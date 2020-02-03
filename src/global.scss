@@ -1,0 +1,178 @@
+@import "~@ionic/angular/css/core.css";
+@import "~@ionic/angular/css/normalize.css";
+@import "~@ionic/angular/css/structure.css";
+@import "~@ionic/angular/css/typography.css";
+
+@import "~@ionic/angular/css/padding.css";
+@import "~@ionic/angular/css/float-elements.css";
+@import "~@ionic/angular/css/text-alignment.css";
+@import "~@ionic/angular/css/text-transformation.css";
+@import "~@ionic/angular/css/flex-utils.css";
+
+/* allow select text */
+ion-content {
+	-webkit-user-select: auto !important;
+	-moz-user-select: auto !important;
+	-ms-user-select: auto !important;
+	user-select: auto !important;
+}
+
+/* side menu */
+@media only screen and (min-width: 1280px) {
+	.split-pane-md.split-pane-visible > .split-pane-side,
+	.split-pane-ios.split-pane-visible > .split-pane-side {
+		max-width: 320px;
+	}
+}
+ion-list {
+	padding: 0 !important;
+}
+ion-menu.menu-side-start > ion-header > ion-toolbar > ion-thumbnail img {
+	border-radius: 50%;
+	width: 80%;
+	height: 80%;
+	margin: 10%;
+}
+.ios ion-menu.menu-side-start > ion-header > ion-toolbar > ion-thumbnail {
+	height: 36px;
+	width: 36px;
+}
+ion-menu > ion-content > ion-list > ion-menu-toggle img {
+	max-height: 44px;
+	margin-right: 16px;
+}
+ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label {
+	line-height: 44px;
+}
+
+/* footer toolbars */
+ion-footer > ion-toolbar {
+	padding-left: 8px;
+} 
+
+/* header toolbars on iOS */
+.plt-ios ion-header ion-toolbar:first-child {
+	padding-top: 0;
+}
+
+/* search bar on iOS */
+.plt-ios .sc-ion-searchbar-ios-h {
+	padding-top: 0;
+	padding-bottom: 0;
+}
+.sc-ion-searchbar-ios-h {
+	height: auto;
+}
+.searchbar-input-container.sc-ion-searchbar-ios {
+	height: 28px;
+}
+
+/* label of invalid controls */
+.invalid:not(.item-has-focus) > ion-label.sc-ion-label-md-h,
+.invalid:not(.item-has-focus) > ion-label.sc-ion-label-md-s,
+.invalid:not(.item-has-focus) > ion-label.sc-ion-label-ios-h,
+.invalid:not(.item-has-focus) > ion-label.sc-ion-label-ios-s {
+	color: var(--ion-color-danger);
+}
+
+/* description label of an input control */
+.label.description,
+label.description {
+	font-size: 12px;
+	color: var(--ion-color-medium);
+}
+
+/* completer */
+.completer-container > ng2-completer,
+.completer-holder,
+.completer-dropdown-holder,
+.completer-dropdown,
+.select-dropdown > div,
+.select-file > div{
+	width: 100% !important;
+}
+ion-item.completer-container > ion-label,
+ion-item.select-dropdown > ion-label,
+ion-item.select-file > ion-label {
+	padding-bottom: 8px;
+}
+.completer-holder > input.completer-input,
+.select-dropdown > div > select,
+.select-file > div > input {
+	padding-top: 8px;
+	padding-bottom: 8px;
+	font-family: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+	letter-spacing: inherit;
+	text-decoration: inherit;
+	text-overflow: inherit;
+	text-transform: inherit;
+	text-align: inherit;
+	white-space: inherit;
+	color: inherit;
+	display: inline-block;
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	width: 100%;
+	border: 0;
+	outline: 0;
+	background: 0 0;
+	box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	appearance: none;	
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	-webkit-tap-highlight-color: rgba(0,0,0,0);
+	-webkit-tap-highlight-color: transparent;
+	-webkit-touch-callout: none;
+}
+.select-dropdown > div {
+	position: relative;
+}
+.select-dropdown > div > div {
+	position: absolute;
+	right: 5px;
+	top: 50%;
+	margin-top: -3px;
+	width: 0;
+	height: 0;
+	border-top: 5px solid;
+	border-right: 5px solid transparent;
+	border-left: 5px solid transparent;
+	color: var(--ion-color-medium);
+	pointer-events: none;	
+}
+.completer-dropdown {
+	position: static !important;
+}
+.completer-title {
+	clear: both;
+	display: block;
+	width: 100%;
+}
+.completer-image {
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+}
+.completer-image-default {
+	background-image: none !important;
+}
+
+/* QR Code */
+qr-code > img {
+	height: auto !important;
+}
+
+/* Preview of Image Picker */
+.image-picker-preview {
+	clear: both;
+	overflow: hidden;
+}
+.image-picker-preview > div {
+	width: 300px;
+	float: left;
+	padding-right: 20px;
+}

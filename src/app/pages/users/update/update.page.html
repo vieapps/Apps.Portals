@@ -1,0 +1,51 @@
+<ion-header>
+	<ion-toolbar [color]="configSvc.color">
+		<ion-buttons *ngIf="buttons.cancel !== undefined" slot="start">
+			<ion-button color="secondary" (click)="buttons.cancel.handler()">
+				<ion-icon *ngIf="buttons.cancel.icon" [name]="buttons.cancel.icon" slot="start"></ion-icon>
+				{{ buttons.cancel.text }}
+			</ion-button>
+		</ion-buttons>
+		<ion-buttons *ngIf="buttons.ok !== undefined" slot="end">
+			<ion-button color="primary" (click)="buttons.ok.handler()">
+				<ion-icon *ngIf="buttons.ok.icon" [name]="buttons.ok.icon" slot="start"></ion-icon>
+				{{ buttons.ok.text }}
+			</ion-button>
+		</ion-buttons>
+		<ion-title>
+			{{ title }}
+		</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content [color]="configSvc.color" class="ion-padding">
+
+	<app-form *ngIf="mode === 'profile' && update.config !== undefined"
+		[color]="configSvc.color"
+		[form]="update.form"
+		[config]="update.config"
+		[controls]="update.controls"
+		(initEvent)="onFormInitialized($event)"></app-form>
+
+	<app-form *ngIf="mode === 'password' && password.config !== undefined"
+		[color]="configSvc.color"
+		[form]="password.form"
+		[config]="password.config"
+		[controls]="password.controls"
+		(initEvent)="onFormInitialized($event)"></app-form>
+
+	<app-form *ngIf="mode === 'email' && email.config !== undefined"
+		[color]="configSvc.color"
+		[form]="email.form"
+		[config]="email.config"
+		[controls]="email.controls"
+		(initEvent)="onFormInitialized($event)"></app-form>
+
+	<div *ngIf="mode === 'privileges' && services !== undefined">
+		<control-user-service-privileges *ngFor="let service of services; let idx=index; trackBy: trackPrivileges"
+			[serviceName]="service"
+			[privileges]="getPrivileges(service)"
+			(changesEvent)="onPrivilegesChanged($event)"></control-user-service-privileges>
+	</div>
+
+</ion-content>

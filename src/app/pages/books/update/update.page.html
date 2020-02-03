@@ -1,0 +1,27 @@
+<ion-header>
+	<ion-toolbar [color]="configSvc.color">
+		<ion-buttons slot="start">
+			<ion-button fill="clear" color="secondary" (click)="cancelAsync()">
+				{{ button.cancel }}
+			</ion-button>
+		</ion-buttons>
+		<ion-buttons slot="end">
+			<ion-button fill="clear" color="primary" (click)="updateAsync()">
+				{{ button.update }}
+			</ion-button>
+		</ion-buttons>
+		<ion-title>
+			{{ title }}
+		</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content [color]="configSvc.color" class="ion-padding">
+	<app-form *ngIf="update.config"
+		[color]="configSvc.color"
+		[form]="update.form"
+		[config]="update.config"
+		[segments]="update.segments"
+		[controls]="update.controls"
+		(initEvent)="onFormInitialized($event)"></app-form>
+</ion-content>

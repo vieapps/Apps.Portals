@@ -1,0 +1,13 @@
+<div [style.background-image]="coverBackground" [title]="book.Title" (click)="openAsync()">
+	<section>
+		<span *ngIf="!hideAuthor">
+			{{ book.Author }}
+		</span>
+		<span *ngIf="!hideCategory">
+			{{ book.Category }}
+		</span>
+		<h2>
+			{{ book.Title }}
+		</h2>
+	</section>
+</div>

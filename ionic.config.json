@@ -1,0 +1,7 @@
+{
+	"name": "VIEApps NGX Books",
+	"integrations": {
+		"cordova": {}
+	},
+	"type": "angular"
+}
