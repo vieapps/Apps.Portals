@@ -15,9 +15,9 @@ export const routes: Routes = [
 		loadChildren: "./pages/users/users.module#UsersModule"
 	},
 	{
-		path: "books",
+		path: "portals",
 		canActivate: [AppReadyGuardService],
-		loadChildren: "./pages/books/books.module#BooksModule"
+		loadChildren: "./pages/portals/portals.module#PortalsModule"
 	},
 	{
 		path: "**",

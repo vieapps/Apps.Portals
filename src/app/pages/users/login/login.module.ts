@@ -6,6 +6,7 @@ import { AppFormsModule } from "../../../components/forms.module";
 import { UsersLogInPage } from "./login.page";
 
 @NgModule({
+	providers: [],
 	imports: [
 		CommonModule,
 		IonicModule,
@@ -15,4 +16,5 @@ import { UsersLogInPage } from "./login.page";
 	exports: [],
 	declarations: [UsersLogInPage]
 })
+
 export class UsersLogInPageModule {}

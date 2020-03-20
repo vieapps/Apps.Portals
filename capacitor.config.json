@@ -1,6 +1,6 @@
 {
-  "appId": "net.vieapps.books",
-  "appName": "VIEApps NGX Books",
+  "appId": "net.vieapps.portals",
+  "appName": "VIEApps NGX Portals",
   "bundledWebRuntime": false,
   "npmClient": "npm",
   "webDir": "www",

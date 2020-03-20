@@ -2,6 +2,7 @@ import { AppUtility } from "../components/app.utility";
 
 /** Statistic base information */
 export class StatisticBase {
+
 	Name = "";
 	Title = "";
 	Counters = 0;
@@ -11,10 +12,12 @@ export class StatisticBase {
 		AppUtility.copy(json, statistic, () => statistic.Title = AppUtility.toANSI(statistic.Name).toLowerCase());
 		return statistic;
 	}
+
 }
 
 /** Statistic information */
 export class StatisticInfo extends StatisticBase {
+
 	FullName = "";
 	Children: Array<StatisticInfo> = [];
 
@@ -48,4 +51,5 @@ export class StatisticInfo extends StatisticBase {
 			})
 		});
 	}
+
 }

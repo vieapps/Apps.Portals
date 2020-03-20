@@ -9,7 +9,7 @@
 		</ion-buttons>
 		<ion-buttons slot="end">
 			<ion-button *ngIf="mode === 'profile' && !id && canManageUsers" routerLink="/users/list">
-				<ion-icon name="contacts" slot="icon-only"></ion-icon>
+				<ion-icon name="people-circle" slot="icon-only"></ion-icon>
 			</ion-button>
 			<ion-button *ngIf="buttons.ok" color="primary" (click)="buttons.ok.handler()">
 				<ion-icon *ngIf="buttons.ok.icon" [name]="buttons.ok.icon" slot="start"></ion-icon>
@@ -32,10 +32,9 @@
 		</ion-buttons>
 		<ion-buttons *ngIf="actions" slot="end">
 			<ion-button color="primary" (click)="showActionsAsync()">
-				<ion-icon name="more" slot="icon-only"></ion-icon>
+				<ion-icon name="ellipsis-horizontal" slot="icon-only"></ion-icon>
 			</ion-button>
 		</ion-buttons>
-		<ion-buttons></ion-buttons>
 	</ion-toolbar>
 </ion-footer>
 
@@ -52,7 +51,9 @@
 
 		<ion-list class="ion-padding-end">
 			<ion-list-header [color]="configSvc.color">
-				{{ labels.header }}
+				<ion-label>
+					{{ labels.header }}
+				</ion-label>
 			</ion-list-header>
 			<ion-item [color]="configSvc.color">
 				<ion-icon icon="at" slot="start"></ion-icon>
@@ -75,20 +76,20 @@
 			</ion-item>
 		</ion-list>
 
-		<control-book-bookmarks *ngIf="configSvc.appConfig.services.active === 'books' && !id"></control-book-bookmarks>
+		<control-book-bookmarks *ngIf="configSvc.appConfig.services.active === 'Books' && !id"></control-book-bookmarks>
 		
 	</div>
 
-	<div *ngIf="mode === 'invitation'" padding>
-		<app-form *ngIf="invitation.config !== undefined"
+	<div *ngIf="mode === 'invitation'" class="ion-padding">
+		<app-form *ngIf="invitation.config"
 			[color]="configSvc.color"
 			[form]="invitation.form"
 			[config]="invitation.config"
 			[controls]="invitation.controls"
 			(initEvent)="onFormInitialized($event)"></app-form>
-		<control-user-service-privileges *ngIf="authSvc.canSetPrivileges"
+		<control-service-privileges *ngIf="authSvc.canSetServicePrivileges"
 			[serviceName]="configSvc.appConfig.services.active"
-			(changesEvent)="onPrivilegesChanged($event)"></control-user-service-privileges>
+			(changesEvent)="onServicePrivilegesChanged($event)"></control-service-privileges>
 	</div>
 
 </ion-content>

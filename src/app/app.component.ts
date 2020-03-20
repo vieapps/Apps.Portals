@@ -14,7 +14,6 @@ import { TrackingUtility } from "./components/app.utility.trackings";
 import { ConfigurationService } from "./services/configuration.service";
 import { AuthenticationService } from "./services/authentication.service";
 import { UsersService } from "./services/users.service";
-import { BooksService } from "./services/books.service";
 
 @Component({
 	selector: "app-root",
@@ -24,17 +23,16 @@ import { BooksService } from "./services/books.service";
 export class AppComponent implements OnInit {
 
 	constructor(
-		public router: Router,
-		public http: HttpClient,
-		public platform: Platform,
-		public menuController: MenuController,
-		public splashScreen: SplashScreen,
-		public statusBar: StatusBar,
-		public appFormsSvc: AppFormsService,
-		public configSvc: ConfigurationService,
-		public authSvc: AuthenticationService,
-		public usersSvc: UsersService,
-		public booksSvc: BooksService
+		private router: Router,
+		private http: HttpClient,
+		private platform: Platform,
+		private menuController: MenuController,
+		private splashScreen: SplashScreen,
+		private statusBar: StatusBar,
+		private appFormsSvc: AppFormsService,
+		private configSvc: ConfigurationService,
+		private authSvc: AuthenticationService,
+		private usersSvc: UsersService
 	) {
 		if (this.configSvc.isDebug) {
 			console.log("<AppComponent>: Initializing...");
@@ -81,6 +79,10 @@ export class AppComponent implements OnInit {
 		}
 	};
 
+	public get color() {
+		return this.configSvc.color;
+	}
+
 	ngOnInit() {
 		this.router.events.subscribe(event => {
 			if (event instanceof RoutesRecognized) {
@@ -100,7 +102,10 @@ export class AppComponent implements OnInit {
 
 		this.platform.ready().then(async () => {
 			this.configSvc.prepare();
-			await this.configSvc.loadOptionsAsync();
+			await Promise.all([
+				this.configSvc.loadURIsAsync(),
+				this.configSvc.loadOptionsAsync()
+			]);
 			await this.configSvc.prepareLanguagesAsync();
 			this.setupEventHandlers();
 			AppEvents.broadcast("App", { Type: "PlatformIsReady" });
@@ -114,7 +119,7 @@ export class AppComponent implements OnInit {
 			}
 
 			const isActivate = this.configSvc.isWebApp && "activate" === this.configSvc.queryParams["prego"];
-			await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync(isActivate ? "common.messages.activating" : "common.messages.loading"));
+			await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "loading"}`));
 			await this.updateSidebarAsync();
 			this.sidebar.left.title = this.configSvc.appConfig.app.name;
 
@@ -165,7 +170,7 @@ export class AppComponent implements OnInit {
 			},
 			profile: {
 				title: await this.configSvc.getResourceAsync("common.sidebar.profile"),
-				url: this.configSvc.appConfig.url.users.profile + "/my",
+				url: `${this.configSvc.appConfig.url.users.profile}/my`,
 				queryParams: undefined as { [key: string]: any },
 				direction: "forward",
 				icon: "person",
@@ -237,6 +242,14 @@ export class AppComponent implements OnInit {
 			if (this.authSvc.canRegisterNewAccounts) {
 				this.updateSidebarItem(index, -1, sidebarItems.register);
 			}
+
+			this.updateSidebarItem(index, -1, {
+				title: "Organizations",
+				url: "/portals/organizations/list",
+				direction: "root",
+				icon: "business",
+				detail: false
+			});
 		}
 		else {
 			this.sidebar.left.menu[index].title = info.title;
@@ -374,10 +387,10 @@ export class AppComponent implements OnInit {
 
 	private async showActivationResultAsync(data: any) {
 		await this.appFormsSvc.showAlertAsync(
-			await this.configSvc.getResourceAsync("account" === data.Mode ? "users.activate.header.account" : "users.activate.header.password"),
-			await this.configSvc.getResourceAsync("OK" === data.Status ? "users.activate.subHeader.success" : "users.activate.subHeader.error"),
+			await this.configSvc.getResourceAsync(`users.activate.header.${("account" === data.Mode ? "account" : "password")}`),
+			await this.configSvc.getResourceAsync(`users.activate.subHeader.${("OK" === data.Status ? "success" : "error")}`),
 			"OK" === data.Status
-				? await this.configSvc.getResourceAsync("account" === data.Mode ? "users.activate.messages.success.account" : "users.activate.messages.success.password")
+				? await this.configSvc.getResourceAsync(`users.activate.messages.success.${("account" === data.Mode ? "account" : "password")}`)
 				: await this.configSvc.getResourceAsync("users.activate.messages.error.general", { error: (data.Error ? ` (${data.Error.Message})` : "") }),
 			async () => {
 				this.configSvc.appConfig.url.stack[this.configSvc.appConfig.url.stack.length - 1] = {
@@ -409,7 +422,7 @@ export class AppComponent implements OnInit {
 								await this.configSvc.resetSessionAsync(() => PlatformUtility.invoke(async () => await this.initializeAsync(onNext, noInitializeSession), 234));
 							}
 							else {
-								await this.appFormsSvc.hideLoadingAsync(() => console.error("<AppComponent>: Cannot initialize the app => " + AppUtility.getErrorMessage(error), error));
+								await this.appFormsSvc.hideLoadingAsync(() => console.error(`<AppComponent>: Cannot initialize the app => ${AppUtility.getErrorMessage(error)}`, error));
 							}
 						}
 					);
@@ -421,7 +434,7 @@ export class AppComponent implements OnInit {
 					await this.configSvc.resetSessionAsync(() => PlatformUtility.invoke(async () => await this.initializeAsync(onNext, noInitializeSession), 234));
 				}
 				else {
-					await this.appFormsSvc.hideLoadingAsync(() => console.error("<AppComponent>: Cannot initialize the app => " + AppUtility.getErrorMessage(error), error));
+					await this.appFormsSvc.hideLoadingAsync(() => console.error(`<AppComponent>: Cannot initialize the app => ${AppUtility.getErrorMessage(error)}`, error));
 				}
 			},
 			noInitializeSession

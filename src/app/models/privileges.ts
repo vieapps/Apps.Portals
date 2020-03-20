@@ -4,7 +4,11 @@ import { AppUtility } from "../components/app.utility";
 /** Privilege of an individual business service */
 export class Privilege {
 
-	constructor(serviceName?: string, objectName?: string, role?: string) {
+	constructor(
+		serviceName?: string,
+		objectName?: string,
+		role?: string
+	) {
 		if (AppUtility.isNotEmpty(serviceName)) {
 			this.ServiceName = serviceName;
 			if (AppUtility.isNotEmpty(objectName)) {
@@ -27,6 +31,7 @@ export class Privilege {
 		AppUtility.copy(json, privilege);
 		return privilege;
 	}
+
 }
 
 /** Privilege of an individual business object */
@@ -60,4 +65,5 @@ export class Privileges {
 		});
 		return privileges;
 	}
+
 }

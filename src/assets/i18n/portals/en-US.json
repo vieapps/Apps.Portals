@@ -1,0 +1,15 @@
+{
+	"portals": {
+		"organizations": {
+			"title": {
+				"search": "Search",
+				"list": "List of organizations",
+				"create": "Create new",
+				"update": "Update",
+				"register": "Register new"
+			}
+		},
+		"modules": {
+		}
+	}
+}

@@ -18,7 +18,7 @@ import { UsersAvatarPage } from "../avatar/avatar.page";
 
 export class UsersProfilePage implements OnInit {
 
-	constructor (
+	constructor(
 		public zone: NgZone,
 		public appFormsSvc: AppFormsService,
 		public configSvc: ConfigurationService,
@@ -120,13 +120,13 @@ export class UsersProfilePage implements OnInit {
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.profile"), "create", () => this.zone.run(async () => await this.openUpdateAsync("profile"))),
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.password"), "key", () => this.zone.run(async () => await this.openUpdateAsync("password"))),
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.email"), "at", () => this.zone.run(async () => await this.openUpdateAsync("email"))),
-					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.otp"), "unlock", () => this.zone.run(async () => await this.openOTPAsync()))
+					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.otp"), "lock-open", () => this.zone.run(async () => await this.openOTPAsync()))
 				].forEach(action => this.actions.push(action));
 			}
 
-			else if (this.authSvc.canSetPrivileges) {
+			else if (this.authSvc.canSetServicePrivileges) {
 				this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.privileges"), "settings", () => this.zone.run(async () => await this.openUpdateAsync("privileges"))));
-				this.usersSvc.getPrivilegesAsync(this.profile.ID);
+				this.usersSvc.getServicePrivilegesAsync(this.profile.ID);
 			}
 
 			if (this.id === undefined || this.id === this.configSvc.getAccount().id) {
@@ -198,7 +198,7 @@ export class UsersProfilePage implements OnInit {
 		await this.setModeAsync("invitation", await this.configSvc.getResourceAsync("users.profile.invitation.title"));
 	}
 
-	onPrivilegesChanged($event: any) {
+	onServicePrivilegesChanged($event: any) {
 		this.invitation.privileges = $event.privileges;
 		this.invitation.relatedInfo = $event.relatedInfo;
 	}

@@ -10,28 +10,28 @@ export class AppConfig {
 	/** URIs of the remote API and related resources */
 	public static URIs = {
 		/** APIs */
-		apis: "https://apis.vieapps.net/",
+		apis: "https://apis.vieapps.com/",
 
 		/** Real-time Updater */
-		updates: "https://rt.vieapps.net/",
+		updates: "https://rt.vieapps.com/",
 
 		/** Files HTTP service */
-		files: "https://fs.vieapps.net/",
+		files: "https://fs.vieapps.com/",
 
 		/** URI to perform activation (on the web) */
-		activations: "https://viebooks.net/"
+		activations: "https://vieapps.net/"
 	};
 
 	/** Information of the app */
 	public static app = {
-		id: "vieapps-ngx-books",
-		name: "VIEApps NGX Books",
-		description: "Online Books from VIEApps.net",
-		version: "1.3.0",
-		copyright: "© 2016 - 2020 VIEApps.net",
+		id: "vieapps-ngx-portals",
+		name: "VIEApps NGX Portals",
+		description: "Managing core portal and related services of VIEApps.net",
+		version: "1.0.0-beta",
+		copyright: "© 2020 VIEApps.net",
 		license: "Apache-2.0",
-		frameworks: "ionic 4.11 - angular 8.2 - cordova 9.0",
-		homepage: "https://viebooks.net",
+		frameworks: "ionic 5.0 - angular 8.2 - cordova 9.0",
+		homepage: "https://vieapps.net",
 		mode: "",
 		platform: "",
 		os: "",
@@ -47,15 +47,17 @@ export class AppConfig {
 		token: undefined as any,
 		account: undefined as Account,
 		keys: {
-			jwt: undefined as string,
 			aes: {
 				key: undefined as string,
 				iv: undefined as string
 			},
 			rsa: {
+				encryptionExponent: undefined as string,
+				decryptionExponent: undefined as string,
 				exponent: undefined as string,
 				modulus: undefined as string
-			}
+			},
+			jwt: undefined as string
 		},
 		device: "",
 		captcha: {
@@ -66,11 +68,11 @@ export class AppConfig {
 
 	/** Services in the app */
 	public static services = {
-		active: "books",
+		active: "Portals",
 		all: [
 			{
-				name: "books",
-				objects: ["book", "category", "statistic"]
+				name: "Portals",
+				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Link", "Item"]
 			}
 		] as Array<{ name: string, objects: Array<string> }>
 	};
@@ -84,10 +86,10 @@ export class AppConfig {
 	/** User account registrations */
 	public static accountRegistrations = {
 		registrable: true,
-		required: ["Gender", "BirthDay", "Address", "Addresses", "Mobile"],
+		required: [],
 		hidden: ["Gender", "BirthDay", "Address", "Addresses", "Mobile"],
 		sendInvitationRole: "Authenticated",
-		setPrivilegsRole: "ServiceAdministrator"
+		setServicePrivilegsRole: "ServiceAdministrator"
 	};
 
 	/** Geographic meta */
@@ -124,10 +126,7 @@ export class AppConfig {
 
 	/** Information for working with url (stack, host, ...) */
 	public static url = {
-		stack: new Array<{
-			url: string,
-			params: { [key: string]: any }
-		}>(),
+		stack: new Array<{ url: string, params: { [key: string]: any } }>(),
 		home: "/home",
 		base: undefined as string,
 		host: undefined as string,
@@ -147,9 +146,9 @@ export class AppConfig {
 
 	/** Tracking information */
 	public static tracking = {
-		google: ["UA-3060572-8"],
+		google: new Array<string>(),
 		facebook: new Array<string>(),
-		domains: ["viebooks.net"],
+		domains: ["vieapps.net"],
 	};
 
 	/** Facebook integration */
@@ -252,7 +251,7 @@ export class AppConfig {
 		const json: { [key: string]: string } = {
 			"language": this.language,
 			"host": this.url.host,
-			"related-service": AppUtility.isNotEmpty(service) ? service : this.services.active
+			"related-service": (AppUtility.isNotEmpty(service) ? service : this.services.active).toLowerCase()
 		};
 		if (AppUtility.isObject(additional, true)) {
 			Object.keys(additional).forEach(key => json[key] = additional[key]);

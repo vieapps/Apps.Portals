@@ -28,7 +28,7 @@ import { Base as BaseService } from "./base.service";
 @Injectable()
 export class ConfigurationService extends BaseService {
 
-	constructor (
+	constructor(
 		private platformLocation: PlatformLocation,
 		private platform: Platform,
 		private navController: NavController,
@@ -106,7 +106,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the color of the theme (dark or light) */
 	public get color() {
-		return this.appConfig.options.theme === "dark" ? "dark" : undefined;
+		return "dark" === this.appConfig.options.theme ? "dark" : undefined;
 	}
 
 	/** Gets the locale data for working with i18n globalization */
@@ -263,7 +263,7 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Initializes the configuration settings of the app */
-	public async initializeAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void, dontInitializeSession?: boolean) {
+	public async initializeAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void, dontInitializeSession: boolean = false) {
 		// prepare environment
 		if (this.appConfig.app.mode === "") {
 			this.prepare();
@@ -275,7 +275,7 @@ export class ConfigurationService extends BaseService {
 		}
 
 		// initialize session
-		if (AppUtility.isFalse(dontInitializeSession)) {
+		if (!dontInitializeSession) {
 			await this.initializeSessionAsync(onNext, onError);
 		}
 		else if (onNext !== undefined) {
@@ -323,7 +323,7 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Updates the session and stores into storage */
-	public async updateSessionAsync(session: any, onNext?: (data?: any) => void, dontStore?: boolean) {
+	public async updateSessionAsync(session: any, onNext?: (data?: any) => void, dontStore: boolean = false) {
 		if (AppUtility.isNotEmpty(session.ID)) {
 			this.appConfig.session.id = session.ID;
 		}
@@ -340,6 +340,8 @@ export class ConfigurationService extends BaseService {
 					iv: session.Keys.AES.IV
 				},
 				rsa: {
+					encryptionExponent: session.Keys.RSA.EncryptionExponent,
+					decryptionExponent: session.Keys.RSA.DecryptionExponent,
 					exponent: session.Keys.RSA.Exponent,
 					modulus: session.Keys.RSA.Modulus
 				}
@@ -349,10 +351,7 @@ export class ConfigurationService extends BaseService {
 
 		if (AppUtility.isNotEmpty(session.Token)) {
 			try {
-				const jwtKey = AppUtility.isObject(this.appConfig.session.keys, true)
-					? this.appConfig.session.keys.jwt
-					: this.appConfig.app.name;
-				this.appConfig.session.token = AppCrypto.jwtDecode(session.Token, jwtKey);
+				this.appConfig.session.token = AppCrypto.jwtDecode(session.Token, AppUtility.isObject(this.appConfig.session.keys, true) ? this.appConfig.session.keys.jwt : this.appConfig.app.name);
 			}
 			catch (error) {
 				this.appConfig.session.token = undefined;
@@ -380,7 +379,7 @@ export class ConfigurationService extends BaseService {
 			});
 		}
 
-		if (AppUtility.isTrue(dontStore)) {
+		if (dontStore) {
 			if (onNext !== undefined) {
 				onNext(this.appConfig.session);
 			}
@@ -462,15 +461,15 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Gets the information of the current/default account */
-	public getAccount(getDefault?: boolean) {
-		const account = AppUtility.isTrue(getDefault) || this.appConfig.session.account === undefined
+	public getAccount(getDefault: boolean = false) {
+		const account = getDefault || this.appConfig.session.account === undefined
 			? undefined
 			: this.appConfig.session.account;
 		return account || new Account();
 	}
 
 	/** Updates information of the account */
-	public updateAccount(data: any, onNext?: (data?: any) => void, updateInstances?: boolean) {
+	public updateAccount(data: any, onNext?: (data?: any) => void, updateInstances: boolean = false) {
 		const id = data.ID || "";
 		const account = Account.instances.containsKey(id)
 			? Account.instances.getValue(id)
@@ -526,7 +525,7 @@ export class ConfigurationService extends BaseService {
 			}
 		}
 		else {
-			if (account.id !== undefined && (AppUtility.isTrue(updateInstances) || Account.instances.containsKey(account.id))) {
+			if (account.id !== undefined && (updateInstances || Account.instances.containsKey(account.id))) {
 				Account.instances.setValue(account.id, account);
 			}
 			if (onNext !== undefined) {
@@ -644,6 +643,31 @@ export class ConfigurationService extends BaseService {
 		});
 	}
 
+	/** Loads the URI settings of the app */
+	public async loadURIsAsync(onNext?: (data?: any) => void) {
+		const uris = await AppStorage.getAsync("URIs") || {};
+		if (uris.apis !== undefined && uris.updates !== undefined && uris.files !== undefined) {
+			this.appConfig.URIs = uris;
+			await this.storeURIsAsync(onNext);
+		}
+		else if (onNext !== undefined) {
+			onNext(uris);
+		}
+	}
+
+	/** Stores the URI settings of the app */
+	public storeURIsAsync(onNext?: (data?: any) => void) {
+		return AppStorage.setAsync("URIs", this.appConfig.URIs).then(() => {
+			AppEvents.broadcast("App", { Type: "URIsUpdated" });
+			if (this.isDebug) {
+				console.log(super.getLogMessage("URIs are updated"), this.appConfig.URIs);
+			}
+			if (onNext !== undefined) {
+				onNext(this.appConfig.URIs);
+			}
+		});
+	}
+
 	/** Loads the options of the app */
 	public async loadOptionsAsync(onNext?: (data?: any) => void) {
 		const options = await AppStorage.getAsync("Options") || {};
@@ -704,48 +728,51 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Definitions (forms, views, resources, ...) */
+	public addDefinition(path: string, definition: any) {
+		this._definitions[AppCrypto.md5(path.toLowerCase())] = definition;
+	}
+
 	public getDefinition(path: string) {
 		return this._definitions[AppCrypto.md5(path.toLowerCase())];
 	}
 
-	public addDefinition(definition: any, path: string) {
-		this._definitions[AppCrypto.md5(path.toLowerCase())] = definition;
+	public async fetchDefinitionAsync(path: string) {
+		if (this.getDefinition(path) === undefined) {
+			await super.fetchAsync(
+				path,
+				data => this.addDefinition(path, data),
+				error => super.showError("Error occurred while working with definitions", error)
+			);
+		}
+		return AppUtility.clone(this.getDefinition(path));
 	}
 
 	private getDefinitionPath(serviceName?: string, objectName?: string, definitionName?: string, repositoryID?: string, entityID?: string) {
 		let path = "discovery/definitions?" + this.relatedQuery;
 		if (AppUtility.isNotEmpty(serviceName)) {
-			path += "&x-service-name=" + serviceName;
+			path += "&x-service-name=" + serviceName.toLowerCase();
 		}
 		if (AppUtility.isNotEmpty(objectName)) {
-			path += "&x-object-name=" + objectName;
+			path += "&x-object-name=" + objectName.toLowerCase();
 		}
 		if (AppUtility.isNotEmpty(definitionName)) {
-			path += "&x-object-identity=" + definitionName;
+			path += "&x-object-identity=" + definitionName.toLowerCase();
 		}
 		if (AppUtility.isNotEmpty(repositoryID)) {
-			path += "&x-repository-id=" + repositoryID;
+			path += "&x-repository-id=" + repositoryID.toLowerCase();
 		}
 		if (AppUtility.isNotEmpty(entityID)) {
-			path += "&x-entity-id=" + entityID;
+			path += "&x-entity-id=" + entityID.toLowerCase();
 		}
 		return path;
 	}
 
 	public setDefinition(definition: any, serviceName?: string, objectName?: string, definitionName?: string, repositoryID?: string, entityID?: string) {
-		this.addDefinition(definition, this.getDefinitionPath(serviceName, objectName, definitionName, repositoryID, entityID));
+		this.addDefinition(this.getDefinitionPath(serviceName, objectName, definitionName, repositoryID, entityID), definition);
 	}
 
-	public async getDefinitionAsync(serviceName?: string, objectName?: string, definitionName?: string, repositoryID?: string, entityID?: string) {
-		const path = this.getDefinitionPath(serviceName, objectName, definitionName, repositoryID, entityID);
-		if (this.getDefinition(path) === undefined) {
-			await super.fetchAsync(
-				path,
-				data => this.addDefinition(data, path),
-				error => super.showError("Error occurred while working with definitions", error)
-			);
-		}
-		return this.getDefinition(path);
+	public getDefinitionAsync(serviceName?: string, objectName?: string, definitionName?: string, repositoryID?: string, entityID?: string) {
+		return this.fetchDefinitionAsync(this.getDefinitionPath(serviceName, objectName, definitionName, repositoryID, entityID));
 	}
 
 }

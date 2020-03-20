@@ -32,7 +32,7 @@ import { ConfigurationService } from "./services/configuration.service";
 import { AuthenticationService } from "./services/authentication.service";
 import { UsersService } from "./services/users.service";
 import { FilesService } from "./services/files.service";
-import { BooksService } from "./services/books.service";
+import { PortalsService } from "./services/portals.service";
 
 // ngx-translate factories
 export function HttpLoaderFactory(http: HttpClient) {
@@ -40,6 +40,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		{ prefix: "./assets/i18n/common/", suffix: ".json" },
 		{ prefix: "./assets/i18n/users/", suffix: ".json" },
 		{ prefix: "./assets/i18n/books/", suffix: ".json" },
+		{ prefix: "./assets/i18n/portals/", suffix: ".json" },
+		{ prefix: "./assets/i18n/portals.cms/", suffix: ".json" },
 	]);
 }
 
@@ -51,22 +53,6 @@ export class HammerConfig extends HammerGestureConfig {
 }
 
 @NgModule({
-	declarations: [AppComponent],
-	imports: [
-		BrowserModule,
-		HttpClientModule,
-		NgxElectronModule,
-		IonicModule.forRoot(),
-		IonicStorageModule.forRoot({ name: AppConfig.app.id + "-db" }),
-		TranslateModule.forRoot({ loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}}),
-		TimePipeModule,
-		AppFormsModule,
-		AppRoutingModule,
-	],
 	providers: [
 		StatusBar,
 		SplashScreen,
@@ -87,10 +73,26 @@ export class HammerConfig extends HammerGestureConfig {
 		AuthenticationService,
 		UsersService,
 		FilesService,
-		BooksService,
+		PortalsService,
 		{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
 		{ provide: HAMMER_GESTURE_CONFIG, useClass: HammerConfig }
 	],
+	imports: [
+		BrowserModule,
+		HttpClientModule,
+		NgxElectronModule,
+		IonicModule.forRoot(),
+		IonicStorageModule.forRoot({ name: AppConfig.app.id + "-db" }),
+		TranslateModule.forRoot({ loader: {
+			provide: TranslateLoader,
+			useFactory: HttpLoaderFactory,
+			deps: [HttpClient]
+		}}),
+		TimePipeModule,
+		AppFormsModule,
+		AppRoutingModule,
+	],
+	declarations: [AppComponent],
 	bootstrap: [AppComponent]
 })
 

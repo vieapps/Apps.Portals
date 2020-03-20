@@ -3,15 +3,16 @@ import { CommonModule } from "@angular/common";
 import { RouterModule } from "@angular/router";
 import { IonicModule } from "@ionic/angular";
 import { AppFormsModule } from "../../../components/forms.module";
-import { UserControlsModule } from "../controls.module";
+import { CommonControlsModule } from "../../../controls/common.controls.module";
 import { UsersUpdatePage } from "./update.page";
 
 @NgModule({
+	providers: [],
 	imports: [
 		CommonModule,
 		IonicModule,
 		AppFormsModule,
-		UserControlsModule,
+		CommonControlsModule,
 		RouterModule.forChild([{ path: "", component: UsersUpdatePage }])
 	],
 	exports: [],

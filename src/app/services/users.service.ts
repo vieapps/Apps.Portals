@@ -14,15 +14,11 @@ import { ConfigurationService } from "./configuration.service";
 @Injectable()
 export class UsersService extends BaseService {
 
-	constructor(private configSvc: ConfigurationService) {
+	constructor(
+		private configSvc: ConfigurationService
+	) {
 		super("Users");
 		AppRTU.registerAsServiceScopeProcessor(this.name, async message => await this.processUpdateMessageAsync(message));
-		if (this.configSvc.isDebug) {
-			AppRTU.registerAsObjectScopeProcessor(this.name, "Session", () => {});
-			AppRTU.registerAsObjectScopeProcessor(this.name, "Account", () => {});
-			AppRTU.registerAsObjectScopeProcessor(this.name, "Profile", () => {});
-			AppRTU.registerAsObjectScopeProcessor(this.name, "Status", () => {});
-		}
 	}
 
 	public get completerDataSource() {
@@ -264,7 +260,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public getPrivilegesAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public getServicePrivilegesAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		return Account.instances.containsKey(id)
 			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
 			: super.readAsync(
@@ -279,7 +275,7 @@ export class UsersService extends BaseService {
 				);
 	}
 
-	public updatePrivilegesAsync(id: string, privileges: { [key: string]: Array<Privilege> }, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public updateServicePrivilegesAsync(id: string, privileges: { [key: string]: Array<Privilege> }, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.updateAsync(
 			super.getURI("account", id, this.configSvc.relatedQuery),
 			{

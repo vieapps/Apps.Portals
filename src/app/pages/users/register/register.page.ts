@@ -15,7 +15,7 @@ import { UsersService } from "../../../services/users.service";
 
 export class UsersRegisterPage implements OnInit {
 
-	constructor (
+	constructor(
 		public zone: NgZone,
 		public appFormsSvc: AppFormsService,
 		public configSvc: ConfigurationService,
@@ -179,8 +179,7 @@ export class UsersRegisterPage implements OnInit {
 		});
 
 		this.register.button.label = await this.configSvc.getResourceAsync("users.register.button");
-		this.title = await this.configSvc.getResourceAsync("users.register.title");
-		this.configSvc.appTitle = this.title;
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.register.title");
 		this.register.config = config;
 	}
 

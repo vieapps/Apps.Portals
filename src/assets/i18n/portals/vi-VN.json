@@ -1,0 +1,36 @@
+{
+	"portals": {
+		"organizations": {
+			"title": {
+				"search": "Tìm kiếm",
+				"list": "Danh sách đơn vị - tổ chức",
+				"create": "Tạo mới đơn vị - tổ chức",
+				"update": "Cập nhật đơn vị - tổ chức",
+				"register": "Đăng ký mới đơn vị - tổ chức"
+			},
+			"list": {
+				"searchbar": {
+					"filter": "tìm nhanh, không dấu cũng OK",
+					"search": "cho từ khoá vào \"..\" để tìm kiếm chính xác"
+				},
+				"actions": {
+					"create": "Tạo mới đơn vị - tổ chức"
+				}
+			},
+			"update": {
+				"segments": {
+					"basic": "Thông tin cơ bản",
+					"privileges": "Quyền truy cập",
+					"messages": "Thông điệp",
+					"emails": "Gửi email",
+					"socials": "Mạng xã hội",
+					"notifications": "Gửi thông báo",
+					"urls": "Thiết đặt URLs",
+					"attachments": "File đính kèm"
+				}
+			}
+		},
+		"modules": {
+		}
+	}
+}

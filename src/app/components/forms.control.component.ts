@@ -11,10 +11,10 @@ import { AppFormsControl, AppFormsService } from "./forms.service";
 
 export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewInit {
 
-	constructor (
-		public changeDetector: ChangeDetectorRef,
-		public appFormsSvc: AppFormsService,
-		public completerSvc: CompleterService
+	constructor(
+		private changeDetector: ChangeDetectorRef,
+		private appFormsSvc: AppFormsService,
+		private completerSvc: CompleterService
 	) {
 	}
 
@@ -523,7 +523,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	trackControl(index: number, control: AppFormsControl) {
-		return control.Name;
+		return `${control.Name}@${index}`;
 	}
 
 }

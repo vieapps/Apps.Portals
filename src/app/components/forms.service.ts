@@ -8,11 +8,12 @@ import { AppConfig } from "../app.config";
 import { AppXHR } from "./app.apis";
 import { AppUtility } from "./app.utility";
 import { PlatformUtility } from "./app.utility.platform";
+import { ConfigurationService } from "../services/configuration.service";
 
 /** Presents the settings of a control in the dynamic forms */
 export class AppFormsControl {
 
-	constructor (
+	constructor(
 		options?: any,
 		order?: number
 	) {
@@ -23,12 +24,12 @@ export class AppFormsControl {
 
 	Name = "";
 	Order = 0;
-	Segment = undefined as string;
+	Segment: string;
 	Type = "TextBox";
 	Hidden = false;
 	Required = false;
-	Validators: Array<ValidatorFn> | Array<string> = undefined;
-	AsyncValidators: Array<AsyncValidatorFn> | Array<string> = undefined;
+	Validators: Array<ValidatorFn> | Array<string>;
+	AsyncValidators: Array<AsyncValidatorFn> | Array<string>;
 	Extras: { [key: string]: any } = {};
 	Options = {
 		Type: "text",
@@ -110,7 +111,7 @@ export class AppFormsControl {
 	SubControls: {
 		AsArray: boolean,
 		Controls: Array<AppFormsControl>
-	} = undefined;
+	};
 
 	/** Gets uri of the captcha image */
 	public get captchaURI() {
@@ -320,7 +321,7 @@ export class AppFormsControl {
 			if (AppUtility.isArray(subConfig, true)) {
 				control.SubControls = {
 					AsArray: !!(subControls.AsArray || subControls.asarray),
-					Controls: (subConfig as Array<any>).map((suboptions, suborder) => this.assign(suboptions, undefined, suborder, control.Name)).sort(AppUtility.compare("Order"))
+					Controls: (subConfig as Array<any>).map((suboptions, suborder) => this.assign(suboptions, undefined, suborder, control.Name)).sort(AppUtility.getCompareFunction("Order"))
 				};
 				if (control.SubControls.Controls.length < 1) {
 					control.SubControls = undefined;
@@ -368,7 +369,7 @@ export class AppFormsControl {
 /** Presents the settings of a segment (means a tab that contains group of controls) in the dynamic forms */
 export class AppFormsSegment {
 
-	constructor (
+	constructor(
 		name?: string,
 		label?: string,
 		icon?: string
@@ -387,13 +388,14 @@ export class AppFormsSegment {
 @Injectable()
 export class AppFormsService {
 
-	constructor (
-		public translateSvc: TranslateService,
-		public loadingController: LoadingController,
-		public alertController: AlertController,
-		public actionsheetController: ActionSheetController,
-		public modalController: ModalController,
-		public toastController: ToastController
+	constructor(
+		private translateSvc: TranslateService,
+		private configSvc: ConfigurationService,
+		private loadingController: LoadingController,
+		private alertController: AlertController,
+		private actionsheetController: ActionSheetController,
+		private modalController: ModalController,
+		private toastController: ToastController
 	) {
 	}
 
@@ -441,7 +443,9 @@ export class AppFormsService {
 							control.Options.SelectOptions.Values = await control.Options.SelectOptions.RemoteURIProcessor(uri, control.Options.SelectOptions.RemoteURIConverter);
 						}
 						else {
-							const values = await AppXHR.sendRequestAsync("GET", uri);
+							const values = uri.indexOf("discovery/definitions?") > 0
+								? await this.configSvc.fetchDefinitionAsync(uri)
+								: await AppXHR.sendRequestAsync("GET", uri);
 							control.Options.SelectOptions.Values = AppUtility.isArray(values, true)
 								? (values as Array<string>).length > 0 && typeof values[0] === "string"
 									? (values as Array<string>).map(value => {
@@ -517,7 +521,7 @@ export class AppFormsService {
 			}
 			return control;
 		})
-		.sort(AppUtility.compare({ name: "segmentIndex", primer: undefined, reverse: false }, "Order"))
+		.sort(AppUtility.getCompareFunction("segmentIndex", "Order"))
 		.forEach((control, order) => {
 			control.Order = order;
 			controls.push(control);
@@ -745,7 +749,7 @@ export class AppFormsService {
 		return (formGroup: FormGroup): { [key: string]: any } | null => {
 			const originalControl = formGroup.controls[original];
 			const confirmControl = formGroup.controls[confirm];
-			if (originalControl !== undefined && confirmControl !== undefined && originalControl.value !== confirmControl.value) {
+			if (originalControl !== undefined && confirmControl !== undefined && !AppUtility.isEquals(originalControl.value, confirmControl.value)) {
 				confirmControl.setErrors({ notEquivalent: true });
 				return { notEquivalent: true };
 			}
@@ -759,7 +763,7 @@ export class AppFormsService {
 			const otherControl = formControl.parent instanceof FormGroup
 				? (formControl.parent as FormGroup).controls[other]
 				: undefined;
-			if (otherControl !== undefined && otherControl.value !== formControl.value) {
+			if (otherControl !== undefined && !AppUtility.isEquals(otherControl.value, formControl.value)) {
 				formControl.setErrors({ notEquivalent: true });
 				return { notEquivalent: true };
 			}
@@ -945,21 +949,13 @@ export class AppFormsService {
 	/** Shows the toast alert message */
 	public async showToastAsync(message: string, duration: number = 1000, showCloseButton: boolean = false, closeButtonText: string = "close", atBottom: boolean = false) {
 		await this.hideToastAsync();
-		this._toast = !showCloseButton && duration < 1
-			? await this.toastController.create({
-					message: message,
-					duration: 1000,
-					position: atBottom ? "bottom" : "top",
-					animated: true
-				})
-			: await this.toastController.create({
-					message: message,
-					duration: duration,
-					showCloseButton: showCloseButton,
-					closeButtonText: closeButtonText,
-					position: atBottom ? "bottom" : "top",
-					animated: true
-				});
+		this._toast = await this.toastController.create({
+			animated: true,
+			message: message,
+			duration: duration < 1 ? 1000 : duration,
+			position: atBottom ? "bottom" : "top",
+			buttons: showCloseButton && AppUtility.isNotEmpty(closeButtonText) ? [{ text: closeButtonText, role: "cancel" }] : []
+		});
 		await this._toast.present();
 	}
 
