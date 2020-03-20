@@ -39,7 +39,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 	return new MultiTranslateHttpLoader(http, [
 		{ prefix: "./assets/i18n/common/", suffix: ".json" },
 		{ prefix: "./assets/i18n/users/", suffix: ".json" },
-		{ prefix: "./assets/i18n/books/", suffix: ".json" },
 		{ prefix: "./assets/i18n/portals/", suffix: ".json" },
 		{ prefix: "./assets/i18n/portals.cms/", suffix: ".json" },
 	]);
