@@ -72,7 +72,7 @@ export class AppConfig {
 		all: [
 			{
 				name: "Portals",
-				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Link", "Item"]
+				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Link", "Contact", "Item"]
 			}
 		] as Array<{ name: string, objects: Array<string> }>
 	};
@@ -89,6 +89,7 @@ export class AppConfig {
 		required: [],
 		hidden: ["Gender", "BirthDay", "Address", "Addresses", "Mobile"],
 		sendInvitationRole: "Authenticated",
+		setServicePrivilegs: true,
 		setServicePrivilegsRole: "ServiceAdministrator"
 	};
 

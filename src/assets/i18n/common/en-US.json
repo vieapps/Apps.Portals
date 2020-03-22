@@ -39,6 +39,16 @@
 			}
 		}
 	},
+	"status": {
+		"approval": {
+			"Draft": "Draft",
+			"Pending": "Pending",
+			"Rejected": "Rejected",
+			"Approved": "Approved",
+			"Published": "Published",
+			"Archieved": "Archieved"
+		}
+	},
 	"homepage": {
 		"title": "Home"
 	}

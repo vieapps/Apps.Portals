@@ -39,6 +39,16 @@
 			}
 		}
 	},
+	"status": {
+		"approval": {
+			"Draft": "Bản nháp",
+			"Pending": "Đợi duyệt",
+			"Rejected": "Bị từ chối",
+			"Approved": "Đã duyệt",
+			"Published": "Xuất bản",
+			"Archieved": "Lưu trữ"
+		}
+	},
 	"homepage": {
 		"title": "Màn hình chính"
 	}

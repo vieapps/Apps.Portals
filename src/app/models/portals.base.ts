@@ -8,27 +8,26 @@ export abstract class PortalBase extends BaseModel {
 		super();
 	}
 
-	abstract ID = "";
-	abstract ansiTitle = "";
+	/** The title */
+	public abstract Title: string;
 
-	protected _routerParams: { [key: string]: any };
+	/** The created time */
+	public abstract Created: Date;
 
-	/** Gets the link for working with router */
+	/** The identity of user who created the object */
+	public abstract CreatedID: string;
+
+	/** The last updated time */
+	public abstract LastModified: Date;
+
+	/** The identity of user who modified the object */
+	public abstract LastModifiedID: string;
+
+	/** The title (only ANSI characters) for working with URIs and filters */
+	public abstract ansiTitle: string;
+
 	public get routerLink() {
 		return `/portals/${this.constructor.name.toLowerCase()}s/view/${AppUtility.toURI(this.ansiTitle)}`;
-	}
-
-	/** Gets the params for working with router */
-	public get routerParams() {
-		this._routerParams = this._routerParams || {
-			"x-request": AppUtility.toBase64Url({ ID: this.ID })
-		};
-		return this._routerParams;
-	}
-
-	/** Gets the URI (means link with 'x-request' param) for working with router */
-	public get routerURI() {
-		return `${this.routerLink}?x-request=${this.routerParams["x-request"]}`;
 	}
 
 }

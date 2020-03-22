@@ -1,6 +1,7 @@
 import { Subscription } from "rxjs";
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from "@angular/core";
 import { FormGroup } from "@angular/forms";
+import { AppUtility } from "../../components/app.utility";
 import { AppFormsControl } from "../../components/forms.service";
 import { ConfigurationService } from "../../services/configuration.service";
 import { Privilege } from "../../models/privileges";
@@ -26,12 +27,12 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 	form = new FormGroup({});
 	controls = new Array<AppFormsControl>();
 	config: Array<any>;
-	objects: Array<{ Name: string, Role: string	}>;
-	subscription: Subscription;
+	private objects: Array<{ Name: string, Role: string	}>;
+	private subscription: Subscription;
 
-	ngOnInit() {
+	async ngOnInit() {
 		this.subscription = this.form.valueChanges.subscribe(value => this.onFormChanged(value));
-		this.initializeFormAsync();
+		await this.initializeFormAsync();
 	}
 
 	ngOnDestroy() {
@@ -39,7 +40,7 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 		this.changesEvent.unsubscribe();
 	}
 
-	async initializeFormAsync() {
+	private async initializeFormAsync() {
 		if (this.privileges === undefined || this.privileges.length < 1) {
 			this.privileges = [new Privilege(this.serviceName)];
 		}
@@ -59,7 +60,7 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 		let serviceLabel = await this.configSvc.getResourceAsync(resourceID);
 		serviceLabel = await this.configSvc.getResourceAsync("users.privileges.role", { service: serviceLabel !== resourceID ? serviceLabel : this.serviceName });
 
-		const config = [{
+		const config: Array<any> = [{
 			Name: "Role",
 			Type: "Select",
 			Options: {
@@ -68,14 +69,14 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 					Values: roles
 				}
 			}
-		}] as Array<any>;
+		}];
 
-		const objects = (this.configSvc.appConfig.services.all.find(service => service.name === this.serviceName).objects || []).map(object => object.toLowerCase());
+		const objects = (this.configSvc.appConfig.services.all.find(service => AppUtility.isEquals(service.name, this.serviceName)).objects || []).map(object => object.toLowerCase());
 		if (objects.length > 0) {
 			this.objects = objects.map(object => {
 				return {
 					Name: object,
-					Role: (this.privileges.find(privilege => privilege.ServiceName === this.serviceName && privilege.ObjectName === object) || new Privilege()).Role
+					Role: (this.privileges.find(privilege => AppUtility.isEquals(privilege.ServiceName, this.serviceName) && AppUtility.isEquals(privilege.ObjectName, object)) || new Privilege()).Role
 				};
 			});
 			const labels = {} as { [key: string]: string };
@@ -111,7 +112,7 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 	}
 
 	onFormInitialized($event: any) {
-		const role = this.privileges.find(privilege => privilege.ServiceName === this.serviceName && privilege.ObjectName === "");
+		const role = this.privileges.find(privilege => AppUtility.isEquals(privilege.ServiceName, this.serviceName) && AppUtility.isEquals(privilege.ObjectName, ""));
 		const value = {
 			Role: role !== undefined ? role.Role : "Viewer",
 			Objects: {} as { [key: string]: string }
@@ -120,10 +121,10 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 		this.form.patchValue(value);
 	}
 
-	onFormChanged(value: any) {
+	private onFormChanged(value: any) {
 		const privileges = [new Privilege(this.serviceName, undefined, value.Role)];
 
-		const subControls = this.controls.find(control => control.Name === "Objects");
+		const subControls = this.controls.find(control => AppUtility.isEquals(control.Name, "Objects"));
 		if (subControls !== undefined) {
 			const objectControls = subControls.SubControls.Controls;
 			if (value.Role === "Viewer") {

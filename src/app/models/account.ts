@@ -28,7 +28,7 @@ export class Account {
 		profileUrl: string
 	};
 
-	/*** Deserializes data to object */
+	/** Deserializes data to object */
 	public static deserialize(json: any = {}, account?: Account, onCompleted?: (account: Account, data: any) => void) {
 		account = account || new Account();
 		AppUtility.copy(json, account, data => {
@@ -45,27 +45,33 @@ export class Account {
 		return account;
 	}
 
-	/*** Gets by identity */
+	/** Gets by identity */
 	public static get(id: string) {
-		return id !== undefined ? this.instances.getValue(id) : undefined;
+		return id !== undefined
+			? this.instances.getValue(id)
+			: undefined;
 	}
 
-	/*** Updates into dictionary */
+	/** Sets by identity */
+	public static set(account: Account) {
+		return account === undefined
+			? undefined
+			: this.instances.setValue(account.id, account) || account;
+	}
+
+	/** Updates into dictionary */
 	public static update(data: any) {
-		if (AppUtility.isObject(data, true)) {
-			const account = data instanceof Account
-				? data as Account
-				: this.deserialize(data, this.get(data.id));
-			this.instances.setValue(account.id, account);
-		}
+		return AppUtility.isObject(data, true)
+			? this.set(data instanceof Account ? data as Account : this.deserialize(data, this.get(data.id)))
+			: undefined;
 	}
 
-	/*** Checks to see the dictionary is contains the object by identity or not */
+	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
 		return id !== undefined && this.instances.containsKey(id);
 	}
 
-	/***
+	/**
 	 * Determines this account is got this role or not
 	 * @param role The role need to check with this accounts' roles
 	*/
@@ -73,7 +79,7 @@ export class Account {
 		return role !== undefined && this.roles !== undefined && this.roles.find(r => AppUtility.isEquals(r, role)) !== undefined;
 	}
 
-	/***
+	/**
 	 * Determines this account is got this privilege role or not
 	 * @param serviceName The service's name need to check with this accounts' privileges
 	 * @param objectName The service object's name need to check with this accounts' privileges
@@ -92,7 +98,7 @@ export class Account {
 			: false;
 	}
 
-	/***
+	/**
 	 * Determines this account is got a privilege or not
 	 * @param users The collection of identities that need to check with this account
 	 * @param roles The collection of roles that need to check with this account
@@ -110,7 +116,7 @@ export class Account {
 		return isIn;
 	}
 
-	/***
+	/**
 	 * Determines this account is administrator or not (can manage or not)
 	 * @param serviceName The service's name need to check with this accounts' privileges
 	 * @param objectName The service object's name need to check with this accounts' privileges
@@ -120,7 +126,7 @@ export class Account {
 		return this.isInPrivilegeRole(serviceName, objectName, "Administrator") || this.isInPrivilege(privileges !== undefined ? privileges.AdministrativeUsers : undefined, privileges !== undefined ? privileges.AdministrativeRoles : undefined);
 	}
 
-	/***
+	/**
 	 * Determines this account is moderator or not (can moderate or not)
 	 * @param serviceName The service's name need to check with this accounts' privileges
 	 * @param objectName The service object's name need to check with this accounts' privileges
@@ -130,7 +136,7 @@ export class Account {
 		return this.isInPrivilegeRole(serviceName, objectName, "Moderator") || this.isInPrivilege(privileges !== undefined ? privileges.ModerateUsers : undefined, privileges !== undefined ? privileges.ModerateRoles : undefined) || this.isAdministrator(serviceName, objectName, privileges);
 	}
 
-	/***
+	/**
 	 * Determines this account is editor or not (can edit or not)
 	 * @param serviceName The service's name need to check with this accounts' privileges
 	 * @param objectName The service object's name need to check with this accounts' privileges
@@ -140,7 +146,7 @@ export class Account {
 		return this.isInPrivilegeRole(serviceName, objectName, "Editor") || this.isInPrivilege(privileges !== undefined ? privileges.EditableUsers : undefined, privileges !== undefined ? privileges.EditableRoles : undefined)  || this.isModerator(serviceName, objectName, privileges);
 	}
 
-	/***
+	/**
 	 * Determines this account is contributor or not (can contribute or not)
 	 * @param serviceName The service's name need to check with this accounts' privileges
 	 * @param objectName The service object's name need to check with this accounts' privileges
@@ -150,7 +156,7 @@ export class Account {
 		return this.isInPrivilegeRole(serviceName, objectName, "Contributor") || this.isInPrivilege(privileges !== undefined ? privileges.ContributiveUsers : undefined, privileges !== undefined ? privileges.ContributiveRoles : undefined)  || this.isEditor(serviceName, objectName, privileges);
 	}
 
-	/***
+	/**
 	 * Determines this account is viewer or not (can view or not)
 	 * @param serviceName The service's name need to check with this accounts' privileges
 	 * @param objectName The service object's name need to check with this accounts' privileges
@@ -160,7 +166,7 @@ export class Account {
 		return this.isInPrivilegeRole(serviceName, objectName, "Viewer") || this.isInPrivilege(privileges !== undefined ? privileges.ViewableUsers : undefined, privileges !== undefined ? privileges.ViewableRoles : undefined)  || this.isContributor(serviceName, objectName, privileges);
 	}
 
-	/***
+	/**
 	 * Determines this account is downloader or not (can download or not)
 	 * @param serviceName The service's name need to check with this accounts' privileges
 	 * @param objectName The service object's name need to check with this accounts' privileges

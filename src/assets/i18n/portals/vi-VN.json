@@ -8,14 +8,65 @@
 				"update": "Cập nhật đơn vị - tổ chức",
 				"register": "Đăng ký mới đơn vị - tổ chức"
 			},
-			"list": {
-				"searchbar": {
-					"filter": "tìm nhanh, không dấu cũng OK",
-					"search": "cho từ khoá vào \"..\" để tìm kiếm chính xác"
+			"controls": {
+				"Title": {
+					"label": "Tiêu đề",
+					"placeholder": "",
+					"description": ""
 				},
-				"actions": {
-					"create": "Tạo mới đơn vị - tổ chức"
+				"Description": {
+					"label": "Chú thích",
+					"placeholder": "",
+					"description": ""
+				},
+				"Status": {
+					"label": "Trạng thái",
+					"placeholder": "",
+					"description": "Hệ thống sẽ chỉ hoạt động khi trạng thái là 'Đã duyệt' hoặc 'Xuất bản'"
+				},
+				"Alias": {
+					"label": "Tên rút gọn",
+					"placeholder": "vd: my-org",
+					"description": "Tên rút gọn sẽ được sử dụng để tạo các liên kết quản trị và xem trước nội dung"
+				},
+				"ExpiredDate": {
+					"label": "Ngày hết hạn",
+					"placeholder": "",
+					"description": ""
+				},
+				"FilesQuotes": {
+					"label": "Hạn mức lưu trữ",
+					"placeholder": "",
+					"description": ""
+				},
+				"Required2FA": {
+					"label": "Yêu cầu phải xác thực 2 lớp",
+					"placeholder": "",
+					"description": ""
+				},
+				"TrackDownloadFiles": {
+					"label": "Ghi nhận tất cả các hoạt động tải files",
+					"placeholder": "",
+					"description": ""
+				},
+				"Theme": {
+					"label": "Theme",
+					"placeholder": "",
+					"description": ""
+				},
+				"HomeDesktopID": {
+					"label": "Desktop cho trang chủ",
+					"placeholder": "",
+					"description": ""
+				},
+				"SearchDesktopID": {
+					"label": "Desktop cho tìm kiếm",
+					"placeholder": "",
+					"description": ""
 				}
+			},
+			"list": {
+				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác"
 			},
 			"update": {
 				"segments": {

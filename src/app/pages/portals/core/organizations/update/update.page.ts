@@ -1,18 +1,18 @@
 import { Component, OnInit, NgZone } from "@angular/core";
 import { FormGroup } from "@angular/forms";
-import { AppCrypto } from "../../../../components/app.crypto";
-import { AppEvents } from "../../../../components/app.events";
-import { AppUtility } from "../../../../components/app.utility";
-import { TrackingUtility } from "../../../../components/app.utility.trackings";
-import { AppFormsControl, AppFormsSegment, AppFormsService } from "../../../../components/forms.service";
-import { ConfigurationService } from "../../../../services/configuration.service";
-import { AuthenticationService } from "../../../../services/authentication.service";
-import { FilesService } from "../../../../services/files.service";
-import { PortalsService } from "../../../../services/portals.service";
-import { Organization } from "../../../../models/portals.organization";
+import { AppCrypto } from "../../../../../components/app.crypto";
+import { AppEvents } from "../../../../../components/app.events";
+import { AppUtility } from "../../../../../components/app.utility";
+import { TrackingUtility } from "../../../../../components/app.utility.trackings";
+import { AppFormsControl, AppFormsSegment, AppFormsService } from "../../../../../components/forms.service";
+import { ConfigurationService } from "../../../../../services/configuration.service";
+import { AuthenticationService } from "../../../../../services/authentication.service";
+import { FilesService } from "../../../../../services/files.service";
+import { PortalsService } from "../../../../../services/portals.service";
+import { Organization } from "../../../../../models/portals.organization";
 
 @Component({
-	selector: "page-organizations-update",
+	selector: "page-portals-organizations-update",
 	templateUrl: "./update.page.html",
 	styleUrls: ["./update.page.scss"]
 })
@@ -45,12 +45,8 @@ export class OrganizationsUpdatePage implements OnInit {
 		cancel: "Cancel"
 	};
 
-	ngOnInit() {
-		this.initializeFormAsync();
-	}
-
-	async initializeFormAsync() {
-		this.organization = Organization.instances.getValue(this.configSvc.requestParams["ID"]);
+	async ngOnInit() {
+		this.organization = Organization.get(this.configSvc.requestParams["ID"]);
 
 		if (!(this.organization === undefined ? this.authSvc.isSystemAdministrator() : this.authSvc.isAdministrator(this.portalsSvc.name, "Organization", this.organization.Privileges))) {
 			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
@@ -84,7 +80,22 @@ export class OrganizationsUpdatePage implements OnInit {
 		const config: Array<any> = await this.configSvc.getDefinitionAsync(this.portalsSvc.name, "organization", "form-controls");
 		config.forEach(control => control.Segment = "basic");
 
-		let ctrl = config.find(control => true === control.Options.AutoFocus);
+		if (this.organization === undefined) {
+			config.find(control => control.Name === "Title").Options.OnKeyUp = () => this.update.form.controls.Alias.setValue(AppUtility.toURI(this.update.form.controls.Title.value));
+		}
+
+		let ctrl = config.find(control => control.Name === "Description");
+		ctrl.Type = "TextArea";
+		ctrl.Options.TextAreaRows = 2;
+
+		ctrl = config.find(control => control.Name === "Status");
+		if (AppUtility.isNotEmpty(ctrl.Options.SelectOptions.Values)) {
+			ctrl.Options.SelectOptions.Values = (AppUtility.toArray(ctrl.Options.SelectOptions.Values) as Array<string>).map(value => {
+				return { Value: value, Label: `{{status.approval.${value}}}` };
+			});
+		}
+
+		ctrl = config.find(control => true === control.Options.AutoFocus);
 		if (ctrl === undefined) {
 			ctrl = config.find(control => control.Type === "TextBox" && !control.Hidden);
 			if (ctrl !== undefined) {
@@ -96,13 +107,10 @@ export class OrganizationsUpdatePage implements OnInit {
 		this.organization = this.organization || new Organization();
 	}
 
-	onFormInitialized($event: any) {
+	onFormInitialized() {
 		this.update.form.patchValue(this.organization);
 		this.update.hash = AppCrypto.hash(this.update.form.value);
 		this.appFormsSvc.hideLoadingAsync();
-	}
-
-	async createAsync() {
 	}
 
 	async updateAsync() {

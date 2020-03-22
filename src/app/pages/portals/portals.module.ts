@@ -4,7 +4,7 @@ import { RouterModule, Routes } from "@angular/router";
 import { IonicModule } from "@ionic/angular";
 import { AuthenticatedGuardService } from "../../services/base.service";
 
-import { OrganizationsModule } from "./organizations/organizations.module";
+import { OrganizationsModule } from "./core/organizations/organizations.module";
 
 const routes: Routes = [
 	/*
@@ -15,36 +15,36 @@ const routes: Routes = [
 	*/
 	{
 		path: "organizations",
-		loadChildren: "./organizations/organizations.module#OrganizationsModule"
+		loadChildren: "./core/organizations/organizations.module#OrganizationsModule"
 	},
 	/*
 	{
 		path: "modules",
-		loadChildren: "./modules/modules.module#ModulesModule"
+		loadChildren: "./core/modules/modules.module#ModulesModule"
 	},
 	{
 		path: "contenttypes",
-		loadChildren: "./contenttypes/contenttypes.module#ContentTypesModule"
+		loadChildren: "./core/contenttypes/contenttypes.module#ContentTypesModule"
 	},
 	{
 		path: "roles",
-		loadChildren: "./roles/roles.module#RolesModule"
+		loadChildren: "./core/roles/roles.module#RolesModule"
 	},
 	{
 		path: "expressions",
-		loadChildren: "./expressions/expressions.module#ExpressionsModule"
+		loadChildren: "./core/expressions/expressions.module#ExpressionsModule"
 	},
 	{
 		path: "sites",
-		loadChildren: "./sites/sites.module#SitesModule"
+		loadChildren: "./core/sites/sites.module#SitesModule"
 	},
 	{
 		path: "desktops",
-		loadChildren: "./desktops/desktops.module#DesktopsModule"
+		loadChildren: "./core/desktops/desktops.module#DesktopsModule"
 	},
 	{
 		path: "portlets",
-		loadChildren: "./portlets/portlets.module#PortletsModule"
+		loadChildren: "./core/portlets/portlets.module#PortletsModule"
 	},
 	*/
 	{

@@ -2,7 +2,7 @@ import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { RouterModule, Routes } from "@angular/router";
 import { IonicModule } from "@ionic/angular";
-import { AuthenticatedGuardService } from "../../../services/base.service";
+import { AuthenticatedGuardService } from "../../../../services/base.service";
 
 import { OrganizationsListPageModule } from "./list/list.module";
 import { OrganizationsUpdatePageModule } from "./update/update.module";

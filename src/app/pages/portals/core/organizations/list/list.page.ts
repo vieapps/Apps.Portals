@@ -3,18 +3,18 @@ import { List } from "linqts";
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, NgZone } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
-import { AppUtility } from "../../../../components/app.utility";
-import { TrackingUtility } from "../../../../components/app.utility.trackings";
-import { PlatformUtility } from "../../../../components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "../../../../components/app.pagination";
-import { AppFormsService } from "../../../../components/forms.service";
-import { ConfigurationService } from "../../../../services/configuration.service";
-import { AuthenticationService } from "../../../../services/authentication.service";
-import { PortalsService } from "../../../../services/portals.service";
-import { Organization } from "../../../../models/portals.organization";
+import { AppUtility } from "../../../../../components/app.utility";
+import { TrackingUtility } from "../../../../../components/app.utility.trackings";
+import { PlatformUtility } from "../../../../../components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "../../../../../components/app.pagination";
+import { AppFormsService } from "../../../../../components/forms.service";
+import { ConfigurationService } from "../../../../../services/configuration.service";
+import { AuthenticationService } from "../../../../../services/authentication.service";
+import { PortalsService } from "../../../../../services/portals.service";
+import { Organization } from "../../../../../models/portals.organization";
 
 @Component({
-	selector: "page-organizations-list",
+	selector: "page-portals-organizations-list",
 	templateUrl: "./list.page.html",
 	styleUrls: ["./list.page.scss"]
 })
@@ -41,6 +41,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		Query: undefined as string,
 		And: new Array<{ [key: string]: any }>()
 	};
+	sortBy = { Title: "Ascending" };
 	actions: Array<{
 		text: string,
 		role: string,
@@ -51,29 +52,6 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 	@ViewChild(IonSearchbar, { static: false }) searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: false }) scrollCtrl: IonInfiniteScroll;
 
-	ngOnInit() {
-		if (!this.authSvc.isServiceAdministrator()) {
-			Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmm..."),
-				this.configSvc.navigateHomeAsync()
-			]);
-		}
-		else {
-			this.initializeAsync();
-		}
-	}
-
-	ngAfterViewInit() {
-		this.initializeSearchbarAsync();
-		this.prepareActionsAsync();
-	}
-
-	ngOnDestroy() {
-		if (this.subscription !== undefined) {
-			this.subscription.unsubscribe();
-		}
-	}
-
 	get locale() {
 		return this.configSvc.locale;
 	}
@@ -82,41 +60,48 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		return AppPagination.computeTotal(this.pageNumber, this.pagination);
 	}
 
-	get sortBy() {
-		return { Name: "Ascending" };
-	}
-
-	async initializeAsync() {
-		this.searching = this.configSvc.currentUrl.startsWith("/portals/organizations/search");
-		this.configSvc.appTitle = this.title = this.searching
-			? await this.configSvc.getResourceAsync("portals.organizations.title.search")
-			: await this.configSvc.getResourceAsync("portals.organizations.title.list");
-		if (!this.searching) {
-			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.portalsSvc.name) || AppPagination.getDefault();
-			this.pagination.PageNumber = this.pageNumber;
-			await this.searchAsync();
+	async ngOnInit() {
+		if (!this.authSvc.isServiceAdministrator()) {
+			await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmm..."),
+				this.zone.run(async () => await this.configSvc.navigateHomeAsync())
+			]);
+		}
+		else {
+			this.searching = this.configSvc.currentUrl.startsWith("/portals/organizations/search");
+			this.configSvc.appTitle = this.title = this.searching
+				? await this.configSvc.getResourceAsync("portals.organizations.title.search")
+				: await this.configSvc.getResourceAsync("portals.organizations.title.list");
+			if (!this.searching) {
+				this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.portalsSvc.name) || AppPagination.getDefault();
+				this.pagination.PageNumber = this.pageNumber;
+				await this.searchAsync();
+			}
 		}
 	}
 
-	async initializeSearchbarAsync() {
-		this.searchCtrl.placeholder = await this.configSvc.getResourceAsync(`portals.organizations.list.searchbar.${(this.searching ? "search" : "filter")}`);
+	async ngAfterViewInit() {
+		this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.organizations.list.searchbar");
+		this.actions = [
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.create"), "create", () => this.openCreateAsync())
+		];
 		if (this.searching) {
 			PlatformUtility.focus(this.searchCtrl);
 		}
 	}
 
-	async prepareActionsAsync() {
-		this.actions = [
-			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.create"), "create", () => this.openCreateAsync())
-		];
-	}
-
-	showActionsAsync() {
-		return this.appFormsSvc.showActionSheetAsync(this.actions);
+	ngOnDestroy() {
+		if (this.subscription !== undefined) {
+			this.subscription.unsubscribe();
+		}
 	}
 
 	track(index: number, organization: Organization) {
 		return `${organization.ID}@${index}`;
+	}
+
+	showActionsAsync() {
+		return this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
 	openCreateAsync() {
@@ -127,7 +112,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		return this.zone.run(async () => await this.configSvc.navigateForwardAsync("/portals/organizations/search"));
 	}
 
-	onStartSearch($event: any) {
+	async onStartSearchAsync($event: any) {
 		this.cancelSearch();
 		if (AppUtility.isNotEmpty($event.detail.value)) {
 			this.filterBy.Query = $event.detail.value;
@@ -135,7 +120,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 				this.organizations = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				this.searchAsync(() => this.scrollCtrl.disabled = false);
+				await this.searchAsync(() => this.scrollCtrl.disabled = false);
 			}
 			else {
 				this.prepareResults();
@@ -154,16 +139,16 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		}
 	}
 
-	onScroll() {
+	async onScrollAsync() {
 		if (this.pagination.PageNumber < this.pagination.TotalPages) {
-			this.searchAsync(() => {
+			await this.searchAsync(async () => {
 				if (this.scrollCtrl !== undefined) {
-					this.scrollCtrl.complete();
+					await this.scrollCtrl.complete();
 				}
 			});
 		}
 		else if (this.scrollCtrl !== undefined) {
-			this.scrollCtrl.complete();
+			await this.scrollCtrl.complete();
 			this.scrollCtrl.disabled = true;
 		}
 	}

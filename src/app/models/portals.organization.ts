@@ -21,7 +21,7 @@ export class Organization extends BaseModel {
 	FilesQuotes = 0;
 	Required2FA = false;
 	TrackDownloadFiles = false;
-	Theme = "";
+	Theme = "default";
 	HomeDesktopID = "";
 	SearchDesktopID = "";
 	Created = new Date();
@@ -31,29 +31,35 @@ export class Organization extends BaseModel {
 
 	ansiTitle = "";
 
-	/*** Deserializes data to object */
-	public static deserialize(json: any, org?: Organization) {
-		org = org || new Organization();
-		org.copy(json, _ => org.ansiTitle = AppUtility.toANSI(org.Title).toLowerCase());
-		return org;
+	/** Deserializes data to object */
+	public static deserialize(json: any, organization?: Organization) {
+		organization = organization || new Organization();
+		organization.copy(json, _ => organization.ansiTitle = AppUtility.toANSI(organization.Title).toLowerCase());
+		return organization;
 	}
 
-	/*** Gets by identity */
+	/** Gets by identity */
 	public static get(id: string) {
-		return id !== undefined ? this.instances.getValue(id) : undefined;
+		return id !== undefined
+			? this.instances.getValue(id)
+			: undefined;
 	}
 
-	/*** Updates into dictionary */
+	/** Sets by identity */
+	public static set(organization: Organization) {
+		return organization === undefined
+			? undefined
+			: this.instances.setValue(organization.ID, organization) || organization;
+	}
+
+	/** Updates into dictionary */
 	public static update(data: any) {
-		if (AppUtility.isObject(data, true)) {
-			const org = data instanceof Organization
-				? data as Organization
-				: this.deserialize(data, this.get(data.ID));
-			this.instances.setValue(org.ID, org);
-		}
+		return AppUtility.isObject(data, true)
+			? this.set(data instanceof Organization ? data as Organization : this.deserialize(data, this.get(data.ID)))
+			: undefined;
 	}
 
-	/*** Checks to see the dictionary is contains the object by identity or not */
+	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
 		return id !== undefined && this.instances.containsKey(id);
 	}
