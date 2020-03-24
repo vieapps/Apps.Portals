@@ -45,7 +45,7 @@ export class UsersListPage implements OnInit, OnDestroy, AfterViewInit {
 	sortBy = { Name: "Ascending" };
 	subscription: Subscription;
 	@ViewChild(IonSearchbar, { static: false }) searchCtrl: IonSearchbar;
-	@ViewChild(IonInfiniteScroll, { static: false }) scrollCtrl: IonInfiniteScroll;
+	@ViewChild(IonInfiniteScroll, { static: false }) infiniteScrollCtrl: IonInfiniteScroll;
 
 	get locale() {
 		return this.configSvc.locale;
@@ -55,23 +55,22 @@ export class UsersListPage implements OnInit, OnDestroy, AfterViewInit {
 		return AppPagination.computeTotal(this.pageNumber, this.pagination);
 	}
 
-	async ngOnInit() {
-		if (!this.authSvc.isServiceAdministrator()) {
-			await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmm..."),
-				this.configSvc.navigateHomeAsync()
-			]);
-		}
-		else {
-			await this.initializeAsync();
-		}
+	ngOnInit() {
+		return this.authSvc.isServiceAdministrator()
+			? this.initializeAsync()
+			: Promise.all([
+					this.appFormsSvc.showToastAsync("Hmmm..."),
+					this.configSvc.navigateHomeAsync()
+				]);
 	}
 
-	async ngAfterViewInit() {
-		this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("users.list.searchbar");
-		if (this.searching) {
-			PlatformUtility.focus(this.searchCtrl);
-		}
+	ngAfterViewInit() {
+		Promise.all([async () => {
+			if (this.searching) {
+				PlatformUtility.focus(this.searchCtrl);
+				this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("users.list.searchbar");
+			}
+		}]);
 	}
 
 	ngOnDestroy() {
@@ -81,7 +80,7 @@ export class UsersListPage implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	async initializeAsync() {
-		this.searching = this.configSvc.currentUrl.startsWith("/users/search");
+		this.searching = this.configSvc.currentUrl.startsWith(this.configSvc.appConfig.url.users.search);
 		this.configSvc.appTitle = this.title = this.searching
 			? await this.configSvc.getResourceAsync("users.list.title.search")
 			: await this.configSvc.getResourceAsync("users.list.title.list");
@@ -89,7 +88,8 @@ export class UsersListPage implements OnInit, OnDestroy, AfterViewInit {
 			this.ratings = {};
 			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.usersSvc.name) || AppPagination.getDefault();
 			this.pagination.PageNumber = this.pageNumber;
-			await this.searchAsync();
+			await this.appFormsSvc.showLoadingAsync();
+			await this.searchAsync(() => this.appFormsSvc.hideLoadingAsync());
 		}
 	}
 
@@ -98,7 +98,7 @@ export class UsersListPage implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	openSearchAsync() {
-		return this.configSvc.navigateForwardAsync("/users/search");
+		return this.configSvc.navigateForwardAsync(this.configSvc.appConfig.url.users.search);
 	}
 
 	onStartSearch($event: any) {
@@ -110,7 +110,7 @@ export class UsersListPage implements OnInit, OnDestroy, AfterViewInit {
 				this.ratings = {};
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				this.searchAsync(() => this.scrollCtrl.disabled = false);
+				this.searchAsync(() => this.infiniteScrollCtrl.disabled = false);
 			}
 			else {
 				this.prepareResults();
@@ -130,17 +130,17 @@ export class UsersListPage implements OnInit, OnDestroy, AfterViewInit {
 		}
 	}
 
-	async onScrollAsync() {
+	async onInfiniteScrollAsync() {
 		if (this.pagination.PageNumber < this.pagination.TotalPages) {
 			await this.searchAsync(async () => {
-				if (this.scrollCtrl !== undefined) {
-					await this.scrollCtrl.complete();
+				if (this.infiniteScrollCtrl !== undefined) {
+					await this.infiniteScrollCtrl.complete();
 				}
 			});
 		}
-		else if (this.scrollCtrl !== undefined) {
-			await this.scrollCtrl.complete();
-			this.scrollCtrl.disabled = true;
+		else if (this.infiniteScrollCtrl !== undefined) {
+			await this.infiniteScrollCtrl.complete();
+			this.infiniteScrollCtrl.disabled = true;
 		}
 	}
 
@@ -167,7 +167,7 @@ export class UsersListPage implements OnInit, OnDestroy, AfterViewInit {
 			this.subscription = undefined;
 		}
 		if (AppUtility.isFalse(dontDisableInfiniteScroll)) {
-			this.scrollCtrl.disabled = true;
+			this.infiniteScrollCtrl.disabled = true;
 		}
 	}
 

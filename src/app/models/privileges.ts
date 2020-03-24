@@ -26,6 +26,7 @@ export class Privilege {
 	Role = "Viewer";
 	Actions = new Array<string>();
 
+	/** Deserializes data to object */
 	public static deserialize(json: any, privilege?: Privilege) {
 		privilege = privilege || new Privilege();
 		AppUtility.copy(json, privilege);
@@ -53,6 +54,7 @@ export class Privileges {
 	AdministrativeRoles = new Set<string>();
 	AdministrativeUsers = new Set<string>();
 
+	/** Deserializes data to object */
 	public static deserialize(json: any, privileges?: Privileges) {
 		privileges = privileges || new Privileges();
 		Object.getOwnPropertyNames(privileges).forEach(property => {
@@ -64,6 +66,19 @@ export class Privileges {
 			}
 		});
 		return privileges;
+	}
+
+	public get isInheritFromParent() {
+		return this.isEmpty(this.AdministrativeRoles, this.AdministrativeUsers)
+			&& this.isEmpty(this.ModerateRoles, this.ModerateUsers)
+			&& this.isEmpty(this.EditableRoles, this.EditableUsers)
+			&& this.isEmpty(this.ContributiveRoles, this.ContributiveUsers)
+			&& this.isEmpty(this.ViewableRoles, this.ViewableUsers)
+			&& this.isEmpty(this.DownloadableRoles, this.DownloadableUsers);
+	}
+
+	private isEmpty(roles: Set<string>, users: Set<string>) {
+		return (roles === undefined || roles.size() < 1) && (users === undefined || users.size() < 1);
 	}
 
 }

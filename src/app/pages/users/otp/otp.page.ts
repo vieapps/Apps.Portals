@@ -62,7 +62,31 @@ export class UsersOtpPage implements OnInit {
 		return this.configSvc.locale;
 	}
 
-	async ngOnInit() {
+	ngOnInit() {
+		Promise.all([
+			this.prepareResourcesAsync(),
+			this.prepareAsync()
+		]);
+	}
+
+	async prepareAsync(onNext?: () => void) {
+		const account = this.configSvc.getAccount();
+		this.required = account.twoFactors !== undefined ? account.twoFactors.required : false;
+		this.providers = account.twoFactors !== undefined ? account.twoFactors.providers : [];
+		this.password = "";
+		this.provision = {
+			info: "",
+			uri: "",
+			value: ""
+		};
+		await this.prepareStatusAsync();
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.profile.otp.title");
+		if (onNext !== undefined) {
+			onNext();
+		}
+	}
+
+	async prepareResourcesAsync() {
 		this.resources = {
 			status: await this.configSvc.getResourceAsync("users.profile.otp.status.label"),
 			providers: await this.configSvc.getResourceAsync("users.profile.otp.labels.providers"),
@@ -85,24 +109,6 @@ export class UsersOtpPage implements OnInit {
 				show: false
 			}
 		};
-		await this.prepareAsync();
-	}
-
-	async prepareAsync(onNext?: () => void) {
-		const account = this.configSvc.getAccount();
-		this.required = account.twoFactors !== undefined ? account.twoFactors.required : false;
-		this.providers = account.twoFactors !== undefined ? account.twoFactors.providers : [];
-		this.password = "";
-		this.provision = {
-			info: "",
-			uri: "",
-			value: ""
-		};
-		this.prepareStatusAsync();
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.profile.otp.title");
-		if (onNext !== undefined) {
-			onNext();
-		}
 	}
 
 	async prepareStatusAsync() {
@@ -181,7 +187,7 @@ export class UsersOtpPage implements OnInit {
 			if (onNext !== undefined) {
 				onNext();
 			}
-			await this.configSvc.navigateBackAsync(!this.configSvc.previousUrl.startsWith("/users/profile") ? "/users/profile/my" : undefined);
+			await this.configSvc.navigateBackAsync(!this.configSvc.previousUrl.startsWith(this.configSvc.appConfig.url.users.profile) ? `${this.configSvc.appConfig.url.users.profile}/my` : undefined);
 		});
 	}
 

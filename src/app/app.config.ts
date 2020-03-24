@@ -89,8 +89,9 @@ export class AppConfig {
 		required: [],
 		hidden: ["Gender", "BirthDay", "Address", "Addresses", "Mobile"],
 		sendInvitationRole: "Authenticated",
-		setServicePrivilegs: true,
-		setServicePrivilegsRole: "ServiceAdministrator"
+		setServicePrivilegs: false,
+		setServicePrivilegsRole: "ServiceAdministrator",
+		setObjectPrivilegs: true
 	};
 
 	/** Geographic meta */
@@ -137,7 +138,10 @@ export class AppConfig {
 			login: "/users/login",
 			register: "/users/register",
 			profile: "/users/profile",
-			list: "/users/list"
+			update: "/users/update",
+			otp: "/users/otp",
+			list: "/users/list",
+			search: "/users/search"
 		},
 		tabs: {
 			previous: undefined as string,

@@ -478,11 +478,11 @@ export class AppFormsService {
 				control.Options.SelectOptions.OkText = await this.normalizeResourceAsync(control.Options.SelectOptions.OkText);
 				control.Options.SelectOptions.CancelText = await this.normalizeResourceAsync(control.Options.SelectOptions.CancelText);
 			}
-			else if (control.Type === "Lookup") {
+			else if (AppUtility.isEquals(control.Type, "Lookup")) {
 				control.Options.LookupOptions.SearchingText = await this.normalizeResourceAsync(control.Options.LookupOptions.SearchingText);
 				control.Options.LookupOptions.NoResultsText = await this.normalizeResourceAsync(control.Options.LookupOptions.NoResultsText);
 			}
-			else if (control.Type === "DatePicker") {
+			else if (AppUtility.isEquals(control.Type, "DatePicker")) {
 				if (AppUtility.isTrue(modifyDatePickers)) {
 					control.Type = "TextBox";
 					control.Options.Type = control.Options.DatePickerOptions.AllowTimes ? "datetime-local" : "date";
@@ -514,11 +514,11 @@ export class AppFormsService {
 			const control = new AppFormsControl(options, order);
 			if (segments !== undefined && segments.items !== undefined && segments.items.length > 0) {
 				if (control.Segment === undefined) {
-					control.Segment = segments.default !== undefined && segments.items.findIndex(segment => segment.Name === segments.default) > -1
+					control.Segment = segments.default !== undefined && segments.items.findIndex(segment => AppUtility.isEquals(segment.Name, segments.default)) > -1
 						? segments.default
 						: segments.items[0].Name;
 				}
-				const segmentIndex = segments.items.findIndex(segment => segment.Name === control.Segment);
+				const segmentIndex = segments.items.findIndex(segment => AppUtility.isEquals(segment.Name, control.Segment));
 				control.Segment = segmentIndex < 0 ? segments.items[0].Name : control.Segment;
 				control.segmentIndex = segmentIndex < 0 ? 0 : segmentIndex;
 			}
@@ -628,18 +628,18 @@ export class AppFormsService {
 			validators.push(Validators.required);
 		}
 
-		if (this._types.text.findIndex(type => type === control.Options.Type) > -1) {
+		if (this._types.text.findIndex(type => AppUtility.isEquals(type, control.Options.Type)) > -1) {
 			if (control.Options.MinLength > 0) {
 				validators.push(Validators.minLength(control.Options.MinLength));
 			}
 			if (control.Options.MaxLength > 0) {
 				validators.push(Validators.maxLength(control.Options.MaxLength));
 			}
-			if (control.Options.Type === "email") {
+			if (AppUtility.isEquals(control.Options.Type, "email")) {
 				validators.push(Validators.pattern("([a-zA-Z0-9_.-]+)@([a-zA-Z0-9_.-]+)\\.([a-zA-Z]{2,5})"));
 			}
 		}
-		else if (this._types.datetime.findIndex(type => type === control.Options.Type) > -1) {
+		else if (this._types.datetime.findIndex(type => AppUtility.isEquals(type, control.Options.Type)) > -1) {
 			if (control.Options.MinValue !== undefined) {
 				validators.push(this.minDate(control.Options.MinValue));
 			}
@@ -647,7 +647,7 @@ export class AppFormsService {
 				validators.push(this.maxDate(control.Options.MaxValue));
 			}
 		}
-		else if ("number" === control.Options.Type) {
+		else if (AppUtility.isEquals("number", control.Options.Type)) {
 			if (control.Options.MinValue !== undefined) {
 				validators.push(Validators.min(+control.Options.MinValue));
 			}
@@ -672,6 +672,14 @@ export class AppFormsService {
 	public setValue(form: FormGroup, controls: Array<AppFormsControl>, value: any = {}) {
 		Object.keys(form.controls).forEach(key => delete form.controls[key]);
 		this.buildForm(form, controls, value);
+	}
+
+	/** Resets the form values */
+	public reset(form: FormGroup) {
+		if (form !== undefined) {
+			const controls = form.controls;
+			Object.keys(controls).forEach(key => controls[key].setValue(undefined));
+		}
 	}
 
 	/** Highlights all invalid controls (by mark as dirty on all invalid controls) and set focus into first invalid control */

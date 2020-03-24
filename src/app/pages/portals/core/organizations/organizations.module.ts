@@ -38,7 +38,7 @@ const routes: Routes = [
 	*/
 	{
 		path: "**",
-		redirectTo: "organizations/search",
+		redirectTo: "organizations/list",
 		pathMatch: "full"
 	}
 ];

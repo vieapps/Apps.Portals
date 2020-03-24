@@ -50,7 +50,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 	}>;
 	subscription: Subscription;
 	@ViewChild(IonSearchbar, { static: false }) searchCtrl: IonSearchbar;
-	@ViewChild(IonInfiniteScroll, { static: false }) scrollCtrl: IonInfiniteScroll;
+	@ViewChild(IonInfiniteScroll, { static: false }) infiniteScrollCtrl: IonInfiniteScroll;
 
 	get locale() {
 		return this.configSvc.locale;
@@ -60,39 +60,45 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		return AppPagination.computeTotal(this.pageNumber, this.pagination);
 	}
 
-	async ngOnInit() {
-		if (!this.authSvc.isServiceAdministrator()) {
-			await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmm..."),
-				this.zone.run(async () => await this.configSvc.navigateHomeAsync())
-			]);
+	ngOnInit() {
+		if (this.authSvc.isServiceAdministrator()) {
+			this.initializeAsync();
 		}
 		else {
-			this.searching = this.configSvc.currentUrl.startsWith("/portals/organizations/search");
-			this.configSvc.appTitle = this.title = this.searching
-				? await this.configSvc.getResourceAsync("portals.organizations.title.search")
-				: await this.configSvc.getResourceAsync("portals.organizations.title.list");
-			if (!this.searching) {
-				this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.portalsSvc.name) || AppPagination.getDefault();
-				this.pagination.PageNumber = this.pageNumber;
-				await this.searchAsync();
-			}
+			Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmm..."),
+				this.configSvc.navigateHomeAsync()
+			]);
 		}
 	}
 
-	async ngAfterViewInit() {
-		this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.organizations.list.searchbar");
-		this.actions = [
-			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.create"), "create", () => this.openCreateAsync())
-		];
-		if (this.searching) {
-			PlatformUtility.focus(this.searchCtrl);
-		}
+	ngAfterViewInit() {
+		Promise.all([async () => {
+			this.actions = [
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.create"), "create", () => this.zone.run(() => this.openCreateAsync()))
+			];
+			if (this.searching) {
+				PlatformUtility.focus(this.searchCtrl);
+				this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.organizations.list.searchbar");
+			}
+		}]);
 	}
 
 	ngOnDestroy() {
 		if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
+		}
+	}
+
+	private async initializeAsync() {
+		this.searching = this.configSvc.currentUrl.startsWith("/portals/organizations/search");
+		this.configSvc.appTitle = this.title = this.searching
+			? await this.configSvc.getResourceAsync("portals.organizations.title.search")
+			: await this.configSvc.getResourceAsync("portals.organizations.title.list");
+		if (!this.searching) {
+			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.portalsSvc.name) || AppPagination.getDefault();
+			this.pagination.PageNumber = this.pageNumber;
+			await this.searchAsync();
 		}
 	}
 
@@ -104,15 +110,15 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		return this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
-	openCreateAsync() {
-		return this.zone.run(async () => await this.configSvc.navigateForwardAsync("/portals/organizations/create"));
+	private openCreateAsync() {
+		return this.configSvc.navigateForwardAsync("/portals/organizations/create");
 	}
 
 	openSearchAsync() {
-		return this.zone.run(async () => await this.configSvc.navigateForwardAsync("/portals/organizations/search"));
+		return this.configSvc.navigateForwardAsync("/portals/organizations/search");
 	}
 
-	async onStartSearchAsync($event: any) {
+	onStartSearch($event: any) {
 		this.cancelSearch();
 		if (AppUtility.isNotEmpty($event.detail.value)) {
 			this.filterBy.Query = $event.detail.value;
@@ -120,7 +126,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 				this.organizations = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				await this.searchAsync(() => this.scrollCtrl.disabled = false);
+				this.searchAsync(() => this.infiniteScrollCtrl.disabled = false);
 			}
 			else {
 				this.prepareResults();
@@ -139,17 +145,17 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		}
 	}
 
-	async onScrollAsync() {
+	async onInfiniteScrollAsync() {
 		if (this.pagination.PageNumber < this.pagination.TotalPages) {
 			await this.searchAsync(async () => {
-				if (this.scrollCtrl !== undefined) {
-					await this.scrollCtrl.complete();
+				if (this.infiniteScrollCtrl !== undefined) {
+					await this.infiniteScrollCtrl.complete();
 				}
 			});
 		}
-		else if (this.scrollCtrl !== undefined) {
-			await this.scrollCtrl.complete();
-			this.scrollCtrl.disabled = true;
+		else if (this.infiniteScrollCtrl !== undefined) {
+			await this.infiniteScrollCtrl.complete();
+			this.infiniteScrollCtrl.disabled = true;
 		}
 	}
 
@@ -176,7 +182,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 			this.subscription = undefined;
 		}
 		if (AppUtility.isFalse(dontDisableInfiniteScroll)) {
-			this.scrollCtrl.disabled = true;
+			this.infiniteScrollCtrl.disabled = true;
 		}
 	}
 

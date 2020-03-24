@@ -35,7 +35,11 @@ export class UsersRegisterPage implements OnInit {
 		}
 	};
 
-	async ngOnInit() {
+	ngOnInit() {
+		this.prepareAsync();
+	}
+
+	private async prepareAsync() {
 		const config: Array<any> = [
 			{
 				Name: "Email",
@@ -165,11 +169,11 @@ export class UsersRegisterPage implements OnInit {
 		];
 
 		config.forEach(options => {
-			if (this.configSvc.appConfig.accountRegistrations.hidden.findIndex(value => value === options.Name) > -1) {
+			if (this.configSvc.appConfig.accountRegistrations.hidden.findIndex(value => AppUtility.isEquals(value, options.Name)) > -1) {
 				options.Hidden = true;
 				options.Required = false;
 			}
-			else if (!options.Required && this.configSvc.appConfig.accountRegistrations.required.findIndex(value => value === options.Name) > -1) {
+			else if (!options.Required && this.configSvc.appConfig.accountRegistrations.required.findIndex(value => AppUtility.isEquals(value, options.Name)) > -1) {
 				options.Required = true;
 			}
 		});
@@ -177,6 +181,11 @@ export class UsersRegisterPage implements OnInit {
 		this.register.button.label = await this.configSvc.getResourceAsync("users.register.button");
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.register.title");
 		this.register.config = config;
+	}
+
+	onFormInitialized($event: any) {
+		this.refreshCaptchaAsync();
+		this.register.form.patchValue({ Gender: "NotProvided" });
 	}
 
 	async registerAsync() {
@@ -189,7 +198,7 @@ export class UsersRegisterPage implements OnInit {
 				AppUtility.clone(this.register.form.value, ["ConfirmEmail", "ConfirmPassword", "Captcha"]),
 				this.register.form.value.Captcha,
 				async () => await Promise.all([
-					TrackingUtility.trackAsync(this.title, "/users/register"),
+					TrackingUtility.trackAsync(this.title, this.configSvc.appConfig.url.users.register),
 					this.appFormsSvc.showAlertAsync(
 						await this.configSvc.getResourceAsync("users.register.alert.header"),
 						undefined,
@@ -208,7 +217,7 @@ export class UsersRegisterPage implements OnInit {
 					this.refreshCaptchaAsync(),
 					this.appFormsSvc.showErrorAsync(error, undefined, () => {
 						if (AppUtility.isGotCaptchaException(error)) {
-							const control = this.register.controls.find(c => c.Name === "Captcha");
+							const control = this.register.controls.find(c => AppUtility.isEquals(c.Name, "Captcha"));
 							control.value = "";
 							control.focus();
 						}
@@ -218,16 +227,11 @@ export class UsersRegisterPage implements OnInit {
 		}
 	}
 
-	onFormInitialized($event: any) {
-		this.refreshCaptchaAsync();
-		this.register.form.patchValue({ Gender: "NotProvided" });
-	}
-
 	onRefreshCaptcha($event: AppFormsControl) {
 		this.refreshCaptchaAsync($event);
 	}
 
-	refreshCaptchaAsync(control?: AppFormsControl) {
+	private refreshCaptchaAsync(control?: AppFormsControl) {
 		return this.authSvc.registerCaptchaAsync(() => (control || this.register.controls.find(c => c.Name === "Captcha")).captchaURI = this.configSvc.appConfig.session.captcha.uri);
 	}
 
