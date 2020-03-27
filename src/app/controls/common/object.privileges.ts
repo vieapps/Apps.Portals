@@ -276,19 +276,24 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy {
 	}
 
 	addRolesAsync(name: string) {
-		const componentProps: { [key: string]: any } = { name: name, multiple: true };
+		if (this.roleComponent === undefined) {
+			return this.appFormsSvc.showAlertAsync(undefined, undefined, "Role component is invalid");
+		}
+
+		const componentProps: { [key: string]: any } = {};
 		if (this.roleComponentProps !== undefined) {
 			Object.keys(this.roleComponentProps).forEach(key => componentProps[key] = this.roleComponentProps[key]);
 		}
-		return this.roleComponent === undefined
-			? this.appFormsSvc.showAlertAsync(undefined, undefined, "Role component is invalid")
-			: this.appFormsSvc.showModalAsync(this.roleComponent, componentProps, async roles => {
-					const privileges = this.getRolesOfPrivileges(name);
-					(roles as Array<string> || []).forEach(user => privileges.add(user));
-					this.prepareRolesAndUsers([name]);
-					await this.prepareNamesOfRolesAndUsersAsync([name]);
-					this.emitChanges();
-				});
+		componentProps["name"] = name;
+		componentProps["multiple"] = true;
+
+		return this.appFormsSvc.showModalAsync(this.roleComponent, componentProps, async roles => {
+			const privileges = this.getRolesOfPrivileges(name);
+			(roles as Array<string> || []).forEach(user => privileges.add(user));
+			this.prepareRolesAndUsers([name]);
+			await this.prepareNamesOfRolesAndUsersAsync([name]);
+			this.emitChanges();
+		});
 	}
 
 	async deleteRolesAsync(name: string) {
