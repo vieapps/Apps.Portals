@@ -1,6 +1,6 @@
 import { Subscription } from "rxjs";
 import { List } from "linqts";
-import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, NgZone } from "@angular/core";
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
 import { AppUtility } from "../../../../../components/app.utility";
@@ -22,7 +22,6 @@ import { Organization } from "../../../../../models/portals.organization";
 export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 
 	constructor(
-		public zone: NgZone,
 		public appFormsSvc: AppFormsService,
 		public configSvc: ConfigurationService,
 		public authSvc: AuthenticationService,
@@ -44,8 +43,8 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 	sortBy = { Title: "Ascending" };
 	actions: Array<{
 		text: string,
-		role: string,
-		icon: string,
+		role?: string,
+		icon?: string,
 		handler: () => void
 	}>;
 	subscription: Subscription;
@@ -73,15 +72,12 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	ngAfterViewInit() {
-		Promise.all([async () => {
-			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.create"), "create", () => this.zone.run(() => this.openCreateAsync()))
-			];
-			if (this.searching) {
+		if (this.searching) {
+			Promise.all([async () => {
 				PlatformUtility.focus(this.searchCtrl);
 				this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.organizations.list.searchbar");
-			}
-		}]);
+			}]);
+		}
 	}
 
 	ngOnDestroy() {
@@ -96,6 +92,9 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 			? await this.configSvc.getResourceAsync("portals.organizations.title.search")
 			: await this.configSvc.getResourceAsync("portals.organizations.title.list");
 		if (!this.searching) {
+			this.actions = [
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.create"), "create", () => this.openCreateAsync())
+			];
 			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.portalsSvc.name) || AppPagination.getDefault();
 			this.pagination.PageNumber = this.pageNumber;
 			await this.searchAsync();
@@ -110,7 +109,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		return this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
-	private openCreateAsync() {
+	openCreateAsync() {
 		return this.configSvc.navigateForwardAsync("/portals/organizations/create");
 	}
 

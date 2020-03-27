@@ -1,8 +1,8 @@
-import { Component, OnInit, NgZone } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppUtility } from "../../../components/app.utility";
 import { TrackingUtility } from "../../../components/app.utility.trackings";
-import { AppFormsControl, AppFormsService } from "../../../components/forms.service";
+import { AppFormsControl, AppFormsControlConfig, AppFormsService } from "../../../components/forms.service";
 import { ConfigurationService } from "../../../services/configuration.service";
 import { AuthenticationService } from "../../../services/authentication.service";
 import { UsersService } from "../../../services/users.service";
@@ -16,7 +16,6 @@ import { UsersService } from "../../../services/users.service";
 export class UsersRegisterPage implements OnInit {
 
 	constructor(
-		public zone: NgZone,
 		public appFormsSvc: AppFormsService,
 		public configSvc: ConfigurationService,
 		public authSvc: AuthenticationService,
@@ -28,7 +27,7 @@ export class UsersRegisterPage implements OnInit {
 	register = {
 		form: new FormGroup({}, [this.appFormsSvc.areEquals("Email", "ConfirmEmail"), this.appFormsSvc.areEquals("Password", "ConfirmPassword")]),
 		controls: new Array<AppFormsControl>(),
-		config: undefined as Array<any>,
+		config: undefined as Array<AppFormsControlConfig>,
 		button: {
 			label: "Register",
 			icon: undefined as string
@@ -40,7 +39,7 @@ export class UsersRegisterPage implements OnInit {
 	}
 
 	private async prepareAsync() {
-		const config: Array<any> = [
+		const config: Array<AppFormsControlConfig> = [
 			{
 				Name: "Email",
 				Required: true,
@@ -183,8 +182,9 @@ export class UsersRegisterPage implements OnInit {
 		this.register.config = config;
 	}
 
-	onFormInitialized($event: any) {
+	onFormInitialized(event: any) {
 		this.refreshCaptchaAsync();
+		this.appFormsSvc.reset(event.form);
 		this.register.form.patchValue({ Gender: "NotProvided" });
 	}
 
@@ -203,15 +203,8 @@ export class UsersRegisterPage implements OnInit {
 						await this.configSvc.getResourceAsync("users.register.alert.header"),
 						undefined,
 						await this.configSvc.getResourceAsync("users.register.alert.message", { email: this.register.form.value.Email }),
-						async () => await this.zone.run(async () => {
-							if (this.configSvc.previousUrl.startsWith("/users")) {
-								await this.configSvc.navigateHomeAsync();
-							}
-							else {
-								await this.configSvc.navigateBackAsync();
-							}
-						}
-					))
+						async () => await (this.configSvc.previousUrl.startsWith(this.configSvc.appConfig.url.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync())
+					)
 				]),
 				async error => await Promise.all([
 					this.refreshCaptchaAsync(),
@@ -227,12 +220,12 @@ export class UsersRegisterPage implements OnInit {
 		}
 	}
 
-	onRefreshCaptcha($event: AppFormsControl) {
-		this.refreshCaptchaAsync($event);
+	onRefreshCaptcha(event: AppFormsControl) {
+		this.refreshCaptchaAsync(event);
 	}
 
 	private refreshCaptchaAsync(control?: AppFormsControl) {
-		return this.authSvc.registerCaptchaAsync(() => (control || this.register.controls.find(c => c.Name === "Captcha")).captchaURI = this.configSvc.appConfig.session.captcha.uri);
+		return this.authSvc.registerCaptchaAsync(() => (control || this.register.controls.find(c => AppUtility.isEquals(c.Name, "Captcha"))).captchaURI = this.configSvc.appConfig.session.captcha.uri);
 	}
 
 }

@@ -1,11 +1,13 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "../components/app.utility";
 import { PortalBase as BaseModel } from "./portals.base";
+import { Privileges } from "./privileges";
 
 export class Organization extends BaseModel {
 
 	constructor() {
 		super();
+		this.Privileges = new Privileges(true);
 	}
 
 	/** All instances of organization */

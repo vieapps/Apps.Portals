@@ -1,4 +1,5 @@
 import { Dictionary } from "typescript-collections";
+import { AppConfig } from "../app.config";
 import { AppUtility } from "../components/app.utility";
 import { Base as BaseModel } from "./base";
 import { RatingPoint } from "./ratingpoint";
@@ -76,7 +77,7 @@ export class UserProfileBase extends BaseModel {
 	}
 
 	public get routerLink() {
-		return `/users/profile/${AppUtility.toANSI(this.Name, true)}`;
+		return `${AppConfig.url.users.profile}/${AppUtility.toANSI(this.Name, true)}`;
 	}
 
 	public copy(source: any, onCompleted?: (data: any) => void) {

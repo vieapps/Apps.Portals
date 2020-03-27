@@ -2,7 +2,7 @@
 <widget id="net.vieapps.portals" version="1.0.0-beta" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>VIEApps NGX Portals</name>
     <description>Managing core portal and related services of VIEApps.net</description>
-    <author email="vieapps.net@gmail.com" href="https://vieapps.net/">VIEApps.net</author>
+    <author email="vieapps.net@gmail.com" href="https://portals.vieapps.net/">VIEApps.net</author>
     <content src="index.html" />
     <access origin="*" />
     <allow-intent href="http://*/*" />

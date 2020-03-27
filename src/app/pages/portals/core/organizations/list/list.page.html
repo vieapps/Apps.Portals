@@ -35,6 +35,11 @@
 </ion-footer>
 
 <ion-content [color]="configSvc.color">
+	<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="openCreateAsync()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
 	<ion-list class="ion-padding-end">
 		<ion-item *ngFor="let organization of organizations; let idx=index; trackBy: track" [color]="configSvc.color" [routerLink]="organization.routerLink" [queryParams]="organization.routerParams" routerDirection="forward" detail="false">
 			<ion-label>

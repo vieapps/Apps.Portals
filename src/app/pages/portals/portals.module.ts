@@ -57,7 +57,7 @@ const routes: Routes = [
 	*/
 	{
 		path: "**",
-		redirectTo: "search",
+		redirectTo: "/home",
 		pathMatch: "full"
 	}
 ];

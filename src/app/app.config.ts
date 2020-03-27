@@ -89,7 +89,7 @@ export class AppConfig {
 		required: [],
 		hidden: ["Gender", "BirthDay", "Address", "Addresses", "Mobile"],
 		sendInvitationRole: "Authenticated",
-		setServicePrivilegs: false,
+		setServicePrivilegs: true,
 		setServicePrivilegsRole: "ServiceAdministrator",
 		setObjectPrivilegs: true
 	};
@@ -135,6 +135,7 @@ export class AppConfig {
 		routerParams: undefined as { [key: string]: any },
 		redirectToWhenReady: undefined as string,
 		users: {
+			root: "/users",
 			login: "/users/login",
 			register: "/users/register",
 			profile: "/users/profile",

@@ -1,4 +1,5 @@
 import { List } from "linqts";
+import { Set } from "typescript-collections";
 import { HttpErrorResponse } from "@angular/common/http";
 import { AppCrypto } from "./app.crypto";
 
@@ -72,11 +73,16 @@ export class AppUtility {
 			: -1;
 	}
 
-	/** Gets the state that determines the emai address is valid or not */
+	/** Gets the state that determines the email address is valid or not */
 	public static isValidEmail(email?: string) {
 		const atPos = this.isNotEmpty(email) ? email.indexOf("@") : -1;
 		const dotPos = this.isNotEmpty(email) ? email.indexOf(".", atPos + 1) : -1;
 		return atPos > 0 && dotPos > atPos;
+	}
+
+	/** Gets the hidden email address for displaying at the public */
+	public static getHiddenEmail(email: string) {
+		return `${email.substr(0, email.indexOf("@") - 2)}**@**${email.substr(email.indexOf("@") + 3)}`;
 	}
 
 	/** Parses the error */

@@ -24,10 +24,10 @@ import { AppConfig } from "./app.config";
 import { AppComponent } from "./app.component";
 import { AppRoutingModule } from "./app.routing.module";
 import { AppFormsModule } from "./components/forms.module";
+import { AppFormsService } from "./components/forms.service";
 import { AppModulePreloader } from "./components/app.preloader";
 import { TimePipeModule } from "./components/time.pipe";
-import { AppReadyGuardService, RegisterGuardService } from "./services/base.service";
-import { AuthenticatedGuardService, NotAuthenticatedGuardService } from "./services/base.service";
+import { AppReadyGuardService, RegisterGuardService, AuthenticatedGuardService, NotAuthenticatedGuardService } from "./services/base.service";
 import { ConfigurationService } from "./services/configuration.service";
 import { AuthenticationService } from "./services/authentication.service";
 import { UsersService } from "./services/users.service";
@@ -64,6 +64,7 @@ export class HammerConfig extends HammerGestureConfig {
 		GoogleAnalytics,
 		InAppBrowser,
 		Clipboard,
+		AppFormsService,
 		AppModulePreloader,
 		AppReadyGuardService,
 		RegisterGuardService,

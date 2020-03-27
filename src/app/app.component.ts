@@ -242,6 +242,14 @@ export class AppComponent implements OnInit {
 			if (this.authSvc.canRegisterNewAccounts) {
 				this.updateSidebarItem(index, -1, sidebarItems.register);
 			}
+
+			this.updateSidebarItem(index, -1, {
+				title: "Organizations",
+				url: "/portals/organizations/list",
+				direction: "root",
+				icon: "business",
+				detail: false
+			});
 		}
 		else {
 			this.sidebar.left.menu[index].title = info.title;

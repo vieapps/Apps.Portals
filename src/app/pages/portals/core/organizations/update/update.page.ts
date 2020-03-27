@@ -1,10 +1,10 @@
-import { Component, OnInit, NgZone } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "../../../../../components/app.crypto";
 import { AppEvents } from "../../../../../components/app.events";
 import { AppUtility } from "../../../../../components/app.utility";
 import { TrackingUtility } from "../../../../../components/app.utility.trackings";
-import { AppFormsControl, AppFormsSegment, AppFormsService } from "../../../../../components/forms.service";
+import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "../../../../../components/forms.service";
 import { ConfigurationService } from "../../../../../services/configuration.service";
 import { AuthenticationService } from "../../../../../services/authentication.service";
 import { FilesService } from "../../../../../services/files.service";
@@ -19,7 +19,6 @@ import { Organization } from "../../../../../models/portals.organization";
 
 export class OrganizationsUpdatePage implements OnInit {
 	constructor(
-		public zone: NgZone,
 		public appFormsSvc: AppFormsService,
 		public configSvc: ConfigurationService,
 		public authSvc: AuthenticationService,
@@ -32,7 +31,7 @@ export class OrganizationsUpdatePage implements OnInit {
 	organization: Organization;
 	update = {
 		form: new FormGroup({}),
-		config: undefined as Array<any>,
+		config: undefined as Array<AppFormsControlConfig>,
 		segments: {
 			items: undefined as Array<AppFormsSegment>,
 			default: "basic"
@@ -54,15 +53,11 @@ export class OrganizationsUpdatePage implements OnInit {
 			return;
 		}
 
-		this.title = this.organization === undefined
-			? await this.configSvc.getResourceAsync("portals.organizations.title.create")
-			: await this.configSvc.getResourceAsync("portals.organizations.title.update");
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.organizations.title.${(this.organization === undefined ? "create" : "update")}`);
 		await this.appFormsSvc.showLoadingAsync(this.title);
 
 		this.button = {
-			update: this.organization === undefined
-				? await this.configSvc.getResourceAsync("common.buttons.create")
-				: await this.configSvc.getResourceAsync("common.buttons.update"),
+			update: await this.configSvc.getResourceAsync(`common.buttons.${(this.organization === undefined ? "create" : "update")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
@@ -73,22 +68,35 @@ export class OrganizationsUpdatePage implements OnInit {
 			new AppFormsSegment("emails", await this.configSvc.getResourceAsync("portals.organizations.update.segments.emails")),
 			new AppFormsSegment("socials", await this.configSvc.getResourceAsync("portals.organizations.update.segments.socials")),
 			new AppFormsSegment("notifications", await this.configSvc.getResourceAsync("portals.organizations.update.segments.notifications")),
-			new AppFormsSegment("urls", await this.configSvc.getResourceAsync("portals.organizations.update.segments.urls")),
-			new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.organizations.update.segments.attachments"))
+			new AppFormsSegment("urls", await this.configSvc.getResourceAsync("portals.organizations.update.segments.urls"))
 		];
-
-		const config: Array<any> = await this.configSvc.getDefinitionAsync(this.portalsSvc.name, "organization", "form-controls");
-		config.forEach(control => control.Segment = "basic");
-
-		if (this.organization === undefined) {
-			config.find(control => control.Name === "Title").Options.OnKeyUp = () => this.update.form.controls.Alias.setValue(AppUtility.toURI(this.update.form.controls.Title.value));
+		if (this.organization !== undefined) {
+			this.update.segments.items.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.organizations.update.segments.attachments")));
 		}
 
-		let ctrl = config.find(control => control.Name === "Description");
+		const config: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsSvc.name, "organization", "form-controls");
+		config.forEach(control => control.Segment = "basic");
+
+		config.push({
+			Name: "Privileges",
+			Type: "Custom",
+			Segment: "privileges",
+			Extras: { AllowInheritFromParent: false },
+			Options: {
+				Type: "object-privileges"
+			}
+		});
+
+
+		if (this.organization === undefined) {
+			config.find(control => AppUtility.isEquals(control.Name, "Title")).Options.OnKeyUp = () => this.update.form.controls.Alias.setValue(AppUtility.toURI(this.update.form.controls.Title.value));
+		}
+
+		let ctrl = config.find(control => AppUtility.isEquals(control.Name, "Description"));
 		ctrl.Type = "TextArea";
 		ctrl.Options.TextAreaRows = 2;
 
-		ctrl = config.find(control => control.Name === "Status");
+		ctrl = config.find(control => AppUtility.isEquals(control.Name, "Status"));
 		if (AppUtility.isNotEmpty(ctrl.Options.SelectOptions.Values)) {
 			ctrl.Options.SelectOptions.Values = (AppUtility.toArray(ctrl.Options.SelectOptions.Values) as Array<string>).map(value => {
 				return { Value: value, Label: `{{status.approval.${value}}}` };
@@ -97,7 +105,7 @@ export class OrganizationsUpdatePage implements OnInit {
 
 		ctrl = config.find(control => true === control.Options.AutoFocus);
 		if (ctrl === undefined) {
-			ctrl = config.find(control => control.Type === "TextBox" && !control.Hidden);
+			ctrl = config.find(control => AppUtility.isEquals(control.Type, "TextBox") && !control.Hidden);
 			if (ctrl !== undefined) {
 				ctrl.Options.AutoFocus = true;
 			}
@@ -127,7 +135,7 @@ export class OrganizationsUpdatePage implements OnInit {
 			undefined,
 			undefined,
 			await this.configSvc.getResourceAsync("portals.organizations.update.messages.confirm"),
-			async () => await this.zone.run(async () => await this.configSvc.navigateBackAsync()),
+			async () => await this.configSvc.navigateBackAsync(),
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);

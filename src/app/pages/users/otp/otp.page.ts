@@ -33,7 +33,7 @@ export class UsersOtpPage implements OnInit {
 		value: ""
 	};
 	password = "";
-	resources = {
+	labels = {
 		status: "status",
 		providers: "providers",
 		buttons: {
@@ -55,8 +55,7 @@ export class UsersOtpPage implements OnInit {
 			show: false
 		}
 	};
-
-	@ViewChild(IonInput, { static: false }) otpCtrl: IonInput;
+	@ViewChild(IonInput, { static: false }) private otpCtrl: IonInput;
 
 	get locale() {
 		return this.configSvc.locale;
@@ -87,7 +86,7 @@ export class UsersOtpPage implements OnInit {
 	}
 
 	async prepareResourcesAsync() {
-		this.resources = {
+		this.labels = {
 			status: await this.configSvc.getResourceAsync("users.profile.otp.status.label"),
 			providers: await this.configSvc.getResourceAsync("users.profile.otp.labels.providers"),
 			buttons: {
@@ -145,7 +144,7 @@ export class UsersOtpPage implements OnInit {
 			this.provision.info,
 			this.provision.value,
 			async () => await this.prepareAsync(async () => await Promise.all([
-				TrackingUtility.trackAsync(this.title, "users/update/otp"),
+				TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.url.users.update}/otp`),
 				this.appFormsSvc.hideLoadingAsync()
 			])),
 			async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => {
@@ -165,7 +164,7 @@ export class UsersOtpPage implements OnInit {
 				data.password + "",
 				provider.Info,
 				async () => await this.prepareAsync(async () => await Promise.all([
-					TrackingUtility.trackAsync(this.title, "users/update/otp"),
+					TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.url.users.update}/otp`),
 					this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.otp.messages.success", { label: provider.Label }))
 				])),
 				async error => await this.appFormsSvc.showErrorAsync(error)
