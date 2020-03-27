@@ -556,7 +556,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		else {
 			// set value
 			this._selectValues = undefined;
-			this.formControl.setValue(event !== undefined && event.detail !== undefined && event.detail.value !== undefined ? event.detail.value : event);
+			this.formControl.setValue(event !== undefined && event.detail !== undefined ? event.detail.value : event);
 
 			// focus to next control
 			if (!this.isRangeControl) {

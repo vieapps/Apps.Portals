@@ -11,7 +11,7 @@ import { UsersUpdatePageModule } from "./update/update.module";
 import { UsersOtpPageModule } from "./otp/otp.module";
 import { UsersListPageModule } from "./list/list.module";
 
-export const routes: Routes = [
+const routes: Routes = [
 	{
 		path: "login",
 		canActivate: [NotAuthenticatedGuardService],

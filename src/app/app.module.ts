@@ -92,7 +92,7 @@ export class HammerConfig extends HammerGestureConfig {
 		}}),
 		TimePipeModule,
 		AppFormsModule,
-		AppRoutingModule,
+		AppRoutingModule
 	],
 	declarations: [AppComponent],
 	bootstrap: [AppComponent]

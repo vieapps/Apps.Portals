@@ -7,12 +7,6 @@ import { AuthenticatedGuardService } from "../../services/base.service";
 import { OrganizationsModule } from "./core/organizations/organizations.module";
 
 const routes: Routes = [
-	/*
-	{
-		path: "",
-		loadChildren: "../home.module#HomePageModule"
-	},
-	*/
 	{
 		path: "organizations",
 		canActivate: [AuthenticatedGuardService],
