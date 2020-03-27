@@ -108,9 +108,10 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 
 	private emitChanges() {
 		const privileges = this.serviceRole === "Viewer"
-			? this.privileges.filter(privilege => AppUtility.isEquals(privilege.ServiceName, this.service) && (AppUtility.isEquals(privilege.ObjectName, "") || (!AppUtility.isEquals(privilege.ObjectName, "") && privilege.Role !== "Viewer")))
+			? this.privileges.filter(privilege => AppUtility.isEquals(privilege.ServiceName, this.service) && (AppUtility.isEquals(privilege.ObjectName, "") || (privilege.ObjectName !== "" && privilege.Role !== "Viewer")))
 			: this.privileges.filter(privilege => AppUtility.isEquals(privilege.ServiceName, this.service) && AppUtility.isEquals(privilege.ObjectName, ""));
 		this.change.emit({
+			control: this.control,
 			service: this.service,
 			privileges: privileges,
 			relatedInfo: undefined,
