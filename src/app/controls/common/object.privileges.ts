@@ -295,7 +295,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy {
 		return this.appFormsSvc.showAlertAsync(
 			undefined,
 			undefined,
-			await this.configSvc.getResourceAsync(this.labels.confirmDelete),
+			this.labels.confirmDelete,
 			async () => {
 				const privileges = this.getRolesOfPrivileges(name);
 				this.selectedRoles[name].forEach(role => privileges.remove(role));
@@ -304,8 +304,8 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy {
 				await this.prepareNamesOfRolesAndUsersAsync([name]);
 				this.emitChanges();
 			},
-			await this.configSvc.getResourceAsync("common.buttons.ok"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel")
+			this.labels.buttons.ok,
+			this.labels.buttons.cancel
 		);
 	}
 
@@ -341,7 +341,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy {
 		return this.appFormsSvc.showAlertAsync(
 			undefined,
 			undefined,
-			await this.configSvc.getResourceAsync(this.labels.confirmDelete),
+			this.labels.confirmDelete,
 			async () => {
 				const privileges = this.getUsersOfPrivileges(name);
 				this.selectedUsers[name].forEach(user => privileges.remove(user));
@@ -350,8 +350,8 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy {
 				await this.prepareNamesOfRolesAndUsersAsync([name]);
 				this.emitChanges();
 			},
-			await this.configSvc.getResourceAsync("common.buttons.ok"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel")
+			this.labels.buttons.ok,
+			this.labels.buttons.cancel
 		);
 	}
 
