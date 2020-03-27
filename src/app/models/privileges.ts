@@ -1,7 +1,7 @@
 import { Set } from "typescript-collections";
 import { AppUtility } from "../components/app.utility";
 
-/** Privilege of an individual business service */
+/** Working privileges of an individual business service */
 export class Privilege {
 
 	constructor(
@@ -45,7 +45,7 @@ export class Privilege {
 
 }
 
-/** Privilege of an individual business object */
+/** Working privileges of an individual business object */
 export class Privileges {
 
 	constructor(
