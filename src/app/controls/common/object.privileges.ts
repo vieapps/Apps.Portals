@@ -32,7 +32,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy {
 	@Input() allowInheritFromParent: boolean;
 
 	/** The function to prepare the name of a role */
-	@Input() rolePrepareNameFn: (role: { id: string, name: string }) => Promise<void>;
+	@Input() prepareRoleNameFunction: (role: { id: string, name: string }) => Promise<void>;
 
 	/** The component to show as the modal to select role(s) */
 	@Input() roleComponent: any;
@@ -91,11 +91,11 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy {
 						? AppUtility.isTrue(this.control.Extras["allowInheritFromParent"])
 						: true;
 		this.inheritFromParent.inherit = this.inheritFromParent.allow && this.privileges.isInheritFromParent;
-		if (this.rolePrepareNameFn === undefined && this.control !== undefined && this.control.Extras !== undefined) {
-			this.rolePrepareNameFn = typeof this.control.Extras["RolePrepareNameFn"] === "function"
-				? this.control.Extras["RolePrepareNameFn"]
-				: typeof this.control.Extras["rolePrepareNameFn"] === "function"
-					? this.control.Extras["rolePrepareNameFn"]
+		if (this.prepareRoleNameFunction === undefined && this.control !== undefined && this.control.Extras !== undefined) {
+			this.prepareRoleNameFunction = typeof this.control.Extras["PrepareRoleName"] === "function" || typeof this.control.Extras["PrepareRoleNameFunction"] === "function"
+				? this.control.Extras["PrepareRoleName"] || this.control.Extras["PrepareRoleNameFunction"]
+				: typeof this.control.Extras["prepareRoleName"] === "function" || typeof this.control.Extras["prepareRoleNameFunction"] === "function"
+					? this.control.Extras["prepareRoleName"] || this.control.Extras["prepareRoleNameFunction"]
 					: (role: { id: string, name: string }) => new Promise<void>(() => role.name = role.id);
 		}
 		if (this.roleComponent === undefined && this.control !== undefined && this.control.Extras !== undefined) {
@@ -204,7 +204,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy {
 					role.name = await this.appFormsSvc.getResourceAsync(`privileges.roles.systems.${role.id}`);
 				}
 				else {
-					await this.rolePrepareNameFn(role);
+					await this.prepareRoleNameFunction(role);
 				}
 			})),
 			Promise.all(this.users[name].filter(user => user.name === undefined).map(async user => await this.userSvc.getProfileAsync(user.id, _ => user.name = (UserProfile.get(user.id) || new UserProfile()).Name)))
