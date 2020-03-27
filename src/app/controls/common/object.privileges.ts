@@ -289,7 +289,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy {
 
 		return this.appFormsSvc.showModalAsync(this.roleComponent, componentProps, async roles => {
 			const privileges = this.getRolesOfPrivileges(name);
-			(roles as Array<string> || []).forEach(user => privileges.add(user));
+			(roles as Array<string> || []).forEach(role => privileges.add(role));
 			this.prepareRolesAndUsers([name]);
 			await this.prepareNamesOfRolesAndUsersAsync([name]);
 			this.emitChanges();
