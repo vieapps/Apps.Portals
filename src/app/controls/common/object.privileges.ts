@@ -31,11 +31,14 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy {
 	/** Set to 'false' to don't allow to inherit the privileges from parent (default is true) */
 	@Input() allowInheritFromParent: boolean;
 
-	/** The action to get name of a role */
-	@Input() prepareRoleName: (role: { id: string, name: string }) => Promise<void>;
+	/** The function to prepare the name of a role */
+	@Input() rolePrepareNameFn: (role: { id: string, name: string }) => Promise<void>;
 
 	/** The component to show as the modal to select role(s) */
 	@Input() roleComponent: any;
+
+	/** The properties of component to show as the modal to select role(s) */
+	@Input() roleComponentProps: { [key: string]: any };
 
 	/** The event handler to run when the controls was initialized */
 	@Output() init: EventEmitter<any> = new EventEmitter();
@@ -88,15 +91,18 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy {
 						? AppUtility.isTrue(this.control.Extras["allowInheritFromParent"])
 						: true;
 		this.inheritFromParent.inherit = this.inheritFromParent.allow && this.privileges.isInheritFromParent;
-		if (this.prepareRoleName === undefined && this.control !== undefined && this.control.Extras !== undefined) {
-			this.prepareRoleName = typeof this.control.Extras["PrepareRoleName"] === "function"
-				? this.control.Extras["PrepareRoleName"]
-				: typeof this.control.Extras["prepareRoleName"] === "function"
-					? this.control.Extras["prepareRoleName"]
+		if (this.rolePrepareNameFn === undefined && this.control !== undefined && this.control.Extras !== undefined) {
+			this.rolePrepareNameFn = typeof this.control.Extras["RolePrepareNameFn"] === "function"
+				? this.control.Extras["RolePrepareNameFn"]
+				: typeof this.control.Extras["rolePrepareNameFn"] === "function"
+					? this.control.Extras["rolePrepareNameFn"]
 					: (role: { id: string, name: string }) => new Promise<void>(() => role.name = role.id);
 		}
 		if (this.roleComponent === undefined && this.control !== undefined && this.control.Extras !== undefined) {
 			this.roleComponent = this.control.Extras["RoleComponent"] || this.control.Extras["roleComponent"];
+		}
+		if (this.roleComponentProps === undefined && this.control !== undefined && this.control.Extras !== undefined) {
+			this.roleComponent = this.control.Extras["RoleComponentProps"] || this.control.Extras["roleComponentProps"];
 		}
 		this.prepareRolesAndUsers();
 		Promise.all([this.prepareLabelsAsync()]).then(() => {
@@ -198,7 +204,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy {
 					role.name = await this.appFormsSvc.getResourceAsync(`privileges.roles.systems.${role.id}`);
 				}
 				else {
-					await this.prepareRoleName(role);
+					await this.rolePrepareNameFn(role);
 				}
 			})),
 			Promise.all(this.users[name].filter(user => user.name === undefined).map(async user => await this.userSvc.getProfileAsync(user.id, _ => user.name = (UserProfile.get(user.id) || new UserProfile()).Name)))
@@ -270,9 +276,13 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy {
 	}
 
 	addRolesAsync(name: string) {
+		const componentProps: { [key: string]: any } = { name: name, multiple: true };
+		if (this.roleComponentProps !== undefined) {
+			Object.keys(this.roleComponentProps).forEach(key => componentProps[key] = this.roleComponentProps[key]);
+		}
 		return this.roleComponent === undefined
 			? this.appFormsSvc.showAlertAsync(undefined, undefined, "Role component is invalid")
-			: this.appFormsSvc.showModalAsync(this.roleComponent, { name: name, multiple: true }, async roles => {
+			: this.appFormsSvc.showModalAsync(this.roleComponent, componentProps, async roles => {
 					const privileges = this.getRolesOfPrivileges(name);
 					(roles as Array<string> || []).forEach(user => privileges.add(user));
 					this.prepareRolesAndUsers([name]);
