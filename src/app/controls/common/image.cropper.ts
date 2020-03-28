@@ -14,10 +14,10 @@ import { FilesService } from "../../services/files.service";
 export class ImageCropperControl implements OnInit, OnDestroy {
 
 	constructor(
-		public nativeImageCropper: NativeImageCropper,
-		public appFormsSvc: AppFormsService,
 		public configSvc: ConfigurationService,
-		public filesSvc: FilesService
+		private appFormsSvc: AppFormsService,
+		private filesSvc: FilesService,
+		private nativeImageCropper: NativeImageCropper
 	) {
 	}
 

@@ -120,15 +120,15 @@ export class AuthenticationService extends BaseService {
 	}
 
 	private canDo(role: string, serviceName?: string, account?: Account) {
-		return "SystemAdministrator" === role
+		return AppUtility.isEquals("SystemAdministrator", role)
 			? this.isSystemAdministrator(account)
-			: "ServiceAdministrator" === role
+			: AppUtility.isEquals("ServiceAdministrator", role)
 				? this.isServiceAdministrator(serviceName, undefined, account)
-				: "ServiceModerator" === role
+				: AppUtility.isEquals("ServiceModerator", role)
 					? this.isServiceModerator(serviceName, undefined, account)
-					: "Authenticated" === role
+					: AppUtility.isEquals("Authenticated", role)
 						? this.configSvc.isAuthenticated
-						: "All" === role;
+						: AppUtility.isEquals("All", role);
 	}
 
 	/** Checks to see the visitor can register new account or not */
