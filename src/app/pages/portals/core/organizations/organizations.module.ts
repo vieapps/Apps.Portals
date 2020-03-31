@@ -30,7 +30,7 @@ const routes: Routes = [
 	},
 	/*
 	{
-		path: "view/:data",
+		path: "organizations/view/:data",
 		data: { preload: true },
 		canActivate: [AuthenticatedGuardService],
 		loadChildren: "../organizations/read/read.module#OrganizationsViewPageModule"
@@ -38,7 +38,7 @@ const routes: Routes = [
 	*/
 	{
 		path: "**",
-		redirectTo: "organizations/list",
+		redirectTo: "/home",
 		pathMatch: "full"
 	}
 ];

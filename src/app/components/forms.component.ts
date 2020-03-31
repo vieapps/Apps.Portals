@@ -70,6 +70,7 @@ export class AppFormsComponent implements OnInit, OnDestroy, AfterViewInit {
 		else {
 			this.appFormsSvc.buildForm(this.form, this.controls, this.value);
 			this.form["_controls"] = this.controls;
+			this.form["_segments"] = this.segments;
 			this.init.emit(this);
 		}
 	}
@@ -85,24 +86,24 @@ export class AppFormsComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.lastFocus.unsubscribe();
 	}
 
-	onSubmit() {
-		this.submit.emit(this.form.value);
+	onSubmit(event: any) {
+		this.submit.emit(event);
 	}
 
-	onRefreshCaptcha($event: any) {
-		this.refreshCaptcha.emit($event);
+	onRefreshCaptcha(event: any) {
+		this.refreshCaptcha.emit(event);
 	}
 
-	onLastFocus($event: any) {
-		this.lastFocus.emit($event);
+	onLastFocus(event: any) {
+		this.lastFocus.emit(event);
 	}
 
 	get gotSegments() {
 		return this.segments !== undefined && this.segments.items !== undefined && this.segments.items.length > 0;
 	}
 
-	onSegmentChanged($event: any) {
-		this.segments.current = $event.detail.value;
+	onSegmentChanged(event: any) {
+		this.segments.current = event.detail.value;
 	}
 
 	trackSegment(index: number, segment: AppFormsSegment) {

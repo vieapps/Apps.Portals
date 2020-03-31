@@ -117,11 +117,7 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 
 	async onInfiniteScrollAsync() {
 		if (this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => {
-				if (this.infiniteScrollCtrl !== undefined) {
-					await this.infiniteScrollCtrl.complete();
-				}
-			});
+			await this.searchAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : new Promise<void>(() => {})));
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
 			await this.infiniteScrollCtrl.complete();
@@ -129,17 +125,17 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 		}
 	}
 
-	async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
-		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.usersSvc.name) || AppPagination.getDefault();
+	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
+		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `profile@${this.usersSvc.name}`.toLowerCase()) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
 		await this.searchAsync(onNext);
 	}
 
-	async searchAsync(onNext?: () => void) {
+	private async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
 			this.pageNumber++;
-			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.usersSvc.name);
+			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `profile@${this.usersSvc.name}`.toLowerCase());
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 		};
@@ -151,7 +147,7 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 		}
 	}
 
-	cancelSearch(dontDisableInfiniteScroll?: boolean) {
+	private cancelSearch(dontDisableInfiniteScroll?: boolean) {
 		if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 			this.subscription = undefined;
@@ -161,7 +157,7 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 		}
 	}
 
-	prepareResults(onNext?: () => void, results?: Array<any>) {
+	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
 			(results || []).forEach(o => this.profiles.push(UserProfile.get(o.ID)));
 		}
