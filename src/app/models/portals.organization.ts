@@ -7,7 +7,6 @@ export class Organization extends BaseModel {
 
 	constructor() {
 		super();
-		this.Privileges = new Privileges(true);
 	}
 
 	/** All instances of organization */
@@ -20,7 +19,7 @@ export class Organization extends BaseModel {
 	Status = "Pending";
 	Alias = "";
 	ExpiredDate = "-";
-	FilesQuotes = 0;
+	FilesQuotes = 10;
 	Required2FA = false;
 	TrackDownloadFiles = false;
 	Theme = "default";
@@ -31,6 +30,7 @@ export class Organization extends BaseModel {
 	LastModified = new Date();
 	LastModifiedID = "";
 
+	Privileges = new Privileges(true);
 	ansiTitle = "";
 
 	/** Deserializes data to object */
