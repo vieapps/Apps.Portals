@@ -15,6 +15,14 @@
 		<ion-icon name="eye-off" slot="icon-only" [hidden]="type !== 'password'"></ion-icon>
 	</ion-button>
 
+	<ion-button *ngIf="isAllowDelete" fill="clear" color="medium" slot="end" (click)="onDeleted($event)">
+		<ion-icon [name]="isDatePickerDesktopControl ? 'close' : 'trash'" slot="icon-only"></ion-icon>
+	</ion-button>
+
+	<ion-button *ngIf="isCompleterAllowLookupByModal" fill="clear" color="medium" slot="end" (click)="completerLookupAsync()">
+		<ion-icon [name]="completerLookupByModalButtonIcon" slot="icon-only"></ion-icon>
+	</ion-button>
+
 	<ion-label *ngIf="label"
 		[color]="color.label"
 		[position]="position"
@@ -93,6 +101,7 @@
 		[disabled]="disabled"
 		[color]="color.control"
 		[checked]="checked"
+		[title]="description"
 		(ionChange)="onChanged($event)"></ion-checkbox>
 
 	<ion-toggle *ngIf="isYesNoControl && type === 'toggle'" slot="end" #elementRef
@@ -100,17 +109,26 @@
 		[disabled]="disabled"
 		[color]="color.control"
 		[checked]="checked"
+		[title]="description"
 		(ionChange)="onChanged($event)"></ion-toggle>
 
 	<ion-range *ngIf="isRangeControl" #elementRef
 		[name]="name"
 		[color]="color.control"
 		[disabled]="disabled"
-		[pin]="true"
+		[pin]="rangeOptions.AllowPin"
+		[snaps]="rangeOptions.AllowSnaps"
+		[dualKnobs]="rangeOptions.AllowDualKnobs"
+		[ticks]="rangeOptions.AllowTicks"
+		[step]="rangeOptions.Step"
 		[min]="minValue"
 		[max]="maxValue"
 		[value]="value"
-		(ionChange)="onChanged($event)"></ion-range>
+		[title]="description"
+		(ionChange)="onChanged($event)">
+		<ion-icon *ngIf="rangeOptions.Icons.Start" [name]="rangeOptions.Icons.Start" size="small" slot="start"></ion-icon>
+		<ion-icon *ngIf="rangeOptions.Icons.End" [name]="rangeOptions.Icons.End" size="small" slot="end"></ion-icon>
+	</ion-range>
 
 	<ng2-completer *ngIf="isCompleter" #elementRef
 		[inputName]="name"
@@ -126,9 +144,6 @@
 		[initialValue]="completerInitialValue"
 		(selected)="onChanged($event)"
 		(keyup)="onKeyUp($event)"></ng2-completer>
-	<ion-button *ngIf="isCompleterAllowLookupByModal" fill="clear" slot="end" (click)="completerLookupAsync()">
-		<ion-icon [name]="completerLookupByModalButtonIcon" slot="icon-only"></ion-icon>
-	</ion-button>
 	
 	<div *ngIf="isFilePickerControl" class="file-picker">
 		<input type="file" #elementRef
@@ -137,11 +152,8 @@
 			[placeholder]="placeholder"
 			(change)="onChanged($event)" />
 	</div>
-	<ion-button *ngIf="isImagePickerControl && control.Options.FilePickerOptions.AllowDelete && value && value.new" fill="clear" slot="end" (click)="onDeleted($event)">
-		<ion-icon name="trash" slot="icon-only"></ion-icon>
-	</ion-button>
 	
-	<label *ngIf="description"
+	<label *ngIf="description && !isYesNoControl && !isRangeControl"
 		[class]="css.description"
 		[style]="style.description">{{ description }}</label>
 

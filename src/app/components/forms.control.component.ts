@@ -132,12 +132,24 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.isFormControl && this.isControl("DatePicker");
 	}
 
+	get isDatePickerDesktopControl() {
+		return this.isTextBoxControl && this.control.Options.Type.startsWith("date");
+	}
+
 	get isFilePickerControl() {
 		return this.isFormControl && this.isControl("FilePicker");
 	}
 
 	get isImagePickerControl() {
 		return this.isFilePickerControl && !this.control.Options.FilePickerOptions.AllowMultiple && this.control.Options.FilePickerOptions.Accept !== undefined && this.control.Options.FilePickerOptions.Accept.indexOf("image/") > -1;
+	}
+
+	get isAllowDelete() {
+		return this.isImagePickerControl
+			? this.control.Options.FilePickerOptions.AllowDelete && this.value !== undefined && this.value.new !== undefined
+			: this.isDatePickerDesktopControl
+				? this.control.Options.DatePickerOptions.AllowDelete
+				: false;
 	}
 
 	get isCustomControl() {
@@ -357,6 +369,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.control.Options.SelectOptions.Values || new Array<{ Value: string, Label: string }>();
 	}
 
+	get rangeOptions() {
+		return this.control.Options.RangeOptions;
+	}
+
 	selectOptionIsChecked(value: string) {
 		if (this._selectValues === undefined) {
 			const values = this.formControl.value;
@@ -570,10 +586,11 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	onDeleted(event: any) {
-		if (this.isImagePickerControl) {
-			if (this.control.Options.FilePickerOptions.OnDeleted !== undefined) {
-				this.control.Options.FilePickerOptions.OnDeleted(event);
-			}
+		if (this.isDatePickerDesktopControl) {
+			this.formControl.setValue(undefined);
+		}
+		if (this.isImagePickerControl && this.control.Options.FilePickerOptions.OnDeleted !== undefined) {
+			this.control.Options.FilePickerOptions.OnDeleted(event);
 		}
 	}
 

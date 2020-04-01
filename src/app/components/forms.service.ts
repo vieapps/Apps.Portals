@@ -122,6 +122,7 @@ export interface AppFormsControlConfig {
 			MonthShortNames?: string;
 			CancelText?: string;
 			DoneText?: string;
+			AllowDelete?: boolean;
 		};
 		FilePickerOptions?: {
 			Accept?: string;
@@ -130,7 +131,18 @@ export interface AppFormsControlConfig {
 			AllowDelete?: boolean;
 			OnChanged?: (event: any) => void;
 			OnDeleted?: (file: File) => void;
-		}
+		};
+		RangeOptions?: {
+			AllowPin?: boolean;
+			AllowSnaps?: boolean;
+			AllowDualKnobs?: boolean;
+			AllowTicks?: boolean;
+			Step?: number;
+			Icons?: {
+				Start?: string;
+				End?: string;
+			};
+		};
 	};
 	SubControls?: {
 		AsArray?: boolean;
@@ -241,7 +253,8 @@ export class AppFormsControl {
 			MonthNames: undefined as string,
 			MonthShortNames: undefined as string,
 			CancelText: "{{common.buttons.cancel}}",
-			DoneText: "{{common.buttons.done}}"
+			DoneText: "{{common.buttons.done}}",
+			AllowDelete: true
 		},
 		FilePickerOptions: {
 			Accept: "*",
@@ -250,6 +263,17 @@ export class AppFormsControl {
 			AllowDelete: true,
 			OnChanged: undefined as (event: any) => void,
 			OnDeleted: undefined as (file: File) => void
+		},
+		RangeOptions: {
+			AllowPin: true,
+			AllowSnaps: false,
+			AllowDualKnobs: false,
+			AllowTicks: true,
+			Step: 1,
+			Icons: {
+				Start: undefined as string,
+				End: undefined as string
+			}
 		}
 	};
 	SubControls: {
@@ -463,7 +487,8 @@ export class AppFormsControl {
 					MonthNames: datepickerOptions.MonthNames || datepickerOptions.monthNames || datepickerOptions.monthnames,
 					MonthShortNames: datepickerOptions.MonthShortNames || datepickerOptions.monthShortNames || datepickerOptions.monthshortnames,
 					CancelText: datepickerOptions.CancelText || datepickerOptions.cancelText || datepickerOptions.canceltext || "{{common.buttons.cancel}}",
-					DoneText: datepickerOptions.DoneText || datepickerOptions.doneText || datepickerOptions.donetext || "{{common.buttons.done}}"
+					DoneText: datepickerOptions.DoneText || datepickerOptions.doneText || datepickerOptions.donetext || "{{common.buttons.done}}",
+					AllowDelete: datepickerOptions.AllowDelete !== undefined || datepickerOptions.allowDelete !== undefined || datepickerOptions.allowdelete !== undefined ? datepickerOptions.AllowDelete || datepickerOptions.allowDelete || datepickerOptions.allowdelete : true
 				};
 			}
 
@@ -476,6 +501,22 @@ export class AppFormsControl {
 					AllowDelete: !!(filepickerOptions.AllowDelete || filepickerOptions.allowDelete || filepickerOptions.allowdelete),
 					OnChanged: filepickerOptions.OnChanged || filepickerOptions.onChanged || filepickerOptions.onchanged,
 					OnDeleted: filepickerOptions.OnDeleted || filepickerOptions.onDeleted || filepickerOptions.ondeleted
+				};
+			}
+
+			const rangeOptions = controlOptions.RangeOptions || controlOptions.rangeOptions || controlOptions.rangeoptions;
+			if (rangeOptions !== undefined) {
+				const icons = rangeOptions.Icons || rangeOptions.icons || {};
+				control.Options.RangeOptions = {
+					AllowPin: !!(rangeOptions.AllowPin || rangeOptions.allowPin || rangeOptions.allowpin),
+					AllowSnaps: !!(rangeOptions.AllowSnaps || rangeOptions.allowSnaps || rangeOptions.allowSnaps),
+					AllowDualKnobs: !!(rangeOptions.AllowDualKnobs || rangeOptions.allowDualKnobs || rangeOptions.allowdualknobs),
+					AllowTicks: !!(rangeOptions.AllowTicks || rangeOptions.allowTicks || rangeOptions.allowticks),
+					Step: rangeOptions.Step || rangeOptions.step || 1,
+					Icons: {
+						Start: icons.Start || icons.start,
+						End:  icons.End || icons.end
+					}
 				};
 			}
 		}
