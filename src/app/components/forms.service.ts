@@ -156,7 +156,7 @@ export interface AppFormsControlConfig {
 export class AppFormsControl {
 
 	constructor(
-		options?: AppFormsControlConfig | any,
+		options?: any,
 		order?: number
 	) {
 		if (options !== undefined) {
@@ -704,9 +704,9 @@ export class AppFormsService {
 	}
 
 	/** Gets the definition of all controls */
-	public getControls(config: Array<AppFormsControlConfig> | Array<any> = [], controls?: Array<AppFormsControl>, segments?: { items: Array<AppFormsSegment>, default: string, current: string }) {
+	public getControls(config: Array<AppFormsControlConfig> = [], controls?: Array<AppFormsControl>, segments?: { items: Array<AppFormsSegment>, default: string, current: string }) {
 		controls = controls || new Array<AppFormsControl>();
-		(config as Array<any>).map((options, order) => {
+		config.map((options, order) => {
 			const control = new AppFormsControl(options, order);
 			if (segments !== undefined && segments.items !== undefined && segments.items.length > 0) {
 				if (control.Segment === undefined) {
