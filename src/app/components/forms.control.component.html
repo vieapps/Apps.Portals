@@ -1,4 +1,4 @@
-<ion-item *ngIf="visible && isFormControl && !isCaptchaControl && !selectAsRadioBoxes && !isCustomControl"
+<ion-item *ngIf="visible && isFormControl && !isCaptchaControl && !selectAsRadioBoxes && !selectAsCheckBoxes && !isCustomControl()"
 	[color]="theme"
 	[formGroup]="formGroup"
 	[class.invalid]="invalid"
@@ -16,7 +16,7 @@
 	</ion-button>
 
 	<ion-button *ngIf="isAllowDelete" fill="clear" color="medium" slot="end" (click)="onDeleted($event)">
-		<ion-icon [name]="isDatePickerDesktopControl ? 'close' : 'trash'" slot="icon-only"></ion-icon>
+		<ion-icon [name]="deleteIcon" slot="icon-only"></ion-icon>
 	</ion-button>
 
 	<ion-button *ngIf="isCompleterAllowLookupByModal" fill="clear" color="medium" slot="end" (click)="completerLookupAsync()">
@@ -53,7 +53,7 @@
 		[readonly]="readonly"
 		[minlength]="minLength"
 		[maxlength]="maxLength"
-		[rows]="textareaRows" 
+		[rows]="rows" 
 		[attr.style]="style.control"></ion-textarea>
 
 	<ion-select *ngIf="isSelectControl && !selectAsDropdown" #elementRef
@@ -69,16 +69,6 @@
 		(ionChange)="onChanged($event)">
 		<ion-select-option *ngFor="let option of selectOptions; trackBy: trackOption" [value]="option.Value">{{ option.Label }}</ion-select-option>
 	</ion-select>
-
-	<div *ngIf="selectAsDropdown">
-		<select #elementRef
-			[formControlName]="formControlName"
-			[name]="name"
-			[class]="css.control"
-			(change)="onChanged(this.value)">
-			<option *ngFor="let option of selectOptions; trackBy: trackOption" [value]="option.Value" [selected]="selectOptionIsChecked(option.Value)">{{ option.Label }}</option>
-		</select>
-	</div>
 
 	<ion-datetime *ngIf="isDatePickerControl" #elementRef
 		[displayFormat]="datetimeDisplayFormat"
@@ -96,21 +86,21 @@
 		[placeholder]="placeholder"
 		(ionChange)="onChanged($event)"></ion-datetime>
 
-	<ion-checkbox *ngIf="isYesNoControl && type !== 'toggle'" slot="end" #elementRef
+	<ion-toggle *ngIf="isToggleControl" slot="end" #elementRef
 		[name]="name"
 		[disabled]="disabled"
 		[color]="color.control"
-		[checked]="checked"
-		[title]="description"
-		(ionChange)="onChanged($event)"></ion-checkbox>
-
-	<ion-toggle *ngIf="isYesNoControl && type === 'toggle'" slot="end" #elementRef
-		[name]="name"
-		[disabled]="disabled"
-		[color]="color.control"
-		[checked]="checked"
+		[checked]="yesnoChecked"
 		[title]="description"
 		(ionChange)="onChanged($event)"></ion-toggle>
+
+	<ion-checkbox *ngIf="isCheckboxControl" slot="end" #elementRef
+		[name]="name"
+		[disabled]="disabled"
+		[color]="color.control"
+		[checked]="yesnoChecked"
+		[title]="description"
+		(ionChange)="onChanged($event)"></ion-checkbox>
 
 	<ion-range *ngIf="isRangeControl" #elementRef
 		[name]="name"
@@ -130,6 +120,17 @@
 		<ion-icon *ngIf="rangeOptions.Icons.End" [name]="rangeOptions.Icons.End" size="small" slot="end"></ion-icon>
 	</ion-range>
 
+	<select *ngIf="selectAsDropdown" #elementRef
+		[formControlName]="formControlName"
+		[name]="name"
+		[multiple]="selectMultiple"
+		[size]="rows" 
+		[class]="css.control"
+		[attr.style]="style.control"
+		(change)="onChanged(this.value)">
+		<option *ngFor="let option of selectOptions; trackBy: trackOption" [value]="option.Value" [selected]="selectOptionIsChecked(option.Value)">{{ option.Label }}</option>
+	</select>
+
 	<ng2-completer *ngIf="isCompleter" #elementRef
 		[inputName]="name"
 		[disableInput]="!!disabled"
@@ -145,41 +146,64 @@
 		(selected)="onChanged($event)"
 		(keyup)="onKeyUp($event)"></ng2-completer>
 	
-	<div *ngIf="isFilePickerControl" class="file-picker">
-		<input type="file" #elementRef
-			[accept]="control.Options.FilePickerOptions.Accept"
-			[multiple]="control.Options.FilePickerOptions.AllowMultiple"
-			[placeholder]="placeholder"
-			(change)="onChanged($event)" />
+	<div *ngIf="isFilePickerControl">
+		<div class="file-picker">
+			<input type="file" #elementRef
+				[accept]="control.Options.FilePickerOptions.Accept"
+				[multiple]="control.Options.FilePickerOptions.AllowMultiple"
+				[placeholder]="placeholder"
+				(change)="onChanged($event)" />
+		</div>
+		<div *ngIf="isAllowImagePreview" class="image-picker-preview ion-padding">
+			<div *ngIf="value.current">
+				<img [src]="value.current" />
+			</div>
+			<div *ngIf="value.new">
+				<img [src]="value.new" />
+			</div>
+		</div>
 	</div>
 	
 	<label *ngIf="description && !isYesNoControl && !isRangeControl"
 		[class]="css.description"
-		[style]="style.description">{{ description }}</label>
+		[style]="style.description"
+		[innerHTML]="description"></label>
 
 </ion-item>
 
-<div *ngIf="visible && isImagePickerControl && control.Options.FilePickerOptions.AllowPreview && value" class="image-picker-preview ion-padding">
-	<div *ngIf="value.current">
-		<img [src]="value.current" />
-	</div>
-	<div *ngIf="value.new">
-		<img [src]="value.new" />
-	</div>
-</div>
+<ion-list *ngIf="visible && selectAsCheckBoxes" #elementRef>
+
+	<ion-list-header *ngIf="label" [color]="theme">
+		<ion-label [class]="css.label">{{ label }}</ion-label>
+	</ion-list-header>
+
+	<ion-item *ngFor="let option of selectOptions; trackBy: trackOption" [color]="theme">
+		<ion-label>{{ option.Label }}</ion-label>
+		<ion-checkbox slot="end" [checked]="selectOptionIsChecked(option.Value)" [value]="option.Value" (ionChange)="onChanged($event)"></ion-checkbox>
+	</ion-item>
+
+	<label *ngIf="description"
+		[class]="css.description"
+		[style]="style.description"
+		[innerHTML]="description"></label>
+
+</ion-list>
 
 <ion-radio-group *ngIf="visible && selectAsRadioBoxes" #elementRef
 	[name]="name"
 	[class.invalid]="invalid"
 	[value]="value"
 	(ionChange)="onChanged($event)">
+
 	<ion-list-header *ngIf="label" [color]="theme">
 		<ion-label [class]="css.label">{{ label }}</ion-label>
 	</ion-list-header>
+
 	<ion-item *ngFor="let option of selectOptions; trackBy: trackOption" [color]="theme">
 		<ion-label>{{ option.Label }}</ion-label>
 		<ion-radio [value]="option.Value"></ion-radio>
 	</ion-item>
+
 </ion-radio-group>
 	
 <div *ngIf="visible && isCaptchaControl">
@@ -204,7 +228,8 @@
 			(keyup)="onKeyUp($event)"></ion-input>
 		<label *ngIf="description"
 			[class]="css.description"
-			[style]="style.description">{{ description }}</label>
+			[style]="style.description"
+			[innerHTML]="description"></label>
 	</ion-item>
 
 	<ion-item [color]="theme">
@@ -216,51 +241,55 @@
 
 </div>
 
-<ion-list-header *ngIf="visible && label && (isFormGroup || isFormArray)"	[color]="theme">
-	<ion-label [class]="css.label">{{ label }}</ion-label>
-</ion-list-header>
-
-<div *ngIf="visible && isFormGroup">
-	<app-form-control *ngFor="let ctrl of subControls; trackBy: trackControl"
-		[formGroup]="subFormGroup"
-		[control]="ctrl"
-		[theme]="theme"></app-form-control>
-</div>
-
-<div *ngIf="visible && isSimpleFormArray">
-	<app-form-control *ngFor="let ctrl of subControls; let idx = index; trackBy: trackControl"
-		[formGroup]="subFormGroup"
-		[formArrayIndex]="idx"
-		[control]="ctrl"
-		[theme]="theme"></app-form-control>
-</div>
-
-<div *ngIf="visible && isComplexFormArray">
-	<div *ngFor="let ctrl of subControls; let idx = index; trackBy: trackControl">
-		<ion-list-header *ngIf="getSubLabel(ctrl)" [color]="getSubColor(ctrl)">
-			<ion-label [class]="getSubCss(ctrl)">{{ getSubLabel(ctrl) }}</ion-label>
-		</ion-list-header>
-		<app-form-control *ngFor="let subctrl of getSubControls(ctrl); trackBy: trackControl"
-			[formGroup]="getSubFormGroup(idx)"
-			[control]="subctrl"
+<ion-list *ngIf="visible && (isFormGroup || isFormArray)">
+	
+	<ion-list-header *ngIf="label" [color]="theme">
+		<ion-label [class]="css.label">{{ label }}</ion-label>
+	</ion-list-header>
+	
+	<div *ngIf="isFormGroup">
+		<app-form-control *ngFor="let ctrl of subControls; trackBy: trackControl"
+			[formGroup]="subFormGroup"
+			[control]="ctrl"
 			[theme]="theme"></app-form-control>
 	</div>
-</div>
+	
+	<div *ngIf="isSimpleFormArray">
+		<app-form-control *ngFor="let ctrl of subControls; let idx = index; trackBy: trackControl"
+			[formGroup]="subFormGroup"
+			[formArrayIndex]="idx"
+			[control]="ctrl"
+			[theme]="theme"></app-form-control>
+	</div>
+	
+	<div *ngIf="isComplexFormArray">
+		<div *ngFor="let ctrl of subControls; let idx = index; trackBy: trackControl">
+			<ion-list-header *ngIf="getSubLabel(ctrl)" [color]="getSubColor(ctrl)">
+				<ion-label [class]="getSubCss(ctrl)">{{ getSubLabel(ctrl) }}</ion-label>
+			</ion-list-header>
+			<app-form-control *ngFor="let subctrl of getSubControls(ctrl); trackBy: trackControl"
+				[formGroup]="getSubFormGroup(idx)"
+				[control]="subctrl"
+				[theme]="theme"></app-form-control>
+		</div>
+	</div>
 
-<control-image-cropper *ngIf="visible && isCustomControl && control.Options.Type === 'image-cropper'" #elementRef
+</ion-list>
+
+<control-image-cropper *ngIf="visible && isCustomControl('image-cropper')" #elementRef
 	[formGroup]="formGroup"
 	[control]="control"
 	[settings]="value"
 	(change)="onChanged($event)"></control-image-cropper>
 
-<control-object-privileges *ngIf="visible && isCustomControl && control.Options.Type === 'object-privileges'" #elementRef
+<control-object-privileges *ngIf="visible && isCustomControl('object-privileges')" #elementRef
 	[formGroup]="formGroup"
 	[control]="control"
 	[privileges]="value"
 	[allowInheritFromParent]="control.Extras['AllowInheritFromParent'] || control.Extras['allowInheritFromParent']"
 	(change)="onChanged($event)"></control-object-privileges>
 
-<control-service-privileges *ngIf="visible && isCustomControl && control.Options.Type === 'service-privileges'" #elementRef
+<control-service-privileges *ngIf="visible && isCustomControl('service-privileges')" #elementRef
 	[formGroup]="formGroup"
 	[control]="control"
 	[privileges]="value"

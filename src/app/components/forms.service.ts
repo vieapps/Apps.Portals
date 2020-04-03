@@ -24,8 +24,8 @@ export class AppFormsSegment {
 	}
 
 	Name: string;
-	Label: string;
 	Icon: string;
+	Label: string;
 }
 
 //  ---------------------------------------------------------------
@@ -69,9 +69,10 @@ export interface AppFormsControlConfig {
 		MaxLength?: number;
 		Width?: string;
 		Height?: string;
-		TextAreaRows?: number;
-		OnKeyUp?: (event: KeyboardEvent) => void;
-		OnChanged?: (event: any) => void;
+		Rows?: number;
+		OnKeyUp?: (event: KeyboardEvent, control?: AppFormsControl, formControl?: AbstractControl, formGroup?: FormGroup) => void;
+		OnChanged?: (event: any, control?: AppFormsControl, formControl?: AbstractControl, formGroup?: FormGroup) => void;
+		GetFormControlName?: (control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => string;
 		SelectOptions?: {
 			Values?: Array<{ Value: string, Label: string }>;
 			RemoteURI?: string;
@@ -93,9 +94,9 @@ export interface AppFormsControlConfig {
 				ClearSelected?: boolean;
 				DataSource?: CompleterData;
 				InitialValue?: any;
-				GetInitialValue?: (control: AppFormsControl) => any;
-				OnInitialized?: (control: AppFormsControl) => void;
-				OnSelected?: (item: any, control: AppFormsControl) => void;
+				GetInitialValue?: (control?: AppFormsControl, formControl?: AbstractControl, formGroup?: FormGroup) => any;
+				OnInitialized?: (control?: AppFormsControl, formControl?: AbstractControl, formGroup?: FormGroup) => void;
+				OnSelected?: (item: any, control?: AppFormsControl, formControl?: AbstractControl, formGroup?: FormGroup) => void;
 				AllowLookupByModal?: boolean;
 				LookupByModalButtonIcon?: string;
 				OnModalDismiss?: (data?: any) => any;
@@ -129,8 +130,8 @@ export interface AppFormsControlConfig {
 			AllowMultiple?: boolean;
 			AllowPreview?: boolean;
 			AllowDelete?: boolean;
-			OnChanged?: (event: any) => void;
-			OnDeleted?: (file: File) => void;
+			OnChanged?: (event: any, control?: AppFormsControl, formControl?: AbstractControl, formGroup?: FormGroup) => void;
+			OnDeleted?: (file: File, control?: AppFormsControl, formControl?: AbstractControl, formGroup?: FormGroup) => void;
 		};
 		RangeOptions?: {
 			AllowPin?: boolean;
@@ -201,9 +202,10 @@ export class AppFormsControl {
 		MaxLength: undefined as number,
 		Width: undefined as string,
 		Height: undefined as string,
-		TextAreaRows: undefined as number,
-		OnKeyUp: undefined as (event: KeyboardEvent) => void,
-		OnChanged: undefined as (event: any) => void,
+		Rows: undefined as number,
+		OnKeyUp: undefined as (event: KeyboardEvent, control?: AppFormsControl, formControl?: AbstractControl, formGroup?: FormGroup) => void,
+		OnChanged: undefined as (event: any, control?: AppFormsControl, formControl?: AbstractControl, formGroup?: FormGroup) => void,
+		GetFormControlName: undefined as (control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => string,
 		SelectOptions: {
 			Values: undefined as Array<{ Value: string, Label: string }>,
 			RemoteURI: undefined as string,
@@ -225,9 +227,9 @@ export class AppFormsControl {
 				ClearSelected: false,
 				DataSource: undefined as CompleterData,
 				InitialValue: undefined as any,
-				GetInitialValue: undefined as (control: AppFormsControl) => any,
-				OnInitialized: undefined as (control: AppFormsControl) => void,
-				OnSelected: undefined as (item: any, control: AppFormsControl) => void,
+				GetInitialValue: undefined as (control?: AppFormsControl, formControl?: AbstractControl, formGroup?: FormGroup) => any,
+				OnInitialized: undefined as (control?: AppFormsControl, formControl?: AbstractControl, formGroup?: FormGroup) => void,
+				OnSelected: undefined as (item: any, control?: AppFormsControl, formControl?: AbstractControl, formGroup?: FormGroup) => void,
 				AllowLookupByModal: false,
 				LookupByModalButtonIcon: undefined as string,
 				OnModalDismiss: undefined as (data?: any) => any
@@ -261,8 +263,8 @@ export class AppFormsControl {
 			AllowMultiple: true,
 			AllowPreview: false,
 			AllowDelete: true,
-			OnChanged: undefined as (event: any) => void,
-			OnDeleted: undefined as (file: File) => void
+			OnChanged: undefined as (event: any, control?: AppFormsControl, formControl?: AbstractControl, formGroup?: FormGroup) => void,
+			OnDeleted: undefined as (file: File, control?: AppFormsControl, formControl?: AbstractControl, formGroup?: FormGroup) => void
 		},
 		RangeOptions: {
 			AllowPin: true,
@@ -407,10 +409,11 @@ export class AppFormsControl {
 			control.Options.Width = controlOptions.Width || controlOptions.width;
 			control.Options.Height = controlOptions.Height || controlOptions.height;
 
-			control.Options.TextAreaRows = controlOptions.TextAreaRows || controlOptions.textAreaRows || controlOptions.textareaRows || controlOptions.textarearows;
+			control.Options.Rows = controlOptions.Rows || controlOptions.rows;
 
 			control.Options.OnKeyUp = controlOptions.OnKeyUp || controlOptions.onKeyUp || controlOptions.onkeyup;
 			control.Options.OnChanged = controlOptions.OnChanged || controlOptions.onChanged || controlOptions.onchanged;
+			control.Options.GetFormControlName = controlOptions.GetFormControlName || controlOptions.getFormControlName || controlOptions.getformcontrolname;
 
 			const selectOptions = controlOptions.SelectOptions || controlOptions.selectOptions || controlOptions.selectoptions;
 			if (selectOptions !== undefined) {
@@ -548,6 +551,7 @@ export class AppFormsControl {
 		options.AsyncValidators = this.AsyncValidators;
 		options.Options.OnKeyUp = this.Options.OnKeyUp;
 		options.Options.OnChanged = this.Options.OnChanged;
+		options.Options.GetFormControlName = this.Options.GetFormControlName;
 		options.Options.SelectOptions.InterfaceOptions = this.Options.SelectOptions.InterfaceOptions;
 		options.Options.LookupOptions.CompleterOptions.DataSource = this.Options.LookupOptions.CompleterOptions.DataSource;
 		options.Options.LookupOptions.CompleterOptions.GetInitialValue = this.Options.LookupOptions.CompleterOptions.GetInitialValue;

@@ -67,39 +67,75 @@ ion-footer > ion-toolbar {
 	height: 28px;
 }
 
+/* Dynamic forms ----------------------------------------- */
+
+/* segments */
+app-form ion-segment.segments.md {
+	padding-bottom: 15px;
+}
+
 /* label of invalid controls */
-.invalid:not(.item-has-focus) > ion-label.sc-ion-label-md-h,
-.invalid:not(.item-has-focus) > ion-label.sc-ion-label-md-s,
-.invalid:not(.item-has-focus) > ion-label.sc-ion-label-ios-h,
-.invalid:not(.item-has-focus) > ion-label.sc-ion-label-ios-s {
+app-form .invalid:not(.item-has-focus) > ion-label.sc-ion-label-md-h,
+app-form .invalid:not(.item-has-focus) > ion-label.sc-ion-label-md-s,
+app-form .invalid:not(.item-has-focus) > ion-label.sc-ion-label-ios-h,
+app-form .invalid:not(.item-has-focus) > ion-label.sc-ion-label-ios-s {
 	color: var(--ion-color-danger);
 }
 
 /* description label of an input control */
-label.description {
+app-form label.description {
 	font-size: 12px;
 	color: var(--ion-color-medium);
 	clear: both;
 	margin: 10px 0;
 }
 
+/* select drop-down with multiple */
+app-form ion-item.select-dropdown select {
+	border: 0;
+	width: 100%;
+	margin: 15px 0;
+}
+app-form ion-item.select-dropdown select > option {
+	padding: 5px;
+}
+
+/* header of a sub list */
+app-form > form > ion-list > app-form-control > ion-list > ion-list-header,
+app-form > form > div > ion-list > app-form-control > ion-list > ion-list-header,
+app-form > form > ion-list > app-form-control > ion-list app-form-control > ion-list > ion-list-header,
+app-form > form > div > ion-list > app-form-control > ion-list app-form-control > ion-list > ion-list-header,
+app-form > form > ion-list > app-form-control > ion-list app-form-control > ion-radio-group > ion-list-header,
+app-form > form > div > ion-list > app-form-control > ion-list app-form-control > ion-radio-group > ion-list-header {
+	font-weight: bold;
+	padding-top: 15px;
+}
+app-form > form > ion-list > app-form-control:first-of-type > ion-list > ion-list-header,
+app-form > form > div > ion-list > app-form-control:first-of-type > ion-list > ion-list-header,
+app-form > form > ion-list > app-form-control > ion-list app-form-control:first-of-type > ion-list > ion-list-header,
+app-form > form > div > ion-list > app-form-control > ion-list app-form-control:first-of-type > ion-list > ion-list-header,
+app-form > form > ion-list > app-form-control > ion-list app-form-control:first-of-type > ion-radio-group > ion-list-header,
+app-form > form > div > ion-list > app-form-control > ion-list app-form-control:first-of-type > ion-radio-group > ion-list-header {
+	padding-top: 0;
+}
+
 /* completer */
-.completer-container > ng2-completer,
-.completer-holder,
-.completer-dropdown-holder,
-.completer-dropdown,
-.select-dropdown > div,
-.select-file > div{
+app-form .completer-container > ng2-completer,
+app-form .completer-holder,
+app-form .completer-dropdown-holder,
+app-form .completer-dropdown,
+app-form .select-dropdown > div,
+app-form .select-file > div{
 	width: 100% !important;
 }
-ion-item.completer-container > ion-label,
-ion-item.select-dropdown > ion-label,
-ion-item.select-file > ion-label {
+app-form ion-item.completer-container > ion-label,
+app-form ion-item.select-dropdown > ion-label,
+app-form ion-item.select-file > ion-label {
 	padding-bottom: 8px;
 }
-.completer-holder > input.completer-input,
-.select-dropdown > div > select,
-.select-file > div > input {
+app-form .completer-holder > input.completer-input,
+app-form .select-dropdown > div > select,
+app-form .select-file > div > input {
 	padding-top: 8px;
 	padding-bottom: 8px;
 	font-family: inherit;
@@ -129,10 +165,10 @@ ion-item.select-file > ion-label {
 	-webkit-tap-highlight-color: transparent;
 	-webkit-touch-callout: none;
 }
-.select-dropdown > div {
+app-form .select-dropdown > div {
 	position: relative;
 }
-.select-dropdown > div > div {
+app-form .select-dropdown > div > div {
 	position: absolute;
 	right: 5px;
 	top: 50%;
@@ -145,34 +181,29 @@ ion-item.select-file > ion-label {
 	color: var(--ion-color-medium);
 	pointer-events: none;	
 }
-.completer-dropdown {
+app-form .completer-dropdown {
 	position: static !important;
 }
-.completer-title {
+app-form .completer-title {
 	clear: both;
 	display: block;
 	width: 100%;
 }
-.completer-image {
+app-form .completer-image {
 	width: 36px;
 	height: 36px;
 	border-radius: 50%;
 }
-.completer-image-default {
+app-form .completer-image-default {
 	background-image: none !important;
 }
 
-/* QR Code */
-qr-code > img {
-	height: auto !important;
-}
-
-/* Preview of Image Picker */
-.image-picker-preview {
+/* image picker preview */
+app-form .image-picker-preview {
 	clear: both;
 	overflow: hidden;
 }
-.image-picker-preview > div {
+app-form .image-picker-preview > div {
 	width: 300px;
 	float: left;
 	padding-right: 20px;
