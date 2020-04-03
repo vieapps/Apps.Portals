@@ -1,6 +1,104 @@
 {
 	"portals": {
 		"name": "Cổng tích hợp",
+		"common": {
+			"controls": {
+				"notifications": {
+					"events": "Gửi thông báo khi",
+					"methods": "Phương thức gửi thông báo",
+					"inheritFromParent": "Sử dụng thiết đặt từ cấp trên để gửi thông báo",
+					"emails": {
+						"label": "Thiết đặt gửi thông báo qua emails",
+						"toAddresses": {
+							"label": "Gửi tới địa chỉ",
+							"placeholder": "Địa chỉ email có thể nhập dạng Tên <địa chỉ email>, vd: VIEApps.net <info@vieapps.net>",
+							"description": "Các địa chỉ email nhận thông báo, phân cách nhau bằng dấu chấm phẩy (;)"
+						},
+						"ccAddresses": {
+							"label": "Gửi tới địa chỉ (CC)",
+							"description": "Các địa chỉ email nhận thông báo tại phần đồng gửi (CC), phân cách nhau bằng dấu chấm phẩy (;)"
+						},
+						"bccAddresses": {
+							"label": "Gửi tới địa chỉ (BCC)",
+							"description": "Các địa chỉ email nhận thông báo tại phần đồng gửi ẩn (BCC), phân cách nhau bằng dấu chấm phẩy (;)"
+						},
+						"subject": {
+							"label": "Tiêu đề email thông báo"
+						},
+						"body": {
+							"label": "Nội dung email thông báo",
+							"description": "Nội dung email thông báo có thể nhập các mã HTML, hệ thống sẽ tự động thêm các thẻ '<b>&lt;br/&gt;</b>' khi xuống dòng.<br/><u>Chú ý</u>: có thể được sử dụng các tokens 'bộ râu' (brace tokens) trong tiêu đề và nội dung của email để điền các dữ liệu, vd: {global.Host} để lấy ra tên domain.<br/>Có 2 đối tượng dữ liệu chính là '<b>global</b>' là đối tượng thông tin meta, '<b>current</b>' là đối tượng thông tin trong ngữ cảnh thao tác.<br/>Vui lòng tham khảo tài liệu hướng dẫn để tìm hiểu chi tiết các đối tượng dữ liệu."
+						}
+					},
+					"webhooks": {
+						"label": "Thiết đặt gửi thông báo qua webhooks",
+						"endpointURLs": {
+							"label": "Địa chỉ nhận web-hooks",
+							"placeholder": "vd: https://webhooks.vieapps.net/",
+							"description": "Các địa chỉ web nhận thông báo webhooks, mỗi một địa chỉ trên một dòng, phải bắt đầu bằng http:// hoặc https://"
+						},
+						"signAlgorithm": {
+							"label": "Phương pháp ký"
+						},
+						"signKey": {
+							"label": "Cụm từ tạo khoá để ký",
+							"description": "Chỉ định cụm từ tạo khoá để ký webhooks.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng giá trị mặc định theo thứ tự ưu tiên:<br/>- Mã định danh của app đang tương tác<br/>- Cụm khoá mặc định của hệ thống"
+						},
+						"signatureName": {
+							"label": "Tên của tham số chữ ký",
+							"description": "Chỉ định tên của tham số chữ ký trong webhooks.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng tên của phương pháp, vd: HmacSha256Signature"
+						},
+						"signatureAsHex": {
+							"label": "Chữ ký dạng hex (off nếu muốn chữ ký dạng base64)"
+						},
+						"signatureInQuery": {
+							"label": "Đặt chữ ký trong query-string (off nếu muốn đặt chữ ký trong header)"
+						},
+						"additionalQuery": {
+							"label": "Thông tin bổ sung cho query-string",
+							"description": "Nhập thông tin bổ sung cho query-string dạng JSON.<br/>Ví dụ:<br/>{<br/>&nbsp;&nbsp;\"webhook.query\":\"this is web hook query\"<br/>}"
+						},
+						"additionalHeader": {
+							"label": "Thông tin bổ sung cho header",
+							"description": "Nhập thông tin bổ sung cho header dạng JSON.<br/>Ví dụ:<br/>{<br/>&nbsp;&nbsp;\"webhook.header\":\"this is web hook header\"<br/>}"
+						}
+					}
+				},
+				"emails": {
+					"label": "Thiết đặt gửi emails",
+					"inheritFromParent": "Sử dụng thiết đặt gửi emails từ cấp trên",
+					"from": {
+						"label": "Địa chỉ email gửi đi",
+						"placeholder": "Địa chỉ email có thể nhập dạng Tên <địa chỉ email>, vd: VIEApps.net <info@vieapps.net>"
+					},
+					"replyTo": "Địa chỉ email nhận phản hồi",
+					"signature": {
+						"label": "Chữ ký (sẽ đặt phía dưới tất cả các email)",
+						"description": "Nội dung có thể nhập các mã HTML, hệ thống sẽ tự động thêm các thẻ '<b>&lt;br/&gt;</b>' khi xuống dòng"
+					},
+					"smtp": {
+						"label": "Máy chủ gửi email",
+						"host": {
+							"label": "Địa chỉ",
+							"description": "Địa chỉ máy chủ gửi email có thể là địa chỉ kiểu tên miền (vd: smtp.gmail.com) hoặc địa chỉ IP"
+						},
+						"port": {
+							"label": "Cổng (port) kết nối",
+							"description": "Thông thường cổng kết nối SMTP là 25, tuy nhiên có khi sử dụng SSL cổng kết nối có thể là 587"
+						},
+						"enableSsl": "Chỉ định sử dụng kết nối an toàn SSL",
+						"userName": {
+							"label": "Tài khoản kết nối",
+							"description": "Tên tài khoản sử dụng để đăng nhập và kết nối tới máy chủ gửi email"
+						},
+						"userPassword": {
+							"label": "Mật khẩu kết nối",
+							"description": "Mật khẩu của tài khoản sử dụng để đăng nhập và kết nối tới máy chủ gửi email"
+						}
+					}
+				}
+			}
+		},
 		"organizations": {
 			"title": {
 				"search": "Tìm kiếm",
@@ -33,22 +131,22 @@
 				"ExpiredDate": {
 					"label": "Ngày hết hạn",
 					"placeholder": "",
-					"description": ""
+					"description": "Chỉ định ngày hết hạn - không nhập dữ liệu/xoá toàn bộ dữ liệu để chỉ định không bao giờ hết hạn"
 				},
 				"FilesQuotes": {
-					"label": "Hạn mức lưu trữ",
+					"label": "Hạn mức lưu trữ (GB)",
 					"placeholder": "",
-					"description": ""
+					"description": "Không đặt hạn mức (giá trị là 0) để chỉ định không giới hạn về hạn mức lưu trữ"
 				},
 				"Required2FA": {
 					"label": "Yêu cầu phải xác thực 2 lớp",
 					"placeholder": "",
-					"description": ""
+					"description": "Nếu được bật, tất cả các tài khoản truy cập vào để biên tập phải được xác thực 2 lớp trước khi thao tác"
 				},
 				"TrackDownloadFiles": {
 					"label": "Ghi nhận tất cả các hoạt động tải files",
 					"placeholder": "",
-					"description": ""
+					"description": "Nếu được bật, tất cả các thao tác tải file đều được ghi nhận lại"
 				},
 				"Theme": {
 					"label": "Theme",
@@ -64,6 +162,25 @@
 					"label": "Desktop cho tìm kiếm",
 					"placeholder": "",
 					"description": ""
+				},
+				"RefreshUrls": {
+					"label": "Các URLs sẽ làm tươi",
+					"Addresses": {
+						"label": "Các địa chỉ URLs sẽ làm tươi định kỳ",
+						"description": "Các URLs ở trên sẽ được làm tươi định kỳ để phản hồi nhanh nhất khi có yêu cầu mở web, một địa chỉ URL nằm trên 1 dòng.<br/><u>Chú ý</u>: có thể sử dụng ký hiệu '<b>~/</b>' để chỉ định liên kết từ gốc (root)."
+					},
+					"Interval": {
+						"label": "Thời gian làm tươi định kỳ (phút)",
+						"description": "Chỉ định thời gian (phút) để làm tươi định kỳ các URLs đã chỉ định."
+					}
+				},
+				"RedirectUrls": {
+					"label": "Các URLs sẽ chuyển hướng",
+					"Addresses": {
+						"label": "Các địa chỉ URLs sẽ chuyển hướng",
+						"description": "Các URLs ở trên sẽ được chuyển hướng khi gặp lỗi không tìm thấy (HTTP 404), một địa chỉ URL nằm trên 1 dòng, nhập theo mẫu 'URL nguồn|URL đích.<br/><u>Chú ý</u>: có thể sử dụng ký hiệu '<b>~/</b>' để chỉ định liên kết từ gốc (root), sử dụng ký hiệu '<b>*</b>' để chỉ định toàn bộ liên kết (nguồn)."
+					},
+					"AllHttp404": "Chuyển hướng toàn bộ các liên kết không tìm thấy (HTTP 404) về trang chủ"
 				}
 			},
 			"list": {
@@ -73,11 +190,11 @@
 				"segments": {
 					"basic": "Thông tin cơ bản",
 					"privileges": "Quyền truy cập",
-					"messages": "Thông điệp",
-					"emails": "Gửi email",
-					"socials": "Mạng xã hội",
-					"notifications": "Gửi thông báo",
-					"urls": "Thiết đặt URLs",
+					"notifications": "Thông báo",
+					"urls": "URLs",
+					"emails": "Emails",
+					"socials": "Mạng XH & Theo dõi",
+					"instructions": "Thông điệp",
 					"attachments": "File đính kèm"
 				}
 			}

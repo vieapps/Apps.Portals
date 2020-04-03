@@ -7,6 +7,17 @@ export class Organization extends BaseModel {
 
 	constructor() {
 		super();
+		this.Notifications = {
+			Events: [],
+			Methods: [],
+			WebHooks: {
+				SignAlgorithm: "SHA256",
+				SignatureAsHex: true
+			}
+		};
+		this.RefreshUrls = { Interval: 15 };
+		this.RedirectUrls = { AllHttp404: true };
+		this.Emails = { Smtp: { Port: 25 } };
 	}
 
 	/** All instances of organization */
@@ -31,6 +42,59 @@ export class Organization extends BaseModel {
 	LastModifiedID = "";
 
 	Privileges = new Privileges(true);
+	Notifications = {} as {
+		Events?: Array<string>;
+		Methods?: Array<string>;
+		Emails?: {
+			ToAddresses?: string;
+			CcAddresses?: string;
+			BccAddresses?: string;
+			Subject?: string;
+			Body?: string;
+		};
+		WebHooks?: {
+			EndpointURLs?: string;
+			SignAlgorithm?: string;
+			SignKey?: string;
+			SignatureName?: string;
+			SignatureAsHex?: boolean;
+			SignatureInQuery?: boolean;
+			AdditionalQuery?: string;
+			AdditionalHeader?: string;
+		};
+	};
+	RefreshUrls = {} as {
+		Addresses?: string;
+		Interval?: number;
+	};
+	RedirectUrls = {} as {
+		Addresses?: string;
+		AllHttp404?: boolean;
+	};
+	Emails = {} as {
+		From?: string;
+		ReplyTo?: string;
+		Signature?: string;
+		Smtp?: {
+			Host?: string;
+			Port?: number;
+			EnableSsl?: boolean;
+			UserName?: string;
+			UserPassword?: string;
+		}
+	};
+	Socials = {} as {
+		[key: string]: string
+	};
+	Trackings = {} as {
+		[key: string]: string
+	};
+	Instructions = {} as {
+		[key: string]: {
+			[key: string]: string
+		}
+	};
+
 	ansiTitle = "";
 
 	/** Deserializes data to object */
