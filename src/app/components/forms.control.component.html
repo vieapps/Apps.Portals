@@ -42,7 +42,9 @@
 		[maxlength]="maxLength"
 		[clearOnEdit]="clearOnEdit"
 		[attr.style]="style.control"
-		(keyup)="onKeyUp($event)"></ion-input>
+		(keyup)="onKeyUp($event)"
+		(ionFocus)="onFocus($event)"
+		(ionBlur)="onBlur($event)"></ion-input>
 
 	<ion-textarea *ngIf="isTextAreaControl" #elementRef
 		[formControlName]="formControlName"
@@ -54,7 +56,9 @@
 		[minlength]="minLength"
 		[maxlength]="maxLength"
 		[rows]="rows" 
-		[attr.style]="style.control"></ion-textarea>
+		[attr.style]="style.control"
+		(ionFocus)="onFocus($event)"
+		(ionBlur)="onBlur($event)"></ion-textarea>
 
 	<ion-select *ngIf="isSelectControl && !selectAsDropdown" #elementRef
 		[name]="name"
@@ -66,7 +70,9 @@
 		[value]="value"
 		[disabled]="disabled"
 		[placeholder]="placeholder"
-		(ionChange)="onChanged($event)">
+		(ionFocus)="onFocus($event)"
+		(ionChange)="onChanged($event)"
+		(ionBlur)="onBlur($event)">
 		<ion-select-option *ngFor="let option of selectOptions; trackBy: trackOption" [value]="option.Value">{{ option.Label }}</ion-select-option>
 	</ion-select>
 
@@ -84,7 +90,9 @@
 		[value]="datetimeValue"
 		[disabled]="disabled"
 		[placeholder]="placeholder"
-		(ionChange)="onChanged($event)"></ion-datetime>
+		(ionFocus)="onFocus($event)"
+		(ionChange)="onChanged($event)"
+		(ionBlur)="onBlur($event)"></ion-datetime>
 
 	<ion-toggle *ngIf="isToggleControl" slot="end" #elementRef
 		[name]="name"
@@ -92,7 +100,9 @@
 		[color]="color.control"
 		[checked]="yesnoChecked"
 		[title]="description"
-		(ionChange)="onChanged($event)"></ion-toggle>
+		(ionFocus)="onFocus($event)"
+		(ionChange)="onChanged($event)"
+		(ionBlur)="onBlur($event)"></ion-toggle>
 
 	<ion-checkbox *ngIf="isCheckboxControl" slot="end" #elementRef
 		[name]="name"
@@ -100,7 +110,9 @@
 		[color]="color.control"
 		[checked]="yesnoChecked"
 		[title]="description"
-		(ionChange)="onChanged($event)"></ion-checkbox>
+		(ionFocus)="onFocus($event)"
+		(ionChange)="onChanged($event)"
+		(ionBlur)="onBlur($event)"></ion-checkbox>
 
 	<ion-range *ngIf="isRangeControl" #elementRef
 		[name]="name"
@@ -115,7 +127,9 @@
 		[max]="maxValue"
 		[value]="value"
 		[title]="description"
-		(ionChange)="onChanged($event)">
+		(ionFocus)="onFocus($event)"
+		(ionChange)="onChanged($event)"
+		(ionBlur)="onBlur($event)">
 		<ion-icon *ngIf="rangeOptions.Icons.Start" [name]="rangeOptions.Icons.Start" size="small" slot="start"></ion-icon>
 		<ion-icon *ngIf="rangeOptions.Icons.End" [name]="rangeOptions.Icons.End" size="small" slot="end"></ion-icon>
 	</ion-range>
@@ -182,10 +196,12 @@
 		<ion-checkbox slot="end" [checked]="selectOptionIsChecked(option.Value)" [value]="option.Value" (ionChange)="onChanged($event)"></ion-checkbox>
 	</ion-item>
 
-	<label *ngIf="description"
-		[class]="css.description"
-		[style]="style.description"
-		[innerHTML]="description"></label>
+	<ion-item *ngIf="description" [color]="theme">
+		<label
+			[class]="css.description"
+			[style]="style.description"
+			[innerHTML]="description"></label>
+	</ion-item>
 
 </ion-list>
 
@@ -193,7 +209,9 @@
 	[name]="name"
 	[class.invalid]="invalid"
 	[value]="value"
-	(ionChange)="onChanged($event)">
+	(ionFocus)="onFocus($event)"
+	(ionChange)="onChanged($event)"
+	(ionBlur)="onBlur($event)">
 
 	<ion-list-header *ngIf="label" [color]="theme">
 		<ion-label [class]="css.label">{{ label }}</ion-label>
@@ -225,7 +243,9 @@
 			[minlength]="minLength"
 			[maxlength]="maxLength"
 			[attr.style]="style.control"
-			(keyup)="onKeyUp($event)"></ion-input>
+			(keyup)="onKeyUp($event)"
+			(ionFocus)="onFocus($event)"
+			(ionBlur)="onBlur($event)"></ion-input>
 		<label *ngIf="description"
 			[class]="css.description"
 			[style]="style.description"
@@ -241,7 +261,7 @@
 
 </div>
 
-<ion-list *ngIf="visible && (isFormGroup || isFormArray)">
+<ion-list *ngIf="visible && (isFormGroup || isFormArray) && !isFormButtons">
 	
 	<ion-list-header *ngIf="label" [color]="theme">
 		<ion-label [class]="css.label">{{ label }}</ion-label>
@@ -275,6 +295,16 @@
 	</div>
 
 </ion-list>
+
+<ion-buttons *ngIf="visible && isFormButtons" class="ion-padding">
+	<ion-button *ngFor="let ctrl of subControls; trackBy: trackControl"
+		[fill]="ctrl.Options.ButtonOptions.Fill"
+		[color]="ctrl.Options.ButtonOptions.Color"
+		(click)="onClick(ctrl, subFormGroup)">
+		<ion-icon *ngIf="ctrl.Options.ButtonOptions.Icon.Name" [icon]="ctrl.Options.ButtonOptions.Icon.Name" [slot]="ctrl.Options.ButtonOptions.Icon.Slot"></ion-icon>
+		{{ ctrl.Options.Label }}
+	</ion-button>
+</ion-buttons>
 
 <control-image-cropper *ngIf="visible && isCustomControl('image-cropper')" #elementRef
 	[formGroup]="formGroup"

@@ -92,6 +92,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.isFormArray && this.control.SubControls.Controls.find(subcontrol => subcontrol.SubControls !== undefined) !== undefined;
 	}
 
+	get isFormButtons() {
+		return this.control.SubControls !== undefined && this.isControl("Buttons");
+	}
+
 	isControl(type: string) {
 		return AppUtility.isEquals(this.control.Type, type);
 	}
@@ -523,9 +527,15 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		this.appFormsSvc.focusNext(this.control, () => this.lastFocus.emit(this.control));
 	}
 
+	onFocus(event: any) {
+		if (this.control.Options.OnFocus !== undefined) {
+			this.control.Options.OnFocus(event, this.control, this.formControl, this.formGroup);
+		}
+	}
+
 	onKeyUp(event: KeyboardEvent) {
 		if (this.control.Options.OnKeyUp !== undefined) {
-			this.control.Options.OnKeyUp(event);
+			this.control.Options.OnKeyUp(event, this.control, this.formControl, this.formGroup);
 		}
 		if (event.code === "Enter") {
 			this.focusNext();
@@ -625,11 +635,21 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		}
 	}
 
-	onDeleted(event: any) {
-		if (this.isDatePickerDesktopControl) {
-			this.formControl.setValue(undefined);
+	onBlur(event: any) {
+		if (this.control.Options.OnBlur !== undefined) {
+			this.control.Options.OnBlur(event, this.control, this.formControl, this.formGroup);
 		}
-		else if (this.isImagePickerControl && this.control.Options.FilePickerOptions.OnDeleted !== undefined) {
+	}
+
+	onClick(control: AppFormsControl, formGroup: FormGroup) {
+		if (control.Options.ButtonOptions.OnClick !== undefined) {
+			control.Options.ButtonOptions.OnClick(control, formGroup);
+		}
+	}
+
+	onDeleted(event: any) {
+		this.formControl.setValue(undefined);
+		if (this.isImagePickerControl && this.control.Options.FilePickerOptions.OnDeleted !== undefined) {
 			this.control.Options.FilePickerOptions.OnDeleted(event, this.control, this.formControl, this.formGroup);
 		}
 	}
