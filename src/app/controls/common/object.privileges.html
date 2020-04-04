@@ -6,7 +6,7 @@
 			[checked]="inheritFromParent.inherit"
 			(ionChange)="onInheritFromParentChanged($event)"></ion-toggle>
 	</ion-item>
-	<section *ngIf="initialized" [hidden]="inheritFromParent.inherit">
+	<section *ngIf="initialized" [hidden]="inheritFromParent.inherit" style="background-color:var(--ion-color-base)">
 		<div *ngFor="let name of names; trackBy: track">
 			<label class="header">
 				{{ labels.names[name].label }}
