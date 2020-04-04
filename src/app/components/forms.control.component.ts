@@ -77,11 +77,11 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get isFormGroup() {
-		return this.control.SubControls !== undefined && !this.control.SubControls.AsArray;
+		return !this.isFormControl && !this.control.SubControls.AsArray;
 	}
 
 	get isFormArray() {
-		return this.control.SubControls !== undefined && this.control.SubControls.AsArray;
+		return !this.isFormControl && this.control.SubControls.AsArray;
 	}
 
 	get isSimpleFormArray() {
@@ -93,7 +93,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get isFormButtons() {
-		return this.control.SubControls !== undefined && this.isControl("Buttons");
+		return !this.isFormControl && this.isControl("Buttons");
 	}
 
 	isControl(type: string) {
@@ -191,8 +191,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get invalid() {
-		const formControl = this.formControl;
-		return formControl !== undefined && formControl.invalid && formControl.dirty;
+		return this.formControl !== undefined && this.formControl.invalid && this.formControl.dirty;
 	}
 
 	get label() {
@@ -223,11 +222,11 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get type() {
-		return (this.isPasswordControl && this.show ? "text" : this.control.Options.Type).trim().toLowerCase();
+		return (this.isPasswordControl && this.show ? "text" : this.control.Options.Type || "text").trim().toLowerCase();
 	}
 
 	get required() {
-		return this.control.Required ? true : undefined;
+		return this.visible && this.control.Required ? true : undefined;
 	}
 
 	get disabled() {
@@ -294,13 +293,15 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get name() {
-		return this.control.Options.Name;
+		return AppUtility.isNotEmpty(this.control.Options.Name) ? this.control.Options.Name.trim() : this.control.Name;
 	}
 
 	get value() {
-		return AppUtility.isEquals(this.control.Options.Type, "datetime-local") || AppUtility.isEquals(this.control.Options.Type, "date")
-			? AppUtility.toIsoDateTime(new Date(this.formControl.value), true)
-			: this.formControl.value;
+		return this.control.Options.GetFormControlValue !== undefined
+			? this.control.Options.GetFormControlValue(this.formControl.value, this.control, this.formControl, this.formGroup)
+			: AppUtility.isEquals(this.control.Options.Type, "datetime-local") || AppUtility.isEquals(this.control.Options.Type, "date")
+				? AppUtility.toIsoDateTime(new Date(this.formControl.value), true)
+				: this.formControl.value;
 	}
 
 	get rows() {
@@ -523,8 +524,28 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.isLookupControl && this.control.Options.LookupOptions.AsModal;
 	}
 
-	private focusNext() {
+	focusNext() {
 		this.appFormsSvc.focusNext(this.control, () => this.lastFocus.emit(this.control));
+	}
+
+	switchPasswordControl() {
+		this.show = !this.show;
+		this.control.focus();
+	}
+
+	clickButton(control: AppFormsControl, formGroup: FormGroup) {
+		if (control.Options.ButtonOptions.OnClick !== undefined) {
+			control.Options.ButtonOptions.OnClick(control, formGroup);
+		}
+	}
+
+	deleteValue() {
+		if (this.formControl !== undefined) {
+			this.formControl.setValue(undefined);
+		}
+		if (this.isImagePickerControl && this.control.Options.FilePickerOptions.OnDelete !== undefined) {
+			this.control.Options.FilePickerOptions.OnDelete(this.control, this.formControl, this.formGroup);
+		}
 	}
 
 	onFocus(event: any) {
@@ -542,12 +563,15 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		}
 	}
 
+	onBlur(event: any) {
+		if (this.control.Options.OnBlur !== undefined) {
+			this.control.Options.OnBlur(event, this.control, this.formControl, this.formGroup);
+		}
+	}
+
 	onChanged(event: any) {
 		// call on-changed event handler
-		if (this.isFilePickerControl && this.control.Options.FilePickerOptions.OnChanged !== undefined) {
-			this.control.Options.FilePickerOptions.OnChanged(event, this.control, this.formControl, this.formGroup);
-		}
-		else if (this.control.Options.OnChanged !== undefined) {
+		if (this.control.Options.OnChanged !== undefined) {
 			this.control.Options.OnChanged(event, this.control, this.formControl, this.formGroup);
 		}
 
@@ -632,25 +656,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			if (!this.isRangeControl) {
 				this.focusNext();
 			}
-		}
-	}
-
-	onBlur(event: any) {
-		if (this.control.Options.OnBlur !== undefined) {
-			this.control.Options.OnBlur(event, this.control, this.formControl, this.formGroup);
-		}
-	}
-
-	onClick(control: AppFormsControl, formGroup: FormGroup) {
-		if (control.Options.ButtonOptions.OnClick !== undefined) {
-			control.Options.ButtonOptions.OnClick(control, formGroup);
-		}
-	}
-
-	onDeleted(event: any) {
-		this.formControl.setValue(undefined);
-		if (this.isImagePickerControl && this.control.Options.FilePickerOptions.OnDeleted !== undefined) {
-			this.control.Options.FilePickerOptions.OnDeleted(event, this.control, this.formControl, this.formGroup);
 		}
 	}
 

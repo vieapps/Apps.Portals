@@ -75,6 +75,7 @@ export interface AppFormsControlConfig {
 		OnBlur?: (event: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void;
 		OnChanged?: (event: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void;
 		GetFormControlName?: (control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => string;
+		GetFormControlValue?: (value: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => any;
 		SelectOptions?: {
 			Values?: Array<{ Value: string, Label: string }>;
 			RemoteURI?: string;
@@ -132,8 +133,7 @@ export interface AppFormsControlConfig {
 			AllowMultiple?: boolean;
 			AllowPreview?: boolean;
 			AllowDelete?: boolean;
-			OnChanged?: (event: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void;
-			OnDeleted?: (file: File, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void;
+			OnDelete?: (control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void;
 		};
 		RangeOptions?: {
 			AllowPin?: boolean;
@@ -219,6 +219,7 @@ export class AppFormsControl {
 		OnBlur: undefined as (event: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void,
 		OnChanged: undefined as (event: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void,
 		GetFormControlName: undefined as (control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => string,
+		GetFormControlValue: undefined as (value: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => any,
 		SelectOptions: {
 			Values: undefined as Array<{ Value: string, Label: string }>,
 			RemoteURI: undefined as string,
@@ -276,8 +277,7 @@ export class AppFormsControl {
 			AllowMultiple: true,
 			AllowPreview: false,
 			AllowDelete: true,
-			OnChanged: undefined as (event: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void,
-			OnDeleted: undefined as (file: File, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void
+			OnDelete: undefined as (control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void
 		},
 		RangeOptions: {
 			AllowPin: true,
@@ -438,6 +438,7 @@ export class AppFormsControl {
 			control.Options.OnBlur = controlOptions.OnBlur || controlOptions.onBlur || controlOptions.onblur;
 			control.Options.OnChanged = controlOptions.OnChanged || controlOptions.onChanged || controlOptions.onchanged;
 			control.Options.GetFormControlName = controlOptions.GetFormControlName || controlOptions.getFormControlName || controlOptions.getformcontrolname;
+			control.Options.GetFormControlValue = controlOptions.GetFormControlValue || controlOptions.getFormControlValue || controlOptions.getformcontrolvalue;
 
 			const selectOptions = controlOptions.SelectOptions || controlOptions.selectOptions || controlOptions.selectoptions;
 			if (selectOptions !== undefined) {
@@ -526,8 +527,7 @@ export class AppFormsControl {
 					AllowMultiple: !!(filepickerOptions.AllowMultiple || filepickerOptions.allowMultiple || filepickerOptions.allowmultiple),
 					AllowPreview: !!(filepickerOptions.AllowPreview || filepickerOptions.allowPreview || filepickerOptions.allowpreview),
 					AllowDelete: !!(filepickerOptions.AllowDelete || filepickerOptions.allowDelete || filepickerOptions.allowdelete),
-					OnChanged: filepickerOptions.OnChanged || filepickerOptions.onChanged || filepickerOptions.onchanged,
-					OnDeleted: filepickerOptions.OnDeleted || filepickerOptions.onDeleted || filepickerOptions.ondeleted
+					OnDelete: filepickerOptions.OnDelete || filepickerOptions.onDelete || filepickerOptions.ondelete
 				};
 			}
 
@@ -592,6 +592,7 @@ export class AppFormsControl {
 		options.Options.OnBlur = this.Options.OnBlur;
 		options.Options.OnChanged = this.Options.OnChanged;
 		options.Options.GetFormControlName = this.Options.GetFormControlName;
+		options.Options.GetFormControlValue = this.Options.GetFormControlValue;
 		options.Options.SelectOptions.InterfaceOptions = this.Options.SelectOptions.InterfaceOptions;
 		options.Options.LookupOptions.CompleterOptions.DataSource = this.Options.LookupOptions.CompleterOptions.DataSource;
 		options.Options.LookupOptions.CompleterOptions.GetInitialValue = this.Options.LookupOptions.CompleterOptions.GetInitialValue;
@@ -600,8 +601,7 @@ export class AppFormsControl {
 		options.Options.LookupOptions.CompleterOptions.OnModalDismiss = this.Options.LookupOptions.CompleterOptions.OnModalDismiss;
 		options.Options.LookupOptions.ModalOptions.Component = this.Options.LookupOptions.ModalOptions.Component;
 		options.Options.LookupOptions.ModalOptions.OnDismiss = this.Options.LookupOptions.ModalOptions.OnDismiss;
-		options.Options.FilePickerOptions.OnChanged = this.Options.FilePickerOptions.OnChanged;
-		options.Options.FilePickerOptions.OnDeleted = this.Options.FilePickerOptions.OnDeleted;
+		options.Options.FilePickerOptions.OnDelete = this.Options.FilePickerOptions.OnDelete;
 		options.Options.ButtonOptions.OnClick = this.Options.ButtonOptions.OnClick;
 		if (onPreCompleted !== undefined) {
 			onPreCompleted(options);
