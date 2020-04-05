@@ -77,7 +77,7 @@ export interface AppFormsControlConfig {
 		GetFormControlName?: (control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => string;
 		GetFormControlValue?: (value: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => any;
 		SelectOptions?: {
-			Values?: Array<{ Value: string, Label: string }>;
+			Values?: string | Array<string> | Array<{ Value: string, Label: string }>;
 			RemoteURI?: string;
 			RemoteURIConverter?: (data: any) => { Value: string, Label: string };
 			RemoteURIProcessor?: (uri: string, converter?: (data: any) => { Value: string, Label: string }) => Promise<Array<{ Value: string, Label: string }>>;
