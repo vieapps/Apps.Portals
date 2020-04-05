@@ -293,28 +293,22 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get name() {
-		return AppUtility.isNotEmpty(this.control.Options.Name) ? this.control.Options.Name.trim() : this.control.Name;
+		return this.control.Options.Name;
 	}
 
 	get value() {
 		return this.control.Options.GetFormControlValue !== undefined
 			? this.control.Options.GetFormControlValue(this.formControl.value, this.control, this.formControl, this.formGroup)
-			: AppUtility.isEquals(this.control.Options.Type, "datetime-local") || AppUtility.isEquals(this.control.Options.Type, "date")
-				? AppUtility.toIsoDateTime(new Date(this.formControl.value), true)
-				: this.formControl.value;
+			: this.control.Options.Type.startsWith("date") ? AppUtility.toIsoDateTime(new Date(this.formControl.value), true) : this.formControl.value;
 	}
 
 	get rows() {
-		return this.control.Options.Rows !== undefined && this.control.Options.Rows > 0
-			? this.control.Options.Rows
-			: 4;
+		return this.control.Options.Rows !== undefined && this.control.Options.Rows > 0 ? this.control.Options.Rows : 4;
 	}
 
 	get yesnoChecked() {
 		return this.control.formRef !== undefined && this.control.value !== undefined
-			? this.minValue === undefined || this.maxValue === undefined
-				? AppUtility.isTrue(this.control.value)
-				: +this.control.value !== 0
+			? this.minValue === undefined || this.maxValue === undefined ? AppUtility.isTrue(this.control.value) : +this.control.value !== 0
 			: false;
 	}
 
@@ -327,9 +321,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	get datetimeDisplayFormat() {
 		return this.control.Options.DatePickerOptions.DisplayFormat !== undefined
 			? this.control.Options.DatePickerOptions.DisplayFormat
-			: this.control.Options.DatePickerOptions.AllowTimes
-				? "DD/MM/YYYY HH:mm"
-				: "DD/MM/YYYY";
+			: this.control.Options.DatePickerOptions.AllowTimes ? "DD/MM/YYYY HH:mm" : "DD/MM/YYYY";
 	}
 
 	get datetimePickerFormat() {

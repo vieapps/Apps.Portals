@@ -551,9 +551,9 @@ export class AppFormsControl {
 			if (buttonOptions !== undefined) {
 				const icon = buttonOptions.Icon || buttonOptions.icon || {};
 				control.Options.ButtonOptions = {
+					OnClick: buttonOptions.OnClick || buttonOptions.onClick || buttonOptions.onclick,
 					Fill: buttonOptions.Fill || buttonOptions.fill || "solid",
 					Color: buttonOptions.Color || buttonOptions.Color,
-					OnClick: buttonOptions.OnClick || buttonOptions.onClick || buttonOptions.onclick,
 					Icon: {
 						Name: icon.Name || icon.name,
 						Slot: icon.Slot || icon.slot || "start"
