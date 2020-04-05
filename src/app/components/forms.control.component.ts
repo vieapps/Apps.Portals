@@ -165,9 +165,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get isAllowDelete() {
-		return this.isImagePickerControl
-			? this.control.Options.FilePickerOptions.AllowDelete && this.value !== undefined && this.value.new !== undefined
-			: false;
+		return this.isImagePickerControl ? this.control.Options.FilePickerOptions.AllowDelete && this.value !== undefined && this.value.new !== undefined : false;
 	}
 
 	get deleteIcon() {
@@ -178,12 +176,12 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.formGroup.controls[this.control.Name];
 	}
 
+	get formControlAsFormGroup() {
+		return this.formControl as FormGroup;
+	}
+
 	get formControlName() {
-		return this.formArrayIndex !== undefined
-			? this.formArrayIndex
-			: this.control.Options.GetFormControlName !== undefined
-				? this.control.Options.GetFormControlName(this.control, this.formControl, this.formGroup) || this.control.Name
-				: this.control.Name;
+		return this.formArrayIndex !== undefined ? this.formArrayIndex : this.control.Name;
 	}
 
 	get visible() {
@@ -297,9 +295,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get value() {
-		return this.control.Options.GetFormControlValue !== undefined
-			? this.control.Options.GetFormControlValue(this.formControl.value, this.control, this.formControl, this.formGroup)
-			: this.control.Options.Type.startsWith("date") ? AppUtility.toIsoDateTime(new Date(this.formControl.value), true) : this.formControl.value;
+		return this.control.Options.Type.startsWith("date") ? AppUtility.toIsoDateTime(new Date(this.formControl.value), true) : this.formControl.value;
 	}
 
 	get rows() {
@@ -659,34 +655,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		this.control.value = "";
 		this.control.focus();
 		this.refreshCaptcha.emit(this.control);
-	}
-
-	get subControls() {
-		return this.control.SubControls.Controls;
-	}
-
-	get subFormGroup() {
-		return this.formControl;
-	}
-
-	getSubFormGroup(index: number) {
-		return (this.subFormGroup as FormArray).controls[index];
-	}
-
-	getSubControls(control: AppFormsControl) {
-		return control.SubControls.Controls;
-	}
-
-	getSubLabel(control: AppFormsControl) {
-		return control.Options.Label;
-	}
-
-	getSubColor(control: AppFormsControl) {
-		return control.Options.LabelOptions.Color;
-	}
-
-	getSubCss(control: AppFormsControl) {
-		return control.Options.LabelOptions.Css;
 	}
 
 	trackControl(index: number, control: AppFormsControl) {

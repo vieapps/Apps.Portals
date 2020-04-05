@@ -74,8 +74,6 @@ export interface AppFormsControlConfig {
 		OnKeyUp?: (event: KeyboardEvent, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void;
 		OnBlur?: (event: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void;
 		OnChanged?: (event: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void;
-		GetFormControlName?: (control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => string;
-		GetFormControlValue?: (value: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => any;
 		SelectOptions?: {
 			Values?: string | Array<string> | Array<{ Value: string, Label: string }>;
 			RemoteURI?: string;
@@ -218,8 +216,6 @@ export class AppFormsControl {
 		OnKeyUp: undefined as (event: KeyboardEvent, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void,
 		OnBlur: undefined as (event: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void,
 		OnChanged: undefined as (event: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void,
-		GetFormControlName: undefined as (control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => string,
-		GetFormControlValue: undefined as (value: any, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => any,
 		SelectOptions: {
 			Values: undefined as Array<{ Value: string, Label: string }>,
 			RemoteURI: undefined as string,
@@ -437,8 +433,6 @@ export class AppFormsControl {
 			control.Options.OnKeyUp = controlOptions.OnKeyUp || controlOptions.onKeyUp || controlOptions.onkeyup;
 			control.Options.OnBlur = controlOptions.OnBlur || controlOptions.onBlur || controlOptions.onblur;
 			control.Options.OnChanged = controlOptions.OnChanged || controlOptions.onChanged || controlOptions.onchanged;
-			control.Options.GetFormControlName = controlOptions.GetFormControlName || controlOptions.getFormControlName || controlOptions.getformcontrolname;
-			control.Options.GetFormControlValue = controlOptions.GetFormControlValue || controlOptions.getFormControlValue || controlOptions.getformcontrolvalue;
 
 			const selectOptions = controlOptions.SelectOptions || controlOptions.selectOptions || controlOptions.selectoptions;
 			if (selectOptions !== undefined) {
@@ -591,8 +585,6 @@ export class AppFormsControl {
 		options.Options.OnKeyUp = this.Options.OnKeyUp;
 		options.Options.OnBlur = this.Options.OnBlur;
 		options.Options.OnChanged = this.Options.OnChanged;
-		options.Options.GetFormControlName = this.Options.GetFormControlName;
-		options.Options.GetFormControlValue = this.Options.GetFormControlValue;
 		options.Options.SelectOptions.InterfaceOptions = this.Options.SelectOptions.InterfaceOptions;
 		options.Options.LookupOptions.CompleterOptions.DataSource = this.Options.LookupOptions.CompleterOptions.DataSource;
 		options.Options.LookupOptions.CompleterOptions.GetInitialValue = this.Options.LookupOptions.CompleterOptions.GetInitialValue;
