@@ -2,9 +2,10 @@
 	[color]="theme"
 	[formGroup]="formGroup"
 	[class.invalid]="invalid"
-	[class.select-file]="isFilePickerControl"
+	[class.file-picker]="isFilePickerControl"
 	[class.completer-container]="isCompleter"
-	[class.select-dropdown]="selectAsDropdown">
+	[class.select-dropdown]="selectAsDropdown"
+	[class.select-multiple]="selectAsMultiple">
 
 	<ion-button *ngIf="icon" fill="clear" slot="start" tabindex="-1">
 		<ion-icon [name]="icon" slot="icon-only"></ion-icon>
@@ -134,7 +135,7 @@
 		<ion-icon *ngIf="rangeOptions.Icons.End" [name]="rangeOptions.Icons.End" size="small" slot="end"></ion-icon>
 	</ion-range>
 
-	<select *ngIf="selectAsDropdown" #elementRef
+	<select *ngIf="selectAsDropdown || selectAsMultiple" #elementRef
 		[formControlName]="formControlName"
 		[name]="name"
 		[multiple]="selectMultiple"
@@ -165,7 +166,7 @@
 		(selected)="onChanged($event)"></ng2-completer>
 	
 	<div *ngIf="isFilePickerControl">
-		<div class="file-picker">
+		<div class="file-picker-input">
 			<input type="file" #elementRef
 				[accept]="control.Options.FilePickerOptions.Accept"
 				[multiple]="control.Options.FilePickerOptions.Multiple"

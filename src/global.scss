@@ -90,13 +90,16 @@ app-form label.description {
 	margin: 10px 0;
 }
 
-/* select drop-down with multiple */
-app-form ion-item.select-dropdown select {
+/* selects */
+app-form ion-item.select-dropdown > select {
+	margin: 8px 0;
+}
+app-form ion-item.select-multiple select {
 	border: 0;
 	width: 100%;
-	margin: 15px 0;
+	margin: 8px 0;
 }
-app-form ion-item.select-dropdown select > option {
+app-form ion-item.select-multiple select > option {
 	padding: 5px;
 }
 
@@ -119,23 +122,23 @@ app-form > form > div > ion-list > app-form-control > ion-list app-form-control:
 	padding-top: 0;
 }
 
-/* completer */
+/* completer & related controls */
 app-form .completer-container > ng2-completer,
 app-form .completer-holder,
 app-form .completer-dropdown-holder,
 app-form .completer-dropdown,
-app-form .select-dropdown > div,
-app-form .select-file > div{
+app-form .select-dropdown > select,
+app-form .file-picker > div,
+app-form .file-picker > div > div.file-picker-input {
 	width: 100% !important;
 }
 app-form ion-item.completer-container > ion-label,
 app-form ion-item.select-dropdown > ion-label,
-app-form ion-item.select-file > ion-label {
+app-form ion-item.file-picker > ion-label {
 	padding-bottom: 8px;
 }
 app-form .completer-holder > input.completer-input,
-app-form .select-dropdown > div > select,
-app-form .select-file > div > input {
+app-form .file-picker > div > div.file-picker-input > input {
 	padding-top: 8px;
 	padding-bottom: 8px;
 	font-family: inherit;
@@ -165,22 +168,6 @@ app-form .select-file > div > input {
 	-webkit-tap-highlight-color: transparent;
 	-webkit-touch-callout: none;
 }
-app-form .select-dropdown > div {
-	position: relative;
-}
-app-form .select-dropdown > div > div {
-	position: absolute;
-	right: 5px;
-	top: 50%;
-	margin-top: -3px;
-	width: 0;
-	height: 0;
-	border-top: 5px solid;
-	border-right: 5px solid transparent;
-	border-left: 5px solid transparent;
-	color: var(--ion-color-medium);
-	pointer-events: none;	
-}
 app-form .completer-dropdown {
 	position: static !important;
 }
@@ -194,16 +181,23 @@ app-form .completer-image {
 	height: 36px;
 	border-radius: 50%;
 }
+app-form .completer-image-holder {
+	width: auto !important;
+	margin-right: 15px;
+}
 app-form .completer-image-default {
 	background-image: none !important;
 }
+app-form .completer-item-text-image {
+	float: left !important;
+}
 
 /* image picker preview */
-app-form .image-picker-preview {
+app-form .file-picker .image-picker-preview {
 	clear: both;
 	overflow: hidden;
 }
-app-form .image-picker-preview > div {
+app-form .file-picker .image-picker-preview > div {
 	width: 300px;
 	float: left;
 	padding-right: 20px;

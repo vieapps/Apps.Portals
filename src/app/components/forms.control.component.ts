@@ -296,7 +296,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get rows() {
-		return this.control.Options.Rows !== undefined && this.control.Options.Rows > 0 ? this.control.Options.Rows : 4;
+		return this.selectAsDropdown ? undefined : this.control.Options.Rows !== undefined && this.control.Options.Rows > 0 ? this.control.Options.Rows : 4;
 	}
 
 	get yesnoChecked() {
@@ -358,7 +358,11 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get selectAsDropdown() {
-		return this.isSelectControl && !this.control.Options.SelectOptions.AsBoxes && AppUtility.isEquals(this.control.Options.Type, "dropdown");
+		return this.isSelectControl && !this.control.Options.SelectOptions.AsBoxes && AppUtility.isEquals(this.control.Options.Type, "dropdown") && !this.control.Options.SelectOptions.Multiple;
+	}
+
+	get selectAsMultiple() {
+		return this.isSelectControl && !this.control.Options.SelectOptions.AsBoxes && AppUtility.isEquals(this.control.Options.Type, "dropdown") && this.control.Options.SelectOptions.Multiple;
 	}
 
 	get selectInterface() {
@@ -523,13 +527,15 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		}
 	}
 
-	deleteValue(event?: any) {
-		if (this.isImagePickerControl && this.control.Options.FilePickerOptions.OnDelete !== undefined) {
-			this.control.Options.FilePickerOptions.OnDelete(this.control, this.formControl, this.formGroup);
+	deleteValue(value?: any) {
+		if (this.isFilePickerControl) {
+			if (this.control.Options.FilePickerOptions.OnDelete !== undefined) {
+				this.control.Options.FilePickerOptions.OnDelete(value as string, this.control, this.formControl, this.formGroup);
+			}
 		}
 		else if (this.isCompleter || this.isModal) {
 			if (this.control.Options.LookupOptions.OnDeleteValue !== undefined) {
-				this.control.Options.LookupOptions.OnDeleteValue(event as string, this.control, this.formControl, this.formGroup);
+				this.control.Options.LookupOptions.OnDeleteValue(value as string, this.control, this.formControl, this.formGroup);
 			}
 		}
 		else if (this.formControl !== undefined) {
@@ -637,7 +643,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		}
 
 		// normal control
-		else {
+		else if (!this.isFilePickerControl) {
 			// set value
 			this.formControl.setValue(event !== undefined && event.detail !== undefined ? event.detail.value : event);
 

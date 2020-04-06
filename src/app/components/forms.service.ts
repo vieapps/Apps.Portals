@@ -133,7 +133,7 @@ export interface AppFormsControlConfig {
 			Multiple?: boolean;
 			AllowPreview?: boolean;
 			AllowDelete?: boolean;
-			OnDelete?: (control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void;
+			OnDelete?: (name: string, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void;
 		};
 		RangeOptions?: {
 			AllowPin?: boolean;
@@ -277,7 +277,7 @@ export class AppFormsControl {
 			Multiple: true,
 			AllowPreview: false,
 			AllowDelete: true,
-			OnDelete: undefined as (control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void
+			OnDelete: undefined as (name: string, control: AppFormsControl, formControl: AbstractControl, formGroup: FormGroup) => void
 		},
 		RangeOptions: {
 			AllowPin: true,
