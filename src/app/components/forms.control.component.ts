@@ -56,10 +56,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		this._step = "ngAfterViewInit";
 		this.control.formRef = this.formControl;
 		this.control.elementRef = this.elementRef;
-		if (this.isCompleter && this._completerInitialValue !== undefined && AppUtility.isEquals(this.control.Options.Type, "Address")) {
-			this.changeDetector.detectChanges();
-		}
-		else if (this.isYesNoControl) {
+		if (this.isYesNoControl || (this.isCompleter && this.completerInitialValue !== undefined)) {
 			this.changeDetector.detectChanges();
 		}
 	}
@@ -157,7 +154,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get isImagePickerControl() {
-		return this.isFilePickerControl && !this.control.Options.FilePickerOptions.AllowMultiple && this.control.Options.FilePickerOptions.Accept !== undefined && this.control.Options.FilePickerOptions.Accept.indexOf("image/") > -1;
+		return this.isFilePickerControl && !this.control.Options.FilePickerOptions.Multiple && this.control.Options.FilePickerOptions.Accept !== undefined && this.control.Options.FilePickerOptions.Accept.indexOf("image/") > -1;
 	}
 
 	get isAllowImagePreview() {
@@ -454,7 +451,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get completerClearSelected() {
-		return this.control.Options.LookupOptions.CompleterOptions.ClearSelected;
+		return this.control.Options.LookupOptions.Multiple ? true : this.control.Options.LookupOptions.CompleterOptions.ClearSelected;
 	}
 
 	get completerDataSource() {
@@ -471,10 +468,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	get completerInitialValue() {
 		if (this._completerInitialValue === undefined) {
-			if (this.control.Options.LookupOptions.CompleterOptions.InitialValue !== undefined) {
-				this._completerInitialValue = this.control.Options.LookupOptions.CompleterOptions.InitialValue;
-			}
-			else if (this.isCompleterOfAddress) {
+			if (this.isCompleterOfAddress) {
 				const value = {
 					County: "",
 					Province: "",
@@ -487,9 +481,11 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				this._completerInitialValue = this.appFormsSvc.getMetaCounties().find(address => AppUtility.isEquals(address.County, value.County) && AppUtility.isEquals(address.Province, value.Province) && AppUtility.isEquals(address.Country, value.Country));
 			}
 			else {
-				this._completerInitialValue = this.control.Options.LookupOptions.CompleterOptions.GetInitialValue !== undefined
-					? this.control.Options.LookupOptions.CompleterOptions.GetInitialValue(this.control, this.formControl, this.formGroup)
-					: undefined;
+				this._completerInitialValue = this.control.Options.LookupOptions.CompleterOptions.InitialValue !== undefined
+					? this.control.Options.LookupOptions.CompleterOptions.InitialValue
+					: this.control.Options.LookupOptions.CompleterOptions.GetInitialValue !== undefined
+						? this.control.Options.LookupOptions.CompleterOptions.GetInitialValue(this.control, this.formControl, this.formGroup)
+						: undefined;
 			}
 		}
 		return this._completerInitialValue;
@@ -527,12 +523,17 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		}
 	}
 
-	deleteValue() {
-		if (this.formControl !== undefined) {
-			this.formControl.setValue(undefined);
-		}
+	deleteValue(event?: any) {
 		if (this.isImagePickerControl && this.control.Options.FilePickerOptions.OnDelete !== undefined) {
 			this.control.Options.FilePickerOptions.OnDelete(this.control, this.formControl, this.formGroup);
+		}
+		else if (this.isCompleter || this.isModal) {
+			if (this.control.Options.LookupOptions.OnDeleteValue !== undefined) {
+				this.control.Options.LookupOptions.OnDeleteValue(event as string, this.control, this.formControl, this.formGroup);
+			}
+		}
+		else if (this.formControl !== undefined) {
+			this.formControl.setValue(undefined);
 		}
 	}
 
@@ -542,11 +543,11 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		}
 	}
 
-	onKeyUp(event: KeyboardEvent) {
+	onKeyUp(event: KeyboardEvent, focusNextOnEnter: boolean = true) {
 		if (this.control.Options.OnKeyUp !== undefined) {
 			this.control.Options.OnKeyUp(event, this.control, this.formControl, this.formGroup);
 		}
-		if (event.code === "Enter") {
+		if (focusNextOnEnter && event.code === "Enter") {
 			this.focusNext();
 		}
 	}
@@ -600,9 +601,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		// special control: completer
 		else if (this.isCompleter) {
 			if (this.isCompleterOfAddress) {
-				let address = AppUtility.isObject(event, true) ? event.originalObject : undefined;
-				if (address === undefined && AppUtility.isEquals(this._step, "ngAfterViewInit") && this._completerInitialValue !== undefined) {
-					address = this._completerInitialValue;
+				let address = event !== undefined ? event.originalObject : undefined;
+				if (address === undefined && AppUtility.isEquals(this._step, "ngAfterViewInit") && this.completerInitialValue !== undefined) {
+					address = this.completerInitialValue;
 					this._step = "ngDone";
 				}
 				["County", "Province", "Country"].forEach(name => {
@@ -630,7 +631,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				else if (this._selectValues.findIndex(value => AppUtility.isEquals(value, event.detail.value)) < 0) {
 					this._selectValues.push(event.detail.value);
 				}
-				this._selectValues = this._selectValues.filter(v => v !== "");
+				this._selectValues = this._selectValues.filter(value => value !== "");
 			}
 			this.formControl.setValue(this._selectValues);
 		}
