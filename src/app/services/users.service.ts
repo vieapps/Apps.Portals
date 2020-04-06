@@ -22,17 +22,19 @@ export class UsersService extends BaseService {
 	}
 
 	public get completerDataSource() {
+		const convertFn = (data: any) => {
+			const profile = data instanceof UserProfile ? data as UserProfile : UserProfile.deserialize(data);
+			return {
+				title: profile.Name,
+				description: AppUtility.getHiddenEmail(profile.Email),
+				image: profile.avatarURI,
+				originalObject: profile
+			};
+		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("profile", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(o => {
-				const profile = UserProfile.deserialize(o);
-				return {
-					title: profile.Name,
-					description: AppUtility.getHiddenEmail(profile.Email),
-					image: profile.avatarURI,
-					originalObject: profile
-				};
-			})
+			data => (data.Objects as Array<any> || []).map(o => convertFn(o)),
+			convertFn
 		);
 	}
 
@@ -138,7 +140,7 @@ export class UsersService extends BaseService {
 		}
 	}
 
-	public getProfileAsync(id?: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public getProfileAsync(id?: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		id = id || this.configSvc.getAccount().id;
 		return UserProfile.contains(id)
 			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
@@ -155,7 +157,9 @@ export class UsersService extends BaseService {
 						if (onError !== undefined) {
 							onError(error);
 						}
-					}
+					},
+					undefined,
+					useXHR
 				);
 	}
 
