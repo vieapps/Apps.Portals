@@ -78,14 +78,15 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public registerAsync(body: any, captcha: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		body["Email"] = AppCrypto.rsaEncrypt(body["Email"]);
-		body["Password"] = AppCrypto.rsaEncrypt(body["Password"]);
-		body["ReferID"] = this.configSvc.appConfig.refer.id;
-		body["ReferSection"] = this.configSvc.appConfig.refer.section;
+	public registerAsync(registerInfo: any, captcha: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.createAsync(
 			super.getURI("account", undefined, `uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`),
-			body,
+			AppUtility.clone(registerInfo, ["ConfirmEmail", "ConfirmPassword", "Captcha"], undefined, body => {
+				body.Email = AppCrypto.rsaEncrypt(body.Email);
+				body.Password = AppCrypto.rsaEncrypt(body.Password);
+				body["ReferID"] = this.configSvc.appConfig.refer.id;
+				body["ReferSection"] = this.configSvc.appConfig.refer.section;
+			}),
 			onNext,
 			onError,
 			this.configSvc.appConfig.getCaptchaHeaders(captcha)
