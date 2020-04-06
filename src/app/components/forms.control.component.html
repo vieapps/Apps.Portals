@@ -290,7 +290,7 @@
 	</div>
 	
 	<div *ngIf="isComplexFormArray">
-		<div *ngFor="let ctrl of control.SubControls.Controls; let idx = index; trackBy: trackControl">
+		<ion-list *ngFor="let ctrl of control.SubControls.Controls; let idx = index; trackBy: trackControl">
 			<ion-list-header *ngIf="ctrl.Options.Label" [color]="ctrl.Options.LabelOptions.Color">
 				<ion-label [class]="ctrl.Options.LabelOptions.Css">{{ ctrl.Options.Label }}</ion-label>
 			</ion-list-header>
@@ -298,7 +298,7 @@
 				[formGroup]="formControlAsFormGroup.controls[idx]"
 				[control]="subctrl"
 				[theme]="theme"></app-form-control>
-		</div>
+		</ion-list>
 	</div>
 
 </ion-list>
