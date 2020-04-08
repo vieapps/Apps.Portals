@@ -184,7 +184,6 @@ export class UsersRegisterPage implements OnInit {
 
 	onFormInitialized(event: any) {
 		this.refreshCaptchaAsync();
-		this.appFormsSvc.reset(event.form);
 		this.register.form.patchValue({ Gender: "NotProvided" });
 	}
 

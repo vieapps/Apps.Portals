@@ -115,7 +115,6 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 	}
 
 	onLoginFormInitialized(event: any) {
-		this.appFormsSvc.reset(event.form);
 		if (this.configSvc.appConfig.isWebApp) {
 			this.login.form.patchValue({ Persistence: this.configSvc.appConfig.app.persistence });
 		}
@@ -288,7 +287,6 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 
 	onResetPasswordFormInitialized(event: any) {
 		this.refreshCaptchaAsync();
-		this.appFormsSvc.reset(event.form);
 		this.reset.form.patchValue({ Email: this.login.form.value.Email });
 	}
 
