@@ -10,6 +10,7 @@ export class UserProfileBase extends BaseModel {
 	constructor() {
 		super();
 		delete this["Privileges"];
+		delete this["OriginalPrivileges"];
 	}
 
 	/** All user profile instances */
