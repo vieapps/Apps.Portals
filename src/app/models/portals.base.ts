@@ -11,16 +11,16 @@ export abstract class PortalBase extends BaseModel {
 	/** The title */
 	public abstract Title: string;
 
-	/** The created time */
+	/** The time when the object was created */
 	public abstract Created: Date;
 
-	/** The identity of user who created the object */
+	/** The identity of user who was created the object */
 	public abstract CreatedID: string;
 
-	/** The last updated time */
+	/** The last time when the object was modified */
 	public abstract LastModified: Date;
 
-	/** The identity of user who modified the object */
+	/** The identity of user who was modified the object at the last time */
 	public abstract LastModifiedID: string;
 
 	/** The title (only ANSI characters) for working with URIs and filters */

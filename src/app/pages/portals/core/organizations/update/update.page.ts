@@ -90,6 +90,7 @@ export class OrganizationsUpdatePage implements OnInit {
 
 		if (this.organization === undefined) {
 			this.organization = new Organization();
+			this.organization.Privileges = new Privileges(true);
 			this.organization.Notifications = {
 				Events: [],
 				Methods: [],

@@ -1,7 +1,6 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "../components/app.utility";
 import { PortalCoreBase as BaseModel } from "./portals.core.base";
-import { Privileges } from "./privileges";
 
 export class Organization extends BaseModel {
 
@@ -32,8 +31,6 @@ export class Organization extends BaseModel {
 	CreatedID = "";
 	LastModified = new Date();
 	LastModifiedID = "";
-
-	Privileges = new Privileges(true);
 	Notifications = {} as {
 		Events?: Array<string>;
 		Methods?: Array<string>;
@@ -88,7 +85,6 @@ export class Organization extends BaseModel {
 			UserPassword?: string;
 		}
 	};
-
 	ansiTitle = "";
 
 	/** Deserializes data to object */

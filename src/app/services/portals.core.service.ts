@@ -212,24 +212,22 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getOrganizationFormControlsAsync(organization: Organization) {
+		const socials: Array<string> = await this.configSvc.getDefinitionAsync(this.name, "socials");
+		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.name, "trackings");
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.name, "organization", "form-controls");
 		formConfig.forEach(c => c.Segment = "basic");
 
-		formConfig.push({
-			Name: "Privileges",
-			Type: "Custom",
-			Segment: "privileges",
-			Extras: { AllowInheritFromParent: false },
-			Options: {
-				Type: "object-privileges"
-			}
-		});
-
-		const socials: Array<string> = await this.configSvc.getDefinitionAsync(this.name, "socials");
-		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.name, "trackings");
-
 		formConfig.push(
-			this.GetNotificationsControlConfig("Notifications", "notifications", undefined, undefined, false),
+			{
+				Name: "Privileges",
+				Type: "Custom",
+				Segment: "privileges",
+				Extras: { AllowInheritFromParent: false },
+				Options: {
+					Type: "object-privileges"
+				}
+			},
+			this.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, false),
 			{
 				Name: "Instructions",
 				Segment: "instructions",
@@ -271,8 +269,8 @@ export class PortalsCoreService extends BaseService {
 										Options: {
 											Label: `{{portals.organizations.controls.Instructions.${type}.Subject}}`,
 											MaxLength: 250,
-											OnBlur: (event, formControl) => {
-												const instructionType = formControl.control.parent.Name;
+											OnBlur: (_, formControl) => {
+												const instructionType = formControl.parentControl.Name;
 												const language = formControl.formGroup.controls.Language.value || this.configSvc.appConfig.language;
 												organization.Instructions[instructionType] = organization.Instructions[instructionType] || {};
 												organization.Instructions[instructionType][language] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
@@ -285,8 +283,8 @@ export class PortalsCoreService extends BaseService {
 										Options: {
 											Label: `{{portals.organizations.controls.Instructions.${type}.Body}}`,
 											Rows: 7,
-											OnBlur: (event, formControl) => {
-												const instructionType = formControl.control.parent.Name;
+											OnBlur: (_, formControl) => {
+												const instructionType = formControl.parentControl.Name;
 												const language = formControl.formGroup.controls.Language.value || this.configSvc.appConfig.language;
 												organization.Instructions[instructionType] = organization.Instructions[instructionType] || {};
 												organization.Instructions[instructionType][language] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
@@ -427,7 +425,7 @@ export class PortalsCoreService extends BaseService {
 					]
 				}
 			},
-			this.GetEmailSettingsControlConfig("Emails", "emails", false),
+			this.getEmailSettingsFormControl("Emails", "emails", false),
 		);
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
@@ -438,7 +436,7 @@ export class PortalsCoreService extends BaseService {
 		control.Required = true;
 		if (this.authSvc.isSystemAdministrator()) {
 			let initialValue: any;
-			if (organization !== undefined) {
+			if (organization !== undefined && AppUtility.isNotEmpty(organization.OwnerID)) {
 				initialValue = UserProfile.get(organization.OwnerID);
 				if (initialValue === undefined) {
 					await this.usersSvc.getProfileAsync(organization.OwnerID, () => initialValue = UserProfile.get(organization.OwnerID), undefined, true);
@@ -497,10 +495,10 @@ export class PortalsCoreService extends BaseService {
 			control.Options.Disabled = true;
 		}
 
-		control = formConfig.find(c => AppUtility.isEquals(c.Name, "Required2FA"));
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Required2FA"));
 		control.Options.Type = "toggle";
 
-		control = formConfig.find(c => AppUtility.isEquals(c.Name, "TrackDownloadFiles"));
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "TrackDownloadFiles"));
 		control.Options.Type = "toggle";
 
 		/*
@@ -513,18 +511,15 @@ export class PortalsCoreService extends BaseService {
 		control.Options.OnChanged = (event, formControl) => console.log("SELECT", event, formControl.formControl, formControl.control);
 		*/
 
-		control = formConfig.find(ctrl => ctrl.Options !== undefined && ctrl.Options.AutoFocus);
-		if (control === undefined) {
-			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Type, "TextBox") && !ctrl.Hidden);
-			if (control !== undefined) {
-				control.Options.AutoFocus = true;
-			}
+		control = formConfig.find(ctrl => ctrl.Options !== undefined && ctrl.Options.AutoFocus) || formConfig.find(ctrl => AppUtility.isEquals(ctrl.Type, "TextBox") && !ctrl.Hidden);
+		if (control !== undefined) {
+			control.Options.AutoFocus = true;
 		}
 
 		return formConfig;
 	}
 
-	public GetEmailNotificationControlConfig(allowInheritFromParent: boolean = true) {
+	public getEmailNotificationFormControl(allowInheritFromParent: boolean = true) {
 		const placeholder = "{{portals.common.controls.notifications.emails.toAddresses.placeholder}}";
 		const config: AppFormsControlConfig = {
 			Name: "Emails",
@@ -595,7 +590,7 @@ export class PortalsCoreService extends BaseService {
 		return config;
 	}
 
-	public GetWebHookNotificationControlConfig(allowInheritFromParent: boolean = true) {
+	public getWebHookNotificationFormControl(allowInheritFromParent: boolean = true) {
 		const config: AppFormsControlConfig = {
 			Name: "WebHooks",
 			Options: {
@@ -695,7 +690,7 @@ export class PortalsCoreService extends BaseService {
 		return config;
 	}
 
-	public GetNotificationsControlConfig(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true) {
+	public getNotificationsFormControl(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true) {
 		const config: AppFormsControlConfig = {
 			Name: name,
 			Segment: segment,
@@ -735,17 +730,17 @@ export class PortalsCoreService extends BaseService {
 		};
 
 		if (methods === undefined || methods.indexOf("Email") > -1) {
-			config.SubControls.Controls.push(this.GetEmailNotificationControlConfig(allowInheritFromParent));
+			config.SubControls.Controls.push(this.getEmailNotificationFormControl(allowInheritFromParent));
 		}
 
 		if (methods === undefined || methods.indexOf("WebHook") > -1) {
-			config.SubControls.Controls.push(this.GetWebHookNotificationControlConfig(allowInheritFromParent));
+			config.SubControls.Controls.push(this.getWebHookNotificationFormControl(allowInheritFromParent));
 		}
 
 		return config;
 	}
 
-	public GetEmailSettingsControlConfig(name: string, segment?: string, allowInheritFromParent: boolean = true) {
+	public getEmailSettingsFormControl(name: string, segment?: string, allowInheritFromParent: boolean = true) {
 		const config: AppFormsControlConfig = {
 			Name: name,
 			Segment: segment,
