@@ -10,12 +10,14 @@ import { UserProfile } from "../models/user";
 import { Privilege } from "../models/privileges";
 import { Base as BaseService } from "./base.service";
 import { ConfigurationService } from "./configuration.service";
+import { AuthenticationService } from "./authentication.service";
 
 @Injectable()
 export class UsersService extends BaseService {
 
 	constructor(
-		private configSvc: ConfigurationService
+		private configSvc: ConfigurationService,
+		private authSvc: AuthenticationService
 	) {
 		super("Users");
 		AppRTU.registerAsServiceScopeProcessor(this.name, async message => await this.processUpdateMessageAsync(message));
@@ -26,7 +28,7 @@ export class UsersService extends BaseService {
 			const profile = data instanceof UserProfile ? data as UserProfile : UserProfile.deserialize(data);
 			return {
 				title: profile.Name,
-				description: AppUtility.getHiddenEmail(profile.Email),
+				description: profile.getEmail(!this.authSvc.isSystemAdministrator()),
 				image: profile.avatarURI,
 				originalObject: profile
 			};

@@ -19,9 +19,8 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	private _style: string;
-	private _step = "";
 	private _completerInitialValue: any;
-	private _selectValues: Array<string>;
+	private _selectOptions: Array<string>;
 
 	public showPassword = false;
 
@@ -38,15 +37,16 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	@Input() theme: string;
 
 	/** The event handler to run when the captcha code of the form was refreshed */
-	@Output() refreshCaptcha: EventEmitter<any> = new EventEmitter();
+	@Output() refreshCaptcha: EventEmitter<AppFormsControlComponent> = new EventEmitter<AppFormsControlComponent>();
 
 	/** The event handler to run when the form was focused into last control */
-	@Output() lastFocus: EventEmitter<any> = new EventEmitter();
+	@Output() lastFocus: EventEmitter<AppFormsControlComponent> = new EventEmitter<AppFormsControlComponent>();
 
 	@ViewChild("elementRef", { static: false }) private elementRef: any;
 
 	ngOnInit() {
-		this._step = "ngOnInit";
+		this.control.controlRef = this;
+		this.control.formControlRef = this.formControl;
 		if (this.isCompleter) {
 			this.completerInit();
 			this.completerGetInitialValue();
@@ -54,8 +54,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	ngAfterViewInit() {
-		this._step = "ngAfterViewInit";
-		this.control.formRef = this.formControl;
 		this.control.elementRef = this.elementRef;
 		if (this.isYesNoControl || (this.isCompleter && this.completerInitialValue !== undefined)) {
 			this.changeDetector.detectChanges();
@@ -146,10 +144,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.isFormControl && this.isControl("DatePicker");
 	}
 
-	get isDatePickerDesktopControl() {
-		return this.isTextBoxControl && this.control.Options.Type.startsWith("date");
-	}
-
 	get isFilePickerControl() {
 		return this.isFormControl && this.isControl("FilePicker");
 	}
@@ -174,8 +168,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 					: false;
 	}
 
-	get deleteIcon() {
-		return this.isDatePickerDesktopControl ? "close" : "trash";
+	/** Gets the reference to the object that contains settings and data of the parent control */
+	get parentControl() {
+		return this.control.parent;
 	}
 
 	/** Gets the form control object (can be instance of AbstractControl, FormControl, FormGroup or FormArray) that assoiciates with this control */
@@ -188,7 +183,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get formControlName() {
-		return this.formArrayIndex !== undefined ? this.formArrayIndex : this.control.Name;
+		return this.formArrayIndex !== undefined
+			? this.formArrayIndex
+			: this.control.Name;
 	}
 
 	get visible() {
@@ -211,7 +208,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get position() {
-		return this.isYesNoControl ? "" : this.control.Options.LabelOptions.Position;
+		return this.isYesNoControl
+			? ""
+			: this.control.Options.LabelOptions.Position;
 	}
 
 	get description() {
@@ -231,15 +230,21 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get required() {
-		return this.control.Required ? true : undefined;
+		return this.control.Required
+			? true
+			: undefined;
 	}
 
 	get disabled() {
-		return this.control.Options.Disabled ? true : undefined;
+		return this.control.Options.Disabled
+			? true
+			: undefined;
 	}
 
 	get readonly() {
-		return this.control.Options.ReadOnly ? true : undefined;
+		return this.control.Options.ReadOnly
+			? true
+			: undefined;
 	}
 
 	get placeholder() {
@@ -263,15 +268,21 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get clearOnEdit() {
-		return this.isPasswordControl ? false : undefined;
+		return this.isPasswordControl
+			? false
+			: undefined;
 	}
 
 	get width() {
-		return this.control.Options.Width !== undefined ? this.control.Options.Width : "";
+		return this.control.Options.Width !== undefined
+			? this.control.Options.Width
+			: "";
 	}
 
 	get height() {
-		return this.control.Options.Height !== undefined ? this.control.Options.Height : "";
+		return this.control.Options.Height !== undefined
+			? this.control.Options.Height
+			: "";
 	}
 
 	get style() {
@@ -293,10 +304,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		};
 	}
 
-	get icon() {
-		return AppUtility.isNotEmpty(this.control.Options.Icon) ? this.control.Options.Icon : undefined;
-	}
-
 	get name() {
 		return this.control.Options.Name;
 	}
@@ -305,18 +312,18 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	get value() {
 		return this.isDatePickerControl
 			? AppUtility.toIsoDateTime(new Date(this.formControl.value), true)
-			: this.isDatePickerDesktopControl
-				? new Date(this.formControl.value)
-				: this.formControl.value;
+			: this.formControl.value;
 	}
 
 	get rows() {
-		return this.selectAsDropdown ? undefined : this.control.Options.Rows !== undefined && this.control.Options.Rows > 0 ? this.control.Options.Rows : 4;
+		return this.selectAsDropdown
+			? undefined
+			: this.control.Options.Rows !== undefined && this.control.Options.Rows > 0 ? this.control.Options.Rows : 4;
 	}
 
 	get yesnoChecked() {
-		return this.control.formRef !== undefined && this.control.value !== undefined
-			? this.minValue === undefined || this.maxValue === undefined ? AppUtility.isTrue(this.control.value) : +this.control.value !== 0
+		return this.formControl.value !== undefined
+			? this.minValue === undefined || this.maxValue === undefined ? AppUtility.isTrue(this.formControl.value) : +this.formControl.value !== 0
 			: false;
 	}
 
@@ -364,20 +371,28 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.control.Options.SelectOptions.Multiple;
 	}
 
+	private get selectAsBoxes() {
+		return this.isSelectControl && this.control.Options.SelectOptions.AsBoxes;
+	}
+
 	get selectAsRadioBoxes() {
-		return this.isSelectControl && this.control.Options.SelectOptions.AsBoxes && !this.selectMultiple;
+		return this.selectAsBoxes && !this.selectMultiple;
 	}
 
 	get selectAsCheckBoxes() {
-		return this.isSelectControl && this.control.Options.SelectOptions.AsBoxes && this.selectMultiple;
+		return this.selectAsBoxes && this.selectMultiple;
+	}
+
+	private get selectAsList() {
+		return this.isSelectControl && !this.control.Options.SelectOptions.AsBoxes && AppUtility.isEquals(this.control.Options.Type, "dropdown");
 	}
 
 	get selectAsDropdown() {
-		return this.isSelectControl && !this.control.Options.SelectOptions.AsBoxes && AppUtility.isEquals(this.control.Options.Type, "dropdown") && !this.control.Options.SelectOptions.Multiple;
+		return this.selectAsList && !this.control.Options.SelectOptions.Multiple;
 	}
 
 	get selectAsMultiple() {
-		return this.isSelectControl && !this.control.Options.SelectOptions.AsBoxes && AppUtility.isEquals(this.control.Options.Type, "dropdown") && this.control.Options.SelectOptions.Multiple;
+		return this.selectAsList && this.control.Options.SelectOptions.Multiple;
 	}
 
 	get selectInterface() {
@@ -401,23 +416,23 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	selectOptionIsChecked(selectOption: string) {
-		if (this._selectValues === undefined) {
+		if (this._selectOptions === undefined) {
 			const values = this.formControl.value;
 			if (AppUtility.isNotEmpty(values)) {
-				this._selectValues = AppUtility.toArray(values) as Array<string>;
+				this._selectOptions = AppUtility.toArray(values) as Array<string>;
 			}
 			else if (AppUtility.isArray(values, true)) {
-				this._selectValues = (values as Array<any>).map(value => value.toString());
+				this._selectOptions = (values as Array<any>).map(value => value.toString());
 			}
 			else if (AppUtility.isObject(values, true)) {
-				this._selectValues = (AppUtility.toArray(values) as Array<any>).map(value => value.toString());
+				this._selectOptions = (AppUtility.toArray(values) as Array<any>).map(value => value.toString());
 			}
 			else {
-				this._selectValues = [values.toString()];
+				this._selectOptions = [values.toString()];
 			}
-			this._selectValues = this._selectValues.filter(value => value !== "");
+			this._selectOptions = this._selectOptions.filter(value => value !== "");
 		}
-		return this._selectValues.indexOf(selectOption) > -1;
+		return this._selectOptions.indexOf(selectOption) > -1;
 	}
 
 	trackOption(index: number, option: { Value: string, Label: string }) {
@@ -441,7 +456,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	completerInit() {
-		if (AppUtility.isEquals(this.control.Options.Type, "Address")) {
+		if (this.isCompleterOfAddress) {
 			this.control.Options.LookupOptions.CompleterOptions.DataSource = this.completerSvc.local(this.appFormsSvc.getMetaCounties(), "Title,TitleANSI", "Title");
 		}
 		else if (this.control.Options.LookupOptions.CompleterOptions.OnInitialized !== undefined) {
@@ -474,15 +489,13 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get completerClearSelected() {
-		return this.control.Options.LookupOptions.Multiple ? true : this.control.Options.LookupOptions.CompleterOptions.ClearSelected;
+		return this.control.Options.LookupOptions.Multiple
+			? true
+			: this.control.Options.LookupOptions.CompleterOptions.ClearSelected;
 	}
 
 	get completerDataSource() {
 		return this.control.Options.LookupOptions.CompleterOptions.DataSource;
-	}
-
-	get completerLookupByModalButtonIcon() {
-		return (this.control.Options.LookupOptions.CompleterOptions.LookupByModalButtonIcon || "duplicate").trim().toLowerCase();
 	}
 
 	private completerGetInitialValue() {
@@ -531,7 +544,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/** Gets the values of this lookup control */
 	get lookupValues() {
-		return this.control.Options.LookupOptions.Multiple ? this.formControl.value as Array<string> : [this.formControl.value as string];
+		return this.control.Options.LookupOptions.Multiple
+			? this.formControl.value as Array<string>
+			: [this.formControl.value as string];
 	}
 
 	/** Sets the values of this lookup control */
@@ -541,7 +556,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/** Gets the values for displaying of this lookup control */
 	get lookupDisplayValues() {
-		return this.control.Options.LookupOptions.Multiple ? this.control.Options.LookupOptions.DisplayValues : undefined;
+		return this.control.Options.LookupOptions.Multiple
+			? this.control.Options.LookupOptions.DisplayValues
+			: undefined;
 	}
 
 	/** Sets the values for displaying of this lookup control */
@@ -561,18 +578,23 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/** Sets focus into next control */
 	focusNext() {
-		this.appFormsSvc.focusNext(this.control, () => this.lastFocus.emit(this.control));
+		this.appFormsSvc.focusNext(this.control, () => this.lastFocus.emit(this));
 	}
 
 	trackControl(index: number, control: AppFormsControl) {
 		return `${control.Name}@${index}`;
 	}
 
+	refreshCaptchaImage() {
+		this.deleteValue();
+		this.refreshCaptcha.emit(this);
+	}
+
 	/** Sets the value of this control */
 	setValue(value: any, options?: Object, updateValueAndValidity: boolean = false) {
 		this.formControl.setValue(value, options);
 		if (updateValueAndValidity) {
-			this.formControl.updateValueAndValidity(options === undefined ? options : { onlySelf: AppUtility.isTrue(options["onlySelf"]), emitEvent: AppUtility.isTrue(options["emitEvent"]) });
+			this.formControl.updateValueAndValidity(options !== undefined ? { onlySelf: AppUtility.isTrue(options["onlySelf"]), emitEvent: AppUtility.isTrue(options["emitEvent"]) } : undefined);
 		}
 	}
 
@@ -580,7 +602,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	patchValue(value: any, options?: Object, updateValueAndValidity: boolean = false) {
 		this.formControl.patchValue(value, options);
 		if (updateValueAndValidity) {
-			this.formControl.updateValueAndValidity(options === undefined ? options : { onlySelf: AppUtility.isTrue(options["onlySelf"]), emitEvent: AppUtility.isTrue(options["emitEvent"]) });
+			this.formControl.updateValueAndValidity(options !== undefined ? { onlySelf: AppUtility.isTrue(options["onlySelf"]), emitEvent: AppUtility.isTrue(options["emitEvent"]) } : undefined);
 		}
 	}
 
@@ -588,11 +610,11 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	resetValue(value?: any, options?: Object, updateValueAndValidity: boolean = false) {
 		this.formControl.reset(value, options);
 		if (updateValueAndValidity) {
-			this.formControl.updateValueAndValidity(options === undefined ? options : { onlySelf: AppUtility.isTrue(options["onlySelf"]), emitEvent: AppUtility.isTrue(options["emitEvent"]) });
+			this.formControl.updateValueAndValidity(options !== undefined ? { onlySelf: AppUtility.isTrue(options["onlySelf"]), emitEvent: AppUtility.isTrue(options["emitEvent"]) } : undefined);
 		}
 	}
 
-	async deleteValueAsync(value?: any) {
+	async deleteValue(value?: any, options?: Object, updateValueAndValidity: boolean = false) {
 		if (this.isLookupControl) {
 			if (this.control.Options.LookupOptions.OnDelete !== undefined) {
 				if (AppUtility.isNotEmpty(this.control.Options.LookupOptions.WarningOnDelete)) {
@@ -632,19 +654,49 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			}
 		}
 		else if (this.formControl !== undefined) {
-			this.resetValue();
+			this.setValue(undefined, options, updateValueAndValidity);
 			this.focus();
 		}
 	}
 
-	switchPasswordControlOnOff() {
-		this.showPassword = !this.showPassword;
-		this.focus();
+	get icon() {
+		return this.isImagePickerControl && this.isAllowDelete
+			? "trash"
+			: this.isCompleterAllowLookupByModal
+				? (this.control.Options.Icon.Name || "duplicate").trim().toLowerCase()
+				: AppUtility.isNotEmpty(this.control.Options.Icon.Name)
+					? this.control.Options.Icon.Name.trim().toLowerCase()
+					: undefined;
 	}
 
-	refreshCaptchaImage() {
-		this.deleteValueAsync();
-		this.refreshCaptcha.emit(this.control);
+	get iconFill() {
+		return (this.control.Options.Icon.Fill || "clear").trim().toLowerCase();
+	}
+
+	get iconColor() {
+		return (this.control.Options.Icon.Color || "medium").trim().toLowerCase();
+	}
+
+	get iconSlot() {
+		return (this.control.Options.Icon.Slot || "end").trim().toLowerCase();
+	}
+
+	clickOnIcon() {
+		if (this.isPasswordControl) {
+			this.showPassword = !this.showPassword;
+			if (this.showPassword) {
+				this.focus();
+			}
+		}
+		else if (this.isImagePickerControl && this.isAllowDelete) {
+			this.deleteValue();
+		}
+		else if (this.isCompleterAllowLookupByModal) {
+			this.completerLookupAsync();
+		}
+		else if (this.control.Options.Icon.OnClick !== undefined) {
+			this.control.Options.Icon.OnClick(this);
+		}
 	}
 
 	clickOnButton(control: AppFormsControl, formGroup: FormGroup) {
@@ -712,11 +764,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		// special control: completer
 		else if (this.isCompleter) {
 			if (this.isCompleterOfAddress) {
-				let address = AppUtility.isObject(event, true) ? event.originalObject : undefined;
-				if (address === undefined && AppUtility.isEquals(this._step, "ngAfterViewInit") && this.completerInitialValue !== undefined) {
-					address = this.completerInitialValue;
-					this._step = "ngDone";
-				}
+				const address = (AppUtility.isObject(event, true) ? event.originalObject : undefined) || this.completerInitialValue;
 				["County", "Province", "Country"].forEach(name => {
 					const formControl = this.formGroup.controls[name];
 					if (formControl !== undefined) {
@@ -734,27 +782,27 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 		// special control: select-box
 		else if (this.selectAsDropdown) {
-			this._selectValues = [event as string];
-			this.setValue(event);
+			this._selectOptions = AppUtility.isArray(event) ? (event as Array<any>).map(value => value.toString()) : [event.toString()];
+			this.setValue(this._selectOptions !== undefined && this._selectOptions.length > 0 ? this._selectOptions[0] : undefined);
 			this.focusNext();
 		}
 
 		// special control: multiple (check-boxes or select-box with multiple)
 		else if (this.selectAsCheckBoxes || this.selectAsMultiple) {
 			if (AppUtility.isArray(event)) {
-				this._selectValues = (event as Array<any>).map(value => value.toString());
+				this._selectOptions = (event as Array<any>).map(value => value.toString());
 			}
 			else {
-				this._selectValues = this._selectValues || [];
+				this._selectOptions = this._selectOptions || [];
 				if (!event.detail.checked) {
-					AppUtility.removeAt(this._selectValues, this._selectValues.indexOf(event.detail.value));
+					AppUtility.removeAt(this._selectOptions, this._selectOptions.indexOf(event.detail.value));
 				}
-				else if (this._selectValues.indexOf(event.detail.value) < 0) {
-					this._selectValues.push(event.detail.value);
+				else if (this._selectOptions.indexOf(event.detail.value) < 0) {
+					this._selectOptions.push(event.detail.value);
 				}
-				this._selectValues = this._selectValues.filter(value => value !== "");
+				this._selectOptions = this._selectOptions.filter(value => value !== "");
 			}
-			this.setValue(this._selectValues);
+			this.setValue(this._selectOptions);
 		}
 
 		// normal control

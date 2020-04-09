@@ -27,7 +27,7 @@ export abstract class PortalBase extends BaseModel {
 	public abstract ansiTitle: string;
 
 	public get routerLink() {
-		return `/portals/${this.constructor.name.toLowerCase()}s/view/${AppUtility.toURI(this.ansiTitle)}`;
+		return `/portals/${this.constructor.name.toLowerCase()}s/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
 }

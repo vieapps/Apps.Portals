@@ -114,7 +114,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.login.login.title");
 	}
 
-	onLoginFormInitialized(event: any) {
+	onLoginFormInitialized() {
 		if (this.configSvc.appConfig.isWebApp) {
 			this.login.form.patchValue({ Persistence: this.configSvc.appConfig.app.persistence });
 		}
@@ -209,11 +209,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 					TrackingUtility.trackAsync(this.title, this.configSvc.appConfig.url.users.otp),
 					this.appFormsSvc.hideLoadingAsync(async () => await this.closeAsync())
 				]),
-				async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => {
-					const control = this.otp.controls.find(c => AppUtility.isEquals(c.Name, "OTP"));
-					control.value = "";
-					control.focus();
-				})
+				async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => this.otp.controls.find(c => AppUtility.isEquals(c.Name, "OTP")).controlRef.deleteValue())
 			);
 		}
 	}
@@ -271,27 +267,23 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 				]),
 				async error => await Promise.all([
 					this.refreshCaptchaAsync(),
-					this.appFormsSvc.showErrorAsync(error, undefined, () => {
-						const control = this.reset.controls.find(c => AppUtility.isEquals(c.Name, "Captcha"));
-						control.value = "";
-						control.focus();
-					})
+					this.appFormsSvc.showErrorAsync(error, undefined, () => this.reset.controls.find(c => AppUtility.isEquals(c.Name, "Captcha")).controlRef.deleteValue())
 				])
 			);
 		}
 	}
 
-	refreshCaptchaAsync(control?: AppFormsControl) {
-		return this.authSvc.registerCaptchaAsync(() => (control || this.reset.controls.find(c => AppUtility.isEquals(c.Name, "Captcha"))).captchaURI = this.configSvc.appConfig.session.captcha.uri);
-	}
-
-	onResetPasswordFormInitialized(event: any) {
+	onResetPasswordFormInitialized() {
 		this.refreshCaptchaAsync();
 		this.reset.form.patchValue({ Email: this.login.form.value.Email });
 	}
 
-	onRefreshCaptcha(event: AppFormsControl) {
-		this.refreshCaptchaAsync(event);
+	refreshCaptchaAsync() {
+		return this.authSvc.registerCaptchaAsync(() => this.reset.controls.find(c => AppUtility.isEquals(c.Name, "Captcha")).captchaURI = this.configSvc.appConfig.session.captcha.uri);
+	}
+
+	onRefreshCaptcha() {
+		this.refreshCaptchaAsync();
 	}
 
 	closeAsync() {

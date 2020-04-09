@@ -8,6 +8,7 @@ import { PlatformUtility } from "../../components/app.utility.platform";
 import { AppPagination, AppDataPagination, AppDataRequest } from "../../components/app.pagination";
 import { AppFormsService } from "../../components/forms.service";
 import { ConfigurationService } from "../../services/configuration.service";
+import { AuthenticationService } from "../../services/authentication.service";
 import { UsersService } from "../../services/users.service";
 import { UserProfile } from "../../models/user";
 
@@ -22,6 +23,7 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 	constructor(
 		public configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
+		private authSvc: AuthenticationService,
 		private usersSvc: UsersService
 	) {
 	}
@@ -54,12 +56,8 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
 	ngOnInit() {
-		if (this.multiple === undefined) {
-			this.multiple = true;
-		}
-		if (this.hideEmails === undefined) {
-			this.hideEmails = true;
-		}
+		this.multiple = this.multiple === undefined ? true : this.multiple;
+		this.hideEmails = this.hideEmails === undefined ? !this.authSvc.isSystemAdministrator() : this.hideEmails;
 		this.initializeAsync();
 	}
 
@@ -82,10 +80,6 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 
 	track(index: number, profile: UserProfile) {
 		return this.searching ? `${index}.${profile.ID}` : `${profile.ID}@${index}`;
-	}
-
-	getEmail(profile: UserProfile) {
-		return this.hideEmails ? AppUtility.getHiddenEmail(profile.Email) : profile.Email;
 	}
 
 	openSearch() {

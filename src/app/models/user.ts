@@ -96,6 +96,10 @@ export class UserProfileBase extends BaseModel {
 		});
 	}
 
+	public getEmail(hideEmail: boolean = true) {
+		return hideEmail ? AppUtility.getHiddenEmail(this.Email) : this.Email;
+	}
+
 }
 
 /** Full user profile (with related information from main service) */

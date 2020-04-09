@@ -168,11 +168,11 @@ export class UsersRegisterPage implements OnInit {
 		];
 
 		config.forEach(options => {
-			if (this.configSvc.appConfig.accountRegistrations.hidden.findIndex(value => AppUtility.isEquals(value, options.Name)) > -1) {
+			if (this.configSvc.appConfig.accountRegistrations.hidden.indexOf(options.Name) > -1) {
 				options.Hidden = true;
 				options.Required = false;
 			}
-			else if (!options.Required && this.configSvc.appConfig.accountRegistrations.required.findIndex(value => AppUtility.isEquals(value, options.Name)) > -1) {
+			else if (!options.Required && this.configSvc.appConfig.accountRegistrations.required.indexOf(options.Name) > -1) {
 				options.Required = true;
 			}
 		});
@@ -182,16 +182,13 @@ export class UsersRegisterPage implements OnInit {
 		this.register.config = config;
 	}
 
-	onFormInitialized(event: any) {
+	onFormInitialized() {
 		this.refreshCaptchaAsync();
 		this.register.form.patchValue({ Gender: "NotProvided" });
 	}
 
 	async registerAsync() {
-		if (this.register.form.invalid) {
-			this.appFormsSvc.highlightInvalids(this.register.form);
-		}
-		else {
+		if (this.appFormsSvc.validate(this.register.form)) {
 			await this.appFormsSvc.showLoadingAsync(this.title);
 			await this.usersSvc.registerAsync(
 				this.register.form.value,
@@ -209,9 +206,7 @@ export class UsersRegisterPage implements OnInit {
 					this.refreshCaptchaAsync(),
 					this.appFormsSvc.showErrorAsync(error, undefined, () => {
 						if (AppUtility.isGotCaptchaException(error)) {
-							const control = this.register.controls.find(c => AppUtility.isEquals(c.Name, "Captcha"));
-							control.value = "";
-							control.focus();
+							this.register.controls.find(c => AppUtility.isEquals(c.Name, "Captcha")).controlRef.deleteValue();
 						}
 					})
 				])
@@ -219,12 +214,12 @@ export class UsersRegisterPage implements OnInit {
 		}
 	}
 
-	onRefreshCaptcha(event: AppFormsControl) {
-		this.refreshCaptchaAsync(event);
+	private refreshCaptchaAsync() {
+		return this.authSvc.registerCaptchaAsync(() => this.register.controls.find(c => AppUtility.isEquals(c.Name, "Captcha")).captchaURI = this.configSvc.appConfig.session.captcha.uri);
 	}
 
-	private refreshCaptchaAsync(control?: AppFormsControl) {
-		return this.authSvc.registerCaptchaAsync(() => (control || this.register.controls.find(c => AppUtility.isEquals(c.Name, "Captcha"))).captchaURI = this.configSvc.appConfig.session.captcha.uri);
+	onRefreshCaptcha() {
+		this.refreshCaptchaAsync();
 	}
 
 }
