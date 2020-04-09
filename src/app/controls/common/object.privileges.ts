@@ -44,10 +44,10 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 	@Input() roleComponentProps: { [key: string]: any };
 
 	/** The event handler to run when the controls was initialized */
-	@Output() init: EventEmitter<ObjectPrivilegesControl> = new EventEmitter<ObjectPrivilegesControl>();
+	@Output() init = new EventEmitter<ObjectPrivilegesControl>();
 
 	/** The event handler to run when the control was changed */
-	@Output() change = new EventEmitter<any>();
+	@Output() change = new EventEmitter();
 
 	inheritFromParent = {
 		allow: false,

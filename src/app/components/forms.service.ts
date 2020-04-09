@@ -954,13 +954,16 @@ export class AppFormsService {
 	}
 
 	/** Validates the form and highlights all invalid controls (if has) */
-	public validate(form: FormGroup) {
+	public validate(form: FormGroup, onPreCompleted?: (form: FormGroup) => void) {
 		form.updateValueAndValidity();
-		if (form.invalid) {
+		const invalid = form.invalid;
+		if (invalid) {
 			this.highlightInvalids(form);
-			return false;
 		}
-		return true;
+		if (onPreCompleted !== undefined) {
+			onPreCompleted(form);
+		}
+		return !invalid;
 	}
 
 	/** Highlights all invalid controls (by mark as dirty on all invalid controls) and set focus into first invalid control */

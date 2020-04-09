@@ -37,10 +37,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	@Input() theme: string;
 
 	/** The event handler to run when the captcha code of the form was refreshed */
-	@Output() refreshCaptcha: EventEmitter<AppFormsControlComponent> = new EventEmitter<AppFormsControlComponent>();
+	@Output() refreshCaptcha = new EventEmitter<AppFormsControlComponent>();
 
 	/** The event handler to run when the form was focused into last control */
-	@Output() lastFocus: EventEmitter<AppFormsControlComponent> = new EventEmitter<AppFormsControlComponent>();
+	@Output() lastFocus = new EventEmitter<AppFormsControlComponent>();
 
 	@ViewChild("elementRef", { static: false }) private elementRef: any;
 
@@ -546,7 +546,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	get lookupValues() {
 		return this.control.Options.LookupOptions.Multiple
 			? this.formControl.value as Array<string>
-			: [this.formControl.value as string];
+			: [this.formControl.value !== undefined ? this.formControl.value.toString() : ""];
 	}
 
 	/** Sets the values of this lookup control */
@@ -739,19 +739,14 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 					const minute = event.detail.value.minute;
 					const second = event.detail.value.second;
 					if (hour !== undefined && minute !== undefined) {
-						value += `T${hour.text}`;
-						if (minute !== undefined) {
-							value += `:${minute.text}`;
-							if (second !== undefined) {
-								value += `:${second.text}`;
-							}
-						}
-						value += "Z";
+						value += `T${hour.text}:${minute.text}` + (second !== undefined ? `:${second.text}` : "") + "Z";
 					}
 				}
 				this.setValue(new Date(value));
 			}
-			catch {}
+			catch (error) {
+				console.error("[Forms]: Error occurred while preparing date-time value", error);
+			}
 			this.focusNext();
 		}
 
@@ -783,7 +778,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		// special control: select-box
 		else if (this.selectAsDropdown) {
 			this._selectOptions = AppUtility.isArray(event) ? (event as Array<any>).map(value => value.toString()) : [event.toString()];
-			this.setValue(this._selectOptions !== undefined && this._selectOptions.length > 0 ? this._selectOptions[0] : undefined);
+			this.setValue(this._selectOptions.length > 0 ? this._selectOptions[0] : undefined);
 			this.focusNext();
 		}
 

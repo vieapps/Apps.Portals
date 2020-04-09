@@ -195,7 +195,7 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	public async getOrganizationFormSegmentsAsync(organization: Organization) {
+	public async getOrganizationFormSegmentsAsync(organization: Organization, onPreCompleted?: (formSegments: AppFormsSegment[]) => void) {
 		const segments = [
 			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.organizations.update.segments.basic")),
 			new AppFormsSegment("privileges", await this.configSvc.getResourceAsync("portals.organizations.update.segments.privileges")),
@@ -205,17 +205,20 @@ export class PortalsCoreService extends BaseService {
 			new AppFormsSegment("urls", await this.configSvc.getResourceAsync("portals.organizations.update.segments.urls")),
 			new AppFormsSegment("emails", await this.configSvc.getResourceAsync("portals.organizations.update.segments.emails"))
 		];
-		if (organization !== undefined) {
+		if (organization !== undefined && AppUtility.isNotEmpty(organization.ID)) {
 			segments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.organizations.update.segments.attachments")));
+		}
+		if (onPreCompleted !== undefined) {
+			onPreCompleted(segments);
 		}
 		return segments;
 	}
 
-	public async getOrganizationFormControlsAsync(organization: Organization) {
+	public async getOrganizationFormControlsAsync(organization: Organization, onPreCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const socials: Array<string> = await this.configSvc.getDefinitionAsync(this.name, "socials");
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.name, "trackings");
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.name, "organization", "form-controls");
-		formConfig.forEach(c => c.Segment = "basic");
+		formConfig.forEach(ctrl => ctrl.Segment = "basic");
 
 		formConfig.push(
 			{
@@ -236,7 +239,7 @@ export class PortalsCoreService extends BaseService {
 					Description: "{{portals.organizations.controls.Instructions.description}}"
 				},
 				SubControls: {
-					Controls: ["Activate", "Invite", "Reset", "Password", "Email"].map(type => {
+					Controls: Organization.instructionElements.map(type => {
 						return {
 							Name: type,
 							Options: {
@@ -516,6 +519,9 @@ export class PortalsCoreService extends BaseService {
 			control.Options.AutoFocus = true;
 		}
 
+		if (onPreCompleted !== undefined) {
+			onPreCompleted(formConfig);
+		}
 		return formConfig;
 	}
 

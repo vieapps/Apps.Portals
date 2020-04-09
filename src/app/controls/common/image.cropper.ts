@@ -38,10 +38,10 @@ export class ImageCropperControl implements OnInit, OnDestroy {
 	@Input() control: AppFormsControl;
 
 	/** The event handler to run when the controls was initialized */
-	@Output() init: EventEmitter<any> = new EventEmitter();
+	@Output() init = new EventEmitter();
 
 	/** The event handler to run when the control was changed */
-	@Output() change = new EventEmitter<any>();
+	@Output() change = new EventEmitter();
 
 	htmlCropper: {
 		data: {

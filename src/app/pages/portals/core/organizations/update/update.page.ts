@@ -76,18 +76,6 @@ export class OrganizationsUpdatePage implements OnInit {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
-		this.formSegments.items = await this.portalsCoreSvc.getOrganizationFormSegmentsAsync(this.organization);
-		const formConfig = await this.portalsCoreSvc.getOrganizationFormControlsAsync(this.organization);
-		if (this.organization === undefined) {
-			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title")).Options.OnBlur = (_, control) => {
-				this.form.controls.Alias.setValue(AppUtility.toANSI(control.value, true).replace(/\-/g, ""));
-				((this.form.controls.Notifications as FormGroup).controls.WebHooks as FormGroup).controls.SignKey.setValue(AppCrypto.md5(control.value));
-			};
-			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, control) => {
-				control.setValue(AppUtility.toANSI(control.value, true).replace(/\-/g, ""));
-			};
-		}
-
 		if (this.organization === undefined) {
 			this.organization = new Organization();
 			this.organization.Privileges = new Privileges(true);
@@ -110,21 +98,32 @@ export class OrganizationsUpdatePage implements OnInit {
 			this.organization.Privileges = Privileges.resetPrivileges(undefined, this.previousPrivileges);
 		}
 
-		this.formConfig = formConfig;
+		this.formSegments.items = await this.portalsCoreSvc.getOrganizationFormSegmentsAsync(this.organization);
+		this.formConfig = await this.portalsCoreSvc.getOrganizationFormControlsAsync(this.organization, formConfig => {
+			if (this.organization.ID === "") {
+				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title")).Options.OnBlur = (_, control) => {
+					this.form.controls.Alias.setValue(AppUtility.toANSI(control.value, true).replace(/\-/g, ""));
+					((this.form.controls.Notifications as FormGroup).controls.WebHooks as FormGroup).controls.SignKey.setValue(AppCrypto.md5(control.value));
+				};
+				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, control) => {
+					control.setValue(AppUtility.toANSI(control.value, true).replace(/\-/g, ""));
+				};
+			}
+		});
 	}
 
 	onFormInitialized() {
 		this.form.patchValue(this.organization);
-		this.form.controls.ExpiredDate.patchValue(AppUtility.toIsoDate(this.organization.ExpiredDate), { onlySelf: true });
-		Organization.instructionElements.forEach(type => ((this.form.controls.Instructions as FormGroup).controls[type] as FormGroup).controls.Language.setValue(this.configSvc.appConfig.language));
-		(this.form.controls.Others as FormGroup).controls.MetaTags.patchValue(this.organization.MetaTags, { onlySelf: true });
-		(this.form.controls.Others as FormGroup).controls.Scripts.patchValue(this.organization.Scripts, { onlySelf: true });
-		PlatformUtility.invoke(() => this.form.controls.OwnerID.patchValue(this.organization.OwnerID, { onlySelf: true }), 345);
+		this.form.controls.ExpiredDate.setValue(AppUtility.toIsoDate(this.organization.ExpiredDate), { onlySelf: true });
+		(this.form.controls.Others as FormGroup).controls.MetaTags.setValue(this.organization.MetaTags, { onlySelf: true });
+		(this.form.controls.Others as FormGroup).controls.Scripts.setValue(this.organization.Scripts, { onlySelf: true });
+		Organization.instructionElements.forEach(type => ((this.form.controls.Instructions as FormGroup).controls[type] as FormGroup).controls.Language.setValue(this.configSvc.appConfig.language, { onlySelf: true }));
+		PlatformUtility.invoke(() => this.form.controls.OwnerID.setValue(this.organization.OwnerID, { onlySelf: true }), 234);
 
 		const formValue = this.form.value;
 		delete formValue.Emails["Buttons"];
 		this.hash = AppCrypto.hash(formValue);
-		this.appFormsSvc.hideLoadingAsync(() => console.warn("Forms Value", this.form.value));
+		this.appFormsSvc.hideLoadingAsync();
 	}
 
 	async updateAsync() {
@@ -135,7 +134,7 @@ export class OrganizationsUpdatePage implements OnInit {
 				if (organization.Instructions[type]) {
 					this.configSvc.appConfig.languages.forEach(language => {
 						const instruction = organization.Instructions[type][language.Value];
-						if (instruction && !AppUtility.isNotEmpty(instruction.Subject) && !AppUtility.isNotEmpty(instruction.Body)) {
+						if (instruction === undefined || (!AppUtility.isNotEmpty(instruction.Subject) && !AppUtility.isNotEmpty(instruction.Body))) {
 							delete organization.Instructions[type][language.Value];
 						}
 					});

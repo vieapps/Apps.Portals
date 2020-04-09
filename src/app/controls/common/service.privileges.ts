@@ -33,10 +33,10 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 	@Input() selectInterface: string;
 
 	/** The event handler to run when the controls was initialized */
-	@Output() init: EventEmitter<ServicePrivilegesControl> = new EventEmitter<ServicePrivilegesControl>();
+	@Output() init = new EventEmitter<ServicePrivilegesControl>();
 
 	/** The event handler to run when the control was changed */
-	@Output() change = new EventEmitter<any>();
+	@Output() change = new EventEmitter();
 
 	roles = Privilege.privilegeRoles;
 	labels = {
