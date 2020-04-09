@@ -8,12 +8,12 @@ import { AppUtility } from "../components/app.utility";
 import { PlatformUtility } from "../components/app.utility.platform";
 import { AppCustomCompleter } from "../components/app.completer";
 import { AppPagination } from "../components/app.pagination";
-import { Organization } from "../models/portals.organization";
+import { Organization } from "../models/portals.core.organization";
 import { Base as BaseService } from "./base.service";
 import { ConfigurationService } from "./configuration.service";
 
 @Injectable()
-export class PortalsCMSService extends BaseService {
+export class PortalsCmsService extends BaseService {
 
 	constructor(
 		private configSvc: ConfigurationService

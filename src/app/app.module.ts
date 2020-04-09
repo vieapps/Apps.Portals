@@ -32,8 +32,8 @@ import { ConfigurationService } from "./services/configuration.service";
 import { AuthenticationService } from "./services/authentication.service";
 import { UsersService } from "./services/users.service";
 import { FilesService } from "./services/files.service";
-import { PortalsService } from "./services/portals.service";
-import { PortalsCMSService } from "./services/portals.cms.service";
+import { PortalsCoreService } from "./services/portals.core.service";
+import { PortalsCmsService } from "./services/portals.cms.service";
 
 // ngx-translate factories
 export function HttpLoaderFactory(http: HttpClient) {
@@ -74,8 +74,8 @@ export class HammerConfig extends HammerGestureConfig {
 		AuthenticationService,
 		UsersService,
 		FilesService,
-		PortalsService,
-		PortalsCMSService,
+		PortalsCoreService,
+		PortalsCmsService,
 		{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
 		{ provide: HAMMER_GESTURE_CONFIG, useClass: HammerConfig }
 	],

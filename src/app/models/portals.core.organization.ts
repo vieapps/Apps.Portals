@@ -1,27 +1,19 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "../components/app.utility";
-import { PortalBase as BaseModel } from "./portals.base";
+import { PortalCoreBase as BaseModel } from "./portals.core.base";
 import { Privileges } from "./privileges";
 
 export class Organization extends BaseModel {
 
 	constructor() {
 		super();
-		this.Notifications = {
-			Events: [],
-			Methods: [],
-			WebHooks: {
-				SignAlgorithm: "SHA256",
-				SignatureAsHex: true
-			}
-		};
-		this.RefreshUrls = { Interval: 15 };
-		this.RedirectUrls = { AllHttp404: true };
-		this.Emails = { Smtp: { Port: 25 } };
+		delete this["OriginalPrivileges"];
 	}
 
 	/** All instances of organization */
 	public static instances = new Dictionary<string, Organization>();
+
+	public static instructionElements = ["Activate", "Invite", "Reset", "Password", "Email"];
 
 	ID = "";
 	Title = "";
@@ -63,6 +55,20 @@ export class Organization extends BaseModel {
 			AdditionalHeader?: string;
 		};
 	};
+	Instructions = {} as {
+		[type: string]: {
+			[language: string]: {
+				Subject?: string;
+				Body?: string;
+			}
+		}
+	};
+	Socials = new Array<string>();
+	Trackings = {} as {
+		[key: string]: string
+	};
+	MetaTags = "";
+	Scripts = "";
 	RefreshUrls = {} as {
 		Addresses?: string;
 		Interval?: number;
@@ -72,26 +78,14 @@ export class Organization extends BaseModel {
 		AllHttp404?: boolean;
 	};
 	Emails = {} as {
-		From?: string;
-		ReplyTo?: string;
+		Sender?: string;
 		Signature?: string;
 		Smtp?: {
 			Host?: string;
 			Port?: number;
 			EnableSsl?: boolean;
-			UserName?: string;
+			User?: string;
 			UserPassword?: string;
-		}
-	};
-	Socials = {} as {
-		[key: string]: string
-	};
-	Trackings = {} as {
-		[key: string]: string
-	};
-	Instructions = {} as {
-		[key: string]: {
-			[key: string]: string
 		}
 	};
 

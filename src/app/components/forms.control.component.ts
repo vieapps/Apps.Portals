@@ -681,7 +681,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return (this.control.Options.Icon.Slot || "end").trim().toLowerCase();
 	}
 
-	clickOnIcon() {
+	async clickOnIcon() {
 		if (this.isPasswordControl) {
 			this.showPassword = !this.showPassword;
 			if (this.showPassword) {
@@ -689,10 +689,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			}
 		}
 		else if (this.isImagePickerControl && this.isAllowDelete) {
-			this.deleteValue();
+			await this.deleteValue();
 		}
 		else if (this.isCompleterAllowLookupByModal) {
-			this.completerLookupAsync();
+			await this.completerLookupAsync();
 		}
 		else if (this.control.Options.Icon.OnClick !== undefined) {
 			this.control.Options.Icon.OnClick(this);

@@ -1,5 +1,5 @@
 import { Component, OnInit } from "@angular/core";
-import { FormGroup } from "@angular/forms";
+import { FormGroup, FormControl } from "@angular/forms";
 import { AppCrypto } from "../../../../../components/app.crypto";
 import { AppEvents } from "../../../../../components/app.events";
 import { AppUtility } from "../../../../../components/app.utility";
@@ -9,8 +9,11 @@ import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsServic
 import { ConfigurationService } from "../../../../../services/configuration.service";
 import { AuthenticationService } from "../../../../../services/authentication.service";
 import { FilesService } from "../../../../../services/files.service";
-import { PortalsService } from "../../../../../services/portals.service";
-import { Organization } from "../../../../../models/portals.organization";
+import { PortalsCoreService } from "../../../../../services/portals.core.service";
+import { UsersService } from "../../../../../services/users.service";
+import { Organization } from "../../../../../models/portals.core.organization";
+import { UserProfile } from "../../../../../models/user";
+import { Privileges } from "../../../../../models/privileges";
 
 @Component({
 	selector: "page-portals-organizations-update",
@@ -20,45 +23,51 @@ import { Organization } from "../../../../../models/portals.organization";
 
 export class OrganizationsUpdatePage implements OnInit {
 	constructor(
-		public appFormsSvc: AppFormsService,
 		public configSvc: ConfigurationService,
-		public authSvc: AuthenticationService,
-		public filesSvc: FilesService,
-		public portalsSvc: PortalsService
+		private appFormsSvc: AppFormsService,
+		private authSvc: AuthenticationService,
+		private filesSvc: FilesService,
+		private portalsCoreSvc: PortalsCoreService,
+		private usersSvc: UsersService
 	) {
 	}
 
 	title = "";
 	organization: Organization;
-	update = {
-		form: new FormGroup({}),
-		config: undefined as Array<AppFormsControlConfig>,
-		segments: {
-			items: undefined as Array<AppFormsSegment>,
-			default: "basic"
-		},
-		controls: new Array<AppFormsControl>(),
-		hash: "",
+
+	form = new FormGroup({});
+	formConfig: Array<AppFormsControlConfig>;
+	formSegments = {
+		items: undefined as Array<AppFormsSegment>,
+		default: "basic"
 	};
+	formControls = new Array<AppFormsControl>();
+	hash = "";
+	processing = false;
 	button = {
 		update: "Update",
 		cancel: "Cancel"
 	};
 
+	private previousPrivileges: { [key: string]: Array<string> };
+
 	ngOnInit() {
 		this.organization = Organization.get(this.configSvc.requestParams["ID"]);
-		if (!(this.organization === undefined ? this.authSvc.isSystemAdministrator() : this.authSvc.isAdministrator(this.portalsSvc.name, "Organization", this.organization.Privileges))) {
+		const gotRights = this.organization === undefined
+			? this.authSvc.isSystemAdministrator()
+			: AppUtility.isEquals(this.organization.OwnerID, this.configSvc.getAccount().id) || this.authSvc.isAdministrator(this.portalsCoreSvc.name, "Organization", this.organization.Privileges);
+		if (!gotRights) {
 			Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
 				this.configSvc.navigateBackAsync()
 			]);
 		}
 		else {
-			this.initializeAsync();
+			this.initializeFormAsync();
 		}
 	}
 
-	async initializeAsync() {
+	async initializeFormAsync() {
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.organizations.title.${(this.organization === undefined ? "create" : "update")}`);
 		await this.appFormsSvc.showLoadingAsync(this.title);
 
@@ -67,189 +76,113 @@ export class OrganizationsUpdatePage implements OnInit {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
-		this.update.segments.items = [
-			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.organizations.update.segments.basic")),
-			new AppFormsSegment("privileges", await this.configSvc.getResourceAsync("portals.organizations.update.segments.privileges")),
-			new AppFormsSegment("notifications", await this.configSvc.getResourceAsync("portals.organizations.update.segments.notifications")),
-			new AppFormsSegment("urls", await this.configSvc.getResourceAsync("portals.organizations.update.segments.urls")),
-			new AppFormsSegment("emails", await this.configSvc.getResourceAsync("portals.organizations.update.segments.emails")),
-			new AppFormsSegment("socials", await this.configSvc.getResourceAsync("portals.organizations.update.segments.socials")),
-			new AppFormsSegment("instructions", await this.configSvc.getResourceAsync("portals.organizations.update.segments.instructions")),
-		];
-		if (this.organization !== undefined) {
-			this.update.segments.items.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.organizations.update.segments.attachments")));
-		}
-
-		const config: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsSvc.name, "organization", "form-controls");
-		config.forEach(control => control.Segment = "basic");
-
-		config.push({
-			Name: "Privileges",
-			Type: "Custom",
-			Segment: "privileges",
-			Extras: { AllowInheritFromParent: false },
-			Options: {
-				Type: "object-privileges"
-			}
-		});
-
-		config.push(
-			await this.portalsSvc.GetNotificationsControlConfigAsync("Notifications", "notifications", undefined, undefined, false),
-			{
-				Name: "RefreshUrls",
-				Segment: "urls",
-				Options: {
-					Label: await this.appFormsSvc.getResourceAsync("portals.organizations.controls.RefreshUrls.label"),
-				},
-					SubControls: {
-					Controls: [
-						{
-							Name: "Addresses",
-							Type: "TextArea",
-							Options: {
-								Label: await this.configSvc.getResourceAsync("portals.organizations.controls.RefreshUrls.Addresses.label"),
-								Description: await this.configSvc.getResourceAsync("portals.organizations.controls.RefreshUrls.Addresses.description"),
-								Rows: 10
-							}
-						},
-						{
-							Name: "Interval",
-							Type: "Range",
-							Options: {
-								Label: await this.configSvc.getResourceAsync("portals.organizations.controls.RefreshUrls.Interval.label"),
-								Description: await this.configSvc.getResourceAsync("portals.organizations.controls.RefreshUrls.Interval.description"),
-								Type: "number",
-								MinValue: 5,
-								MaxValue: 120,
-								RangeOptions: {
-									AllowPin: true,
-									AllowSnaps: true,
-									AllowTicks: true,
-									Step: 5,
-									Icons: {
-										Start: "time"
-									}
-								}
-							}
-						}
-					]
-				}
-			},
-			{
-				Name: "RedirectUrls",
-				Segment: "urls",
-				Options: {
-					Label: await this.appFormsSvc.getResourceAsync("portals.organizations.controls.RedirectUrls.label"),
-				},
-					SubControls: {
-					Controls: [
-						{
-							Name: "Addresses",
-							Type: "TextArea",
-							Options: {
-								Label: await this.configSvc.getResourceAsync("portals.organizations.controls.RedirectUrls.Addresses.label"),
-								Description: await this.configSvc.getResourceAsync("portals.organizations.controls.RedirectUrls.Addresses.description"),
-								Rows: 10
-							}
-						},
-						{
-							Name: "AllHttp404",
-							Type: "YesNo",
-							Options: {
-								Label: await this.configSvc.getResourceAsync("portals.organizations.controls.RedirectUrls.AllHttp404"),
-								Type: "toggle"
-							}
-						}
-					]
-				}
-			},
-			await this.portalsSvc.GetEmailSettingsControlConfigAsync("Emails", "emails", false)
-		);
-
+		this.formSegments.items = await this.portalsCoreSvc.getOrganizationFormSegmentsAsync(this.organization);
+		const formConfig = await this.portalsCoreSvc.getOrganizationFormControlsAsync(this.organization);
 		if (this.organization === undefined) {
-			config.find(control => AppUtility.isEquals(control.Name, "Title")).Options.OnKeyUp = () => {
-				this.update.form.controls.Alias.setValue(AppUtility.toANSI(this.update.form.controls.Title.value, true).replace(/\-/g, ""));
-				let control = this.update.form.controls.Notifications as FormGroup;
-				control = control.controls.WebHooks as FormGroup;
-				control.controls.SignKey.setValue(AppCrypto.md5(this.update.form.controls.Title.value));
+			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title")).Options.OnBlur = (_, control) => {
+				this.form.controls.Alias.setValue(AppUtility.toANSI(control.value, true).replace(/\-/g, ""));
+				((this.form.controls.Notifications as FormGroup).controls.WebHooks as FormGroup).controls.SignKey.setValue(AppCrypto.md5(control.value));
+			};
+			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, control) => {
+				control.setValue(AppUtility.toANSI(control.value, true).replace(/\-/g, ""));
 			};
 		}
 
-		let ctrl = config.find(control => AppUtility.isEquals(control.Name, "Description"));
-		ctrl.Type = "TextArea";
-		ctrl.Options.Rows = 2;
-
-		ctrl = config.find(control => AppUtility.isEquals(control.Name, "Status"));
-		if (AppUtility.isNotEmpty(ctrl.Options.SelectOptions.Values)) {
-			ctrl.Options.SelectOptions.Values = (AppUtility.toArray(ctrl.Options.SelectOptions.Values) as Array<string>).map(value => {
-				return { Value: value, Label: `{{status.approval.${value}}}` };
-			});
-			ctrl.Options.SelectOptions.Interface = "popover";
+		if (this.organization === undefined) {
+			this.organization = new Organization();
+			this.organization.Notifications = {
+				Events: [],
+				Methods: [],
+				WebHooks: {
+					SignAlgorithm: "SHA256",
+					SignatureAsHex: true,
+					SignatureInQuery: false
+				}
+			};
+			this.organization.RefreshUrls = { Interval: 15 };
+			this.organization.RedirectUrls = { AllHttp404: false };
+			this.organization.Emails = { Smtp: { Port: 25, EnableSsl: false } };
 		}
-		if (!this.authSvc.isSystemAdministrator()) {
-			ctrl.Options.Disabled = true;
-		}
-
-		ctrl = config.find(control => AppUtility.isEquals(control.Name, "ExpiredDate"));
-		ctrl.Type = "DatePicker";
-		ctrl.Required = false;
-		ctrl.Options.DatePickerOptions = { AllowTimes: false };
-		if (!this.authSvc.isSystemAdministrator()) {
-			ctrl.Options.Disabled = true;
+		else {
+			this.previousPrivileges = Privileges.getPrivileges(this.organization.Privileges);
+			this.organization = Organization.deserialize(AppUtility.clone(this.organization));
+			this.organization.Privileges = Privileges.resetPrivileges(undefined, this.previousPrivileges);
 		}
 
-		ctrl = config.find(control => AppUtility.isEquals(control.Name, "FilesQuotes"));
-		ctrl.Type = "Range";
-		ctrl.Options.MinValue = 0;
-		ctrl.Options.MaxValue = 500;
-		ctrl.Options.RangeOptions = {
-			AllowPin: true,
-			AllowSnaps: true,
-			AllowTicks: true,
-			Step: 10,
-			Icons: {
-				Start: "cloud-done",
-				End: "cloud"
-			}
-		};
-		if (!this.authSvc.isSystemAdministrator()) {
-			ctrl.Options.Disabled = true;
-		}
-
-		ctrl = config.find(control => AppUtility.isEquals(control.Name, "Required2FA"));
-		ctrl.Options.Type = "toggle";
-
-		ctrl = config.find(control => AppUtility.isEquals(control.Name, "TrackDownloadFiles"));
-		ctrl.Options.Type = "toggle";
-
-		ctrl = config.find(control => control.Options && control.Options.AutoFocus);
-		if (ctrl === undefined) {
-			ctrl = config.find(control => AppUtility.isEquals(control.Type, "TextBox") && !control.Hidden);
-			if (ctrl !== undefined) {
-				ctrl.Options.AutoFocus = true;
-			}
-		}
-
-		this.update.config = config;
-		this.organization = this.organization || new Organization();
+		this.formConfig = formConfig;
 	}
 
-	onFormInitialized(event: any) {
-		this.update.form.patchValue(this.organization);
-		if (AppUtility.isEquals("-", this.organization.ExpiredDate)) {
-			this.update.form.controls.ExpiredDate.patchValue(undefined);
-		}
-		this.update.hash = AppCrypto.hash(this.update.form.value);
-		this.appFormsSvc.hideLoadingAsync();
-		console.log("Forms", this.update.form.value);
+	onFormInitialized() {
+		this.form.patchValue(this.organization);
+		this.form.controls.ExpiredDate.patchValue(AppUtility.toIsoDate(this.organization.ExpiredDate), { onlySelf: true });
+		Organization.instructionElements.forEach(type => ((this.form.controls.Instructions as FormGroup).controls[type] as FormGroup).controls.Language.setValue(this.configSvc.appConfig.language));
+		(this.form.controls.Others as FormGroup).controls.MetaTags.patchValue(this.organization.MetaTags, { onlySelf: true });
+		(this.form.controls.Others as FormGroup).controls.Scripts.patchValue(this.organization.Scripts, { onlySelf: true });
+		PlatformUtility.invoke(() => this.form.controls.OwnerID.patchValue(this.organization.OwnerID, { onlySelf: true }), 345);
+
+		const formValue = this.form.value;
+		delete formValue.Emails["Buttons"];
+		this.hash = AppCrypto.hash(formValue);
+		this.appFormsSvc.hideLoadingAsync(() => console.warn("Forms Value", this.form.value));
 	}
 
 	async updateAsync() {
-		if (this.update.form.invalid) {
-			this.appFormsSvc.highlightInvalids(this.update.form);
-		}
-		else {
-			await this.appFormsSvc.showLoadingAsync(this.title);
+		if (this.appFormsSvc.validate(this.form)) {
+			const organization = this.form.value;
+			delete organization.Emails["Buttons"];
+			Organization.instructionElements.forEach(type => {
+				if (organization.Instructions[type]) {
+					this.configSvc.appConfig.languages.forEach(language => {
+						const instruction = organization.Instructions[type][language.Value];
+						if (instruction && !AppUtility.isNotEmpty(instruction.Subject) && !AppUtility.isNotEmpty(instruction.Body)) {
+							delete organization.Instructions[type][language.Value];
+						}
+					});
+				}
+			});
+
+			if (this.hash === AppCrypto.hash(organization)) {
+				await this.configSvc.navigateBackAsync();
+			}
+			else {
+				this.processing = true;
+				await this.appFormsSvc.showLoadingAsync(this.title);
+
+				organization.ExpiredDate = this.form.value.ExpiredDate !== undefined ? AppUtility.toIsoDate(this.form.value.ExpiredDate).replace(/\-/g, "/") : "-";
+				organization.MetaTags = this.form.value.Others.MetaTags;
+				organization.Scripts = this.form.value.Others.Scripts;
+				organization.OriginalPrivileges = Privileges.getPrivileges(this.organization.Privileges);
+
+				delete organization["Others"];
+				delete organization["Privileges"];
+
+				if (AppUtility.isNotEmpty(organization.ID)) {
+					await this.portalsCoreSvc.updateOrganizationAsync(
+						organization,
+						async () => {
+							await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.update"));
+							await this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync());
+						},
+						async error => {
+							this.processing = false;
+							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+						}
+					);
+				}
+				else {
+					await this.portalsCoreSvc.createOrganizationAsync(
+						organization,
+						async () => {
+							await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.new"));
+							await this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync());
+						},
+						async error => {
+							this.processing = false;
+							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+						}
+					);
+				}
+			}
 		}
 	}
 
@@ -257,8 +190,14 @@ export class OrganizationsUpdatePage implements OnInit {
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			undefined,
-			await this.configSvc.getResourceAsync("portals.organizations.update.messages.confirm"),
-			async () => await this.configSvc.navigateBackAsync(),
+			await this.configSvc.getResourceAsync(`portals.organizations.update.messages.confirm.${AppUtility.isNotEmpty(this.organization.ID) ? "cancel" : "new"}`),
+			async () => {
+				this.organization = Organization.get(this.configSvc.requestParams["ID"]);
+				if (this.organization !== undefined) {
+					Privileges.resetPrivileges(this.organization.Privileges, this.previousPrivileges);
+				}
+				await this.configSvc.navigateBackAsync();
+			},
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);

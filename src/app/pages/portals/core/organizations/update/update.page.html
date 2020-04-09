@@ -1,12 +1,12 @@
 <ion-header>
 	<ion-toolbar [color]="configSvc.color">
 		<ion-buttons slot="start">
-			<ion-button fill="clear" color="secondary" (click)="cancelAsync()">
+			<ion-button fill="clear" color="secondary" [disabled]="processing" (click)="cancelAsync()">
 				{{ button.cancel }}
 			</ion-button>
 		</ion-buttons>
 		<ion-buttons slot="end">
-			<ion-button fill="clear" color="primary" (click)="updateAsync()">
+			<ion-button fill="clear" color="primary" [disabled]="processing" (click)="updateAsync()">
 				{{ button.update }}
 			</ion-button>
 		</ion-buttons>
@@ -17,11 +17,11 @@
 </ion-header>
 
 <ion-content [color]="configSvc.color" class="ion-padding">
-	<app-form *ngIf="update.config"
+	<app-form *ngIf="formConfig"
 		[color]="configSvc.color"
-		[form]="update.form"
-		[config]="update.config"
-		[segments]="update.segments"
-		[controls]="update.controls"
-		(init)="onFormInitialized($event)"></app-form>
+		[form]="form"
+		[config]="formConfig"
+		[segments]="formSegments"
+		[controls]="formControls"
+		(init)="onFormInitialized()"></app-form>
 </ion-content>

@@ -10,8 +10,8 @@ import { AppPagination, AppDataPagination, AppDataRequest } from "../../../../..
 import { AppFormsService } from "../../../../../components/forms.service";
 import { ConfigurationService } from "../../../../../services/configuration.service";
 import { AuthenticationService } from "../../../../../services/authentication.service";
-import { PortalsService } from "../../../../../services/portals.service";
-import { Organization } from "../../../../../models/portals.organization";
+import { PortalsCoreService } from "../../../../../services/portals.core.service";
+import { Organization } from "../../../../../models/portals.core.organization";
 
 @Component({
 	selector: "page-portals-organizations-list",
@@ -25,7 +25,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		public appFormsSvc: AppFormsService,
 		public configSvc: ConfigurationService,
 		public authSvc: AuthenticationService,
-		public portalsSvc: PortalsService
+		public portalsSvc: PortalsCoreService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
