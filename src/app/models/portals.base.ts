@@ -26,8 +26,4 @@ export abstract class PortalBase extends BaseModel {
 	/** The title (only ANSI characters) for working with URIs and filters */
 	public abstract ansiTitle: string;
 
-	public get routerLink() {
-		return `/portals/${this.constructor.name.toLowerCase()}s/view/${AppUtility.toURI(this.ansiTitle)}`;
-	}
-
 }

@@ -9,33 +9,25 @@ import { OrganizationsUpdatePageModule } from "./update/update.module";
 
 const routes: Routes = [
 	{
-		path: "organizations/search",
+		path: "core/organizations/search",
 		canActivate: [AuthenticatedGuardService],
 		loadChildren: "../organizations/list/list.module#OrganizationsListPageModule"
 	},
 	{
-		path: "organizations/list",
+		path: "core/organizations/list",
 		canActivate: [AuthenticatedGuardService],
 		loadChildren: "../organizations/list/list.module#OrganizationsListPageModule"
 	},
 	{
-		path: "organizations/create",
+		path: "core/organizations/create",
 		canActivate: [AuthenticatedGuardService],
 		loadChildren: "../organizations/update/update.module#OrganizationsUpdatePageModule"
 	},
 	{
-		path: "organizations/update/:data",
+		path: "core/organizations/update/:data",
 		canActivate: [AuthenticatedGuardService],
 		loadChildren: "../organizations/update/update.module#OrganizationsUpdatePageModule"
 	},
-	/*
-	{
-		path: "organizations/view/:data",
-		data: { preload: true },
-		canActivate: [AuthenticatedGuardService],
-		loadChildren: "../organizations/read/read.module#OrganizationsViewPageModule"
-	},
-	*/
 	{
 		path: "**",
 		redirectTo: "/home",

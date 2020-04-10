@@ -14,7 +14,7 @@ import { PortalsCoreService } from "../../../../../services/portals.core.service
 import { Organization } from "../../../../../models/portals.core.organization";
 
 @Component({
-	selector: "page-portals-organizations-list",
+	selector: "page-portals-core-organizations-list",
 	templateUrl: "./list.page.html",
 	styleUrls: ["./list.page.scss"]
 })
@@ -22,10 +22,10 @@ import { Organization } from "../../../../../models/portals.core.organization";
 export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 
 	constructor(
-		public appFormsSvc: AppFormsService,
 		public configSvc: ConfigurationService,
-		public authSvc: AuthenticationService,
-		public portalsSvc: PortalsCoreService
+		private appFormsSvc: AppFormsService,
+		private authSvc: AuthenticationService,
+		private portalsCoreSvc: PortalsCoreService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
@@ -48,8 +48,8 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		handler: () => void
 	}>;
 	subscription: Subscription;
-	@ViewChild(IonSearchbar, { static: false }) searchCtrl: IonSearchbar;
-	@ViewChild(IonInfiniteScroll, { static: false }) infiniteScrollCtrl: IonInfiniteScroll;
+	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
+	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
 	get locale() {
 		return this.configSvc.locale;
@@ -87,7 +87,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	private async initializeAsync() {
-		this.searching = this.configSvc.currentUrl.startsWith("/portals/organizations/search");
+		this.searching = this.configSvc.currentUrl.startsWith("/portals/core/organizations/search");
 		this.configSvc.appTitle = this.title = this.searching
 			? await this.configSvc.getResourceAsync("portals.organizations.title.search")
 			: await this.configSvc.getResourceAsync("portals.organizations.title.list");
@@ -95,7 +95,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.create"), "create", () => this.openCreateAsync())
 			];
-			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.portalsSvc.name) || AppPagination.getDefault();
+			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `organization@${this.portalsCoreSvc.name}`) || AppPagination.getDefault();
 			this.pagination.PageNumber = this.pageNumber;
 			await this.searchAsync();
 		}
@@ -110,17 +110,17 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	openCreateAsync() {
-		return this.configSvc.navigateForwardAsync("/portals/organizations/create");
+		return this.configSvc.navigateForwardAsync("/portals/core/organizations/create");
 	}
 
 	openSearchAsync() {
-		return this.configSvc.navigateForwardAsync("/portals/organizations/search");
+		return this.configSvc.navigateForwardAsync("/portals/core/organizations/search");
 	}
 
-	onStartSearch($event: any) {
+	onStartSearch(event: any) {
 		this.cancelSearch();
-		if (AppUtility.isNotEmpty($event.detail.value)) {
-			this.filterBy.Query = $event.detail.value;
+		if (AppUtility.isNotEmpty(event.detail.value)) {
+			this.filterBy.Query = event.detail.value;
 			if (this.searching) {
 				this.organizations = [];
 				this.pageNumber = 0;
@@ -133,15 +133,15 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		}
 	}
 
-	onCancelSearch() {
+	onClearSearch(event: any) {
 		this.cancelSearch();
 		this.filterBy.Query = undefined;
-		if (this.searching) {
-			this.organizations = [];
-		}
-		else {
-			this.prepareResults();
-		}
+		this.organizations = [];
+	}
+
+	onCancelSearch(event: any) {
+		this.onClearSearch(event);
+		this.startSearchAsync();
 	}
 
 	async onInfiniteScrollAsync() {
@@ -158,24 +158,30 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		}
 	}
 
-	async searchAsync(onNext?: () => void) {
+	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
+		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `organization@${this.portalsCoreSvc.name}`.toLowerCase()) || AppPagination.getDefault();
+		this.pagination.PageNumber = this.pageNumber = 0;
+		await this.searchAsync(onNext);
+	}
+
+	private async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
 			this.pageNumber++;
-			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.portalsSvc.name);
+			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `organization@${this.portalsCoreSvc.name}`.toLowerCase());
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsSvc.searchOrganization(this.request, onNextAsync);
+			this.subscription = this.portalsCoreSvc.searchOrganization(this.request, onNextAsync);
 		}
 		else {
-			await this.portalsSvc.searchOrganizationAsync(this.request, onNextAsync);
+			await this.portalsCoreSvc.searchOrganizationAsync(this.request, onNextAsync);
 		}
 	}
 
-	cancelSearch(dontDisableInfiniteScroll?: boolean) {
+	private cancelSearch(dontDisableInfiniteScroll?: boolean) {
 		if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 			this.subscription = undefined;
@@ -185,13 +191,12 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		}
 	}
 
-	prepareResults(onNext?: () => void, results?: Array<any>) {
+	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
 			(results || []).forEach(o => this.organizations.push(Organization.get(o.ID)));
 		}
 		else {
-			let objects = new List(results === undefined ? Organization.instances.values() : results.map(o => Organization.get(o.ID)));
-			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			const objects = new List(results === undefined ? Organization.instances.values() : results.map(o => Organization.get(o.ID))).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
 			this.organizations = results === undefined
 				? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
 				: this.organizations.concat(objects.ToArray());

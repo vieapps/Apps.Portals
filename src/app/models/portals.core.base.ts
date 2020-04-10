@@ -9,7 +9,7 @@ export abstract class PortalCoreBase extends BaseModel {
 	}
 
 	public get routerLink() {
-		return `/portals/${this.constructor.name.toLowerCase()}s/update/${AppUtility.toURI(this.ansiTitle)}`;
+		return `/portals/core/${this.constructor.name.toLowerCase()}s/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
 }

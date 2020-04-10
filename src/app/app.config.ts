@@ -77,12 +77,6 @@ export class AppConfig {
 		] as Array<{ name: string, objects: Array<string> }>
 	};
 
-	/** Available organizations in the app */
-	public static organizations = {
-		all: new Array<string>(),
-		current: ""
-	};
-
 	/** User account registrations */
 	public static accountRegistrations = {
 		registrable: true,

@@ -16,7 +16,7 @@ import { UserProfile } from "../../../../../models/user";
 import { Privileges } from "../../../../../models/privileges";
 
 @Component({
-	selector: "page-portals-organizations-update",
+	selector: "page-portals-core-organizations-update",
 	templateUrl: "./update.page.html",
 	styleUrls: ["./update.page.scss"]
 })

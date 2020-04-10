@@ -4,51 +4,26 @@ import { RouterModule, Routes } from "@angular/router";
 import { IonicModule } from "@ionic/angular";
 import { AuthenticatedGuardService } from "../../services/base.service";
 
-import { OrganizationsModule } from "./core/organizations/organizations.module";
+import { PortalsCoreModule } from "./core/core.module";
+// import { PortalsCmsModule } from "./cms/cms.module";
+// import { PortalsSearchModule } from "./search/search.module";
 
 const routes: Routes = [
 	{
-		path: "organizations",
+		path: "core",
 		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/organizations/organizations.module#OrganizationsModule"
+		loadChildren: "./core/core.module#PortalsCoreModule"
 	},
-	/*
-	{
-		path: "modules",
-		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/modules/modules.module#ModulesModule"
-	},
-	{
-		path: "contenttypes",
-		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/contenttypes/contenttypes.module#ContentTypesModule"
-	},
-	{
-		path: "roles",
-		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/roles/roles.module#RolesModule"
-	},
-	{
-		path: "expressions",
-		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/expressions/expressions.module#ExpressionsModule"
-	},
-	{
-		path: "sites",
-		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/sites/sites.module#SitesModule"
-	},
-	{
-		path: "desktops",
-		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/desktops/desktops.module#DesktopsModule"
-	},
-	{
-		path: "portlets",
-		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/portlets/portlets.module#PortletsModule"
-	},
-	*/
+	// {
+	// 	path: "cms",
+	// 	canActivate: [AuthenticatedGuardService],
+	// 	loadChildren: "./cms/cms.module#PortalsCmsModule"
+	// },
+	// {
+	// 	path: "search",
+	// 	canActivate: [AuthenticatedGuardService],
+	// 	loadChildren: "./search/search.module#PortalsSearchModule"
+	// },
 	{
 		path: "**",
 		redirectTo: "/home",
@@ -61,7 +36,9 @@ const routes: Routes = [
 	imports: [
 		CommonModule,
 		IonicModule,
-		OrganizationsModule,
+		PortalsCoreModule,
+		// PortalsCmsModule,
+		// PortalsSearchModule,
 		RouterModule.forChild(routes)
 	],
 	exports: [RouterModule],

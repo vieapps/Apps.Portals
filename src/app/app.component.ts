@@ -256,7 +256,7 @@ export class AppComponent implements OnInit {
 
 			this.updateSidebarItem(index, -1, {
 				title: "Organizations",
-				url: "/portals/organizations/list",
+				url: "/portals/core/organizations/list",
 				direction: "root",
 				icon: "business",
 				detail: false
@@ -474,7 +474,6 @@ export class AppComponent implements OnInit {
 				app: appConfig.app,
 				session: appConfig.session,
 				services: appConfig.services,
-				organizations: appConfig.organizations,
 				accountRegistrations: appConfig.accountRegistrations,
 				options: appConfig.options,
 				languages: appConfig.languages
