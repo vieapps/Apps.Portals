@@ -62,7 +62,6 @@ export class ImageCropperControl implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.settings = this.settings || {};
-
 		if (this.configSvc.isNativeApp) {
 			this.prepareNativeCropper();
 		}
