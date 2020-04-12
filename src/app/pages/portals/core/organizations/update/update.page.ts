@@ -32,9 +32,18 @@ export class OrganizationsUpdatePage implements OnInit {
 	) {
 	}
 
-	title = "";
-	organization: Organization;
+	private organization: Organization;
+	private hash = "";
+	private instructions = {} as {
+		[type: string]: {
+			[language: string]: {
+				Subject?: string;
+				Body?: string;
+			}
+		}
+	};
 
+	title = "";
 	form = new FormGroup({});
 	formConfig: Array<AppFormsControlConfig>;
 	formSegments = {
@@ -42,14 +51,11 @@ export class OrganizationsUpdatePage implements OnInit {
 		default: "basic"
 	};
 	formControls = new Array<AppFormsControl>();
-	hash = "";
 	processing = false;
 	button = {
 		update: "Update",
 		cancel: "Cancel"
 	};
-
-	private previousPrivileges: { [key: string]: Array<string> };
 
 	ngOnInit() {
 		this.organization = Organization.get(this.configSvc.requestParams["ID"]);
@@ -83,63 +89,81 @@ export class OrganizationsUpdatePage implements OnInit {
 				Events: [],
 				Methods: [],
 				WebHooks: {
+					EndpointURLs: [],
 					SignAlgorithm: "SHA256",
 					SignatureAsHex: true,
 					SignatureInQuery: false
 				}
 			};
-			this.organization.RefreshUrls = { Interval: 15 };
-			this.organization.RedirectUrls = { AllHttp404: false };
-			this.organization.Emails = { Smtp: { Port: 25, EnableSsl: false } };
-		}
-		else {
-			this.previousPrivileges = Privileges.getPrivileges(this.organization.Privileges);
-			this.organization = Organization.deserialize(AppUtility.clone(this.organization));
-			this.organization.Privileges = Privileges.resetPrivileges(undefined, this.previousPrivileges);
+			this.organization.RefreshUrls = { Addresses: [], Interval: 15 };
+			this.organization.RedirectUrls = { Addresses: [], AllHttp404: false };
+			this.organization.EmailSettings = { Smtp: { Port: 25, EnableSsl: false } };
 		}
 
 		this.formSegments.items = await this.portalsCoreSvc.getOrganizationFormSegmentsAsync(this.organization);
 		this.formConfig = await this.portalsCoreSvc.getOrganizationFormControlsAsync(this.organization, formConfig => {
 			if (this.organization.ID === "") {
 				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title")).Options.OnBlur = (_, control) => {
-					this.form.controls.Alias.setValue(AppUtility.toANSI(control.value, true).replace(/\-/g, ""));
-					((this.form.controls.Notifications as FormGroup).controls.WebHooks as FormGroup).controls.SignKey.setValue(AppCrypto.md5(control.value));
+					this.form.controls.Alias.setValue(AppUtility.toANSI(control.value, true).replace(/\-/g, ""), { onlySelf: true });
+					((this.form.controls.Notifications as FormGroup).controls.WebHooks as FormGroup).controls.SignKey.setValue(AppCrypto.md5(control.value), { onlySelf: true });
 				};
 				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, control) => {
-					control.setValue(AppUtility.toANSI(control.value, true).replace(/\-/g, ""));
+					control.setValue(AppUtility.toANSI(control.value, true).replace(/\-/g, ""), { onlySelf: true });
 				};
 			}
+			const instructionControls = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Instructions")).SubControls.Controls;
+			Organization.instructionElements.forEach(type => {
+				const controls = instructionControls.find(ctrl => AppUtility.isEquals(ctrl.Name, type)).SubControls.Controls;
+				controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Language")).Options.OnChanged = (event, formControl) => {
+					this.instructions[formControl.parentControl.Name] = this.instructions[formControl.parentControl.Name] || {};
+					const instruction = this.instructions[formControl.parentControl.Name][event.detail.value] || {};
+					formControl.formGroup.controls.Subject.setValue(instruction.Subject, { onlySelf: true });
+					formControl.formGroup.controls.Body.setValue(instruction.Body, { onlySelf: true });
+					formControl.parentControl.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Subject")).focus();
+				};
+				controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Subject")).Options.OnBlur = (_, formControl) => this.instructions[formControl.parentControl.Name][formControl.formGroup.controls.Language.value] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
+				controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Body")).Options.OnBlur = (_, formControl) => this.instructions[formControl.parentControl.Name][formControl.formGroup.controls.Language.value] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
+			});
 		});
 	}
 
 	onFormInitialized() {
-		this.form.patchValue(this.organization);
-		this.form.controls.ExpiredDate.setValue(AppUtility.toIsoDate(this.organization.ExpiredDate), { onlySelf: true });
-		(this.form.controls.Others as FormGroup).controls.MetaTags.setValue(this.organization.MetaTags, { onlySelf: true });
-		(this.form.controls.Others as FormGroup).controls.Scripts.setValue(this.organization.Scripts, { onlySelf: true });
-		Organization.instructionElements.forEach(type => ((this.form.controls.Instructions as FormGroup).controls[type] as FormGroup).controls.Language.setValue(this.configSvc.appConfig.language, { onlySelf: true }));
-		PlatformUtility.invoke(() => this.form.controls.OwnerID.setValue(this.organization.OwnerID, { onlySelf: true }), 234);
+		const privileges = Privileges.getPrivileges(this.organization.Privileges);
+		const organization = AppUtility.clone(this.organization, ["MetaTags", "Scripts"]);
+		organization.Privileges = Privileges.resetPrivileges(undefined, privileges);
+		organization.ExpiredDate = AppUtility.toIsoDate(this.organization.ExpiredDate);
+		organization.Notifications.WebHooks.EndpointURLs = AppUtility.toStr(this.organization.Notifications.WebHooks.EndpointURLs.filter(value => AppUtility.isNotEmpty(value)), "\n");
+		organization.Others = { MetaTags: this.organization.MetaTags, Scripts: this.organization.Scripts };
+		organization.RefreshUrls.Addresses = AppUtility.toStr(this.organization.RefreshUrls.Addresses, "\n");
+		organization.RedirectUrls.Addresses = AppUtility.toStr(this.organization.RedirectUrls.Addresses, "\n");
 
-		const formValue = this.form.value;
-		delete formValue.Emails["Buttons"];
-		this.hash = AppCrypto.hash(formValue);
-		this.appFormsSvc.hideLoadingAsync();
+		this.instructions = organization.Instructions;
+		Organization.instructionElements.forEach(type => {
+			this.instructions[type] = this.instructions[type] || {};
+			this.configSvc.appConfig.languages.map(language => language.Value).forEach(language => {
+				this.instructions[type][language] = this.instructions[type][language] || { Subject: undefined as string, Body: undefined as string };
+			});
+		});
+		this.hash = AppCrypto.hash(organization);
+
+		organization.Instructions = {};
+		Organization.instructionElements.forEach(type => {
+			const instruction = this.instructions[type][this.configSvc.appConfig.language];
+			organization.Instructions[type] = {
+				Language: this.configSvc.appConfig.language,
+				Subject: instruction.Subject,
+				Body: instruction.Body
+			};
+		});
+		this.form.patchValue(organization);
+		this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.invoke(() => this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true }), 234));
 	}
 
 	async updateAsync() {
 		if (this.appFormsSvc.validate(this.form)) {
 			const organization = this.form.value;
-			delete organization.Emails["Buttons"];
-			Organization.instructionElements.forEach(type => {
-				if (organization.Instructions[type]) {
-					this.configSvc.appConfig.languages.forEach(language => {
-						const instruction = organization.Instructions[type][language.Value];
-						if (instruction === undefined || (!AppUtility.isNotEmpty(instruction.Subject) && !AppUtility.isNotEmpty(instruction.Body))) {
-							delete organization.Instructions[type][language.Value];
-						}
-					});
-				}
-			});
+			organization.Instructions = this.instructions;
+			delete organization.EmailSettings["Buttons"];
 
 			if (this.hash === AppCrypto.hash(organization)) {
 				await this.configSvc.navigateBackAsync();
@@ -148,10 +172,13 @@ export class OrganizationsUpdatePage implements OnInit {
 				this.processing = true;
 				await this.appFormsSvc.showLoadingAsync(this.title);
 
-				organization.ExpiredDate = this.form.value.ExpiredDate !== undefined ? AppUtility.toIsoDate(this.form.value.ExpiredDate).replace(/\-/g, "/") : "-";
-				organization.MetaTags = this.form.value.Others.MetaTags;
-				organization.Scripts = this.form.value.Others.Scripts;
-				organization.OriginalPrivileges = Privileges.getPrivileges(this.organization.Privileges);
+				organization.ExpiredDate = organization.ExpiredDate !== undefined ? AppUtility.toIsoDate(organization.ExpiredDate).replace(/\-/g, "/") : "-";
+				organization.Notifications.WebHooks.EndpointURLs = AppUtility.toArray(organization.Notifications.WebHooks.EndpointURLs, "\n").filter(value => AppUtility.isNotEmpty(value));
+				organization.MetaTags = organization.Others.MetaTags;
+				organization.Scripts = organization.Others.Scripts;
+				organization.RefreshUrls.Addresses = AppUtility.toArray(organization.RefreshUrls.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));
+				organization.RedirectUrls.Addresses = AppUtility.toArray(organization.RedirectUrls.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));
+				organization.OriginalPrivileges = Privileges.getPrivileges(organization.Privileges);
 
 				delete organization["Others"];
 				delete organization["Privileges"];
@@ -191,13 +218,7 @@ export class OrganizationsUpdatePage implements OnInit {
 			undefined,
 			undefined,
 			await this.configSvc.getResourceAsync(`portals.organizations.update.messages.confirm.${AppUtility.isNotEmpty(this.organization.ID) ? "cancel" : "new"}`),
-			async () => {
-				this.organization = Organization.get(this.configSvc.requestParams["ID"]);
-				if (this.organization !== undefined) {
-					Privileges.resetPrivileges(this.organization.Privileges, this.previousPrivileges);
-				}
-				await this.configSvc.navigateBackAsync();
-			},
+			async () => await this.configSvc.navigateBackAsync(),
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);

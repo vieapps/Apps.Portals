@@ -1,6 +1,7 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "../components/app.utility";
 import { PortalCoreBase as BaseModel } from "./portals.core.base";
+import { Privileges } from "./privileges";
 
 export class Organization extends BaseModel {
 
@@ -42,7 +43,7 @@ export class Organization extends BaseModel {
 			Body?: string;
 		};
 		WebHooks?: {
-			EndpointURLs?: string;
+			EndpointURLs?: Array<string>;
 			SignAlgorithm?: string;
 			SignKey?: string;
 			SignatureName?: string;
@@ -67,14 +68,14 @@ export class Organization extends BaseModel {
 	MetaTags = "";
 	Scripts = "";
 	RefreshUrls = {} as {
-		Addresses?: string;
+		Addresses?: Array<string>;
 		Interval?: number;
 	};
 	RedirectUrls = {} as {
-		Addresses?: string;
+		Addresses?: Array<string>;
 		AllHttp404?: boolean;
 	};
-	Emails = {} as {
+	EmailSettings = {} as {
 		Sender?: string;
 		Signature?: string;
 		Smtp?: {

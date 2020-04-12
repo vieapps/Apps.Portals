@@ -1,5 +1,5 @@
-import { Privileges } from "./privileges";
 import { AppUtility } from "../components/app.utility";
+import { Privileges } from "./privileges";
 
 /** Base of all model/entity classes */
 export abstract class Base {

@@ -176,9 +176,7 @@ export class PortalsCoreService extends BaseService {
 		switch (message.Type.Event) {
 			case "Create":
 			case "Update":
-			case "Post":
-			case "Put":
-			Organization.update(message.Data);
+				Organization.update(message.Data);
 				AppEvents.broadcast("Portals", { Object: "Organization", Type: "Updated", ID: message.Data.ID });
 				break;
 
@@ -196,7 +194,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getOrganizationFormSegmentsAsync(organization: Organization, onPreCompleted?: (formSegments: AppFormsSegment[]) => void) {
-		const segments = [
+		const formSegments = [
 			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.organizations.update.segments.basic")),
 			new AppFormsSegment("privileges", await this.configSvc.getResourceAsync("portals.organizations.update.segments.privileges")),
 			new AppFormsSegment("notifications", await this.configSvc.getResourceAsync("portals.organizations.update.segments.notifications")),
@@ -206,12 +204,12 @@ export class PortalsCoreService extends BaseService {
 			new AppFormsSegment("emails", await this.configSvc.getResourceAsync("portals.organizations.update.segments.emails"))
 		];
 		if (organization !== undefined && AppUtility.isNotEmpty(organization.ID)) {
-			segments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.organizations.update.segments.attachments")));
+			formSegments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.organizations.update.segments.attachments")));
 		}
 		if (onPreCompleted !== undefined) {
-			onPreCompleted(segments);
+			onPreCompleted(formSegments);
 		}
-		return segments;
+		return formSegments;
 	}
 
 	public async getOrganizationFormControlsAsync(organization: Organization, onPreCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
@@ -255,15 +253,6 @@ export class PortalsCoreService extends BaseService {
 											SelectOptions: {
 												Values: this.configSvc.appConfig.languages,
 												Interface: "popover"
-											},
-											OnChanged: (event, formControl) => {
-												const instructionType = formControl.control.parent.Name;
-												const language = event.detail.value || this.configSvc.appConfig.language;
-												organization.Instructions[instructionType] = organization.Instructions[instructionType] || {};
-												const instruction = organization.Instructions[instructionType][language] || {};
-												formControl.formGroup.controls.Subject.setValue(instruction.Subject);
-												formControl.formGroup.controls.Body.setValue(instruction.Body);
-												formControl.control.parent.SubControls.Controls.find(c => c.Name === "Subject").focus();
 											}
 										}
 									},
@@ -271,13 +260,7 @@ export class PortalsCoreService extends BaseService {
 										Name: "Subject",
 										Options: {
 											Label: `{{portals.organizations.controls.Instructions.${type}.Subject}}`,
-											MaxLength: 250,
-											OnBlur: (_, formControl) => {
-												const instructionType = formControl.parentControl.Name;
-												const language = formControl.formGroup.controls.Language.value || this.configSvc.appConfig.language;
-												organization.Instructions[instructionType] = organization.Instructions[instructionType] || {};
-												organization.Instructions[instructionType][language] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
-											}
+											MaxLength: 250
 										}
 									},
 									{
@@ -285,13 +268,7 @@ export class PortalsCoreService extends BaseService {
 										Type: "TextArea",
 										Options: {
 											Label: `{{portals.organizations.controls.Instructions.${type}.Body}}`,
-											Rows: 7,
-											OnBlur: (_, formControl) => {
-												const instructionType = formControl.parentControl.Name;
-												const language = formControl.formGroup.controls.Language.value || this.configSvc.appConfig.language;
-												organization.Instructions[instructionType] = organization.Instructions[instructionType] || {};
-												organization.Instructions[instructionType][language] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
-											}
+											Rows: 7
 										}
 									}
 								]
@@ -428,7 +405,7 @@ export class PortalsCoreService extends BaseService {
 					]
 				}
 			},
-			this.getEmailSettingsFormControl("Emails", "emails", false),
+			this.getEmailSettingsFormControl("EmailSettings", "emails", false),
 		);
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
@@ -525,9 +502,9 @@ export class PortalsCoreService extends BaseService {
 		return formConfig;
 	}
 
-	public getEmailNotificationFormControl(allowInheritFromParent: boolean = true) {
+	public getEmailNotificationFormControl(allowInheritFromParent: boolean = true, onPreCompleted?: (formConfig: AppFormsControlConfig) => void) {
 		const placeholder = "{{portals.common.controls.notifications.emails.toAddresses.placeholder}}";
-		const config: AppFormsControlConfig = {
+		const formConfig: AppFormsControlConfig = {
 			Name: "Emails",
 			Options: {
 				Label: "{{portals.common.controls.notifications.emails.label}}",
@@ -579,25 +556,28 @@ export class PortalsCoreService extends BaseService {
 
 		if (allowInheritFromParent) {
 			AppUtility.insertAt(
-				config.SubControls.Controls,
+				formConfig.SubControls.Controls,
 				{
 					Name: "InheritFromParent",
 					Type: "YesNo",
 					Options: {
 						Label: "{{portals.common.controls.notifications.inheritFromParent}}",
 						Type: "toggle",
-						OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(control => control.Name !== "InheritFromParent").forEach(control => control.Hidden = event.detail.checked)
+						OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name !== "InheritFromParent").forEach(ctrl => ctrl.Hidden = event.detail.checked)
 					}
 				},
 				0
 			);
 		}
 
-		return config;
+		if (onPreCompleted !== undefined) {
+			onPreCompleted(formConfig);
+		}
+		return formConfig;
 	}
 
-	public getWebHookNotificationFormControl(allowInheritFromParent: boolean = true) {
-		const config: AppFormsControlConfig = {
+	public getWebHookNotificationFormControl(allowInheritFromParent: boolean = true, onPreCompleted?: (formConfig: AppFormsControlConfig) => void) {
+		const formConfig: AppFormsControlConfig = {
 			Name: "WebHooks",
 			Options: {
 				Label: "{{portals.common.controls.notifications.webhooks.label}}",
@@ -679,25 +659,28 @@ export class PortalsCoreService extends BaseService {
 
 		if (allowInheritFromParent) {
 			AppUtility.insertAt(
-				config.SubControls.Controls,
+				formConfig.SubControls.Controls,
 				{
 					Name: "InheritFromParent",
 					Type: "YesNo",
 					Options: {
 						Label: "{{portals.common.controls.notifications.inheritFromParent}}",
 						Type: "toggle",
-						OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(control => control.Name !== "InheritFromParent").forEach(control => control.Hidden = event.detail.checked)
+						OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name !== "InheritFromParent").forEach(ctrl => ctrl.Hidden = event.detail.checked)
 					}
 				},
 				0
 			);
 		}
 
-		return config;
+		if (onPreCompleted !== undefined) {
+			onPreCompleted(formConfig);
+		}
+		return formConfig;
 	}
 
-	public getNotificationsFormControl(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true) {
-		const config: AppFormsControlConfig = {
+	public getNotificationsFormControl(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true, onPreCompleted?: (formConfig: AppFormsControlConfig) => void) {
+		const formConfig: AppFormsControlConfig = {
 			Name: name,
 			Segment: segment,
 			SubControls: {
@@ -736,18 +719,21 @@ export class PortalsCoreService extends BaseService {
 		};
 
 		if (methods === undefined || methods.indexOf("Email") > -1) {
-			config.SubControls.Controls.push(this.getEmailNotificationFormControl(allowInheritFromParent));
+			formConfig.SubControls.Controls.push(this.getEmailNotificationFormControl(allowInheritFromParent));
 		}
 
 		if (methods === undefined || methods.indexOf("WebHook") > -1) {
-			config.SubControls.Controls.push(this.getWebHookNotificationFormControl(allowInheritFromParent));
+			formConfig.SubControls.Controls.push(this.getWebHookNotificationFormControl(allowInheritFromParent));
 		}
 
-		return config;
+		if (onPreCompleted !== undefined) {
+			onPreCompleted(formConfig);
+		}
+		return formConfig;
 	}
 
-	public getEmailSettingsFormControl(name: string, segment?: string, allowInheritFromParent: boolean = true) {
-		const config: AppFormsControlConfig = {
+	public getEmailSettingsFormControl(name: string, segment?: string, allowInheritFromParent: boolean = true, onPreCompleted?: (formConfig: AppFormsControlConfig) => void) {
+		const formConfig: AppFormsControlConfig = {
 			Name: name,
 			Segment: segment,
 			Options: {
@@ -855,21 +841,24 @@ export class PortalsCoreService extends BaseService {
 
 		if (allowInheritFromParent) {
 			AppUtility.insertAt(
-				config.SubControls.Controls,
+				formConfig.SubControls.Controls,
 				{
 					Name: "InheritFromParent",
 					Type: "YesNo",
 					Options: {
 						Label: "{{portals.common.controls.emails.inheritFromParent}}",
 						Type: "toggle",
-						OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(control => control.Name !== "InheritFromParent").forEach(control => control.Hidden = event.detail.checked)
+						OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name !== "InheritFromParent").forEach(ctrl => ctrl.Hidden = event.detail.checked)
 					}
 				},
 				0
 			);
 		}
 
-		return config;
+		if (onPreCompleted !== undefined) {
+			onPreCompleted(formConfig);
+		}
+		return formConfig;
 	}
 
 }

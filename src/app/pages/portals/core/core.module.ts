@@ -10,43 +10,43 @@ const routes: Routes = [
 	{
 		path: "core/organizations",
 		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/organizations/organizations.module#OrganizationsModule"
+		loadChildren: "./organizations/organizations.module#OrganizationsModule"
 	},
 	/*
 	{
 		path: "core/modules",
 		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/modules/modules.module#ModulesModule"
+		loadChildren: "./modules/modules.module#ModulesModule"
 	},
 	{
 		path: "core/contenttypes",
 		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/contenttypes/contenttypes.module#ContentTypesModule"
+		loadChildren: "./contenttypes/contenttypes.module#ContentTypesModule"
 	},
 	{
 		path: "core/roles",
 		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/roles/roles.module#RolesModule"
+		loadChildren: "./roles/roles.module#RolesModule"
 	},
 	{
 		path: "core/expressions",
 		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/expressions/expressions.module#ExpressionsModule"
+		loadChildren: "./expressions/expressions.module#ExpressionsModule"
 	},
 	{
 		path: "core/sites",
 		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/sites/sites.module#SitesModule"
+		loadChildren: "./sites/sites.module#SitesModule"
 	},
 	{
 		path: "core/desktops",
 		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/desktops/desktops.module#DesktopsModule"
+		loadChildren: "./desktops/desktops.module#DesktopsModule"
 	},
 	{
 		path: "core/portlets",
 		canActivate: [AuthenticatedGuardService],
-		loadChildren: "./core/portlets/portlets.module#PortletsModule"
+		loadChildren: "./portlets/portlets.module#PortletsModule"
 	},
 	*/
 	{
