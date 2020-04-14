@@ -1,8 +1,9 @@
 import { Subscription } from "rxjs";
 import { List } from "linqts";
-import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
+import { AppEvents } from "../../../../../components/app.events";
 import { AppUtility } from "../../../../../components/app.utility";
 import { TrackingUtility } from "../../../../../components/app.utility.trackings";
 import { PlatformUtility } from "../../../../../components/app.utility.platform";
@@ -19,7 +20,7 @@ import { Organization } from "../../../../../models/portals.core.organization";
 	styleUrls: ["./list.page.scss"]
 })
 
-export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
+export class OrganizationsListPage implements OnInit, OnDestroy {
 
 	constructor(
 		public configSvc: ConfigurationService,
@@ -47,7 +48,8 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		icon?: string,
 		handler: () => void
 	}>;
-	subscription: Subscription;
+
+	private subscription: Subscription;
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
@@ -60,23 +62,19 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	ngOnInit() {
-		if (this.authSvc.isServiceAdministrator()) {
+		if (this.authSvc.isServiceModerator(this.portalsCoreSvc.name)) {
 			this.initializeAsync();
+			AppEvents.on("Portals", info => {
+				if (!this.searching && info.args.Object === "Organization" && (info.args.Type === "Updated" || info.args.Type === "Deleted")) {
+					this.prepareResults();
+				}
+			}, "RefreshListOfOrganizationsEventHandler");
 		}
 		else {
 			Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmm..."),
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
 				this.configSvc.navigateHomeAsync()
 			]);
-		}
-	}
-
-	ngAfterViewInit() {
-		if (this.searching) {
-			Promise.all([async () => {
-				PlatformUtility.focus(this.searchCtrl);
-				this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.organizations.list.searchbar");
-			}]);
 		}
 	}
 
@@ -84,6 +82,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 		}
+		AppEvents.off("Portals", "RefreshListOfOrganizationsEventHandler");
 	}
 
 	private async initializeAsync() {
@@ -91,9 +90,14 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		this.configSvc.appTitle = this.title = this.searching
 			? await this.configSvc.getResourceAsync("portals.organizations.title.search")
 			: await this.configSvc.getResourceAsync("portals.organizations.title.list");
-		if (!this.searching) {
+		if (this.searching) {
+			PlatformUtility.focus(this.searchCtrl);
+			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.organizations.list.searchbar");
+		}
+		else {
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.create"), "create", () => this.openCreateAsync())
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.create"), "create", () => this.openCreateAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.search"), "search", () => this.openSearchAsync())
 			];
 			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `organization@${this.portalsCoreSvc.name}`) || AppPagination.getDefault();
 			this.pagination.PageNumber = this.pageNumber;
@@ -133,14 +137,14 @@ export class OrganizationsListPage implements OnInit, OnDestroy, AfterViewInit {
 		}
 	}
 
-	onClearSearch(event: any) {
+	onClearSearch() {
 		this.cancelSearch();
 		this.filterBy.Query = undefined;
 		this.organizations = [];
 	}
 
-	onCancelSearch(event: any) {
-		this.onClearSearch(event);
+	onCancelSearch() {
+		this.onClearSearch();
 		this.startSearchAsync();
 	}
 

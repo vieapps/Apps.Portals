@@ -12,7 +12,6 @@ import { FilesService } from "../../../../../services/files.service";
 import { PortalsCoreService } from "../../../../../services/portals.core.service";
 import { UsersService } from "../../../../../services/users.service";
 import { Organization } from "../../../../../models/portals.core.organization";
-import { UserProfile } from "../../../../../models/user";
 import { Privileges } from "../../../../../models/privileges";
 
 @Component({
@@ -27,21 +26,9 @@ export class OrganizationsUpdatePage implements OnInit {
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
 		private filesSvc: FilesService,
-		private portalsCoreSvc: PortalsCoreService,
-		private usersSvc: UsersService
+		private portalsCoreSvc: PortalsCoreService
 	) {
 	}
-
-	private organization: Organization;
-	private hash = "";
-	private instructions = {} as {
-		[type: string]: {
-			[language: string]: {
-				Subject?: string;
-				Body?: string;
-			}
-		}
-	};
 
 	title = "";
 	form = new FormGroup({});
@@ -57,19 +44,30 @@ export class OrganizationsUpdatePage implements OnInit {
 		cancel: "Cancel"
 	};
 
+	private organization: Organization;
+	private hash = "";
+	private instructions = {} as {
+		[type: string]: {
+			[language: string]: {
+				Subject?: string;
+				Body?: string;
+			}
+		}
+	};
+
 	ngOnInit() {
 		this.organization = Organization.get(this.configSvc.requestParams["ID"]);
 		const gotRights = this.organization === undefined
-			? this.authSvc.isSystemAdministrator()
-			: AppUtility.isEquals(this.organization.OwnerID, this.configSvc.getAccount().id) || this.authSvc.isAdministrator(this.portalsCoreSvc.name, "Organization", this.organization.Privileges);
-		if (!gotRights) {
+			? this.authSvc.isServiceModerator(this.portalsCoreSvc.name)
+			: AppUtility.isEquals(this.organization.OwnerID, this.configSvc.getAccount().id) || this.authSvc.isServiceModerator(this.portalsCoreSvc.name, this.organization.Privileges);
+		if (gotRights) {
+			this.initializeFormAsync();
+		}
+		else {
 			Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
 				this.configSvc.navigateBackAsync()
 			]);
-		}
-		else {
-			this.initializeFormAsync();
 		}
 	}
 
@@ -103,13 +101,11 @@ export class OrganizationsUpdatePage implements OnInit {
 		this.formSegments.items = await this.portalsCoreSvc.getOrganizationFormSegmentsAsync(this.organization);
 		this.formConfig = await this.portalsCoreSvc.getOrganizationFormControlsAsync(this.organization, formConfig => {
 			if (this.organization.ID === "") {
-				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title")).Options.OnBlur = (_, control) => {
-					this.form.controls.Alias.setValue(AppUtility.toANSI(control.value, true).replace(/\-/g, ""), { onlySelf: true });
-					((this.form.controls.Notifications as FormGroup).controls.WebHooks as FormGroup).controls.SignKey.setValue(AppCrypto.md5(control.value), { onlySelf: true });
+				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title")).Options.OnBlur = (_, formControl) => {
+					this.form.controls.Alias.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
+					((this.form.controls.Notifications as FormGroup).controls.WebHooks as FormGroup).controls.SignKey.setValue(AppCrypto.md5(formControl.value), { onlySelf: true });
 				};
-				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, control) => {
-					control.setValue(AppUtility.toANSI(control.value, true).replace(/\-/g, ""), { onlySelf: true });
-				};
+				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
 			}
 			const instructionControls = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Instructions")).SubControls.Controls;
 			Organization.instructionElements.forEach(type => {
@@ -128,14 +124,13 @@ export class OrganizationsUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const privileges = Privileges.getPrivileges(this.organization.Privileges);
-		const organization = AppUtility.clone(this.organization, ["MetaTags", "Scripts"]);
-		organization.Privileges = Privileges.resetPrivileges(undefined, privileges);
-		organization.ExpiredDate = AppUtility.toIsoDate(this.organization.ExpiredDate);
-		organization.Notifications.WebHooks.EndpointURLs = AppUtility.toStr(this.organization.Notifications.WebHooks.EndpointURLs.filter(value => AppUtility.isNotEmpty(value)), "\n");
-		organization.Others = { MetaTags: this.organization.MetaTags, Scripts: this.organization.Scripts };
-		organization.RefreshUrls.Addresses = AppUtility.toStr(this.organization.RefreshUrls.Addresses, "\n");
-		organization.RedirectUrls.Addresses = AppUtility.toStr(this.organization.RedirectUrls.Addresses, "\n");
+		const organization = AppUtility.clone(this.organization, false);
+		organization.Privileges = Privileges.resetPrivileges(undefined, Privileges.getPrivileges(this.organization.Privileges));
+		organization.ExpiredDate = AppUtility.toIsoDate(organization.ExpiredDate);
+		organization.Notifications.WebHooks.EndpointURLs = AppUtility.toStr(organization.Notifications.WebHooks.EndpointURLs, "\n");
+		organization.Others = { MetaTags: organization.MetaTags, Scripts: organization.Scripts };
+		organization.RefreshUrls.Addresses = AppUtility.toStr(organization.RefreshUrls.Addresses, "\n");
+		organization.RedirectUrls.Addresses = AppUtility.toStr(organization.RedirectUrls.Addresses, "\n");
 
 		this.instructions = organization.Instructions;
 		Organization.instructionElements.forEach(type => {
@@ -144,6 +139,9 @@ export class OrganizationsUpdatePage implements OnInit {
 				this.instructions[type][language] = this.instructions[type][language] || { Subject: undefined as string, Body: undefined as string };
 			});
 		});
+
+		delete organization["MetaTags"];
+		delete organization["Scripts"];
 		this.hash = AppCrypto.hash(organization);
 
 		organization.Instructions = {};
