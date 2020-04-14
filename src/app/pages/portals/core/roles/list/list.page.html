@@ -1,0 +1,61 @@
+<ion-header>
+	<ion-toolbar [color]="configSvc.color">
+		<ion-buttons slot="start">
+			<ion-back-button text=""></ion-back-button>
+		</ion-buttons>
+		<ion-buttons *ngIf="!searching" slot="end">
+			<ion-button [hidden]="searching" (click)="openSearchAsync()">
+				<ion-icon name="search" slot="icon-only"></ion-icon>
+			</ion-button>
+		</ion-buttons>
+		<ion-title [hidden]="searching">
+			{{ title }}
+		</ion-title>
+		<ion-searchbar [hidden]="!searching"
+			(ionChange)="onStartSearch($event)"
+			(ionClear)="onClearSearch($event)"
+			(ionCancel)="onCancelSearch($event)"></ion-searchbar>
+	</ion-toolbar>
+</ion-header>
+
+<ion-footer *ngIf="pagination">
+	<ion-toolbar [color]="configSvc.color">
+		<span slot="start">
+			<ion-icon name="business" color="primary" slot="start"></ion-icon>
+			<span>
+				{{ totalRecords | number:'':locale }} / {{ pagination.TotalRecords | number:'':locale }}	
+			</span>
+		</span>
+		<ion-buttons *ngIf="actions" slot="end">
+			<ion-button color="primary" (click)="showActionsAsync()">
+				<ion-icon name="ellipsis-horizontal" slot="icon-only"></ion-icon>
+			</ion-button>
+		</ion-buttons>
+	</ion-toolbar>
+</ion-footer>
+
+<ion-content [color]="configSvc.color">
+	<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="openCreateAsync()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+	<ion-list class="ion-padding-end">
+		<ion-item *ngFor="let role of roles; let idx=index; trackBy: track" [color]="configSvc.color" [routerLink]="role.routerLink" [queryParams]="role.routerParams" routerDirection="forward" detail="false">
+			<ion-label>
+				<label class="time" class="ion-float-end">
+					<ion-icon icon="time" slot="start"></ion-icon>
+					<span title="{{ role.LastModified | date:'h:mm a @ d/M/y' }}">
+						{{ role.LastModified | time:locale:'h:mm a @ d/M/y' }}
+					</span>
+				</label>
+				<h2>
+					{{ role.Title }}
+				</h2>
+			</ion-label>
+		</ion-item>
+	</ion-list>
+	<ion-infinite-scroll threshold="288px" position="bottom" (ionInfinite)="onInfiniteScrollAsync()">
+		<ion-infinite-scroll-content></ion-infinite-scroll-content>
+	</ion-infinite-scroll>
+</ion-content>
