@@ -12,6 +12,7 @@ import { UsersService } from "./users.service";
 import { AuthenticationService } from "./authentication.service";
 import { UserProfile } from "../models/user";
 import { Organization } from "../models/portals.core.organization";
+import { Role } from "../models/portals.core.role";
 
 @Injectable()
 export class PortalsCoreService extends BaseService {
@@ -25,6 +26,14 @@ export class PortalsCoreService extends BaseService {
 		super("Portals");
 		this.initialize();
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Organization", message => this.processOrganizationUpdateMessageAsync(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Role", message => this.processRoleUpdateMessageAsync(message));
+	}
+
+	public get activeOrganization() {
+		if (Organization.active === undefined) {
+			Organization.active = Organization.instances.size() > 0 ? Organization.instances.values()[0] : undefined;
+		}
+		return Organization.active;
 	}
 
 	private initialize() {
@@ -39,7 +48,6 @@ export class PortalsCoreService extends BaseService {
 			return {
 				title: organization.Title,
 				description: organization.Description,
-				image: undefined,
 				originalObject: organization
 			};
 		};
@@ -859,6 +867,165 @@ export class PortalsCoreService extends BaseService {
 			onPreCompleted(formConfig);
 		}
 		return formConfig;
+	}
+
+	public get roleCompleterDataSource() {
+		const convertFn = (data: any) => {
+			const role = data instanceof Role ? data as Role : Role.deserialize(data);
+			return {
+				title: role.Title,
+				description: role.Description,
+				originalObject: role
+			};
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(super.getSearchURI("role", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(o => convertFn(o)),
+			convertFn
+		);
+	}
+
+	public searchRole(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.search(
+			super.getSearchURI("role", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(o => Role.update(o));
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching role", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public searchRoleAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.searchAsync(
+			super.getSearchURI("role", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(o => Role.update(o));
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching role", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public createRoleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.createAsync(
+			super.getURI("role"),
+			body,
+			data => {
+				Role.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while creating new role", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public getRoleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		const role = Role.instances.getValue(id);
+		if (role !== undefined) {
+			return new Promise<void>(onNext !== undefined ? () => onNext(role) : () => {});
+		}
+		else {
+			return super.readAsync(
+				super.getURI("role", id),
+				data => {
+					Role.update(data);
+					if (onNext !== undefined) {
+						onNext(data);
+					}
+				},
+				error => {
+					console.error(super.getErrorMessage("Error occurred while getting an role", error));
+					if (onError !== undefined) {
+						onError(error);
+					}
+				}
+			);
+		}
+	}
+
+	public updateRoleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.updateAsync(
+			super.getURI("role", body.ID),
+			body,
+			data => {
+				Role.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while updating an role", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+	);
+	}
+
+	public deleteRoleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.deleteAsync(
+			super.getURI("role", id),
+			data => {
+				Role.instances.remove(id);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while deleting an role", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	private async processRoleUpdateMessageAsync(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				Role.update(message.Data);
+				AppEvents.broadcast("Portals", { Object: "Role", Type: "Updated", ID: message.Data.ID });
+				break;
+
+			case "Delete":
+				if (Role.contains(message.Data.ID)) {
+					Role.instances.remove(message.Data.ID);
+					AppEvents.broadcast("Portals", { Object: "Role", Type: "Deleted", ID: message.Data.ID });
+				}
+				break;
+
+			default:
+				console.warn(super.getLogMessage("Got an update message of a role"), message);
+				break;
+		}
 	}
 
 }
