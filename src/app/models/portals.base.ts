@@ -1,4 +1,3 @@
-import { AppUtility } from "../components/app.utility";
 import { Base as BaseModel } from "./base";
 
 /** Abstract class for all portals' entity classes */
