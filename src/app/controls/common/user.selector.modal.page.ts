@@ -35,6 +35,7 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 	@Input() hideEmails: boolean;
 
 	profiles = new Array<UserProfile>();
+	results = new Array<UserProfile>();
 	searching = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;
@@ -79,11 +80,11 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 	}
 
 	track(index: number, profile: UserProfile) {
-		return this.searching ? `${index}.${profile.ID}` : `${profile.ID}@${index}`;
+		return `${profile.ID}@${index}`;
 	}
 
 	openSearch() {
-		this.profiles = [];
+		this.results = [];
 		this.searching = true;
 		PlatformUtility.focus(this.searchCtrl);
 	}
@@ -92,21 +93,22 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 		this.cancelSearch();
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
-			this.profiles = [];
+			this.results = [];
+			this.selected.clear();
 			this.startSearchAsync(() => this.infiniteScrollCtrl.disabled = false, AppPagination.getDefault());
 		}
 	}
 
-	onClearSearch(event: any) {
+	onClearSearch() {
 		this.cancelSearch();
 		this.filterBy.Query = undefined;
-		this.profiles = [];
+		this.results = [];
+		this.selected.clear();
 	}
 
-	onCancelSearch(event: any) {
+	onCancelSearch() {
+		this.onClearSearch();
 		this.searching = false;
-		this.onClearSearch(event);
-		this.startSearchAsync();
 	}
 
 	async onInfiniteScrollAsync() {
@@ -131,7 +133,18 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `profile@${this.usersSvc.name}`.toLowerCase());
 			this.pagination.PageNumber = this.pageNumber;
-			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
+			if (this.searching) {
+				(data !== undefined ? data.Objects as Array<any> : []).forEach(profile => this.results.push(UserProfile.get(profile.ID)));
+			}
+			else {
+				const profiles = new List(data !== undefined ? (data.Objects as Array<any>).map(profile => UserProfile.get(profile.ID)) : UserProfile.all).OrderBy(profile => profile.Name).ThenByDescending(profile => profile.LastAccess);
+				this.profiles = data === undefined
+					? profiles.Take(this.pageNumber * this.pagination.PageSize).ToArray()
+					: this.profiles.concat(profiles.ToArray());
+			}
+			if (onNext !== undefined) {
+				onNext();
+			}
 		};
 		if (this.searching) {
 			this.subscription = this.usersSvc.search(this.request, onNextAsync);
@@ -148,21 +161,6 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 		}
 		if (AppUtility.isFalse(dontDisableInfiniteScroll)) {
 			this.infiniteScrollCtrl.disabled = true;
-		}
-	}
-
-	private prepareResults(onNext?: () => void, results?: Array<any>) {
-		if (this.searching) {
-			(results || []).forEach(o => this.profiles.push(UserProfile.get(o.ID)));
-		}
-		else {
-			const objects = new List(results === undefined ? UserProfile.all : results.map(o => UserProfile.get(o.ID))).OrderBy(o => o.Name).ThenByDescending(o => o.LastAccess);
-			this.profiles = results === undefined
-				? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
-				: this.profiles.concat(objects.ToArray());
-		}
-		if (onNext !== undefined) {
-			onNext();
 		}
 	}
 
