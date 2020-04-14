@@ -13,6 +13,9 @@ export class Organization extends BaseModel {
 	/** All instances of organization */
 	public static instances = new Dictionary<string, Organization>();
 
+	/** Active organization */
+	public static active: Organization;
+
 	public static instructionElements = ["Activate", "Invite", "Reset", "Password", "Email"];
 
 	ID = "";
