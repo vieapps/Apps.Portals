@@ -316,7 +316,7 @@
 	</ion-button>
 </ion-buttons>
 
-<control-selector *ngIf="visible && (isSelector || isCustomControl('selector'))" #elementRef
+<control-data-selector *ngIf="visible && (isSelector || isCustomControl('selector'))" #elementRef
 	[formGroup]="formGroup"
 	[control]="control"
 	[items]="lookupDisplayValues"
@@ -325,7 +325,7 @@
 	[showImage]="control.Extras['ShowImage'] || control.Extras['showImage']"
 	[showDescription]="control.Extras['ShowDescription'] || control.Extras['showDescription']"
 	[allowAdd]="control.Extras['AllowAdd'] || control.Extras['allowAdd']"
-	[allowDelete]="control.Extras['AllowDelete'] || control.Extras['allowDelete']"></control-selector>
+	[allowDelete]="control.Extras['AllowDelete'] || control.Extras['allowDelete']"></control-data-selector>
 <ion-item *ngIf="visible && description && (isSelector || isCustomControl('selector'))" [color]="theme">
 	<label
 		[class]="css.description"
@@ -343,7 +343,6 @@
 	[formGroup]="formGroup"
 	[control]="control"
 	[privileges]="value"
-	[allowInheritFromParent]="control.Extras['AllowInheritFromParent'] || control.Extras['allowInheritFromParent']"
 	(change)="onChanged($event)"></control-object-privileges>
 
 <control-service-privileges *ngIf="visible && isCustomControl('service-privileges')" #elementRef

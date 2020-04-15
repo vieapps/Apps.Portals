@@ -34,14 +34,15 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 	/** Set to 'false' to don't allow to inherit the privileges from parent (default is true) */
 	@Input() allowInheritFromParent: boolean;
 
-	/** The function to prepare the name of a role */
-	@Input() prepareRoleNameFunction: (role: { value: string, label: string }) => Promise<void>;
-
-	/** The component to show as the modal to select role(s) */
-	@Input() roleComponent: any;
-
-	/** The properties of component to show as the modal to select role(s) */
-	@Input() roleComponentProps: { [key: string]: any };
+	/** The information for working with role (prepare name function, modal component, modal properties) */
+	@Input() role: {
+		/** The function to prepare the information of a role */
+		prepare: (role: { Value: string; Label: string; Description?: string; Image?: string }) => Promise<void>;
+		/** The component to show as the modal to select role(s) */
+		modalComponent: any;
+		/** The properties of modal component to to select role(s) */
+		modalComponentProperties: { [key: string]: any };
+	};
 
 	/** The event handler to run when the controls was initialized */
 	@Output() init = new EventEmitter<ObjectPrivilegesControl>();
@@ -76,8 +77,8 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 	initialized = false;
 	sections = Privileges.sections;
 
-	roles = {} as { [key: string]: Array<{ value: string, label: string }> };
-	users = {} as { [key: string]: Array<{ value: string, label: string }> };
+	roles = {} as { [key: string]: Array<{ Value: string; Label: string; Description?: string; Image?: string }> };
+	users = {} as { [key: string]: Array<{ Value: string; Label: string; Description?: string; Image?: string }> };
 
 	selectedRoles = {} as { [key: string]: Array<string> };
 	selectedUsers = {} as { [key: string]: Array<string> };
@@ -94,18 +95,27 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 						? AppUtility.isTrue(this.control.Extras["allowInheritFromParent"])
 						: true;
 		this.inheritFromParent.inherit = this.inheritFromParent.allow && this.privileges.isInheritFromParent;
-		if (this.prepareRoleNameFunction === undefined && this.control !== undefined && this.control.Extras !== undefined) {
-			this.prepareRoleNameFunction = typeof this.control.Extras["PrepareRoleName"] === "function" || typeof this.control.Extras["PrepareRoleNameFunction"] === "function"
-				? this.control.Extras["PrepareRoleName"] || this.control.Extras["PrepareRoleNameFunction"]
-				: typeof this.control.Extras["prepareRoleName"] === "function" || typeof this.control.Extras["prepareRoleNameFunction"] === "function"
-					? this.control.Extras["prepareRoleName"] || this.control.Extras["prepareRoleNameFunction"]
-					: (role: { id: string, name: string }) => new Promise<void>(() => role.name = role.id);
+		if (this.role === undefined) {
+			this.role = this.control !== undefined && this.control.Extras !== undefined
+				? this.control.Extras["Role"] || this.control.Extras["RoleModal"] || this.control.Extras["role"] || this.control.Extras["roleModal"] || {}
+				: {};
 		}
-		if (this.roleComponent === undefined && this.control !== undefined && this.control.Extras !== undefined) {
-			this.roleComponent = this.control.Extras["RoleComponent"] || this.control.Extras["roleComponent"];
+		if (this.role.prepare === undefined && this.control !== undefined && this.control.Extras !== undefined) {
+			this.role.prepare = typeof this.control.Extras["PrepareRole"] === "function"
+				? this.control.Extras["PrepareRole"]
+				: typeof this.control.Extras["prepareRole"] === "function"
+					? this.control.Extras["prepareRole"]
+					: typeof this.control.Extras["PrepareRoleFunction"] === "function"
+						? this.control.Extras["PrepareRoleFunction"]
+						: typeof this.control.Extras["prepareRoleFunction"] === "function"
+							? this.control.Extras["prepareRoleFunction"]
+							: (role: { Value: string; Label: string; Description?: string; Image?: string }) => new Promise<void>(() => role.Label = role.Value);
 		}
-		if (this.roleComponentProps === undefined && this.control !== undefined && this.control.Extras !== undefined) {
-			this.roleComponent = this.control.Extras["RoleComponentProps"] || this.control.Extras["roleComponentProps"];
+		if (this.role.modalComponent === undefined && this.control !== undefined && this.control.Extras !== undefined) {
+			this.role.modalComponent = this.control.Extras["RoleModalComponent"] || this.control.Extras["roleModalComponent"];
+		}
+		if (this.role.modalComponentProperties === undefined && this.control !== undefined && this.control.Extras !== undefined) {
+			this.role.modalComponentProperties = this.control.Extras["RoleModalComponentProperties"] || this.control.Extras["roleModalComponentProperties"];
 		}
 		this.prepareRolesAndUsers();
 		Promise.all([this.prepareLabelsAsync()]).then(() => {
@@ -152,26 +162,35 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 		const arraysOfPrivileges = Privileges.getPrivileges(this.privileges, sections);
 		(sections || this.sections).forEach(section => {
 			this.roles[section] = arraysOfPrivileges[`${section}Roles`].map(id => {
-				return { value: id, label: undefined };
+				return { Value: id, Label: undefined, Description: undefined, Image: undefined };
 			});
 			this.users[section] = arraysOfPrivileges[`${section}Users`].map(id => {
-				return { value: id, label: undefined };
+				return { Value: id, Label: undefined, Description: undefined, Image: undefined };
 			});
 		});
 	}
 
-	private prepareNamesOfRolesAndUsersAsync(sections?: Array<string>) {
-		return Promise.all((sections || this.sections).map(async section => await Promise.all([
-			Promise.all(this.roles[section].filter(role => role.label === undefined).map(async role => {
-				if (Privilege.systemRoles.indexOf(role.value) > -1) {
-					role.label = await this.appFormsSvc.getResourceAsync(`privileges.roles.systems.${role.value}`);
+	private async prepareNamesOfRolesAndUsersAsync(sections?: Array<string>) {
+		await Promise.all((sections || this.sections).map(async section => await Promise.all([
+			Promise.all(this.roles[section].filter(role => role.Label === undefined).map(async role => {
+				if (Privilege.systemRoles.indexOf(role.Value) > -1) {
+					role.Label = await this.appFormsSvc.getResourceAsync(`privileges.roles.systems.${role.Value}`);
 				}
 				else {
-					await this.prepareRoleNameFunction(role);
+					await this.role.prepare(role);
 				}
 			})),
-			Promise.all(this.users[section].filter(user => user.label === undefined).map(async user => await this.userSvc.getProfileAsync(user.value, _ => user.label = (UserProfile.get(user.value) || new UserProfile()).Name)))
+			Promise.all(this.users[section].filter(user => user.Label === undefined).map(async user => {
+				let profile = UserProfile.get(user.Value);
+				if (profile === undefined) {
+					await this.userSvc.getProfileAsync(user.Value, _ => profile = (UserProfile.get(user.Value) || new UserProfile()), undefined, true);
+				}
+				user.Label = profile.Name;
+				user.Description = profile.getEmail();
+				user.Image = profile.avatarURI;
+			}))
 		])));
+		(sections || this.sections).forEach(section => this.users[section] = this.users[section].sort(AppUtility.getCompareFunction("Label", "Description")));
 	}
 
 	private emitChanges() {
@@ -213,18 +232,18 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	addRolesAsync(section: string) {
-		if (this.roleComponent === undefined) {
-			return this.appFormsSvc.showAlertAsync(undefined, undefined, "Role component is invalid");
+		if (this.role.modalComponent === undefined) {
+			return this.appFormsSvc.showAlertAsync(undefined, undefined, "Role modal component is invalid");
 		}
 
-		const componentProps: { [key: string]: any } = {};
-		if (this.roleComponentProps !== undefined) {
-			Object.keys(this.roleComponentProps).forEach(key => componentProps[key] = this.roleComponentProps[key]);
+		const modalProperties: { [key: string]: any } = {};
+		if (this.role.modalComponentProperties !== undefined) {
+			Object.keys(this.role.modalComponentProperties).forEach(key => modalProperties[key] = this.role.modalComponentProperties[key]);
 		}
-		componentProps["section"] = section;
-		componentProps["multiple"] = true;
+		modalProperties["section"] = section;
+		modalProperties["multiple"] = true;
 
-		return this.appFormsSvc.showModalAsync(this.roleComponent, componentProps, async roles => {
+		return this.appFormsSvc.showModalAsync(this.role.modalComponent, modalProperties, async roles => {
 			AppUtility.updateSet(this.privileges.getRoles(section), roles as Array<string>);
 			this.prepareRolesAndUsers([section]);
 			this.emitChanges();

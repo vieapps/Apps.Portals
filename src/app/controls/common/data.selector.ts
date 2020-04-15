@@ -4,12 +4,12 @@ import { AppFormsControl, AppFormsService } from "../../components/forms.service
 import { ConfigurationService } from "../../services/configuration.service";
 
 @Component({
-	selector: "control-selector",
-	templateUrl: "./selector.html",
-	styleUrls: ["./selector.scss"]
+	selector: "control-data-selector",
+	templateUrl: "./data.selector.html",
+	styleUrls: ["./data.selector.scss"]
 })
 
-export class SelectorControl implements OnInit {
+export class DataSelectorControl implements OnInit {
 
 	constructor(
 		public configSvc: ConfigurationService,
