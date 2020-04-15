@@ -24,7 +24,7 @@ export class UsersService extends BaseService {
 	}
 
 	public get completerDataSource() {
-		const convertFn = (data: any) => {
+		const convertToCompleterItem = (data: any) => {
 			const profile = data instanceof UserProfile ? data as UserProfile : UserProfile.deserialize(data);
 			return {
 				title: profile.Name,
@@ -35,8 +35,8 @@ export class UsersService extends BaseService {
 		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("profile", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(o => convertFn(o)),
-			convertFn
+			data => (data.Objects as Array<any> || []).map(o => convertToCompleterItem(o)),
+			convertToCompleterItem
 		);
 	}
 
