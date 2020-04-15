@@ -21,15 +21,10 @@ export class SelectorControl implements OnInit {
 	@Input() control: AppFormsControl;
 
 	/** The current items for displying */
-	@Input() items: Array<{ Value: string; Label: string; Description: string; Image?: string }>;
+	@Input() items: Array<{ Value: string; Label: string; Description?: string; Image?: string }>;
 
 	/** The resources of header, delete confirmation and buttons */
-	@Input() resources: {
-		header: string;
-		confirm: string;
-		ok: string;
-		cancel: string;
-	};
+	@Input() resources: { header: string; confirm: string; ok: string; cancel: string; };
 
 	/** true to show image */
 	@Input() showImage: boolean;
@@ -132,8 +127,8 @@ export class SelectorControl implements OnInit {
 					this.handlers.delete(this.selected);
 					this.selected = [];
 				},
-				this.resources.ok || "OK",
-				this.resources.cancel || "Cancel"
+				this.resources.ok,
+				this.resources.cancel
 			);
 		}
 	}

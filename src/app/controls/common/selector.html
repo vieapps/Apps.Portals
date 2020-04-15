@@ -17,12 +17,12 @@
 	<ion-item *ngFor="let item of items; trackBy: track" [color]="configSvc.color">
 		<ion-checkbox slot="end" [checked]="isChecked(item.Value)" (ionChange)="onChanged(item.Value, $event)"></ion-checkbox>
 		<ion-label>
-			<ion-thumbnail *ngIf="showImage" class="ion-float-start ion-padding-end">
+			<ion-thumbnail *ngIf="showImage && item.Image" class="ion-float-start ion-padding-end">
 				<img [src]="item.Image" />
 			</ion-thumbnail>
 			<span>
 				{{ item.Label }}
-				<span *ngIf="showDescription" class="ion-float-end">
+				<span *ngIf="showDescription && item.Description" class="ion-float-end">
 					{{ item.Description }}
 				</span>
 			</span>
