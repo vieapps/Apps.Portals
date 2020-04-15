@@ -6,6 +6,7 @@ import { Crop as NativeImageCropper } from "@ionic-native/crop/ngx";
 import { ImageCropperControl } from "./common/image.cropper";
 import { ObjectPrivilegesControl } from "./common/object.privileges";
 import { ServicePrivilegesControl } from "./common/service.privileges";
+import { SelectorControl } from "./common/selector";
 import { UsersSelectorModule } from "./common/user.selector.module";
 
 @NgModule({
@@ -19,12 +20,14 @@ import { UsersSelectorModule } from "./common/user.selector.module";
 	exports: [
 		ImageCropperControl,
 		ObjectPrivilegesControl,
-		ServicePrivilegesControl
+		ServicePrivilegesControl,
+		SelectorControl
 	],
 	declarations: [
 		ImageCropperControl,
 		ObjectPrivilegesControl,
-		ServicePrivilegesControl
+		ServicePrivilegesControl,
+		SelectorControl
 	]
 })
 

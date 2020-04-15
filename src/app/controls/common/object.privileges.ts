@@ -35,7 +35,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 	@Input() allowInheritFromParent: boolean;
 
 	/** The function to prepare the name of a role */
-	@Input() prepareRoleNameFunction: (role: { id: string, name: string }) => Promise<void>;
+	@Input() prepareRoleNameFunction: (role: { value: string, label: string }) => Promise<void>;
 
 	/** The component to show as the modal to select role(s) */
 	@Input() roleComponent: any;
@@ -76,8 +76,8 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 	initialized = false;
 	sections = Privileges.sections;
 
-	roles = {} as { [key: string]: Array<{ id: string, name: string }> };
-	users = {} as { [key: string]: Array<{ id: string, name: string }> };
+	roles = {} as { [key: string]: Array<{ value: string, label: string }> };
+	users = {} as { [key: string]: Array<{ value: string, label: string }> };
 
 	selectedRoles = {} as { [key: string]: Array<string> };
 	selectedUsers = {} as { [key: string]: Array<string> };
@@ -150,27 +150,27 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 
 	private prepareRolesAndUsers(sections?: Array<string>) {
 		const arraysOfPrivileges = Privileges.getPrivileges(this.privileges, sections);
-		(sections || this.sections).forEach(name => {
-			this.roles[name] = arraysOfPrivileges[`${name}Roles`].map(id => {
-				return { id: id, name: undefined };
+		(sections || this.sections).forEach(section => {
+			this.roles[section] = arraysOfPrivileges[`${section}Roles`].map(id => {
+				return { value: id, label: undefined };
 			});
-			this.users[name] = arraysOfPrivileges[`${name}Users`].map(id => {
-				return { id: id, name: undefined };
+			this.users[section] = arraysOfPrivileges[`${section}Users`].map(id => {
+				return { value: id, label: undefined };
 			});
 		});
 	}
 
 	private prepareNamesOfRolesAndUsersAsync(sections?: Array<string>) {
-		return Promise.all((sections || this.sections).map(async name => await Promise.all([
-			Promise.all(this.roles[name].filter(role => role.name === undefined).map(async role => {
-				if (Privilege.systemRoles.indexOf(role.id) > -1) {
-					role.name = await this.appFormsSvc.getResourceAsync(`privileges.roles.systems.${role.id}`);
+		return Promise.all((sections || this.sections).map(async section => await Promise.all([
+			Promise.all(this.roles[section].filter(role => role.label === undefined).map(async role => {
+				if (Privilege.systemRoles.indexOf(role.value) > -1) {
+					role.label = await this.appFormsSvc.getResourceAsync(`privileges.roles.systems.${role.value}`);
 				}
 				else {
 					await this.prepareRoleNameFunction(role);
 				}
 			})),
-			Promise.all(this.users[name].filter(user => user.name === undefined).map(async user => await this.userSvc.getProfileAsync(user.id, _ => user.name = (UserProfile.get(user.id) || new UserProfile()).Name)))
+			Promise.all(this.users[section].filter(user => user.label === undefined).map(async user => await this.userSvc.getProfileAsync(user.value, _ => user.label = (UserProfile.get(user.value) || new UserProfile()).Name)))
 		])));
 	}
 
