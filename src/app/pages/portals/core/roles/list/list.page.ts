@@ -32,6 +32,12 @@ export class RolesListPage implements OnInit, OnDestroy {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
 
+	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
+	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
+
+	private organization = this.portalsCoreSvc.activeOrganization || new Organization();
+	private subscription: Subscription;
+
 	title = "Roles";
 	roles = new Array<Role>();
 	searching = false;
@@ -40,7 +46,13 @@ export class RolesListPage implements OnInit, OnDestroy {
 	request: AppDataRequest;
 	filterBy = {
 		Query: undefined as string,
-		And: new Array<{ [key: string]: any }>()
+		And: [
+			{
+				SystemID: {
+					Equals: this.organization.ID
+				}
+			}
+		] as Array<{ [key: string]: any }>
 	};
 	sortBy = { Title: "Ascending" };
 	actions: Array<{
@@ -49,11 +61,6 @@ export class RolesListPage implements OnInit, OnDestroy {
 		icon?: string,
 		handler: () => void
 	}>;
-
-	private organization = this.portalsCoreSvc.activeOrganization || new Organization();
-	private subscription: Subscription;
-	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
-	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
 	get locale() {
 		return this.configSvc.locale;
