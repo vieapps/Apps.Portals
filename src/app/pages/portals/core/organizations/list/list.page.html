@@ -18,9 +18,9 @@
 	</ion-toolbar>
 </ion-header>
 
-<ion-footer *ngIf="pagination">
+<ion-footer *ngIf="pagination || actions">
 	<ion-toolbar [color]="configSvc.color">
-		<span slot="start">
+		<span *ngIf="pagination" slot="start">
 			<ion-icon name="business" color="primary" slot="start"></ion-icon>
 			<span>
 				{{ totalRecords | number:'':locale }} / {{ pagination.TotalRecords | number:'':locale }}	

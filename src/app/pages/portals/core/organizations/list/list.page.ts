@@ -31,6 +31,11 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
 
+	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
+	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
+
+	private subscription: Subscription;
+
 	title = "Organizations";
 	organizations = new Array<Organization>();
 	searching = false;
@@ -48,10 +53,6 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 		icon?: string,
 		handler: () => void
 	}>;
-
-	private subscription: Subscription;
-	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
-	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
 	get locale() {
 		return this.configSvc.locale;
