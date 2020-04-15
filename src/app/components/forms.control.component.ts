@@ -158,7 +158,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	get isAllowDelete() {
 		return this.isLookupControl
-			? this.lookupDisplayValues && this.lookupDisplayValues.length > 0
+			? this.lookupDisplayValues !== undefined && this.lookupDisplayValues.length > 0
 			: this.isDatePickerControl
 				? this.control.Options.DatePickerOptions.AllowDelete
 				: this.isFilePickerControl
@@ -542,6 +542,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.isLookupControl && this.control.Options.LookupOptions.AsModal;
 	}
 
+	get isSelector() {
+		return this.isLookupControl && this.control.Options.LookupOptions.AsSelector;
+	}
+
 	/** Gets the values of this lookup control */
 	get lookupValues() {
 		return this.control.Options.LookupOptions.Multiple
@@ -562,8 +566,28 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	/** Sets the values for displaying of this lookup control */
-	set lookupDisplayValues(values: Array<{ Value: string, Label: string }>) {
+	set lookupDisplayValues(values: Array<{ Value: string; Label: string; Description?: string; Image?: string }>) {
 		this.control.Options.LookupOptions.DisplayValues = values;
+	}
+
+	get lookupResources() {
+		return {
+			header: this.control.Options.LookupOptions.SelectorOptions.HeaderText,
+			confirm: this.control.Options.LookupOptions.WarningOnDelete,
+			ok: this.control.Options.LookupOptions.SelectorOptions.OkText,
+			cancel: this.control.Options.LookupOptions.SelectorOptions.CancelText
+		};
+	}
+
+	get lookupHandlers() {
+		return {
+			add: () => {
+				if (this.isSelector && this.control.Options.LookupOptions.SelectorOptions.OnAdd !== undefined) {
+					this.control.Options.LookupOptions.SelectorOptions.OnAdd(this);
+				}
+			},
+			delete: (values: Array<string>) => this.deleteValue(values)
+		};
 	}
 
 	/** Gets the URI for displaying captcha image of this control */
@@ -617,22 +641,27 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	async deleteValue(value?: any, options?: Object, updateValueAndValidity: boolean = false) {
 		if (this.isLookupControl) {
 			if (this.control.Options.LookupOptions.OnDelete !== undefined) {
-				if (AppUtility.isNotEmpty(this.control.Options.LookupOptions.WarningOnDelete)) {
-					await this.appFormsSvc.showAlertAsync(
-						undefined,
-						undefined,
-						this.control.Options.LookupOptions.WarningOnDelete,
-						() => {
-							this.control.Options.LookupOptions.OnDelete(value as string, this);
-							this.focus();
-						},
-						await this.appFormsSvc.getResourceAsync("common.buttons.ok"),
-						await this.appFormsSvc.getResourceAsync("common.buttons.cancel")
-					);
+				if (this.isSelector) {
+					this.control.Options.LookupOptions.OnDelete(value, this);
 				}
 				else {
-					this.control.Options.LookupOptions.OnDelete(value as string, this);
-					this.focus();
+					if (AppUtility.isNotEmpty(this.control.Options.LookupOptions.WarningOnDelete)) {
+						await this.appFormsSvc.showAlertAsync(
+							undefined,
+							undefined,
+							this.control.Options.LookupOptions.WarningOnDelete,
+							() => {
+								this.control.Options.LookupOptions.OnDelete([value], this);
+								this.focus();
+							},
+							await this.appFormsSvc.getResourceAsync("common.buttons.ok"),
+							await this.appFormsSvc.getResourceAsync("common.buttons.cancel")
+						);
+					}
+					else {
+						this.control.Options.LookupOptions.OnDelete([value], this);
+						this.focus();
+					}
 				}
 			}
 		}
@@ -652,6 +681,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 					this.control.Options.FilePickerOptions.OnDelete(value as string, this);
 				}
 			}
+		}
+		else if (this.isCustomControl() && this.control.Options.LookupOptions.OnDelete !== undefined) {
+			this.control.Options.LookupOptions.OnDelete(value, this);
 		}
 		else if (this.formControl !== undefined) {
 			this.setValue(undefined, options, updateValueAndValidity);

@@ -1,4 +1,4 @@
-<ion-item *ngIf="visible && isFormControl && !isCaptchaControl && !selectAsRadioBoxes && !selectAsCheckBoxes && !isCustomControl()"
+<ion-item *ngIf="visible && isFormControl && !isCaptchaControl && !selectAsRadioBoxes && !selectAsCheckBoxes && !isSelector && !isCustomControl()"
 	[color]="theme"
 	[formGroup]="formGroup"
 	[class.invalid]="invalid"
@@ -179,7 +179,7 @@
 	
 </ion-item>
 
-<ion-item *ngIf="isLookupControl && isAllowDelete">
+<ion-item *ngIf="(isCompleter || isModal) && isAllowDelete">
 	<ion-chip *ngFor="let lookup of lookupDisplayValues">
 		<ion-label>{{ lookup.Label }}</ion-label>
 		<ion-icon name="close-circle" (click)="deleteValue(lookup.Value)"></ion-icon>
@@ -264,7 +264,7 @@
 	<img *ngIf="captchaURI" slot="start" [src]="captchaURI"/>
 </ion-item>
 
-<ion-item *ngIf="visible && (isFormGroup || isFormArray) && description" [color]="theme">
+<ion-item *ngIf="visible && description && (isFormGroup || isFormArray)" [color]="theme">
 	<label
 		[class]="css.description"
 		[style]="style.description"
@@ -316,6 +316,23 @@
 	</ion-button>
 </ion-buttons>
 
+<control-selector *ngIf="visible && (isSelector || isCustomControl('selector'))" #elementRef
+	[formGroup]="formGroup"
+	[control]="control"
+	[items]="lookupDisplayValues"
+	[resources]="lookupResources"
+	[handlers]="lookupHandlers"
+	[showImage]="control.Extras['ShowImage'] || control.Extras['showImage']"
+	[showDescription]="control.Extras['ShowDescription'] || control.Extras['showDescription']"
+	[allowAdd]="control.Extras['AllowAdd'] || control.Extras['allowAdd']"
+	[allowDelete]="control.Extras['AllowDelete'] || control.Extras['allowDelete']"></control-selector>
+<ion-item *ngIf="visible && description && (isSelector || isCustomControl('selector'))" [color]="theme">
+	<label
+		[class]="css.description"
+		[style]="style.description"
+		[innerHTML]="description"></label>
+</ion-item>
+	
 <control-image-cropper *ngIf="visible && isCustomControl('image-cropper')" #elementRef
 	[formGroup]="formGroup"
 	[control]="control"

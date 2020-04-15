@@ -106,8 +106,8 @@ export interface AppFormsControlConfig {
 			AsBoxes?: boolean;
 			Interface?: string;
 			InterfaceOptions?: any;
-			CancelText?: string;
 			OkText?: string;
+			CancelText?: string;
 		};
 		LookupOptions?: {
 			AsCompleter?: boolean;
@@ -132,8 +132,15 @@ export interface AppFormsControlConfig {
 				SwipeToClose?: boolean
 				OnDismiss?: (data?: any, control?: AppFormsControlComponent) => void;
 			};
+			AsSelector?: boolean;
+			SelectorOptions?: {
+				HeaderText?: string;
+				OkText?: string;
+				CancelText?: string;
+				OnAdd?: (control?: AppFormsControlComponent) => void;
+			};
 			Multiple?: boolean;
-			OnDelete?: (value: string, control: AppFormsControlComponent) => void;
+			OnDelete?: (values: Array<string>, control: AppFormsControlComponent) => void;
 			WarningOnDelete?: string;
 		};
 		DatePickerOptions?: {
@@ -144,8 +151,8 @@ export interface AppFormsControlConfig {
 			DayShortNames?: string;
 			MonthNames?: string;
 			MonthShortNames?: string;
-			CancelText?: string;
 			DoneText?: string;
+			CancelText?: string;
 			AllowDelete?: boolean;
 		};
 		FilePickerOptions?: {
@@ -254,8 +261,8 @@ export class AppFormsControl {
 			AsBoxes: false,
 			Interface: "alert",
 			InterfaceOptions: undefined as any,
-			CancelText: "{{common.buttons.cancel}}",
-			OkText: "{{common.buttons.ok}}"
+			OkText: "{{common.buttons.ok}}",
+			CancelText: "{{common.buttons.cancel}}"
 		},
 		LookupOptions: {
 			AsCompleter: true,
@@ -280,10 +287,17 @@ export class AppFormsControl {
 				SwipeToClose: false,
 				OnDismiss: undefined as (data?: any, control?: AppFormsControlComponent) => void
 			},
+			AsSelector: false,
+			SelectorOptions: {
+				HeaderText: undefined as string,
+				OkText: "{{common.buttons.ok}}",
+				CancelText: "{{common.buttons.cancel}}",
+				OnAdd: undefined as (control: AppFormsControlComponent) => void
+			},
 			Multiple: false,
-			OnDelete: undefined as (value: string, control: AppFormsControlComponent) => void,
+			OnDelete: undefined as (values: Array<string>, control: AppFormsControlComponent) => void,
 			WarningOnDelete: undefined as string,
-			DisplayValues: undefined as Array<{ Value: string, Label: string }>
+			DisplayValues: undefined as Array<{ Value: string; Label: string; Description?: string; Image?: string }>
 		},
 		DatePickerOptions: {
 			AllowTimes: false,
@@ -293,8 +307,8 @@ export class AppFormsControl {
 			DayShortNames: undefined as string,
 			MonthNames: undefined as string,
 			MonthShortNames: undefined as string,
-			CancelText: "{{common.buttons.cancel}}",
 			DoneText: "{{common.buttons.done}}",
+			CancelText: "{{common.buttons.cancel}}",
 			AllowDelete: true
 		},
 		FilePickerOptions: {
@@ -497,8 +511,8 @@ export class AppFormsControl {
 					AsBoxes: !!(selectOptions.AsBoxes || selectOptions.asboxes),
 					Interface: selectOptions.Interface || selectOptions.interface || "alert",
 					InterfaceOptions: selectOptions.InterfaceOptions || selectOptions.interfaceOptions || selectOptions.interfaceoptions,
-					CancelText: selectOptions.CancelText || selectOptions.cancelText || selectOptions.canceltext || "{{common.buttons.cancel}}",
-					OkText: selectOptions.OkText || selectOptions.okText || selectOptions.oktext || "{{common.buttons.ok}}"
+					OkText: selectOptions.OkText || selectOptions.okText || selectOptions.oktext || "{{common.buttons.ok}}",
+					CancelText: selectOptions.CancelText || selectOptions.cancelText || selectOptions.canceltext || "{{common.buttons.cancel}}"
 				};
 			}
 
@@ -508,6 +522,8 @@ export class AppFormsControl {
 				const completerOptions = lookupOptions.CompleterOptions || lookupOptions.completerOptions || lookupOptions.completeroptions || {};
 				const asModal = !asCompleter && (lookupOptions.AsModal !== undefined || lookupOptions.asModal !== undefined || lookupOptions.asmodal !== undefined ? lookupOptions.AsModal || lookupOptions.asModal || lookupOptions.asmodal : false);
 				const modalOptions = lookupOptions.ModalOptions || lookupOptions.modalOptions || lookupOptions.modaloptions || {};
+				const asSelector = !asCompleter && !asModal && (lookupOptions.AsSelector !== undefined || lookupOptions.asSelector !== undefined || lookupOptions.asselector !== undefined ? lookupOptions.AsSelector || lookupOptions.asSelector || lookupOptions.asselector : false);
+				const selectorOptions = lookupOptions.SelectorOptions || lookupOptions.selectorOptions || lookupOptions.selectoroptions || {};
 				const multiple = !!(lookupOptions.Multiple || lookupOptions.multiple);
 				control.Options.LookupOptions = {
 					AsCompleter: asCompleter,
@@ -532,6 +548,13 @@ export class AppFormsControl {
 						SwipeToClose: !!(modalOptions.SwipeToClose || modalOptions.swipeToClose || modalOptions.swipetoclose),
 						OnDismiss: modalOptions.OnDismiss || modalOptions.onDismiss || modalOptions.ondismiss
 					},
+					AsSelector: asSelector,
+					SelectorOptions: {
+						HeaderText: selectorOptions.HeaderText || selectorOptions.headerText || selectorOptions.headertext,
+						OkText: selectorOptions.OkText || selectorOptions.okText || selectorOptions.oktext || "{{common.buttons.ok}}",
+						CancelText: selectorOptions.CancelText || selectorOptions.cancelText || selectorOptions.canceltext || "{{common.buttons.cancel}}",
+						OnAdd: selectorOptions.OnAdd || selectorOptions.onAdd || selectorOptions.onadd
+					},
 					Multiple: multiple,
 					OnDelete: multiple ? lookupOptions.OnDelete || lookupOptions.onDelete || lookupOptions.ondelete : undefined,
 					WarningOnDelete: multiple ? lookupOptions.WarningOnDelete || lookupOptions.warningOnDelete || lookupOptions.warningondelete : undefined,
@@ -549,8 +572,8 @@ export class AppFormsControl {
 					DayShortNames: datepickerOptions.DayShortNames || datepickerOptions.dayShortNames || datepickerOptions.dayshortnames,
 					MonthNames: datepickerOptions.MonthNames || datepickerOptions.monthNames || datepickerOptions.monthnames,
 					MonthShortNames: datepickerOptions.MonthShortNames || datepickerOptions.monthShortNames || datepickerOptions.monthshortnames,
-					CancelText: datepickerOptions.CancelText || datepickerOptions.cancelText || datepickerOptions.canceltext || "{{common.buttons.cancel}}",
 					DoneText: datepickerOptions.DoneText || datepickerOptions.doneText || datepickerOptions.donetext || "{{common.buttons.done}}",
+					CancelText: datepickerOptions.CancelText || datepickerOptions.cancelText || datepickerOptions.canceltext || "{{common.buttons.cancel}}",
 					AllowDelete: datepickerOptions.AllowDelete !== undefined || datepickerOptions.allowDelete !== undefined || datepickerOptions.allowdelete !== undefined ? datepickerOptions.AllowDelete || datepickerOptions.allowDelete || datepickerOptions.allowdelete : true
 				};
 			}
@@ -621,8 +644,8 @@ export class AppFormsControl {
 	}
 
 	/** Copies the options of this control */
-	public copy(onPreCompleted?: (options: AppFormsControlConfig) => void) {
-		const options = AppUtility.clone(this, ["Order", "Validators", "AsyncValidators"]) as AppFormsControlConfig;
+	public copy(onPreCompleted?: (options: AppFormsControl) => void) {
+		const options = AppUtility.clone(this, ["Order", "Validators", "AsyncValidators"]) as AppFormsControl;
 		options.Validators = this.Validators;
 		options.AsyncValidators = this.AsyncValidators;
 		options.Options.OnFocus = this.Options.OnFocus;
@@ -637,6 +660,7 @@ export class AppFormsControl {
 		options.Options.LookupOptions.CompleterOptions.OnInitialized = this.Options.LookupOptions.CompleterOptions.OnInitialized;
 		options.Options.LookupOptions.CompleterOptions.OnSelected = this.Options.LookupOptions.CompleterOptions.OnSelected;
 		options.Options.LookupOptions.CompleterOptions.OnModalDismiss = this.Options.LookupOptions.CompleterOptions.OnModalDismiss;
+		options.Options.LookupOptions.SelectorOptions.OnAdd = this.Options.LookupOptions.SelectorOptions.OnAdd;
 		options.Options.LookupOptions.ModalOptions.Component = this.Options.LookupOptions.ModalOptions.Component;
 		options.Options.LookupOptions.ModalOptions.OnDismiss = this.Options.LookupOptions.ModalOptions.OnDismiss;
 		options.Options.FilePickerOptions.OnDelete = this.Options.FilePickerOptions.OnDelete;
@@ -702,36 +726,36 @@ export class AppFormsService {
 			: resource;
 	}
 
-	private async prepareControlsAsync(controls: Array<AppFormsControl>, modifyDatePickers?: boolean) {
-		controls.forEach((control, index) => {
-			if (index < controls.length - 1) {
-				control.next = controls[index + 1];
+	private async prepareControlsAsync(formControls: Array<AppFormsControl>, modifyDatePickers?: boolean) {
+		formControls.forEach((formControl, index) => {
+			if (index < formControls.length - 1) {
+				formControl.next = formControls[index + 1];
 			}
 		});
-		await Promise.all(controls.filter(control => !control.Hidden).map(async control => {
-			control.Options.Label = await this.normalizeResourceAsync(control.Options.Label);
-			control.Options.Description = await this.normalizeResourceAsync(control.Options.Description);
-			control.Options.PlaceHolder = await this.normalizeResourceAsync(control.Options.PlaceHolder);
-			if (control.Type === "Select") {
-				if (AppUtility.isNotEmpty(control.Options.SelectOptions.RemoteURI)) {
-					let uri = AppXHR.getURI(control.Options.SelectOptions.RemoteURI);
+		await Promise.all(formControls.filter(formControl => !formControl.Hidden).map(async formControl => {
+			formControl.Options.Label = await this.normalizeResourceAsync(formControl.Options.Label);
+			formControl.Options.Description = await this.normalizeResourceAsync(formControl.Options.Description);
+			formControl.Options.PlaceHolder = await this.normalizeResourceAsync(formControl.Options.PlaceHolder);
+			if (formControl.Type === "Select") {
+				if (AppUtility.isNotEmpty(formControl.Options.SelectOptions.RemoteURI)) {
+					let uri = AppXHR.getURI(formControl.Options.SelectOptions.RemoteURI);
 					uri += (uri.indexOf("?") < 0 ? "?" : "&") + AppConfig.getRelatedQuery();
 					try {
-						if (control.Options.SelectOptions.RemoteURIProcessor !== undefined) {
-							control.Options.SelectOptions.Values = await control.Options.SelectOptions.RemoteURIProcessor(uri, control.Options.SelectOptions.RemoteURIConverter);
+						if (formControl.Options.SelectOptions.RemoteURIProcessor !== undefined) {
+							formControl.Options.SelectOptions.Values = await formControl.Options.SelectOptions.RemoteURIProcessor(uri, formControl.Options.SelectOptions.RemoteURIConverter);
 						}
 						else {
 							const values = uri.indexOf("discovery/definitions?") > 0
 								? await this.configSvc.fetchDefinitionAsync(uri)
 								: await AppXHR.sendRequestAsync("GET", uri);
-							control.Options.SelectOptions.Values = AppUtility.isArray(values, true)
+							formControl.Options.SelectOptions.Values = AppUtility.isArray(values, true)
 								? (values as Array<string>).length > 0 && typeof values[0] === "string"
 									? (values as Array<string>).map(value => {
 											return { Value: value, Label: value };
 										})
 									: (values as Array<any>).map(data => {
-											return control.Options.SelectOptions.RemoteURIConverter !== undefined
-												? control.Options.SelectOptions.RemoteURIConverter(data)
+											return formControl.Options.SelectOptions.RemoteURIConverter !== undefined
+												? formControl.Options.SelectOptions.RemoteURIConverter(data)
 												: { Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value };
 										})
 								: AppUtility.isNotEmpty(values)
@@ -745,298 +769,313 @@ export class AppFormsService {
 					}
 					catch (error) {
 						console.error("[Forms]: Error occurred while preparing the selecting values from a remote URI", error);
-						control.Options.SelectOptions.Values = [];
+						formControl.Options.SelectOptions.Values = [];
 					}
 				}
-				if (AppUtility.isArray(control.Options.SelectOptions.Values, true)) {
-					await Promise.all(control.Options.SelectOptions.Values.map(async selectValue => {
+				if (AppUtility.isArray(formControl.Options.SelectOptions.Values, true)) {
+					await Promise.all(formControl.Options.SelectOptions.Values.map(async selectValue => {
 						selectValue.Value = await this.normalizeResourceAsync(selectValue.Value);
 						selectValue.Label = await this.normalizeResourceAsync(selectValue.Label);
 					}));
 				}
-				control.Options.SelectOptions.OkText = await this.normalizeResourceAsync(control.Options.SelectOptions.OkText);
-				control.Options.SelectOptions.CancelText = await this.normalizeResourceAsync(control.Options.SelectOptions.CancelText);
+				formControl.Options.SelectOptions.OkText = await this.normalizeResourceAsync(formControl.Options.SelectOptions.OkText);
+				formControl.Options.SelectOptions.CancelText = await this.normalizeResourceAsync(formControl.Options.SelectOptions.CancelText);
 			}
-			else if (AppUtility.isEquals(control.Type, "Lookup")) {
-				if (AppUtility.isNotEmpty(control.Options.LookupOptions.WarningOnDelete)) {
-					control.Options.LookupOptions.WarningOnDelete = await this.normalizeResourceAsync(control.Options.LookupOptions.WarningOnDelete);
+			else if (AppUtility.isEquals(formControl.Type, "Lookup")) {
+				if (AppUtility.isNotEmpty(formControl.Options.LookupOptions.WarningOnDelete)) {
+					formControl.Options.LookupOptions.WarningOnDelete = await this.normalizeResourceAsync(formControl.Options.LookupOptions.WarningOnDelete);
 				}
-				control.Options.LookupOptions.CompleterOptions.SearchingText = await this.normalizeResourceAsync(control.Options.LookupOptions.CompleterOptions.SearchingText);
-				control.Options.LookupOptions.CompleterOptions.NoResultsText = await this.normalizeResourceAsync(control.Options.LookupOptions.CompleterOptions.NoResultsText);
+				formControl.Options.LookupOptions.CompleterOptions.SearchingText = await this.normalizeResourceAsync(formControl.Options.LookupOptions.CompleterOptions.SearchingText);
+				formControl.Options.LookupOptions.CompleterOptions.NoResultsText = await this.normalizeResourceAsync(formControl.Options.LookupOptions.CompleterOptions.NoResultsText);
+				if (AppUtility.isNotEmpty(formControl.Options.LookupOptions.SelectorOptions.HeaderText)) {
+					formControl.Options.LookupOptions.SelectorOptions.HeaderText = await this.normalizeResourceAsync(formControl.Options.LookupOptions.SelectorOptions.HeaderText);
+				}
+				formControl.Options.LookupOptions.SelectorOptions.OkText = await this.normalizeResourceAsync(formControl.Options.LookupOptions.SelectorOptions.OkText);
+				formControl.Options.LookupOptions.SelectorOptions.CancelText = await this.normalizeResourceAsync(formControl.Options.LookupOptions.SelectorOptions.CancelText);
 			}
-			else if (AppUtility.isEquals(control.Type, "DatePicker")) {
+			else if (AppUtility.isEquals(formControl.Type, "DatePicker")) {
 				if (AppUtility.isTrue(modifyDatePickers)) {
-					control.Type = "TextBox";
-					control.Options.Type = control.Options.DatePickerOptions.AllowTimes ? "datetime-local" : "date";
+					formControl.Type = "TextBox";
+					formControl.Options.Type = formControl.Options.DatePickerOptions.AllowTimes ? "datetime-local" : "date";
 				}
 				else  {
-					control.Options.DatePickerOptions.DayNames = await this.normalizeResourceAsync(control.Options.DatePickerOptions.DayNames);
-					control.Options.DatePickerOptions.DayShortNames = await this.normalizeResourceAsync(control.Options.DatePickerOptions.DayShortNames);
-					control.Options.DatePickerOptions.MonthNames = await this.normalizeResourceAsync(control.Options.DatePickerOptions.MonthNames);
-					control.Options.DatePickerOptions.MonthShortNames = await this.normalizeResourceAsync(control.Options.DatePickerOptions.MonthShortNames);
-					control.Options.DatePickerOptions.DoneText = await this.normalizeResourceAsync(control.Options.DatePickerOptions.DoneText);
-					control.Options.DatePickerOptions.CancelText = await this.normalizeResourceAsync(control.Options.DatePickerOptions.CancelText);
+					formControl.Options.DatePickerOptions.DayNames = await this.normalizeResourceAsync(formControl.Options.DatePickerOptions.DayNames);
+					formControl.Options.DatePickerOptions.DayShortNames = await this.normalizeResourceAsync(formControl.Options.DatePickerOptions.DayShortNames);
+					formControl.Options.DatePickerOptions.MonthNames = await this.normalizeResourceAsync(formControl.Options.DatePickerOptions.MonthNames);
+					formControl.Options.DatePickerOptions.MonthShortNames = await this.normalizeResourceAsync(formControl.Options.DatePickerOptions.MonthShortNames);
+					formControl.Options.DatePickerOptions.DoneText = await this.normalizeResourceAsync(formControl.Options.DatePickerOptions.DoneText);
+					formControl.Options.DatePickerOptions.CancelText = await this.normalizeResourceAsync(formControl.Options.DatePickerOptions.CancelText);
 				}
 			}
-			else if (AppUtility.isEquals(control.Type, "FilePicker") && AppUtility.isNotEmpty(control.Options.FilePickerOptions.WarningOnDelete)) {
-				control.Options.FilePickerOptions.WarningOnDelete = await this.normalizeResourceAsync(control.Options.FilePickerOptions.WarningOnDelete);
+			else if (AppUtility.isEquals(formControl.Type, "FilePicker") && AppUtility.isNotEmpty(formControl.Options.FilePickerOptions.WarningOnDelete)) {
+				formControl.Options.FilePickerOptions.WarningOnDelete = await this.normalizeResourceAsync(formControl.Options.FilePickerOptions.WarningOnDelete);
 			}
-			if (control.SubControls !== undefined) {
-				await this.prepareControlsAsync(control.SubControls.Controls, modifyDatePickers);
-				control.SubControls.Controls.forEach(subcontrol => subcontrol.parent = control);
+			else if (AppUtility.isEquals(formControl.Type, "Lookup") && AppUtility.isEquals(formControl.Options.Type, "selector")) {
+				if (AppUtility.isNotEmpty(formControl.Options.LookupOptions.WarningOnDelete)) {
+					formControl.Options.LookupOptions.WarningOnDelete = await this.normalizeResourceAsync(formControl.Options.LookupOptions.WarningOnDelete);
+				}
+				if (AppUtility.isNotEmpty(formControl.Options.LookupOptions.SelectorOptions.HeaderText)) {
+					formControl.Options.LookupOptions.SelectorOptions.HeaderText = await this.normalizeResourceAsync(formControl.Options.LookupOptions.SelectorOptions.HeaderText);
+				}
+				formControl.Options.LookupOptions.SelectorOptions.OkText = await this.normalizeResourceAsync(formControl.Options.LookupOptions.SelectorOptions.OkText);
+				formControl.Options.LookupOptions.SelectorOptions.CancelText = await this.normalizeResourceAsync(formControl.Options.LookupOptions.SelectorOptions.CancelText);
+			}
+			if (formControl.SubControls !== undefined) {
+				await this.prepareControlsAsync(formControl.SubControls.Controls, modifyDatePickers);
+				formControl.SubControls.Controls.forEach(subcontrol => subcontrol.parent = formControl);
 			}
 		}));
 	}
 
-	private prepareControls(controls: Array<AppFormsControl>, modifyDatePickers?: boolean) {
-		this.prepareControlsAsync(controls, modifyDatePickers);
+	private prepareControls(formControls: Array<AppFormsControl>, modifyDatePickers?: boolean) {
+		this.prepareControlsAsync(formControls, modifyDatePickers);
 	}
 
 	/** Gets the definition of all controls */
-	public getControls(config: Array<AppFormsControlConfig> = [], controls?: Array<AppFormsControl>, segments?: { items: Array<AppFormsSegment>, default: string, current: string }) {
-		controls = controls || new Array<AppFormsControl>();
-		config.map((options, order) => {
-			const control = new AppFormsControl(options, order);
-			if (segments !== undefined && segments.items !== undefined && segments.items.length > 0) {
-				if (control.Segment === undefined) {
-					control.Segment = segments.default !== undefined && segments.items.findIndex(segment => AppUtility.isEquals(segment.Name, segments.default)) > -1
-						? segments.default
-						: segments.items[0].Name;
+	public getControls(formConfig: Array<AppFormsControlConfig> = [], formControls?: Array<AppFormsControl>, formSegments?: { items: Array<AppFormsSegment>, default: string, current: string }) {
+		formControls = formControls || new Array<AppFormsControl>();
+		formConfig.map((options, order) => {
+			const formControl = new AppFormsControl(options, order);
+			if (formSegments !== undefined && formSegments.items !== undefined && formSegments.items.length > 0) {
+				if (formControl.Segment === undefined) {
+					formControl.Segment = formSegments.default !== undefined && formSegments.items.findIndex(segment => AppUtility.isEquals(segment.Name, formSegments.default)) > -1
+						? formSegments.default
+						: formSegments.items[0].Name;
 				}
-				const segmentIndex = segments.items.findIndex(segment => AppUtility.isEquals(segment.Name, control.Segment));
-				control.Segment = segmentIndex < 0 ? segments.items[0].Name : control.Segment;
-				control.segmentIndex = segmentIndex < 0 ? 0 : segmentIndex;
+				const segmentIndex = formSegments.items.findIndex(segment => AppUtility.isEquals(segment.Name, formControl.Segment));
+				formControl.Segment = segmentIndex < 0 ? formSegments.items[0].Name : formControl.Segment;
+				formControl.segmentIndex = segmentIndex < 0 ? 0 : segmentIndex;
 			}
-			return control;
+			return formControl;
 		})
 		.sort(AppUtility.getCompareFunction("segmentIndex", "Order"))
-		.forEach((control, order) => {
-			control.Order = order;
-			controls.push(control);
+		.forEach((formControl, order) => {
+			formControl.Order = order;
+			formControls.push(formControl);
 		});
-		this.prepareControls(controls, !AppConfig.isNativeApp && AppConfig.app.platform.startsWith("Desktop") && !PlatformUtility.isSafari());
-		return controls;
+		this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.startsWith("Desktop") && !PlatformUtility.isSafari());
+		return formControls;
 	}
 
 	/** Updates the definition of all controls */
-	public updateControls(controls: Array<AppFormsControl> = [], value: any = {}) {
-		controls.forEach((control, order) => control.Order = order);
-		controls.filter(control => control.SubControls !== undefined).forEach(control => {
-			if (control.SubControls.AsArray) {
-				const values = value[control.Name] as Array<any>;
-				const options = control.SubControls.Controls[0].copy();
-				while (control.SubControls.Controls.length < values.length) {
-					control.SubControls.Controls.push(new AppFormsControl(options, control.SubControls.Controls.length));
+	public updateControls(formControls: Array<AppFormsControl> = [], value: any = {}) {
+		formControls.forEach((formControl, order) => formControl.Order = order);
+		formControls.filter(formControl => formControl.SubControls !== undefined).forEach(formControl => {
+			if (formControl.SubControls.AsArray) {
+				const values = value[formControl.Name] as Array<any>;
+				const options = formControl.SubControls.Controls[0].copy();
+				while (formControl.SubControls.Controls.length < values.length) {
+					formControl.SubControls.Controls.push(new AppFormsControl(options, formControl.SubControls.Controls.length));
 				}
-				control.SubControls.Controls.forEach((subcontrol, subindex) => {
+				formControl.SubControls.Controls.forEach((subcontrol, subindex) => {
 					if (subcontrol.SubControls !== undefined) {
 						this.updateControls(subcontrol.SubControls.Controls, values[subindex]);
 					}
 				});
 			}
 			else {
-				this.updateControls(control.SubControls.Controls, value[control.Name]);
+				this.updateControls(formControl.SubControls.Controls, value[formControl.Name]);
 			}
 		});
 	}
 
 	/** Builds the form */
-	public buildForm(form: FormGroup, controls: Array<AppFormsControl> = [], value?: any, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
-		this.getFormGroup(controls, form, validators, asyncValidators);
+	public buildForm(form: FormGroup, formControls: Array<AppFormsControl> = [], value?: any, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
+		this.getFormGroup(formControls, form, validators, asyncValidators);
 		if (value !== undefined) {
-			this.updateControls(controls, value);
-			this.prepareControls(controls, !AppConfig.isNativeApp && AppConfig.app.platform.startsWith("Desktop") && !PlatformUtility.isSafari());
+			this.updateControls(formControls, value);
+			this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.startsWith("Desktop") && !PlatformUtility.isSafari());
 			form.patchValue(value);
 		}
 		else {
-			this.prepareControls(controls, !AppConfig.isNativeApp && AppConfig.app.platform.startsWith("Desktop") && !PlatformUtility.isSafari());
+			this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.startsWith("Desktop") && !PlatformUtility.isSafari());
 		}
 	}
 
-	private getFormGroup(controls: Array<AppFormsControl>, formGroup?: FormGroup, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
+	private getFormGroup(formControls: Array<AppFormsControl>, formGroup?: FormGroup, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
 		formGroup = formGroup || new FormGroup({}, validators, asyncValidators);
-		controls.forEach(control => {
+		formControls.forEach(control => {
 			if (control.SubControls === undefined && AppUtility.isEquals(control.Type, "Lookup") && control.Options.LookupOptions.AsCompleter && AppUtility.isEquals(control.Options.Type, "Address")) {
-				const options = control.copy();
-				["County", "Province", "Country"].forEach(name => formGroup.addControl(name, this.getFormControl(new AppFormsControl(options))));
+				const frmControl = control.copy();
+				["County", "Province", "Country"].forEach(name => formGroup.addControl(name, this.getFormControl(frmControl)));
 			}
 			else {
-				const formControl = control.SubControls === undefined
+				const frmControl = control.SubControls === undefined
 					? this.getFormControl(control)
 					: control.SubControls.AsArray
 						? this.getFormArray(control, this.getValidators(control), this.getAsyncValidators(control))
 						: this.getFormGroup(control.SubControls.Controls, undefined, this.getValidators(control), this.getAsyncValidators(control));
-				formGroup.addControl(control.Name, formControl);
+				formGroup.addControl(control.Name, frmControl);
 			}
 		});
 		return formGroup;
 	}
 
-	private getFormArray(control: AppFormsControl, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
+	private getFormArray(formControl: AppFormsControl, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
 		const formArray = new FormArray([], validators, asyncValidators);
-		control.SubControls.Controls.forEach(subcontrol => {
-			if (subcontrol.SubControls === undefined && AppUtility.isEquals(subcontrol.Type, "Lookup") && control.Options.LookupOptions.AsCompleter && AppUtility.isEquals(subcontrol.Options.Type, "Address")) {
-				const options = subcontrol.copy();
-				const formGroup = new FormGroup({}, this.getValidators(subcontrol), this.getAsyncValidators(subcontrol));
-				["County", "Province", "Country"].forEach(name => formGroup.addControl(name, this.getFormControl(new AppFormsControl(options))));
+		formControl.SubControls.Controls.forEach(subFormControl => {
+			if (subFormControl.SubControls === undefined && AppUtility.isEquals(subFormControl.Type, "Lookup") && formControl.Options.LookupOptions.AsCompleter && AppUtility.isEquals(subFormControl.Options.Type, "Address")) {
+				const frmControl = subFormControl.copy();
+				const formGroup = new FormGroup({}, this.getValidators(subFormControl), this.getAsyncValidators(subFormControl));
+				["County", "Province", "Country"].forEach(name => formGroup.addControl(name, this.getFormControl(frmControl)));
 				formArray.push(formGroup);
 			}
 			else {
-				const formControl: AbstractControl = subcontrol.SubControls === undefined
-					? this.getFormControl(subcontrol)
-					: subcontrol.SubControls.AsArray
-						? this.getFormArray(subcontrol, this.getValidators(subcontrol), this.getAsyncValidators(subcontrol))
-						: this.getFormGroup(subcontrol.SubControls.Controls, undefined, this.getValidators(subcontrol), this.getAsyncValidators(subcontrol));
-				formArray.push(formControl);
+				const frmControl: AbstractControl = subFormControl.SubControls === undefined
+					? this.getFormControl(subFormControl)
+					: subFormControl.SubControls.AsArray
+						? this.getFormArray(subFormControl, this.getValidators(subFormControl), this.getAsyncValidators(subFormControl))
+						: this.getFormGroup(subFormControl.SubControls.Controls, undefined, this.getValidators(subFormControl), this.getAsyncValidators(subFormControl));
+				formArray.push(frmControl);
 			}
 		});
 		return formArray;
 	}
 
-	private getFormControl(control: AppFormsControl) {
-		return new FormControl(undefined, this.getValidators(control), this.getAsyncValidators(control));
+	private getFormControl(formControl: AppFormsControl) {
+		return new FormControl(undefined, this.getValidators(formControl), this.getAsyncValidators(formControl));
 	}
 
-	private getValidators(control: AppFormsControl) {
+	private getValidators(formControl: AppFormsControl) {
 		let validators = new Array<ValidatorFn>();
 
-		if (control.Validators !== undefined && control.Validators.length > 0) {
-			if (typeof control.Validators[0] === "string") {
+		if (formControl.Validators !== undefined && formControl.Validators.length > 0) {
+			if (typeof formControl.Validators[0] === "string") {
 
 			}
 			else {
-				validators = control.Validators as Array<ValidatorFn>;
+				validators = formControl.Validators as Array<ValidatorFn>;
 			}
 		}
 
-		if (control.Required) {
+		if (formControl.Required) {
 			validators.push(Validators.required);
 		}
 
-		if (this._types.text.findIndex(type => AppUtility.isEquals(type, control.Options.Type)) > -1) {
-			if (control.Options.MinLength > 0) {
-				validators.push(Validators.minLength(control.Options.MinLength));
+		if (this._types.text.findIndex(type => AppUtility.isEquals(type, formControl.Options.Type)) > -1) {
+			if (formControl.Options.MinLength > 0) {
+				validators.push(Validators.minLength(formControl.Options.MinLength));
 			}
-			if (control.Options.MaxLength > 0) {
-				validators.push(Validators.maxLength(control.Options.MaxLength));
+			if (formControl.Options.MaxLength > 0) {
+				validators.push(Validators.maxLength(formControl.Options.MaxLength));
 			}
-			if (AppUtility.isEquals(control.Options.Type, "email")) {
+			if (AppUtility.isEquals(formControl.Options.Type, "email")) {
 				validators.push(Validators.pattern("([a-zA-Z0-9_.-]+)@([a-zA-Z0-9_.-]+)\\.([a-zA-Z]{2,5})"));
 			}
 		}
-		else if (this._types.datetime.findIndex(type => AppUtility.isEquals(type, control.Options.Type)) > -1) {
-			if (control.Options.MinValue !== undefined) {
-				validators.push(this.minDate(control.Options.MinValue));
+		else if (this._types.datetime.findIndex(type => AppUtility.isEquals(type, formControl.Options.Type)) > -1) {
+			if (formControl.Options.MinValue !== undefined) {
+				validators.push(this.minDate(formControl.Options.MinValue));
 			}
-			if (control.Options.MaxValue !== undefined) {
-				validators.push(this.maxDate(control.Options.MaxValue));
+			if (formControl.Options.MaxValue !== undefined) {
+				validators.push(this.maxDate(formControl.Options.MaxValue));
 			}
 		}
-		else if (AppUtility.isEquals("number", control.Options.Type)) {
-			if (control.Options.MinValue !== undefined) {
-				validators.push(Validators.min(+control.Options.MinValue));
+		else if (AppUtility.isEquals("number", formControl.Options.Type)) {
+			if (formControl.Options.MinValue !== undefined) {
+				validators.push(Validators.min(+formControl.Options.MinValue));
 			}
-			if (control.Options.MaxValue !== undefined) {
-				validators.push(Validators.max(+control.Options.MaxValue));
+			if (formControl.Options.MaxValue !== undefined) {
+				validators.push(Validators.max(+formControl.Options.MaxValue));
 			}
 		}
 
-		if (AppUtility.isNotEmpty(control.Options.ValidatePattern)) {
-			validators.push(Validators.pattern(control.Options.ValidatePattern));
+		if (AppUtility.isNotEmpty(formControl.Options.ValidatePattern)) {
+			validators.push(Validators.pattern(formControl.Options.ValidatePattern));
 		}
 
 		return validators;
 	}
 
-	private getAsyncValidators(control: AppFormsControl) {
+	private getAsyncValidators(formControl: AppFormsControl) {
 		const asyncValidators = new Array<AsyncValidatorFn>();
 		return asyncValidators;
 	}
 
 	/** Validates the form and highlights all invalid controls (if has) */
-	public validate(form: FormGroup, onPreCompleted?: (form: FormGroup) => void) {
+	public validate(form: FormGroup, onPreCompleted?: (form: FormGroup, valid: boolean) => void) {
 		form.updateValueAndValidity();
 		const invalid = form.invalid;
 		if (invalid) {
 			this.highlightInvalids(form);
 		}
 		if (onPreCompleted !== undefined) {
-			onPreCompleted(form);
+			onPreCompleted(form, !invalid);
 		}
 		return !invalid;
 	}
 
 	/** Highlights all invalid controls (by mark as dirty on all invalid controls) and set focus into first invalid control */
 	public highlightInvalids(form: FormGroup) {
-		const control = this.highlightInvalidsFormGroup(form, form["_controls"] as Array<AppFormsControl>);
-		if (control !== undefined) {
-			if (AppUtility.isNotEmpty(control.Segment) && form["_segments"] !== undefined) {
+		const formControl = this.highlightInvalidsFormGroup(form, form["_controls"] as Array<AppFormsControl>);
+		if (formControl !== undefined) {
+			if (AppUtility.isNotEmpty(formControl.Segment) && form["_segments"] !== undefined) {
 				try {
-					form["_segments"].current = control.Segment;
+					form["_segments"].current = formControl.Segment;
 				}
 				catch (error) {
 					console.error("[Forms]: Cannot update form's segment", error);
 				}
 			}
-			console.warn(`[Forms]: Invalid => ${control.Name}`, control.formControlRef.value);
-			control.focus();
+			console.warn(`[Forms]: Invalid => ${formControl.Name}`, formControl.formControlRef.value);
+			formControl.focus();
 		}
-		return control;
+		return formControl;
 	}
 
-	private highlightInvalidsFormGroup(formGroup: FormGroup, controls: Array<AppFormsControl>) {
-		let first: AppFormsControl;
+	private highlightInvalidsFormGroup(formGroup: FormGroup, formControls: Array<AppFormsControl>) {
+		let firstControl: AppFormsControl;
 		Object.keys(formGroup.controls).forEach(key => {
 			const formControl = formGroup.controls[key];
 			if (formControl.invalid) {
-				const control = controls.find(ctrl => ctrl.Name === key);
+				const control = formControls.find(ctrl => ctrl.Name === key);
 				const subcontrols = control !== undefined && control.SubControls !== undefined ? control.SubControls.Controls : undefined;
 				if (formControl instanceof FormGroup) {
-					first = first || this.highlightInvalidsFormGroup(formControl as FormGroup, subcontrols);
+					firstControl = firstControl || this.highlightInvalidsFormGroup(formControl as FormGroup, subcontrols);
 				}
 				else if (formControl instanceof FormArray) {
-					first = first || this.highlightInvalidsFormArray(formControl as FormArray, subcontrols);
+					firstControl = firstControl || this.highlightInvalidsFormArray(formControl as FormArray, subcontrols);
 				}
 				else {
 					formControl.markAsDirty();
-					first = first || control;
+					firstControl = firstControl || control;
 				}
 			}
 		});
-		return first;
+		return firstControl;
 	}
 
-	private highlightInvalidsFormArray(formArray: FormArray, controls: Array<AppFormsControl>) {
-		let first: AppFormsControl;
+	private highlightInvalidsFormArray(formArray: FormArray, formControls: Array<AppFormsControl>) {
+		let firstControl: AppFormsControl;
 		formArray.controls.forEach((control, index) => {
 			if (control.invalid) {
 				if (control instanceof FormGroup) {
-					first = first || this.highlightInvalidsFormGroup(control as FormGroup, controls[index] !== undefined && controls[index].SubControls !== undefined ? controls[index].SubControls.Controls : undefined);
+					firstControl = firstControl || this.highlightInvalidsFormGroup(control as FormGroup, formControls[index] !== undefined && formControls[index].SubControls !== undefined ? formControls[index].SubControls.Controls : undefined);
 				}
 				else if (control instanceof FormArray) {
-					first = first || this.highlightInvalidsFormArray(control as FormArray, controls[index] !== undefined && controls[index].SubControls !== undefined ? controls[index].SubControls.Controls : undefined);
+					firstControl = firstControl || this.highlightInvalidsFormArray(control as FormArray, formControls[index] !== undefined && formControls[index].SubControls !== undefined ? formControls[index].SubControls.Controls : undefined);
 				}
 				else {
 					control.markAsDirty();
-					first = first || controls[index];
+					firstControl = firstControl || formControls[index];
 				}
 			}
 		});
-		return first;
+		return firstControl;
 	}
 
 	/** Sets focus into control */
-	public focus(control: AppFormsControl, whenNoControlFound?: () => void) {
-		if (control !== undefined) {
-			control.focus();
+	public focus(formControl: AppFormsControl, whenNoControlFound?: () => void) {
+		if (formControl !== undefined) {
+			formControl.focus();
 		}
 		else if (whenNoControlFound !== undefined) {
 			whenNoControlFound();
 		}
 	}
 
-	private getNext(control: AppFormsControl) {
-		let next = control !== undefined ? control.next : undefined;
+	private getNext(formControl: AppFormsControl) {
+		let next = formControl !== undefined ? formControl.next : undefined;
 		while (next !== undefined && next.Hidden) {
 			next = next.next;
 		}
@@ -1044,8 +1083,8 @@ export class AppFormsService {
 	}
 
 	/** Sets focus into next control */
-	public focusNext(control: AppFormsControl, whenNoControlFound?: () => void) {
-		this.focus(this.getNext(control), whenNoControlFound);
+	public focusNext(formControl: AppFormsControl, whenNoControlFound?: () => void) {
+		this.focus(this.getNext(formControl), whenNoControlFound);
 	}
 
 	/** Checks values of two controls are equal or not */
