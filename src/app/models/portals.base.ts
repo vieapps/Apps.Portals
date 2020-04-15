@@ -26,3 +26,37 @@ export abstract class PortalBase extends BaseModel {
 	public abstract ansiTitle: string;
 
 }
+
+export interface PortalNested {
+
+	/** The title */
+	Title: string;
+
+	/** The full title */
+	FullTitle: string;
+
+	/** The identity of the parent object */
+	ParentID: string;
+
+	/** The order-index for sorting */
+	OrderIndex: number;
+
+	/** The time when the object was created */
+	Created: Date;
+
+	/** The identity of user who was created the object */
+	CreatedID: string;
+
+	/** The last time when the object was modified */
+	LastModified: Date;
+
+	/** The identity of user who was modified the object at the last time */
+	LastModifiedID: string;
+
+	/** The parent object */
+	Parent: PortalNested;
+
+	/** The children objects */
+	Children: PortalNested[];
+
+}
