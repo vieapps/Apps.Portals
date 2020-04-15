@@ -43,7 +43,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public get organizationCompleterDataSource() {
-		const convertFn = (data: any) => {
+		const convertToCompleterItem = (data: any) => {
 			const organization = data instanceof Organization ? data as Organization : Organization.deserialize(data);
 			return {
 				title: organization.Title,
@@ -53,8 +53,8 @@ export class PortalsCoreService extends BaseService {
 		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("organization", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(o => convertFn(o)),
-			convertFn
+			data => (data.Objects as Array<any> || []).map(organization => convertToCompleterItem(organization)),
+			convertToCompleterItem
 		);
 	}
 
@@ -119,28 +119,26 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public getOrganizationAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		const organization = Organization.instances.getValue(id);
-		if (organization !== undefined) {
-			return new Promise<void>(onNext !== undefined ? () => onNext(organization) : () => {});
-		}
-		else {
-			return super.readAsync(
-				super.getURI("organization", id),
-				data => {
-					Organization.update(data);
-					if (onNext !== undefined) {
-						onNext(data);
-					}
-				},
-				error => {
-					console.error(super.getErrorMessage("Error occurred while getting an organization", error));
-					if (onError !== undefined) {
-						onError(error);
-					}
-				}
-			);
-		}
+	public getOrganizationAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return Organization.contains(id)
+			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
+			: super.readAsync(
+					super.getURI("organization", id),
+					data => {
+						Organization.update(data);
+						if (onNext !== undefined) {
+							onNext(data);
+						}
+					},
+					error => {
+						console.error(super.getErrorMessage("Error occurred while getting an organization", error));
+						if (onError !== undefined) {
+							onError(error);
+						}
+					},
+					undefined,
+					useXHR
+				);
 	}
 
 	public updateOrganizationAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
@@ -870,7 +868,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public get roleCompleterDataSource() {
-		const convertFn = (data: any) => {
+		const convertToCompleterItem = (data: any) => {
 			const role = data instanceof Role ? data as Role : Role.deserialize(data);
 			return {
 				title: role.Title,
@@ -880,8 +878,8 @@ export class PortalsCoreService extends BaseService {
 		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("role", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(o => convertFn(o)),
-			convertFn
+			data => (data.Objects as Array<any> || []).map(role => convertToCompleterItem(role)),
+			convertToCompleterItem
 		);
 	}
 
@@ -946,28 +944,26 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public getRoleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		const role = Role.instances.getValue(id);
-		if (role !== undefined) {
-			return new Promise<void>(onNext !== undefined ? () => onNext(role) : () => {});
-		}
-		else {
-			return super.readAsync(
-				super.getURI("role", id),
-				data => {
-					Role.update(data);
-					if (onNext !== undefined) {
-						onNext(data);
-					}
-				},
-				error => {
-					console.error(super.getErrorMessage("Error occurred while getting an role", error));
-					if (onError !== undefined) {
-						onError(error);
-					}
-				}
-			);
-		}
+	public getRoleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return Role.contains(id)
+			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
+			: super.readAsync(
+					super.getURI("role", id),
+					data => {
+						Role.update(data);
+						if (onNext !== undefined) {
+							onNext(data);
+						}
+					},
+					error => {
+						console.error(super.getErrorMessage("Error occurred while getting an role", error));
+						if (onError !== undefined) {
+							onError(error);
+						}
+					},
+					undefined,
+					useXHR
+				);
 	}
 
 	public updateRoleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
