@@ -148,7 +148,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.isFormControl && this.isControl("FilePicker");
 	}
 
-	get isImagePickerControl() {
+	private get isImagePickerControl() {
 		return this.isFilePickerControl && !this.control.Options.FilePickerOptions.Multiple && this.control.Options.FilePickerOptions.Accept !== undefined && this.control.Options.FilePickerOptions.Accept.indexOf("image/") > -1;
 	}
 
@@ -156,9 +156,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.isImagePickerControl && this.control.Options.FilePickerOptions.AllowPreview && this.value !== undefined;
 	}
 
-	get isAllowDelete() {
+	private get isAllowDelete() {
 		return this.isLookupControl
-			? this.lookupDisplayValues !== undefined && this.lookupDisplayValues.length > 0
+			? (this.isCompleter || this.isModal) && this.lookupDisplayValues !== undefined && this.lookupDisplayValues.length > 0
 			: this.isDatePickerControl
 				? this.control.Options.DatePickerOptions.AllowDelete
 				: this.isFilePickerControl
@@ -447,8 +447,16 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.isLookupControl && this.control.Options.LookupOptions.AsCompleter;
 	}
 
-	get isCompleterAllowLookupByModal() {
-		return this.control.Options.LookupOptions.CompleterOptions.AllowLookupByModal && this.control.Options.LookupOptions.ModalOptions.Component !== undefined;
+	get isModal() {
+		return this.isLookupControl && this.control.Options.LookupOptions.AsModal;
+	}
+
+	get isSelector() {
+		return this.isLookupControl && this.control.Options.LookupOptions.AsSelector;
+	}
+
+	private get isCompleterAllowLookupByModal() {
+		return this.isCompleter && this.control.Options.LookupOptions.CompleterOptions.AllowLookupByModal && this.control.Options.LookupOptions.ModalOptions.Component !== undefined;
 	}
 
 	private get isCompleterOfAddress() {
@@ -521,36 +529,40 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this._completerInitialValue;
 	}
 
+	/** Gets the initial value of the completer */
 	get completerInitialValue() {
 		return this._completerInitialValue || this.completerGetInitialValue();
 	}
 
-	completerLookupAsync() {
-		return this.appFormsSvc.showModalAsync(
+	/** Sets the initial value of the completer */
+	set completerInitialValue(value: any) {
+		this._completerInitialValue = value;
+		this.changeDetector.detectChanges();
+	}
+
+	private async lookupAsync() {
+		await this.appFormsSvc.showModalAsync(
 			this.control.Options.LookupOptions.ModalOptions.Component,
 			this.control.Options.LookupOptions.ModalOptions.ComponentProps,
 			data => {
-				this._completerInitialValue = this.control.Options.LookupOptions.CompleterOptions.OnModalDismiss !== undefined
-					? this.control.Options.LookupOptions.CompleterOptions.OnModalDismiss(data, this)
-					: data;
-				this.changeDetector.detectChanges();
-			}
+				if (this.control.Options.LookupOptions.ModalOptions.OnDismiss !== undefined) {
+					this.control.Options.LookupOptions.ModalOptions.OnDismiss(data, this);
+				}
+			},
+			this.control.Options.LookupOptions.ModalOptions.BackdropDismiss,
+			this.control.Options.LookupOptions.ModalOptions.SwipeToClose
 		);
 	}
 
-	get isModal() {
-		return this.isLookupControl && this.control.Options.LookupOptions.AsModal;
-	}
-
-	get isSelector() {
-		return this.isLookupControl && this.control.Options.LookupOptions.AsSelector;
+	/** Gets the state to lookup multiple items */
+	get lookupMultiple() {
+		return this.control.Options.LookupOptions.Multiple;
 	}
 
 	/** Gets the values of this lookup control */
 	get lookupValues() {
-		return this.control.Options.LookupOptions.Multiple
-			? this.formControl.value as Array<string>
-			: [this.formControl.value !== undefined ? this.formControl.value.toString() : ""];
+		const value = this.formControl.value;
+		return (this.lookupMultiple ? value as Array<string> : value !== undefined ? [value.toString()] : []) || [];
 	}
 
 	/** Sets the values of this lookup control */
@@ -560,14 +572,18 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/** Gets the values for displaying of this lookup control */
 	get lookupDisplayValues() {
-		return this.control.Options.LookupOptions.Multiple
-			? this.control.Options.LookupOptions.DisplayValues
-			: undefined;
+		return this.control.Options.LookupOptions.DisplayValues || [];
 	}
 
 	/** Sets the values for displaying of this lookup control */
 	set lookupDisplayValues(values: Array<{ Value: string; Label: string; Description?: string; Image?: string }>) {
 		this.control.Options.LookupOptions.DisplayValues = values;
+	}
+
+	/** Gets the single value for displaying of this lookup control */
+	get lookupDisplayValue() {
+		const lookupDisplayValues = this.lookupDisplayValues;
+		return lookupDisplayValues.length > 0 ? lookupDisplayValues[0].Label : undefined;
 	}
 
 	get lookupResources() {
@@ -652,7 +668,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 							this.control.Options.LookupOptions.WarningOnDelete,
 							() => {
 								this.control.Options.LookupOptions.OnDelete([value], this);
-								this.focus();
+								if (this.isCompleter) {
+									this.focus();
+								}
 							},
 							await this.appFormsSvc.getResourceAsync("common.buttons.ok"),
 							await this.appFormsSvc.getResourceAsync("common.buttons.cancel")
@@ -660,7 +678,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 					}
 					else {
 						this.control.Options.LookupOptions.OnDelete([value], this);
-						this.focus();
+						if (this.isCompleter) {
+							this.focus();
+						}
 					}
 				}
 			}
@@ -682,8 +702,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				}
 			}
 		}
-		else if (this.isCustomControl() && this.control.Options.LookupOptions.OnDelete !== undefined) {
-			this.control.Options.LookupOptions.OnDelete(value, this);
+		else if (this.isCustomControl()) {
+			if (this.control.Options.LookupOptions.OnDelete !== undefined) {
+				this.control.Options.LookupOptions.OnDelete(value, this);
+			}
 		}
 		else if (this.formControl !== undefined) {
 			this.setValue(undefined, options, updateValueAndValidity);
@@ -694,11 +716,15 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	get icon() {
 		return this.isImagePickerControl && this.isAllowDelete
 			? "trash"
-			: this.isCompleterAllowLookupByModal
+			: this.isCompleterAllowLookupByModal || this.isModal
 				? (this.control.Options.Icon.Name || "duplicate").trim().toLowerCase()
 				: AppUtility.isNotEmpty(this.control.Options.Icon.Name)
 					? this.control.Options.Icon.Name.trim().toLowerCase()
 					: undefined;
+	}
+
+	get iconSlot() {
+		return (this.control.Options.Icon.Slot || "end").trim().toLowerCase();
 	}
 
 	get iconFill() {
@@ -707,10 +733,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	get iconColor() {
 		return (this.control.Options.Icon.Color || "medium").trim().toLowerCase();
-	}
-
-	get iconSlot() {
-		return (this.control.Options.Icon.Slot || "end").trim().toLowerCase();
 	}
 
 	async clickOnIcon() {
@@ -723,8 +745,8 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		else if (this.isImagePickerControl && this.isAllowDelete) {
 			await this.deleteValue();
 		}
-		else if (this.isCompleterAllowLookupByModal) {
-			await this.completerLookupAsync();
+		else if (this.isCompleterAllowLookupByModal || this.isModal) {
+			await this.lookupAsync();
 		}
 		else if (this.control.Options.Icon.OnClick !== undefined) {
 			this.control.Options.Icon.OnClick(this);

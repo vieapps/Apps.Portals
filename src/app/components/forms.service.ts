@@ -122,7 +122,6 @@ export interface AppFormsControlConfig {
 				OnInitialized?: (control: AppFormsControlComponent) => void;
 				OnSelected?: (item: any, control: AppFormsControlComponent) => void;
 				AllowLookupByModal?: boolean;
-				OnModalDismiss?: (data?: any, control?: AppFormsControlComponent) => any;
 			};
 			AsModal?: boolean;
 			ModalOptions?: {
@@ -276,8 +275,7 @@ export class AppFormsControl {
 				GetInitialValue: undefined as (control: AppFormsControlComponent) => any,
 				OnInitialized: undefined as (control: AppFormsControlComponent) => void,
 				OnSelected: undefined as (item: any, control: AppFormsControlComponent) => void,
-				AllowLookupByModal: false,
-				OnModalDismiss: undefined as (data?: any, control?: AppFormsControlComponent) => any
+				AllowLookupByModal: false
 			},
 			AsModal: false,
 			ModalOptions: {
@@ -524,7 +522,6 @@ export class AppFormsControl {
 				const modalOptions = lookupOptions.ModalOptions || lookupOptions.modalOptions || lookupOptions.modaloptions || {};
 				const asSelector = !asCompleter && !asModal && (lookupOptions.AsSelector !== undefined || lookupOptions.asSelector !== undefined || lookupOptions.asselector !== undefined ? lookupOptions.AsSelector || lookupOptions.asSelector || lookupOptions.asselector : false);
 				const selectorOptions = lookupOptions.SelectorOptions || lookupOptions.selectorOptions || lookupOptions.selectoroptions || {};
-				const multiple = !!(lookupOptions.Multiple || lookupOptions.multiple);
 				control.Options.LookupOptions = {
 					AsCompleter: asCompleter,
 					CompleterOptions: {
@@ -537,8 +534,7 @@ export class AppFormsControl {
 						GetInitialValue: completerOptions.GetInitialValue || completerOptions.getInitialValue || completerOptions.getinitialvalue,
 						OnInitialized: completerOptions.OnInitialized || completerOptions.onInitialized || completerOptions.oninitialized,
 						OnSelected: completerOptions.OnSelected || completerOptions.onSelected || completerOptions.onselected,
-						AllowLookupByModal: !!(completerOptions.AllowLookupByModal || completerOptions.allowLookupByModal || completerOptions.allowlookupbymodal),
-						OnModalDismiss: completerOptions.OnModalDismiss || completerOptions.onModalDismiss || completerOptions.onmodaldismiss
+						AllowLookupByModal: !!(completerOptions.AllowLookupByModal || completerOptions.allowLookupByModal || completerOptions.allowlookupbymodal)
 					},
 					AsModal: asModal,
 					ModalOptions: {
@@ -555,10 +551,10 @@ export class AppFormsControl {
 						CancelText: selectorOptions.CancelText || selectorOptions.cancelText || selectorOptions.canceltext || "{{common.buttons.cancel}}",
 						OnAdd: selectorOptions.OnAdd || selectorOptions.onAdd || selectorOptions.onadd
 					},
-					Multiple: multiple,
-					OnDelete: multiple ? lookupOptions.OnDelete || lookupOptions.onDelete || lookupOptions.ondelete : undefined,
-					WarningOnDelete: multiple ? lookupOptions.WarningOnDelete || lookupOptions.warningOnDelete || lookupOptions.warningondelete : undefined,
-					DisplayValues: multiple ? [] : undefined,
+					Multiple: !!(lookupOptions.Multiple || lookupOptions.multiple),
+					OnDelete: lookupOptions.OnDelete || lookupOptions.onDelete || lookupOptions.ondelete,
+					WarningOnDelete: lookupOptions.WarningOnDelete || lookupOptions.warningOnDelete || lookupOptions.warningondelete,
+					DisplayValues: undefined,
 				};
 			}
 
@@ -580,15 +576,14 @@ export class AppFormsControl {
 
 			const filepickerOptions = controlOptions.FilePickerOptions || controlOptions.filePickerOptions || controlOptions.filepickerOptions || controlOptions.filepickeroptions;
 			if (filepickerOptions !== undefined) {
-				const allowDelete = !!(filepickerOptions.AllowDelete || filepickerOptions.allowDelete || filepickerOptions.allowdelete);
 				control.Options.FilePickerOptions = {
 					Accept: filepickerOptions.Accept || filepickerOptions.accept || "*",
 					Multiple: !!(filepickerOptions.Multiple || filepickerOptions.multiple),
 					AllowPreview: !!(filepickerOptions.AllowPreview || filepickerOptions.allowPreview || filepickerOptions.allowpreview),
-					AllowDelete: allowDelete,
-					OnDelete: allowDelete ? filepickerOptions.OnDelete || filepickerOptions.onDelete || filepickerOptions.ondelete : undefined,
-					WarningOnDelete: allowDelete ? filepickerOptions.WarningOnDelete || filepickerOptions.warningOnDelete || filepickerOptions.warningondelete : undefined,
-					SelectedFiles: allowDelete ? [] : undefined
+					AllowDelete: !!(filepickerOptions.AllowDelete || filepickerOptions.allowDelete || filepickerOptions.allowdelete),
+					OnDelete: filepickerOptions.OnDelete || filepickerOptions.onDelete || filepickerOptions.ondelete,
+					WarningOnDelete: filepickerOptions.WarningOnDelete || filepickerOptions.warningOnDelete || filepickerOptions.warningondelete,
+					SelectedFiles: undefined
 				};
 			}
 
@@ -643,7 +638,7 @@ export class AppFormsControl {
 		return control;
 	}
 
-	/** Copies the options of this control */
+	/** Copies this control */
 	public copy(onPreCompleted?: (options: AppFormsControl) => void) {
 		const options = AppUtility.clone(this, ["Order", "Validators", "AsyncValidators"]) as AppFormsControl;
 		options.Validators = this.Validators;
@@ -659,25 +654,15 @@ export class AppFormsControl {
 		options.Options.LookupOptions.CompleterOptions.GetInitialValue = this.Options.LookupOptions.CompleterOptions.GetInitialValue;
 		options.Options.LookupOptions.CompleterOptions.OnInitialized = this.Options.LookupOptions.CompleterOptions.OnInitialized;
 		options.Options.LookupOptions.CompleterOptions.OnSelected = this.Options.LookupOptions.CompleterOptions.OnSelected;
-		options.Options.LookupOptions.CompleterOptions.OnModalDismiss = this.Options.LookupOptions.CompleterOptions.OnModalDismiss;
-		options.Options.LookupOptions.SelectorOptions.OnAdd = this.Options.LookupOptions.SelectorOptions.OnAdd;
 		options.Options.LookupOptions.ModalOptions.Component = this.Options.LookupOptions.ModalOptions.Component;
 		options.Options.LookupOptions.ModalOptions.OnDismiss = this.Options.LookupOptions.ModalOptions.OnDismiss;
+		options.Options.LookupOptions.SelectorOptions.OnAdd = this.Options.LookupOptions.SelectorOptions.OnAdd;
 		options.Options.FilePickerOptions.OnDelete = this.Options.FilePickerOptions.OnDelete;
 		options.Options.ButtonOptions.OnClick = this.Options.ButtonOptions.OnClick;
 		if (onPreCompleted !== undefined) {
 			onPreCompleted(options);
 		}
 		return options;
-	}
-
-	/** Clones this control */
-	public clone(order?: number, onPreCompleted?: (control: AppFormsControl) => void) {
-		const control = new AppFormsControl(this.copy(), order);
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(control);
-		}
-		return control;
 	}
 
 	/** Sets focus into this control */
@@ -894,18 +879,17 @@ export class AppFormsService {
 
 	private getFormGroup(formControls: Array<AppFormsControl>, formGroup?: FormGroup, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
 		formGroup = formGroup || new FormGroup({}, validators, asyncValidators);
-		formControls.forEach(control => {
-			if (control.SubControls === undefined && AppUtility.isEquals(control.Type, "Lookup") && control.Options.LookupOptions.AsCompleter && AppUtility.isEquals(control.Options.Type, "Address")) {
-				const frmControl = control.copy();
-				["County", "Province", "Country"].forEach(name => formGroup.addControl(name, this.getFormControl(frmControl)));
+		formControls.forEach(formControl => {
+			if (formControl.SubControls === undefined && AppUtility.isEquals(formControl.Type, "Lookup") && formControl.Options.LookupOptions.AsCompleter && AppUtility.isEquals(formControl.Options.Type, "Address")) {
+				["County", "Province", "Country"].forEach(name => formGroup.addControl(name, this.getFormControl(formControl)));
 			}
 			else {
-				const frmControl = control.SubControls === undefined
-					? this.getFormControl(control)
-					: control.SubControls.AsArray
-						? this.getFormArray(control, this.getValidators(control), this.getAsyncValidators(control))
-						: this.getFormGroup(control.SubControls.Controls, undefined, this.getValidators(control), this.getAsyncValidators(control));
-				formGroup.addControl(control.Name, frmControl);
+				const frmControl = formControl.SubControls === undefined
+					? this.getFormControl(formControl)
+					: formControl.SubControls.AsArray
+						? this.getFormArray(formControl, this.getValidators(formControl), this.getAsyncValidators(formControl))
+						: this.getFormGroup(formControl.SubControls.Controls, undefined, this.getValidators(formControl), this.getAsyncValidators(formControl));
+				formGroup.addControl(formControl.Name, frmControl);
 			}
 		});
 		return formGroup;
@@ -915,9 +899,8 @@ export class AppFormsService {
 		const formArray = new FormArray([], validators, asyncValidators);
 		formControl.SubControls.Controls.forEach(subFormControl => {
 			if (subFormControl.SubControls === undefined && AppUtility.isEquals(subFormControl.Type, "Lookup") && formControl.Options.LookupOptions.AsCompleter && AppUtility.isEquals(subFormControl.Options.Type, "Address")) {
-				const frmControl = subFormControl.copy();
 				const formGroup = new FormGroup({}, this.getValidators(subFormControl), this.getAsyncValidators(subFormControl));
-				["County", "Province", "Country"].forEach(name => formGroup.addControl(name, this.getFormControl(frmControl)));
+				["County", "Province", "Country"].forEach(name => formGroup.addControl(name, this.getFormControl(subFormControl)));
 				formArray.push(formGroup);
 			}
 			else {

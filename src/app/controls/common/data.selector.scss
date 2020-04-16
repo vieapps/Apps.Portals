@@ -8,6 +8,10 @@ ion-item ion-thumbnail {
 	height: 32px;
 	width: 48px;
 }
+ion-list-header > ion-label > ion-buttons,
+ion-item > ion-checkbox {
+	margin-right: 15px;
+}
 ion-item ion-thumbnail > img {
 	border-radius: 50%;
 }
