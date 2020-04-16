@@ -1,5 +1,5 @@
 import { Component, OnInit } from "@angular/core";
-import { FormGroup, FormControl } from "@angular/forms";
+import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "../../../../../components/app.crypto";
 import { AppEvents } from "../../../../../components/app.events";
 import { AppUtility } from "../../../../../components/app.utility";
@@ -139,15 +139,11 @@ export class RolesUpdatePage implements OnInit {
 					organizationID: this.organization.ID,
 					excludedIDs: this.role.ID === "" ? undefined : [this.role.ID]
 				},
-				OnDismiss: async (data, formControl) => {
+				OnDismiss: (data, formControl) => {
 					if (AppUtility.isArray(data, true)) {
-						const id = data[0] as string;
-						let role = Role.get(id);
-						if (role === undefined) {
-							await this.portalsCoreSvc.getRoleAsync(id, _ => role = Role.get(id) || new Role(), undefined, true);
-						}
-						formControl.setValue(id);
-						formControl.lookupDisplayValues = [{ Value: id, Label: role.Title }];
+						const role = Role.get(data[0]);
+						formControl.setValue(role.ID);
+						formControl.lookupDisplayValues = [{ Value: role.ID, Label: role.Title }];
 					}
 				}
 			},
@@ -161,7 +157,7 @@ export class RolesUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "UserIDs"));
 		control.Hidden = false;
 		control.Type = "Lookup";
-		control.Extras = { ShowImage: true, ShowDescription: true };
+		control.Extras = { ShowImage: true, ShowDescription: true, LookupDisplayValues: this.users };
 		control.SubControls = control.Options.Label = undefined;
 		control.Options.Description = "{{portals.roles.controls.UserIDs.description}}";
 		control.Options.LookupOptions = {
@@ -181,8 +177,8 @@ export class RolesUpdatePage implements OnInit {
 								Image: undefined as string
 							});
 						});
-						formControl.setValue(userIDs, { onlySelf: true });
 						await this.prepareUsersAsync();
+						formControl.lookupValues = userIDs;
 						formControl.lookupDisplayValues = this.users;
 					}
 				})
@@ -195,7 +191,7 @@ export class RolesUpdatePage implements OnInit {
 					AppUtility.removeAt(userIDs, userIDs.indexOf(id));
 					AppUtility.removeAt(this.users, this.users.findIndex(user => user.Value === id));
 				});
-				formControl.setValue(userIDs, { onlySelf: true });
+				formControl.lookupValues = userIDs;
 				formControl.lookupDisplayValues = this.users;
 			}
 		};
@@ -206,25 +202,9 @@ export class RolesUpdatePage implements OnInit {
 	onFormInitialized() {
 		const role = AppUtility.clone(this.role, false);
 		role.Organization = this.organization.Title;
-		this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "UserIDs")).Options.LookupOptions.DisplayValues = this.users;
-
 		this.form.patchValue(role);
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync();
-	}
-
-	async prepareUsersAsync() {
-		const hideEmails = !this.authSvc.isSystemAdministrator();
-		await Promise.all(this.users.filter(user => user.Label === undefined).map(async user => {
-			let profile = UserProfile.get(user.Value);
-			if (profile === undefined) {
-				await this.usersSvc.getProfileAsync(user.Value, _ => profile = UserProfile.get(user.Value) || new UserProfile(), undefined, true);
-			}
-			user.Label = profile.Name;
-			user.Description = profile.getEmail(hideEmails);
-			user.Image = profile.avatarURI;
-		}));
-		this.users = this.users.sort(AppUtility.getCompareFunction("Label", "Description"));
 	}
 
 	async updateAsync() {
@@ -276,6 +256,20 @@ export class RolesUpdatePage implements OnInit {
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
+	}
+
+	private async prepareUsersAsync() {
+		const hideEmails = !this.authSvc.isSystemAdministrator();
+		await Promise.all(this.users.filter(user => user.Label === undefined).map(async user => {
+			let profile = UserProfile.get(user.Value);
+			if (profile === undefined) {
+				await this.usersSvc.getProfileAsync(user.Value, _ => profile = UserProfile.get(user.Value) || new UserProfile(), undefined, true);
+			}
+			user.Label = profile.Name;
+			user.Description = profile.getEmail(hideEmails);
+			user.Image = profile.avatarURI;
+		}));
+		this.users = this.users.sort(AppUtility.getCompareFunction("Label", "Description"));
 	}
 
 }
