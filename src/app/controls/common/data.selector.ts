@@ -26,16 +26,16 @@ export class DataSelectorControl implements OnInit, OnDestroy {
 	/** The resources of header, delete confirmation and buttons */
 	@Input() resources: { header: string; confirm: string; ok: string; cancel: string; };
 
-	/** true to show image */
+	/** Sets to 'true' to show image */
 	@Input() showImage: boolean;
 
-	/** true to show description */
+	/** Sets to 'true' to show description */
 	@Input() showDescription: boolean;
 
-	/** true to add new items */
+	/** Sets to 'true' to allow to add new items */
 	@Input() allowAdd: boolean;
 
-	/** true to delete the selected items */
+	/** Sets to 'true' to allow to delete the selected items */
 	@Input() allowDelete: boolean;
 
 	/** The handlers to process the request on add/delete */

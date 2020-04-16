@@ -135,13 +135,13 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `profile@${this.usersSvc.name}`.toLowerCase());
 			this.pagination.PageNumber = this.pageNumber;
 			if (this.searching) {
-				(data !== undefined ? data.Objects as Array<any> : []).forEach(profile => this.results.push(UserProfile.get(profile.ID)));
+				(data !== undefined ? data.Objects as Array<any> : []).forEach(o => this.results.push(UserProfile.get(o.ID)));
 			}
 			else {
-				const profiles = new List(data !== undefined ? (data.Objects as Array<any>).map(profile => UserProfile.get(profile.ID)) : UserProfile.all).OrderBy(profile => profile.Name).ThenByDescending(profile => profile.LastAccess);
+				const objects = new List(data !== undefined ? (data.Objects as Array<any>).map(o => UserProfile.get(o.ID)) : UserProfile.all).OrderBy(o => o.Name).ThenByDescending(o => o.LastAccess);
 				this.profiles = data === undefined
-					? profiles.Take(this.pageNumber * this.pagination.PageSize).ToArray()
-					: this.profiles.concat(profiles.ToArray());
+					? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
+					: this.profiles.concat(objects.ToArray());
 			}
 			if (onNext !== undefined) {
 				onNext();
@@ -177,9 +177,9 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 		}
 	}
 
-	closeAsync(users?: Array<string>) {
-		return users === undefined || users.length > 0
-			? this.appFormsSvc.hideModalAsync(users)
+	closeAsync(ids?: Array<string>) {
+		return ids === undefined || ids.length > 0
+			? this.appFormsSvc.hideModalAsync(ids)
 			: new Promise<void>(() => {});
 	}
 

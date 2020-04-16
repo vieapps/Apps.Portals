@@ -118,14 +118,14 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 			this.role.modalComponentProperties = this.control.Extras["RoleModalComponentProperties"] || this.control.Extras["roleModalComponentProperties"];
 		}
 		this.prepareRolesAndUsers();
-		Promise.all([this.prepareLabelsAsync()]).then(() => {
+		this.prepareLabelsAsync().then(() => {
 			this.initialized = true;
 			this.init.emit(this);
 		});
 	}
 
 	ngAfterViewInit() {
-		Promise.all([this.prepareRolesAndUsersAsync()]).then(() => this.changeDetector.detectChanges());
+		this.prepareRolesAndUsersAsync().then(() => this.changeDetector.detectChanges());
 	}
 
 	ngOnDestroy() {
