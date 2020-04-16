@@ -658,7 +658,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		if (this.isLookupControl) {
 			if (this.control.Options.LookupOptions.OnDelete !== undefined) {
 				if (this.isSelector) {
-					this.control.Options.LookupOptions.OnDelete(value, this);
+					this.control.Options.LookupOptions.OnDelete(AppUtility.isArray(value) ? value : [value], this);
 				}
 				else {
 					if (AppUtility.isNotEmpty(this.control.Options.LookupOptions.WarningOnDelete)) {
@@ -667,8 +667,8 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 							undefined,
 							this.control.Options.LookupOptions.WarningOnDelete,
 							() => {
-								this.control.Options.LookupOptions.OnDelete([value], this);
-								if (this.isCompleter) {
+								this.control.Options.LookupOptions.OnDelete(AppUtility.isArray(value) ? value : [value], this);
+								if (this.isCompleter && this.lookupMultiple) {
 									this.focus();
 								}
 							},
@@ -677,8 +677,8 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 						);
 					}
 					else {
-						this.control.Options.LookupOptions.OnDelete([value], this);
-						if (this.isCompleter) {
+						this.control.Options.LookupOptions.OnDelete(AppUtility.isArray(value) ? value : [value], this);
+						if (this.isCompleter && this.lookupMultiple) {
 							this.focus();
 						}
 					}
