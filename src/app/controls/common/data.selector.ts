@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from "@angular/core";
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from "@angular/core";
 import { AppUtility } from "../../components/app.utility";
 import { AppFormsControl, AppFormsService } from "../../components/forms.service";
 import { ConfigurationService } from "../../services/configuration.service";
@@ -9,7 +9,7 @@ import { ConfigurationService } from "../../services/configuration.service";
 	styleUrls: ["./data.selector.scss"]
 })
 
-export class DataSelectorControl implements OnInit {
+export class DataSelectorControl implements OnInit, OnDestroy {
 
 	constructor(
 		public configSvc: ConfigurationService,
@@ -41,7 +41,14 @@ export class DataSelectorControl implements OnInit {
 	/** The handlers to process the request on add/delete */
 	@Input() handlers: { add: () => void; delete: (selected: Array<string>) => void; };
 
-	selected = new Array<string>();
+	/** The event handler to run when the controls was initialized */
+	@Output() init = new EventEmitter<DataSelectorControl>();
+
+	private selected = new Array<string>();
+
+	get disabled() {
+		return this.selected.length < 1;
+	}
 
 	ngOnInit() {
 		this.items = this.items || [];
@@ -92,17 +99,23 @@ export class DataSelectorControl implements OnInit {
 					: this.control.Extras["allowDelete"] !== undefined
 						? AppUtility.isTrue(this.control.Extras["allowDelete"])
 						: true;
+
+		this.init.emit(this);
+	}
+
+	ngOnDestroy() {
+		this.init.unsubscribe();
 	}
 
 	track(index: number, item: { Value: string; Label: string; Description: string; Image?: string }) {
 		return `${item.Value}@${index}`;
 	}
 
-	isChecked(value: string) {
+	checked(value: string) {
 		return this.selected.length > 0 && this.selected.indexOf(value) > -1;
 	}
 
-	onChanged(value: string, event: any) {
+	select(value: string, event: any) {
 		if (!event.detail.checked) {
 			AppUtility.removeAt(this.selected, this.selected.indexOf(value));
 		}
@@ -111,13 +124,13 @@ export class DataSelectorControl implements OnInit {
 		}
 	}
 
-	onAdd() {
+	add() {
 		if (this.handlers !== undefined && this.handlers.add !== undefined && typeof this.handlers.add === "function") {
 			this.handlers.add();
 		}
 	}
 
-	onDelete() {
+	delete() {
 		if (this.handlers !== undefined && this.handlers.delete !== undefined && typeof this.handlers.delete === "function") {
 			this.appFormsSvc.showAlertAsync(
 				undefined,

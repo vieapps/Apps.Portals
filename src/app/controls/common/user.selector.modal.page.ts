@@ -28,6 +28,9 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 	) {
 	}
 
+	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
+	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
+
 	/** Set to 'true' to allow select multiple users */
 	@Input() multiple: boolean;
 
@@ -51,10 +54,8 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 		search: "Search"
 	};
 	selected = new Set<string>();
-	subscription: Subscription;
 
-	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
-	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
+	private subscription: Subscription;
 
 	ngOnInit() {
 		this.multiple = this.multiple === undefined ? true : this.multiple;

@@ -125,7 +125,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	ngAfterViewInit() {
-		Promise.all([this.prepareNamesOfRolesAndUsersAsync()]).then(() => this.changeDetector.detectChanges());
+		Promise.all([this.prepareRolesAndUsersAsync()]).then(() => this.changeDetector.detectChanges());
 	}
 
 	ngOnDestroy() {
@@ -170,7 +170,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 		});
 	}
 
-	private async prepareNamesOfRolesAndUsersAsync(sections?: Array<string>) {
+	private async prepareRolesAndUsersAsync(sections?: Array<string>) {
 		await Promise.all((sections || this.sections).map(async section => await Promise.all([
 			Promise.all(this.roles[section].filter(role => role.Label === undefined).map(async role => {
 				if (Privilege.systemRoles.indexOf(role.Value) > -1) {
@@ -247,7 +247,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 			AppUtility.updateSet(this.privileges.getRoles(section), roles as Array<string>);
 			this.prepareRolesAndUsers([section]);
 			this.emitChanges();
-			await this.prepareNamesOfRolesAndUsersAsync([section]);
+			await this.prepareRolesAndUsersAsync([section]);
 		});
 	}
 
@@ -261,7 +261,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 				this.selectedRoles[section] = [];
 				this.prepareRolesAndUsers([section]);
 				this.emitChanges();
-				await this.prepareNamesOfRolesAndUsersAsync([section]);
+				await this.prepareRolesAndUsersAsync([section]);
 			},
 			this.labels.buttons.ok,
 			this.labels.buttons.cancel
@@ -291,7 +291,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 			AppUtility.updateSet(this.privileges.getUsers(section), users as Array<string>);
 			this.prepareRolesAndUsers([section]);
 			this.emitChanges();
-			await this.prepareNamesOfRolesAndUsersAsync([section]);
+			await this.prepareRolesAndUsersAsync([section]);
 		});
 	}
 
@@ -305,7 +305,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 				this.selectedUsers[section] = [];
 				this.prepareRolesAndUsers([section]);
 				this.emitChanges();
-				await this.prepareNamesOfRolesAndUsersAsync([section]);
+				await this.prepareRolesAndUsersAsync([section]);
 			},
 			this.labels.buttons.ok,
 			this.labels.buttons.cancel
