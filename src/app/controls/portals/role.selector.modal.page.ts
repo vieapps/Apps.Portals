@@ -76,6 +76,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		this.allowSystemRoles = this.allowSystemRoles === undefined ? true : AppUtility.isTrue(this.allowSystemRoles);
 		this.section = AppUtility.isNotEmpty(this.section) ? this.section : "Viewable";
 		this.organization = Organization.get(this.organizationID) || new Organization();
+		this.excludedIDs = AppUtility.isArray(this.excludedIDs, true) ? this.excludedIDs.map(id => id.toString().trim()) : [];
 		this.resetFilter();
 		this.initializeAsync();
 	}
@@ -187,10 +188,14 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `role@${this.portalsCoreSvc.name}`.toLowerCase());
 			this.pagination.PageNumber = this.pageNumber;
 			if (this.searching) {
-				(data !== undefined ? data.Objects as Array<any> : []).forEach(o => this.results.push(Role.get(o.ID)));
+				(data !== undefined ? data.Objects as Array<any> : []).filter(o => this.excludedIDs.indexOf(o.ID) < 0).forEach(o => this.results.push(Role.get(o.ID)));
 			}
 			else {
-				const objects = new List(data === undefined ? Role.filter(this.parentID, this.organization.ID) : (data.Objects as Array<any>).map(o => Role.get(o.ID))).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+				const objects = new List(
+					data === undefined
+						? Role.filter(this.parentID, this.organization.ID)
+						: (data.Objects as Array<any>).map(o => Role.get(o.ID))
+					).Where(o => this.excludedIDs.indexOf(o.ID) < 0).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
 				this.roles = data === undefined
 					? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
 					: this.roles.concat(objects.ToArray());
