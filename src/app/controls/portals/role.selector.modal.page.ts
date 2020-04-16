@@ -36,6 +36,9 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	/** Set to 'true' to allow system roles (Authorized and All) */
 	@Input() allowSystemRoles: boolean;
 
+	/** Set to 'true' to allow All role (include anonymous) to show in 'Contributive' section */
+	@Input() allowAllInContributive: boolean;
+
 	/** The working section */
 	@Input() section: string;
 
@@ -74,6 +77,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.multiple = this.multiple === undefined ? true : AppUtility.isTrue(this.multiple);
 		this.allowSystemRoles = this.allowSystemRoles === undefined ? true : AppUtility.isTrue(this.allowSystemRoles);
+		this.allowAllInContributive = this.allowAllInContributive === undefined ? false : AppUtility.isTrue(this.allowAllInContributive);
 		this.section = AppUtility.isNotEmpty(this.section) ? this.section : "Viewable";
 		this.organization = Organization.get(this.organizationID) || new Organization();
 		this.excludedIDs = AppUtility.isArray(this.excludedIDs, true) ? this.excludedIDs.map(id => id.toString().trim()) : [];
@@ -95,15 +99,22 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
 			search: await this.configSvc.getResourceAsync("common.buttons.search")
 		};
-		this.roleOfAll.ID = "All";
-		this.roleOfAll.Title = await this.appFormsSvc.getResourceAsync("privileges.roles.systems.All");
-		this.roleOfAuthorized.ID = "Authorized";
-		this.roleOfAuthorized.Title = await this.appFormsSvc.getResourceAsync("privileges.roles.systems.Authorized");
+
+		if (this.allowSystemRoles) {
+			this.roleOfAll.ID = "All";
+			this.roleOfAll.Title = await this.appFormsSvc.getResourceAsync("privileges.roles.systems.All");
+			this.roleOfAuthorized.ID = "Authorized";
+			this.roleOfAuthorized.Title = await this.appFormsSvc.getResourceAsync("privileges.roles.systems.Authorized");
+		}
+
 		await this.startSearchAsync(async () => {
 			if (this.allowSystemRoles) {
 				if (this.section === "Contributive" || this.section === "Viewable" || this.section === "Downloadable") {
 					AppUtility.insertAt(this.roles, this.roleOfAll, 0);
 					AppUtility.insertAt(this.roles, this.roleOfAuthorized, 1);
+					if (this.section === "Contributive" && !this.allowAllInContributive) {
+						AppUtility.removeAt(this.roles, 0);
+					}
 				}
 				else if (this.section === "Editable") {
 					AppUtility.insertAt(this.roles, this.roleOfAuthorized, 0);
