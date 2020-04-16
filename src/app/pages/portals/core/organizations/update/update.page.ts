@@ -8,11 +8,14 @@ import { TrackingUtility } from "../../../../../components/app.utility.trackings
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "../../../../../components/forms.service";
 import { ConfigurationService } from "../../../../../services/configuration.service";
 import { FilesService } from "../../../../../services/files.service";
+import { UsersService } from "../../../../../services/users.service";
 import { PortalsCoreService } from "../../../../../services/portals.core.service";
 import { Organization } from "../../../../../models/portals.core.organization";
 import { Privileges } from "../../../../../models/privileges";
+import { UserProfile } from "../../../../../models/user";
 import { Role } from "../../../../../models/portals.core.role";
 import { RolesSelectorModalPage } from "../../../../../controls/portals/role.selector.modal.page";
+import { UsersSelectorModalPage } from "../../../../../controls/common/user.selector.modal.page";
 
 @Component({
 	selector: "page-portals-core-organizations-update",
@@ -25,6 +28,7 @@ export class OrganizationsUpdatePage implements OnInit {
 		public configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private filesSvc: FilesService,
+		private usersSvc: UsersService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
 	}
@@ -105,6 +109,19 @@ export class OrganizationsUpdatePage implements OnInit {
 				};
 				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
 			}
+
+			const ownerControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OwnerID"));
+			ownerControl.Options.LookupOptions.CompleterOptions.AllowLookupByModal = true;
+			ownerControl.Options.LookupOptions.ModalOptions = {
+				Component: UsersSelectorModalPage,
+				ComponentProps: { multiple: false },
+				OnDismiss: (data, formControl) => {
+					if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
+						formControl.completerInitialValue = UserProfile.get(data[0]);
+					}
+				}
+			};
+
 			const privilegesControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Privileges"));
 			privilegesControl.Extras["role"] = {
 				prepare: async (role: { Value: string; Label: string; Description?: string; Image?: string }) => {
@@ -117,6 +134,7 @@ export class OrganizationsUpdatePage implements OnInit {
 				modalComponent: RolesSelectorModalPage,
 				modalComponentProperties: { organizationID: this.organization.ID }
 			};
+
 			const instructionControls = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Instructions")).SubControls.Controls;
 			Organization.instructionElements.forEach(type => {
 				const controls = instructionControls.find(ctrl => AppUtility.isEquals(ctrl.Name, type)).SubControls.Controls;
