@@ -191,7 +191,7 @@
 	
 </ion-item>
 
-<ion-item *ngIf="(isCompleter || isModal) && lookupMultiple" [color]="theme">
+<ion-item *ngIf="visible && (isCompleter || isModal) && lookupMultiple" [color]="theme">
 	<ion-chip *ngFor="let lookup of lookupDisplayValues">
 		<ion-label>
 			<ion-thumbnail *ngIf="lookup.Image" class="ion-float-start">
