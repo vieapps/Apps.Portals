@@ -43,163 +43,6 @@ export class PortalsCoreService extends BaseService {
 	public async initializeAsync(onNext?: () => void) {
 	}
 
-	public get organizationCompleterDataSource() {
-		const convertToCompleterItem = (data: any) => {
-			const organization = data instanceof Organization ? data as Organization : Organization.deserialize(data);
-			return {
-				title: organization.Title,
-				description: organization.Description,
-				originalObject: organization
-			};
-		};
-		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("organization", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(organization => convertToCompleterItem(organization)),
-			convertToCompleterItem
-		);
-	}
-
-	public searchOrganization(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.search(
-			super.getSearchURI("organization", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(o => Organization.update(o));
-				}
-				if (onNext !== undefined) {
-					onNext(data);
-				}
-			},
-			error => {
-				console.error(super.getErrorMessage("Error occurred while searching organization", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
-		);
-	}
-
-	public searchOrganizationAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.searchAsync(
-			super.getSearchURI("organization", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(o => Organization.update(o));
-				}
-				if (onNext !== undefined) {
-					onNext(data);
-				}
-			},
-			error => {
-				console.error(super.getErrorMessage("Error occurred while searching organization", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
-		);
-	}
-
-	public createOrganizationAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.createAsync(
-			super.getURI("organization"),
-			body,
-			data => {
-				Organization.update(data);
-				if (onNext !== undefined) {
-					onNext(data);
-				}
-			},
-			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new organization", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
-		);
-	}
-
-	public getOrganizationAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return Organization.contains(id)
-			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
-			: super.readAsync(
-					super.getURI("organization", id),
-					data => {
-						Organization.update(data);
-						if (onNext !== undefined) {
-							onNext(data);
-						}
-					},
-					error => {
-						console.error(super.getErrorMessage("Error occurred while getting an organization", error));
-						if (onError !== undefined) {
-							onError(error);
-						}
-					},
-					undefined,
-					useXHR
-				);
-	}
-
-	public updateOrganizationAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.updateAsync(
-			super.getURI("organization", body.ID),
-			body,
-			data => {
-				Organization.update(data);
-				if (onNext !== undefined) {
-					onNext(data);
-				}
-			},
-			error => {
-				console.error(super.getErrorMessage("Error occurred while updating an organization", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
-	);
-	}
-
-	public deleteOrganizationAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.deleteAsync(
-			super.getURI("organization", id),
-			data => {
-				Organization.instances.remove(id);
-				if (onNext !== undefined) {
-					onNext(data);
-				}
-			},
-			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting an organization", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
-		);
-	}
-
-	private async processOrganizationUpdateMessageAsync(message: AppMessage) {
-		switch (message.Type.Event) {
-			case "Create":
-			case "Update":
-				Organization.update(message.Data);
-				AppEvents.broadcast("Portals", { Object: "Organization", Type: "Updated", ID: message.Data.ID });
-				break;
-
-			case "Delete":
-				if (Organization.contains(message.Data.ID)) {
-					Organization.instances.remove(message.Data.ID);
-					AppEvents.broadcast("Portals", { Object: "Organization", Type: "Deleted", ID: message.Data.ID });
-				}
-				break;
-
-			default:
-				console.warn(super.getLogMessage("Got an update message of an organization"), message);
-				break;
-		}
-	}
-
 	public canManageOrganization(organization?: Organization, account?: Account) {
 		account = account || this.configSvc.getAccount();
 		return organization === undefined || organization.ID === ""
@@ -882,6 +725,193 @@ export class PortalsCoreService extends BaseService {
 		return formConfig;
 	}
 
+	public getRolesSelector(selectorModalPage: any, organizationID: string, parentID?: string) {
+		return {
+			prepare: async (role: { Value: string; Label: string; Description?: string; Image?: string }) => {
+				if (!Role.contains(role.Value)) {
+					await this.getRoleAsync(role.Value, undefined, undefined, true);
+				}
+				role.Label = (Role.get(role.Value) || new Role()).Title;
+			},
+			modalComponent: selectorModalPage,
+			modalComponentProperties: { organizationID: organizationID, parentID: parentID }
+		};
+	}
+
+	public get organizationCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const organization = data instanceof Organization ? data as Organization : Organization.deserialize(data);
+			return {
+				title: organization.Title,
+				description: organization.Description,
+				originalObject: organization
+			};
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(super.getSearchURI("organization", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => {
+				if (!Organization.contains(obj.ID)) {
+					const organization = Organization.deserialize(obj);
+					Organization.update(organization);
+					return convertToCompleterItem(organization);
+				}
+				else {
+					return convertToCompleterItem(Organization.get(obj.ID));
+				}
+			}),
+			convertToCompleterItem
+		);
+	}
+
+	public searchOrganization(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.search(
+			super.getSearchURI("organization", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!Organization.contains(obj.ID)) {
+							Organization.update(obj);
+						}
+					});
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching organization", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public searchOrganizationAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.searchAsync(
+			super.getSearchURI("organization", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!Organization.contains(obj.ID)) {
+							Organization.update(obj);
+						}
+					});
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching organization", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public createOrganizationAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.createAsync(
+			super.getURI("organization"),
+			body,
+			data => {
+				Organization.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while creating new organization", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public getOrganizationAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return Organization.contains(id)
+			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
+			: super.readAsync(
+					super.getURI("organization", id),
+					data => {
+						Organization.update(data);
+						if (onNext !== undefined) {
+							onNext(data);
+						}
+					},
+					error => {
+						console.error(super.getErrorMessage("Error occurred while getting an organization", error));
+						if (onError !== undefined) {
+							onError(error);
+						}
+					},
+					undefined,
+					useXHR
+				);
+	}
+
+	public updateOrganizationAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.updateAsync(
+			super.getURI("organization", body.ID),
+			body,
+			data => {
+				Organization.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while updating an organization", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+	);
+	}
+
+	public deleteOrganizationAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.deleteAsync(
+			super.getURI("organization", id),
+			data => {
+				Organization.instances.remove(id);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while deleting an organization", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	private async processOrganizationUpdateMessageAsync(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				Organization.update(message.Data);
+				AppEvents.broadcast("Portals", { Object: "Organization", Type: "Updated", ID: message.Data.ID });
+				break;
+
+			case "Delete":
+				if (Organization.contains(message.Data.ID)) {
+					Organization.instances.remove(message.Data.ID);
+					AppEvents.broadcast("Portals", { Object: "Organization", Type: "Deleted", ID: message.Data.ID });
+				}
+				break;
+
+			default:
+				console.warn(super.getLogMessage("Got an update message of an organization"), message);
+				break;
+		}
+	}
+
 	public get roleCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const role = data instanceof Role ? data as Role : Role.deserialize(data);
@@ -893,7 +923,16 @@ export class PortalsCoreService extends BaseService {
 		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("role", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(role => convertToCompleterItem(role)),
+			data => (data.Objects as Array<any> || []).map(obj => {
+				if (!Role.contains(obj.ID)) {
+					const role = Role.deserialize(obj);
+					Role.update(role);
+					return convertToCompleterItem(role);
+				}
+				else {
+					return convertToCompleterItem(Role.get(obj.ID));
+				}
+			}),
 			convertToCompleterItem
 		);
 	}
@@ -904,7 +943,11 @@ export class PortalsCoreService extends BaseService {
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(o => Role.update(o));
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!Role.contains(obj.ID)) {
+							Role.update(obj);
+						}
+					});
 				}
 				if (onNext !== undefined) {
 					onNext(data);
@@ -925,7 +968,11 @@ export class PortalsCoreService extends BaseService {
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(o => Role.update(o));
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!Role.contains(obj.ID)) {
+							Role.update(obj);
+						}
+					});
 				}
 				if (onNext !== undefined) {
 					onNext(data);

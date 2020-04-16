@@ -35,7 +35,16 @@ export class UsersService extends BaseService {
 		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("profile", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(o => convertToCompleterItem(o)),
+			data => (data.Objects as Array<any> || []).map(obj => {
+				if (!UserProfile.contains(obj.ID)) {
+					const profile = UserProfile.deserialize(obj);
+					UserProfile.update(profile);
+					return convertToCompleterItem(profile);
+				}
+				else {
+					return convertToCompleterItem(UserProfile.get(obj.ID));
+				}
+			}),
 			convertToCompleterItem
 		);
 	}
@@ -46,7 +55,11 @@ export class UsersService extends BaseService {
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(o => UserProfile.update(o));
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!UserProfile.contains(obj.ID)) {
+							UserProfile.update(obj);
+						}
+					});
 				}
 				if (onNext !== undefined) {
 					onNext(data);
@@ -67,7 +80,11 @@ export class UsersService extends BaseService {
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(o => UserProfile.update(o));
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!UserProfile.contains(obj.ID)) {
+							UserProfile.update(obj);
+						}
+					});
 				}
 				if (onNext !== undefined) {
 					onNext(data);
