@@ -13,6 +13,7 @@ import { PortalsCoreService } from "../../../../../services/portals.core.service
 import { Organization } from "../../../../../models/portals.core.organization";
 import { Role } from "../../../../../models/portals.core.role";
 import { UserProfile } from "../../../../../models/user";
+import { RolesSelectorModalPage } from "../../../../../controls/portals/role.selector.modal.page";
 import { UsersSelectorModalPage } from "../../../../../controls/common/user.selector.modal.page";
 
 @Component({
@@ -47,22 +48,25 @@ export class RolesUpdatePage implements OnInit {
 	};
 
 	ngOnInit() {
+		this.initializeAsync();
+	}
+
+	private async initializeAsync() {
 		this.role = Role.get(this.configSvc.requestParams["ID"]);
-		const gotRights = this.role === undefined
-			? this.authSvc.isSystemAdministrator()
-			: AppUtility.isEquals(this.organization.OwnerID, this.configSvc.getAccount().id) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Role", this.organization.Privileges);
-		if (!gotRights) {
-			Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateBackAsync()
-			]);
+		this.organization = this.role !== undefined && this.role.SystemID !== this.organization.ID
+			? Organization.get(this.role.SystemID)
+			: this.organization;
+
+		if (this.portalsCoreSvc.canModerateOrganization(this.organization)) {
+			await this.initializeFormAsync();
 		}
 		else {
-			this.initializeFormAsync();
+			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
+			await this.configSvc.navigateBackAsync();
 		}
 	}
 
-	async initializeFormAsync() {
+	private async initializeFormAsync() {
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.roles.title.${(this.role === undefined ? "create" : "update")}`);
 		await this.appFormsSvc.showLoadingAsync(this.title);
 
@@ -75,11 +79,16 @@ export class RolesUpdatePage implements OnInit {
 			this.role = new Role();
 			this.role.SystemID = this.organization.ID;
 		}
-		else {
+		else if (this.role.SystemID !== this.organization.ID) {
 			this.organization = Organization.get(this.role.SystemID);
 			if (this.organization === undefined) {
 				await this.portalsCoreSvc.getOrganizationAsync(this.role.SystemID, _ => this.organization = Organization.get(this.role.SystemID), undefined, true);
 			}
+		}
+
+		if (this.organization === undefined || this.organization.ID === "") {
+			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.roles.list.invalid"));
+			return;
 		}
 
 		if (this.role.UserIDs !== undefined && this.role.UserIDs.length > 0) {
@@ -116,12 +125,44 @@ export class RolesUpdatePage implements OnInit {
 		control.Type = "TextArea";
 		control.Options.Rows = 2;
 
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID"));
+		control.Hidden = false;
+		control.Type = "Lookup";
+		control.Options.LookupOptions = {
+			AsCompleter: false,
+			AsModal: true,
+			ModalOptions: {
+				Component: RolesSelectorModalPage,
+				ComponentProps: {
+					multiple: false,
+					allowSystemRoles: false,
+					organizationID: this.organization.ID,
+					excludedIDs: this.role.ID === "" ? undefined : [this.role.ID]
+				},
+				OnDismiss: async (data, formControl) => {
+					if (AppUtility.isArray(data, true)) {
+						const id = data[0] as string;
+						let role = Role.get(id);
+						if (role === undefined) {
+							await this.portalsCoreSvc.getRoleAsync(id, _ => role = Role.get(id) || new Role(), undefined, true);
+						}
+						formControl.setValue(id);
+						formControl.lookupDisplayValues = [{ Value: id, Label: role.Title }];
+					}
+				}
+			},
+			Multiple: false,
+			OnDelete: (_, formControl) => {
+				formControl.setValue(undefined);
+				formControl.lookupDisplayValues = undefined;
+			}
+		};
+
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "UserIDs"));
-		control.SubControls = undefined;
 		control.Hidden = false;
 		control.Type = "Lookup";
 		control.Extras = { ShowImage: true, ShowDescription: true };
-		control.Options.Label = undefined;
+		control.SubControls = control.Options.Label = undefined;
 		control.Options.Description = "{{portals.roles.controls.UserIDs.description}}";
 		control.Options.LookupOptions = {
 			AsCompleter: false,
@@ -165,11 +206,10 @@ export class RolesUpdatePage implements OnInit {
 	onFormInitialized() {
 		const role = AppUtility.clone(this.role, false);
 		role.Organization = this.organization.Title;
-		this.hash = AppCrypto.hash(role);
-
 		this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "UserIDs")).Options.LookupOptions.DisplayValues = this.users;
 
 		this.form.patchValue(role);
+		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync();
 	}
 
@@ -189,14 +229,13 @@ export class RolesUpdatePage implements OnInit {
 
 	async updateAsync() {
 		if (this.appFormsSvc.validate(this.form)) {
-			const role = this.form.value;
-
-			if (this.hash === AppCrypto.hash(role)) {
+			if (this.hash === AppCrypto.hash(this.form.value)) {
 				await this.configSvc.navigateBackAsync();
 			}
 			else {
 				this.processing = true;
 				await this.appFormsSvc.showLoadingAsync(this.title);
+				const role = this.form.value;
 				delete role["Organization"];
 				if (AppUtility.isNotEmpty(role.ID)) {
 					await this.portalsCoreSvc.updateRoleAsync(
@@ -228,14 +267,14 @@ export class RolesUpdatePage implements OnInit {
 		}
 	}
 
-	async cancelAsync() {
+	async cancelAsync(message?: string) {
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			undefined,
-			await this.configSvc.getResourceAsync(`portals.roles.update.messages.confirm.${AppUtility.isNotEmpty(this.role.ID) ? "cancel" : "new"}`),
+			message || await this.configSvc.getResourceAsync(`portals.roles.update.messages.confirm.${AppUtility.isNotEmpty(this.role.ID) ? "cancel" : "new"}`),
 			async () => await this.configSvc.navigateBackAsync(),
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel")
+			message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
 	}
 

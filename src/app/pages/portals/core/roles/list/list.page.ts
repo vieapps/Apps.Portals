@@ -10,7 +10,6 @@ import { PlatformUtility } from "../../../../../components/app.utility.platform"
 import { AppPagination, AppDataPagination, AppDataRequest } from "../../../../../components/app.pagination";
 import { AppFormsService } from "../../../../../components/forms.service";
 import { ConfigurationService } from "../../../../../services/configuration.service";
-import { AuthenticationService } from "../../../../../services/authentication.service";
 import { PortalsCoreService } from "../../../../../services/portals.core.service";
 import { Organization } from "../../../../../models/portals.core.organization";
 import { Role } from "../../../../../models/portals.core.role";
@@ -26,7 +25,6 @@ export class RolesListPage implements OnInit, OnDestroy {
 	constructor(
 		public configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
-		private authSvc: AuthenticationService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
@@ -35,7 +33,8 @@ export class RolesListPage implements OnInit, OnDestroy {
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
-	private organization = this.portalsCoreSvc.activeOrganization || new Organization();
+	private organization: Organization;
+	private parentID: string;
 	private subscription: Subscription;
 
 	title = "Roles";
@@ -46,13 +45,7 @@ export class RolesListPage implements OnInit, OnDestroy {
 	request: AppDataRequest;
 	filterBy = {
 		Query: undefined as string,
-		And: [
-			{
-				SystemID: {
-					Equals: this.organization.ID
-				}
-			}
-		] as Array<{ [key: string]: any }>
+		And: new Array<{ [key: string]: any }>()
 	};
 	sortBy = { Title: "Ascending" };
 	actions: Array<{
@@ -71,28 +64,12 @@ export class RolesListPage implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		if (this.organization.ID === "") {
-			Promise.all([async () => {
-				await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.list.noinfo"));
-				await this.configSvc.navigateHomeAsync();
-			}]);
-		}
-		else {
-			if (this.authSvc.isServiceModerator(this.portalsCoreSvc.name, this.organization.Privileges)) {
-				this.initializeAsync();
-				AppEvents.on("Portals", info => {
-					if (!this.searching && info.args.Object === "Role" && (info.args.Type === "Updated" || info.args.Type === "Deleted")) {
-						this.prepareResults();
-					}
-				}, "RefreshListOfRolesEventHandler");
+		this.initializeAsync();
+		AppEvents.on("Portals", info => {
+			if (!this.searching && info.args.Object === "Role" && (info.args.Type === "Updated" || info.args.Type === "Deleted")) {
+				this.prepareResults();
 			}
-			else {
-				Promise.all([
-					this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-					this.configSvc.navigateHomeAsync()
-				]);
-			}
-		}
+		}, "RefreshListOfRolesEventHandler");
 	}
 
 	ngOnDestroy() {
@@ -103,10 +80,37 @@ export class RolesListPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
-		this.searching = this.configSvc.currentUrl.startsWith("/portals/core/roles/search");
-		this.configSvc.appTitle = this.title = this.searching
-			? await this.configSvc.getResourceAsync("portals.roles.title.search")
-			: await this.configSvc.getResourceAsync("portals.roles.title.list");
+		this.organization = Organization.get(this.configSvc.requestParams["SystemID"]) || this.portalsCoreSvc.activeOrganization || new Organization();
+		if (this.organization === undefined || this.organization.ID === "") {
+			await this.appFormsSvc.showAlertAsync(
+				undefined,
+				undefined,
+				await this.configSvc.getResourceAsync("portals.roles.list.invalid"),
+				async () => await this.configSvc.navigateHomeAsync("/portals/core/organizations/list"),
+				await this.configSvc.getResourceAsync("common.buttons.ok")
+			);
+			return;
+		}
+
+		if (!this.portalsCoreSvc.canModerateOrganization(this.organization)) {
+			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
+			await this.configSvc.navigateHomeAsync();
+			return;
+		}
+
+		this.parentID = this.configSvc.requestParams["ParentID"];
+		this.filterBy.And.push(
+			{
+				SystemID: { Equals: this.organization.ID}
+			},
+			{
+				ParentID: AppUtility.isNotEmpty(this.parentID) ? { Equals: this.parentID } : "IsNull"
+			}
+		);
+
+		this.searching = this.configSvc.currentUrl.endsWith("/search");
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.roles.title.${(this.searching ? "search" : "list")}`);
+
 		if (this.searching) {
 			PlatformUtility.focus(this.searchCtrl);
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.roles.list.searchbar");
@@ -217,7 +221,7 @@ export class RolesListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.roles.push(Role.get(o.ID)));
 		}
 		else {
-			const objects = new List(results === undefined ? Role.instances.values().filter(o => o.SystemID === this.organization.ID) : results.map(o => Role.get(o.ID))).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			const objects = new List(results === undefined ? Role.filter(this.parentID, this.organization.ID) : results.map(o => Role.get(o.ID))).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
 			this.roles = results === undefined
 				? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
 				: this.roles.concat(objects.ToArray());
