@@ -57,10 +57,7 @@ export class OrganizationsUpdatePage implements OnInit {
 
 	ngOnInit() {
 		this.organization = Organization.get(this.configSvc.requestParams["ID"]);
-		const gotRights = this.organization === undefined
-			? this.authSvc.isServiceModerator(this.portalsCoreSvc.name)
-			: AppUtility.isEquals(this.organization.OwnerID, this.configSvc.getAccount().id) || this.authSvc.isServiceModerator(this.portalsCoreSvc.name, this.organization.Privileges);
-		if (gotRights) {
+		if (this.portalsCoreSvc.canModerateOrganization(this.organization)) {
 			this.initializeFormAsync();
 		}
 		else {

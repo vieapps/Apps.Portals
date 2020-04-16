@@ -63,7 +63,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		if (this.authSvc.isServiceModerator(this.portalsCoreSvc.name)) {
+		if (this.portalsCoreSvc.canModerateOrganization()) {
 			this.initializeAsync();
 			AppEvents.on("Portals", info => {
 				if (!this.searching && info.args.Object === "Organization" && (info.args.Type === "Updated" || info.args.Type === "Deleted")) {
