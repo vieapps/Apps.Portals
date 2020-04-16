@@ -48,6 +48,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	ngOnInit() {
 		this.control.controlRef = this;
 		this.control.formControlRef = this.formControl;
+		this.lookupDisplayValues = this.control.Extras["LookupDisplayValues"] || this.control.Extras["lookupDisplayValues"];
 		if (this.isCompleter) {
 			this.completerInit();
 			this.completerGetInitialValue();
