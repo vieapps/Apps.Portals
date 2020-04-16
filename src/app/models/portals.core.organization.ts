@@ -10,13 +10,18 @@ export class Organization extends BaseModel {
 		delete this["OriginalPrivileges"];
 	}
 
+	public static instructionElements = ["Activate", "Invite", "Reset", "Password", "Email"];
+
 	/** All instances of organization */
 	public static instances = new Dictionary<string, Organization>();
 
+	/** All instances of organization */
+	public static get all() {
+		return this.instances.values();
+	}
+
 	/** Active organization */
 	public static active: Organization;
-
-	public static instructionElements = ["Activate", "Invite", "Reset", "Password", "Email"];
 
 	ID = "";
 	Title = "";
