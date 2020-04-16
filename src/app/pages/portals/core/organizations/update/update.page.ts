@@ -7,8 +7,6 @@ import { PlatformUtility } from "../../../../../components/app.utility.platform"
 import { TrackingUtility } from "../../../../../components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "../../../../../components/forms.service";
 import { ConfigurationService } from "../../../../../services/configuration.service";
-import { FilesService } from "../../../../../services/files.service";
-import { UsersService } from "../../../../../services/users.service";
 import { PortalsCoreService } from "../../../../../services/portals.core.service";
 import { Organization } from "../../../../../models/portals.core.organization";
 import { Privileges } from "../../../../../models/privileges";
@@ -27,8 +25,6 @@ export class OrganizationsUpdatePage implements OnInit {
 	constructor(
 		public configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
-		private filesSvc: FilesService,
-		private usersSvc: UsersService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
 	}
@@ -122,18 +118,7 @@ export class OrganizationsUpdatePage implements OnInit {
 				}
 			};
 
-			const privilegesControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Privileges"));
-			privilegesControl.Extras["role"] = {
-				prepare: async (role: { Value: string; Label: string; Description?: string; Image?: string }) => {
-					let r = Role.get(role.Value);
-					if (r === undefined) {
-						await this.portalsCoreSvc.getRoleAsync(role.Value, _ => r = Role.get(role.Value) || new Role(), undefined, true);
-					}
-					role.Label = r.Title;
-				},
-				modalComponent: RolesSelectorModalPage,
-				modalComponentProperties: { organizationID: this.organization.ID }
-			};
+			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Privileges")).Extras["role"] = this.portalsCoreSvc.getRolesSelector(RolesSelectorModalPage, this.organization.ID);
 
 			const instructionControls = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Instructions")).SubControls.Controls;
 			Organization.instructionElements.forEach(type => {
