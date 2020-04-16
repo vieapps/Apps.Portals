@@ -294,8 +294,7 @@ export class AppFormsControl {
 			},
 			Multiple: false,
 			OnDelete: undefined as (values: Array<string>, control: AppFormsControlComponent) => void,
-			WarningOnDelete: undefined as string,
-			DisplayValues: undefined as Array<{ Value: string; Label: string; Description?: string; Image?: string }>
+			WarningOnDelete: undefined as string
 		},
 		DatePickerOptions: {
 			AllowTimes: false,
@@ -553,8 +552,7 @@ export class AppFormsControl {
 					},
 					Multiple: !!(lookupOptions.Multiple || lookupOptions.multiple),
 					OnDelete: lookupOptions.OnDelete || lookupOptions.onDelete || lookupOptions.ondelete,
-					WarningOnDelete: lookupOptions.WarningOnDelete || lookupOptions.warningOnDelete || lookupOptions.warningondelete,
-					DisplayValues: undefined,
+					WarningOnDelete: lookupOptions.WarningOnDelete || lookupOptions.warningOnDelete || lookupOptions.warningondelete
 				};
 			}
 

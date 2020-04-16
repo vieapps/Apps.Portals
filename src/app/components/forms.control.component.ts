@@ -20,6 +20,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	private _style: string;
 	private _completerInitialValue: any;
+	private _lookupDisplayValues: Array<{ Value: string; Label: string; Description?: string; Image?: string }>;
 	private _selectOptions: Array<string>;
 
 	public showPassword = false;
@@ -572,18 +573,17 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/** Gets the values for displaying of this lookup control */
 	get lookupDisplayValues() {
-		return this.control.Options.LookupOptions.DisplayValues || [];
+		return this._lookupDisplayValues || [];
 	}
 
 	/** Sets the values for displaying of this lookup control */
 	set lookupDisplayValues(values: Array<{ Value: string; Label: string; Description?: string; Image?: string }>) {
-		this.control.Options.LookupOptions.DisplayValues = values;
+		this._lookupDisplayValues = values;
 	}
 
 	/** Gets the single value for displaying of this lookup control */
 	get lookupDisplayValue() {
-		const lookupDisplayValues = this.lookupDisplayValues;
-		return lookupDisplayValues.length > 0 ? lookupDisplayValues[0].Label : undefined;
+		return this.lookupDisplayValues.length > 0 ? this.lookupDisplayValues[0].Label : undefined;
 	}
 
 	get lookupResources() {
