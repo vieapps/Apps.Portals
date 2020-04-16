@@ -10,6 +10,7 @@ import { Base as BaseService } from "./base.service";
 import { ConfigurationService } from "./configuration.service";
 import { UsersService } from "./users.service";
 import { AuthenticationService } from "./authentication.service";
+import { Account } from "../models/account";
 import { UserProfile } from "../models/user";
 import { Organization } from "../models/portals.core.organization";
 import { Role } from "../models/portals.core.role";
@@ -197,6 +198,20 @@ export class PortalsCoreService extends BaseService {
 				console.warn(super.getLogMessage("Got an update message of an organization"), message);
 				break;
 		}
+	}
+
+	public canManageOrganization(organization?: Organization, account?: Account) {
+		account = account || this.configSvc.getAccount();
+		return organization === undefined || organization.ID === ""
+			? this.authSvc.isAdministrator(this.name, "Organization", undefined, account)
+			: AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isAdministrator(this.name, "Organization", organization.Privileges, account);
+	}
+
+	public canModerateOrganization(organization?: Organization, account?: Account) {
+		account = account || this.configSvc.getAccount();
+		return organization === undefined || organization.ID === ""
+			? this.authSvc.isModerator(this.name, "Organization", undefined, account)
+			: AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isModerator(this.name, "Organization", organization.Privileges, account);
 	}
 
 	public async getOrganizationFormSegmentsAsync(organization: Organization, onPreCompleted?: (formSegments: AppFormsSegment[]) => void) {
