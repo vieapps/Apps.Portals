@@ -1,5 +1,5 @@
 import { Component, OnInit } from "@angular/core";
-import { FormGroup, FormControl } from "@angular/forms";
+import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "../../../../../components/app.crypto";
 import { AppEvents } from "../../../../../components/app.events";
 import { AppUtility } from "../../../../../components/app.utility";
@@ -7,12 +7,12 @@ import { PlatformUtility } from "../../../../../components/app.utility.platform"
 import { TrackingUtility } from "../../../../../components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "../../../../../components/forms.service";
 import { ConfigurationService } from "../../../../../services/configuration.service";
-import { AuthenticationService } from "../../../../../services/authentication.service";
 import { FilesService } from "../../../../../services/files.service";
 import { PortalsCoreService } from "../../../../../services/portals.core.service";
-import { UsersService } from "../../../../../services/users.service";
 import { Organization } from "../../../../../models/portals.core.organization";
 import { Privileges } from "../../../../../models/privileges";
+import { Role } from "../../../../../models/portals.core.role";
+import { RolesSelectorModalPage } from "../../../../../controls/portals/role.selector.modal.page";
 
 @Component({
 	selector: "page-portals-core-organizations-update",
@@ -24,7 +24,6 @@ export class OrganizationsUpdatePage implements OnInit {
 	constructor(
 		public configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
-		private authSvc: AuthenticationService,
 		private filesSvc: FilesService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
@@ -56,19 +55,21 @@ export class OrganizationsUpdatePage implements OnInit {
 	};
 
 	ngOnInit() {
+		this.initializeAsync();
+	}
+
+	private async initializeAsync() {
 		this.organization = Organization.get(this.configSvc.requestParams["ID"]);
 		if (this.portalsCoreSvc.canModerateOrganization(this.organization)) {
-			this.initializeFormAsync();
+			await this.initializeFormAsync();
 		}
 		else {
-			Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateBackAsync()
-			]);
+			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
+			await this.configSvc.navigateBackAsync();
 		}
 	}
 
-	async initializeFormAsync() {
+	private async initializeFormAsync() {
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.organizations.title.${(this.organization === undefined ? "create" : "update")}`);
 		await this.appFormsSvc.showLoadingAsync(this.title);
 
@@ -104,6 +105,18 @@ export class OrganizationsUpdatePage implements OnInit {
 				};
 				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
 			}
+			const privilegesControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Privileges"));
+			privilegesControl.Extras["role"] = {
+				prepare: async (role: { Value: string; Label: string; Description?: string; Image?: string }) => {
+					let r = Role.get(role.Value);
+					if (r === undefined) {
+						await this.portalsCoreSvc.getRoleAsync(role.Value, _ => r = Role.get(role.Value) || new Role(), undefined, true);
+					}
+					role.Label = r.Title;
+				},
+				modalComponent: RolesSelectorModalPage,
+				modalComponentProperties: { organizationID: this.organization.ID }
+			};
 			const instructionControls = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Instructions")).SubControls.Controls;
 			Organization.instructionElements.forEach(type => {
 				const controls = instructionControls.find(ctrl => AppUtility.isEquals(ctrl.Name, type)).SubControls.Controls;

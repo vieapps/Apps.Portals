@@ -63,20 +63,12 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		if (this.portalsCoreSvc.canModerateOrganization()) {
-			this.initializeAsync();
-			AppEvents.on("Portals", info => {
-				if (!this.searching && info.args.Object === "Organization" && (info.args.Type === "Updated" || info.args.Type === "Deleted")) {
-					this.prepareResults();
-				}
-			}, "RefreshListOfOrganizationsEventHandler");
-		}
-		else {
-			Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateHomeAsync()
-			]);
-		}
+		this.initializeAsync();
+		AppEvents.on("Portals", info => {
+			if (!this.searching && info.args.Object === "Organization" && (info.args.Type === "Updated" || info.args.Type === "Deleted")) {
+				this.prepareResults();
+			}
+		}, "RefreshListOfOrganizationsEventHandler");
 	}
 
 	ngOnDestroy() {
@@ -87,10 +79,15 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
-		this.searching = this.configSvc.currentUrl.startsWith("/portals/core/organizations/search");
-		this.configSvc.appTitle = this.title = this.searching
-			? await this.configSvc.getResourceAsync("portals.organizations.title.search")
-			: await this.configSvc.getResourceAsync("portals.organizations.title.list");
+		if (!this.portalsCoreSvc.canModerateOrganization()) {
+			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
+			await this.configSvc.navigateHomeAsync();
+			return;
+		}
+
+		this.searching = this.configSvc.currentUrl.endsWith("/search");
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.organizations.title.${(this.searching ? "search" : "list")}`);
+
 		if (this.searching) {
 			PlatformUtility.focus(this.searchCtrl);
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.organizations.list.searchbar");
