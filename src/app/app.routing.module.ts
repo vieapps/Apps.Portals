@@ -1,5 +1,5 @@
 import { NgModule } from "@angular/core";
-import { RouterModule, Routes } from "@angular/router";
+import { RouterModule } from "@angular/router";
 import { AppModulePreloader } from "./components/app.preloader";
 import { AppReadyGuardService } from "./services/base.service";
 import { AppConfig } from "./app.config";

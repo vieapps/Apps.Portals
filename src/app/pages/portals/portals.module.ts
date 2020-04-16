@@ -1,14 +1,16 @@
 import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { RouterModule, Routes } from "@angular/router";
+import { RouterModule } from "@angular/router";
 import { IonicModule } from "@ionic/angular";
 import { AuthenticatedGuardService } from "../../services/base.service";
+import { PortalsControlsModule } from "../../controls/portals.controls.module";
 
 @NgModule({
 	providers: [],
 	imports: [
 		CommonModule,
 		IonicModule,
+		PortalsControlsModule,
 		RouterModule.forChild([
 			{
 				path: "core",
