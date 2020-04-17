@@ -7,11 +7,12 @@ import { PlatformUtility } from "../../../../../components/app.utility.platform"
 import { TrackingUtility } from "../../../../../components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "../../../../../components/forms.service";
 import { ConfigurationService } from "../../../../../services/configuration.service";
+import { AuthenticationService } from "../../../../../services/authentication.service";
+import { UsersService } from "../../../../../services/users.service";
 import { PortalsCoreService } from "../../../../../services/portals.core.service";
 import { Organization } from "../../../../../models/portals.core.organization";
 import { Privileges } from "../../../../../models/privileges";
 import { UserProfile } from "../../../../../models/user";
-import { Role } from "../../../../../models/portals.core.role";
 import { RolesSelectorModalPage } from "../../../../../controls/portals/role.selector.modal.page";
 import { UsersSelectorModalPage } from "../../../../../controls/common/user.selector.modal.page";
 
@@ -24,6 +25,8 @@ import { UsersSelectorModalPage } from "../../../../../controls/common/user.sele
 export class OrganizationsUpdatePage implements OnInit {
 	constructor(
 		public configSvc: ConfigurationService,
+		private authSvc: AuthenticationService,
+		private usersSvc: UsersService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
@@ -96,8 +99,8 @@ export class OrganizationsUpdatePage implements OnInit {
 			this.organization.EmailSettings = { Smtp: { Port: 25, EnableSsl: false } };
 		}
 
-		this.formSegments.items = await this.portalsCoreSvc.getOrganizationFormSegmentsAsync(this.organization);
-		this.formConfig = await this.portalsCoreSvc.getOrganizationFormControlsAsync(this.organization, formConfig => {
+		this.formSegments.items = await this.getOrganizationFormSegmentsAsync();
+		this.formConfig = await this.getOrganizationFormControlsAsync(formConfig => {
 			if (this.organization.ID === "") {
 				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title")).Options.OnBlur = (_, formControl) => {
 					this.form.controls.Alias.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
@@ -106,19 +109,19 @@ export class OrganizationsUpdatePage implements OnInit {
 				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
 			}
 
-			const ownerControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OwnerID"));
-			ownerControl.Options.LookupOptions.CompleterOptions.AllowLookupByModal = true;
-			ownerControl.Options.LookupOptions.ModalOptions = {
-				Component: UsersSelectorModalPage,
-				ComponentProps: { multiple: false },
-				OnDismiss: (data, formControl) => {
-					if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
-						formControl.completerInitialValue = UserProfile.get(data[0]);
+			if (this.authSvc.isSystemAdministrator()) {
+				const ownerControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OwnerID"));
+				ownerControl.Options.LookupOptions.CompleterOptions.AllowLookupByModal = true;
+				ownerControl.Options.LookupOptions.ModalOptions = {
+					Component: UsersSelectorModalPage,
+					ComponentProps: { multiple: false },
+					OnDismiss: (data, formControl) => {
+						if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
+							formControl.completerInitialValue = UserProfile.get(data[0]);
+						}
 					}
-				}
-			};
-
-			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Privileges")).Extras["role"] = this.portalsCoreSvc.getRolesSelector(RolesSelectorModalPage, this.organization.ID);
+				};
+			}
 
 			const instructionControls = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Instructions")).SubControls.Controls;
 			Organization.instructionElements.forEach(type => {
@@ -134,6 +137,316 @@ export class OrganizationsUpdatePage implements OnInit {
 				controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Body")).Options.OnBlur = (_, formControl) => this.instructions[formControl.parentControl.Name][formControl.formGroup.controls.Language.value] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
 			});
 		});
+	}
+
+	private async getOrganizationFormSegmentsAsync(onPreCompleted?: (formSegments: AppFormsSegment[]) => void) {
+		const formSegments = [
+			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.organizations.update.segments.basic")),
+			new AppFormsSegment("privileges", await this.configSvc.getResourceAsync("portals.organizations.update.segments.privileges")),
+			new AppFormsSegment("notifications", await this.configSvc.getResourceAsync("portals.organizations.update.segments.notifications")),
+			new AppFormsSegment("instructions", await this.configSvc.getResourceAsync("portals.organizations.update.segments.instructions")),
+			new AppFormsSegment("socials", await this.configSvc.getResourceAsync("portals.organizations.update.segments.socials")),
+			new AppFormsSegment("urls", await this.configSvc.getResourceAsync("portals.organizations.update.segments.urls")),
+			new AppFormsSegment("emails", await this.configSvc.getResourceAsync("portals.organizations.update.segments.emails"))
+		];
+		if (AppUtility.isNotEmpty(this.organization.ID)) {
+			formSegments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.organizations.update.segments.attachments")));
+		}
+		if (onPreCompleted !== undefined) {
+			onPreCompleted(formSegments);
+		}
+		return formSegments;
+	}
+
+	private async getOrganizationFormControlsAsync(onPreCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
+		const socials: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "socials");
+		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
+		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "organization", "form-controls");
+		formConfig.forEach(ctrl => ctrl.Segment = "basic");
+
+		formConfig.push(
+			{
+				Name: "Privileges",
+				Type: "Custom",
+				Segment: "privileges",
+				Extras: { AllowInheritFromParent: false, RolesSelector: this.portalsCoreSvc.getRolesSelector(RolesSelectorModalPage, { organizationID: this.organization.ID }) },
+				Options: {
+					Type: "object-privileges"
+				}
+			},
+			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, false),
+			{
+				Name: "Instructions",
+				Segment: "instructions",
+				Type: "Nothing",
+				Options: {
+					Description: "{{portals.organizations.controls.Instructions.description}}"
+				},
+				SubControls: {
+					Controls: Organization.instructionElements.map(type => {
+						return {
+							Name: type,
+							Options: {
+								Label: `{{portals.organizations.controls.Instructions.${type}.label}}`
+							},
+							SubControls: {
+								Controls: [
+									{
+										Name: "Language",
+										Type: "Select",
+										Options: {
+											Label: "{{portals.organizations.controls.Instructions.language}}",
+											SelectOptions: {
+												Values: this.configSvc.appConfig.languages,
+												Interface: "popover"
+											}
+										}
+									},
+									{
+										Name: "Subject",
+										Options: {
+											Label: `{{portals.organizations.controls.Instructions.${type}.Subject}}`,
+											MaxLength: 250
+										}
+									},
+									{
+										Name: "Body",
+										Type: "TextArea",
+										Options: {
+											Label: `{{portals.organizations.controls.Instructions.${type}.Body}}`,
+											Rows: 7
+										}
+									}
+								]
+							}
+						};
+					})
+				}
+			},
+			{
+				Name: "Socials",
+				Segment: "socials",
+				Type: "Select",
+				Options: {
+					Label: "{{portals.organizations.controls.Socials}}",
+					SelectOptions: {
+						Multiple: true,
+						AsBoxes: true,
+						Values: socials
+					}
+				}
+			},
+			{
+				Name: "Trackings",
+				Segment: "socials",
+				Options: {
+					Label: "{{portals.organizations.controls.Trackings.label}}"
+				},
+				SubControls: {
+					Controls: trackings.map(tracking => {
+						return {
+							Name: tracking,
+							Options: {
+								Label: `{{portals.organizations.controls.Trackings.${tracking}.label}}`,
+								Description: `{{portals.organizations.controls.Trackings.${tracking}.description}}`
+							}
+						};
+					})
+				}
+			},
+			{
+				Name: "Others",
+				Segment: "socials",
+				Options: {
+					Label: "{{portals.organizations.controls.Others.label}}"
+				},
+				SubControls: {
+					Controls: [
+						{
+							Name: "MetaTags",
+							Type: "TextArea",
+							Options: {
+								Label: "{{portals.organizations.controls.Others.MetaTags.label}}",
+								Description: "{{portals.organizations.controls.Others.MetaTags.description}}",
+								Rows: 10
+							}
+						},
+						{
+							Name: "Scripts",
+							Type: "TextArea",
+							Options: {
+								Label: "{{portals.organizations.controls.Others.Scripts.label}}",
+								Description: "{{portals.organizations.controls.Others.Scripts.description}}",
+								Rows: 15
+							}
+						}
+					]
+				}
+			},
+			{
+				Name: "RefreshUrls",
+				Segment: "urls",
+				Options: {
+					Label: "{{portals.organizations.controls.RefreshUrls.label}}",
+				},
+					SubControls: {
+					Controls: [
+						{
+							Name: "Addresses",
+							Type: "TextArea",
+							Options: {
+								Label: "{{portals.organizations.controls.RefreshUrls.Addresses.label}}",
+								Description: "{{portals.organizations.controls.RefreshUrls.Addresses.description}}",
+								Rows: 10
+							}
+						},
+						{
+							Name: "Interval",
+							Type: "Range",
+							Options: {
+								Label: "{{portals.organizations.controls.RefreshUrls.Interval.label}}",
+								Description: "{{portals.organizations.controls.RefreshUrls.Interval.description}}",
+								Type: "number",
+								MinValue: 5,
+								MaxValue: 120,
+								RangeOptions: {
+									AllowPin: true,
+									AllowSnaps: true,
+									AllowTicks: true,
+									Step: 5,
+									Icons: {
+										Start: "time"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				Name: "RedirectUrls",
+				Segment: "urls",
+				Options: {
+					Label: await this.appFormsSvc.getResourceAsync("portals.organizations.controls.RedirectUrls.label")
+				},
+				SubControls: {
+					Controls: [
+						{
+							Name: "Addresses",
+							Type: "TextArea",
+							Options: {
+								Label: "{{portals.organizations.controls.RedirectUrls.Addresses.label}}",
+								Description: "{{portals.organizations.controls.RedirectUrls.Addresses.description}}",
+								Rows: 10
+							}
+						},
+						{
+							Name: "AllHttp404",
+							Type: "YesNo",
+							Options: {
+								Label: "{{portals.organizations.controls.RedirectUrls.AllHttp404}}",
+								Type: "toggle"
+							}
+						}
+					]
+				}
+			},
+			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "emails", false),
+		);
+
+		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
+		control.Type = "TextArea";
+		control.Options.Rows = 2;
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OwnerID"));
+		control.Required = true;
+		if (this.authSvc.isSystemAdministrator()) {
+			let initialValue: any;
+			if (AppUtility.isNotEmpty(this.organization.OwnerID)) {
+				initialValue = UserProfile.get(this.organization.OwnerID);
+				if (initialValue === undefined) {
+					await this.usersSvc.getProfileAsync(this.organization.OwnerID, () => initialValue = UserProfile.get(this.organization.OwnerID), undefined, true);
+				}
+			}
+			control.Type = "Lookup";
+			control.Hidden = false;
+			control.Options.LookupOptions = {
+				AsModal: false,
+				AsCompleter: true,
+				CompleterOptions: {
+					DataSource: this.usersSvc.completerDataSource,
+					InitialValue: initialValue,
+					OnSelected: (event, formControl) => formControl.setValue(AppUtility.isObject(event, true) && event.originalObject !== undefined && AppUtility.isNotEmpty(event.originalObject.ID) ? event.originalObject.ID : undefined)
+				}
+			};
+		}
+		else {
+			control.Type = "TextBox";
+			control.Hidden = true;
+		}
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
+		control.Options.SelectOptions.Interface = "popover";
+		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
+			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values) as Array<string>).map(value => {
+				return { Value: value, Label: `{{status.approval.${value}}}` };
+			});
+		}
+		if (!this.authSvc.isSystemAdministrator()) {
+			control.Options.Disabled = true;
+		}
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExpiredDate"));
+		control.Type = "DatePicker";
+		control.Required = false;
+		control.Options.DatePickerOptions = { AllowTimes: false };
+		if (!this.authSvc.isSystemAdministrator()) {
+			control.Options.Disabled = true;
+		}
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "FilesQuotes"));
+		control.Type = "Range";
+		control.Options.MinValue = 0;
+		control.Options.MaxValue = 100;
+		control.Options.RangeOptions = {
+			AllowPin: true,
+			AllowSnaps: true,
+			AllowTicks: true,
+			Step: 10,
+			Icons: {
+				Start: "cloud-done",
+				End: "cloud"
+			}
+		};
+		if (!this.authSvc.isSystemAdministrator()) {
+			control.Options.Disabled = true;
+		}
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Required2FA"));
+		control.Options.Type = "toggle";
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "TrackDownloadFiles"));
+		control.Options.Type = "toggle";
+
+		/*
+		control = formConfig.find(c => AppUtility.isEquals(c.Name, "Theme"));
+		control.Type = "Select";
+		control.Options.Type = "dropdown";
+		control.Options.SelectOptions = { Values: ["default", "blueocean"].map(value => {
+			return { Value: value, Label: value };
+		})};
+		control.Options.OnChanged = (event, formControl) => console.log("SELECT", event, formControl.formControl, formControl.control);
+		*/
+
+		control = formConfig.find(ctrl => ctrl.Options !== undefined && ctrl.Options.AutoFocus) || formConfig.find(ctrl => AppUtility.isEquals(ctrl.Type, "TextBox") && !ctrl.Hidden);
+		if (control !== undefined) {
+			control.Options.AutoFocus = true;
+		}
+
+		if (onPreCompleted !== undefined) {
+			onPreCompleted(formConfig);
+		}
+		return formConfig;
 	}
 
 	onFormInitialized() {
@@ -167,7 +480,10 @@ export class OrganizationsUpdatePage implements OnInit {
 			};
 		});
 		this.form.patchValue(organization);
-		this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.invoke(() => this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true }), 234));
+		this.appFormsSvc.hideLoadingAsync(() => {
+			// hack/work-around the Completer component to update correct form value
+			PlatformUtility.invoke(() => this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true }), 234);
+		});
 	}
 
 	async updateAsync() {
