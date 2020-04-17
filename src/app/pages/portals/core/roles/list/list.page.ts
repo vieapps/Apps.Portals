@@ -98,24 +98,24 @@ export class RolesListPage implements OnInit, OnDestroy {
 			return;
 		}
 
-		this.parentID = this.configSvc.requestParams["ParentID"];
-		this.filterBy.And.push(
-			{
-				SystemID: { Equals: this.organization.ID}
-			},
-			{
-				ParentID: AppUtility.isNotEmpty(this.parentID) ? { Equals: this.parentID } : "IsNull"
-			}
-		);
-
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.roles.title.${(this.searching ? "search" : "list")}`);
 
 		if (this.searching) {
-			PlatformUtility.focus(this.searchCtrl);
+			this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.roles.list.searchbar");
+			PlatformUtility.focus(this.searchCtrl);
 		}
 		else {
+			this.parentID = this.configSvc.requestParams["ParentID"];
+			this.filterBy.And = [
+				{
+					SystemID: { Equals: this.organization.ID}
+				},
+				{
+					ParentID: AppUtility.isNotEmpty(this.parentID) ? { Equals: this.parentID.trim() } : "IsNull"
+				}
+			];
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.roles.title.create"), "create", () => this.openCreateAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.roles.title.search"), "search", () => this.openSearchAsync())
@@ -158,14 +158,14 @@ export class RolesListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	onClearSearch(event: any) {
+	onClearSearch() {
 		this.cancelSearch();
 		this.filterBy.Query = undefined;
 		this.roles = [];
 	}
 
-	onCancelSearch(event: any) {
-		this.onClearSearch(event);
+	onCancelSearch() {
+		this.onClearSearch();
 		this.startSearchAsync();
 	}
 
