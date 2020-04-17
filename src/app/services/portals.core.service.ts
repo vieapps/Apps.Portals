@@ -5,13 +5,11 @@ import { AppUtility } from "../components/app.utility";
 import { PlatformUtility } from "../components/app.utility.platform";
 import { AppCustomCompleter } from "../components/app.completer";
 import { AppPagination } from "../components/app.pagination";
-import { AppFormsControlConfig, AppFormsSegment, AppFormsService } from "../components/forms.service";
+import { AppFormsControlConfig, AppFormsLookupValue } from "../components/forms.service";
 import { Base as BaseService } from "./base.service";
 import { ConfigurationService } from "./configuration.service";
-import { UsersService } from "./users.service";
 import { AuthenticationService } from "./authentication.service";
 import { Account } from "../models/account";
-import { UserProfile } from "../models/user";
 import { Organization } from "../models/portals.core.organization";
 import { Role } from "../models/portals.core.role";
 
@@ -20,9 +18,7 @@ export class PortalsCoreService extends BaseService {
 
 	constructor(
 		private configSvc: ConfigurationService,
-		private appFormsSvc: AppFormsService,
-		private authSvc: AuthenticationService,
-		private usersSvc: UsersService
+		private authSvc: AuthenticationService
 	) {
 		super("Portals");
 		this.initialize();
@@ -55,315 +51,6 @@ export class PortalsCoreService extends BaseService {
 		return organization === undefined || organization.ID === ""
 			? this.authSvc.isModerator(this.name, "Organization", undefined, account)
 			: AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isModerator(this.name, "Organization", organization.Privileges, account);
-	}
-
-	public async getOrganizationFormSegmentsAsync(organization: Organization, onPreCompleted?: (formSegments: AppFormsSegment[]) => void) {
-		const formSegments = [
-			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.organizations.update.segments.basic")),
-			new AppFormsSegment("privileges", await this.configSvc.getResourceAsync("portals.organizations.update.segments.privileges")),
-			new AppFormsSegment("notifications", await this.configSvc.getResourceAsync("portals.organizations.update.segments.notifications")),
-			new AppFormsSegment("instructions", await this.configSvc.getResourceAsync("portals.organizations.update.segments.instructions")),
-			new AppFormsSegment("socials", await this.configSvc.getResourceAsync("portals.organizations.update.segments.socials")),
-			new AppFormsSegment("urls", await this.configSvc.getResourceAsync("portals.organizations.update.segments.urls")),
-			new AppFormsSegment("emails", await this.configSvc.getResourceAsync("portals.organizations.update.segments.emails"))
-		];
-		if (organization !== undefined && AppUtility.isNotEmpty(organization.ID)) {
-			formSegments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.organizations.update.segments.attachments")));
-		}
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(formSegments);
-		}
-		return formSegments;
-	}
-
-	public async getOrganizationFormControlsAsync(organization: Organization, onPreCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
-		const socials: Array<string> = await this.configSvc.getDefinitionAsync(this.name, "socials");
-		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.name, "trackings");
-		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.name, "organization", "form-controls");
-		formConfig.forEach(ctrl => ctrl.Segment = "basic");
-
-		formConfig.push(
-			{
-				Name: "Privileges",
-				Type: "Custom",
-				Segment: "privileges",
-				Extras: { AllowInheritFromParent: false },
-				Options: {
-					Type: "object-privileges"
-				}
-			},
-			this.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, false),
-			{
-				Name: "Instructions",
-				Segment: "instructions",
-				Type: "Nothing",
-				Options: {
-					Description: "{{portals.organizations.controls.Instructions.description}}"
-				},
-				SubControls: {
-					Controls: Organization.instructionElements.map(type => {
-						return {
-							Name: type,
-							Options: {
-								Label: `{{portals.organizations.controls.Instructions.${type}.label}}`
-							},
-							SubControls: {
-								Controls: [
-									{
-										Name: "Language",
-										Type: "Select",
-										Options: {
-											Label: "{{portals.organizations.controls.Instructions.language}}",
-											SelectOptions: {
-												Values: this.configSvc.appConfig.languages,
-												Interface: "popover"
-											}
-										}
-									},
-									{
-										Name: "Subject",
-										Options: {
-											Label: `{{portals.organizations.controls.Instructions.${type}.Subject}}`,
-											MaxLength: 250
-										}
-									},
-									{
-										Name: "Body",
-										Type: "TextArea",
-										Options: {
-											Label: `{{portals.organizations.controls.Instructions.${type}.Body}}`,
-											Rows: 7
-										}
-									}
-								]
-							}
-						};
-					})
-				}
-			},
-			{
-				Name: "Socials",
-				Segment: "socials",
-				Type: "Select",
-				Options: {
-					Label: "{{portals.organizations.controls.Socials}}",
-					SelectOptions: {
-						Multiple: true,
-						AsBoxes: true,
-						Values: socials
-					}
-				}
-			},
-			{
-				Name: "Trackings",
-				Segment: "socials",
-				Options: {
-					Label: "{{portals.organizations.controls.Trackings.label}}"
-				},
-				SubControls: {
-					Controls: trackings.map(tracking => {
-						return {
-							Name: tracking,
-							Options: {
-								Label: `{{portals.organizations.controls.Trackings.${tracking}.label}}`,
-								Description: `{{portals.organizations.controls.Trackings.${tracking}.description}}`
-							}
-						};
-					})
-				}
-			},
-			{
-				Name: "Others",
-				Segment: "socials",
-				Options: {
-					Label: "{{portals.organizations.controls.Others.label}}"
-				},
-				SubControls: {
-					Controls: [
-						{
-							Name: "MetaTags",
-							Type: "TextArea",
-							Options: {
-								Label: "{{portals.organizations.controls.Others.MetaTags.label}}",
-								Description: "{{portals.organizations.controls.Others.MetaTags.description}}",
-								Rows: 10
-							}
-						},
-						{
-							Name: "Scripts",
-							Type: "TextArea",
-							Options: {
-								Label: "{{portals.organizations.controls.Others.Scripts.label}}",
-								Description: "{{portals.organizations.controls.Others.Scripts.description}}",
-								Rows: 15
-							}
-						}
-					]
-				}
-			},
-			{
-				Name: "RefreshUrls",
-				Segment: "urls",
-				Options: {
-					Label: "{{portals.organizations.controls.RefreshUrls.label}}",
-				},
-					SubControls: {
-					Controls: [
-						{
-							Name: "Addresses",
-							Type: "TextArea",
-							Options: {
-								Label: "{{portals.organizations.controls.RefreshUrls.Addresses.label}}",
-								Description: "{{portals.organizations.controls.RefreshUrls.Addresses.description}}",
-								Rows: 10
-							}
-						},
-						{
-							Name: "Interval",
-							Type: "Range",
-							Options: {
-								Label: "{{portals.organizations.controls.RefreshUrls.Interval.label}}",
-								Description: "{{portals.organizations.controls.RefreshUrls.Interval.description}}",
-								Type: "number",
-								MinValue: 5,
-								MaxValue: 120,
-								RangeOptions: {
-									AllowPin: true,
-									AllowSnaps: true,
-									AllowTicks: true,
-									Step: 5,
-									Icons: {
-										Start: "time"
-									}
-								}
-							}
-						}
-					]
-				}
-			},
-			{
-				Name: "RedirectUrls",
-				Segment: "urls",
-				Options: {
-					Label: await this.appFormsSvc.getResourceAsync("portals.organizations.controls.RedirectUrls.label")
-				},
-				SubControls: {
-					Controls: [
-						{
-							Name: "Addresses",
-							Type: "TextArea",
-							Options: {
-								Label: "{{portals.organizations.controls.RedirectUrls.Addresses.label}}",
-								Description: "{{portals.organizations.controls.RedirectUrls.Addresses.description}}",
-								Rows: 10
-							}
-						},
-						{
-							Name: "AllHttp404",
-							Type: "YesNo",
-							Options: {
-								Label: "{{portals.organizations.controls.RedirectUrls.AllHttp404}}",
-								Type: "toggle"
-							}
-						}
-					]
-				}
-			},
-			this.getEmailSettingsFormControl("EmailSettings", "emails", false),
-		);
-
-		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
-		control.Type = "TextArea";
-		control.Options.Rows = 2;
-
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OwnerID"));
-		control.Required = true;
-		if (this.authSvc.isSystemAdministrator()) {
-			let initialValue: any;
-			if (organization !== undefined && AppUtility.isNotEmpty(organization.OwnerID)) {
-				initialValue = UserProfile.get(organization.OwnerID);
-				if (initialValue === undefined) {
-					await this.usersSvc.getProfileAsync(organization.OwnerID, () => initialValue = UserProfile.get(organization.OwnerID), undefined, true);
-				}
-			}
-			control.Type = "Lookup";
-			control.Hidden = false;
-			control.Options.LookupOptions = {
-				AsCompleter: true,
-				CompleterOptions: {
-					DataSource: this.usersSvc.completerDataSource,
-					InitialValue: initialValue,
-					OnSelected: (event, formControl) => formControl.setValue(AppUtility.isObject(event, true) && event.originalObject !== undefined && AppUtility.isNotEmpty(event.originalObject.ID) ? event.originalObject.ID : undefined)
-				}
-			};
-		}
-		else {
-			control.Type = "TextBox";
-			control.Hidden = true;
-		}
-
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
-		control.Options.SelectOptions.Interface = "popover";
-		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
-			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values) as Array<string>).map(value => {
-				return { Value: value, Label: `{{status.approval.${value}}}` };
-			});
-		}
-		if (!this.authSvc.isSystemAdministrator()) {
-			control.Options.Disabled = true;
-		}
-
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExpiredDate"));
-		control.Type = "DatePicker";
-		control.Required = false;
-		control.Options.DatePickerOptions = { AllowTimes: false };
-		if (!this.authSvc.isSystemAdministrator()) {
-			control.Options.Disabled = true;
-		}
-
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "FilesQuotes"));
-		control.Type = "Range";
-		control.Options.MinValue = 0;
-		control.Options.MaxValue = 100;
-		control.Options.RangeOptions = {
-			AllowPin: true,
-			AllowSnaps: true,
-			AllowTicks: true,
-			Step: 10,
-			Icons: {
-				Start: "cloud-done",
-				End: "cloud"
-			}
-		};
-		if (!this.authSvc.isSystemAdministrator()) {
-			control.Options.Disabled = true;
-		}
-
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Required2FA"));
-		control.Options.Type = "toggle";
-
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "TrackDownloadFiles"));
-		control.Options.Type = "toggle";
-
-		/*
-		control = formConfig.find(c => AppUtility.isEquals(c.Name, "Theme"));
-		control.Type = "Select";
-		control.Options.Type = "dropdown";
-		control.Options.SelectOptions = { Values: ["default", "blueocean"].map(value => {
-			return { Value: value, Label: value };
-		})};
-		control.Options.OnChanged = (event, formControl) => console.log("SELECT", event, formControl.formControl, formControl.control);
-		*/
-
-		control = formConfig.find(ctrl => ctrl.Options !== undefined && ctrl.Options.AutoFocus) || formConfig.find(ctrl => AppUtility.isEquals(ctrl.Type, "TextBox") && !ctrl.Hidden);
-		if (control !== undefined) {
-			control.Options.AutoFocus = true;
-		}
-
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(formConfig);
-		}
-		return formConfig;
 	}
 
 	public getEmailNotificationFormControl(allowInheritFromParent: boolean = true, onPreCompleted?: (formConfig: AppFormsControlConfig) => void) {
@@ -725,21 +412,24 @@ export class PortalsCoreService extends BaseService {
 		return formConfig;
 	}
 
-	public getRolesSelector(selectorModalPage: any, organizationID: string, parentID?: string) {
+	public getRolesSelector(modalComponent: any, modalComponentProperties?: { [key: string]: any }) {
 		return {
-			prepare: async (role: { Value: string; Label: string; Description?: string; Image?: string }) => {
+			prepare: async (role: AppFormsLookupValue) => {
 				if (!Role.contains(role.Value)) {
 					await this.getRoleAsync(role.Value, undefined, undefined, true);
 				}
 				role.Label = (Role.get(role.Value) || new Role()).Title;
 			},
-			modalComponent: selectorModalPage,
-			modalComponentProperties: { organizationID: organizationID, parentID: parentID }
+			modalComponent: modalComponent,
+			modalComponentProperties: modalComponentProperties
 		};
 	}
 
 	public get organizationCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
+			if (data === undefined) {
+				return undefined;
+			}
 			const organization = data instanceof Organization ? data as Organization : Organization.deserialize(data);
 			return {
 				title: organization.Title,
@@ -914,6 +604,9 @@ export class PortalsCoreService extends BaseService {
 
 	public get roleCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
+			if (data === undefined) {
+				return undefined;
+			}
 			const role = data instanceof Role ? data as Role : Role.deserialize(data);
 			return {
 				title: role.Title,
@@ -924,13 +617,13 @@ export class PortalsCoreService extends BaseService {
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("role", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
-				if (!Role.contains(obj.ID)) {
-					const role = Role.deserialize(obj);
-					Role.update(role);
-					return convertToCompleterItem(role);
+				if (Role.contains(obj.ID)) {
+					return convertToCompleterItem(Role.get(obj.ID));
 				}
 				else {
-					return convertToCompleterItem(Role.get(obj.ID));
+					const role = Role.update(obj);
+					this.fetchRole(role);
+					return convertToCompleterItem(role);
 				}
 			}),
 			convertToCompleterItem
@@ -943,11 +636,7 @@ export class PortalsCoreService extends BaseService {
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!Role.contains(obj.ID)) {
-							Role.update(obj);
-						}
-					});
+					(data.Objects as Array<any>).filter(obj => !Role.contains(obj.ID)).forEach(obj => this.fetchRole(Role.update(obj)));
 				}
 				if (onNext !== undefined) {
 					onNext(data);
@@ -968,11 +657,7 @@ export class PortalsCoreService extends BaseService {
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!Role.contains(obj.ID)) {
-							Role.update(obj);
-						}
-					});
+					(data.Objects as Array<any>).filter(obj => !Role.contains(obj.ID)).forEach(obj => this.fetchRole(Role.update(obj)));
 				}
 				if (onNext !== undefined) {
 					onNext(data);
@@ -985,6 +670,17 @@ export class PortalsCoreService extends BaseService {
 				}
 			}
 		);
+	}
+
+	private fetchRole(role: Role) {
+		if (role !== undefined && role.childrenIDs === undefined) {
+			this.getRoleAsync(role.ID, _ => {
+				const r = Role.get(role.ID);
+				if (r.childrenIDs !== undefined && r.childrenIDs.length > 0) {
+					r.Children.forEach(c => this.fetchRole(c));
+				}
+			});
+		}
 	}
 
 	public createRoleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
@@ -1007,7 +703,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public getRoleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return Role.contains(id)
+		const role = Role.get(id);
+		return role !== undefined && role.childrenIDs !== undefined
 			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
 			: super.readAsync(
 					super.getURI("role", id),
