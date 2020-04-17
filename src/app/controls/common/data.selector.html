@@ -20,12 +20,15 @@
 			<ion-thumbnail *ngIf="showImage && item.Image" class="ion-float-start ion-padding-end">
 				<img [src]="item.Image" />
 			</ion-thumbnail>
-			<span>
+			<span [ngClass]="{ 'one': !showDescription || descriptionAtRight, 'atRight': showDescription && descriptionAtRight }">
 				{{ item.Label }}
-				<span *ngIf="showDescription && item.Description" class="ion-float-end">
+				<span *ngIf="showDescription && descriptionAtRight && item.Description">
 					{{ item.Description }}
 				</span>
 			</span>
+			<div *ngIf="showDescription && !descriptionAtRight && item.Description">
+				{{ item.Description }}
+			</div>
 		</ion-label>
 	</ion-item>
 </ion-list>

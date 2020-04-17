@@ -1,6 +1,7 @@
+import { Set } from "typescript-collections";
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from "@angular/core";
 import { AppUtility } from "../../components/app.utility";
-import { AppFormsControl, AppFormsService } from "../../components/forms.service";
+import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "../../components/forms.service";
 import { ConfigurationService } from "../../services/configuration.service";
 
 @Component({
@@ -21,33 +22,52 @@ export class DataSelectorControl implements OnInit, OnDestroy {
 	@Input() control: AppFormsControl;
 
 	/** The current items for displying */
-	@Input() items: Array<{ Value: string; Label: string; Description?: string; Image?: string }>;
+	@Input() items: Array<AppFormsLookupValue>;
 
 	/** The resources of header, delete confirmation and buttons */
 	@Input() resources: { header: string; confirm: string; ok: string; cancel: string; };
 
-	/** Sets to 'true' to show image */
-	@Input() showImage: boolean;
-
-	/** Sets to 'true' to show description */
-	@Input() showDescription: boolean;
-
-	/** Sets to 'true' to allow to add new items */
-	@Input() allowAdd: boolean;
-
-	/** Sets to 'true' to allow to delete the selected items */
-	@Input() allowDelete: boolean;
-
 	/** The handlers to process the request on add/delete */
 	@Input() handlers: { add: () => void; delete: (selected: Array<string>) => void; };
+
+	/** Set to 'true' to allow select multiple item */
+	@Input() multiple: boolean;
+
+	/** The settings (allow add/delete, show show item's image/description, position of desscription) */
+	@Input() settings: { [key: string]: any };
 
 	/** The event handler to run when the controls was initialized */
 	@Output() init = new EventEmitter<DataSelectorControl>();
 
-	private selected = new Array<string>();
+	private _allowAdd: boolean;
+	private _allowDelete: boolean;
+	private _showImage: boolean;
+	private _showDescription: boolean;
+	private _descriptionAtRight: boolean;
+	private _selected = new Set<string>();
 
 	get disabled() {
-		return this.selected.length < 1;
+		return this._selected.size() < 1;
+	}
+
+	get allowAdd() {
+		return this._allowAdd;
+	}
+
+	get allowDelete() {
+		return this._allowDelete;
+	}
+
+	get showImage() {
+		return this._showImage;
+	}
+
+	get showDescription() {
+		return this._showDescription;
+	}
+
+	get descriptionAtRight() {
+		return this._descriptionAtRight;
 	}
 
 	ngOnInit() {
@@ -55,50 +75,38 @@ export class DataSelectorControl implements OnInit, OnDestroy {
 
 		this.resources = this.resources || {
 			header: undefined,
-			confirm: "Are you sure you want to delete?",
+			confirm: "Are you sure?",
 			ok: "OK",
 			cancel: "Cancel"
 		};
 
-		this.showImage = this.showImage !== undefined
-			? AppUtility.isTrue(this.showImage)
-			: this.control === undefined || this.control.Extras === undefined
-				? false
-				: this.control.Extras["ShowImage"] !== undefined
-					? AppUtility.isTrue(this.control.Extras["ShowImage"])
-					: this.control.Extras["showImage"] !== undefined
-						? AppUtility.isTrue(this.control.Extras["showImage"])
-						: false;
+		this.multiple = this.multiple !== undefined ? AppUtility.isTrue(this.multiple) : true;
 
-		this.showDescription = this.showDescription !== undefined
-			? AppUtility.isTrue(this.showDescription)
-			: this.control === undefined || this.control.Extras === undefined
-				? false
-				: this.control.Extras["ShowDescription"] !== undefined
-					? AppUtility.isTrue(this.control.Extras["ShowDescription"])
-					: this.control.Extras["showDescription"] !== undefined
-						? AppUtility.isTrue(this.control.Extras["showDescription"])
-						: false;
+		this.settings = AppUtility.isObject(this.settings, true)
+			? this.settings
+			: this.control !== undefined && this.control.Extras !== undefined
+				? this.control.Extras["Settings"] || this.control.Extras["settings"] || {}
+				: {};
 
-		this.allowAdd = this.allowAdd !== undefined
-			? AppUtility.isTrue(this.allowAdd)
-			: this.control === undefined || this.control.Extras === undefined
-				? true
-				: this.control.Extras["AllowAdd"] !== undefined
-					? AppUtility.isTrue(this.control.Extras["AllowAdd"])
-					: this.control.Extras["allowAdd"] !== undefined
-						? AppUtility.isTrue(this.control.Extras["allowAdd"])
-						: true;
+		this._allowAdd = this.settings.AllowAdd !== undefined || this.settings.allowAdd !== undefined
+			? !!(this.settings.AllowAdd || this.settings.allowAdd)
+			: true;
 
-		this.allowDelete = this.allowDelete !== undefined
-			? AppUtility.isTrue(this.allowDelete)
-			: this.control === undefined || this.control.Extras === undefined
-				? true
-				: this.control.Extras["AllowDelete"] !== undefined
-					? AppUtility.isTrue(this.control.Extras["AllowDelete"])
-					: this.control.Extras["allowDelete"] !== undefined
-						? AppUtility.isTrue(this.control.Extras["allowDelete"])
-						: true;
+		this._allowDelete = this.settings.AllowDelete !== undefined || this.settings.allowDelete !== undefined
+			? !!(this.settings.AllowDelete || this.settings.allowDelete)
+			: true;
+
+		this._showImage = this.settings.ShowImage !== undefined || this.settings.showImage !== undefined
+			? !!(this.settings.ShowImage || this.settings.showImage)
+			: false;
+
+		this._showDescription = this.settings.ShowDescription !== undefined || this.settings.showDescription !== undefined
+			? !!(this.settings.ShowDescription || this.settings.showDescription)
+			: false;
+
+		this._descriptionAtRight = this.settings.DescriptionAtRight !== undefined || this.settings.descriptionAtRight !== undefined
+			? !!(this.settings.DescriptionAtRight || this.settings.descriptionAtRight)
+			: false;
 
 		this.init.emit(this);
 	}
@@ -107,20 +115,23 @@ export class DataSelectorControl implements OnInit, OnDestroy {
 		this.init.unsubscribe();
 	}
 
-	track(index: number, item: { Value: string; Label: string; Description: string; Image?: string }) {
+	track(index: number, item: AppFormsLookupValue) {
 		return `${item.Value}@${index}`;
 	}
 
 	checked(value: string) {
-		return this.selected.length > 0 && this.selected.indexOf(value) > -1;
+		return this._selected.contains(value);
 	}
 
 	select(value: string, event: any) {
-		if (!event.detail.checked) {
-			AppUtility.removeAt(this.selected, this.selected.indexOf(value));
+		if (event.detail.checked) {
+			if (!this.multiple) {
+				this._selected.clear();
+			}
+			this._selected.add(value);
 		}
-		else if (this.selected.indexOf(value) < 0) {
-			this.selected.push(value);
+		else {
+			this._selected.remove(value);
 		}
 	}
 
@@ -137,8 +148,8 @@ export class DataSelectorControl implements OnInit, OnDestroy {
 				undefined,
 				this.resources.confirm,
 				() => {
-					this.handlers.delete(this.selected);
-					this.selected = [];
+					this.handlers.delete(this._selected.toArray());
+					this._selected.clear();
 				},
 				this.resources.ok,
 				this.resources.cancel
