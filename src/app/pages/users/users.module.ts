@@ -14,39 +14,39 @@ import { RegisterGuardService, AuthenticatedGuardService, NotAuthenticatedGuardS
 				path: "login",
 				data: { preload: true },
 				canActivate: [NotAuthenticatedGuardService],
-				loadChildren: "../users/login/login.module#UsersLogInPageModule"
+				loadChildren: "./login/login.module#UsersLogInPageModule"
 			},
 			{
 				path: "register",
 				data: { preload: true },
 				canActivate: [RegisterGuardService, NotAuthenticatedGuardService],
-				loadChildren: "../users/register/register.module#UsersRegisterPageModule"
+				loadChildren: "./register/register.module#UsersRegisterPageModule"
 			},
 			{
 				path: "profile/:data",
 				data: { preload: true },
 				canActivate: [AuthenticatedGuardService],
-				loadChildren: "../users/profile/profile.module#UsersProfilePageModule"
+				loadChildren: "./profile/profile.module#UsersProfilePageModule"
 			},
 			{
 				path: "update/:data",
 				canActivate: [AuthenticatedGuardService],
-				loadChildren: "../users/update/update.module#UsersUpdatePageModule"
+				loadChildren: "./update/update.module#UsersUpdatePageModule"
 			},
 			{
 				path: "otp",
 				canActivate: [AuthenticatedGuardService],
-				loadChildren: "../users/otp/otp.module#UsersOtpPageModule"
+				loadChildren: "./otp/otp.module#UsersOtpPageModule"
 			},
 			{
 				path: "list",
 				canActivate: [AuthenticatedGuardService],
-				loadChildren: "../users/list/list.module#UsersListPageModule"
+				loadChildren: "./list/list.module#UsersListPageModule"
 			},
 			{
 				path: "search",
 				canActivate: [AuthenticatedGuardService],
-				loadChildren: "../users/list/list.module#UsersListPageModule"
+				loadChildren: "./list/list.module#UsersListPageModule"
 			}
 		])
 	],
