@@ -25,6 +25,9 @@ export class UsersService extends BaseService {
 
 	public get completerDataSource() {
 		const convertToCompleterItem = (data: any) => {
+			if (data === undefined) {
+				return undefined;
+			}
 			const profile = data instanceof UserProfile ? data as UserProfile : UserProfile.deserialize(data);
 			return {
 				title: profile.Name,
