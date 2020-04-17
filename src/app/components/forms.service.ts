@@ -110,6 +110,17 @@ export interface AppFormsControlConfig {
 			CancelText?: string;
 		};
 		LookupOptions?: {
+			Multiple?: boolean;
+			OnDelete?: (values: Array<string>, control: AppFormsControlComponent) => void;
+			WarningOnDelete?: string;
+			AsModal?: boolean;
+			ModalOptions?: {
+				Component?: any;
+				ComponentProps?: { [key: string]: any };
+				BackdropDismiss?: boolean;
+				SwipeToClose?: boolean
+				OnDismiss?: (data?: any, control?: AppFormsControlComponent) => void;
+			};
 			AsCompleter?: boolean;
 			CompleterOptions?: {
 				SearchingText?: string;
@@ -123,14 +134,6 @@ export interface AppFormsControlConfig {
 				OnSelected?: (item: any, control: AppFormsControlComponent) => void;
 				AllowLookupByModal?: boolean;
 			};
-			AsModal?: boolean;
-			ModalOptions?: {
-				Component?: any;
-				ComponentProps?: { [key: string]: any };
-				BackdropDismiss?: boolean;
-				SwipeToClose?: boolean
-				OnDismiss?: (data?: any, control?: AppFormsControlComponent) => void;
-			};
 			AsSelector?: boolean;
 			SelectorOptions?: {
 				HeaderText?: string;
@@ -138,9 +141,6 @@ export interface AppFormsControlConfig {
 				CancelText?: string;
 				OnAdd?: (control?: AppFormsControlComponent) => void;
 			};
-			Multiple?: boolean;
-			OnDelete?: (values: Array<string>, control: AppFormsControlComponent) => void;
-			WarningOnDelete?: string;
 		};
 		DatePickerOptions?: {
 			AllowTimes?: boolean;
@@ -187,6 +187,16 @@ export interface AppFormsControlConfig {
 		AsArray?: boolean;
 		Controls?: Array<AppFormsControlConfig>
 	};
+}
+
+/** Presents a value for working with lookup in the dynamic forms */
+export interface AppFormsLookupValue {
+	Value: string;
+	Label: string;
+	Description?: string;
+	Image?: string;
+	Extras?: { [key: string]: any };
+	Children?: Array<AppFormsLookupValue>;
 }
 
 //  ---------------------------------------------------------------
@@ -264,7 +274,18 @@ export class AppFormsControl {
 			CancelText: "{{common.buttons.cancel}}"
 		},
 		LookupOptions: {
-			AsCompleter: true,
+			Multiple: false,
+			OnDelete: undefined as (values: Array<string>, control: AppFormsControlComponent) => void,
+			WarningOnDelete: undefined as string,
+			AsModal: true,
+			ModalOptions: {
+				Component: undefined as any,
+				ComponentProps: undefined as { [key: string]: any },
+				BackdropDismiss: false,
+				SwipeToClose: false,
+				OnDismiss: undefined as (data?: any, control?: AppFormsControlComponent) => void
+			},
+			AsCompleter: false,
 			CompleterOptions: {
 				SearchingText: "{{common.messages.completer.searching}}",
 				NoResultsText: "{{common.messages.completer.noresults}}",
@@ -277,24 +298,13 @@ export class AppFormsControl {
 				OnSelected: undefined as (item: any, control: AppFormsControlComponent) => void,
 				AllowLookupByModal: false
 			},
-			AsModal: false,
-			ModalOptions: {
-				Component: undefined as any,
-				ComponentProps: undefined as { [key: string]: any },
-				BackdropDismiss: false,
-				SwipeToClose: false,
-				OnDismiss: undefined as (data?: any, control?: AppFormsControlComponent) => void
-			},
 			AsSelector: false,
 			SelectorOptions: {
 				HeaderText: undefined as string,
 				OkText: "{{common.buttons.ok}}",
 				CancelText: "{{common.buttons.cancel}}",
 				OnAdd: undefined as (control: AppFormsControlComponent) => void
-			},
-			Multiple: false,
-			OnDelete: undefined as (values: Array<string>, control: AppFormsControlComponent) => void,
-			WarningOnDelete: undefined as string
+			}
 		},
 		DatePickerOptions: {
 			AllowTimes: false,
@@ -314,8 +324,7 @@ export class AppFormsControl {
 			AllowPreview: false,
 			AllowDelete: true,
 			OnDelete: undefined as (name: string, control: AppFormsControlComponent) => void,
-			WarningOnDelete: undefined as string,
-			SelectedFiles: undefined as Array<File>
+			WarningOnDelete: undefined as string
 		},
 		RangeOptions: {
 			AllowPin: true,
@@ -515,13 +524,24 @@ export class AppFormsControl {
 
 			const lookupOptions = controlOptions.LookupOptions || controlOptions.lookupOptions || controlOptions.lookupoptions;
 			if (lookupOptions !== undefined) {
-				const asCompleter = lookupOptions.AsCompleter !== undefined || lookupOptions.asCompleter !== undefined || lookupOptions.ascompleter !== undefined ? lookupOptions.AsCompleter || lookupOptions.asCompleter || lookupOptions.ascompleter : true;
-				const completerOptions = lookupOptions.CompleterOptions || lookupOptions.completerOptions || lookupOptions.completeroptions || {};
-				const asModal = !asCompleter && (lookupOptions.AsModal !== undefined || lookupOptions.asModal !== undefined || lookupOptions.asmodal !== undefined ? lookupOptions.AsModal || lookupOptions.asModal || lookupOptions.asmodal : false);
+				const asModal = lookupOptions.AsModal !== undefined || lookupOptions.asModal !== undefined || lookupOptions.asmodal !== undefined ? !!(lookupOptions.AsModal || lookupOptions.asModal || lookupOptions.asmodal) : true;
 				const modalOptions = lookupOptions.ModalOptions || lookupOptions.modalOptions || lookupOptions.modaloptions || {};
-				const asSelector = !asCompleter && !asModal && (lookupOptions.AsSelector !== undefined || lookupOptions.asSelector !== undefined || lookupOptions.asselector !== undefined ? lookupOptions.AsSelector || lookupOptions.asSelector || lookupOptions.asselector : false);
+				const asCompleter = !asModal && (lookupOptions.AsCompleter !== undefined || lookupOptions.asCompleter !== undefined || lookupOptions.ascompleter !== undefined ? !!(lookupOptions.AsCompleter || lookupOptions.asCompleter || lookupOptions.ascompleter) : false);
+				const completerOptions = lookupOptions.CompleterOptions || lookupOptions.completerOptions || lookupOptions.completeroptions || {};
+				const asSelector = !asModal && !asCompleter && (lookupOptions.AsSelector !== undefined || lookupOptions.asSelector !== undefined || lookupOptions.asselector !== undefined ? !!(lookupOptions.AsSelector || lookupOptions.asSelector || lookupOptions.asselector) : false);
 				const selectorOptions = lookupOptions.SelectorOptions || lookupOptions.selectorOptions || lookupOptions.selectoroptions || {};
 				control.Options.LookupOptions = {
+					Multiple: lookupOptions.Multiple !== undefined || lookupOptions.multiple !== undefined ? !!(lookupOptions.Multiple || lookupOptions.multiple) : true,
+					OnDelete: lookupOptions.OnDelete || lookupOptions.onDelete || lookupOptions.ondelete,
+					WarningOnDelete: lookupOptions.WarningOnDelete || lookupOptions.warningOnDelete || lookupOptions.warningondelete,
+					AsModal: asModal,
+					ModalOptions: {
+						Component: modalOptions.Component || modalOptions.component,
+						ComponentProps: modalOptions.ComponentProps || modalOptions.componentProps || modalOptions.componentprops,
+						BackdropDismiss: !!(modalOptions.BackdropDismiss || modalOptions.backdropDismiss || modalOptions.backdropdismiss),
+						SwipeToClose: !!(modalOptions.SwipeToClose || modalOptions.swipeToClose || modalOptions.swipetoclose),
+						OnDismiss: modalOptions.OnDismiss || modalOptions.onDismiss || modalOptions.ondismiss
+					},
 					AsCompleter: asCompleter,
 					CompleterOptions: {
 						SearchingText: completerOptions.SearchingText || completerOptions.searchingText || completerOptions.searchingtext || "{{common.messages.completer.searching}}",
@@ -535,24 +555,13 @@ export class AppFormsControl {
 						OnSelected: completerOptions.OnSelected || completerOptions.onSelected || completerOptions.onselected,
 						AllowLookupByModal: !!(completerOptions.AllowLookupByModal || completerOptions.allowLookupByModal || completerOptions.allowlookupbymodal)
 					},
-					AsModal: asModal,
-					ModalOptions: {
-						Component: modalOptions.Component || modalOptions.component,
-						ComponentProps: modalOptions.ComponentProps || modalOptions.componentProps || modalOptions.componentprops,
-						BackdropDismiss: !!(modalOptions.BackdropDismiss || modalOptions.backdropDismiss || modalOptions.backdropdismiss),
-						SwipeToClose: !!(modalOptions.SwipeToClose || modalOptions.swipeToClose || modalOptions.swipetoclose),
-						OnDismiss: modalOptions.OnDismiss || modalOptions.onDismiss || modalOptions.ondismiss
-					},
 					AsSelector: asSelector,
 					SelectorOptions: {
 						HeaderText: selectorOptions.HeaderText || selectorOptions.headerText || selectorOptions.headertext,
 						OkText: selectorOptions.OkText || selectorOptions.okText || selectorOptions.oktext || "{{common.buttons.ok}}",
 						CancelText: selectorOptions.CancelText || selectorOptions.cancelText || selectorOptions.canceltext || "{{common.buttons.cancel}}",
 						OnAdd: selectorOptions.OnAdd || selectorOptions.onAdd || selectorOptions.onadd
-					},
-					Multiple: !!(lookupOptions.Multiple || lookupOptions.multiple),
-					OnDelete: lookupOptions.OnDelete || lookupOptions.onDelete || lookupOptions.ondelete,
-					WarningOnDelete: lookupOptions.WarningOnDelete || lookupOptions.warningOnDelete || lookupOptions.warningondelete
+					}
 				};
 			}
 
@@ -568,7 +577,7 @@ export class AppFormsControl {
 					MonthShortNames: datepickerOptions.MonthShortNames || datepickerOptions.monthShortNames || datepickerOptions.monthshortnames,
 					DoneText: datepickerOptions.DoneText || datepickerOptions.doneText || datepickerOptions.donetext || "{{common.buttons.done}}",
 					CancelText: datepickerOptions.CancelText || datepickerOptions.cancelText || datepickerOptions.canceltext || "{{common.buttons.cancel}}",
-					AllowDelete: datepickerOptions.AllowDelete !== undefined || datepickerOptions.allowDelete !== undefined || datepickerOptions.allowdelete !== undefined ? datepickerOptions.AllowDelete || datepickerOptions.allowDelete || datepickerOptions.allowdelete : true
+					AllowDelete: datepickerOptions.AllowDelete !== undefined || datepickerOptions.allowDelete !== undefined || datepickerOptions.allowdelete !== undefined ? !!(datepickerOptions.AllowDelete || datepickerOptions.allowDelete || datepickerOptions.allowdelete) : true
 				};
 			}
 
@@ -580,8 +589,7 @@ export class AppFormsControl {
 					AllowPreview: !!(filepickerOptions.AllowPreview || filepickerOptions.allowPreview || filepickerOptions.allowpreview),
 					AllowDelete: !!(filepickerOptions.AllowDelete || filepickerOptions.allowDelete || filepickerOptions.allowdelete),
 					OnDelete: filepickerOptions.OnDelete || filepickerOptions.onDelete || filepickerOptions.ondelete,
-					WarningOnDelete: filepickerOptions.WarningOnDelete || filepickerOptions.warningOnDelete || filepickerOptions.warningondelete,
-					SelectedFiles: undefined
+					WarningOnDelete: filepickerOptions.WarningOnDelete || filepickerOptions.warningOnDelete || filepickerOptions.warningondelete
 				};
 			}
 
@@ -648,12 +656,12 @@ export class AppFormsControl {
 		options.Options.Icon.OnClick = this.Options.Icon.OnClick;
 		options.Options.SelectOptions.InterfaceOptions = this.Options.SelectOptions.InterfaceOptions;
 		options.Options.LookupOptions.OnDelete = this.Options.LookupOptions.OnDelete;
+		options.Options.LookupOptions.ModalOptions.Component = this.Options.LookupOptions.ModalOptions.Component;
+		options.Options.LookupOptions.ModalOptions.OnDismiss = this.Options.LookupOptions.ModalOptions.OnDismiss;
 		options.Options.LookupOptions.CompleterOptions.DataSource = this.Options.LookupOptions.CompleterOptions.DataSource;
 		options.Options.LookupOptions.CompleterOptions.GetInitialValue = this.Options.LookupOptions.CompleterOptions.GetInitialValue;
 		options.Options.LookupOptions.CompleterOptions.OnInitialized = this.Options.LookupOptions.CompleterOptions.OnInitialized;
 		options.Options.LookupOptions.CompleterOptions.OnSelected = this.Options.LookupOptions.CompleterOptions.OnSelected;
-		options.Options.LookupOptions.ModalOptions.Component = this.Options.LookupOptions.ModalOptions.Component;
-		options.Options.LookupOptions.ModalOptions.OnDismiss = this.Options.LookupOptions.ModalOptions.OnDismiss;
 		options.Options.LookupOptions.SelectorOptions.OnAdd = this.Options.LookupOptions.SelectorOptions.OnAdd;
 		options.Options.FilePickerOptions.OnDelete = this.Options.FilePickerOptions.OnDelete;
 		options.Options.ButtonOptions.OnClick = this.Options.ButtonOptions.OnClick;

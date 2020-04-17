@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, AfterViewInit, Input, Output, EventEmitte
 import { FormGroup } from "@angular/forms";
 import { CompleterService } from "ng2-completer";
 import { AppUtility } from "./app.utility";
-import { AppFormsControl, AppFormsService } from "./forms.service";
+import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "./forms.service";
 
 @Component({
 	selector: "app-form-control",
@@ -20,7 +20,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	private _style: string;
 	private _completerInitialValue: any;
-	private _lookupDisplayValues: Array<{ Value: string; Label: string; Description?: string; Image?: string }>;
+	private _lookupDisplayValues: Array<AppFormsLookupValue>;
 	private _selectOptions: Array<string>;
 
 	public showPassword = false;
@@ -151,7 +151,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	private get isImagePickerControl() {
-		return this.isFilePickerControl && !this.control.Options.FilePickerOptions.Multiple && this.control.Options.FilePickerOptions.Accept !== undefined && this.control.Options.FilePickerOptions.Accept.indexOf("image/") > -1;
+		return this.isFilePickerControl && !this.control.Options.FilePickerOptions.Multiple && AppUtility.indexOf(this.control.Options.FilePickerOptions.Accept, "image/") > -1;
 	}
 
 	get isAllowImagePreview() {
@@ -160,7 +160,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	private get isAllowDelete() {
 		return this.isLookupControl
-			? (this.isCompleter || this.isModal) && this.lookupDisplayValues !== undefined && this.lookupDisplayValues.length > 0
+			? (this.isCompleter || this.isModal) && this.lookupDisplayValues.length > 0
 			: this.isDatePickerControl
 				? this.control.Options.DatePickerOptions.AllowDelete
 				: this.isFilePickerControl
@@ -558,7 +558,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/** Gets the state to lookup multiple items */
 	get lookupMultiple() {
-		return this.control.Options.LookupOptions.Multiple;
+		return this.isLookupControl && this.control.Options.LookupOptions.Multiple;
 	}
 
 	/** Gets the values of this lookup control */
@@ -578,8 +578,28 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	/** Sets the values for displaying of this lookup control */
-	set lookupDisplayValues(values: Array<{ Value: string; Label: string; Description?: string; Image?: string }>) {
-		this._lookupDisplayValues = values;
+	set lookupDisplayValues(values: Array<AppFormsLookupValue>) {
+		this._lookupDisplayValues = AppUtility.isArray(values, true)
+			? values.map(value => {
+					return {
+						Value: value["Value"],
+						Label: value["Label"],
+						Description: value["Description"],
+						Image: value["Image"],
+						Extras: value["Extras"],
+						Children: value["Children"]
+					};
+				})
+			: AppUtility.isObject(values, true)
+				? [{
+						Value: values["Value"],
+						Label: values["Label"],
+						Description: values["Description"],
+						Image: values["Image"],
+						Extras: values["Extras"],
+						Children: values["Children"]
+					}]
+				: new Array<AppFormsLookupValue>();
 	}
 
 	/** Gets the single value for displaying of this lookup control */

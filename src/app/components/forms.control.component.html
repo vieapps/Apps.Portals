@@ -142,6 +142,13 @@
 		<option *ngFor="let option of selectOptions; trackBy: trackOption" [value]="option.Value" [selected]="selectOptionIsChecked(option.Value)">{{ option.Label }}</option>
 	</select>
 
+	<ion-input *ngIf="isModal && !lookupMultiple" readonly #elementRef
+		[value]="lookupDisplayValue"
+		[placeholder]="placeholder"
+		[class]="css.control"
+		[required]="required"		
+		[attr.style]="style.control"></ion-input>
+
 	<ng2-completer *ngIf="isCompleter" #elementRef
 		[inputName]="name"
 		[disableInput]="!!disabled"
@@ -158,13 +165,6 @@
 		(focus)="onFocus($event)"
 		(blur)="onBlur($event)"
 		(selected)="onChanged($event)"></ng2-completer>
-
-	<ion-input *ngIf="isModal && !lookupMultiple" readonly #elementRef
-		[value]="lookupDisplayValue"
-		[placeholder]="placeholder"
-		[class]="css.control"
-		[required]="required"		
-		[attr.style]="style.control"></ion-input>
 
 	<div *ngIf="isFilePickerControl">
 		<div class="file-picker-input">
@@ -335,17 +335,14 @@
 	</ion-button>
 </ion-buttons>
 
-<control-data-selector *ngIf="visible && (isSelector || isCustomControl('selector'))" #elementRef
+<control-data-selector *ngIf="visible && (isSelector || isCustomControl('data-selector'))" #elementRef
 	[formGroup]="formGroup"
 	[control]="control"
 	[items]="lookupDisplayValues"
 	[resources]="lookupResources"
 	[handlers]="lookupHandlers"
-	[showImage]="control.Extras['ShowImage'] || control.Extras['showImage']"
-	[showDescription]="control.Extras['ShowDescription'] || control.Extras['showDescription']"
-	[allowAdd]="control.Extras['AllowAdd'] || control.Extras['allowAdd']"
-	[allowDelete]="control.Extras['AllowDelete'] || control.Extras['allowDelete']"></control-data-selector>
-<ion-item *ngIf="visible && description && (isSelector || isCustomControl('selector'))" [color]="theme">
+	[multiple]="lookupMultiple"></control-data-selector>
+<ion-item *ngIf="visible && description && (isSelector || isCustomControl('data-selector'))" [color]="theme">
 	<label
 		[class]="css.description"
 		[style]="style.description"
