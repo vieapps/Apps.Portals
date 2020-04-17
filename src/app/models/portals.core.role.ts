@@ -5,10 +5,13 @@ import { PortalCoreBase as BaseModel } from "./portals.core.base";
 
 export class Role extends BaseModel implements NestedModel {
 
-	constructor() {
+	constructor(
+		organizationID?: string
+	) {
 		super();
 		delete this["Privileges"];
 		delete this["OriginalPrivileges"];
+		this.SystemID = AppUtility.isNotEmpty(organizationID) ? organizationID : "";
 	}
 
 	/** All instances of role */
@@ -29,7 +32,9 @@ export class Role extends BaseModel implements NestedModel {
 	CreatedID = "";
 	LastModified = new Date();
 	LastModifiedID = "";
+
 	ansiTitle = "";
+	childrenIDs: Array<string>;
 
 	public static filter(parentID?: string, organizationID?: string) {
 		let roles = Role.all;
@@ -45,7 +50,18 @@ export class Role extends BaseModel implements NestedModel {
 	/** Deserializes data to object */
 	public static deserialize(json: any, role?: Role) {
 		role = role || new Role();
-		role.copy(json, _ => role.ansiTitle = AppUtility.toANSI(role.Title).toLowerCase());
+		role.copy(json, data => {
+			role.ansiTitle = AppUtility.toANSI(role.Title).toLowerCase();
+			if (AppUtility.isArray(data["Children"], true)) {
+				role.childrenIDs = [];
+				(data["Children"] as Array<any>).forEach(d => {
+					const c = this.update(d);
+					if (c !== undefined) {
+						role.childrenIDs.push(c.ID);
+					}
+				});
+			}
+		});
 		return role;
 	}
 
@@ -58,9 +74,10 @@ export class Role extends BaseModel implements NestedModel {
 
 	/** Sets by identity */
 	public static set(role: Role) {
-		return role === undefined
-			? undefined
-			: this.instances.setValue(role.ID, role) || role;
+		if (role !== undefined) {
+			this.instances.setValue(role.ID, role);
+		}
+		return role;
 	}
 
 	/** Updates into dictionary */
@@ -89,7 +106,9 @@ export class Role extends BaseModel implements NestedModel {
 	}
 
 	get Children() {
-		return Role.filter(this.ID);
+		return AppUtility.isArray(this.childrenIDs, true)
+			? this.childrenIDs.map(id => Role.get(id)).sort(AppUtility.getCompareFunction("Title"))
+			: Role.filter(this.ID);
 	}
 
 }

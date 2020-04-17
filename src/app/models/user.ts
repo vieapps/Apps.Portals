@@ -63,9 +63,10 @@ export class UserProfileBase extends BaseModel {
 
 	/** Sets by identity */
 	public static set(profile: UserProfileBase) {
-		return profile === undefined
-			? undefined
-			: this.instances.setValue(profile.ID, profile) || profile;
+		if (profile !== undefined) {
+			this.instances.setValue(profile.ID, profile);
+		}
+		return profile;
 	}
 
 	/** Checks to see the dictionary is contains the object by identity or not */
@@ -89,7 +90,7 @@ export class UserProfileBase extends BaseModel {
 			this.fullAddress = this.Address
 				+ (AppUtility.isNotEmpty(this.Province) ? (AppUtility.isNotEmpty(this.Address) ? ", " : "")
 				+ this.County + ", " + this.Province + ", " + this.Country : "");
-			this.ansiTitle = AppUtility.toANSI(this.Name + " " + this.fullAddress + " " + this.Email + " " + this.Mobile).toLowerCase();
+				this.ansiTitle = AppUtility.toANSI(this.Name + " " + this.fullAddress + " " + this.Email + " " + this.Mobile).toLowerCase();
 			if (onCompleted !== undefined) {
 				onCompleted(data);
 			}

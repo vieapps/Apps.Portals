@@ -77,7 +77,7 @@ export class Privileges {
 	/** Deserializes data to object */
 	public static deserialize(json: any, privileges?: Privileges) {
 		privileges = privileges || new Privileges();
-		Object.getOwnPropertyNames(privileges).forEach(property => {
+		AppUtility.getProperties(privileges, true).map(info => info.name).forEach(property => {
 			const data = json[property];
 			if (AppUtility.isArray(data, true)) {
 				const set = new Set<string>();

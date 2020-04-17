@@ -112,9 +112,10 @@ export class Organization extends BaseModel {
 
 	/** Sets by identity */
 	public static set(organization: Organization) {
-		return organization === undefined
-			? undefined
-			: this.instances.setValue(organization.ID, organization) || organization;
+		if (organization !== undefined) {
+			this.instances.setValue(organization.ID, organization);
+		}
+		return organization;
 	}
 
 	/** Updates into dictionary */
