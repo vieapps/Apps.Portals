@@ -136,13 +136,26 @@ export class AppUtility {
 			: false;
 	}
 
+	/** Gets their own properties of an object */
+	public static getProperties<T>(obj: T, onlyWritable: boolean = false) {
+		const properties = new Array<{ name: string; info: PropertyDescriptor }>();
+		const ownProperties = Object.getOwnPropertyDescriptors(obj);
+		Object.keys(ownProperties).forEach(name => properties.push({
+			name: name,
+			info: ownProperties[name]
+		}));
+		return onlyWritable
+			? properties.filter(property => property.info.writable)
+			: properties;
+	}
+
 	/**
 	 * Copys data from the source (object or JSON) into the objects" properties
-	 * @param source The source (object or JSON) to copy data from
-	 * @param obj The instance of an object to copy data into
-	 * @param onCompleted The handler to run when copying process is completed
+	 * @param source The source to copy data from
+	 * @param target The instance of an object to copy data into
+	 * @param onCompleted The handler to run when the copy process is on-going completed with normalized data from source
 	*/
-	public static copy(source: any, obj: any, onCompleted?: (data: any) => void) {
+	public static copy<T>(source: any, target: T, onCompleted?: (data: any) => void) {
 		try {
 			const data = this.isNotEmpty(source)
 				? JSON.parse(source)
@@ -150,21 +163,23 @@ export class AppUtility {
 					? source
 					: {};
 
-			Object.getOwnPropertyNames(data).forEach(name => {
-				const type = typeof obj[name];
+			this.getProperties(target, true).forEach(info => {
+				const type = typeof target[info.name];
 				if (type !== "undefined" && type !== "function") {
-					obj[name] = this.isDate(obj[name])
-						? new Date(data[name])
-						: data[name];
+					target[info.name] = this.isDate(target[info.name])
+						? new Date(data[info.name])
+						: data[info.name];
 				}
 			});
 
 			if (onCompleted !== undefined) {
 				onCompleted(data);
 			}
+			return target;
 		}
 		catch (error) {
 			console.error(`[Utility]: Error occurred while copying object`, error);
+			return target;
 		}
 	}
 
@@ -174,17 +189,17 @@ export class AppUtility {
 	 * @param excluded The collection of excluded properties are not be deleted event value is undefined
 	 * @param onCompleted The handler to run when cleaning process is completed
 	*/
-	public static clean(obj: any, excluded?: Array<string>, onCompleted?: (obj: any) => void) {
-		Object.getOwnPropertyNames(obj).forEach(name => {
-			if (this.isNull(obj[name])) {
-				if (excluded === undefined || excluded.indexOf(name) < 0) {
+	public static clean<T>(obj: T, excluded?: Array<string>, onCompleted?: (obj: T) => void) {
+		this.getProperties(obj).forEach(info => {
+			if (this.isNull(obj[info.name])) {
+				if (excluded === undefined || excluded.indexOf(info.name) < 0) {
 					delete obj[name];
 				}
 			}
-			else if (this.isObject(obj[name])) {
-				this.clean(obj[name], excluded);
-				if (Object.getOwnPropertyNames(obj[name]).length < 1) {
-					delete obj[name];
+			else if (this.isObject(obj[info.name])) {
+				this.clean(obj[info.name], excluded);
+				if (this.getProperties(obj[info.name]).length < 1) {
+					delete obj[info.name];
 				}
 			}
 		});
@@ -201,7 +216,7 @@ export class AppUtility {
 	 * @param excluded The collection of excluded properties are not be deleted event value is undefined
 	 * @param onCompleted The handler to run when process is completed
 	*/
-	public static clone(source?: any, beRemovedOrCleanUndefined?: Array<string> | boolean, excluded?: Array<string>, onCompleted?: (obj: any) => void) {
+	public static clone<T>(source: T, beRemovedOrCleanUndefined?: Array<string> | boolean, excluded?: Array<string>, onCompleted?: (obj: any) => void) {
 		// clone
 		const exists = [];
 		const obj = JSON.parse(JSON.stringify(source, (key: string, value: any) => {
