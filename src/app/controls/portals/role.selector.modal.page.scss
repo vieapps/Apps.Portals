@@ -1,9 +1,12 @@
-ion-item ion-thumbnail {
-	height: 32px;
-	width: 48px;
+ion-item.parent {
+	cursor: pointer;
 }
-ion-item ion-thumbnail > img {
-	border-radius: 50%;
+ion-item.parent > ion-label {
+	margin: 16px 0;
+}
+ion-item.parent > ion-label > ion-icon {
+	margin-top: 6px;
+	margin-right: 16px;
 }
 ion-item > ion-label > span {
 	display: block;
