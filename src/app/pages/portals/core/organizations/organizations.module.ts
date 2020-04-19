@@ -11,19 +11,19 @@ import { IonicModule } from "@ionic/angular";
 		RouterModule.forChild([
 			{
 				path: "search",
-				loadChildren: "./list/list.module#OrganizationsListPageModule"
+				loadChildren: "../organizations/list/list.module#OrganizationsListPageModule"
 			},
 			{
-				path: "list",
-				loadChildren: "./list/list.module#OrganizationsListPageModule"
+				path: "list/:data",
+				loadChildren: "../organizations/list/list.module#OrganizationsListPageModule"
 			},
 			{
 				path: "create",
-				loadChildren: "./update/update.module#OrganizationsUpdatePageModule"
+				loadChildren: "../organizations/update/update.module#OrganizationsUpdatePageModule"
 			},
 			{
 				path: "update/:data",
-				loadChildren: "./update/update.module#OrganizationsUpdatePageModule"
+				loadChildren: "../organizations/update/update.module#OrganizationsUpdatePageModule"
 			}
 		])
 	],
