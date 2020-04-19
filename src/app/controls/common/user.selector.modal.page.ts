@@ -28,14 +28,16 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 	) {
 	}
 
-	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
-	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
-
 	/** Set to 'true' to allow select multiple users */
 	@Input() multiple: boolean;
 
 	/** Set to 'true' to hide all email addresses */
 	@Input() hideEmails: boolean;
+
+	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
+	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
+
+	private subscription: Subscription;
 
 	profiles = new Array<UserProfile>();
 	results = new Array<UserProfile>();
@@ -54,8 +56,6 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 		search: "Search"
 	};
 	selected = new Set<string>();
-
-	private subscription: Subscription;
 
 	ngOnInit() {
 		this.multiple = this.multiple === undefined ? true : this.multiple;

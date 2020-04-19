@@ -27,9 +27,6 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	) {
 	}
 
-	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
-	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
-
 	/** Set to 'true' to allow select multiple roles */
 	@Input() multiple: boolean;
 
@@ -51,6 +48,15 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	/** The excluded identities */
 	@Input() excludedIDs: Array<string>;
 
+	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
+	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
+
+	private subscription: Subscription;
+	private organization: Organization;
+	private children = "{{number}} children: {{children}}";
+	private roleOfAll = new Role();
+	private roleOfAuthorized = new Role();
+
 	roles = new Array<Role>();
 	results = new Array<Role>();
 	searching = false;
@@ -69,12 +75,6 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	};
 	selected = new Set<string>();
 	parentRole: Role;
-
-	private subscription: Subscription;
-	private organization: Organization;
-	private children = "{{number}} children: {{children}}";
-	private roleOfAll = new Role();
-	private roleOfAuthorized = new Role();
 
 	ngOnInit() {
 		this.multiple = this.multiple === undefined ? true : AppUtility.isTrue(this.multiple);
@@ -272,4 +272,5 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		this.parentRole = role;
 		this.roles = this.parentRole.Children;
 	}
+
 }

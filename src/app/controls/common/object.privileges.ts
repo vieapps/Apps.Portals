@@ -98,7 +98,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 
 		if (this.rolesSelector === undefined) {
 			this.rolesSelector = this.control !== undefined && this.control.Extras !== undefined
-				? this.control.Extras["RolesSelector"] || this.control.Extras["rolesSelector"] || {}
+				? this.control.Extras["RolesSelector"] || this.control.Extras["rolesSelector"] || this.control.Extras["RoleSelector"] || this.control.Extras["roleSelector"] || {}
 				: {};
 		}
 		if (this.rolesSelector.prepare === undefined && this.control !== undefined && this.control.Extras !== undefined) {

@@ -43,6 +43,8 @@ export class ImageCropperControl implements OnInit, OnDestroy {
 	/** The event handler to run when the control was changed */
 	@Output() change = new EventEmitter();
 
+	@ViewChild(HtmlImageCropper, { static: false }) private htmlImageCropper: HtmlImageCropper;
+
 	htmlCropper: {
 		data: {
 			/** Gets the cropped image */
@@ -52,8 +54,6 @@ export class ImageCropperControl implements OnInit, OnDestroy {
 		};
 		settings: HtmlImageCropperSettings;
 	};
-
-	@ViewChild(HtmlImageCropper, { static: false }) private htmlImageCropper: HtmlImageCropper;
 
 	/** Gets the data of image cropper */
 	get data() {

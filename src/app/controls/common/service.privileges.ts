@@ -72,7 +72,7 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 		});
 
 		this.prepareObjectRoles();
-		Promise.all([this.prepareLabelsAsync()]).then(() => this.init.emit(this));
+		this.prepareLabelsAsync().then(() => this.init.emit(this));
 	}
 
 	ngOnDestroy() {
