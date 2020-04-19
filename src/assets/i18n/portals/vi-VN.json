@@ -278,7 +278,7 @@
 		"roles": {
 			"title": {
 				"search": "Tìm kiếm vai trò sử dụng",
-				"list": "Danh sách vai trò sử dụng",
+				"list": "Danh sách vai trò sử dụng {{title}}",
 				"create": "Tạo mới vai trò sử dụng",
 				"update": "Cập nhật vai trò sử dụng"
 			},
@@ -307,7 +307,8 @@
 			},
 			"list": {
 				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác vai trò sử dụng",
-				"invalid": "Thông tin về đơn vị - tổ chức chưa đúng, cần chọn đơn vị - tổ chức sẽ hoạt động"
+				"invalid": "Thông tin về đơn vị - tổ chức chưa đúng, cần chọn đơn vị - tổ chức sẽ hoạt động",
+				"children": "{{number}} vai trò cấp dưới: {{children}}"
 			},
 			"update": {
 				"messages": {
