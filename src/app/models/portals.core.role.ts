@@ -6,12 +6,14 @@ import { PortalCoreBase as BaseModel } from "./portals.core.base";
 export class Role extends BaseModel implements NestedModel {
 
 	constructor(
-		organizationID?: string
+		organizationID?: string,
+		title?: string
 	) {
 		super();
 		delete this["Privileges"];
 		delete this["OriginalPrivileges"];
 		this.SystemID = AppUtility.isNotEmpty(organizationID) ? organizationID : "";
+		this.Title = AppUtility.isNotEmpty(title) ? title : "";
 	}
 
 	/** All instances of role */
@@ -38,30 +40,19 @@ export class Role extends BaseModel implements NestedModel {
 
 	public static filter(parentID?: string, organizationID?: string) {
 		let roles = Role.all;
-		if (AppUtility.isNotEmpty(parentID)) {
-			roles = roles.filter(role => role.ParentID === parentID);
-		}
-		else if (AppUtility.isNotEmpty(organizationID)) {
+		if (AppUtility.isNotEmpty(organizationID)) {
 			roles = roles.filter(role => role.SystemID === organizationID);
 		}
+		roles = roles.filter(role => role.ParentID === parentID);
 		return roles.sort(AppUtility.getCompareFunction("Title"));
 	}
 
 	/** Deserializes data to object */
 	public static deserialize(json: any, role?: Role) {
 		role = role || new Role();
-		role.copy(json, data => {
-			role.ansiTitle = AppUtility.toANSI(role.Title).toLowerCase();
-			if (AppUtility.isArray(data["Children"], true)) {
-				role.childrenIDs = [];
-				(data["Children"] as Array<any>).forEach(d => {
-					const c = this.update(d);
-					if (c !== undefined) {
-						role.childrenIDs.push(c.ID);
-					}
-				});
-			}
-		});
+		role.copy(json);
+		role.ParentID = AppUtility.isNotEmpty(role.ParentID) ? role.ParentID : undefined;
+		role.ansiTitle = AppUtility.toANSI(role.Title).toLowerCase();
 		return role;
 	}
 
@@ -109,6 +100,10 @@ export class Role extends BaseModel implements NestedModel {
 		return AppUtility.isArray(this.childrenIDs, true)
 			? this.childrenIDs.map(id => Role.get(id)).sort(AppUtility.getCompareFunction("Title"))
 			: Role.filter(this.ID);
+	}
+
+	public get listURI() {
+		return `${this.routerLink.replace("/update/", "/list/")}?x-request=${AppUtility.toBase64Url({ ParentID: this.ID })}`;
 	}
 
 }
