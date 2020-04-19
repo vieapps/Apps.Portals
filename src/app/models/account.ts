@@ -29,14 +29,14 @@ export class Account {
 	};
 
 	/** Deserializes data to object */
-	public static deserialize(json: any = {}, account?: Account, onCompleted?: (account: Account, data: any) => void) {
+	public static deserialize(json: any, account?: Account, onCompleted?: (account: Account, data: any) => void) {
 		account = account || new Account();
 		AppUtility.copy(json, account, data => {
-			account.privileges = AppUtility.isArray(json.privileges, true)
-				? (json.privileges as Array<any>).map(o => Privilege.deserialize(o))
+			account.privileges = AppUtility.isArray(data.privileges, true)
+				? (data.privileges as Array<any>).map(o => Privilege.deserialize(o))
 				: new Array<Privilege>();
 			account.profile = data.profile !== undefined
-				? UserProfile.deserialize(data.profile)
+				? UserProfile.deserialize(data.profile, UserProfile.get(data.profile.ID))
 				: undefined;
 			if (onCompleted !== undefined) {
 				onCompleted(account, data);
