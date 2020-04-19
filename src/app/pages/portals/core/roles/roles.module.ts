@@ -11,19 +11,19 @@ import { IonicModule } from "@ionic/angular";
 		RouterModule.forChild([
 			{
 				path: "search",
-				loadChildren: "./list/list.module#RolesListPageModule"
+				loadChildren: "../roles/list/list.module#RolesListPageModule"
 			},
 			{
-				path: "list",
-				loadChildren: "./list/list.module#RolesListPageModule"
+				path: "list/:data",
+				loadChildren: "../roles/list/list.module#RolesListPageModule"
 			},
 			{
 				path: "create",
-				loadChildren: "./update/update.module#RolesUpdatePageModule"
+				loadChildren: "../roles/update/update.module#RolesUpdatePageModule"
 			},
 			{
 				path: "update/:data",
-				loadChildren: "./update/update.module#RolesUpdatePageModule"
+				loadChildren: "../roles/update/update.module#RolesUpdatePageModule"
 			}
 		])
 	],

@@ -35,7 +35,9 @@ export class RolesListPage implements OnInit, OnDestroy {
 
 	private organization: Organization;
 	private parentID: string;
+	private parentRole: Role;
 	private subscription: Subscription;
+	private children = "{{number}} children: {{children}}";
 
 	title = "Roles";
 	roles = new Array<Role>();
@@ -65,18 +67,18 @@ export class RolesListPage implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.initializeAsync();
-		AppEvents.on("Portals", info => {
-			if (!this.searching && info.args.Object === "Role" && (info.args.Type === "Updated" || info.args.Type === "Deleted")) {
-				this.prepareResults();
-			}
-		}, "RefreshListOfRolesEventHandler");
 	}
 
 	ngOnDestroy() {
 		if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 		}
-		AppEvents.off("Portals", "RefreshListOfRolesEventHandler");
+		if (this.parentID === undefined) {
+			AppEvents.off("Portals", "Roles:RefreshList");
+		}
+		else {
+			AppEvents.off("Portals", `Roles:RefreshChildren:${this.parentID}`);
+		}
 	}
 
 	private async initializeAsync() {
@@ -86,7 +88,7 @@ export class RolesListPage implements OnInit, OnDestroy {
 				undefined,
 				undefined,
 				await this.configSvc.getResourceAsync("portals.roles.list.invalid"),
-				async () => await this.configSvc.navigateHomeAsync("/portals/core/organizations/list"),
+				async () => await this.configSvc.navigateHomeAsync("/portals/core/organizations/list/all"),
 				await this.configSvc.getResourceAsync("common.buttons.ok")
 			);
 			return;
@@ -99,7 +101,9 @@ export class RolesListPage implements OnInit, OnDestroy {
 		}
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.roles.title.${(this.searching ? "search" : "list")}`);
+		const title = await this.configSvc.getResourceAsync(`portals.roles.title.${(this.searching ? "search" : "list")}`);
+		this.configSvc.appTitle = this.title = AppUtility.format(title, { title: "" });
+		this.children = await this.configSvc.getResourceAsync("portals.roles.list.children");
 
 		if (this.searching) {
 			this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
@@ -107,22 +111,37 @@ export class RolesListPage implements OnInit, OnDestroy {
 			PlatformUtility.focus(this.searchCtrl);
 		}
 		else {
-			this.parentID = this.configSvc.requestParams["ParentID"];
-			this.filterBy.And = [
-				{
-					SystemID: { Equals: this.organization.ID}
-				},
-				{
-					ParentID: AppUtility.isNotEmpty(this.parentID) ? { Equals: this.parentID.trim() } : "IsNull"
-				}
-			];
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.roles.title.create"), "create", () => this.openCreateAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.roles.title.search"), "search", () => this.openSearchAsync())
 			];
-			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `role@${this.portalsCoreSvc.name}`) || AppPagination.getDefault();
-			this.pagination.PageNumber = this.pageNumber;
-			await this.searchAsync();
+
+			this.parentID = this.configSvc.requestParams["ParentID"];
+			this.parentRole = Role.get(this.parentID);
+
+			if (this.parentRole !== undefined) {
+				this.roles = this.parentRole.Children;
+				this.configSvc.appTitle = this.title = AppUtility.format(title, { title: `[${this.parentRole.FullTitle}]` });
+				AppEvents.on("Portals", info => {
+					if (info.args.Object === "Role" && this.parentRole.ID === info.args.ID) {
+						this.roles = this.parentRole.Children;
+					}
+				}, `Roles:RefreshChildren:${this.parentID}`);
+			}
+			else {
+				this.filterBy.And = [
+					{ SystemID: { Equals: this.organization.ID } },
+					{ ParentID: AppUtility.isNotEmpty(this.parentID) ? { Equals: this.parentID.trim() } : "IsNull" }
+				];
+				this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `role@${this.portalsCoreSvc.name}`) || AppPagination.getDefault();
+				this.pagination.PageNumber = this.pageNumber;
+				await this.searchAsync();
+				AppEvents.on("Portals", info => {
+					if (info.args.Object === "Role" && (info.args.Type === "Updated" || info.args.Type === "Deleted")) {
+						this.roles = Role.all.filter(role => role.SystemID === this.organization.ID && role.ParentID === undefined).sort(AppUtility.getCompareFunction("Title"));
+					}
+				}, "Roles:RefreshList");
+			}
 		}
 	}
 
@@ -130,12 +149,18 @@ export class RolesListPage implements OnInit, OnDestroy {
 		return `${role.ID}@${index}`;
 	}
 
+	getInfo(role: Role) {
+		return role.childrenIDs === undefined || role.childrenIDs.length < 1
+			? role.Description
+			: AppUtility.format(this.children, { number: role.childrenIDs.length, children: `${role.Children[0].Title}${(role.childrenIDs.length > 1 ? `, ${role.Children[1].Title}` : "")}, ...` });
+	}
+
 	showActionsAsync() {
 		return this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
 	openCreateAsync() {
-		return this.configSvc.navigateForwardAsync("/portals/core/roles/create");
+		return this.configSvc.navigateForwardAsync(`/portals/core/roles/create${(this.parentID === undefined ? "" : "?x-request=" + AppUtility.toBase64Url({ ParentID: this.parentID }))}`);
 	}
 
 	openSearchAsync() {
@@ -221,7 +246,10 @@ export class RolesListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.roles.push(Role.get(o.ID)));
 		}
 		else {
-			const objects = new List(results === undefined ? Role.filter(this.parentID, this.organization.ID) : results.map(o => Role.get(o.ID))).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			const items = results === undefined
+				? Role.all.filter(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID)
+				: results.map(o => Role.get(o.ID));
+			const objects = new List(items).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
 			this.roles = results === undefined
 				? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
 				: this.roles.concat(objects.ToArray());
@@ -229,6 +257,16 @@ export class RolesListPage implements OnInit, OnDestroy {
 		if (onNext !== undefined) {
 			onNext();
 		}
+	}
+
+	async openAsync(event: Event, role: Role) {
+		event.stopPropagation();
+		await this.configSvc.navigateForwardAsync(role.routerURI);
+	}
+
+	async showChildrenAsync(event: Event, role: Role) {
+		event.stopPropagation();
+		await this.configSvc.navigateForwardAsync(role.listURI);
 	}
 
 }

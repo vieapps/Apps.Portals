@@ -98,7 +98,11 @@ export class RolesUpdatePage implements OnInit {
 			await this.prepareUsersAsync();
 		}
 
+		if (this.role.ID === "") {
+			this.role.ParentID = this.configSvc.requestParams["ParentID"];
+		}
 		const parentRole = this.role.Parent;
+
 		this.formConfig = await this.getFormConfigAsync(formConfig => {
 			let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 			control.Options.AutoFocus = true;
@@ -110,7 +114,7 @@ export class RolesUpdatePage implements OnInit {
 			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID"));
 			control.Hidden = false;
 			control.Type = "Lookup";
-			control.Extras = { LookupDisplayValues: parentRole !== undefined ? [{ Value: parentRole.ID, Label: parentRole.Title }] : undefined };
+			control.Extras = { LookupDisplayValues: parentRole !== undefined ? [{ Value: parentRole.ID, Label: parentRole.FullTitle }] : undefined };
 			control.Options.LookupOptions = {
 				ModalOptions: {
 					Component: RolesSelectorModalPage,
@@ -124,7 +128,7 @@ export class RolesUpdatePage implements OnInit {
 						if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
 							const role = Role.get(data[0]);
 							formControl.setValue(role.ID);
-							formControl.lookupDisplayValues = [{ Value: role.ID, Label: role.Title }];
+							formControl.lookupDisplayValues = [{ Value: role.ID, Label: role.FullTitle }];
 						}
 					}
 				},
