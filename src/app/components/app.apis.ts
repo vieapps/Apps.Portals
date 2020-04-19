@@ -481,7 +481,7 @@ export class AppRTU {
 			Body: requestInfo.Body || {},
 			Header: requestInfo.Header || {},
 			Extra: requestInfo.Extra || {}
-		});
+		}, (_, value) => typeof value === "undefined" ? null : value);
 		this._requests.counter++;
 		if (onSuccess !== undefined || onError !== undefined) {
 			this._requests.callbackableRequests[id] = request;
