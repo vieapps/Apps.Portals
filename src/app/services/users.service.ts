@@ -25,16 +25,19 @@ export class UsersService extends BaseService {
 
 	public get completerDataSource() {
 		const convertToCompleterItem = (data: any) => {
-			if (data === undefined) {
-				return undefined;
-			}
-			const profile = data instanceof UserProfile ? data as UserProfile : UserProfile.deserialize(data);
-			return {
-				title: profile.Name,
-				description: profile.getEmail(!this.authSvc.isSystemAdministrator()),
-				image: profile.avatarURI,
-				originalObject: profile
-			};
+			const profile = data === undefined
+				? undefined
+				: data instanceof UserProfile
+					? data as UserProfile
+					: UserProfile.deserialize(data);
+			return profile === undefined
+				? undefined
+				: {
+						title: profile.Name,
+						description: profile.getEmail(!this.authSvc.isSystemAdministrator()),
+						image: profile.avatarURI,
+						originalObject: profile
+					};
 		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("profile", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),

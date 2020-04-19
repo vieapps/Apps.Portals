@@ -427,15 +427,18 @@ export class PortalsCoreService extends BaseService {
 
 	public get organizationCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
-			if (data === undefined) {
-				return undefined;
-			}
-			const organization = data instanceof Organization ? data as Organization : Organization.deserialize(data);
-			return {
-				title: organization.Title,
-				description: organization.Description,
-				originalObject: organization
-			};
+			const organization = data === undefined
+				? undefined
+				: data instanceof Organization
+					? data as Organization
+					: Organization.deserialize(data);
+			return organization === undefined
+				? undefined
+				: {
+						title: organization.Title,
+						description: organization.Description,
+						originalObject: organization
+					};
 		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("organization", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
@@ -604,15 +607,18 @@ export class PortalsCoreService extends BaseService {
 
 	public get roleCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
-			if (data === undefined) {
-				return undefined;
-			}
-			const role = data instanceof Role ? data as Role : Role.deserialize(data);
-			return {
-				title: role.Title,
-				description: role.Description,
-				originalObject: role
-			};
+			const role = data === undefined
+				? undefined
+				: data instanceof Role
+					? data as Role
+					: Role.deserialize(data);
+			return role === undefined
+				? undefined
+				: {
+						title: role.Title,
+						description: role.Description,
+						originalObject: role
+					};
 		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("role", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
