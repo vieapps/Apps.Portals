@@ -418,7 +418,7 @@ export class PortalsCoreService extends BaseService {
 				if (!Role.contains(role.Value)) {
 					await this.getRoleAsync(role.Value, undefined, undefined, true);
 				}
-				role.Label = (Role.get(role.Value) || new Role()).Title;
+				role.Label = (Role.get(role.Value) || new Role("", "Unknown")).FullTitle;
 			},
 			modalComponent: modalComponent,
 			modalComponentProperties: modalComponentProperties
@@ -672,23 +672,12 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	private fetchRole(role: Role) {
-		if (role !== undefined && role.childrenIDs === undefined) {
-			this.getRoleAsync(role.ID, _ => {
-				const r = Role.get(role.ID);
-				if (r.childrenIDs !== undefined && r.childrenIDs.length > 0) {
-					r.Children.forEach(c => this.fetchRole(c));
-				}
-			});
-		}
-	}
-
 	public createRoleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.createAsync(
 			super.getURI("role"),
 			body,
 			data => {
-				Role.update(data);
+				this.updateRole(data);
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -709,7 +698,7 @@ export class PortalsCoreService extends BaseService {
 			: super.readAsync(
 					super.getURI("role", id),
 					data => {
-						Role.update(data);
+						this.updateRole(data);
 						if (onNext !== undefined) {
 							onNext(data);
 						}
@@ -730,7 +719,8 @@ export class PortalsCoreService extends BaseService {
 			super.getURI("role", body.ID),
 			body,
 			data => {
-				Role.update(data);
+				this.updateRole(data, Role.contains(body.ID) ? Role.get(body.ID).ParentID : undefined);
+				AppEvents.broadcast("Portals", { Object: "Role", Type: "Updated", ID: body.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -748,7 +738,8 @@ export class PortalsCoreService extends BaseService {
 		return super.deleteAsync(
 			super.getURI("role", id),
 			data => {
-				Role.instances.remove(id);
+				this.deleteRole(data, Role.contains(id) ? Role.get(id).ParentID : undefined);
+				AppEvents.broadcast("Portals", { Object: "Role", Type: "Deleted", ID: id });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -764,22 +755,64 @@ export class PortalsCoreService extends BaseService {
 
 	private async processRoleUpdateMessageAsync(message: AppMessage) {
 		switch (message.Type.Event) {
-			case "Create":
 			case "Update":
-				Role.update(message.Data);
+				this.updateRole(message.Data, message.Data.ParentID);
 				AppEvents.broadcast("Portals", { Object: "Role", Type: "Updated", ID: message.Data.ID });
 				break;
 
 			case "Delete":
-				if (Role.contains(message.Data.ID)) {
-					Role.instances.remove(message.Data.ID);
-					AppEvents.broadcast("Portals", { Object: "Role", Type: "Deleted", ID: message.Data.ID });
-				}
+				this.deleteRole(message.Data.ID, message.Data.ParentID);
+				AppEvents.broadcast("Portals", { Object: "Role", Type: "Deleted", ID: message.Data.ID });
 				break;
 
 			default:
 				console.warn(super.getLogMessage("Got an update message of a role"), message);
 				break;
+		}
+	}
+
+	private fetchRole(role: Role) {
+		if (role !== undefined && role.childrenIDs === undefined) {
+			this.getRoleAsync(role.ID, _ => {
+				const r = Role.get(role.ID);
+				if (r.childrenIDs !== undefined && r.childrenIDs.length > 0) {
+					r.Children.forEach(c => this.fetchRole(c));
+				}
+			});
+		}
+	}
+
+	private updateRole(json: any, oldParentID?: string) {
+		const role = Role.set(Role.deserialize(json, Role.get(json.ID)));
+		if (AppUtility.isObject(json, true) && AppUtility.isArray(json.Children, true)) {
+			role.childrenIDs = [];
+			(json.Children as Array<any>).forEach(cdata => {
+				const crole = this.updateRole(cdata);
+				crole.ParentID = role.ID;
+				role.childrenIDs.push(crole.ID);
+			});
+			role.childrenIDs = role.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+		}
+		let parentRole = oldParentID !== undefined ? Role.get(oldParentID) : undefined;
+		if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.ID !== role.ParentID) {
+			AppUtility.removeAt(parentRole.childrenIDs, parentRole.childrenIDs.indexOf(role.ID));
+		}
+		parentRole = role.Parent;
+		if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.childrenIDs.indexOf(role.ID) < 0) {
+			parentRole.childrenIDs.push(role.ID);
+			parentRole.childrenIDs = parentRole.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+		}
+		return role;
+	}
+
+	private deleteRole(id: string, parentID?: string) {
+		if (Role.contains(id)) {
+			const parentRole = parentID !== undefined ? Role.get(parentID) : undefined;
+			if (parentRole !== undefined && parentRole.childrenIDs !== undefined) {
+				AppUtility.removeAt(parentRole.childrenIDs, parentRole.childrenIDs.indexOf(id));
+			}
+			Role.all.filter(role => role.ParentID === id).forEach(role => this.deleteRole(role.ID));
+			Role.instances.remove(id);
 		}
 	}
 
