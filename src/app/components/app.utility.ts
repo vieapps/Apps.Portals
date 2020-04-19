@@ -219,14 +219,14 @@ export class AppUtility {
 	public static clone<T>(source: T, beRemovedOrCleanUndefined?: Array<string> | boolean, excluded?: Array<string>, onCompleted?: (obj: any) => void) {
 		// clone
 		const exists = [];
-		const obj = JSON.parse(JSON.stringify(source, (key: string, value: any) => {
+		const obj = JSON.parse(JSON.stringify(source, (_, value) => {
 			if (this.isObject(value, true)) {
 				if (exists.indexOf(value) !== -1) {
 					return;
 				}
 				exists.push(value);
 			}
-			return value;
+			return typeof value === "undefined" ? null : value;
 		}));
 
 		// remove the specified properties
