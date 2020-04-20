@@ -1,9 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "../../../../../components/app.crypto";
-import { AppEvents } from "../../../../../components/app.events";
 import { AppUtility } from "../../../../../components/app.utility";
-import { PlatformUtility } from "../../../../../components/app.utility.platform";
 import { TrackingUtility } from "../../../../../components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsService, AppFormsLookupValue } from "../../../../../components/forms.service";
 import { ConfigurationService } from "../../../../../services/configuration.service";
@@ -265,10 +263,11 @@ export class RolesUpdatePage implements OnInit {
 				if (AppUtility.isNotEmpty(role.ID)) {
 					await this.portalsCoreSvc.updateRoleAsync(
 						role,
-						async () => {
-							await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.update"));
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync());
-						},
+						async () => await Promise.all([
+							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.update")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]),
 						async error => {
 							this.processing = false;
 							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
@@ -278,10 +277,11 @@ export class RolesUpdatePage implements OnInit {
 				else {
 					await this.portalsCoreSvc.createRoleAsync(
 						role,
-						async () => {
-							await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.new"));
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync());
-						},
+						async () => await Promise.all([
+							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.new")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]),
 						async error => {
 							this.processing = false;
 							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
@@ -312,6 +312,7 @@ export class RolesUpdatePage implements OnInit {
 				await this.portalsCoreSvc.deleteRoleAsync(
 					this.role.ID,
 					async () => await Promise.all([
+						TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.roles.update.buttons.delete"), this.configSvc.currentUrl),
 						this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.delete")),
 						this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 					]),
