@@ -1,13 +1,11 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "../../../../../components/app.crypto";
-import { AppEvents } from "../../../../../components/app.events";
 import { AppUtility } from "../../../../../components/app.utility";
 import { PlatformUtility } from "../../../../../components/app.utility.platform";
 import { TrackingUtility } from "../../../../../components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "../../../../../components/forms.service";
 import { ConfigurationService } from "../../../../../services/configuration.service";
-import { AuthenticationService } from "../../../../../services/authentication.service";
 import { UsersService } from "../../../../../services/users.service";
 import { PortalsCoreService } from "../../../../../services/portals.core.service";
 import { Organization } from "../../../../../models/portals.core.organization";
@@ -25,7 +23,6 @@ import { UsersSelectorModalPage } from "../../../../../controls/common/user.sele
 export class OrganizationsUpdatePage implements OnInit {
 	constructor(
 		public configSvc: ConfigurationService,
-		private authSvc: AuthenticationService,
 		private usersSvc: UsersService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService
@@ -46,6 +43,7 @@ export class OrganizationsUpdatePage implements OnInit {
 		cancel: "Cancel"
 	};
 
+	private canModerateOrganization = false;
 	private organization: Organization;
 	private hash = "";
 	private instructions = {} as {
@@ -63,7 +61,8 @@ export class OrganizationsUpdatePage implements OnInit {
 
 	private async initializeAsync() {
 		this.organization = Organization.get(this.configSvc.requestParams["ID"]);
-		if (this.portalsCoreSvc.canModerateOrganization(this.organization)) {
+		this.canModerateOrganization = this.portalsCoreSvc.canModerateOrganization(this.organization);
+		if (this.canModerateOrganization) {
 			await this.initializeFormAsync();
 		}
 		else {
@@ -109,7 +108,7 @@ export class OrganizationsUpdatePage implements OnInit {
 				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
 			}
 
-			if (this.authSvc.isSystemAdministrator()) {
+			if (this.canModerateOrganization) {
 				const ownerControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OwnerID"));
 				ownerControl.Options.LookupOptions.CompleterOptions.AllowLookupByModal = true;
 				ownerControl.Options.LookupOptions.ModalOptions = {
@@ -360,7 +359,7 @@ export class OrganizationsUpdatePage implements OnInit {
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OwnerID"));
 		control.Required = true;
-		if (this.authSvc.isSystemAdministrator()) {
+		if (this.canModerateOrganization) {
 			let initialValue: any;
 			if (AppUtility.isNotEmpty(this.organization.OwnerID)) {
 				initialValue = UserProfile.get(this.organization.OwnerID);
@@ -393,7 +392,7 @@ export class OrganizationsUpdatePage implements OnInit {
 				return { Value: value, Label: `{{status.approval.${value}}}` };
 			});
 		}
-		if (!this.authSvc.isSystemAdministrator()) {
+		if (!this.canModerateOrganization) {
 			control.Options.Disabled = true;
 		}
 
@@ -401,7 +400,7 @@ export class OrganizationsUpdatePage implements OnInit {
 		control.Type = "DatePicker";
 		control.Required = false;
 		control.Options.DatePickerOptions = { AllowTimes: false };
-		if (!this.authSvc.isSystemAdministrator()) {
+		if (!this.canModerateOrganization) {
 			control.Options.Disabled = true;
 		}
 
@@ -419,7 +418,7 @@ export class OrganizationsUpdatePage implements OnInit {
 				End: "cloud"
 			}
 		};
-		if (!this.authSvc.isSystemAdministrator()) {
+		if (!this.canModerateOrganization) {
 			control.Options.Disabled = true;
 		}
 
@@ -481,10 +480,7 @@ export class OrganizationsUpdatePage implements OnInit {
 			};
 		});
 		this.form.patchValue(organization);
-		this.appFormsSvc.hideLoadingAsync(() => {
-			// hack the Completer component to update correct form value & validity status
-			PlatformUtility.invoke(() => this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true }), 234);
-		});
+		this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.invoke(() => this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true }), 234)); // hack the Completer component to update correct form value & validity status
 	}
 
 	async updateAsync() {
@@ -514,10 +510,11 @@ export class OrganizationsUpdatePage implements OnInit {
 					Organization.get(organization.ID).owner = undefined;
 					await this.portalsCoreSvc.updateOrganizationAsync(
 						organization,
-						async () => {
-							await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.update"));
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync());
-						},
+						async () => await Promise.all([
+							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.update")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]),
 						async error => {
 							this.processing = false;
 							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
@@ -527,10 +524,11 @@ export class OrganizationsUpdatePage implements OnInit {
 				else {
 					await this.portalsCoreSvc.createOrganizationAsync(
 						organization,
-						async () => {
-							await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.new"));
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync());
-						},
+						async () => await Promise.all([
+							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.new")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]),
 						async error => {
 							this.processing = false;
 							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
