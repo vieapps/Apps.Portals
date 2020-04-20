@@ -29,14 +29,14 @@ export class HomePage implements OnInit, OnDestroy {
 				if ("Initialized" === info.args.Type) {
 					this.prepareAsync();
 				}
-			}, "AppReadyEventHandlerOfHomePage");
+			}, "Home:AppInitialized");
 		}
 
 		AppEvents.on("App", info => {
 			if ("LanguageChanged" === info.args.Type) {
 				this.setTitleAsync();
 			}
-		}, "LanguageChangedEventHandlerOfHomePage");
+		}, "Home:LanguageChanged");
 
 		AppEvents.on("Navigated", info => {
 			if (this.configSvc.appConfig.url.home === info.args.Url) {
@@ -45,18 +45,18 @@ export class HomePage implements OnInit, OnDestroy {
 					this.changes = new Date();
 				});
 			}
-		}, "NavigatingEventHandlerOfHomePage");
+		}, "Home:Navigated");
 
 		AppEvents.on("SetHomepageTitleResource", info => {
 			this.titleResource = info.args.ResourceID || "common.sidebar.home";
-		}, "SetTitleResourceEventHandlerOfHomePage");
+		}, "Home:SetTitle");
 	}
 
 	ngOnDestroy() {
-		AppEvents.off("App", "AppReadyEventHandlerOfHomePage");
-		AppEvents.off("App", "LanguageChangedEventHandlerOfHomePage");
-		AppEvents.off("Navigated", "NavigatingEventHandlerOfHomePage");
-		AppEvents.off("SetHomepageTitleResource", "SetTitleResourceEventHandlerOfHomePage");
+		AppEvents.off("App", "Home:AppInitialized");
+		AppEvents.off("App", "Home:LanguageChanged");
+		AppEvents.off("Navigated", "Home:Navigated");
+		AppEvents.off("SetHomepageTitleResource", "Home:SetTitle");
 	}
 
 	private async prepareAsync(section?: string) {
