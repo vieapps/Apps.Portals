@@ -365,12 +365,13 @@ export class OrganizationsUpdatePage implements OnInit {
 			if (AppUtility.isNotEmpty(this.organization.OwnerID)) {
 				initialValue = UserProfile.get(this.organization.OwnerID);
 				if (initialValue === undefined) {
-					await this.usersSvc.getProfileAsync(this.organization.OwnerID, () => initialValue = UserProfile.get(this.organization.OwnerID), undefined, true);
+					await this.usersSvc.getProfileAsync(this.organization.OwnerID, _ => initialValue = UserProfile.get(this.organization.OwnerID), undefined, true);
 				}
 			}
 			control.Type = "Lookup";
 			control.Hidden = false;
 			control.Options.LookupOptions = {
+				Multiple: false,
 				AsModal: false,
 				AsCompleter: true,
 				CompleterOptions: {
@@ -481,7 +482,7 @@ export class OrganizationsUpdatePage implements OnInit {
 		});
 		this.form.patchValue(organization);
 		this.appFormsSvc.hideLoadingAsync(() => {
-			// hack/work-around the Completer component to update correct form value
+			// hack the Completer component to update correct form value & validity status
 			PlatformUtility.invoke(() => this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true }), 234);
 		});
 	}
@@ -490,7 +491,6 @@ export class OrganizationsUpdatePage implements OnInit {
 		if (this.appFormsSvc.validate(this.form)) {
 			const organization = this.form.value;
 			organization.Instructions = this.instructions;
-			delete organization.EmailSettings["Buttons"];
 
 			if (this.hash === AppCrypto.hash(organization)) {
 				await this.configSvc.navigateBackAsync();
@@ -511,6 +511,7 @@ export class OrganizationsUpdatePage implements OnInit {
 				delete organization["Privileges"];
 
 				if (AppUtility.isNotEmpty(organization.ID)) {
+					Organization.get(organization.ID).owner = undefined;
 					await this.portalsCoreSvc.updateOrganizationAsync(
 						organization,
 						async () => {

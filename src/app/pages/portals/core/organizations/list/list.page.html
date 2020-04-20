@@ -43,15 +43,15 @@
 	<ion-list class="ion-padding-end">
 		<ion-item *ngFor="let organization of organizations; let idx=index; trackBy: track" [color]="configSvc.color" [routerLink]="organization.routerLink" [queryParams]="organization.routerParams" routerDirection="forward" detail="false">
 			<ion-label>
-				<label class="time" class="ion-float-end">
-					<ion-icon icon="time" slot="start"></ion-icon>
-					<span title="{{ organization.LastModified | date:'h:mm a @ d/M/y' }}">
-						{{ organization.LastModified | time:locale:'h:mm a @ d/M/y' }}
-					</span>
-				</label>
-				<h2>
+				<span class="time ion-float-end" [hidden]="configSvc.screenWidth < 768">
+					{{ organization.Created | date:'h:mm a @ d/M/y' }} <br/> {{ organization.LastModified | date:'h:mm a @ d/M/y' }}
+				</span>
+				<span>
 					{{ organization.Title }}
-				</h2>
+				</span>
+				<div>
+					{{ getInfo(organization) }}
+				</div>
 			</ion-label>
 		</ion-item>
 	</ion-list>

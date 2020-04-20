@@ -10,9 +10,10 @@ import { PlatformUtility } from "../../../../../components/app.utility.platform"
 import { AppPagination, AppDataPagination, AppDataRequest } from "../../../../../components/app.pagination";
 import { AppFormsService } from "../../../../../components/forms.service";
 import { ConfigurationService } from "../../../../../services/configuration.service";
-import { AuthenticationService } from "../../../../../services/authentication.service";
+import { UsersService } from "../../../../../services/users.service";
 import { PortalsCoreService } from "../../../../../services/portals.core.service";
 import { Organization } from "../../../../../models/portals.core.organization";
+import { UserProfile } from "../../../../../models/user";
 
 @Component({
 	selector: "page-portals-core-organizations-list",
@@ -24,8 +25,8 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 
 	constructor(
 		public configSvc: ConfigurationService,
+		private usersSvc: UsersService,
 		private appFormsSvc: AppFormsService,
-		private authSvc: AuthenticationService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
@@ -35,6 +36,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
 	private subscription: Subscription;
+	private owner: string;
 
 	title = "Organizations";
 	organizations = new Array<Organization>();
@@ -68,14 +70,14 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 			if (!this.searching && info.args.Object === "Organization" && (info.args.Type === "Updated" || info.args.Type === "Deleted")) {
 				this.prepareResults();
 			}
-		}, "RefreshListOfOrganizationsEventHandler");
+		}, "Organizations:RefreshList");
 	}
 
 	ngOnDestroy() {
 		if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 		}
-		AppEvents.off("Portals", "RefreshListOfOrganizationsEventHandler");
+		AppEvents.off("Portals", "Organizations:RefreshList");
 	}
 
 	private async initializeAsync() {
@@ -87,6 +89,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.organizations.title.${(this.searching ? "search" : "list")}`);
+		this.owner = await this.configSvc.getResourceAsync("portals.organizations.list.owner");
 
 		if (this.searching) {
 			PlatformUtility.focus(this.searchCtrl);
@@ -97,14 +100,16 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.create"), "create", () => this.openCreateAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.search"), "search", () => this.openSearchAsync())
 			];
-			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `organization@${this.portalsCoreSvc.name}`) || AppPagination.getDefault();
-			this.pagination.PageNumber = this.pageNumber;
-			await this.searchAsync();
+			await this.startSearchAsync();
 		}
 	}
 
 	track(index: number, organization: Organization) {
 		return `${organization.ID}@${index}`;
+	}
+
+	getInfo(organization: Organization) {
+		return AppUtility.format(this.owner, { owner: organization.owner }) + (AppUtility.isNotEmpty(organization.Description) ? ` - ${organization.Description.substr(0, 30)}` : "");
 	}
 
 	showActionsAsync() {
@@ -198,13 +203,24 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.organizations.push(Organization.get(o.ID)));
 		}
 		else {
-			const objects = new List(results === undefined ? Organization.instances.values() : results.map(o => Organization.get(o.ID))).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			const objects = new List(results === undefined ? Organization.all : results.map(o => Organization.get(o.ID))).OrderBy(o => o.Title).ThenByDescending(o => o.Created);
 			this.organizations = results === undefined
 				? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
 				: this.organizations.concat(objects.ToArray());
 		}
+		this.organizations.forEach(organization => this.getOwnerAsync(organization));
 		if (onNext !== undefined) {
 			onNext();
+		}
+	}
+
+	private async getOwnerAsync(organization: Organization) {
+		if (organization.owner === undefined && AppUtility.isNotEmpty(organization.OwnerID)) {
+			let owner = UserProfile.get(organization.OwnerID);
+			if (owner === undefined) {
+				await this.usersSvc.getProfileAsync(organization.OwnerID, _ => owner = UserProfile.get(organization.OwnerID) || new UserProfile("Unknonwn"), undefined, true);
+			}
+			organization.owner = owner.Name;
 		}
 	}
 

@@ -1,41 +1,5 @@
-ion-footer > ion-toolbar > div > span,
-ion-footer > ion-toolbar > div > span > ion-icon,
-ion-footer > ion-toolbar > div > span > span {
-	display: inline-block;
-	vertical-align: middle;
-	top: -1px;
-}
-ion-footer > ion-toolbar > div > span > ion-icon {
-	margin-top: 3px;
-	margin-right: 8px;
-}
-ion-item ion-thumbnail {
-	width: 62px;
-	height: 48px;
-}
-ion-item ion-thumbnail > img {
-	border-radius: 50%;
-}
-ion-item h2 {
-	margin: 0 0 5px;
-	font-size: 1.2em;
-	font-weight: normal;
-}
-ion-item div > span {
-	font-size: 0.96em;
-}
-ion-item div > ion-icon,
-ion-item label,
-ion-item label > ion-icon,
-ion-item div > span > ion-icon {
-	display: inline-block;
-	vertical-align: middle;
-	top: -1px;
+ion-list > ion-item > ion-label > span.time,
+ion-list > ion-item > ion-label > div {
 	font-size: 0.85em;
-	color: var(--ion-color-medium);
-}
-@media only screen and (max-width: 479px) {
-	label.time {
-		display: none !important;
-	}
+	padding-top: 5px;
 }
