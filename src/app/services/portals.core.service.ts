@@ -2,10 +2,9 @@ import { Injectable } from "@angular/core";
 import { AppRTU, AppMessage } from "../components/app.apis";
 import { AppEvents } from "../components/app.events";
 import { AppUtility } from "../components/app.utility";
-import { PlatformUtility } from "../components/app.utility.platform";
 import { AppCustomCompleter } from "../components/app.completer";
 import { AppPagination } from "../components/app.pagination";
-import { AppFormsControlConfig, AppFormsLookupValue } from "../components/forms.service";
+import { AppFormsControlConfig, AppFormsLookupValue, AppFormsService } from "../components/forms.service";
 import { Base as BaseService } from "./base.service";
 import { ConfigurationService } from "./configuration.service";
 import { AuthenticationService } from "./authentication.service";
@@ -18,7 +17,8 @@ export class PortalsCoreService extends BaseService {
 
 	constructor(
 		private configSvc: ConfigurationService,
-		private authSvc: AuthenticationService
+		private authSvc: AuthenticationService,
+		private appFormsSvc: AppFormsService
 	) {
 		super("Portals");
 		this.initialize();
@@ -361,31 +361,22 @@ export class PortalsCoreService extends BaseService {
 							]
 						}
 					},
-					{
-						Name: "Buttons",
-						Type: "Buttons",
-						SubControls: {
-							Controls: [
-								{
-									Name: "TestEmail",
-									Options: {
-										Label: "{{portals.common.controls.emails.test.label}}",
-										ButtonOptions: {
-											OnClick: (control, formGroup) => {
-												console.log("Test send email", AppUtility.clone(formGroup.parent.value, ["InheritFromParent", "Buttons"]));
-											},
-											Fill: "solid",
-											Color: "primary",
-											Icon: {
-												Name: "send",
-												Slot: "start"
-											}
-										}
-									}
-								}
-							]
+					this.appFormsSvc.getButtonControls({
+						Name: "TestEmail",
+						Label: "{{portals.common.controls.emails.test.label}}",
+						OnClick: (event, formControl) => {
+							console.warn("Test email settings", event, formControl);
+						},
+						Options: {
+							Fill: "clear",
+							Color: "primary",
+							Css: "ion-float-end",
+							Icon: {
+								Name: "send",
+								Slot: "end"
+							}
 						}
-					}
+					})
 				]
 			}
 		};
@@ -434,24 +425,11 @@ export class PortalsCoreService extends BaseService {
 					: Organization.deserialize(data);
 			return organization === undefined
 				? undefined
-				: {
-						title: organization.Title,
-						description: organization.Description,
-						originalObject: organization
-					};
+				: { title: organization.Title, description: organization.Description, originalObject: organization };
 		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("organization", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(obj => {
-				if (!Organization.contains(obj.ID)) {
-					const organization = Organization.deserialize(obj);
-					Organization.update(organization);
-					return convertToCompleterItem(organization);
-				}
-				else {
-					return convertToCompleterItem(Organization.get(obj.ID));
-				}
-			}),
+			data => (data.Objects as Array<any> || []).map(obj => Organization.contains(obj.ID) ? convertToCompleterItem(Organization.get(obj.ID)) : convertToCompleterItem(Organization.update(Organization.deserialize(obj)))),
 			convertToCompleterItem
 		);
 	}
@@ -614,21 +592,19 @@ export class PortalsCoreService extends BaseService {
 					: Role.deserialize(data);
 			return role === undefined
 				? undefined
-				: {
-						title: role.Title,
-						description: role.Description,
-						originalObject: role
-					};
+				: { title: role.FullTitle, description: role.Description, originalObject: role };
 		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("role", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
-				if (Role.contains(obj.ID)) {
-					return convertToCompleterItem(Role.get(obj.ID));
+				const role = Role.get(obj.ID);
+				if (role === undefined) {
+					return convertToCompleterItem(this.fetchRole(Role.update(obj)));
+				}
+				else if (role.childrenIDs === undefined) {
+					return convertToCompleterItem(this.fetchRole(role));
 				}
 				else {
-					const role = Role.update(obj);
-					this.fetchRole(role);
 					return convertToCompleterItem(role);
 				}
 			}),
@@ -642,7 +618,15 @@ export class PortalsCoreService extends BaseService {
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).filter(obj => !Role.contains(obj.ID)).forEach(obj => this.fetchRole(Role.update(obj)));
+					(data.Objects as Array<any>).forEach(obj => {
+						const role = Role.get(obj.ID);
+						if (role === undefined) {
+							this.fetchRole(Role.update(obj));
+						}
+						else if (role.childrenIDs === undefined) {
+							this.fetchRole(role);
+						}
+					});
 				}
 				if (onNext !== undefined) {
 					onNext(data);
@@ -663,7 +647,15 @@ export class PortalsCoreService extends BaseService {
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).filter(obj => !Role.contains(obj.ID)).forEach(obj => this.fetchRole(Role.update(obj)));
+					(data.Objects as Array<any>).forEach(obj => {
+						const role = Role.get(obj.ID);
+						if (role === undefined) {
+							this.fetchRole(Role.update(obj));
+						}
+						else if (role.childrenIDs === undefined) {
+							this.fetchRole(role);
+						}
+					});
 				}
 				if (onNext !== undefined) {
 					onNext(data);
@@ -684,6 +676,7 @@ export class PortalsCoreService extends BaseService {
 			body,
 			data => {
 				this.updateRole(data);
+				this.broadcastRoleUpdatedEventMessage(body.ID, body.ParentID);
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -710,7 +703,7 @@ export class PortalsCoreService extends BaseService {
 						}
 					},
 					error => {
-						console.error(super.getErrorMessage("Error occurred while getting an role", error));
+						console.error(super.getErrorMessage("Error occurred while getting a role", error));
 						if (onError !== undefined) {
 							onError(error);
 						}
@@ -725,33 +718,18 @@ export class PortalsCoreService extends BaseService {
 			super.getURI("role", body.ID),
 			body,
 			data => {
-				this.updateRole(data, Role.contains(body.ID) ? Role.get(body.ID).ParentID : undefined);
-				AppEvents.broadcast("Portals", { Object: "Role", Type: "Updated", ID: body.ID });
+				const oldParentID = Role.contains(body.ID) ? Role.get(body.ID).ParentID : undefined;
+				this.updateRole(data, oldParentID);
+				this.broadcastRoleUpdatedEventMessage(body.ID, body.ParentID);
+				if (oldParentID !== body.ParentID) {
+					this.broadcastRoleUpdatedEventMessage(body.ID, oldParentID);
+				}
 				if (onNext !== undefined) {
 					onNext(data);
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating an role", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
-	);
-	}
-
-	public deleteRoleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.deleteAsync(
-			super.getURI("role", id),
-			data => {
-				this.deleteRole(data, Role.contains(id) ? Role.get(id).ParentID : undefined);
-				AppEvents.broadcast("Portals", { Object: "Role", Type: "Deleted", ID: id });
-				if (onNext !== undefined) {
-					onNext(data);
-				}
-			},
-			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting an role", error));
+				console.error(super.getErrorMessage("Error occurred while updating a role", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -759,16 +737,41 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
+	public deleteRoleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		return super.deleteAsync(
+			super.getURI("role", id),
+			data => {
+				const parentID = Role.contains(id) ? Role.get(id).ParentID : undefined;
+				this.deleteRole(data, parentID);
+				this.broadcastRoleUpdatedEventMessage(id, parentID, "Deleted");
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while deleting a role", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			},
+			headers
+		);
+	}
+
+	private broadcastRoleUpdatedEventMessage(id: string, parentID: string, type?: string) {
+		AppEvents.broadcast("Portals", { Object: "Role", Type: type || "Updated", ID: id, ParentID: AppUtility.isNotEmpty(parentID) ? parentID : undefined });
+	}
+
 	private async processRoleUpdateMessageAsync(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Update":
 				this.updateRole(message.Data, message.Data.ParentID);
-				AppEvents.broadcast("Portals", { Object: "Role", Type: "Updated", ID: message.Data.ID });
+				this.broadcastRoleUpdatedEventMessage(message.Data.ID, message.Data.ParentID);
 				break;
 
 			case "Delete":
 				this.deleteRole(message.Data.ID, message.Data.ParentID);
-				AppEvents.broadcast("Portals", { Object: "Role", Type: "Deleted", ID: message.Data.ID });
+				this.broadcastRoleUpdatedEventMessage(message.Data.ID, message.Data.ParentID, "Deleted");
 				break;
 
 			default:
@@ -786,34 +789,34 @@ export class PortalsCoreService extends BaseService {
 				}
 			});
 		}
+		return role;
 	}
 
 	private updateRole(json: any, oldParentID?: string) {
-		const role = Role.set(Role.deserialize(json, Role.get(json.ID)));
-		if (AppUtility.isObject(json, true) && AppUtility.isArray(json.Children, true)) {
-			role.childrenIDs = [];
-			(json.Children as Array<any>).forEach(cdata => {
-				const crole = this.updateRole(cdata);
-				crole.ParentID = role.ID;
-				role.childrenIDs.push(crole.ID);
-			});
-			role.childrenIDs = role.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+		if (AppUtility.isObject(json, true)) {
+			const role = Role.set(Role.deserialize(json, Role.get(json.ID)));
+			if (AppUtility.isArray(json.Children, true)) {
+				role.childrenIDs = [];
+				(json.Children as Array<any>).map(c => this.updateRole(c)).filter(r => r !== undefined).forEach(r => role.childrenIDs.push(r.ID));
+				role.childrenIDs = role.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+			}
+			let parentRole = Role.get(oldParentID);
+			if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.ID !== role.ParentID) {
+				AppUtility.removeAt(parentRole.childrenIDs, parentRole.childrenIDs.indexOf(role.ID));
+			}
+			parentRole = role.Parent;
+			if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.childrenIDs.indexOf(role.ID) < 0) {
+				parentRole.childrenIDs.push(role.ID);
+				parentRole.childrenIDs = parentRole.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+			}
+			return role;
 		}
-		let parentRole = oldParentID !== undefined ? Role.get(oldParentID) : undefined;
-		if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.ID !== role.ParentID) {
-			AppUtility.removeAt(parentRole.childrenIDs, parentRole.childrenIDs.indexOf(role.ID));
-		}
-		parentRole = role.Parent;
-		if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.childrenIDs.indexOf(role.ID) < 0) {
-			parentRole.childrenIDs.push(role.ID);
-			parentRole.childrenIDs = parentRole.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
-		}
-		return role;
+		return undefined;
 	}
 
 	private deleteRole(id: string, parentID?: string) {
 		if (Role.contains(id)) {
-			const parentRole = parentID !== undefined ? Role.get(parentID) : undefined;
+			const parentRole = Role.get(parentID);
 			if (parentRole !== undefined && parentRole.childrenIDs !== undefined) {
 				AppUtility.removeAt(parentRole.childrenIDs, parentRole.childrenIDs.indexOf(id));
 			}

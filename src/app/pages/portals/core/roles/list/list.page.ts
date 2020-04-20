@@ -123,7 +123,7 @@ export class RolesListPage implements OnInit, OnDestroy {
 				this.roles = this.parentRole.Children;
 				this.configSvc.appTitle = this.title = AppUtility.format(title, { title: `[${this.parentRole.FullTitle}]` });
 				AppEvents.on("Portals", info => {
-					if (info.args.Object === "Role" && this.parentRole.ID === info.args.ID) {
+					if (info.args.Object === "Role" && (this.parentRole.ID === info.args.ID || this.parentRole.ID === info.args.ParentID)) {
 						this.roles = this.parentRole.Children;
 					}
 				}, `Roles:RefreshChildren:${this.parentID}`);
@@ -131,13 +131,13 @@ export class RolesListPage implements OnInit, OnDestroy {
 			else {
 				this.filterBy.And = [
 					{ SystemID: { Equals: this.organization.ID } },
-					{ ParentID: AppUtility.isNotEmpty(this.parentID) ? { Equals: this.parentID.trim() } : "IsNull" }
+					{ ParentID: "IsNull" }
 				];
 				this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `role@${this.portalsCoreSvc.name}`) || AppPagination.getDefault();
 				this.pagination.PageNumber = this.pageNumber;
 				await this.searchAsync();
 				AppEvents.on("Portals", info => {
-					if (info.args.Object === "Role" && (info.args.Type === "Updated" || info.args.Type === "Deleted")) {
+					if (info.args.Object === "Role" && !info.args.ParentID) {
 						this.roles = Role.all.filter(role => role.SystemID === this.organization.ID && role.ParentID === undefined).sort(AppUtility.getCompareFunction("Title"));
 					}
 				}, "Roles:RefreshList");
@@ -243,16 +243,13 @@ export class RolesListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.roles.push(Role.get(o.ID)));
+			(results || []).forEach(r => this.roles.push(Role.get(r.ID)));
 		}
 		else {
-			const items = results === undefined
-				? Role.all.filter(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID)
-				: results.map(o => Role.get(o.ID));
-			const objects = new List(items).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
-			this.roles = results === undefined
-				? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
-				: this.roles.concat(objects.ToArray());
+			const objects = new List(results !== undefined ? results.map(r => Role.get(r.ID)) : Role.all.filter(r => r.SystemID === this.organization.ID && r.ParentID === this.parentID)).OrderBy(r => r.Title).ThenByDescending(r => r.LastModified);
+			this.roles = results !== undefined
+				? this.roles.concat(objects.ToArray())
+				: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();
 		}
 		if (onNext !== undefined) {
 			onNext();

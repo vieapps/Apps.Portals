@@ -248,7 +248,8 @@
 				}
 			},
 			"list": {
-				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác đơn vị - tổ chức"
+				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác đơn vị - tổ chức",
+				"owner": "Tài khoản chủ sở hữu: {{owner}}"
 			},
 			"update": {
 				"segments": {
@@ -321,7 +322,13 @@
 						"new": "Đã khởi tạo vai trò sử dụng thành công",
 						"update": "Đã cập nhật các thay đổi của vai trò sử dụng thành công",
 						"delete": "Đã xoá vai trò sử dụng thành công"
-					}
+					},
+					"mode": "Cách thức thực hiện với toàn bộ vai trò cấp dưới:"
+				},
+				"buttons": {
+					"delete": "Xoá vai trò sử dụng",
+					"delete-all": "Xoá bỏ",
+					"set-null-all": "Chuyển về gốc"
 				}
 			}
 		}
