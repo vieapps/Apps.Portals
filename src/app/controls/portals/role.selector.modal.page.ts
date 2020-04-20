@@ -212,13 +212,12 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 				(data !== undefined ? data.Objects as Array<any> : []).filter(o => this.excludedIDs.indexOf(o.ID) < 0).forEach(o => this.results.push(Role.get(o.ID)));
 			}
 			else {
-				const items = data === undefined
-					? Role.all.filter(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID)
-					: (data.Objects as Array<any>).map(o => Role.get(o.ID));
-				const objects = new List(items).Where(o => this.excludedIDs.indexOf(o.ID) < 0).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
-				this.roles = data === undefined
-					? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
-					: this.roles.concat(objects.ToArray());
+				const objects = new List(data !== undefined ? (data.Objects as Array<any>).map(r => Role.get(r.ID)) : Role.all.filter(r => r.SystemID === this.organization.ID && r.ParentID === this.parentID))
+					.Where(r => this.excludedIDs.indexOf(r.ID) < 0)
+					.OrderBy(r => r.Title).ThenByDescending(r => r.LastModified);
+				this.roles = data !== undefined
+					? this.roles.concat(objects.ToArray())
+					: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();
 			}
 			if (onNext !== undefined) {
 				onNext();
@@ -263,14 +262,14 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	back() {
 		this.parentRole = this.parentRole.Parent;
 		this.roles = this.parentRole !== undefined
-			? this.parentRole.Children
+			? this.parentRole.Children.filter(r => this.excludedIDs.indexOf(r.ID) < 0)
 			: Role.all.filter(r => r.SystemID === this.organization.ID && r.ParentID === undefined).sort(AppUtility.getCompareFunction("Title"));
 	}
 
 	async showChildrenAsync(event: Event, role: Role) {
 		event.stopPropagation();
 		this.parentRole = role;
-		this.roles = this.parentRole.Children;
+		this.roles = this.parentRole.Children.filter(r => this.excludedIDs.indexOf(r.ID) < 0);
 	}
 
 }
