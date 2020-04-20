@@ -598,15 +598,11 @@ export class PortalsCoreService extends BaseService {
 			term => AppUtility.format(super.getSearchURI("role", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
 				const role = Role.get(obj.ID);
-				if (role === undefined) {
-					return convertToCompleterItem(this.fetchRole(Role.update(obj)));
-				}
-				else if (role.childrenIDs === undefined) {
-					return convertToCompleterItem(this.fetchRole(role));
-				}
-				else {
-					return convertToCompleterItem(role);
-				}
+				return role === undefined
+					? convertToCompleterItem(this.fetchRole(Role.update(obj)))
+					: role.childrenIDs === undefined
+						? convertToCompleterItem(this.fetchRole(role))
+						: convertToCompleterItem(role);
 			}),
 			convertToCompleterItem
 		);
