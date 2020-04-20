@@ -12,7 +12,7 @@ import { ConfigurationService } from "../../../services/configuration.service";
 import { AuthenticationService } from "../../../services/authentication.service";
 import { UsersService } from "../../../services/users.service";
 import { UserProfile } from "../../../models/user";
-import { RatingPoint } from "../../../models/ratingpoint";
+import { RatingPoint } from "../../../models/rating.point";
 
 @Component({
 	selector: "page-users-list",
