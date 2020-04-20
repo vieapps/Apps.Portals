@@ -163,13 +163,11 @@ export class AppUtility {
 					? source
 					: {};
 
-			this.getProperties(target, true).forEach(info => {
-				const type = typeof target[info.name];
-				if (type !== "undefined" && type !== "function") {
-					target[info.name] = this.isDate(target[info.name])
-						? new Date(data[info.name])
-						: data[info.name];
-				}
+			this.getProperties(target, true).map(info => info.name).filter(name => typeof target[name] !== "function").forEach(name => {
+				const value = data[name];
+				target[name] = value === undefined || value === null
+					? undefined
+					: this.isDate(target[name]) ? new Date(value) : value;
 			});
 
 			if (onCompleted !== undefined) {
@@ -226,7 +224,7 @@ export class AppUtility {
 				}
 				exists.push(value);
 			}
-			return typeof value === "undefined" ? null : value;
+			return value;
 		}));
 
 		// remove the specified properties
