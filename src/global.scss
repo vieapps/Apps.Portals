@@ -90,6 +90,17 @@ app-form label.description {
 	margin: 10px 0;
 }
 
+/* text */
+app-form span.text,
+app-form div.text {
+	padding: 12px 0;
+}
+
+/* buttons */
+app-form ion-buttons.sc-ion-buttons-md-h,
+app-form ion-buttons.sc-ion-buttons-ios-h {
+	display: block;
+}
 /* selects */
 app-form ion-item.select-dropdown > select {
 	margin: 8px 0;
