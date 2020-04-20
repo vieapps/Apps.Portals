@@ -641,7 +641,8 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get isTextDisplayAsBoxControl() {
-		return this.isTextDisplayControl && this.type !== "textarea" && this.type !== "label" && this.type !== "paragraph";
+		const type = this.type;
+		return this.isTextDisplayControl && type !== "textarea" && type !== "label" && type !== "paragraph";
 	}
 
 	get isTextDisplayAsTexAreaControl() {

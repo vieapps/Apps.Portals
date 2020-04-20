@@ -97,12 +97,12 @@ export class AppFormsComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.submit.emit(this);
 	}
 
-	onRefreshCaptcha(event: AppFormsControlComponent) {
-		this.refreshCaptcha.emit(event);
+	onRefreshCaptcha(control: AppFormsControlComponent) {
+		this.refreshCaptcha.emit(control);
 	}
 
-	onLastFocus(event: AppFormsControlComponent) {
-		this.lastFocus.emit(event);
+	onLastFocus(control: AppFormsControlComponent) {
+		this.lastFocus.emit(control);
 	}
 
 	get gotSegments() {

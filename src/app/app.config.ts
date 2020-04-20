@@ -18,6 +18,9 @@ export class AppConfig {
 		/** Files HTTP service */
 		files: "https://fs.vieapps.com/",
 
+		/** Portals HTTP service */
+		portals: "https://portals.vieapps.com/",
+
 		/** URI to perform activation (on the web) */
 		activations: "https://vieapps.net/"
 	};
