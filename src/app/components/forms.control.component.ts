@@ -20,8 +20,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	private _style: string;
 	private _completerInitialValue: any;
-	private _lookupDisplayValues: Array<AppFormsLookupValue>;
 	private _selectOptions: Array<string>;
+	private _lookupDisplayValues: Array<AppFormsLookupValue>;
+	private _text: string;
 
 	public showPassword = false;
 
@@ -48,16 +49,24 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	ngOnInit() {
 		this.control.controlRef = this;
 		this.control.formControlRef = this.formControl;
-		this.lookupDisplayValues = this.control.Extras["LookupDisplayValues"] || this.control.Extras["lookupDisplayValues"];
-		if (this.isCompleter) {
-			this.completerInit();
-			this.completerGetInitialValue();
+		if (this.isLookupControl) {
+			this.lookupDisplayValues = this.control.Extras["LookupDisplayValues"] || this.control.Extras["lookupDisplayValues"];
+			if (this.isCompleter) {
+				this.completerInit();
+				this.completerGetInitialValue();
+			}
+		}
+		else if (this.isTextDisplayControl) {
+			this.text = this.control.Extras["Text"] || this.control.Extras["text"];
 		}
 	}
 
 	ngAfterViewInit() {
 		this.control.elementRef = this.elementRef;
-		if (this.isYesNoControl || (this.isCompleter && this.completerInitialValue !== undefined)) {
+		if (this.control.Options.OnAfterViewInit !== undefined) {
+			this.control.Options.OnAfterViewInit(this);
+		}
+		if (this.control.Options.OnAfterViewInit !== undefined || this.isYesNoControl || (this.isCompleter && this.completerInitialValue !== undefined)) {
 			this.changeDetector.detectChanges();
 		}
 	}
@@ -108,6 +117,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	get isTextAreaControl() {
 		return this.isFormControl && this.isControl("TextArea");
+	}
+
+	get isTextDisplayControl() {
+		return this.isFormControl && this.isControl("Text");
 	}
 
 	get isSelectControl() {
@@ -627,6 +640,32 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		};
 	}
 
+	get isTextDisplayAsBoxControl() {
+		return this.isTextDisplayControl && this.type !== "textarea" && this.type !== "label" && this.type !== "paragraph";
+	}
+
+	get isTextDisplayAsTexAreaControl() {
+		return this.isTextDisplayControl && this.type === "textarea";
+	}
+
+	get isTextDisplayAsLabelControl() {
+		return this.isTextDisplayControl && this.type === "label";
+	}
+
+	get isTextDisplayAsParagraphControl() {
+		return this.isTextDisplayControl && this.type === "paragraph";
+	}
+
+	/** Sets the text for displaying of this text control */
+	set text(value: string) {
+		this._text = value;
+	}
+
+	/** Gets the text for displaying of this text control */
+	get text() {
+		return this._text;
+	}
+
 	/** Gets the URI for displaying captcha image of this control */
 	get captchaURI() {
 		return this.control.captchaURI;
@@ -756,7 +795,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return (this.control.Options.Icon.Color || "medium").trim().toLowerCase();
 	}
 
-	async clickOnIcon() {
+	async clickOnIcon(event: Event) {
 		if (this.isPasswordControl) {
 			this.showPassword = !this.showPassword;
 			if (this.showPassword) {
@@ -770,17 +809,17 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			await this.lookupAsync();
 		}
 		else if (this.control.Options.Icon.OnClick !== undefined) {
-			this.control.Options.Icon.OnClick(this);
+			this.control.Options.Icon.OnClick(event, this);
 		}
 	}
 
-	clickOnButton(control: AppFormsControl, formGroup: FormGroup) {
+	clickOnButton(event: Event, control: AppFormsControl) {
 		if (control !== undefined && control.Options.ButtonOptions.OnClick !== undefined) {
-			control.Options.ButtonOptions.OnClick(control, formGroup);
+			control.Options.ButtonOptions.OnClick(event, control);
 		}
 	}
 
-	onFocus(event: any) {
+	onFocus(event: Event) {
 		if (this.control.Options.OnFocus !== undefined) {
 			this.control.Options.OnFocus(event, this);
 		}
@@ -795,7 +834,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		}
 	}
 
-	onBlur(event: any) {
+	onBlur(event: Event) {
 		if (this.control.Options.OnBlur !== undefined) {
 			this.control.Options.OnBlur(event, this);
 		}

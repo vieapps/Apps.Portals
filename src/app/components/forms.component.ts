@@ -40,6 +40,9 @@ export class AppFormsComponent implements OnInit, OnDestroy, AfterViewInit {
 	/** The event handler to run when the form was initialized */
 	@Output() init = new EventEmitter<AppFormsComponent>();
 
+	/** The event handler to run when the form's view was initialized */
+	@Output() afterViewInit = new EventEmitter<AppFormsComponent>();
+
 	/** The event handler to run when the form was submitted */
 	@Output() submit = new EventEmitter<AppFormsComponent>();
 
@@ -72,16 +75,19 @@ export class AppFormsComponent implements OnInit, OnDestroy, AfterViewInit {
 			this.appFormsSvc.buildForm(this.form, this.controls, this.value);
 			this.form["_controls"] = this.controls;
 			this.form["_segments"] = this.segments;
-			this.init.emit(this);
 		}
+
+		this.init.emit(this);
 	}
 
 	ngAfterViewInit() {
 		PlatformUtility.focus(this.controls.find(control => control.Options.AutoFocus), AppConfig.isRunningOnIOS ? 567 : 345);
+		this.afterViewInit.emit(this);
 	}
 
 	ngOnDestroy() {
 		this.init.unsubscribe();
+		this.afterViewInit.unsubscribe();
 		this.submit.unsubscribe();
 		this.refreshCaptcha.unsubscribe();
 		this.lastFocus.unsubscribe();

@@ -86,22 +86,23 @@ export interface AppFormsControlConfig {
 		Width?: string;
 		Height?: string;
 		Rows?: number;
-		OnFocus?: (event: any, control: AppFormsControlComponent) => void;
+		OnAfterViewInit?: (control: AppFormsControlComponent) => void;
+		OnFocus?: (event: Event, control: AppFormsControlComponent) => void;
 		OnKeyUp?: (event: KeyboardEvent, control: AppFormsControlComponent) => void;
-		OnBlur?: (event: any, control: AppFormsControlComponent) => void;
+		OnBlur?: (event: Event, control: AppFormsControlComponent) => void;
 		OnChanged?: (event: any, control: AppFormsControlComponent) => void;
 		Icon?: {
 			Name?: string;
 			Fill?: string;
 			Color?: string;
 			Slot?: string;
-			OnClick?: (control: AppFormsControlComponent) => void;
+			OnClick?: (event: Event, control: AppFormsControlComponent) => void;
 		};
 		SelectOptions?: {
-			Values?: string | Array<string> | Array<{ Value: string, Label: string }>;
+			Values?: string | Array<string> | Array<AppFormsLookupValue>;
 			RemoteURI?: string;
-			RemoteURIConverter?: (data: any) => { Value: string, Label: string };
-			RemoteURIProcessor?: (uri: string, converter?: (data: any) => { Value: string, Label: string }) => Promise<Array<{ Value: string, Label: string }>>;
+			RemoteURIConverter?: (data: any) => AppFormsLookupValue;
+			RemoteURIProcessor?: (uri: string, converter?: (data: any) => AppFormsLookupValue) => Promise<Array<AppFormsLookupValue>>;
 			Multiple?: boolean;
 			AsBoxes?: boolean;
 			Interface?: string;
@@ -174,7 +175,7 @@ export interface AppFormsControlConfig {
 			};
 		};
 		ButtonOptions?: {
-			OnClick?: (control: AppFormsControl, formGroup: FormGroup) => void;
+			OnClick?: (event: Event, control: AppFormsControl) => void;
 			Fill?: string;
 			Color?: string;
 			Icon?: {
@@ -188,6 +189,8 @@ export interface AppFormsControlConfig {
 		Controls?: Array<AppFormsControlConfig>
 	};
 }
+
+//  ---------------------------------------------------------------
 
 /** Presents a value for working with lookup in the dynamic forms */
 export interface AppFormsLookupValue {
@@ -250,22 +253,23 @@ export class AppFormsControl {
 		Width: undefined as string,
 		Height: undefined as string,
 		Rows: undefined as number,
-		OnFocus: undefined as (event: any, control: AppFormsControlComponent) => void,
+		OnAfterViewInit: undefined as (control: AppFormsControlComponent) => void,
+		OnFocus: undefined as (event: Event, control: AppFormsControlComponent) => void,
 		OnKeyUp: undefined as (event: KeyboardEvent, control: AppFormsControlComponent) => void,
-		OnBlur: undefined as (event: any, control: AppFormsControlComponent) => void,
+		OnBlur: undefined as (event: Event, control: AppFormsControlComponent) => void,
 		OnChanged: undefined as (event: any, control: AppFormsControlComponent) => void,
 		Icon: {
 			Name: undefined as string,
 			Fill: undefined as string,
 			Color: undefined as string,
 			Slot: undefined as string,
-			OnClick: undefined as (control: AppFormsControlComponent) => void
+			OnClick: undefined as (event: Event, control: AppFormsControlComponent) => void
 		},
 		SelectOptions: {
-			Values: undefined as Array<{ Value: string, Label: string }>,
+			Values: undefined as Array<AppFormsLookupValue>,
 			RemoteURI: undefined as string,
-			RemoteURIConverter: undefined as (data: any) => { Value: string, Label: string },
-			RemoteURIProcessor: undefined as (uri: string, converter?: (data: any) => { Value: string, Label: string }) => Promise<Array<{ Value: string, Label: string }>>,
+			RemoteURIConverter: undefined as (data: any) => AppFormsLookupValue,
+			RemoteURIProcessor: undefined as (uri: string, converter?: (data: any) => AppFormsLookupValue) => Promise<Array<AppFormsLookupValue>>,
 			Multiple: false,
 			AsBoxes: false,
 			Interface: "alert",
@@ -338,7 +342,7 @@ export class AppFormsControl {
 			}
 		},
 		ButtonOptions: {
-			OnClick: undefined as (control: AppFormsControl, formGroup: FormGroup) => void,
+			OnClick: undefined as (event: Event, control: AppFormsControl) => void,
 			Fill: "solid",
 			Color: undefined as string,
 			Icon: {
@@ -477,6 +481,7 @@ export class AppFormsControl {
 			control.Options.Height = controlOptions.Height || controlOptions.height;
 			control.Options.Rows = controlOptions.Rows || controlOptions.rows;
 
+			control.Options.OnAfterViewInit = controlOptions.OnAfterViewInit || controlOptions.onAfterViewInit || controlOptions.onafterviewinit;
 			control.Options.OnFocus = controlOptions.OnFocus || controlOptions.onFocus || controlOptions.onfocus;
 			control.Options.OnKeyUp = controlOptions.OnKeyUp || controlOptions.onKeyUp || controlOptions.onkeyup;
 			control.Options.OnBlur = controlOptions.OnBlur || controlOptions.onBlur || controlOptions.onblur;
@@ -645,30 +650,31 @@ export class AppFormsControl {
 	}
 
 	/** Copies this control */
-	public copy(onPreCompleted?: (options: AppFormsControl) => void) {
-		const options = AppUtility.clone(this, ["Order", "Validators", "AsyncValidators"]) as AppFormsControl;
-		options.Validators = this.Validators;
-		options.AsyncValidators = this.AsyncValidators;
-		options.Options.OnFocus = this.Options.OnFocus;
-		options.Options.OnKeyUp = this.Options.OnKeyUp;
-		options.Options.OnBlur = this.Options.OnBlur;
-		options.Options.OnChanged = this.Options.OnChanged;
-		options.Options.Icon.OnClick = this.Options.Icon.OnClick;
-		options.Options.SelectOptions.InterfaceOptions = this.Options.SelectOptions.InterfaceOptions;
-		options.Options.LookupOptions.OnDelete = this.Options.LookupOptions.OnDelete;
-		options.Options.LookupOptions.ModalOptions.Component = this.Options.LookupOptions.ModalOptions.Component;
-		options.Options.LookupOptions.ModalOptions.OnDismiss = this.Options.LookupOptions.ModalOptions.OnDismiss;
-		options.Options.LookupOptions.CompleterOptions.DataSource = this.Options.LookupOptions.CompleterOptions.DataSource;
-		options.Options.LookupOptions.CompleterOptions.GetInitialValue = this.Options.LookupOptions.CompleterOptions.GetInitialValue;
-		options.Options.LookupOptions.CompleterOptions.OnInitialized = this.Options.LookupOptions.CompleterOptions.OnInitialized;
-		options.Options.LookupOptions.CompleterOptions.OnSelected = this.Options.LookupOptions.CompleterOptions.OnSelected;
-		options.Options.LookupOptions.SelectorOptions.OnAdd = this.Options.LookupOptions.SelectorOptions.OnAdd;
-		options.Options.FilePickerOptions.OnDelete = this.Options.FilePickerOptions.OnDelete;
-		options.Options.ButtonOptions.OnClick = this.Options.ButtonOptions.OnClick;
+	public copy(onPreCompleted?: (formControl: AppFormsControl) => void) {
+		const formControl = AppUtility.clone(this, ["Order", "Validators", "AsyncValidators"]) as AppFormsControl;
+		formControl.Validators = this.Validators;
+		formControl.AsyncValidators = this.AsyncValidators;
+		formControl.Options.OnAfterViewInit = this.Options.OnAfterViewInit;
+		formControl.Options.OnFocus = this.Options.OnFocus;
+		formControl.Options.OnKeyUp = this.Options.OnKeyUp;
+		formControl.Options.OnBlur = this.Options.OnBlur;
+		formControl.Options.OnChanged = this.Options.OnChanged;
+		formControl.Options.Icon.OnClick = this.Options.Icon.OnClick;
+		formControl.Options.SelectOptions.InterfaceOptions = this.Options.SelectOptions.InterfaceOptions;
+		formControl.Options.LookupOptions.OnDelete = this.Options.LookupOptions.OnDelete;
+		formControl.Options.LookupOptions.ModalOptions.Component = this.Options.LookupOptions.ModalOptions.Component;
+		formControl.Options.LookupOptions.ModalOptions.OnDismiss = this.Options.LookupOptions.ModalOptions.OnDismiss;
+		formControl.Options.LookupOptions.CompleterOptions.DataSource = this.Options.LookupOptions.CompleterOptions.DataSource;
+		formControl.Options.LookupOptions.CompleterOptions.GetInitialValue = this.Options.LookupOptions.CompleterOptions.GetInitialValue;
+		formControl.Options.LookupOptions.CompleterOptions.OnInitialized = this.Options.LookupOptions.CompleterOptions.OnInitialized;
+		formControl.Options.LookupOptions.CompleterOptions.OnSelected = this.Options.LookupOptions.CompleterOptions.OnSelected;
+		formControl.Options.LookupOptions.SelectorOptions.OnAdd = this.Options.LookupOptions.SelectorOptions.OnAdd;
+		formControl.Options.FilePickerOptions.OnDelete = this.Options.FilePickerOptions.OnDelete;
+		formControl.Options.ButtonOptions.OnClick = this.Options.ButtonOptions.OnClick;
 		if (onPreCompleted !== undefined) {
-			onPreCompleted(options);
+			onPreCompleted(formControl);
 		}
-		return options;
+		return formControl;
 	}
 
 	/** Sets focus into this control */
@@ -891,11 +897,17 @@ export class AppFormsService {
 			}
 			else {
 				const frmControl = formControl.SubControls === undefined
-					? this.getFormControl(formControl)
+					? AppUtility.isEquals(formControl.Type, "Text")
+						? undefined
+						: this.getFormControl(formControl)
 					: formControl.SubControls.AsArray
 						? this.getFormArray(formControl, this.getValidators(formControl), this.getAsyncValidators(formControl))
-						: this.getFormGroup(formControl.SubControls.Controls, undefined, this.getValidators(formControl), this.getAsyncValidators(formControl));
-				formGroup.addControl(formControl.Name, frmControl);
+						: AppUtility.isEquals(formControl.Type, "Buttons")
+							? undefined
+							: this.getFormGroup(formControl.SubControls.Controls, undefined, this.getValidators(formControl), this.getAsyncValidators(formControl));
+				if (frmControl !== undefined) {
+					formGroup.addControl(formControl.Name, frmControl);
+				}
 			}
 		});
 		return formGroup;
@@ -979,6 +991,35 @@ export class AppFormsService {
 	private getAsyncValidators(formControl: AppFormsControl) {
 		const asyncValidators = new Array<AsyncValidatorFn>();
 		return asyncValidators;
+	}
+
+	/** Gets the forms' button controls */
+	public getButtonControls(...buttons: Array<{ Name: string; Label: string; OnClick: (event: Event, control: AppFormsControl) => void; Options?: { Fill?: string; Color?: string; Css?: string; Icon?: { Name?: string; Slot?: string } } }>) {
+		return {
+			Name: "Buttons",
+			Type: "Buttons",
+			SubControls: {
+				Controls: buttons.map(button => {
+					return {
+						Name: button.Name,
+						Type: "Button",
+						Options: {
+							Label: button.Label,
+							Css: (button.Options !== undefined ? button.Options.Css : undefined) || "",
+							ButtonOptions: {
+								OnClick: button.OnClick,
+								Fill: (button.Options !== undefined ? button.Options.Fill : undefined) || "solid",
+								Color: (button.Options !== undefined ? button.Options.Color : undefined) || "primary",
+								Icon: {
+									Name: button.Options !== undefined && button.Options.Icon !== undefined ? button.Options.Icon.Name : undefined,
+									Slot: (button.Options !== undefined && button.Options.Icon !== undefined ? button.Options.Icon.Slot : undefined) || "start"
+								}
+							}
+						}
+					};
+				})
+			}
+		} as AppFormsControlConfig;
 	}
 
 	/** Validates the form and highlights all invalid controls (if has) */
@@ -1215,7 +1256,7 @@ export class AppFormsService {
 	public async showAlertAsync(header: string = null, subHeader: string = null, message: string, postProcess?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string, inputs?: Array<any>, backdropDismiss: boolean = false) {
 		await this.hideLoadingAsync(async () => await this.hideAlertAsync());
 		const buttons = AppUtility.isNotEmpty(cancelButtonText)
-			? [{ text: cancelButtonText, role: "cancel", handler: async (data?: any) => await this.hideAlertAsync() }]
+			? [{ text: cancelButtonText, role: "cancel", handler: async () => await this.hideAlertAsync() }]
 			: [];
 		buttons.push({
 			text: okButtonText || await this.getResourceAsync("common.buttons.ok"),
