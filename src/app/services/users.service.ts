@@ -1,10 +1,12 @@
 import { Injectable } from "@angular/core";
+import { DatePipe } from "@angular/common";
 import { AppXHR, AppRTU, AppMessage } from "../components/app.apis";
 import { AppEvents } from "../components/app.events";
 import { AppCrypto } from "../components/app.crypto";
 import { AppUtility } from "../components/app.utility";
 import { AppCustomCompleter } from "../components/app.completer";
 import { AppPagination } from "../components/app.pagination";
+import { AppFormsControlConfig } from "../components/forms.service";
 import { Account } from "../models/account";
 import { UserProfile } from "../models/user";
 import { Privilege } from "../models/privileges";
@@ -17,7 +19,8 @@ export class UsersService extends BaseService {
 
 	constructor(
 		private configSvc: ConfigurationService,
-		private authSvc: AuthenticationService
+		private authSvc: AuthenticationService,
+		private datePipe: DatePipe
 	) {
 		super("Users");
 		AppRTU.registerAsServiceScopeProcessor(this.name, async message => await this.processUpdateMessageAsync(message));
@@ -32,25 +35,11 @@ export class UsersService extends BaseService {
 					: UserProfile.deserialize(data);
 			return profile === undefined
 				? undefined
-				: {
-						title: profile.Name,
-						description: profile.getEmail(!this.authSvc.isSystemAdministrator()),
-						image: profile.avatarURI,
-						originalObject: profile
-					};
+				: { title: profile.Name, description: profile.getEmail(!this.authSvc.isSystemAdministrator()), image: profile.avatarURI, originalObject: profile };
 		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("profile", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(obj => {
-				if (!UserProfile.contains(obj.ID)) {
-					const profile = UserProfile.deserialize(obj);
-					UserProfile.update(profile);
-					return convertToCompleterItem(profile);
-				}
-				else {
-					return convertToCompleterItem(UserProfile.get(obj.ID));
-				}
-			}),
+			data => (data.Objects as Array<any> || []).map(obj => UserProfile.contains(obj.ID) ? convertToCompleterItem(UserProfile.get(obj.ID)) : convertToCompleterItem(UserProfile.update(UserProfile.deserialize(obj)))),
 			convertToCompleterItem
 		);
 	}
@@ -406,6 +395,40 @@ export class UsersService extends BaseService {
 				console.warn(super.getLogMessage("Got an update of an user"), message);
 				break;
 		}
+	}
+
+	public async getAuditFormControlAsync(created: Date, createdID: string, lastModified: Date, lastModifiedID: string, onPreCompleted?: (formConfig: AppFormsControlConfig) => void) {
+		const formConfig: AppFormsControlConfig = {
+			Name: "Audits",
+			Type: "Text",
+			Options: {
+				Label: "{{common.audits.label}}",
+				Type: "label",
+				OnAfterViewInit: async formControl => {
+					let creator = UserProfile.get(createdID);
+					if (creator === undefined) {
+						await this.getProfileAsync(createdID, _ => creator = UserProfile.get(createdID) || new UserProfile("Unknown"), undefined, true);
+					}
+					let modifier = UserProfile.get(lastModifiedID);
+					if (modifier === undefined) {
+						await this.getProfileAsync(lastModifiedID, _ => modifier = UserProfile.get(lastModifiedID) || new UserProfile("Unknown"), undefined, true);
+					}
+					const params = {
+						creator: creator.Name,
+						creatorProfileURI: creator.routerURI,
+						created: this.datePipe.transform(created, "h:mm a @ d/M/y"),
+						modifier: modifier.Name,
+						modifierProfileURI: modifier.routerURI,
+						modified: this.datePipe.transform(lastModified, "h:mm a @ d/M/y")
+					};
+					formControl.text = AppUtility.format(await this.configSvc.getResourceAsync("common.audits.info"), params);
+				}
+			}
+		};
+		if (onPreCompleted !== undefined) {
+			onPreCompleted(formConfig);
+		}
+		return formConfig;
 	}
 
 }

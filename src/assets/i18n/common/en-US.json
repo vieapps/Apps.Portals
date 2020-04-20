@@ -44,6 +44,10 @@
 				"searching": "searching...",
 				"noresults": "no matched result is found"
 			}
+		},
+		"audits": {
+			"label": "Management information",
+			"info": "Created by {{creator}} at {{created}} - {{modifier}} was modified at {{modified}}"
 		}
 	},
 	"privileges": {

@@ -44,6 +44,10 @@
 				"searching": "tìm kiếm...",
 				"noresults": "không có kết quả phù hợp"
 			}
+		},
+		"audits": {
+			"label": "Thông tin quản trị",
+			"info": "{{creator}} khởi tạo lúc {{created}} - {{modifier}} cập nhật lần cuối lúc {{modified}}"
 		}
 	},
 	"privileges": {
