@@ -94,12 +94,15 @@ export class Organization extends BaseModel {
 			UserPassword?: string;
 		}
 	};
+
 	ansiTitle = "";
+	owner: string;
 
 	/** Deserializes data to object */
 	public static deserialize(json: any, organization?: Organization) {
 		organization = organization || new Organization();
-		organization.copy(json, _ => organization.ansiTitle = AppUtility.toANSI(organization.Title).toLowerCase());
+		organization.copy(json);
+		organization.ansiTitle = AppUtility.toANSI(organization.Title).toLowerCase();
 		return organization;
 	}
 

@@ -38,20 +38,10 @@ export class Role extends BaseModel implements NestedModel {
 	ansiTitle = "";
 	childrenIDs: Array<string>;
 
-	public static filter(parentID?: string, organizationID?: string) {
-		let roles = Role.all;
-		if (AppUtility.isNotEmpty(organizationID)) {
-			roles = roles.filter(role => role.SystemID === organizationID);
-		}
-		roles = roles.filter(role => role.ParentID === parentID);
-		return roles.sort(AppUtility.getCompareFunction("Title"));
-	}
-
 	/** Deserializes data to object */
 	public static deserialize(json: any, role?: Role) {
 		role = role || new Role();
 		role.copy(json);
-		role.ParentID = AppUtility.isNotEmpty(role.ParentID) ? role.ParentID : undefined;
 		role.ansiTitle = AppUtility.toANSI(role.Title).toLowerCase();
 		return role;
 	}
@@ -93,13 +83,11 @@ export class Role extends BaseModel implements NestedModel {
 	}
 
 	get Parent() {
-		return AppUtility.isNotEmpty(this.ParentID) ? Role.get(this.ParentID) : undefined;
+		return Role.get(this.ParentID);
 	}
 
 	get Children() {
-		return AppUtility.isArray(this.childrenIDs, true)
-			? this.childrenIDs.map(id => Role.get(id)).sort(AppUtility.getCompareFunction("Title"))
-			: Role.filter(this.ID);
+		return (AppUtility.isArray(this.childrenIDs, true) ? this.childrenIDs.map(id => Role.get(id)) : Role.all.filter(role => role.ParentID === this.ID)).sort(AppUtility.getCompareFunction("Title"));
 	}
 
 	public get listURI() {
