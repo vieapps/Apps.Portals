@@ -2,15 +2,18 @@ import { Dictionary } from "typescript-collections";
 import { AppConfig } from "../app.config";
 import { AppUtility } from "../components/app.utility";
 import { Base as BaseModel } from "./base";
-import { RatingPoint } from "./ratingpoint";
+import { RatingPoint } from "./rating.point";
 
 /** Base user profile */
 export class UserProfileBase extends BaseModel {
 
-	constructor() {
+	constructor(
+		name?: string
+	) {
 		super();
 		delete this["Privileges"];
 		delete this["OriginalPrivileges"];
+		this.Name = AppUtility.isNotEmpty(name) ? name : "";
 	}
 
 	/** All user profile instances */
@@ -106,8 +109,10 @@ export class UserProfileBase extends BaseModel {
 /** Full user profile (with related information from main service) */
 export class UserProfile extends UserProfileBase {
 
-	constructor() {
-		super();
+	constructor(
+		name?: string
+	) {
+		super(name);
 	}
 
 	Level = "Normal";
