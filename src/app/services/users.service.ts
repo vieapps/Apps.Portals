@@ -397,10 +397,11 @@ export class UsersService extends BaseService {
 		}
 	}
 
-	public async getAuditFormControlAsync(created: Date, createdID: string, lastModified: Date, lastModifiedID: string, onPreCompleted?: (formConfig: AppFormsControlConfig) => void) {
+	public async getAuditFormControlAsync(created: Date, createdID: string, lastModified: Date, lastModifiedID: string, segment?: string, onPreCompleted?: (formConfig: AppFormsControlConfig) => void) {
 		const formConfig: AppFormsControlConfig = {
 			Name: "Audits",
 			Type: "Text",
+			Segment: segment,
 			Options: {
 				Label: "{{common.audits.label}}",
 				Type: "label",
