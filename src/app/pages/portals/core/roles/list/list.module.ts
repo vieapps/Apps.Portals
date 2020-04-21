@@ -10,8 +10,8 @@ import { RolesListPage } from "./list.page";
 	imports: [
 		CommonModule,
 		IonicModule,
-		RouterModule.forChild([{ path: "", component: RolesListPage }]),
-		TimePipeModule
+		TimePipeModule,
+		RouterModule.forChild([{ path: "", component: RolesListPage }])
 	],
 	exports: [],
 	declarations: [RolesListPage]

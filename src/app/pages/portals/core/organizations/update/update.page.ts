@@ -11,8 +11,10 @@ import { PortalsCoreService } from "@services/portals.core.service";
 import { Organization } from "@models/portals.core.organization";
 import { Privileges } from "@models/privileges";
 import { UserProfile } from "@models/user";
-import { RolesSelectorModalPage } from "../../../../../controls/portals/role.selector.modal.page";
-import { UsersSelectorModalPage } from "../../../../../controls/common/user.selector.modal.page";
+import { Desktop } from "@models/portals.core.desktop";
+import { RolesSelectorModalPage } from "@controls/portals/role.selector.modal.page";
+import { UsersSelectorModalPage } from "@controls/common/user.selector.modal.page";
+import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.modal.page";
 
 @Component({
 	selector: "page-portals-core-organizations-update",
@@ -98,47 +100,11 @@ export class OrganizationsUpdatePage implements OnInit {
 			this.organization.EmailSettings = { Smtp: { Port: 25, EnableSsl: false } };
 		}
 
-		this.formSegments.items = await this.getOrganizationFormSegmentsAsync();
-		this.formConfig = await this.getOrganizationFormControlsAsync(formConfig => {
-			if (this.organization.ID === "") {
-				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title")).Options.OnBlur = (_, formControl) => {
-					this.form.controls.Alias.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
-					((this.form.controls.Notifications as FormGroup).controls.WebHooks as FormGroup).controls.SignKey.setValue(AppCrypto.md5(formControl.value), { onlySelf: true });
-				};
-				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
-			}
-
-			if (this.canModerateOrganization) {
-				const ownerControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OwnerID"));
-				ownerControl.Options.LookupOptions.CompleterOptions.AllowLookupByModal = true;
-				ownerControl.Options.LookupOptions.ModalOptions = {
-					Component: UsersSelectorModalPage,
-					ComponentProps: { multiple: false },
-					OnDismiss: (data, formControl) => {
-						if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
-							formControl.completerInitialValue = UserProfile.get(data[0]);
-						}
-					}
-				};
-			}
-
-			const instructionControls = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Instructions")).SubControls.Controls;
-			Organization.instructionElements.forEach(type => {
-				const controls = instructionControls.find(ctrl => AppUtility.isEquals(ctrl.Name, type)).SubControls.Controls;
-				controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Language")).Options.OnChanged = (event, formControl) => {
-					this.instructions[formControl.parentControl.Name] = this.instructions[formControl.parentControl.Name] || {};
-					const instruction = this.instructions[formControl.parentControl.Name][event.detail.value] || {};
-					formControl.formGroup.controls.Subject.setValue(instruction.Subject, { onlySelf: true });
-					formControl.formGroup.controls.Body.setValue(instruction.Body, { onlySelf: true });
-					formControl.parentControl.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Subject")).focus();
-				};
-				controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Subject")).Options.OnBlur = (_, formControl) => this.instructions[formControl.parentControl.Name][formControl.formGroup.controls.Language.value] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
-				controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Body")).Options.OnBlur = (_, formControl) => this.instructions[formControl.parentControl.Name][formControl.formGroup.controls.Language.value] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
-			});
-		});
+		this.formSegments.items = await this.getFormSegmentsAsync();
+		this.formConfig = await this.getFormControlsAsync();
 	}
 
-	private async getOrganizationFormSegmentsAsync(onPreCompleted?: (formSegments: AppFormsSegment[]) => void) {
+	private async getFormSegmentsAsync(onPreCompleted?: (formSegments: AppFormsSegment[]) => void) {
 		const formSegments = [
 			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.organizations.update.segments.basic")),
 			new AppFormsSegment("privileges", await this.configSvc.getResourceAsync("portals.organizations.update.segments.privileges")),
@@ -157,11 +123,15 @@ export class OrganizationsUpdatePage implements OnInit {
 		return formSegments;
 	}
 
-	private async getOrganizationFormControlsAsync(onPreCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
+	private async getFormControlsAsync(onPreCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const socials: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "socials");
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
+
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "organization", "form-controls");
 		formConfig.forEach(ctrl => ctrl.Segment = "basic");
+		if (this.organization.ID !== "") {
+			formConfig.push(await this.usersSvc.getAuditFormControlAsync(this.organization.Created, this.organization.CreatedID, this.organization.LastModified, this.organization.LastModifiedID, "basic"));
+		}
 
 		formConfig.push(
 			{
@@ -353,9 +323,21 @@ export class OrganizationsUpdatePage implements OnInit {
 			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "emails", false),
 		);
 
-		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
+		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
+		control.Options.AutoFocus = true;
+
+		if (this.organization.ID === "") {
+			control.Options.OnBlur = (_, formControl) => {
+				this.form.controls.Alias.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
+				((this.form.controls.Notifications as FormGroup).controls.WebHooks as FormGroup).controls.SignKey.setValue(AppCrypto.md5(formControl.value), { onlySelf: true });
+			};
+		}
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
 		control.Type = "TextArea";
 		control.Options.Rows = 2;
+
+		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OwnerID"));
 		control.Required = true;
@@ -368,7 +350,6 @@ export class OrganizationsUpdatePage implements OnInit {
 				}
 			}
 			control.Type = "Lookup";
-			control.Hidden = false;
 			control.Options.LookupOptions = {
 				Multiple: false,
 				AsModal: false,
@@ -376,7 +357,17 @@ export class OrganizationsUpdatePage implements OnInit {
 				CompleterOptions: {
 					DataSource: this.usersSvc.completerDataSource,
 					InitialValue: initialValue,
+					AllowLookupByModal: true,
 					OnSelected: (event, formControl) => formControl.setValue(AppUtility.isObject(event, true) && event.originalObject !== undefined && AppUtility.isNotEmpty(event.originalObject.ID) ? event.originalObject.ID : undefined)
+				},
+				ModalOptions: {
+					Component: UsersSelectorModalPage,
+					ComponentProps: { multiple: false },
+					OnDismiss: (data, formControl) => {
+						if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
+							formControl.completerInitialValue = UserProfile.get(data[0]);
+						}
+					}
 				}
 			};
 		}
@@ -438,14 +429,64 @@ export class OrganizationsUpdatePage implements OnInit {
 		control.Options.OnChanged = (event, formControl) => console.log("SELECT", event, formControl.formControl, formControl.control);
 		*/
 
-		control = formConfig.find(ctrl => ctrl.Options !== undefined && ctrl.Options.AutoFocus) || formConfig.find(ctrl => AppUtility.isEquals(ctrl.Type, "TextBox") && !ctrl.Hidden);
-		if (control !== undefined) {
-			control.Options.AutoFocus = true;
+		const homeDesktopCtrl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "HomeDesktopID"));
+		const searchDesktopCtrl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SearchDesktopID"));
+
+		homeDesktopCtrl.Type = searchDesktopCtrl.Type = "Lookup";
+		homeDesktopCtrl.Options.LookupOptions = searchDesktopCtrl.Options.LookupOptions = {
+			Multiple: false,
+			OnDelete: (_, formControl) => {
+				formControl.setValue(undefined);
+				formControl.lookupDisplayValues = undefined;
+			},
+			ModalOptions: {
+				Component: DesktopsSelectorModalPage,
+				ComponentProps: {
+					multiple: false,
+					organizationID: this.organization.ID
+				},
+				OnDismiss: (data, formControl) => {
+					if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
+						const desktop = Desktop.get(data[0]);
+						formControl.setValue(desktop.ID);
+						formControl.lookupDisplayValues = [{ Value: desktop.ID, Label: desktop.FullTitle }];
+					}
+				}
+			}
+		};
+
+		let homeDesktop = Desktop.get(this.organization.HomeDesktopID);
+		if (homeDesktop === undefined && AppUtility.isNotEmpty(this.organization.HomeDesktopID)) {
+			await this.portalsCoreSvc.getDesktopAsync(this.organization.HomeDesktopID, _ => homeDesktop = Desktop.get(this.organization.HomeDesktopID), undefined, true);
 		}
 
+		let searchDesktop = Desktop.get(this.organization.SearchDesktopID);
+		if (searchDesktop === undefined && AppUtility.isNotEmpty(this.organization.SearchDesktopID)) {
+			await this.portalsCoreSvc.getDesktopAsync(this.organization.SearchDesktopID, _ => searchDesktop = Desktop.get(this.organization.SearchDesktopID), undefined, true);
+		}
+
+		homeDesktopCtrl.Options.OnAfterViewInit = formControl => formControl.lookupDisplayValues = homeDesktop !== undefined ? [{ Value: homeDesktop.ID, Label: homeDesktop.FullTitle }] : undefined;
+		searchDesktopCtrl.Options.OnAfterViewInit = formControl => formControl.lookupDisplayValues = searchDesktop !== undefined ? [{ Value: searchDesktop.ID, Label: searchDesktop.FullTitle }] : undefined;
+
+		const instructionControls = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Instructions")).SubControls.Controls;
+		Organization.instructionElements.forEach(type => {
+			const controls = instructionControls.find(ctrl => AppUtility.isEquals(ctrl.Name, type)).SubControls.Controls;
+			controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Language")).Options.OnChanged = (event, formControl) => {
+				this.instructions[formControl.parentControl.Name] = this.instructions[formControl.parentControl.Name] || {};
+				const instruction = this.instructions[formControl.parentControl.Name][event.detail.value] || {};
+				formControl.formGroup.controls.Subject.setValue(instruction.Subject, { onlySelf: true });
+				formControl.formGroup.controls.Body.setValue(instruction.Body, { onlySelf: true });
+				formControl.parentControl.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Subject")).focus();
+			};
+			controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Subject")).Options.OnBlur = (_, formControl) => this.instructions[formControl.parentControl.Name][formControl.formGroup.controls.Language.value] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
+			controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Body")).Options.OnBlur = (_, formControl) => this.instructions[formControl.parentControl.Name][formControl.formGroup.controls.Language.value] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
+		});
+
+		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (onPreCompleted !== undefined) {
 			onPreCompleted(formConfig);
 		}
+
 		return formConfig;
 	}
 

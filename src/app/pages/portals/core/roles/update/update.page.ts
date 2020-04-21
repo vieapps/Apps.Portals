@@ -10,8 +10,8 @@ import { PortalsCoreService } from "@services/portals.core.service";
 import { Organization } from "@models/portals.core.organization";
 import { Role } from "@models/portals.core.role";
 import { UserProfile } from "@models/user";
-import { RolesSelectorModalPage } from "../../../../../controls/portals/role.selector.modal.page";
-import { UsersSelectorModalPage } from "../../../../../controls/common/user.selector.modal.page";
+import { RolesSelectorModalPage } from "@controls/portals/role.selector.modal.page";
+import { UsersSelectorModalPage } from "@controls/common/user.selector.modal.page";
 
 @Component({
 	selector: "page-portals-core-roles-update",
@@ -72,7 +72,7 @@ export class RolesUpdatePage implements OnInit {
 	private async initializeFormAsync() {
 		this.role = this.role || new Role(this.organization.ID);
 		if (this.organization === undefined || this.organization.ID === "" || this.organization.ID !== this.role.SystemID) {
-			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.roles.list.invalid"));
+			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"));
 			return;
 		}
 
@@ -100,117 +100,10 @@ export class RolesUpdatePage implements OnInit {
 			this.role.ParentID = this.configSvc.requestParams["ParentID"];
 		}
 
-		const parentRole = this.role.Parent;
-
-		this.formConfig = await this.getFormConfigAsync(async formConfig => {
-			let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
-			control.Options.AutoFocus = true;
-
-			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
-			control.Type = "TextArea";
-			control.Options.Rows = 2;
-
-			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID"));
-			control.Hidden = false;
-			control.Type = "Lookup";
-			control.Extras = { LookupDisplayValues: parentRole !== undefined ? [{ Value: parentRole.ID, Label: parentRole.FullTitle }] : undefined };
-			control.Options.LookupOptions = {
-				AsModal: true,
-				AsCompleter: false,
-				Multiple: false,
-				OnDelete: (_, formControl) => {
-					formControl.setValue(undefined);
-					formControl.lookupDisplayValues = undefined;
-				},
-				ModalOptions: {
-					Component: RolesSelectorModalPage,
-					ComponentProps: {
-						multiple: false,
-						allowSystemRoles: false,
-						organizationID: this.organization.ID,
-						excludedIDs: this.role.ID === "" ? undefined : [this.role.ID]
-					},
-					OnDismiss: (data, formControl) => {
-						if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
-							const role = Role.get(data[0]);
-							formControl.setValue(role.ID);
-							formControl.lookupDisplayValues = [{ Value: role.ID, Label: role.FullTitle }];
-						}
-					}
-				}
-			};
-
-			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "UserIDs"));
-			control.Hidden = false;
-			control.Type = "Lookup";
-			control.Extras = {
-				Settings: {
-					ShowImage: true,
-					ShowDescription: true, DescriptionAtRight: true
-				}
-			};
-			control.SubControls = control.Options.Label = undefined;
-			control.Options.Description = "{{portals.roles.controls.UserIDs.description}}";
-			control.Options.OnAfterViewInit = formControl => formControl.lookupDisplayValues = this.users,
-			control.Options.LookupOptions = {
-				AsModal: false,
-				AsSelector: true,
-				Multiple: true,
-				WarningOnDelete: "{{portals.roles.controls.UserIDs.confirm}}",
-				OnDelete: (selected, formControl) => {
-					const users = formControl.lookupValues;
-					selected.forEach(id => {
-						AppUtility.removeAt(users, users.indexOf(id));
-						AppUtility.removeAt(this.users, this.users.findIndex(user => user.Value === id));
-					});
-					formControl.lookupValues = users;
-					formControl.lookupDisplayValues = this.users;
-				},
-				SelectorOptions: {
-					HeaderText: "{{portals.roles.controls.UserIDs.label}}",
-					OnAdd: async formControl => await this.appFormsSvc.showModalAsync(UsersSelectorModalPage, { multiple: true }, async selected => {
-						if (AppUtility.isArray(selected, true)) {
-							const users = formControl.lookupValues;
-							(selected as Array<string>).filter(id => users.indexOf(id) < 0).forEach(id => {
-								users.push(id);
-								this.users.push({
-									Value: id,
-									Label: undefined as string,
-									Description: undefined as string,
-									Image: undefined as string
-								});
-							});
-							await this.prepareUsersAsync();
-							formControl.lookupValues = users;
-							formControl.lookupDisplayValues = this.users;
-						}
-					})
-				}
-			};
-
-			if (this.role.ID !== "") {
-				formConfig.push(
-					await this.usersSvc.getAuditFormControlAsync(this.role.Created, this.role.CreatedID, this.role.LastModified, this.role.LastModifiedID),
-					this.appFormsSvc.getButtonControls({
-						Name: "Delete",
-						Label: "{{portals.roles.update.buttons.delete}}",
-						OnClick: async () => await this.deleteAsync(),
-						Options: {
-							Fill: "clear",
-							Color: "danger",
-							Css: "ion-float-end",
-							Icon: {
-								Name: "trash",
-								Slot: "start"
-							}
-						}
-					})
-				);
-			}
-		});
+		this.formConfig = await this.getFormControlsAsync();
 	}
 
-	private async getFormConfigAsync(onPreCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
+	private async getFormControlsAsync(onPreCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "role", "form-controls");
 		AppUtility.insertAt(
 			formConfig,
@@ -225,9 +118,117 @@ export class RolesUpdatePage implements OnInit {
 			},
 			0
 		);
+
+		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title")).Options.AutoFocus = true;
+
+		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
+		control.Type = "TextArea";
+		control.Options.Rows = 2;
+
+		const parentRole = this.role.Parent;
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID"));
+		control.Type = "Lookup";
+		control.Extras = { LookupDisplayValues: parentRole !== undefined ? [{ Value: parentRole.ID, Label: parentRole.FullTitle }] : undefined };
+		control.Options.LookupOptions = {
+			AsModal: true,
+			Multiple: false,
+			OnDelete: (_, formControl) => {
+				formControl.setValue(undefined);
+				formControl.lookupDisplayValues = undefined;
+			},
+			ModalOptions: {
+				Component: RolesSelectorModalPage,
+				ComponentProps: {
+					multiple: false,
+					allowSystemRoles: false,
+					organizationID: this.organization.ID,
+					excludedIDs: this.role.ID === "" ? undefined : [this.role.ID]
+				},
+				OnDismiss: (data, formControl) => {
+					if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
+						const role = Role.get(data[0]);
+						formControl.setValue(role.ID);
+						formControl.lookupDisplayValues = [{ Value: role.ID, Label: role.FullTitle }];
+					}
+				}
+			}
+		};
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "UserIDs"));
+		control.Type = "Lookup";
+		control.Extras = {
+			Settings: {
+				ShowImage: true,
+				ShowDescription: true, DescriptionAtRight: true
+			}
+		};
+		control.SubControls = control.Options.Label = undefined;
+		control.Options.Description = "{{portals.roles.controls.UserIDs.description}}";
+		control.Options.OnAfterViewInit = formControl => formControl.lookupDisplayValues = this.users,
+		control.Options.LookupOptions = {
+			AsModal: false,
+			AsSelector: true,
+			Multiple: true,
+			WarningOnDelete: "{{portals.roles.controls.UserIDs.confirm}}",
+			OnDelete: (selected, formControl) => {
+				const users = formControl.lookupValues;
+				selected.forEach(id => {
+					AppUtility.removeAt(users, users.indexOf(id));
+					AppUtility.removeAt(this.users, this.users.findIndex(user => user.Value === id));
+				});
+				formControl.lookupValues = users;
+				formControl.lookupDisplayValues = this.users;
+			},
+			SelectorOptions: {
+				HeaderText: "{{portals.roles.controls.UserIDs.label}}",
+				OnAdd: async formControl => await this.appFormsSvc.showModalAsync(UsersSelectorModalPage, { multiple: true }, async selected => {
+					if (AppUtility.isArray(selected, true)) {
+						const users = formControl.lookupValues;
+						(selected as Array<string>).filter(id => users.indexOf(id) < 0).forEach(id => {
+							users.push(id);
+							this.users.push({
+								Value: id,
+								Label: undefined as string,
+								Description: undefined as string,
+								Image: undefined as string
+							});
+						});
+						await this.prepareUsersAsync();
+						formControl.lookupValues = users;
+						formControl.lookupDisplayValues = this.users;
+					}
+				})
+			}
+		};
+
+		if (this.role.ID !== "") {
+			formConfig.push(
+				await this.usersSvc.getAuditFormControlAsync(this.role.Created, this.role.CreatedID, this.role.LastModified, this.role.LastModifiedID),
+				this.appFormsSvc.getButtonControls(
+					undefined,
+					{
+						Name: "Delete",
+						Label: "{{portals.roles.update.buttons.delete}}",
+						OnClick: async () => await this.deleteAsync(),
+						Options: {
+							Fill: "clear",
+							Color: "danger",
+							Css: "ion-float-end",
+							Icon: {
+								Name: "trash",
+								Slot: "start"
+							}
+						}
+					}
+				)
+			);
+		}
+
+		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (onPreCompleted !== undefined) {
 			onPreCompleted(formConfig);
 		}
+
 		return formConfig;
 	}
 
@@ -336,8 +337,8 @@ export class RolesUpdatePage implements OnInit {
 	async cancelAsync(message?: string) {
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
-			undefined,
 			message || await this.configSvc.getResourceAsync(`portals.roles.update.messages.confirm.${AppUtility.isNotEmpty(this.role.ID) ? "cancel" : "new"}`),
+			undefined,
 			async () => await this.configSvc.navigateBackAsync(),
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")

@@ -18,12 +18,12 @@
 	</ion-toolbar>
 </ion-header>
 
-<ion-footer *ngIf="pagination || actions">
+<ion-footer *ngIf="gotPagination || actions">
 	<ion-toolbar [color]="configSvc.color">
-		<span *ngIf="pagination" slot="start">
-			<ion-icon name="business" color="primary" slot="start"></ion-icon>
+		<span *ngIf="gotPagination" slot="start">
+			<ion-icon name="body" color="primary" slot="start"></ion-icon>
 			<span>
-				{{ totalRecords | number:'':locale }} / {{ pagination.TotalRecords | number:'':locale }}	
+				{{ totalDisplays | number:'':locale }} / {{ totalRecords | number:'':locale }}	
 			</span>
 		</span>
 		<ion-buttons *ngIf="actions" slot="end">

@@ -61,8 +61,20 @@ export class RolesListPage implements OnInit, OnDestroy {
 		return this.configSvc.locale;
 	}
 
+	get gotPagination() {
+		return this.pagination !== undefined || this.parentRole !== undefined;
+	}
+
+	get totalDisplays() {
+		return this.parentID !== undefined
+			? this.parentRole.childrenIDs.length
+			: AppPagination.computeTotal(this.pageNumber, this.pagination);
+	}
+
 	get totalRecords() {
-		return AppPagination.computeTotal(this.pageNumber, this.pagination);
+		return this.parentID !== undefined
+			? this.parentRole.childrenIDs.length
+			: this.pagination.TotalRecords;
 	}
 
 	ngOnInit() {
@@ -74,10 +86,10 @@ export class RolesListPage implements OnInit, OnDestroy {
 			this.subscription.unsubscribe();
 		}
 		if (this.parentID === undefined) {
-			AppEvents.off("Portals", "Roles:RefreshList");
+			AppEvents.off("Portals", "Roles:Refresh");
 		}
 		else {
-			AppEvents.off("Portals", `Roles:RefreshChildren:${this.parentID}`);
+			AppEvents.off("Portals", `Roles:Refresh:${this.parentID}`);
 		}
 	}
 
@@ -86,8 +98,8 @@ export class RolesListPage implements OnInit, OnDestroy {
 		if (this.organization === undefined || this.organization.ID === "") {
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
+				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
 				undefined,
-				await this.configSvc.getResourceAsync("portals.roles.list.invalid"),
 				async () => await this.configSvc.navigateHomeAsync("/portals/core/organizations/list/all"),
 				await this.configSvc.getResourceAsync("common.buttons.ok")
 			);
@@ -126,7 +138,7 @@ export class RolesListPage implements OnInit, OnDestroy {
 					if (info.args.Object === "Role" && (this.parentRole.ID === info.args.ID || this.parentRole.ID === info.args.ParentID)) {
 						this.roles = this.parentRole.Children;
 					}
-				}, `Roles:RefreshChildren:${this.parentID}`);
+				}, `Roles:Refresh:${this.parentID}`);
 			}
 			else {
 				this.filterBy.And = [
@@ -140,7 +152,7 @@ export class RolesListPage implements OnInit, OnDestroy {
 					if (info.args.Object === "Role" && !info.args.ParentID) {
 						this.roles = Role.all.filter(role => role.SystemID === this.organization.ID && role.ParentID === undefined).sort(AppUtility.getCompareFunction("Title"));
 					}
-				}, "Roles:RefreshList");
+				}, "Roles:Refresh");
 			}
 		}
 	}
