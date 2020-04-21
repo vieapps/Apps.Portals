@@ -363,22 +363,25 @@ export class PortalsCoreService extends BaseService {
 							]
 						}
 					},
-					this.appFormsSvc.getButtonControls({
-						Name: "TestEmail",
-						Label: "{{portals.common.controls.emails.test.label}}",
-						OnClick: (event, formControl) => {
-							console.warn("Test email settings", event, formControl);
-						},
-						Options: {
-							Fill: "clear",
-							Color: "primary",
-							Css: "ion-float-end",
-							Icon: {
-								Name: "send",
-								Slot: "end"
+					this.appFormsSvc.getButtonControls(
+						undefined,
+						{
+							Name: "TestEmail",
+							Label: "{{portals.common.controls.emails.test.label}}",
+							OnClick: (event, formControl) => {
+								console.warn("Test email settings", event, formControl);
+							},
+							Options: {
+								Fill: "clear",
+								Color: "primary",
+								Css: "ion-float-end",
+								Icon: {
+									Name: "send",
+									Slot: "end"
+								}
 							}
 						}
-					})
+					)
 				]
 			}
 		};
