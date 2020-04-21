@@ -304,7 +304,7 @@
 	<img *ngIf="captchaURI" slot="start" [src]="captchaURI"/>
 </ion-item>
 
-<ion-item *ngIf="visible && description && (isFormGroup || isFormArray)" [color]="theme">
+<ion-item *ngIf="visible && description && !label && (isFormGroup || isFormArray)" [color]="theme">
 	<label
 		[class]="css.description"
 		[style]="style.description"

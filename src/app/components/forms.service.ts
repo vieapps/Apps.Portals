@@ -994,10 +994,11 @@ export class AppFormsService {
 	}
 
 	/** Gets the forms' button controls */
-	public getButtonControls(...buttons: Array<{ Name: string; Label: string; OnClick: (event: Event, control: AppFormsControl) => void; Options?: { Fill?: string; Color?: string; Css?: string; Icon?: { Name?: string; Slot?: string } } }>) {
+	public getButtonControls(segment: string, ...buttons: Array<{ Name: string; Label: string; OnClick: (event: Event, control: AppFormsControl) => void; Options?: { Fill?: string; Color?: string; Css?: string; Icon?: { Name?: string; Slot?: string } } }>) {
 		return {
 			Name: "Buttons",
 			Type: "Buttons",
+			Segment: segment,
 			SubControls: {
 				Controls: buttons.map(button => {
 					return {
@@ -1253,7 +1254,7 @@ export class AppFormsService {
 	}
 
 	/** Shows the alert/confirmation box  */
-	public async showAlertAsync(header: string = null, subHeader: string = null, message: string, postProcess?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string, inputs?: Array<any>, backdropDismiss: boolean = false) {
+	public async showAlertAsync(header: string = null, message: string = null, subMessage?: string, postProcess?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string, inputs?: Array<any>, backdropDismiss: boolean = false) {
 		await this.hideLoadingAsync(async () => await this.hideAlertAsync());
 		const buttons = AppUtility.isNotEmpty(cancelButtonText)
 			? [{ text: cancelButtonText, role: "cancel", handler: async () => await this.hideAlertAsync() }]
@@ -1270,9 +1271,9 @@ export class AppFormsService {
 		});
 		this._alert = await this.alertController.create({
 			header: header || await this.getResourceAsync("common.alert.header.general"),
-			subHeader: subHeader,
+			subHeader: message,
 			backdropDismiss: backdropDismiss,
-			message: message,
+			message: subMessage,
 			inputs: AppUtility.isArray(inputs, true) ? inputs : undefined,
 			buttons: buttons
 		});

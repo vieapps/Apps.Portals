@@ -556,17 +556,22 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	private async lookupAsync() {
-		await this.appFormsSvc.showModalAsync(
-			this.control.Options.LookupOptions.ModalOptions.Component,
-			this.control.Options.LookupOptions.ModalOptions.ComponentProps,
-			data => {
-				if (this.control.Options.LookupOptions.ModalOptions.OnDismiss !== undefined) {
-					this.control.Options.LookupOptions.ModalOptions.OnDismiss(data, this);
-				}
-			},
-			this.control.Options.LookupOptions.ModalOptions.BackdropDismiss,
-			this.control.Options.LookupOptions.ModalOptions.SwipeToClose
-		);
+		if (this.control.Options.LookupOptions.ModalOptions.Component === undefined) {
+			await this.appFormsSvc.showAlertAsync(undefined, "Lookup component is invalid");
+		}
+		else {
+			await this.appFormsSvc.showModalAsync(
+				this.control.Options.LookupOptions.ModalOptions.Component,
+				this.control.Options.LookupOptions.ModalOptions.ComponentProps,
+				data => {
+					if (this.control.Options.LookupOptions.ModalOptions.OnDismiss !== undefined) {
+						this.control.Options.LookupOptions.ModalOptions.OnDismiss(data, this);
+					}
+				},
+				this.control.Options.LookupOptions.ModalOptions.BackdropDismiss,
+				this.control.Options.LookupOptions.ModalOptions.SwipeToClose
+			);
+		}
 	}
 
 	/** Gets the state to lookup multiple items */
