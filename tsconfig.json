@@ -21,9 +21,9 @@
 		"paths": {
 			"@components/*": ["src/app/components/*"],
 			"@controls/*": ["src/app/controls/*"],
-      "@models/*": ["src/app/models/*"],
+			"@models/*": ["src/app/models/*"],
 			"@pages/*": ["src/app/pages/*"],
-      "@services/*": ["src/app/services/*"],
+			"@services/*": ["src/app/services/*"],
 			"core-js/es7/reflect": ["node_modules/core-js/proposals/reflect-metadata"],
 			"core-js/es6/*": ["node_modules/core-js/es/*"]
 		}
