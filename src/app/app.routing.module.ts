@@ -1,7 +1,7 @@
 import { NgModule } from "@angular/core";
 import { RouterModule } from "@angular/router";
-import { AppModulePreloader } from "./components/app.preloader";
-import { AppReadyGuardService } from "./services/base.service";
+import { AppModulePreloader } from "@components/app.preloader";
+import { AppReadyGuardService } from "@services/base.service";
 import { AppConfig } from "./app.config";
 
 @NgModule({
@@ -10,17 +10,17 @@ import { AppConfig } from "./app.config";
 			{
 				path: AppConfig.url.home.substr(1),
 				data: { preload: true },
-				loadChildren: "./pages/home.module#HomePageModule"
+				loadChildren: "@pages/home.module#HomePageModule"
 			},
 			{
 				path: "users",
 				canActivate: [AppReadyGuardService],
-				loadChildren: "./pages/users/users.module#UsersModule"
+				loadChildren: "@pages/users/users.module#UsersModule"
 			},
 			{
 				path: "portals",
 				canActivate: [AppReadyGuardService],
-				loadChildren: "./pages/portals/portals.module#PortalsModule"
+				loadChildren: "@pages/portals/portals.module#PortalsModule"
 			},
 			{
 				path: "**",

@@ -3,16 +3,16 @@ import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
-import { AppEvents } from "../../../../../components/app.events";
-import { AppUtility } from "../../../../../components/app.utility";
-import { TrackingUtility } from "../../../../../components/app.utility.trackings";
-import { PlatformUtility } from "../../../../../components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "../../../../../components/app.pagination";
-import { AppFormsService } from "../../../../../components/forms.service";
-import { ConfigurationService } from "../../../../../services/configuration.service";
-import { PortalsCoreService } from "../../../../../services/portals.core.service";
-import { Organization } from "../../../../../models/portals.core.organization";
-import { Role } from "../../../../../models/portals.core.role";
+import { AppEvents } from "@components/app.events";
+import { AppUtility } from "@components/app.utility";
+import { TrackingUtility } from "@components/app.utility.trackings";
+import { PlatformUtility } from "@components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
+import { AppFormsService } from "@components/forms.service";
+import { ConfigurationService } from "@services/configuration.service";
+import { PortalsCoreService } from "@services/portals.core.service";
+import { Organization } from "@models/portals.core.organization";
+import { Role } from "@models/portals.core.role";
 
 @Component({
 	selector: "page-portals-core-roles-list",

@@ -1,4 +1,4 @@
-import { AppUtility } from "../components/app.utility";
+import { AppUtility } from "@components/app.utility";
 
 /** Rating information */
 export class RatingPoint {

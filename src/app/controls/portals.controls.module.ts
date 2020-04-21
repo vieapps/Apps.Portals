@@ -1,7 +1,7 @@
 import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { IonicModule } from "@ionic/angular";
-import { RolesSelectorModule } from "./portals/role.selector.module";
+import { RolesSelectorModule } from "@controls/portals/role.selector.module";
 
 @NgModule({
 	providers: [],

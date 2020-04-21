@@ -1,4 +1,4 @@
-import { Base as BaseModel } from "./base";
+import { Base as BaseModel } from "@models/base";
 
 /** Abstract class for all portals' entity classes */
 export abstract class PortalBase extends BaseModel {

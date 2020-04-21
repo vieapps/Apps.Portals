@@ -1,8 +1,8 @@
 import { Set } from "typescript-collections";
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from "@angular/core";
-import { AppUtility } from "../../components/app.utility";
-import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "../../components/forms.service";
-import { ConfigurationService } from "../../services/configuration.service";
+import { AppUtility } from "@components/app.utility";
+import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
+import { ConfigurationService } from "@services/configuration.service";
 
 @Component({
 	selector: "control-data-selector",

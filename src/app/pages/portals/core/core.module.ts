@@ -11,11 +11,11 @@ import { IonicModule } from "@ionic/angular";
 		RouterModule.forChild([
 			{
 				path: "organizations",
-				loadChildren: "./organizations/organizations.module#OrganizationsModule"
+				loadChildren: "@pages/portals/core/organizations/organizations.module#OrganizationsModule"
 			},
 			{
 				path: "roles",
-				loadChildren: "./roles/roles.module#RolesModule"
+				loadChildren: "@pages/portals/core/roles/roles.module#RolesModule"
 			},
 		])
 	],

@@ -1,7 +1,7 @@
 import { List } from "linqts";
 import { Set } from "typescript-collections";
 import { HttpErrorResponse } from "@angular/common/http";
-import { AppCrypto } from "./app.crypto";
+import { AppCrypto } from "@components/app.crypto";
 
 /** Decorator of an extension method */
 export function Extension(object: any) {

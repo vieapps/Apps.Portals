@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild } from "@angular/core";
 import { ImageCropperComponent as HtmlImageCropper, CropperSettings as HtmlImageCropperSettings } from "ng2-img-cropper";
 import { Crop as NativeImageCropper } from "@ionic-native/crop/ngx";
-import { AppFormsControl, AppFormsService } from "../../components/forms.service";
-import { ConfigurationService } from "../../services/configuration.service";
-import { FilesService } from "../../services/files.service";
+import { AppFormsControl, AppFormsService } from "@components/forms.service";
+import { ConfigurationService } from "@services/configuration.service";
+import { FilesService } from "@services/files.service";
 
 @Component({
 	selector: "control-image-cropper",

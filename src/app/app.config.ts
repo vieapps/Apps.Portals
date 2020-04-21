@@ -1,6 +1,6 @@
-import { AppCrypto } from "./components/app.crypto";
-import { AppUtility } from "./components/app.utility";
-import { Account } from "./models/account";
+import { AppCrypto } from "@components/app.crypto";
+import { AppUtility } from "@components/app.utility";
+import { Account } from "@models/account";
 import vi_VN from "@angular/common/locales/vi";
 import en_US from "@angular/common/locales/en";
 

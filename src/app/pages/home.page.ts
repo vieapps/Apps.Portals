@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
-import { AppEvents } from "../components/app.events";
-import { TrackingUtility } from "../components/app.utility.trackings";
-import { ConfigurationService } from "../services/configuration.service";
+import { AppEvents } from "@components/app.events";
+import { TrackingUtility } from "@components/app.utility.trackings";
+import { ConfigurationService } from "@services/configuration.service";
 
 @Component({
 	selector: "page-home",

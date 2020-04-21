@@ -1,17 +1,17 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
-import { AppCrypto } from "../../../components/app.crypto";
-import { AppEvents } from "../../../components/app.events";
-import { AppUtility } from "../../../components/app.utility";
-import { AppFormsControl, AppFormsControlConfig, AppFormsService } from "../../../components/forms.service";
-import { AppFormsComponent } from "../../../components/forms.component";
-import { TrackingUtility } from "../../../components/app.utility.trackings";
-import { ConfigurationService } from "../../../services/configuration.service";
-import { AuthenticationService } from "../../../services/authentication.service";
-import { UsersService } from "../../../services/users.service";
-import { UserProfile } from "../../../models/user";
-import { Account } from "../../../models/account";
-import { Privilege } from "../../../models/privileges";
+import { AppCrypto } from "@components/app.crypto";
+import { AppEvents } from "@components/app.events";
+import { AppUtility } from "@components/app.utility";
+import { AppFormsControl, AppFormsControlConfig, AppFormsService } from "@components/forms.service";
+import { AppFormsComponent } from "@components/forms.component";
+import { TrackingUtility } from "@components/app.utility.trackings";
+import { ConfigurationService } from "@services/configuration.service";
+import { AuthenticationService } from "@services/authentication.service";
+import { UsersService } from "@services/users.service";
+import { UserProfile } from "@models/user";
+import { Account } from "@models/account";
+import { Privilege } from "@models/privileges";
 
 @Component({
 	selector: "page-users-update",

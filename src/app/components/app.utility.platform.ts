@@ -4,9 +4,9 @@ import { Keyboard } from "@ionic-native/keyboard/ngx";
 import { Clipboard } from "@ionic-native/clipboard/ngx";
 import { InAppBrowser } from "@ionic-native/in-app-browser/ngx";
 import { ElectronService } from "ngx-electron";
+import { AppCrypto } from "@components/app.crypto";
+import { AppUtility } from "@components/app.utility";
 import { AppConfig } from "../app.config";
-import { AppCrypto } from "./app.crypto";
-import { AppUtility } from "./app.utility";
 
 /** Servicing component for working with app on a specific platform */
 export class PlatformUtility {

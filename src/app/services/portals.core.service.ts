@@ -1,16 +1,16 @@
 import { Injectable } from "@angular/core";
-import { AppRTU, AppMessage } from "../components/app.apis";
-import { AppEvents } from "../components/app.events";
-import { AppUtility } from "../components/app.utility";
-import { AppCustomCompleter } from "../components/app.completer";
-import { AppPagination } from "../components/app.pagination";
-import { AppFormsControlConfig, AppFormsLookupValue, AppFormsService } from "../components/forms.service";
-import { Base as BaseService } from "./base.service";
-import { ConfigurationService } from "./configuration.service";
-import { AuthenticationService } from "./authentication.service";
-import { Account } from "../models/account";
-import { Organization } from "../models/portals.core.organization";
-import { Role } from "../models/portals.core.role";
+import { AppRTU, AppMessage } from "@components/app.apis";
+import { AppEvents } from "@components/app.events";
+import { AppUtility } from "@components/app.utility";
+import { AppCustomCompleter } from "@components/app.completer";
+import { AppPagination } from "@components/app.pagination";
+import { AppFormsControlConfig, AppFormsLookupValue, AppFormsService } from "@components/forms.service";
+import { Base as BaseService } from "@services/base.service";
+import { ConfigurationService } from "@services/configuration.service";
+import { AuthenticationService } from "@services/authentication.service";
+import { Account } from "@models/account";
+import { Organization } from "@models/portals.core.organization";
+import { Role } from "@models/portals.core.role";
 
 @Injectable()
 export class PortalsCoreService extends BaseService {

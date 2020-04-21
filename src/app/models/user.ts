@@ -1,8 +1,8 @@
 import { Dictionary } from "typescript-collections";
+import { AppUtility } from "@components/app.utility";
+import { Base as BaseModel } from "@models/base";
+import { RatingPoint } from "@models/rating.point";
 import { AppConfig } from "../app.config";
-import { AppUtility } from "../components/app.utility";
-import { Base as BaseModel } from "./base";
-import { RatingPoint } from "./rating.point";
 
 /** Base user profile */
 export class UserProfileBase extends BaseModel {

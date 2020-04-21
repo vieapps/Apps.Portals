@@ -1,15 +1,15 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
-import { AppCrypto } from "../../../../../components/app.crypto";
-import { AppUtility } from "../../../../../components/app.utility";
-import { TrackingUtility } from "../../../../../components/app.utility.trackings";
-import { AppFormsControl, AppFormsControlConfig, AppFormsService, AppFormsLookupValue } from "../../../../../components/forms.service";
-import { ConfigurationService } from "../../../../../services/configuration.service";
-import { UsersService } from "../../../../../services/users.service";
-import { PortalsCoreService } from "../../../../../services/portals.core.service";
-import { Organization } from "../../../../../models/portals.core.organization";
-import { Role } from "../../../../../models/portals.core.role";
-import { UserProfile } from "../../../../../models/user";
+import { AppCrypto } from "@components/app.crypto";
+import { AppUtility } from "@components/app.utility";
+import { TrackingUtility } from "@components/app.utility.trackings";
+import { AppFormsControl, AppFormsControlConfig, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
+import { ConfigurationService } from "@services/configuration.service";
+import { UsersService } from "@services/users.service";
+import { PortalsCoreService } from "@services/portals.core.service";
+import { Organization } from "@models/portals.core.organization";
+import { Role } from "@models/portals.core.role";
+import { UserProfile } from "@models/user";
 import { RolesSelectorModalPage } from "../../../../../controls/portals/role.selector.modal.page";
 import { UsersSelectorModalPage } from "../../../../../controls/common/user.selector.modal.page";
 

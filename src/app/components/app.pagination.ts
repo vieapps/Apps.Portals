@@ -1,6 +1,6 @@
 import { Dictionary } from "typescript-collections";
-import { AppCrypto } from "./app.crypto";
-import { AppUtility } from "./app.utility";
+import { AppCrypto } from "@components/app.crypto";
+import { AppUtility } from "@components/app.utility";
 
 /** Presents a data pagination */
 export interface AppDataPagination {

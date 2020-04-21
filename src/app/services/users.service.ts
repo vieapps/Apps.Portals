@@ -1,18 +1,18 @@
 import { Injectable } from "@angular/core";
 import { DatePipe } from "@angular/common";
-import { AppXHR, AppRTU, AppMessage } from "../components/app.apis";
-import { AppEvents } from "../components/app.events";
-import { AppCrypto } from "../components/app.crypto";
-import { AppUtility } from "../components/app.utility";
-import { AppCustomCompleter } from "../components/app.completer";
-import { AppPagination } from "../components/app.pagination";
-import { AppFormsControlConfig } from "../components/forms.service";
-import { Account } from "../models/account";
-import { UserProfile } from "../models/user";
-import { Privilege } from "../models/privileges";
-import { Base as BaseService } from "./base.service";
-import { ConfigurationService } from "./configuration.service";
-import { AuthenticationService } from "./authentication.service";
+import { AppXHR, AppRTU, AppMessage } from "@components/app.apis";
+import { AppEvents } from "@components/app.events";
+import { AppCrypto } from "@components/app.crypto";
+import { AppUtility } from "@components/app.utility";
+import { AppCustomCompleter } from "@components/app.completer";
+import { AppPagination } from "@components/app.pagination";
+import { AppFormsControlConfig } from "@components/forms.service";
+import { Account } from "@models/account";
+import { UserProfile } from "@models/user";
+import { Privilege } from "@models/privileges";
+import { Base as BaseService } from "@services/base.service";
+import { ConfigurationService } from "@services/configuration.service";
+import { AuthenticationService } from "@services/authentication.service";
 
 @Injectable()
 export class UsersService extends BaseService {

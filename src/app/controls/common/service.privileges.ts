@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from "@angular/core";
-import { AppUtility } from "../../components/app.utility";
-import { AppFormsControl } from "../../components/forms.service";
-import { ConfigurationService } from "../../services/configuration.service";
-import { Privilege } from "../../models/privileges";
+import { AppUtility } from "@components/app.utility";
+import { AppFormsControl } from "@components/forms.service";
+import { ConfigurationService } from "@services/configuration.service";
+import { Privilege } from "@models/privileges";
 
 @Component({
 	selector: "control-service-privileges",

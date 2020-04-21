@@ -1,16 +1,16 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
-import { AppCrypto } from "../../../../../components/app.crypto";
-import { AppUtility } from "../../../../../components/app.utility";
-import { PlatformUtility } from "../../../../../components/app.utility.platform";
-import { TrackingUtility } from "../../../../../components/app.utility.trackings";
-import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "../../../../../components/forms.service";
-import { ConfigurationService } from "../../../../../services/configuration.service";
-import { UsersService } from "../../../../../services/users.service";
-import { PortalsCoreService } from "../../../../../services/portals.core.service";
-import { Organization } from "../../../../../models/portals.core.organization";
-import { Privileges } from "../../../../../models/privileges";
-import { UserProfile } from "../../../../../models/user";
+import { AppCrypto } from "@components/app.crypto";
+import { AppUtility } from "@components/app.utility";
+import { PlatformUtility } from "@components/app.utility.platform";
+import { TrackingUtility } from "@components/app.utility.trackings";
+import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
+import { ConfigurationService } from "@services/configuration.service";
+import { UsersService } from "@services/users.service";
+import { PortalsCoreService } from "@services/portals.core.service";
+import { Organization } from "@models/portals.core.organization";
+import { Privileges } from "@models/privileges";
+import { UserProfile } from "@models/user";
 import { RolesSelectorModalPage } from "../../../../../controls/portals/role.selector.modal.page";
 import { UsersSelectorModalPage } from "../../../../../controls/common/user.selector.modal.page";
 

@@ -14,16 +14,16 @@ import { Clipboard } from "@ionic-native/clipboard/ngx";
 import { TranslateService } from "@ngx-translate/core";
 import { ElectronService } from "ngx-electron";
 import { AppConfig } from "../app.config";
-import { AppStorage } from "../components/app.storage";
-import { AppCrypto } from "../components/app.crypto";
-import { AppEvents } from "../components/app.events";
-import { AppUtility } from "../components/app.utility";
-import { PlatformUtility } from "../components/app.utility.platform";
-import { TrackingUtility } from "../components/app.utility.trackings";
-import { Account } from "../models/account";
-import { Privilege } from "../models/privileges";
-import { UserProfile } from "../models/user";
-import { Base as BaseService } from "./base.service";
+import { AppStorage } from "@components/app.storage";
+import { AppCrypto } from "@components/app.crypto";
+import { AppEvents } from "@components/app.events";
+import { AppUtility } from "@components/app.utility";
+import { PlatformUtility } from "@components/app.utility.platform";
+import { TrackingUtility } from "@components/app.utility.trackings";
+import { Account } from "@models/account";
+import { Privilege } from "@models/privileges";
+import { UserProfile } from "@models/user";
+import { Base as BaseService } from "@services/base.service";
 
 @Injectable()
 export class ConfigurationService extends BaseService {

@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef, Input, Output, EventEmitter } from "@angular/core";
-import { AppUtility } from "../../components/app.utility";
-import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "../../components/forms.service";
-import { ConfigurationService } from "../../services/configuration.service";
-import { AuthenticationService } from "../../services/authentication.service";
-import { UsersService } from "../../services/users.service";
-import { Privilege, Privileges } from "../../models/privileges";
-import { UserProfile } from "../../models/user";
+import { AppUtility } from "@components/app.utility";
+import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
+import { ConfigurationService } from "@services/configuration.service";
+import { AuthenticationService } from "@services/authentication.service";
+import { UsersService } from "@services/users.service";
+import { Privilege, Privileges } from "@models/privileges";
+import { UserProfile } from "@models/user";
 import { UsersSelectorModalPage } from "./user.selector.modal.page";
 
 @Component({

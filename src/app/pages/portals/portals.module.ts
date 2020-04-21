@@ -2,8 +2,8 @@ import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { RouterModule } from "@angular/router";
 import { IonicModule } from "@ionic/angular";
-import { AuthenticatedGuardService } from "../../services/base.service";
-import { PortalsControlsModule } from "../../controls/portals.controls.module";
+import { AuthenticatedGuardService } from "@services/base.service";
+import { PortalsControlsModule } from "@controls/portals.controls.module";
 
 @NgModule({
 	providers: [],
@@ -15,17 +15,17 @@ import { PortalsControlsModule } from "../../controls/portals.controls.module";
 			{
 				path: "core",
 				canActivate: [AuthenticatedGuardService],
-				loadChildren: "./core/core.module#PortalsCoreModule"
+				loadChildren: "@pages/portals/core/core.module#PortalsCoreModule"
 			},
 			// {
 			// 	path: "cms",
 			// 	canActivate: [AuthenticatedGuardService],
-			// 	loadChildren: "./cms/cms.module#PortalsCmsModule"
+			// 	loadChildren: "@pages/portals/cms/cms.module#PortalsCmsModule"
 			// },
 			// {
 			// 	path: "search",
 			// 	canActivate: [AuthenticatedGuardService],
-			// 	loadChildren: "./search/search.module#PortalsSearchModule"
+			// 	loadChildren: "@pages/portals/search/search.module#PortalsSearchModule"
 			// }
 		])
 	],

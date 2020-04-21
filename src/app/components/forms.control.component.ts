@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, Output, EventEmitter, ViewChild, ChangeDetectorRef } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { CompleterService } from "ng2-completer";
-import { AppUtility } from "./app.utility";
-import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "./forms.service";
+import { AppUtility } from "@components/app.utility";
+import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
 
 @Component({
 	selector: "app-form-control",

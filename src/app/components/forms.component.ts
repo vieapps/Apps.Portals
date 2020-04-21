@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, Output, EventEmitter } from "@angular/core";
 import { FormGroup } from "@angular/forms";
+import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
+import { AppFormsControlComponent } from "@components/forms.control.component";
+import { AppUtility } from "@components/app.utility";
+import { PlatformUtility } from "@components/app.utility.platform";
 import { AppConfig } from "../app.config";
-import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "./forms.service";
-import { AppFormsControlComponent } from "./forms.control.component";
-import { AppUtility } from "./app.utility";
-import { PlatformUtility } from "./app.utility.platform";
 
 @Component({
 	selector: "app-form",

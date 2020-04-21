@@ -3,16 +3,16 @@ import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
-import { AppUtility } from "../../../components/app.utility";
-import { TrackingUtility } from "../../../components/app.utility.trackings";
-import { PlatformUtility } from "../../../components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "../../../components/app.pagination";
-import { AppFormsService } from "../../../components/forms.service";
-import { ConfigurationService } from "../../../services/configuration.service";
-import { AuthenticationService } from "../../../services/authentication.service";
-import { UsersService } from "../../../services/users.service";
-import { UserProfile } from "../../../models/user";
-import { RatingPoint } from "../../../models/rating.point";
+import { AppUtility } from "@components/app.utility";
+import { TrackingUtility } from "@components/app.utility.trackings";
+import { PlatformUtility } from "@components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
+import { AppFormsService } from "@components/forms.service";
+import { ConfigurationService } from "@services/configuration.service";
+import { AuthenticationService } from "@services/authentication.service";
+import { UsersService } from "@services/users.service";
+import { UserProfile } from "@models/user";
+import { RatingPoint } from "@models/rating.point";
 
 @Component({
 	selector: "page-users-list",

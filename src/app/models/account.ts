@@ -1,7 +1,7 @@
 import { Dictionary, Set } from "typescript-collections";
-import { Privilege, Privileges } from "./privileges";
-import { UserProfile } from "./user";
-import { AppUtility } from "../components/app.utility";
+import { AppUtility } from "@components/app.utility";
+import { Privilege, Privileges } from "@models/privileges";
+import { UserProfile } from "@models/user";
 
 /** Account of the app */
 export class Account {

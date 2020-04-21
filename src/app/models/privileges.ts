@@ -1,5 +1,5 @@
 import { Set } from "typescript-collections";
-import { AppUtility } from "../components/app.utility";
+import { AppUtility } from "@components/app.utility";
 
 /** Working privileges of an individual business service */
 export class Privilege {

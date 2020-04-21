@@ -2,7 +2,7 @@ import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { RouterModule } from "@angular/router";
 import { IonicModule } from "@ionic/angular";
-import { TimePipeModule } from "../../../../../components/time.pipe";
+import { TimePipeModule } from "@components/time.pipe";
 import { RolesListPage } from "./list.page";
 
 @NgModule({

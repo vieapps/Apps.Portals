@@ -1,10 +1,10 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpEventType } from "@angular/common/http";
 import { AppConfig } from "../app.config";
-import { AppXHR } from "../components/app.apis";
-import { AppCrypto } from "../components/app.crypto";
-import { AppUtility } from "../components/app.utility";
-import { Base as BaseService } from "./base.service";
+import { AppXHR } from "@components/app.apis";
+import { AppCrypto } from "@components/app.crypto";
+import { AppUtility } from "@components/app.utility";
+import { Base as BaseService } from "@services/base.service";
 
 /** Presents the header for uploading files */
 export interface FilesHeader {

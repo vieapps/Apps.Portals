@@ -1,9 +1,9 @@
 import { Subject } from "rxjs";
 import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
+import { AppCrypto } from "@components/app.crypto";
+import { AppUtility } from "@components/app.utility";
+import { PlatformUtility } from "@components/app.utility.platform";
 import { AppConfig } from "../app.config";
-import { AppCrypto } from "./app.crypto";
-import { AppUtility } from "./app.utility";
-import { PlatformUtility } from "./app.utility.platform";
 
 /** Presents the struct of a message type */
 export interface AppMessageType {

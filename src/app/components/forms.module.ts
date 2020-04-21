@@ -4,10 +4,10 @@ import { ReactiveFormsModule } from "@angular/forms";
 import { IonicModule } from "@ionic/angular";
 import { Ng2CompleterModule } from "ng2-completer";
 import { CKEditorModule } from "@ckeditor/ckeditor5-angular";
-import { AppFormsService } from "./forms.service";
-import { AppFormsComponent } from "./forms.component";
-import { AppFormsControlComponent } from "./forms.control.component";
-import { CommonControlsModule } from "../controls/common.controls.module";
+import { AppFormsService } from "@components/forms.service";
+import { AppFormsComponent } from "@components/forms.component";
+import { AppFormsControlComponent } from "@components/forms.control.component";
+import { CommonControlsModule } from "@controls/common.controls.module";
 
 @NgModule({
 	providers: [AppFormsService],

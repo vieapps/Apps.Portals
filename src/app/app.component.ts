@@ -4,16 +4,16 @@ import { HttpClient } from "@angular/common/http";
 import { Platform, MenuController } from "@ionic/angular";
 import { SplashScreen } from "@ionic-native/splash-screen/ngx";
 import { StatusBar } from "@ionic-native/status-bar/ngx";
-import { AppRTU, AppXHR } from "./components/app.apis";
-import { AppEvents } from "./components/app.events";
-import { AppCrypto } from "./components/app.crypto";
-import { AppUtility } from "./components/app.utility";
-import { AppFormsService } from "./components/forms.service";
-import { PlatformUtility } from "./components/app.utility.platform";
-import { TrackingUtility } from "./components/app.utility.trackings";
-import { ConfigurationService } from "./services/configuration.service";
-import { AuthenticationService } from "./services/authentication.service";
-import { UsersService } from "./services/users.service";
+import { AppRTU, AppXHR } from "@components/app.apis";
+import { AppEvents } from "@components/app.events";
+import { AppCrypto } from "@components/app.crypto";
+import { AppUtility } from "@components/app.utility";
+import { AppFormsService } from "@components/forms.service";
+import { PlatformUtility } from "@components/app.utility.platform";
+import { TrackingUtility } from "@components/app.utility.trackings";
+import { ConfigurationService } from "@services/configuration.service";
+import { AuthenticationService } from "@services/authentication.service";
+import { UsersService } from "@services/users.service";
 
 @Component({
 	selector: "app-root",
@@ -256,9 +256,16 @@ export class AppComponent implements OnInit {
 
 			this.updateSidebarItem(index, -1, {
 				title: "Organizations",
-				url: "/portals/core/organizations/list",
+				url: "/portals/core/organizations/list/all",
 				direction: "root",
 				icon: "business",
+				detail: false
+			});
+			this.updateSidebarItem(index, -1, {
+				title: "Roles",
+				url: "/portals/core/roles/list/all",
+				direction: "root",
+				icon: "body",
 				detail: false
 			});
 		}
