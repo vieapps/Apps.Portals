@@ -268,6 +268,13 @@ export class AppComponent implements OnInit {
 				icon: "body",
 				detail: false
 			});
+			this.updateSidebarItem(index, -1, {
+				title: "Desktops",
+				url: "/portals/core/desktops/list/all",
+				direction: "root",
+				icon: "desktop",
+				detail: false
+			});
 		}
 		else {
 			this.sidebar.left.menu[index].title = info.title;

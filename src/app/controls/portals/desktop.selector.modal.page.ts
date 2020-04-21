@@ -10,15 +10,15 @@ import { AppFormsService } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { Organization } from "@models/portals.core.organization";
-import { Role } from "@models/portals.core.role";
+import { Desktop } from "@models/portals.core.desktop";
 
 @Component({
-	selector: "page-roles-selector",
-	templateUrl: "./role.selector.modal.page.html",
-	styleUrls: ["./role.selector.modal.page.scss"]
+	selector: "page-desktops-selector",
+	templateUrl: "./desktop.selector.modal.page.html",
+	styleUrls: ["./desktop.selector.modal.page.scss"]
 })
 
-export class RolesSelectorModalPage implements OnInit, OnDestroy {
+export class DesktopsSelectorModalPage implements OnInit, OnDestroy {
 
 	constructor(
 		public configSvc: ConfigurationService,
@@ -27,22 +27,13 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	) {
 	}
 
-	/** Set to 'true' to allow select multiple roles */
+	/** Set to 'true' to allow select multiple desktops */
 	@Input() multiple: boolean;
-
-	/** Set to 'true' to allow system roles (Authorized and All) */
-	@Input() allowSystemRoles: boolean;
-
-	/** Set to 'true' to allow visitor role to show in 'Contributive' section */
-	@Input() allowVisitorInContributiveSection: boolean;
-
-	/** The working section */
-	@Input() section: string;
 
 	/** The identity of organization */
 	@Input() organizationID: string;
 
-	/** The identity of parent role */
+	/** The identity of parent desktop */
 	@Input() parentID: string;
 
 	/** The excluded identities */
@@ -54,11 +45,9 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	private subscription: Subscription;
 	private organization: Organization;
 	private children = "{{number}} children: {{children}}";
-	private roleOfAll = new Role();
-	private roleOfAuthorized = new Role();
 
-	roles = new Array<Role>();
-	results = new Array<Role>();
+	desktops = new Array<Desktop>();
+	results = new Array<Desktop>();
 	searching = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;
@@ -74,16 +63,13 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		search: "Search"
 	};
 	selected = new Set<string>();
-	parentRole: Role;
+	parentDesktop: Desktop;
 
 	ngOnInit() {
 		this.multiple = this.multiple === undefined ? true : AppUtility.isTrue(this.multiple);
-		this.allowSystemRoles = this.allowSystemRoles === undefined ? true : AppUtility.isTrue(this.allowSystemRoles);
-		this.allowVisitorInContributiveSection = this.allowVisitorInContributiveSection === undefined ? false : AppUtility.isTrue(this.allowVisitorInContributiveSection);
-		this.section = AppUtility.isNotEmpty(this.section) ? this.section : "Viewable";
 		this.organization = Organization.get(this.organizationID) || new Organization();
 		this.excludedIDs = AppUtility.isArray(this.excludedIDs, true) ? this.excludedIDs.map(id => id.toString().trim()) : [];
-		this.parentRole = Role.get(this.parentID);
+		this.parentDesktop = Desktop.get(this.parentID);
 		this.filterBy.And = [
 			{ SystemID: { Equals: this.organization.ID } },
 			{ ParentID: "IsNull" }
@@ -99,46 +85,24 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
-		this.children = await this.configSvc.getResourceAsync("portals.roles.list.children");
-		this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.roles.list.searchbar");
+		this.children = await this.configSvc.getResourceAsync("portals.desktops.list.children");
+		this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.desktops.list.searchbar");
 		this.labels = {
 			select: await this.configSvc.getResourceAsync("common.buttons.select"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
 			search: await this.configSvc.getResourceAsync("common.buttons.search")
 		};
-
-		if (this.allowSystemRoles) {
-			this.roleOfAll.ID = "All";
-			this.roleOfAll.Title = await this.appFormsSvc.getResourceAsync("privileges.roles.systems.All");
-			this.roleOfAuthorized.ID = "Authorized";
-			this.roleOfAuthorized.Title = await this.appFormsSvc.getResourceAsync("privileges.roles.systems.Authorized");
-		}
-
-		await this.startSearchAsync(async () => {
-			if (this.allowSystemRoles) {
-				if (this.section === "Contributive" || this.section === "Viewable" || this.section === "Downloadable") {
-					AppUtility.insertAt(this.roles, this.roleOfAll, 0);
-					AppUtility.insertAt(this.roles, this.roleOfAuthorized, 1);
-					if (this.section === "Contributive" && !this.allowVisitorInContributiveSection) {
-						AppUtility.removeAt(this.roles, 0);
-					}
-				}
-				else if (this.section === "Editable") {
-					AppUtility.insertAt(this.roles, this.roleOfAuthorized, 0);
-				}
-			}
-			await this.appFormsSvc.hideLoadingAsync();
-		});
+		await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 	}
 
-	track(index: number, role: Role) {
-		return `${role.ID}@${index}`;
+	track(index: number, desktop: Desktop) {
+		return `${desktop.ID}@${index}`;
 	}
 
-	getInfo(role: Role) {
-		return role.childrenIDs === undefined || role.childrenIDs.length < 1
+	getInfo(desktop: Desktop) {
+		return desktop.childrenIDs === undefined || desktop.childrenIDs.length < 1
 			? ""
-			: AppUtility.format(this.children, { number: role.childrenIDs.length, children: `${role.Children[0].Title}, ...` });
+			: AppUtility.format(this.children, { number: desktop.childrenIDs.length, children: `${desktop.Children[0].Title}, ...` });
 	}
 
 	openSearch() {
@@ -191,7 +155,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 			}
 		}
 		else {
-			this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `role@${this.portalsCoreSvc.name}`.toLowerCase()) || AppPagination.getDefault();
+			this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `desktop@${this.portalsCoreSvc.name}`.toLowerCase()) || AppPagination.getDefault();
 			this.pagination.PageNumber = this.pageNumber = 0;
 			await this.searchAsync(onNext);
 		}
@@ -201,17 +165,17 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
 			this.pageNumber++;
-			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `role@${this.portalsCoreSvc.name}`.toLowerCase());
+			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `desktop@${this.portalsCoreSvc.name}`.toLowerCase());
 			this.pagination.PageNumber = this.pageNumber;
 			if (this.searching) {
-				(data !== undefined ? data.Objects as Array<any> : []).filter(o => this.excludedIDs.indexOf(o.ID) < 0).forEach(o => this.results.push(Role.get(o.ID)));
+				(data !== undefined ? data.Objects as Array<any> : []).filter(d => this.excludedIDs.indexOf(d.ID) < 0).forEach(o => this.results.push(Desktop.get(o.ID)));
 			}
 			else {
-				const objects = new List(data !== undefined ? (data.Objects as Array<any>).map(r => Role.get(r.ID)) : Role.all.filter(r => r.SystemID === this.organization.ID && r.ParentID === this.parentID))
-					.Where(r => this.excludedIDs.indexOf(r.ID) < 0)
-					.OrderBy(r => r.Title).ThenByDescending(r => r.LastModified);
-				this.roles = data !== undefined
-					? this.roles.concat(objects.ToArray())
+				const objects = new List(data !== undefined ? (data.Objects as Array<any>).map(d => Desktop.get(d.ID)) : Desktop.all.filter(d => d.SystemID === this.organization.ID && d.ParentID === this.parentID))
+					.Where(d => this.excludedIDs.indexOf(d.ID) < 0)
+					.OrderBy(d => d.Title).ThenByDescending(d => d.LastModified);
+				this.desktops = data !== undefined
+					? this.desktops.concat(objects.ToArray())
 					: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();
 			}
 			if (onNext !== undefined) {
@@ -219,10 +183,10 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 			}
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchRole(this.request, onNextAsync);
+			this.subscription = this.portalsCoreSvc.searchDesktop(this.request, onNextAsync);
 		}
 		else {
-			await this.portalsCoreSvc.searchRoleAsync(this.request, onNextAsync);
+			await this.portalsCoreSvc.searchDesktopAsync(this.request, onNextAsync);
 		}
 	}
 
@@ -255,16 +219,16 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	}
 
 	back() {
-		this.parentRole = this.parentRole.Parent;
-		this.roles = this.parentRole !== undefined
-			? this.parentRole.Children.filter(r => this.excludedIDs.indexOf(r.ID) < 0)
-			: Role.all.filter(r => r.SystemID === this.organization.ID && r.ParentID === undefined).sort(AppUtility.getCompareFunction("Title"));
+		this.parentDesktop = this.parentDesktop.Parent;
+		this.desktops = this.parentDesktop !== undefined
+			? this.parentDesktop.Children.filter(d => this.excludedIDs.indexOf(d.ID) < 0)
+			: Desktop.all.filter(d => d.SystemID === this.organization.ID && d.ParentID === undefined).sort(AppUtility.getCompareFunction("Title"));
 	}
 
-	async showChildrenAsync(event: Event, role: Role) {
+	async showChildrenAsync(event: Event, desktop: Desktop) {
 		event.stopPropagation();
-		this.parentRole = role;
-		this.roles = this.parentRole.Children.filter(r => this.excludedIDs.indexOf(r.ID) < 0);
+		this.parentDesktop = desktop;
+		this.desktops = this.parentDesktop.Children.filter(d => this.excludedIDs.indexOf(d.ID) < 0);
 	}
 
 }

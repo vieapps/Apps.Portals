@@ -72,8 +72,8 @@ export class Organization extends BaseModel {
 	Trackings = {} as {
 		[key: string]: string
 	};
-	MetaTags = "";
-	Scripts = "";
+	MetaTags: string;
+	Scripts: string;
 	RefreshUrls = {} as {
 		Addresses?: Array<string>;
 		Interval?: number;

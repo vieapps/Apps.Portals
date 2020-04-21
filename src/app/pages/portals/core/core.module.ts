@@ -17,6 +17,10 @@ import { IonicModule } from "@ionic/angular";
 				path: "roles",
 				loadChildren: "@pages/portals/core/roles/roles.module#RolesModule"
 			},
+			{
+				path: "desktops",
+				loadChildren: "@pages/portals/core/desktops/desktops.module#DesktopsModule"
+			},
 		])
 	],
 	exports: [RouterModule],

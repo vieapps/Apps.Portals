@@ -110,7 +110,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 						? this.control.Extras["PrepareRoleFunction"]
 						: typeof this.control.Extras["prepareRoleFunction"] === "function"
 							? this.control.Extras["prepareRoleFunction"]
-							: (role: { Value: string; Label: string; Description?: string; Image?: string }) => new Promise<void>(() => role.Label = role.Value);
+							: role => new Promise<void>(() => role.Label = role.Value);
 		}
 		if (this.rolesSelector.modalComponent === undefined && this.control !== undefined && this.control.Extras !== undefined) {
 			this.rolesSelector.modalComponent = this.control.Extras["RoleModalComponent"] || this.control.Extras["roleModalComponent"];
@@ -235,7 +235,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 
 	addRolesAsync(section: string) {
 		if (this.rolesSelector.modalComponent === undefined) {
-			return this.appFormsSvc.showAlertAsync(undefined, undefined, "Roles selector component is invalid");
+			return this.appFormsSvc.showAlertAsync(undefined, "Roles selector component is invalid");
 		}
 
 		const modalProperties: { [key: string]: any } = {};

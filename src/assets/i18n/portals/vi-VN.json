@@ -103,8 +103,73 @@
 						"subject": "Tiêu đề email thử nghiệm",
 						"body": "Nội dung email thử nghiệm"
 					}
+				},
+				"UISettings": {
+					"label": "Tuỳ chỉnh hiển thị",
+					"description": "",
+					"Padding": {
+						"label": "Cách lề",
+						"placeholder": "vd: 10px 3px",
+						"description": "Chỉ định thông số cách lề (padding) theo tiêu chuẩn của HTML (trên dưới trái phải), các giá trị có thể là px, %, rem, em"
+					},
+					"Margin": {
+						"label": "Dãn lề",
+						"placeholder": "vd: 10px 3px 7px 20px",
+						"description": "Chỉ định thông số dãn lề (margin) theo tiêu chuẩn của HTML (trên dưới trái phải), các giá trị có thể là px, %, rem, em"
+					},
+					"Width": {
+						"label": "Chiều rộng (cố định)",
+						"placeholder": "",
+						"description": "Chỉ định chiều rộng (width) có định theo tiêu chuẩn của HTML (trên dưới trái phải), giá trị có thể là px, %, rem, em"
+					},
+					"Height": {
+						"label": "Chiều cao (cố định)",
+						"placeholder": "",
+						"description": "Chỉ định chiều cao (height) có định theo tiêu chuẩn của HTML (trên dưới trái phải), giá trị có thể là px, %, rem, em"
+					},
+					"Color": {
+						"label": "Mầu chữ",
+						"placeholder": "vd: #000000",
+						"description": "Chỉ mầu chữ theo tiêu chuẩn của HTML với mã mầu RGB theo giá trị hexa"
+					},
+					"BackgroundColor": {
+						"label": "Mầu nền",
+						"placeholder": "vd: #ffccff",
+						"description": "Chỉ mầu nền theo tiêu chuẩn của HTML với mã mầu RGB theo giá trị hexa"
+					},
+					"BackgroundImageURI": {
+						"label": "Ảnh nền",
+						"placeholder": "",
+						"description": "Chỉ định ảnh nền từ file đã upload"
+					},
+					"BackgroundImageRepeat": {
+						"label": "Cách thức lặp của ảnh nền",
+						"placeholder": "",
+						"description": "Chỉ định cách thức lặp lại của ảnh nền"
+					},
+					"BackgroundImagePosition": {
+						"label": "Vị trí của ảnh nền",
+						"placeholder": "",
+						"description": "Chỉ định vị trí hiển thị của ảnh nền"
+					},
+					"BackgroundImageSize": {
+						"label": "Kích cỡ của ảnh nền",
+						"placeholder": "",
+						"description": "Chỉ định kích cỡ hiển thị của ảnh nền"
+					},
+					"Css": {
+						"label": "Các mã CSS",
+						"placeholder": "",
+						"description": "Chỉ định các mã CSS sẽ sử dụng theo tiêu chuẩn của HTML, các giá trị sẽ cách nhau bằng khoảng trắng (space)"
+					},
+					"Style": {
+						"label": "Tuỳ chỉnh khác",
+						"placeholder": "",
+						"description": "Chỉ định tuỳ chỉnh khác qua thông số <b>style</b> theo tiêu chuẩn của HTML"
+					}
 				}
-			}
+			},
+			"unspecified": "Không xác định"
 		},
 		"organizations": {
 			"title": {
@@ -249,7 +314,8 @@
 			},
 			"list": {
 				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác đơn vị - tổ chức",
-				"owner": "Tài khoản chủ sở hữu: {{owner}}"
+				"owner": "Tài khoản chủ sở hữu: {{owner}}",
+				"invalid": "Thông tin về đơn vị - tổ chức chưa đúng, cần chọn đơn vị - tổ chức sẽ hoạt động"
 			},
 			"update": {
 				"segments": {
@@ -285,6 +351,11 @@
 			},
 			"controls": {
 				"Organization": "Vai trò trong đơn vị - tổ chức",
+				"ParentID": {
+					"label": "Vai trò cấp trên",
+					"placeholder": "",
+					"description": "Vai trò cấp trên sẽ tự động có các quyền sử dụng được chỉ định đối với vai trò này"
+				},
 				"Title": {
 					"label": "Tiêu đề",
 					"placeholder": "",
@@ -295,20 +366,15 @@
 					"placeholder": "",
 					"description": ""
 				},
-				"ParentID": {
-					"label": "Vai trò cấp trên",
-					"placeholder": "",
-					"description": "Vai trò cấp trên sẽ tự động có các quyền sử dụng được chỉ định đối với vai trò này"
-				},
 				"UserIDs": {
 					"label": "Tài khoản người dùng trong vai trò",
 					"placeholder": "",
-					"description": "Các tài khoản người dùng trong vai trò này sẽ có các quyền sử dụng được chỉ định cho vai trò"
+					"description": "Các tài khoản người dùng trong vai trò này sẽ có các quyền sử dụng được chỉ định cho vai trò",
+					"confirm": "Chắc chắn muốn bỏ các tài khoản người dùng đã chọn khỏi vai trò?"
 				}
 			},
 			"list": {
 				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác vai trò sử dụng",
-				"invalid": "Thông tin về đơn vị - tổ chức chưa đúng, cần chọn đơn vị - tổ chức sẽ hoạt động",
 				"children": "{{number}} vai trò cấp dưới: {{children}}"
 			},
 			"update": {
@@ -327,6 +393,147 @@
 				},
 				"buttons": {
 					"delete": "Xoá vai trò sử dụng",
+					"delete-all": "Xoá bỏ",
+					"set-null-all": "Chuyển về gốc"
+				}
+			}
+		},
+		"desktops": {
+			"title": {
+				"search": "Tìm kiếm desktop hiển thị",
+				"list": "Danh sách desktop hiển thị {{title}}",
+				"create": "Tạo mới desktop hiển thị",
+				"update": "Cập nhật desktop hiển thị"
+			},
+			"controls": {
+				"Organization": "Desktop trong đơn vị - tổ chức",
+				"CopyFromID": {
+					"label": "Tạo bản sao từ desktop",
+					"placeholder": "",
+					"description": "Chỉ định desktop để tạo bản sao (mẫu hiển thị, tuỳ chỉnh hiển thị và các portlets)"
+				},
+				"ParentID": {
+					"label": "Desktop cấp trên",
+					"placeholder": "",
+					"description": "Khi chỉ định desktop cấp trên, các thiết đặt hiển thị và SEO sẽ kế thừa từ đó nếu không thiết đặt trong desktop này"
+				},
+				"Title": {
+					"label": "Tên đầy đủ",
+					"placeholder": "",
+					"description": "Tên này được sử dụng trong quá trình quản trị"
+				},
+				"Alias": {
+					"label": "Tên rút gọn",
+					"placeholder": "vd: my-dsk",
+					"description": "Tên rút gọn sẽ được sử dụng để tạo các liên kết quản trị và xem trước nội dung"
+				},
+				"Aliases": {
+					"label": "Tên rút gọn khác",
+					"placeholder": "",
+					"description": "Cho phép tạo ra nhiều liên kết khác nhau từ desktop để đảm bảo tính kế thừa, các giá trị được phân cách bởi dấu chấm phẩy (;)"
+				},
+				"Language": {
+					"label": "Ngôn ngữ hiển thị",
+					"placeholder": "",
+					"description": "Các nhãn, số, ngày tháng, ... sẽ được hiển thị theo định dạng của loại ngôn ngữ đã chọn. Chọn giá trị <b>'Không xác định'</b> để chỉ định sẽ kế thừ từ desktop cấp trên."
+				},
+				"Theme": {
+					"label": "Theme",
+					"placeholder": "",
+					"description": "Nếu không chỉ định sẽ sử dụng bộ theme kế thừa từ desktop cấp trên hoặc từ site hoặc của đơn vị"
+				},
+				"Template": {
+					"label": "Mẫu hiển thị",
+					"placeholder": "",
+					"description": "Mã XHTML cho mẫu hiển thị của desktop, sẽ sử dụng mẫu hiển thị mặc định nếu không nhập, phải có ít nhất 1 vùng (zone) có mã định danh là <b>Content</b>.<br/>Các vùng (zone) để đặt các portlet phải là các thẻ HTML phù hợp (div, section, ...) và có mã định danh qua tham số <b>zone-id</b> (vd: zone-id=\"Content\").<br/>Tips: bấm vào biểu tượng ở bên cạnh để hệ thống lấy mã XHTML mặc định của mẫu hiển thị rồi sửa từ đó."
+				},
+				"IconURI": {
+					"label": "Ảnh biểu tượng",
+					"placeholder": "",
+					"description": "Chỉ định ảnh biểu tượng cho desktop, tốt nhất là loại .ICO hoặc .PNG có kích thước 64x64"
+				},
+				"MetaTags": {
+					"label": "Các thẻ meta bổ sung",
+					"placeholder": "",
+					"description": "Các thẻ meta bổ sung sẽ được thêm vào phần HEAD của desktop hiển thị, cần phải viết các thẻ meta đúng theo quy chuẩn của XML"
+				},
+				"Scripts": {
+					"label": "Các mã scripts bổ sung",
+					"placeholder": "",
+					"description": "Các mã script (Javascript) bổ sung sẽ được thêm vào phần cuối (trước khi đóng thẻ BODY) của desktop hiển thị.<br/>Các đoạn mã này phải nằm trong &lt;script&gt; và &lt;/script&gt; và có thể sử dụng jQuery ($), đồng thời cho phép trỏ ra các thư viện script ở bên ngoài.<br/>Tips: cũng có thể các thẻ HTML bổ sung vào đây cũng được."
+				},
+				"MainPortletID": {
+					"label": "Portlet chính",
+					"placeholder": "",
+					"description": "Chỉ định portlet chính để tổ hợp các tham số SEO"
+				},
+				"SEOSettings": {
+					"label": "Tuỳ chỉnh SEO",
+					"placeholder": "",
+					"description": "",
+					"SEOInfo": {
+						"label": "",
+						"placeholder": "",
+						"description": "",
+						"Title": {
+							"label": "Tiêu đề",
+							"placeholder": "",
+							"description": "Tiêu đề của desktop, được sử dụng để tổ hợp với tiêu đề của portlet chính và site"
+						},
+						"Description": {
+							"label": "Diễn giải",
+							"placeholder": "",
+							"description": "Diễn giải của desktop, được sử dụng để tổ hợp với tiêu đề của portlet chính và site"
+						},
+						"Keywords": {
+							"label": "Từ khoá",
+							"placeholder": "",
+							"description": "Từ khoá của desktop, được sử dụng để tổ hợp với tiêu đề của portlet chính và site"
+						}
+					},
+					"TitleMode": {
+						"label": "Các thức tổ hợp tiêu đề",
+						"placeholder": "",
+						"description": "Chỉ định cách thức tổ hợp để tạo tiêu đề (thẻ <b>title</b>) của desktop"
+					},
+					"DescriptionMode": {
+						"label": "Các thức tổ hợp diễn giải",
+						"placeholder": "",
+						"description": "Chỉ định cách thức tổ hợp để tạo diễn giải (thẻ <b>description</b>) của desktop"
+					},
+					"KeywordsMode": {
+						"label": "Các thức tổ hợp từ khoá",
+						"placeholder": "",
+						"description": "Chỉ định cách thức tổ hợp để tạo từ khoá (thẻ <b>keywords</b>) của desktop"
+					}
+				}
+			},
+			"list": {
+				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác desktop hiển thị",
+				"children": "{{number}} desktop cấp dưới: {{children}}"
+			},
+			"update": {
+				"segments": {
+					"basic": "Thông tin cơ bản",
+					"display": "Thiết đặt hiển thị",
+					"seo": "Thiết đặt SEO",
+					"attachments": "File đính kèm"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo desktop hiển thị?",
+						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của desktop hiển thị?",
+						"delete": "Chắc chắn muốn xoá bỏ desktop hiển thị và các thônng tin liên quan?"
+					},
+					"success": {
+						"new": "Đã khởi tạo desktop hiển thị thành công",
+						"update": "Đã cập nhật các thay đổi của desktop hiển thị thành công",
+						"delete": "Đã xoá desktop hiển thị thành công"
+					},
+					"mode": "Cách thức thực hiện với toàn bộ desktop cấp dưới:"
+				},
+				"buttons": {
+					"delete": "Xoá desktop hiển thị",
 					"delete-all": "Xoá bỏ",
 					"set-null-all": "Chuyển về gốc"
 				}

@@ -11,6 +11,7 @@ import { AuthenticationService } from "@services/authentication.service";
 import { Account } from "@models/account";
 import { Organization } from "@models/portals.core.organization";
 import { Role } from "@models/portals.core.role";
+import { Desktop } from "@models/portals.core.desktop";
 
 @Injectable()
 export class PortalsCoreService extends BaseService {
@@ -24,6 +25,7 @@ export class PortalsCoreService extends BaseService {
 		this.initialize();
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Organization", message => this.processOrganizationUpdateMessageAsync(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Role", message => this.processRoleUpdateMessageAsync(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Desktop", message => this.processDesktopUpdateMessageAsync(message));
 	}
 
 	public get activeOrganization() {
@@ -755,8 +757,12 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	private broadcastRoleUpdatedEventMessage(id: string, parentID: string, type?: string) {
-		AppEvents.broadcast("Portals", { Object: "Role", Type: type || "Updated", ID: id, ParentID: AppUtility.isNotEmpty(parentID) ? parentID : undefined });
-	}
+		type = type || "Updated";
+		AppEvents.broadcast("Portals", { Object: "Role", Type: type, ID: id, ParentID: AppUtility.isNotEmpty(parentID) ? parentID : undefined });
+		if (AppUtility.isNotEmpty(parentID)) {
+			AppEvents.broadcast("Portals", { Object: "Role", Type: type, ID: id, ParentID: undefined });
+		}
+}
 
 	private async processRoleUpdateMessageAsync(message: AppMessage) {
 		switch (message.Type.Event) {
@@ -818,6 +824,248 @@ export class PortalsCoreService extends BaseService {
 			}
 			Role.all.filter(role => role.ParentID === id).forEach(role => this.deleteRole(role.ID));
 			Role.instances.remove(id);
+		}
+	}
+
+	public get desktopCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const desktop = data === undefined
+				? undefined
+				: data instanceof Desktop
+					? data as Desktop
+					: Desktop.deserialize(data);
+			return desktop === undefined
+				? undefined
+				: { title: desktop.FullTitle, description: desktop.Alias, originalObject: desktop };
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(super.getSearchURI("desktop", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => {
+				const desktop = Desktop.get(obj.ID);
+				return desktop === undefined
+					? convertToCompleterItem(this.fetchDesktop(Desktop.update(obj)))
+					: desktop.childrenIDs === undefined
+						? convertToCompleterItem(this.fetchDesktop(desktop))
+						: convertToCompleterItem(desktop);
+			}),
+			convertToCompleterItem
+		);
+	}
+
+	public searchDesktop(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.search(
+			super.getSearchURI("desktop", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						const desktop = Desktop.get(obj.ID);
+						if (desktop === undefined) {
+							this.fetchDesktop(Desktop.update(obj));
+						}
+						else if (desktop.childrenIDs === undefined) {
+							this.fetchDesktop(desktop);
+						}
+					});
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching desktop", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public searchDesktopAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.searchAsync(
+			super.getSearchURI("desktop", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						const desktop = Desktop.get(obj.ID);
+						if (desktop === undefined) {
+							this.fetchDesktop(Desktop.update(obj));
+						}
+						else if (desktop.childrenIDs === undefined) {
+							this.fetchDesktop(desktop);
+						}
+					});
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching desktop", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public createDesktopAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.createAsync(
+			super.getURI("desktop"),
+			body,
+			data => {
+				this.updateDesktop(data);
+				this.broadcastDesktopUpdatedEventMessage(body.ID, body.ParentID);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while creating new desktop", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public getDesktopAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		const desktop = Desktop.get(id);
+		return desktop !== undefined && desktop.childrenIDs !== undefined
+			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
+			: super.readAsync(
+					super.getURI("desktop", id),
+					data => {
+						this.updateDesktop(data);
+						if (onNext !== undefined) {
+							onNext(data);
+						}
+					},
+					error => {
+						console.error(super.getErrorMessage("Error occurred while getting a desktop", error));
+						if (onError !== undefined) {
+							onError(error);
+						}
+					},
+					undefined,
+					useXHR
+				);
+	}
+
+	public updateDesktopAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.updateAsync(
+			super.getURI("desktop", body.ID),
+			body,
+			data => {
+				const oldParentID = Desktop.contains(body.ID) ? Desktop.get(body.ID).ParentID : undefined;
+				this.updateDesktop(data, oldParentID);
+				this.broadcastDesktopUpdatedEventMessage(body.ID, body.ParentID);
+				if (oldParentID !== body.ParentID) {
+					this.broadcastDesktopUpdatedEventMessage(body.ID, oldParentID);
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while updating a desktop", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public deleteDesktopAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		return super.deleteAsync(
+			super.getURI("desktop", id),
+			data => {
+				const parentID = Desktop.contains(id) ? Desktop.get(id).ParentID : undefined;
+				this.deleteDesktop(data, parentID);
+				this.broadcastDesktopUpdatedEventMessage(id, parentID, "Deleted");
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while deleting a desktop", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			},
+			headers
+		);
+	}
+
+	private broadcastDesktopUpdatedEventMessage(id: string, parentID: string, type?: string) {
+		type = type || "Updated";
+		AppEvents.broadcast("Portals", { Object: "Desktop", Type: type, ID: id, ParentID: AppUtility.isNotEmpty(parentID) ? parentID : undefined });
+		if (AppUtility.isNotEmpty(parentID)) {
+			AppEvents.broadcast("Portals", { Object: "Desktop", Type: type, ID: id, ParentID: undefined });
+		}
+}
+
+	private async processDesktopUpdateMessageAsync(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Update":
+				this.updateDesktop(message.Data, message.Data.ParentID);
+				this.broadcastDesktopUpdatedEventMessage(message.Data.ID, message.Data.ParentID);
+				break;
+
+			case "Delete":
+				this.deleteDesktop(message.Data.ID, message.Data.ParentID);
+				this.broadcastDesktopUpdatedEventMessage(message.Data.ID, message.Data.ParentID, "Deleted");
+				break;
+
+			default:
+				console.warn(super.getLogMessage("Got an update message of a desktop"), message);
+				break;
+		}
+	}
+
+	private fetchDesktop(desktop: Desktop) {
+		if (desktop !== undefined && desktop.childrenIDs === undefined) {
+			this.getDesktopAsync(desktop.ID, _ => {
+				const d = Desktop.get(desktop.ID);
+				if (d.childrenIDs !== undefined && d.childrenIDs.length > 0) {
+					d.Children.forEach(c => this.fetchDesktop(c));
+				}
+			});
+		}
+		return desktop;
+	}
+
+	private updateDesktop(json: any, oldParentID?: string) {
+		if (AppUtility.isObject(json, true)) {
+			const desktop = Desktop.set(Desktop.deserialize(json, Desktop.get(json.ID)));
+			if (AppUtility.isArray(json.Children, true)) {
+				desktop.childrenIDs = [];
+				(json.Children as Array<any>).map(c => this.updateDesktop(c)).filter(d => d !== undefined).forEach(d => desktop.childrenIDs.push(d.ID));
+				desktop.childrenIDs = desktop.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+			}
+			let parentDesktop = Desktop.get(oldParentID);
+			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined && parentDesktop.ID !== desktop.ParentID) {
+				AppUtility.removeAt(parentDesktop.childrenIDs, parentDesktop.childrenIDs.indexOf(desktop.ID));
+			}
+			parentDesktop = desktop.Parent;
+			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined && parentDesktop.childrenIDs.indexOf(desktop.ID) < 0) {
+				parentDesktop.childrenIDs.push(desktop.ID);
+				parentDesktop.childrenIDs = parentDesktop.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+			}
+			return desktop;
+		}
+		return undefined;
+	}
+
+	private deleteDesktop(id: string, parentID?: string) {
+		if (Desktop.contains(id)) {
+			const parentDesktop = Desktop.get(parentID);
+			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined) {
+				AppUtility.removeAt(parentDesktop.childrenIDs, parentDesktop.childrenIDs.indexOf(id));
+			}
+			Desktop.all.filter(desktop => desktop.ParentID === id).forEach(desktop => this.deleteDesktop(desktop.ID));
+			Desktop.instances.remove(id);
 		}
 	}
 
