@@ -454,7 +454,7 @@ export class AppUtility {
 	/** Stringifys the JSON and encode as base64-url */
 	public static toBase64Url(json: any) {
 		return this.isObject(json, true)
-			? AppCrypto.urlEncode(JSON.stringify(json))
+			? AppCrypto.urlEncode(JSON.stringify(json, (_, value) => typeof value === "undefined" ? null : value))
 			: "";
 	}
 
