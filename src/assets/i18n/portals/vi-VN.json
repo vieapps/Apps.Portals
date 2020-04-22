@@ -492,17 +492,17 @@
 						}
 					},
 					"TitleMode": {
-						"label": "Các thức tổ hợp tiêu đề",
+						"label": "Cách thức tổ hợp tiêu đề",
 						"placeholder": "",
 						"description": "Chỉ định cách thức tổ hợp để tạo tiêu đề (thẻ <b>title</b>) của desktop"
 					},
 					"DescriptionMode": {
-						"label": "Các thức tổ hợp diễn giải",
+						"label": "Cách thức tổ hợp diễn giải",
 						"placeholder": "",
 						"description": "Chỉ định cách thức tổ hợp để tạo diễn giải (thẻ <b>description</b>) của desktop"
 					},
 					"KeywordsMode": {
-						"label": "Các thức tổ hợp từ khoá",
+						"label": "Cách thức tổ hợp từ khoá",
 						"placeholder": "",
 						"description": "Chỉ định cách thức tổ hợp để tạo từ khoá (thẻ <b>keywords</b>) của desktop"
 					}
@@ -536,6 +536,16 @@
 					"delete": "Xoá desktop hiển thị",
 					"delete-all": "Xoá bỏ",
 					"set-null-all": "Chuyển về gốc"
+				},
+				"seo": {
+					"PortletAndDesktopAndSite": "Porlet + Desktop + Site",
+					"SiteAndDesktopAndPortlet": "Site + Desktop + Portlet",
+					"PortletAndDesktop": "Porlet + Desktop",
+					"DesktopAndPortlet": "Desktop + Portlet",
+					"PortletAndSite": "Porlet + Site",
+					"SiteAndPortlet": "Site + Portlet",
+					"Portlet": "Chỉ của Portlet",
+					"Desktop": "Chỉ của Desktop"
 				}
 			}
 		}

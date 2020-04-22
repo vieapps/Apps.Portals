@@ -71,7 +71,7 @@ export class DesktopsUpdatePage implements OnInit {
 	}
 
 	private async initializeFormAsync() {
-		this.desktop = this.desktop || new Desktop(this.organization.ID);
+		this.desktop = this.desktop || new Desktop(this.organization.ID, "", this.configSvc.requestParams["ParentID"]);
 		if (this.organization.ID === "" || this.organization.ID !== this.desktop.SystemID) {
 			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"));
 			return;
@@ -84,11 +84,6 @@ export class DesktopsUpdatePage implements OnInit {
 			update: await this.configSvc.getResourceAsync(`common.buttons.${(this.desktop.ID === "" ? "create" : "update")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
-
-		if (this.desktop.ID === "") {
-			this.desktop.ParentID = this.configSvc.requestParams["ParentID"];
-			this.desktop.SEOSettings = { SEOInfo: { Title: "" } };
-		}
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
@@ -127,7 +122,7 @@ export class DesktopsUpdatePage implements OnInit {
 			0
 		);
 
-		if (this.desktop.ID === "") {
+		if (!AppUtility.isNotEmpty(this.desktop.ID)) {
 			AppUtility.insertAt(
 				formConfig,
 				{
@@ -158,7 +153,7 @@ export class DesktopsUpdatePage implements OnInit {
 				ComponentProps: {
 					multiple: false,
 					organizationID: this.organization.ID,
-					excludedIDs: this.desktop.ID === "" ? undefined : [this.desktop.ID]
+					excludedIDs: AppUtility.isNotEmpty(this.desktop.ID) ? [this.desktop.ID] : undefined
 				},
 				OnDismiss: (data, formControl) => {
 					if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
@@ -175,12 +170,14 @@ export class DesktopsUpdatePage implements OnInit {
 			control.Options.LookupOptions = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID")).Options.LookupOptions;
 		}
 
+		const unspecified = await this.configSvc.getResourceAsync("portals.common.unspecified");
+
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Language"));
 		control.Options.SelectOptions.Interface = "popover";
 		control.Options.SelectOptions.Values = this.configSvc.languages.map(language => {
 			return { Value: language.Value, Label: language.Label };
 		});
-		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: undefined, Label: await this.configSvc.getResourceAsync("portals.common.unspecified") }, 0);
+		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: undefined, Label: unspecified }, 0);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"));
 		control.Options.Rows = 18;
@@ -205,10 +202,18 @@ export class DesktopsUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Scripts"));
 		control.Options.Rows = 15;
 
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SEOSettings"));
+		const seo = (AppUtility.toArray(control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "TitleMode")).Options.SelectOptions.Values) as Array<string>).map(value => {
+			return { Value: value, Label: `{{portals.desktops.update.seo.${value}}}` };
+		});
+		await Promise.all(seo.map(async s => s.Label = await this.appFormsSvc.getResourceAsync(s.Label)));
+		AppUtility.insertAt(seo, { Value: undefined, Label: unspecified }, 0);
+		control.SubControls.Controls.filter(ctrl => ctrl.Type === "Select").forEach(ctrl => ctrl.Options.SelectOptions.Values = seo);
+
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		control.Options.AutoFocus = true;
 
-		if (this.desktop.ID !== "") {
+		if (AppUtility.isNotEmpty(this.desktop.ID)) {
 			formConfig.push(
 				await this.usersSvc.getAuditFormControlAsync(this.desktop.Created, this.desktop.CreatedID, this.desktop.LastModified, this.desktop.LastModifiedID, "basic"),
 				this.appFormsSvc.getButtonControls(
@@ -258,8 +263,7 @@ export class DesktopsUpdatePage implements OnInit {
 		this.form.patchValue(desktop);
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync();
-		console.warn("Form Controls", this.formControls);
-		console.warn("Form Value", this.form.value);
+		console.warn("Data", this.desktop, desktop, this.form.value);
 	}
 
 	async updateAsync() {

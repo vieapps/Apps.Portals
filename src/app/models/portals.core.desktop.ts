@@ -7,13 +7,15 @@ export class Desktop extends BaseModel implements NestedModel {
 
 	constructor(
 		organizationID?: string,
-		title?: string
+		title?: string,
+		parentID?: string
 	) {
 		super();
 		delete this["Privileges"];
 		delete this["OriginalPrivileges"];
 		this.SystemID = AppUtility.isNotEmpty(organizationID) ? organizationID : "";
 		this.Title = AppUtility.isNotEmpty(title) ? title : "";
+		this.ParentID = AppUtility.isNotEmpty(parentID) ? parentID : "";
 	}
 
 	/** All instances of desktop */
@@ -24,14 +26,14 @@ export class Desktop extends BaseModel implements NestedModel {
 		return this.instances.values();
 	}
 
-	ParentID = "";
-	Title = "";
-	Alias = "";
-	Aliases: string;
-	Language: string;
-	Theme: string;
-	Template: string;
-	UISettings?: {
+	ParentID = undefined as string;
+	Title = undefined as string;
+	Alias = undefined as string;
+	Aliases = undefined as string;
+	Language = undefined as string;
+	Theme = undefined as string;
+	Template = undefined as string;
+	UISettings = {} as {
 		Padding?: string;
 		Margin?: string;
 		Width?: string;
@@ -45,11 +47,11 @@ export class Desktop extends BaseModel implements NestedModel {
 		Css?: string;
 		Style?: string;
 	};
-	IconURI: string;
-	MetaTags: string;
-	Scripts: string;
-	MainPortletID: string;
-	SEOSettings?: {
+	IconURI = undefined as string;
+	MetaTags = undefined as string;
+	Scripts = undefined as string;
+	MainPortletID = undefined as string;
+	SEOSettings = {} as {
 		SEOInfo?: {
 			Title?: string;
 			Description?: string;
@@ -59,15 +61,15 @@ export class Desktop extends BaseModel implements NestedModel {
 		DescriptionMode?: string;
 		KeywordsMode?: string;
 	};
-	Created = new Date();
-	CreatedID = "";
-	LastModified = new Date();
-	LastModifiedID = "";
-	SystemID = "";
-	ID = "";
+	Created = undefined as Date;
+	CreatedID = undefined as string;
+	LastModified = undefined as Date;
+	LastModifiedID = undefined as string;
+	SystemID = undefined as string;
+	ID = undefined as string;
 
-	ansiTitle = "";
-	childrenIDs: Array<string>;
+	ansiTitle = undefined as string;
+	childrenIDs = undefined as Array<string>;
 
 	/** Deserializes data to object */
 	public static deserialize(json: any, desktop?: Desktop) {

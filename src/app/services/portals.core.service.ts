@@ -944,6 +944,9 @@ export class PortalsCoreService extends BaseService {
 						if (onNext !== undefined) {
 							onNext(data);
 						}
+						if (onNext !== undefined) {
+							onNext(data);
+						}
 					},
 					error => {
 						console.error(super.getErrorMessage("Error occurred while getting a desktop", error));

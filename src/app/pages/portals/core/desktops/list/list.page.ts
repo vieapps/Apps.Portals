@@ -38,6 +38,7 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 	private parentDesktop: Desktop;
 	private subscription: Subscription;
 	private children = "{{number}} children: {{children}}";
+	private alias = "Alias";
 
 	title = "Desktops";
 	desktops = new Array<Desktop>();
@@ -116,6 +117,7 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 		const title = await this.configSvc.getResourceAsync(`portals.desktops.title.${(this.searching ? "search" : "list")}`);
 		this.configSvc.appTitle = this.title = AppUtility.format(title, { title: "" });
 		this.children = await this.configSvc.getResourceAsync("portals.desktops.list.children");
+		this.alias = await this.configSvc.getResourceAsync("portals.desktops.controls.Alias.label");
 
 		if (this.searching) {
 			this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
@@ -163,7 +165,7 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 
 	getInfo(desktop: Desktop) {
 		return desktop.childrenIDs === undefined || desktop.childrenIDs.length < 1
-			? desktop.Alias
+			? `${this.alias}: ${desktop.Alias}`
 			: AppUtility.format(this.children, { number: desktop.childrenIDs.length, children: `${desktop.Children[0].Title}${(desktop.childrenIDs.length > 1 ? `, ${desktop.Children[1].Title}` : "")}, ...` });
 	}
 
