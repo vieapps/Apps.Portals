@@ -459,14 +459,13 @@ export class OrganizationsUpdatePage implements OnInit {
 		if (homeDesktop === undefined && AppUtility.isNotEmpty(this.organization.HomeDesktopID)) {
 			await this.portalsCoreSvc.getDesktopAsync(this.organization.HomeDesktopID, _ => homeDesktop = Desktop.get(this.organization.HomeDesktopID), undefined, true);
 		}
+		homeDesktopCtrl.Extras = { LookupDisplayValues: homeDesktop !== undefined ? [{ Value: homeDesktop.ID, Label: homeDesktop.FullTitle }] : undefined };
 
 		let searchDesktop = Desktop.get(this.organization.SearchDesktopID);
 		if (searchDesktop === undefined && AppUtility.isNotEmpty(this.organization.SearchDesktopID)) {
 			await this.portalsCoreSvc.getDesktopAsync(this.organization.SearchDesktopID, _ => searchDesktop = Desktop.get(this.organization.SearchDesktopID), undefined, true);
 		}
-
-		homeDesktopCtrl.Options.OnAfterViewInit = formControl => formControl.lookupDisplayValues = homeDesktop !== undefined ? [{ Value: homeDesktop.ID, Label: homeDesktop.FullTitle }] : undefined;
-		searchDesktopCtrl.Options.OnAfterViewInit = formControl => formControl.lookupDisplayValues = searchDesktop !== undefined ? [{ Value: searchDesktop.ID, Label: searchDesktop.FullTitle }] : undefined;
+		searchDesktopCtrl.Extras = { LookupDisplayValues: searchDesktop !== undefined ? [{ Value: searchDesktop.ID, Label: searchDesktop.FullTitle }] : undefined };
 
 		const instructionControls = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Instructions")).SubControls.Controls;
 		Organization.instructionElements.forEach(type => {

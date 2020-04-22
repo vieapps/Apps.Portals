@@ -110,10 +110,10 @@ export class RolesUpdatePage implements OnInit {
 			{
 				Name: "Organization",
 				Type: "Text",
+				Extras: { Text: this.organization.Title },
 				Options: {
 					Label: "{{portals.roles.controls.Organization}}",
-					ReadOnly: true,
-					OnAfterViewInit: formControl => formControl.text = this.organization.Title
+					ReadOnly: true
 				},
 			},
 			0
@@ -160,11 +160,11 @@ export class RolesUpdatePage implements OnInit {
 			Settings: {
 				ShowImage: true,
 				ShowDescription: true, DescriptionAtRight: true
-			}
+			},
+			LookupDisplayValues: this.users
 		};
 		control.SubControls = control.Options.Label = undefined;
 		control.Options.Description = "{{portals.roles.controls.UserIDs.description}}";
-		control.Options.OnAfterViewInit = formControl => formControl.lookupDisplayValues = this.users,
 		control.Options.LookupOptions = {
 			AsModal: false,
 			AsSelector: true,

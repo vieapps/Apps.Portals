@@ -118,10 +118,10 @@ export class DesktopsUpdatePage implements OnInit {
 				Name: "Organization",
 				Type: "Text",
 				Segment: "basic",
+				Extras: { Text: this.organization.Title },
 				Options: {
 					Label: "{{portals.desktops.controls.Organization}}",
-					ReadOnly: true,
-					OnAfterViewInit: formControl => formControl.text = this.organization.Title
+					ReadOnly: true
 				}
 			},
 			0
@@ -143,13 +143,11 @@ export class DesktopsUpdatePage implements OnInit {
 			);
 		}
 
-		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID"));
-		const copyCtrl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CopyFromID")) || AppUtility.clone(control, false) as AppFormsControlConfig;
 		const parentDesktop = this.desktop.Parent;
-
-		copyCtrl.Type = control.Type = "Lookup";
-		copyCtrl.Options.OnAfterViewInit = control.Options.OnAfterViewInit = formControl => formControl.lookupDisplayValues = parentDesktop !== undefined ? [{ Value: parentDesktop.ID, Label: parentDesktop.FullTitle }] : undefined;
-		copyCtrl.Options.LookupOptions = control.Options.LookupOptions = {
+		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID"));
+		control.Type = "Lookup";
+		control.Extras = { LookupDisplayValues: parentDesktop !== undefined ? [{ Value: parentDesktop.ID, Label: parentDesktop.FullTitle }] : undefined };
+		control.Options.LookupOptions = {
 			Multiple: false,
 			OnDelete: (_, formControl) => {
 				formControl.setValue(undefined);
@@ -171,6 +169,11 @@ export class DesktopsUpdatePage implements OnInit {
 				}
 			}
 		};
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CopyFromID"));
+		if (control !== undefined) {
+			control.Options.LookupOptions = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID")).Options.LookupOptions;
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Language"));
 		control.Options.SelectOptions.Interface = "popover";
@@ -234,8 +237,13 @@ export class DesktopsUpdatePage implements OnInit {
 			};
 		}
 
-		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
-		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Aliases")).Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.isNotEmpty(formControl.value) ? AppUtility.toStr((AppUtility.toArray(formControl.value, ";") as string[]).map(alias => alias.trim().toLowerCase().replace(/\-/g, "")), ";") : undefined, { onlySelf: true });
+		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.toANSI(formControl.value, true), { onlySelf: true });
+		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Aliases")).Options.OnBlur = (_, formControl) => {
+			const aliases = AppUtility.isNotEmpty(formControl.value)
+				? AppUtility.toStr((AppUtility.toArray(formControl.value, ";") as string[]).map(alias => AppUtility.toANSI(alias, true)), ";")
+				: undefined;
+			formControl.setValue(aliases, { onlySelf: true });
+		};
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (onPreCompleted !== undefined) {
