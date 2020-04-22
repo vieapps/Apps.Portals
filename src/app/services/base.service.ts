@@ -153,7 +153,7 @@ export class Base {
 	 * @param query The additional query
 	*/
 	protected getURI(objectName: string, objectID?: string, query?: string) {
-		return `${this.name.toLowerCase()}/${objectName.toLowerCase()}` + (AppUtility.isNotEmpty(objectID) ? "/" + objectID : "") + (AppUtility.isNotEmpty(query) ? "?" + query : "");
+		return `${this.name.toLowerCase()}/${objectName.toLowerCase()}` + (AppUtility.isNotEmpty(objectID) ? `/${objectID}` : "") + (AppUtility.isNotEmpty(query) ? `?${query}` : "");
 	}
 
 	/**
@@ -162,7 +162,7 @@ export class Base {
 	 * @param query The additional query
 	*/
 	protected getSearchURI(objectName: string, query?: string) {
-		return this.getURI(objectName, "search", "x-request={{request}}" + (query !== undefined ? "&" + query : ""));
+		return this.getURI(objectName, "search", "x-request={{request}}" + (query !== undefined ? `&${query}` : ""));
 	}
 
 	/**
