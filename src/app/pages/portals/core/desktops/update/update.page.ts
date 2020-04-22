@@ -72,7 +72,7 @@ export class DesktopsUpdatePage implements OnInit {
 
 	private async initializeFormAsync() {
 		this.desktop = this.desktop || new Desktop(this.organization.ID);
-		if (this.organization === undefined || this.organization.ID === "" || this.organization.ID !== this.desktop.SystemID) {
+		if (this.organization.ID === "" || this.organization.ID !== this.desktop.SystemID) {
 			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"));
 			return;
 		}
@@ -94,7 +94,7 @@ export class DesktopsUpdatePage implements OnInit {
 		this.formConfig = await this.getFormControlsAsync();
 	}
 
-	private async getFormSegmentsAsync(onPreCompleted?: (formSegments: AppFormsSegment[]) => void) {
+	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
 		const formSegments = [
 			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.desktops.update.segments.basic")),
 			new AppFormsSegment("display", await this.configSvc.getResourceAsync("portals.desktops.update.segments.display")),
@@ -103,13 +103,13 @@ export class DesktopsUpdatePage implements OnInit {
 		if (this.desktop.ID !== "") {
 			formSegments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.desktops.update.segments.attachments")));
 		}
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(formSegments);
+		if (onCompleted !== undefined) {
+			onCompleted(formSegments);
 		}
 		return formSegments;
 	}
 
-	private async getFormControlsAsync(onPreCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
+	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "desktop", "form-controls");
 
 		AppUtility.insertAt(
@@ -246,8 +246,8 @@ export class DesktopsUpdatePage implements OnInit {
 		};
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(formConfig);
+		if (onCompleted !== undefined) {
+			onCompleted(formConfig);
 		}
 
 		return formConfig;

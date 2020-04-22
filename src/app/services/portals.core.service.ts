@@ -55,7 +55,7 @@ export class PortalsCoreService extends BaseService {
 			: AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isModerator(this.name, "Organization", organization.Privileges, account);
 	}
 
-	public getEmailNotificationFormControl(allowInheritFromParent: boolean = true, onPreCompleted?: (formConfig: AppFormsControlConfig) => void) {
+	public getEmailNotificationFormControl(allowInheritFromParent: boolean = true, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
 		const placeholder = "{{portals.common.controls.notifications.emails.toAddresses.placeholder}}";
 		const formConfig: AppFormsControlConfig = {
 			Name: "Emails",
@@ -123,13 +123,13 @@ export class PortalsCoreService extends BaseService {
 			);
 		}
 
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(formConfig);
+		if (onCompleted !== undefined) {
+			onCompleted(formConfig);
 		}
 		return formConfig;
 	}
 
-	public getWebHookNotificationFormControl(allowInheritFromParent: boolean = true, onPreCompleted?: (formConfig: AppFormsControlConfig) => void) {
+	public getWebHookNotificationFormControl(allowInheritFromParent: boolean = true, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
 		const formConfig: AppFormsControlConfig = {
 			Name: "WebHooks",
 			Options: {
@@ -226,13 +226,13 @@ export class PortalsCoreService extends BaseService {
 			);
 		}
 
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(formConfig);
+		if (onCompleted !== undefined) {
+			onCompleted(formConfig);
 		}
 		return formConfig;
 	}
 
-	public getNotificationsFormControl(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true, onPreCompleted?: (formConfig: AppFormsControlConfig) => void) {
+	public getNotificationsFormControl(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
 		const formConfig: AppFormsControlConfig = {
 			Name: name,
 			Segment: segment,
@@ -279,13 +279,13 @@ export class PortalsCoreService extends BaseService {
 			formConfig.SubControls.Controls.push(this.getWebHookNotificationFormControl(allowInheritFromParent));
 		}
 
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(formConfig);
+		if (onCompleted !== undefined) {
+			onCompleted(formConfig);
 		}
 		return formConfig;
 	}
 
-	public getEmailSettingsFormControl(name: string, segment?: string, allowInheritFromParent: boolean = true, onPreCompleted?: (formConfig: AppFormsControlConfig) => void) {
+	public getEmailSettingsFormControl(name: string, segment?: string, allowInheritFromParent: boolean = true, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
 		const formConfig: AppFormsControlConfig = {
 			Name: name,
 			Segment: segment,
@@ -402,8 +402,8 @@ export class PortalsCoreService extends BaseService {
 			);
 		}
 
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(formConfig);
+		if (onCompleted !== undefined) {
+			onCompleted(formConfig);
 		}
 		return formConfig;
 	}
@@ -423,14 +423,14 @@ export class PortalsCoreService extends BaseService {
 
 	public get organizationCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
-			const organization = data === undefined
-				? undefined
-				: data instanceof Organization
+			const organization = data !== undefined
+				? data instanceof Organization
 					? data as Organization
-					: Organization.deserialize(data);
-			return organization === undefined
-				? undefined
-				: { title: organization.Title, description: organization.Description, originalObject: organization };
+					: Organization.deserialize(data)
+				: undefined;
+			return organization !== undefined
+				? { title: organization.Title, description: organization.Description, originalObject: organization }
+				: undefined;
 		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("organization", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
@@ -590,14 +590,14 @@ export class PortalsCoreService extends BaseService {
 
 	public get roleCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
-			const role = data === undefined
-				? undefined
-				: data instanceof Role
+			const role = data !== undefined
+				? data instanceof Role
 					? data as Role
-					: Role.deserialize(data);
-			return role === undefined
-				? undefined
-				: { title: role.FullTitle, description: role.Description, originalObject: role };
+					: Role.deserialize(data)
+				: undefined;
+			return role !== undefined
+				? { title: role.FullTitle, description: role.Description, originalObject: role }
+				: undefined;
 		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("role", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
@@ -832,14 +832,14 @@ export class PortalsCoreService extends BaseService {
 
 	public get desktopCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
-			const desktop = data === undefined
-				? undefined
-				: data instanceof Desktop
+			const desktop = data !== undefined
+				? data instanceof Desktop
 					? data as Desktop
-					: Desktop.deserialize(data);
-			return desktop === undefined
-				? undefined
-				: { title: desktop.FullTitle, description: desktop.Alias, originalObject: desktop };
+					: Desktop.deserialize(data)
+				: undefined;
+			return desktop !== undefined
+				? { title: desktop.FullTitle, description: desktop.Alias, originalObject: desktop }
+				: undefined;
 		};
 		return new AppCustomCompleter(
 			term => AppUtility.format(super.getSearchURI("desktop", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),

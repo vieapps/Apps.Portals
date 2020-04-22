@@ -103,7 +103,7 @@ export class RolesUpdatePage implements OnInit {
 		this.formConfig = await this.getFormControlsAsync();
 	}
 
-	private async getFormControlsAsync(onPreCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
+	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "role", "form-controls");
 		AppUtility.insertAt(
 			formConfig,
@@ -225,8 +225,8 @@ export class RolesUpdatePage implements OnInit {
 		}
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(formConfig);
+		if (onCompleted !== undefined) {
+			onCompleted(formConfig);
 		}
 
 		return formConfig;

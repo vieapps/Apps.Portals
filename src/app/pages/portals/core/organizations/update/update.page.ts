@@ -104,7 +104,7 @@ export class OrganizationsUpdatePage implements OnInit {
 		this.formConfig = await this.getFormControlsAsync();
 	}
 
-	private async getFormSegmentsAsync(onPreCompleted?: (formSegments: AppFormsSegment[]) => void) {
+	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
 		const formSegments = [
 			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.organizations.update.segments.basic")),
 			new AppFormsSegment("privileges", await this.configSvc.getResourceAsync("portals.organizations.update.segments.privileges")),
@@ -117,13 +117,13 @@ export class OrganizationsUpdatePage implements OnInit {
 		if (AppUtility.isNotEmpty(this.organization.ID)) {
 			formSegments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.organizations.update.segments.attachments")));
 		}
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(formSegments);
+		if (onCompleted !== undefined) {
+			onCompleted(formSegments);
 		}
 		return formSegments;
 	}
 
-	private async getFormControlsAsync(onPreCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
+	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const socials: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "socials");
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
 
@@ -482,8 +482,8 @@ export class OrganizationsUpdatePage implements OnInit {
 		});
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(formConfig);
+		if (onCompleted !== undefined) {
+			onCompleted(formConfig);
 		}
 
 		return formConfig;
