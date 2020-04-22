@@ -68,7 +68,7 @@ export class DesktopsSelectorModalPage implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.multiple = this.multiple === undefined ? true : AppUtility.isTrue(this.multiple);
 		this.organization = Organization.get(this.organizationID) || new Organization();
-		this.excludedIDs = AppUtility.isArray(this.excludedIDs, true) ? this.excludedIDs.map(id => id.toString().trim()) : [];
+		this.excludedIDs = AppUtility.isArray(this.excludedIDs, true) ? this.excludedIDs.filter(id => AppUtility.isNotEmpty(id)).map(id => id.trim()) : [];
 		this.parentDesktop = Desktop.get(this.parentID);
 		this.filterBy.And = [
 			{ SystemID: { Equals: this.organization.ID } },
