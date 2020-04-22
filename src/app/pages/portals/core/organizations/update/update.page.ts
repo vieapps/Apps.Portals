@@ -85,15 +85,11 @@ export class OrganizationsUpdatePage implements OnInit {
 		if (this.organization === undefined) {
 			this.organization = new Organization();
 			this.organization.Privileges = new Privileges(true);
-			this.organization.Notifications = {
-				Events: [],
-				Methods: [],
-				WebHooks: {
-					EndpointURLs: [],
-					SignAlgorithm: "SHA256",
-					SignatureAsHex: true,
-					SignatureInQuery: false
-				}
+			this.organization.Notifications.WebHooks = {
+				EndpointURLs: [],
+				SignAlgorithm: "SHA256",
+				SignatureAsHex: true,
+				SignatureInQuery: false
 			};
 			this.organization.RefreshUrls = { Addresses: [], Interval: 15 };
 			this.organization.RedirectUrls = { Addresses: [], AllHttp404: false };
