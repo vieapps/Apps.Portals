@@ -28,7 +28,7 @@
 <ion-content [color]="configSvc.color">
 	<ion-list *ngIf="!searching" class="ion-padding-end">
 		<ion-item *ngFor="let profile of profiles; trackBy: track" [color]="configSvc.color" detail="false">
-			<ion-checkbox slot="end" [checked]="selected.contains(profile.ID)" (ionChange)="select(profile.ID, $event)"></ion-checkbox>
+			<ion-checkbox slot="end" [checked]="selected.contains(profile.ID)" (ionChange)="select($event, profile.ID)"></ion-checkbox>
 			<ion-label>
 				<ion-thumbnail class="ion-float-start ion-padding-end">
 					<img [src]="profile.avatarURI" />
@@ -44,7 +44,7 @@
 	</ion-list>
 	<ion-list *ngIf="searching" class="ion-padding-end">
 		<ion-item *ngFor="let profile of results; trackBy: track" [color]="configSvc.color" detail="false">
-			<ion-checkbox slot="end" [checked]="selected.contains(profile.ID)" (ionChange)="select(profile.ID, $event)"></ion-checkbox>
+			<ion-checkbox slot="end" [checked]="selected.contains(profile.ID)" (ionChange)="select($event, profile.ID)"></ion-checkbox>
 			<ion-label>
 				<ion-thumbnail class="ion-float-start ion-padding-end">
 					<img [src]="profile.avatarURI" />

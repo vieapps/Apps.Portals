@@ -117,9 +117,9 @@ export class UsersOtpPage implements OnInit {
 				: await this.configSvc.getResourceAsync("users.profile.otp.status.provisioning");
 	}
 
-	provisonAsync() {
-		this.appFormsSvc.showLoadingAsync(this.title);
-		return this.usersSvc.prepare2FAMethodAsync(
+	async provisonAsync() {
+		await this.appFormsSvc.showLoadingAsync(this.title);
+		await this.usersSvc.prepare2FAMethodAsync(
 			async data => {
 				this.provision.info = data.Provisioning;
 				this.provision.uri = data.URI;

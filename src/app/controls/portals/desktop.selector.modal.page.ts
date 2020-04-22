@@ -200,7 +200,7 @@ export class DesktopsSelectorModalPage implements OnInit, OnDestroy {
 		}
 	}
 
-	select(id: string, event: any) {
+	select(event: any, id: string) {
 		if (event.detail.checked) {
 			if (!this.multiple) {
 				this.selected.clear();
@@ -218,14 +218,15 @@ export class DesktopsSelectorModalPage implements OnInit, OnDestroy {
 			: new Promise<void>(() => {});
 	}
 
-	back() {
+	back(event: Event) {
+		event.stopPropagation();
 		this.parentDesktop = this.parentDesktop.Parent;
 		this.desktops = this.parentDesktop !== undefined
 			? this.parentDesktop.Children.filter(d => this.excludedIDs.indexOf(d.ID) < 0)
 			: Desktop.all.filter(d => d.SystemID === this.organization.ID && d.ParentID === undefined).sort(AppUtility.getCompareFunction("Title"));
 	}
 
-	async showChildrenAsync(event: Event, desktop: Desktop) {
+	show(event: Event, desktop: Desktop) {
 		event.stopPropagation();
 		this.parentDesktop = desktop;
 		this.desktops = this.parentDesktop.Children.filter(d => this.excludedIDs.indexOf(d.ID) < 0);

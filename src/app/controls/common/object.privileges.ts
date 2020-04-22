@@ -220,7 +220,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 		return roles !== undefined && roles.length > 0 && roles.indexOf(id) > -1;
 	}
 
-	selectRole(section: string, id: string, event: any) {
+	selectRole(event: any, section: string, id: string) {
 		let roles = this.selectedRoles[section];
 		if (roles === undefined) {
 			roles = this.selectedRoles[section] = new Array<string>();
@@ -275,7 +275,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 		return users !== undefined && users.length > 0 && users.indexOf(id) > -1;
 	}
 
-	selectUser(section: string, id: string, event: any) {
+	selectUser(event: any, section: string, id: string) {
 		let users = this.selectedUsers[section];
 		if (users === undefined) {
 			users = this.selectedUsers[section] = new Array<string>();

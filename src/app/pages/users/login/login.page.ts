@@ -121,28 +121,24 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 	}
 
 	async logInAsync() {
-		if (this.login.form.invalid) {
-			this.appFormsSvc.highlightInvalids(this.login.form);
-			return;
-		}
-
-		if (this.configSvc.appConfig.isWebApp) {
-			this.configSvc.appConfig.app.persistence = this.login.form.value.Persistence;
-			if (!this.configSvc.appConfig.app.persistence) {
-				await this.configSvc.deleteSessionAsync();
+		if (this.appFormsSvc.validate(this.login.form)) {
+			if (this.configSvc.appConfig.isWebApp) {
+				this.configSvc.appConfig.app.persistence = this.login.form.value.Persistence;
+				if (!this.configSvc.appConfig.app.persistence) {
+					await this.configSvc.deleteSessionAsync();
+				}
 			}
+			await this.appFormsSvc.showLoadingAsync(this.title);
+			await this.authSvc.logInAsync(
+				this.login.form.value.Email,
+				this.login.form.value.Password,
+				async data => await Promise.all([
+					TrackingUtility.trackAsync(this.title, this.configSvc.appConfig.url.users.login),
+					this.appFormsSvc.hideLoadingAsync(async () => await (data.Require2FA ? this.openLoginOTPAsync(data) : this.closeAsync()))
+				]),
+				async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => this.login.controls.find(c => AppUtility.isEquals(c.Name, "Email")).focus())
+			);
 		}
-
-		await this.appFormsSvc.showLoadingAsync(this.title);
-		await this.authSvc.logInAsync(
-			this.login.form.value.Email,
-			this.login.form.value.Password,
-			async data => await Promise.all([
-				TrackingUtility.trackAsync(this.title, this.configSvc.appConfig.url.users.login),
-				this.appFormsSvc.hideLoadingAsync(async () => await (data.Require2FA ? this.openLoginOTPAsync(data) : this.closeAsync()))
-			]),
-			async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => this.login.controls.find(c => AppUtility.isEquals(c.Name, "Email")).focus())
-		);
 	}
 
 	async openLoginOTPAsync(data: any) {
@@ -196,10 +192,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 	}
 
 	async logInOTPAsync() {
-		if (this.otp.form.invalid) {
-			this.appFormsSvc.highlightInvalids(this.otp.form);
-		}
-		else {
+		if (this.appFormsSvc.validate(this.otp.form)) {
 			await this.appFormsSvc.showLoadingAsync(this.title);
 			await this.authSvc.logInOTPAsync(
 				this.otp.form.value.ID,
@@ -248,10 +241,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 	}
 
 	async resetPasswordAsync() {
-		if (this.reset.form.invalid) {
-			this.appFormsSvc.highlightInvalids(this.reset.form);
-		}
-		else {
+		if (this.appFormsSvc.validate(this.reset.form)) {
 			await this.appFormsSvc.showLoadingAsync(this.title);
 			await this.authSvc.resetPasswordAsync(
 				this.reset.form.value.Email,

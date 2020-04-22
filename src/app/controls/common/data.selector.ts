@@ -123,7 +123,7 @@ export class DataSelectorControl implements OnInit, OnDestroy {
 		return this._selected.contains(value);
 	}
 
-	select(value: string, event: any) {
+	select(event: any, value: string) {
 		if (event.detail.checked) {
 			if (!this.multiple) {
 				this._selected.clear();

@@ -236,7 +236,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		}
 	}
 
-	select(id: string, event: any) {
+	select(event: any, id: string) {
 		if (event.detail.checked) {
 			if (!this.multiple) {
 				this.selected.clear();
@@ -254,14 +254,15 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 			: new Promise<void>(() => {});
 	}
 
-	back() {
+	back(event: Event) {
+		event.stopPropagation();
 		this.parentRole = this.parentRole.Parent;
 		this.roles = this.parentRole !== undefined
 			? this.parentRole.Children.filter(r => this.excludedIDs.indexOf(r.ID) < 0)
 			: Role.all.filter(r => r.SystemID === this.organization.ID && r.ParentID === undefined).sort(AppUtility.getCompareFunction("Title"));
 	}
 
-	async showChildrenAsync(event: Event, role: Role) {
+	show(event: Event, role: Role) {
 		event.stopPropagation();
 		this.parentRole = role;
 		this.roles = this.parentRole.Children.filter(r => this.excludedIDs.indexOf(r.ID) < 0);

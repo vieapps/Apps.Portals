@@ -34,7 +34,7 @@
 								</ion-label>
 							</ion-list-header>
 							<ion-item *ngFor="let role of roles[section]; trackBy: track" [color]="configSvc.color">
-								<ion-checkbox slot="end" [checked]="isRoleChecked(section, role.Value)" (ionChange)="selectRole(section, role.Value, $event)"></ion-checkbox>
+								<ion-checkbox slot="end" [checked]="isRoleChecked(section, role.Value)" (ionChange)="selectRole($event, section, role.Value)"></ion-checkbox>
 								<ion-label>
 									{{ role.Label }}
 								</ion-label>
@@ -62,7 +62,7 @@
 								</ion-label>
 							</ion-list-header>
 							<ion-item *ngFor="let user of users[section]; trackBy: track" [color]="configSvc.color">
-								<ion-checkbox slot="end" [checked]="isUserChecked(section, user.Value)" (ionChange)="selectUser(section, user.Value, $event)"></ion-checkbox>
+								<ion-checkbox slot="end" [checked]="isUserChecked(section, user.Value)" (ionChange)="selectUser($event, section, user.Value)"></ion-checkbox>
 								<ion-label>
 									{{ user.Label }}
 								</ion-label>

@@ -165,7 +165,7 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 		}
 	}
 
-	select(id: string, event: any) {
+	select(event: any, id: string) {
 		if (event.detail.checked) {
 			if (!this.multiple) {
 				this.selected.clear();

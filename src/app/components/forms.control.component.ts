@@ -458,12 +458,12 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.control.Options.RangeOptions;
 	}
 
-	get isCompleter() {
-		return this.isLookupControl && this.control.Options.LookupOptions.AsCompleter;
-	}
-
 	get isModal() {
 		return this.isLookupControl && this.control.Options.LookupOptions.AsModal;
+	}
+
+	get isCompleter() {
+		return this.isLookupControl && this.control.Options.LookupOptions.AsCompleter;
 	}
 
 	get isSelector() {
@@ -675,6 +675,11 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	/** Gets the URI for displaying captcha image of this control */
 	get captchaURI() {
 		return this.control.captchaURI;
+	}
+
+	/** Sets the URI for displaying captcha image of this control */
+	set captchaURI(uri: string) {
+		this.control.captchaURI = uri;
 	}
 
 	/** Sets focus into this control */
