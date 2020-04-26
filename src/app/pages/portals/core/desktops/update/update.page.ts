@@ -28,7 +28,7 @@ export class DesktopsUpdatePage implements OnInit {
 
 	private desktop: Desktop;
 	private organization: Organization;
-	private canManageOrganizations = false;
+	private canModerateOrganization = false;
 	private hash = "";
 
 	title = "";
@@ -60,8 +60,8 @@ export class DesktopsUpdatePage implements OnInit {
 			await this.portalsCoreSvc.getOrganizationAsync(this.desktop.SystemID, _ => this.organization = Organization.get(this.desktop.SystemID), undefined, true);
 		}
 
-		this.canManageOrganizations = this.portalsCoreSvc.canModerateOrganization(this.organization);
-		if (this.canManageOrganizations) {
+		this.canModerateOrganization = this.portalsCoreSvc.canModerateOrganization(this.organization);
+		if (this.canModerateOrganization) {
 			await this.initializeFormAsync();
 		}
 		else {
@@ -72,7 +72,7 @@ export class DesktopsUpdatePage implements OnInit {
 
 	private async initializeFormAsync() {
 		this.desktop = this.desktop || new Desktop(this.organization.ID, "", this.configSvc.requestParams["ParentID"]);
-		if (this.organization.ID === "" || this.organization.ID !== this.desktop.SystemID) {
+		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.desktop.SystemID) {
 			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"));
 			return;
 		}
@@ -85,6 +85,10 @@ export class DesktopsUpdatePage implements OnInit {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
+		if (!AppUtility.isNotEmpty(this.desktop.ID)) {
+			this.desktop.SEOSettings = { SEOInfo: { Title: undefined as string } };
+		}
+
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 	}
@@ -95,7 +99,7 @@ export class DesktopsUpdatePage implements OnInit {
 			new AppFormsSegment("display", await this.configSvc.getResourceAsync("portals.desktops.update.segments.display")),
 			new AppFormsSegment("seo", await this.configSvc.getResourceAsync("portals.desktops.update.segments.seo"))
 		];
-		if (this.desktop.ID !== "") {
+		if (AppUtility.isNotEmpty(this.desktop.ID)) {
 			formSegments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.desktops.update.segments.attachments")));
 		}
 		if (onCompleted !== undefined) {
@@ -173,11 +177,12 @@ export class DesktopsUpdatePage implements OnInit {
 		const unspecified = await this.configSvc.getResourceAsync("portals.common.unspecified");
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Language"));
+		control.Required = false;
 		control.Options.SelectOptions.Interface = "popover";
 		control.Options.SelectOptions.Values = this.configSvc.languages.map(language => {
 			return { Value: language.Value, Label: language.Label };
 		});
-		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: undefined, Label: unspecified }, 0);
+		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: unspecified }, 0);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"));
 		control.Options.Rows = 18;
@@ -207,7 +212,7 @@ export class DesktopsUpdatePage implements OnInit {
 			return { Value: value, Label: `{{portals.desktops.update.seo.${value}}}` };
 		});
 		await Promise.all(seo.map(async s => s.Label = await this.appFormsSvc.getResourceAsync(s.Label)));
-		AppUtility.insertAt(seo, { Value: undefined, Label: unspecified }, 0);
+		AppUtility.insertAt(seo, { Value: "-", Label: unspecified }, 0);
 		control.SubControls.Controls.filter(ctrl => ctrl.Type === "Select").forEach(ctrl => ctrl.Options.SelectOptions.Values = seo);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
@@ -260,10 +265,14 @@ export class DesktopsUpdatePage implements OnInit {
 
 	onFormInitialized() {
 		const desktop = AppUtility.clone(this.desktop, false);
+		desktop.Language = AppUtility.isNotEmpty(desktop.Language) ? desktop.Language : "-";
+		this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "SEOSettings")).SubControls.Controls.filter(ctrl => ctrl.Type === "Select").forEach(ctrl => {
+			const value = desktop.SEOSettings[ctrl.Name];
+			desktop.SEOSettings[ctrl.Name] = AppUtility.isNotEmpty(value) ? value : "-";
+		});
 		this.form.patchValue(desktop);
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync();
-		console.warn("Data", this.desktop, desktop, this.form.value);
 	}
 
 	async updateAsync() {
@@ -274,7 +283,14 @@ export class DesktopsUpdatePage implements OnInit {
 			else {
 				this.processing = true;
 				await this.appFormsSvc.showLoadingAsync(this.title);
+
 				const desktop = this.form.value;
+				desktop.Language = AppUtility.isEquals(desktop.Language, "-") ? undefined : desktop.Language;
+				this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "SEOSettings")).SubControls.Controls.filter(ctrl => ctrl.Type === "Select").forEach(ctrl => {
+					const value = desktop.SEOSettings[ctrl.Name];
+					desktop.SEOSettings[ctrl.Name] = AppUtility.isEquals(value, "-") ? undefined : value;
+				});
+
 				if (AppUtility.isNotEmpty(desktop.ID)) {
 					await this.portalsCoreSvc.updateDesktopAsync(
 						desktop,

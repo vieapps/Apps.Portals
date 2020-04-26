@@ -149,7 +149,7 @@ export class DesktopsSelectorModalPage implements OnInit, OnDestroy {
 	}
 
 	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
-		if (this.organization === undefined || this.organization.ID === "") {
+		if (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID)) {
 			if (onNext !== undefined) {
 				onNext();
 			}

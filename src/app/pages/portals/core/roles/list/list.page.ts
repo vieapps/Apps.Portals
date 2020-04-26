@@ -95,7 +95,7 @@ export class RolesListPage implements OnInit, OnDestroy {
 
 	private async initializeAsync() {
 		this.organization = Organization.get(this.configSvc.requestParams["SystemID"]) || this.portalsCoreSvc.activeOrganization || new Organization();
-		if (this.organization === undefined || this.organization.ID === "") {
+		if (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID)) {
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),

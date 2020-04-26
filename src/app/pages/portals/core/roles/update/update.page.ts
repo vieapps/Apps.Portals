@@ -71,7 +71,7 @@ export class RolesUpdatePage implements OnInit {
 
 	private async initializeFormAsync() {
 		this.role = this.role || new Role(this.organization.ID);
-		if (this.organization === undefined || this.organization.ID === "" || this.organization.ID !== this.role.SystemID) {
+		if (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.role.SystemID) {
 			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"));
 			return;
 		}
@@ -96,7 +96,7 @@ export class RolesUpdatePage implements OnInit {
 			await this.prepareUsersAsync();
 		}
 
-		if (this.role.ID === "") {
+		if (!AppUtility.isNotEmpty(this.role.ID)) {
 			this.role.ParentID = this.configSvc.requestParams["ParentID"];
 		}
 
@@ -201,7 +201,7 @@ export class RolesUpdatePage implements OnInit {
 			}
 		};
 
-		if (this.role.ID !== "") {
+		if (!AppUtility.isNotEmpty(this.role.ID)) {
 			formConfig.push(
 				await this.usersSvc.getAuditFormControlAsync(this.role.Created, this.role.CreatedID, this.role.LastModified, this.role.LastModifiedID),
 				this.appFormsSvc.getButtonControls(
