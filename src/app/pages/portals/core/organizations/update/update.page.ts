@@ -84,13 +84,15 @@ export class OrganizationsUpdatePage implements OnInit {
 
 		if (this.organization === undefined) {
 			this.organization = new Organization();
+			this.organization.Status = "Pending";
 			this.organization.Privileges = new Privileges(true);
-			this.organization.Notifications.WebHooks = {
+			this.organization.Notifications = { WebHooks: {
 				EndpointURLs: [],
 				SignAlgorithm: "SHA256",
 				SignatureAsHex: true,
 				SignatureInQuery: false
-			};
+			}};
+			this.organization.Instructions = {};
 			this.organization.RefreshUrls = { Addresses: [], Interval: 15 };
 			this.organization.RedirectUrls = { Addresses: [], AllHttp404: false };
 			this.organization.EmailSettings = { Smtp: { Port: 25, EnableSsl: false } };
@@ -322,7 +324,7 @@ export class OrganizationsUpdatePage implements OnInit {
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		control.Options.AutoFocus = true;
 
-		if (this.organization.ID === "") {
+		if (!AppUtility.isNotEmpty(this.organization.ID)) {
 			control.Options.OnBlur = (_, formControl) => {
 				this.form.controls.Alias.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
 				((this.form.controls.Notifications as FormGroup).controls.WebHooks as FormGroup).controls.SignKey.setValue(AppCrypto.md5(formControl.value), { onlySelf: true });
