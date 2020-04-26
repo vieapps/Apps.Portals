@@ -1227,13 +1227,13 @@ export class PortalsCoreService extends BaseService {
 		switch (message.Type.Event) {
 			case "Create":
 			case "Update":
-				Organization.update(message.Data);
+				Site.update(message.Data);
 				AppEvents.broadcast("Portals", { Object: "Site", Type: "Updated", ID: message.Data.ID });
 				break;
 
 			case "Delete":
-				if (Organization.contains(message.Data.ID)) {
-					Organization.instances.remove(message.Data.ID);
+				if (Site.contains(message.Data.ID)) {
+					Site.instances.remove(message.Data.ID);
 					AppEvents.broadcast("Portals", { Object: "Site", Type: "Deleted", ID: message.Data.ID });
 				}
 				break;
