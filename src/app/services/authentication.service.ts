@@ -26,6 +26,14 @@ export class AuthenticationService extends BaseService {
 	}
 
 	/**
+	 * Determines the account is system moderator or not
+	 * @param account The account to check (default is current logged in account)
+	*/
+	public isSystemModerator(account?: Account) {
+		return (account || this.configSvc.getAccount()).isInRole("SystemModerator") || this.isSystemAdministrator(account);
+	}
+
+	/**
 	 * Determines the account is service administrator or not (can manage or not)
 	 * @param serviceName The service's name need to check with this accounts' privileges
 	 * @param objectName The service object's name need to check with this accounts' privileges
