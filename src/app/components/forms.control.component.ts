@@ -443,7 +443,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				this._selectOptions = (AppUtility.toArray(values) as Array<any>).map(value => value.toString());
 			}
 			else {
-				this._selectOptions = [values.toString()];
+				this._selectOptions = AppUtility.isNotNull(values) ? [values.toString()] : [];
 			}
 			this._selectOptions = this._selectOptions.filter(value => value !== "");
 		}
