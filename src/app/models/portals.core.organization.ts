@@ -4,9 +4,12 @@ import { PortalCoreBase as BaseModel } from "@models/portals.core.base";
 
 export class Organization extends BaseModel {
 
-	constructor() {
+	constructor(
+		id?: string
+	) {
 		super();
 		delete this["OriginalPrivileges"];
+		this.ID = AppUtility.isNotEmpty(id) ? id : "";
 	}
 
 	public static instructionElements = ["Activate", "Invite", "Reset", "Password", "Email"];
@@ -22,24 +25,19 @@ export class Organization extends BaseModel {
 	/** Active organization */
 	public static active: Organization;
 
-	ID = "";
-	Title = "";
-	Description = "";
-	OwnerID = "";
-	Status = "Pending";
-	Alias = "";
+	Title = undefined as string;
+	Description = undefined as string;
+	OwnerID = undefined as string;
+	Status = undefined as string;
+	Alias = undefined as string;
 	ExpiredDate = "-";
 	FilesQuotes = 10;
 	Required2FA = false;
 	TrackDownloadFiles = false;
 	Theme = "default";
-	HomeDesktopID = "";
-	SearchDesktopID = "";
-	Created = new Date();
-	CreatedID = "";
-	LastModified = new Date();
-	LastModifiedID = "";
-	Notifications = {} as {
+	HomeDesktopID = undefined as string;
+	SearchDesktopID = undefined as string;
+	Notifications = undefined as {
 		Events?: Array<string>;
 		Methods?: Array<string>;
 		Emails?: {
@@ -60,7 +58,7 @@ export class Organization extends BaseModel {
 			AdditionalHeader?: string;
 		};
 	};
-	Instructions = {} as {
+	Instructions = undefined as {
 		[type: string]: {
 			[language: string]: {
 				Subject?: string;
@@ -68,21 +66,21 @@ export class Organization extends BaseModel {
 			}
 		}
 	};
-	Socials = new Array<string>();
-	Trackings = {} as {
+	Socials = undefined as Array<string>;
+	Trackings = undefined as {
 		[key: string]: string
 	};
-	MetaTags: string;
-	Scripts: string;
-	RefreshUrls = {} as {
+	MetaTags = undefined as string;
+	Scripts = undefined as string;
+	RefreshUrls = undefined as {
 		Addresses?: Array<string>;
 		Interval?: number;
 	};
-	RedirectUrls = {} as {
+	RedirectUrls = undefined as {
 		Addresses?: Array<string>;
 		AllHttp404?: boolean;
 	};
-	EmailSettings = {} as {
+	EmailSettings = undefined as {
 		Sender?: string;
 		Signature?: string;
 		Smtp?: {
@@ -93,8 +91,13 @@ export class Organization extends BaseModel {
 			UserPassword?: string;
 		}
 	};
+	Created = undefined as Date;
+	CreatedID = undefined as string;
+	LastModified = undefined as Date;
+	LastModifiedID = undefined as string;
+	ID = undefined as string;
 
-	ansiTitle = "";
+	ansiTitle: string;
 	owner: string;
 
 	/** Deserializes data to object */

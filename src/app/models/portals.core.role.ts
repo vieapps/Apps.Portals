@@ -24,18 +24,18 @@ export class Role extends BaseModel implements NestedModel {
 		return this.instances.values();
 	}
 
-	ParentID = "";
-	Title = "";
-	Description = "";
-	UserIDs = new Array<string>();
-	Created = new Date();
-	CreatedID = "";
-	LastModified = new Date();
-	LastModifiedID = "";
-	SystemID = "";
-	ID = "";
+	ParentID = undefined as string;
+	Title = undefined as string;
+	Description = undefined as string;
+	UserIDs = undefined as Array<string>;
+	Created = undefined as Date;
+	CreatedID = undefined as string;
+	LastModified = undefined as Date;
+	LastModifiedID = undefined as string;
+	SystemID = undefined as string;
+	ID = undefined as string;
 
-	ansiTitle = "";
+	ansiTitle: string;
 	childrenIDs: Array<string>;
 
 	/** Deserializes data to object */

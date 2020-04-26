@@ -33,7 +33,7 @@ export class Desktop extends BaseModel implements NestedModel {
 	Language = undefined as string;
 	Theme = undefined as string;
 	Template = undefined as string;
-	UISettings = {} as {
+	UISettings = undefined as {
 		Padding?: string;
 		Margin?: string;
 		Width?: string;
@@ -48,10 +48,11 @@ export class Desktop extends BaseModel implements NestedModel {
 		Style?: string;
 	};
 	IconURI = undefined as string;
+	CoverURI = undefined as string;
 	MetaTags = undefined as string;
 	Scripts = undefined as string;
 	MainPortletID = undefined as string;
-	SEOSettings = {} as {
+	SEOSettings = undefined as {
 		SEOInfo?: {
 			Title?: string;
 			Description?: string;
@@ -68,8 +69,8 @@ export class Desktop extends BaseModel implements NestedModel {
 	SystemID = undefined as string;
 	ID = undefined as string;
 
-	ansiTitle = undefined as string;
-	childrenIDs = undefined as Array<string>;
+	ansiTitle: string;
+	childrenIDs: Array<string>;
 
 	/** Deserializes data to object */
 	public static deserialize(json: any, desktop?: Desktop) {
