@@ -275,6 +275,27 @@ export class AppComponent implements OnInit {
 				icon: "desktop",
 				detail: false
 			});
+			this.updateSidebarItem(index, -1, {
+				title: "Sites",
+				url: "/portals/core/sites/list/all",
+				direction: "root",
+				icon: "globe",
+				detail: false
+			});
+			this.updateSidebarItem(index, -1, {
+				title: "Modules",
+				url: "/portals/core/modules/list/all",
+				direction: "root",
+				icon: "albums",
+				detail: false
+			});
+			this.updateSidebarItem(index, -1, {
+				title: "Content Types",
+				url: "/portals/core/content-types/list/all",
+				direction: "root",
+				icon: "git-compare",
+				detail: false
+			});
 		}
 		else {
 			this.sidebar.left.menu[index].title = info.title;

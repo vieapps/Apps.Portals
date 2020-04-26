@@ -12,6 +12,7 @@ import { Account } from "@models/account";
 import { Organization } from "@models/portals.core.organization";
 import { Role } from "@models/portals.core.role";
 import { Desktop } from "@models/portals.core.desktop";
+import { Site } from "@models/portals.core.site";
 
 @Injectable()
 export class PortalsCoreService extends BaseService {
@@ -26,6 +27,7 @@ export class PortalsCoreService extends BaseService {
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Organization", message => this.processOrganizationUpdateMessageAsync(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Role", message => this.processRoleUpdateMessageAsync(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Desktop", message => this.processDesktopUpdateMessageAsync(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Site", message => this.processSiteUpdateMessageAsync(message));
 	}
 
 	public get activeOrganization() {
@@ -43,14 +45,14 @@ export class PortalsCoreService extends BaseService {
 
 	public canManageOrganization(organization?: Organization, account?: Account) {
 		account = account || this.configSvc.getAccount();
-		return organization === undefined || organization.ID === ""
+		return organization === undefined || !AppUtility.isNotEmpty(organization.ID)
 			? this.authSvc.isAdministrator(this.name, "Organization", undefined, account)
 			: AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isAdministrator(this.name, "Organization", organization.Privileges, account);
 	}
 
 	public canModerateOrganization(organization?: Organization, account?: Account) {
 		account = account || this.configSvc.getAccount();
-		return organization === undefined || organization.ID === ""
+		return organization === undefined || !AppUtility.isNotEmpty(organization.ID)
 			? this.authSvc.isModerator(this.name, "Organization", undefined, account)
 			: AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isModerator(this.name, "Organization", organization.Privileges, account);
 	}
@@ -456,7 +458,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching organization", error));
+				console.error(super.getErrorMessage("Error occurred while searching organization(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -481,7 +483,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching organization", error));
+				console.error(super.getErrorMessage("Error occurred while searching organization(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -634,7 +636,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching role", error));
+				console.error(super.getErrorMessage("Error occurred while searching role(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -663,7 +665,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching role", error));
+				console.error(super.getErrorMessage("Error occurred while searching role(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -876,7 +878,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching desktop", error));
+				console.error(super.getErrorMessage("Error occurred while searching desktop(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -905,7 +907,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching desktop", error));
+				console.error(super.getErrorMessage("Error occurred while searching desktop(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1072,6 +1074,173 @@ export class PortalsCoreService extends BaseService {
 			}
 			Desktop.all.filter(desktop => desktop.ParentID === id).forEach(desktop => this.deleteDesktop(desktop.ID));
 			Desktop.instances.remove(id);
+		}
+	}
+
+	public get siteCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const site = data !== undefined
+				? data instanceof Site
+					? data as Site
+					: Site.deserialize(data)
+				: undefined;
+			return site !== undefined
+				? { title: site.Title, description: `${site.SubDomain}.${site.PrimaryDomain}`, originalObject: site }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(super.getSearchURI("site", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => Site.contains(obj.ID) ? convertToCompleterItem(Site.get(obj.ID)) : convertToCompleterItem(Site.update(Site.deserialize(obj)))),
+			convertToCompleterItem
+		);
+	}
+
+	public searchSite(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.search(
+			super.getSearchURI("site", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!Site.contains(obj.ID)) {
+							Site.update(obj);
+						}
+					});
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching site(s)", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public searchSiteAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.searchAsync(
+			super.getSearchURI("site", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!Site.contains(obj.ID)) {
+							Site.update(obj);
+						}
+					});
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching site(s)", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public createSiteAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.createAsync(
+			super.getURI("site"),
+			body,
+			data => {
+				Site.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while creating new site", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public getSiteAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return Site.contains(id)
+			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
+			: super.readAsync(
+					super.getURI("site", id),
+					data => {
+						Site.update(data);
+						if (onNext !== undefined) {
+							onNext(data);
+						}
+					},
+					error => {
+						console.error(super.getErrorMessage("Error occurred while getting an site", error));
+						if (onError !== undefined) {
+							onError(error);
+						}
+					},
+					undefined,
+					useXHR
+				);
+	}
+
+	public updateSiteAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.updateAsync(
+			super.getURI("site", body.ID),
+			body,
+			data => {
+				Site.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while updating a site", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+	);
+	}
+
+	public deleteSiteAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.deleteAsync(
+			super.getURI("site", id),
+			data => {
+				Site.instances.remove(id);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while deleting a site", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	private async processSiteUpdateMessageAsync(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				Organization.update(message.Data);
+				AppEvents.broadcast("Portals", { Object: "Site", Type: "Updated", ID: message.Data.ID });
+				break;
+
+			case "Delete":
+				if (Organization.contains(message.Data.ID)) {
+					Organization.instances.remove(message.Data.ID);
+					AppEvents.broadcast("Portals", { Object: "Site", Type: "Deleted", ID: message.Data.ID });
+				}
+				break;
+
+			default:
+				console.warn(super.getLogMessage("Got an update message of a site"), message);
+				break;
 		}
 	}
 

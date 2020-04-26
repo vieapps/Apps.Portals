@@ -21,6 +21,10 @@ import { IonicModule } from "@ionic/angular";
 				path: "desktops",
 				loadChildren: "@pages/portals/core/desktops/desktops.module#DesktopsModule"
 			},
+			{
+				path: "sites",
+				loadChildren: "@pages/portals/core/sites/sites.module#SitesModule"
+			},
 		])
 	],
 	exports: [RouterModule],
