@@ -50,6 +50,8 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 	/** The event handler to run when the control was changed */
 	@Output() change = new EventEmitter();
 
+	private current: Privileges;
+
 	inheritFromParent = {
 		allow: false,
 		inherit: false
@@ -93,7 +95,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 					: this.control.Extras["allowInheritFromParent"] !== undefined
 						? AppUtility.isTrue(this.control.Extras["allowInheritFromParent"])
 						: true;
-		this.inheritFromParent.inherit = this.inheritFromParent.allow && (this.privileges === undefined || this.privileges.isInheritFromParent);
+		this.inheritFromParent.inherit = this.inheritFromParent.allow && (AppUtility.isNull(this.privileges) || this.privileges.isInheritFromParent);
 		this.privileges = this.privileges || new Privileges();
 
 		if (this.rolesSelector === undefined) {
@@ -198,7 +200,6 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 	private emitChanges() {
 		const privileges = this.inheritFromParent.inherit ? undefined : this.privileges;
 		this.change.emit({
-			control: this.control,
 			privileges: privileges,
 			detail: {
 				value: privileges
@@ -211,7 +212,14 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	onInheritFromParentChanged(event: any) {
-		this.inheritFromParent.inherit = AppUtility.isTrue(event.detail.checked);
+		const isInheritFromParent = AppUtility.isTrue(event.detail.checked);
+		this.inheritFromParent.inherit = isInheritFromParent;
+		if (isInheritFromParent) {
+			this.current = Privileges.resetPrivileges(undefined, Privileges.getPrivileges(this.privileges));
+		}
+		else {
+			this.privileges = Privileges.resetPrivileges(undefined, Privileges.getPrivileges(this.current));
+		}
 		this.emitChanges();
 	}
 
