@@ -110,6 +110,11 @@ export class Privileges {
 		return privileges;
 	}
 
+	/** Clones the privileges */
+	public static clonePrivileges(privileges: Privileges) {
+		return this.resetPrivileges(undefined, this.getPrivileges(privileges));
+	}
+
 	/** Gets the collection of roles */
 	public getRoles(section: string) {
 		return (AppUtility.isNotEmpty(section) ? this[`${section}Roles`] as Set<string> : undefined) || new Set<string>();
