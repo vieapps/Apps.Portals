@@ -40,12 +40,12 @@ export abstract class Base {
 	/** Copies data from source (object or JSON) and fill into this objects' properties */
 	public copy(source: any, onCompleted?: (data: any) => void) {
 		AppUtility.copy(source, this, data => {
-			if (AppUtility.isObject(data.Privileges, true)) {
-				this.Privileges = Privileges.deserialize(data.Privileges);
-			}
-			if (AppUtility.isObject(data.OriginalPrivileges, true)) {
-				this.OriginalPrivileges = Privileges.deserialize(data.OriginalPrivileges);
-			}
+			this.Privileges = AppUtility.isObject(data.Privileges, true)
+				? Privileges.deserialize(data.Privileges)
+				: undefined;
+			this.OriginalPrivileges = AppUtility.isObject(data.OriginalPrivileges, true)
+				? Privileges.deserialize(data.OriginalPrivileges)
+				: undefined;
 			if (onCompleted !== undefined) {
 				onCompleted(data);
 			}
