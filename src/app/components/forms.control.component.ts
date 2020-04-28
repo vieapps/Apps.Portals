@@ -427,7 +427,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get selectOptions() {
-		return this.control.Options.SelectOptions.Values || new Array<{ Value: string, Label: string }>();
+		return this.control.Options.SelectOptions.Values || new Array<AppFormsLookupValue>();
 	}
 
 	selectOptionIsChecked(selectOption: string) {

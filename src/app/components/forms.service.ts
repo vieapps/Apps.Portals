@@ -512,7 +512,7 @@ export class AppFormsControl {
 										return { Value: value, Label: value };
 									})
 								: (selectValues as Array<any>).map(data => {
-										return { Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value };
+										return { Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value, Description: data.Description || data.description };
 									})
 							: [],
 					RemoteURI: selectOptions.RemoteURI || selectOptions.remoteURI || selectOptions.remoteuri,
@@ -729,7 +729,7 @@ export class AppFormsService {
 				formControl.next = formControls[index + 1];
 			}
 		});
-		await Promise.all(formControls.filter(formControl => !formControl.Hidden).map(async formControl => {
+		await Promise.all(formControls.map(async formControl => {
 			formControl.Options.Label = await this.normalizeResourceAsync(formControl.Options.Label);
 			formControl.Options.Description = await this.normalizeResourceAsync(formControl.Options.Description);
 			formControl.Options.PlaceHolder = await this.normalizeResourceAsync(formControl.Options.PlaceHolder);
@@ -753,7 +753,7 @@ export class AppFormsService {
 									: (values as Array<any>).map(data => {
 											return formControl.Options.SelectOptions.RemoteURIConverter !== undefined
 												? formControl.Options.SelectOptions.RemoteURIConverter(data)
-												: { Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value };
+												: { Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value, Description: data.Description || data.description };
 										})
 								: AppUtility.isNotEmpty(values)
 									? (AppUtility.toArray(values) as Array<string>).map(value => {

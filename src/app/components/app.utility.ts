@@ -418,9 +418,9 @@ export class AppUtility {
 
 	/** Gets the values as an array from a set */
 	public static getArray<T>(set: Set<T>) {
-		return set === undefined
-			? new Array<T>()
-			: set.toArray();
+		return this.isNotNull(set)
+			? set.toArray()
+			: new Array<T>();
 	}
 
 	/** Updates the values of a set from values of an array */
