@@ -745,32 +745,29 @@ export class ConfigurationService extends BaseService {
 		return AppUtility.clone(this.getDefinition(path));
 	}
 
-	private getDefinitionPath(serviceName?: string, objectName?: string, definitionName?: string, repositoryID?: string, entityID?: string) {
-		let path = "discovery/definitions?" + this.relatedQuery;
+	private getDefinitionPath(serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {
+		let path = "discovery/definitions?";
 		if (AppUtility.isNotEmpty(serviceName)) {
-			path += "&x-service-name=" + serviceName.toLowerCase();
+			path += `x-service-name=${serviceName.toLowerCase()}&`;
 		}
 		if (AppUtility.isNotEmpty(objectName)) {
-			path += "&x-object-name=" + objectName.toLowerCase();
+			path += `x-object-name=${objectName.toLowerCase()}&`;
 		}
 		if (AppUtility.isNotEmpty(definitionName)) {
-			path += "&x-object-identity=" + definitionName.toLowerCase();
+			path += `x-object-identity=${definitionName.toLowerCase()}&`;
 		}
-		if (AppUtility.isNotEmpty(repositoryID)) {
-			path += "&x-repository-id=" + repositoryID.toLowerCase();
+		if (AppUtility.isObject(query, true)) {
+			Object.keys(query).forEach(key => path += `${key}=${encodeURIComponent(query[key])}`);
 		}
-		if (AppUtility.isNotEmpty(entityID)) {
-			path += "&x-entity-id=" + entityID.toLowerCase();
-		}
-		return path;
+		return path + this.relatedQuery;
 	}
 
-	public setDefinition(definition: any, serviceName?: string, objectName?: string, definitionName?: string, repositoryID?: string, entityID?: string) {
-		this.addDefinition(this.getDefinitionPath(serviceName, objectName, definitionName, repositoryID, entityID), definition);
+	public setDefinition(definition: any, serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {
+		this.addDefinition(this.getDefinitionPath(serviceName, objectName, definitionName, query), definition);
 	}
 
-	public getDefinitionAsync(serviceName?: string, objectName?: string, definitionName?: string, repositoryID?: string, entityID?: string) {
-		return this.fetchDefinitionAsync(this.getDefinitionPath(serviceName, objectName, definitionName, repositoryID, entityID));
+	public getDefinitionAsync(serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {
+		return this.fetchDefinitionAsync(this.getDefinitionPath(serviceName, objectName, definitionName, query));
 	}
 
 }
