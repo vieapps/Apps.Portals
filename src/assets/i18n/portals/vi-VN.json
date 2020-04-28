@@ -4,10 +4,11 @@
 		"common": {
 			"controls": {
 				"notifications": {
+					"inheritFromParent": "Sử dụng thiết đặt các sự kiện và phương thức gửi thông báo từ cấp trên",
 					"events": "Gửi thông báo khi",
 					"methods": "Phương thức gửi thông báo",
-					"inheritFromParent": "Sử dụng thiết đặt từ cấp trên để gửi thông báo",
 					"emails": {
+						"inheritFromParent": "Sử dụng thiết đặt từ cấp trên để gửi thông báo qua emails",
 						"label": "Thiết đặt gửi thông báo qua emails",
 						"toAddresses": {
 							"label": "Gửi tới địa chỉ",
@@ -31,6 +32,7 @@
 						}
 					},
 					"webhooks": {
+						"inheritFromParent": "Sử dụng thiết đặt từ cấp trên để gửi thông báo qua webhooks",
 						"label": "Thiết đặt gửi thông báo qua webhooks",
 						"endpointURLs": {
 							"label": "Địa chỉ nhận web-hooks",
@@ -332,12 +334,12 @@
 					"confirm": {
 						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo đơn vị - tổ chức?",
 						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của đơn vị - tổ chức?",
-						"delete": "Chắc chắn muốn xoá bỏ đơn vị - tổ chức và các thônng tin liên quan?"
+						"delete": "Chắc chắn muốn xoá bỏ đơn vị - tổ chức và các thông tin liên quan?"
 					},
 					"success": {
 						"new": "Đã khởi tạo đơn vị - tổ chức thành công",
 						"update": "Đã cập nhật các thay đổi của đơn vị - tổ chức thành công",
-						"delete": "Đã đưa đơn vị - tổ chức và các thônng tin liên quan vào hàng đợi để chuyển vào thùng rác"
+						"delete": "Đã đưa đơn vị - tổ chức và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
 					}
 				}
 			}
@@ -382,7 +384,7 @@
 					"confirm": {
 						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo vai trò sử dụng?",
 						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của vai trò sử dụng?",
-						"delete": "Chắc chắn muốn xoá bỏ vai trò sử dụng và các thônng tin liên quan?"
+						"delete": "Chắc chắn muốn xoá bỏ vai trò sử dụng và các thông tin liên quan?"
 					},
 					"success": {
 						"new": "Đã khởi tạo vai trò sử dụng thành công",
@@ -528,7 +530,7 @@
 					"confirm": {
 						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo desktop hiển thị?",
 						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của desktop hiển thị?",
-						"delete": "Chắc chắn muốn xoá bỏ desktop hiển thị và các thônng tin liên quan?"
+						"delete": "Chắc chắn muốn xoá bỏ desktop hiển thị và các thông tin liên quan?"
 					},
 					"success": {
 						"new": "Đã khởi tạo desktop hiển thị thành công",
@@ -679,7 +681,7 @@
 					"confirm": {
 						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo site?",
 						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của site?",
-						"delete": "Chắc chắn muốn xoá bỏ site và các thônng tin liên quan?"
+						"delete": "Chắc chắn muốn xoá bỏ site và các thông tin liên quan?"
 					},
 					"success": {
 						"new": "Đã khởi tạo site thành công",
@@ -689,6 +691,172 @@
 				},
 				"buttons": {
 					"delete": "Xoá site"
+				}
+			}
+		},
+		"modules": {
+			"title": {
+				"search": "Tìm kiếm module nghiệp vụ",
+				"list": "Danh sách module nghiệp vụ {{organization}}",
+				"create": "Tạo mới module nghiệp vụ",
+				"update": "Cập nhật module nghiệp vụ"
+			},
+			"controls": {
+				"Organization": "Module nghiệp vụ của đơn vị - tổ chức",
+				"ModuleDefinitionID": {
+					"label": "Module chức năng",
+					"placeholder": "",
+					"description": "Các chức năng của module nghiệp vụ này sẽ được cung cấp bởi module chức năng chỉ định ở trên"
+				},
+				"Title": {
+					"label": "Tên module nghiệp vụ",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Diễn giải",
+					"placeholder": "",
+					"description": ""
+				},
+				"DesktopID": {
+					"label": "Desktop hiển thị",
+					"placeholder": "",
+					"description": "Desktop mặc định sử dụng để hiển thị các nội dung nghiệp vụ của module"
+				},
+				"Trackings": {
+					"label": "Các hệ thống đếm/theo dõi",
+					"GoogleAnalytics": {
+						"label": "Mã Google Analytics",
+						"description": "Nhập các mã định danh của GA, phân cách bằng dấu chấm phẩy (;) để đếm dạng page-view (web) hoặc screen-view (app) đối với các nội dung của module nghiệp vụ"
+					},
+					"FacebookPixel": {
+						"label": "Mã Facebook Pixel",
+						"description": "Nhập các mã định danh của FB Pixel, phân cách bằng dấu chấm phẩy (;) để đếm dạng page-view (web) đối với các nội dung của module nghiệp vụ"
+					}
+				}
+			},
+			"list": {
+				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác module nghiệp vụ"
+			},
+			"update": {
+				"segments": {
+					"basic": "Thông tin cơ bản",
+					"privileges": "Quyền truy cập",
+					"notifications": "Thông báo",
+					"emails": "Mã theo dõi & Emails"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo module nghiệp vụ?",
+						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của module nghiệp vụ?",
+						"delete": "Chắc chắn muốn xoá bỏ module nghiệp vụ và các thông tin liên quan?",
+						"remove": "Module nghiệp vụ, kiểu dữ liệu và toàn bộ các dữ liệu nghiệp vụ của module này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
+					},
+					"success": {
+						"new": "Đã khởi tạo module nghiệp vụ thành công",
+						"update": "Đã cập nhật các thay đổi của module nghiệp vụ thành công",
+						"delete": "Đã đưa module nghiệp vụ và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
+					}
+				},
+				"buttons": {
+					"delete": "Xoá module nghiệp vụ",
+					"remove": "Đồng ý xoá"
+				}
+			}
+		},
+		"contenttypes": {
+			"title": {
+				"search": "Tìm kiếm kiểu dữ liệu nghiệp vụ",
+				"list": "Danh sách kiểu dữ liệu nghiệp vụ {{organization}}",
+				"create": "Tạo mới kiểu dữ liệu nghiệp vụ",
+				"update": "Cập nhật kiểu dữ liệu nghiệp vụ"
+			},
+			"controls": {
+				"Organization": "Kiểu dữ liệu nghiệp vụ của đơn vị - tổ chức",
+				"RepositoryID": {
+					"label": "Module nghiệp vụ",
+					"placeholder": "",
+					"description": "Kiểu dữ liệu nghiệp vụ này sẽ thuộc về module nghiệp vụ được chỉ định"
+				},
+				"ContentTypeDefinitionID": {
+					"label": "Kiểu dữ liệu mẫu",
+					"placeholder": "",
+					"description": "Các chức năng của kiểu dữ liệu nghiệp vụ này sẽ được cung cấp bởi kiểu dữ liệu mẫu đã chỉ định"
+				},
+				"Title": {
+					"label": "Tên kiểu dữ liệu nghiệp vụ",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Diễn giải",
+					"placeholder": "",
+					"description": ""
+				},
+				"DesktopID": {
+					"label": "Desktop hiển thị",
+					"placeholder": "",
+					"description": "Desktop mặc định sử dụng để hiển thị các nội dung nghiệp vụ của kiểu dữ liệu"
+				},
+				"CreateNewVersionWhenUpdated": {
+					"label": "Luôn tạo phiên bản nội dung khi có thay đổi",
+					"placeholder": "",
+					"description": ""
+				},
+				"AllowComments": {
+					"label": "Cho phép bình luận đối với các nội dung",
+					"placeholder": "",
+					"description": ""
+				},
+				"UseSocialNetworkComments": {
+					"label": "Sử dụng hệ thống bình luận của mạng xã hội",
+					"placeholder": "",
+					"description": ""
+				},
+				"DefaultCommentStatus": {
+					"label": "Trạng thái phê duyệt mặc định của bình luận mới",
+					"placeholder": "",
+					"description": "Chú ý: nếu trạng thái mặc định là 'Xuất bản', các bình luận mới tự động hiển thị ngay tức thì sau khi người dùng gửi bình luận mà không qua kiểm soát"
+				},
+				"Trackings": {
+					"label": "Các hệ thống đếm/theo dõi",
+					"GoogleAnalytics": {
+						"label": "Mã Google Analytics",
+						"description": "Nhập các mã định danh của GA, phân cách bằng dấu chấm phẩy (;) để đếm dạng page-view (web) hoặc screen-view (app) đối với các nội dung của kiểu dữ liệu nghiệp vụ"
+					},
+					"FacebookPixel": {
+						"label": "Mã Facebook Pixel",
+						"description": "Nhập các mã định danh của FB Pixel, phân cách bằng dấu chấm phẩy (;) để đếm dạng page-view (web) đối với các nội dung của kiểu dữ liệu nghiệp vụ"
+					}
+				}
+			},
+			"list": {
+				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác kiểu dữ liệu nghiệp vụ"
+			},
+			"update": {
+				"segments": {
+					"basic": "Thông tin cơ bản",
+					"privileges": "Quyền truy cập",
+					"notifications": "Thông báo",
+					"emails": "Mã theo dõi & Emails",
+					"extend": "Tuỳ chỉnh dữ liệu mở rộng"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo kiểu dữ liệu nghiệp vụ?",
+						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của kiểu dữ liệu nghiệp vụ?",
+						"delete": "Chắc chắn muốn xoá bỏ kiểu dữ liệu nghiệp vụ và các thông tin liên quan?",
+						"remove": "Thông tin và toàn bộ các dữ liệu nghiệp vụ của kiểu dữ liệu này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
+					},
+					"success": {
+						"new": "Đã khởi tạo kiểu dữ liệu nghiệp vụ thành công",
+						"update": "Đã cập nhật các thay đổi của kiểu dữ liệu nghiệp vụ thành công",
+						"delete": "Đã đưa kiểu dữ liệu nghiệp vụ và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
+					}
+				},
+				"buttons": {
+					"delete": "Xoá kiểu dữ liệu nghiệp vụ",
+					"remove": "Đồng ý xoá"
 				}
 			}
 		}

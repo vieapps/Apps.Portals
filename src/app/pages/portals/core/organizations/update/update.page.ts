@@ -82,22 +82,7 @@ export class OrganizationsUpdatePage implements OnInit {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
-		if (this.organization === undefined) {
-			this.organization = new Organization();
-			this.organization.Status = "Pending";
-			this.organization.Privileges = new Privileges(true);
-			this.organization.Notifications = { WebHooks: {
-				EndpointURLs: [],
-				SignAlgorithm: "SHA256",
-				SignatureAsHex: true,
-				SignatureInQuery: false
-			}};
-			this.organization.Instructions = {};
-			this.organization.RefreshUrls = { Addresses: [], Interval: 15 };
-			this.organization.RedirectUrls = { Addresses: [], AllHttp404: false };
-			this.organization.EmailSettings = { Smtp: { Port: 25, EnableSsl: false } };
-		}
-
+		this.organization = this.organization || new Organization("", "Pending", new Privileges(true));
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 	}
@@ -127,7 +112,7 @@ export class OrganizationsUpdatePage implements OnInit {
 
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "organization", "form-controls");
 		formConfig.forEach(ctrl => ctrl.Segment = "basic");
-		if (this.organization.ID !== "") {
+		if (!AppUtility.isNotEmpty(this.organization.ID)) {
 			formConfig.push(await this.usersSvc.getAuditFormControlAsync(this.organization.Created, this.organization.CreatedID, this.organization.LastModified, this.organization.LastModifiedID, "basic"));
 		}
 
@@ -489,14 +474,30 @@ export class OrganizationsUpdatePage implements OnInit {
 
 	onFormInitialized() {
 		const organization = AppUtility.clone(this.organization, false);
-		organization.Privileges = Privileges.resetPrivileges(undefined, Privileges.getPrivileges(this.organization.Privileges));
+		organization.Privileges = Privileges.clonePrivileges(this.organization.Privileges);
 		organization.ExpiredDate = AppUtility.toIsoDate(organization.ExpiredDate);
+		organization.Notifications = organization.Notifications || {};
+		organization.Notifications.Events = organization.Notifications.Events || [];
+		organization.Notifications.Methods = organization.Notifications.Methods || [];
+		organization.Notifications.Emails = organization.Notifications.Emails || {};
+		organization.Notifications.WebHooks = organization.Notifications.WebHooks || {
+			EndpointURLs: [],
+			SignAlgorithm: "SHA256",
+			SignatureAsHex: true,
+			SignatureInQuery: false
+		};
 		organization.Notifications.WebHooks.EndpointURLs = AppUtility.toStr(organization.Notifications.WebHooks.EndpointURLs, "\n");
 		organization.Others = { MetaTags: organization.MetaTags, Scripts: organization.Scripts };
+		organization.RefreshUrls = organization.RefreshUrls || {};
 		organization.RefreshUrls.Addresses = AppUtility.toStr(organization.RefreshUrls.Addresses, "\n");
+		organization.RefreshUrls.Interval = organization.RefreshUrls.Interval || 15;
+		organization.RedirectUrls = organization.RedirectUrls || {};
 		organization.RedirectUrls.Addresses = AppUtility.toStr(organization.RedirectUrls.Addresses, "\n");
+		organization.RedirectUrls.AllHttp404 = organization.RedirectUrls.AllHttp404 !== undefined ? !!organization.RedirectUrls.AllHttp404 : false;
+		organization.EmailSettings = organization.EmailSettings || {};
+		organization.EmailSettings.Smtp = organization.EmailSettings.Smtp || { Smtp: { Port: 25, EnableSsl: false } };
 
-		this.instructions = organization.Instructions;
+		this.instructions = organization.Instructions || {};
 		Organization.instructionElements.forEach(type => {
 			this.instructions[type] = this.instructions[type] || {};
 			this.configSvc.appConfig.languages.map(language => language.Value).forEach(language => {
@@ -506,7 +507,6 @@ export class OrganizationsUpdatePage implements OnInit {
 
 		delete organization["MetaTags"];
 		delete organization["Scripts"];
-		this.hash = AppCrypto.hash(organization);
 
 		organization.Instructions = {};
 		Organization.instructionElements.forEach(type => {
@@ -517,7 +517,9 @@ export class OrganizationsUpdatePage implements OnInit {
 				Body: instruction.Body
 			};
 		});
+
 		this.form.patchValue(organization);
+		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.invoke(() => this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true }), 234)); // hack the Completer component to update correct form value & validity status
 	}
 

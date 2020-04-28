@@ -291,7 +291,7 @@ export class AppComponent implements OnInit {
 			});
 			this.updateSidebarItem(index, -1, {
 				title: "Content Types",
-				url: "/portals/core/content-types/list/all",
+				url: "/portals/core/content.types/list/all",
 				direction: "root",
 				icon: "git-compare",
 				detail: false

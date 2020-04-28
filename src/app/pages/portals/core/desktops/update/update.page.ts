@@ -77,11 +77,11 @@ export class DesktopsUpdatePage implements OnInit {
 			return;
 		}
 
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.desktops.title.${(this.desktop.ID === "" ? "create" : "update")}`);
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.desktops.title.${(AppUtility.isNotEmpty(this.desktop.ID) ? "update" : "create")}`);
 		await this.appFormsSvc.showLoadingAsync(this.title);
 
 		this.button = {
-			update: await this.configSvc.getResourceAsync(`common.buttons.${(this.desktop.ID === "" ? "create" : "update")}`),
+			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.desktop.ID) ? "update" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 

@@ -1,47 +1,37 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
+import { ExtendedPropertyDefinition, ExtendedUIDefinition } from "@models/portals.base";
 import { PortalCoreBase as BaseModel } from "@models/portals.core.base";
 
-export class Organization extends BaseModel {
+export class ContentType extends BaseModel {
 
 	constructor(
-		id?: string,
-		status?: string,
+		organizationID?: string,
+		title?: string,
 		privileges?: Privileges
 	) {
 		super();
-		delete this["OriginalPrivileges"];
-		this.ID = AppUtility.isNotEmpty(id) ? id : "";
-		this.Status = AppUtility.isNotEmpty(status) ? status : "Pending";
-		this.Privileges = privileges;
+		this.SystemID = AppUtility.isNotEmpty(organizationID) ? organizationID : "";
+		this.Title = AppUtility.isNotEmpty(title) ? title : "";
+		this.OriginalPrivileges = privileges;
 	}
 
-	public static instructionElements = ["Activate", "Invite", "Reset", "Password", "Email"];
+	/** All instances of contentType */
+	public static instances = new Dictionary<string, ContentType>();
 
-	/** All instances of organization */
-	public static instances = new Dictionary<string, Organization>();
-
-	/** All instances of organization */
+	/** All instances of contentType */
 	public static get all() {
 		return this.instances.values();
 	}
 
-	/** Active organization */
-	public static active: Organization;
-
 	Title = undefined as string;
 	Description = undefined as string;
-	OwnerID = undefined as string;
-	Status = undefined as string;
-	Alias = undefined as string;
-	ExpiredDate = "-";
-	FilesQuotes = 10;
-	Required2FA = false;
-	TrackDownloadFiles = false;
-	Theme = "default";
-	HomeDesktopID = undefined as string;
-	SearchDesktopID = undefined as string;
+	DesktopID = undefined as string;
+	CreateNewVersionWhenUpdated = true;
+	AllowComments = false;
+	UseSocialNetworkComments = false;
+	DefaultCommentStatus = "Pending";
 	Notifications = undefined as {
 		Events?: Array<string>;
 		Methods?: Array<string>;
@@ -63,27 +53,8 @@ export class Organization extends BaseModel {
 			AdditionalHeader?: string;
 		};
 	};
-	Instructions = undefined as {
-		[type: string]: {
-			[language: string]: {
-				Subject?: string;
-				Body?: string;
-			}
-		}
-	};
-	Socials = undefined as Array<string>;
 	Trackings = undefined as {
 		[key: string]: string
-	};
-	MetaTags = undefined as string;
-	Scripts = undefined as string;
-	RefreshUrls = undefined as {
-		Addresses?: Array<string>;
-		Interval?: number;
-	};
-	RedirectUrls = undefined as {
-		Addresses?: Array<string>;
-		AllHttp404?: boolean;
 	};
 	EmailSettings = undefined as {
 		Sender?: string;
@@ -96,21 +67,25 @@ export class Organization extends BaseModel {
 			UserPassword?: string;
 		}
 	};
+	ExtendedPropertyDefinitions = undefined as Array<ExtendedPropertyDefinition>;
+	ExtendedUIDefinition = undefined as ExtendedUIDefinition;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;
 	LastModifiedID = undefined as string;
+	SystemID = undefined as string;
+	RepositoryID = undefined as string;
+	ContentTypeDefinitionID = undefined as string;
 	ID = undefined as string;
 
 	ansiTitle: string;
-	owner: string;
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, organization?: Organization) {
-		organization = organization || new Organization();
-		organization.copy(json);
-		organization.ansiTitle = AppUtility.toANSI(organization.Title).toLowerCase();
-		return organization;
+	public static deserialize(json: any, contentType?: ContentType) {
+		contentType = contentType || new ContentType();
+		contentType.copy(json);
+		contentType.ansiTitle = AppUtility.toANSI(contentType.Title).toLowerCase();
+		return contentType;
 	}
 
 	/** Gets by identity */
@@ -121,17 +96,17 @@ export class Organization extends BaseModel {
 	}
 
 	/** Sets by identity */
-	public static set(organization: Organization) {
-		if (organization !== undefined) {
-			this.instances.setValue(organization.ID, organization);
+	public static set(contentType: ContentType) {
+		if (contentType !== undefined) {
+			this.instances.setValue(contentType.ID, contentType);
 		}
-		return organization;
+		return contentType;
 	}
 
 	/** Updates into dictionary */
 	public static update(data: any) {
 		return AppUtility.isObject(data, true)
-			? this.set(data instanceof Organization ? data as Organization : this.deserialize(data, this.get(data.ID)))
+			? this.set(data instanceof ContentType ? data as ContentType : this.deserialize(data, this.get(data.ID)))
 			: undefined;
 	}
 

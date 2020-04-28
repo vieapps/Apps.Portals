@@ -76,11 +76,11 @@ export class RolesUpdatePage implements OnInit {
 			return;
 		}
 
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.roles.title.${(this.role.ID === "" ? "create" : "update")}`);
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.roles.title.${(AppUtility.isNotEmpty(this.role.ID) ? "update" : "create")}`);
 		await this.appFormsSvc.showLoadingAsync(this.title);
 
 		this.button = {
-			update: await this.configSvc.getResourceAsync(`common.buttons.${(this.role.ID === "" ? "create" : "update")}`),
+			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.role.ID) ? "update" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 

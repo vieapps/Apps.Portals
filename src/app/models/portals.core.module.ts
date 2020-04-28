@@ -3,45 +3,30 @@ import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
 import { PortalCoreBase as BaseModel } from "@models/portals.core.base";
 
-export class Organization extends BaseModel {
+export class Module extends BaseModel {
 
 	constructor(
-		id?: string,
-		status?: string,
+		organizationID?: string,
+		title?: string,
 		privileges?: Privileges
 	) {
 		super();
-		delete this["OriginalPrivileges"];
-		this.ID = AppUtility.isNotEmpty(id) ? id : "";
-		this.Status = AppUtility.isNotEmpty(status) ? status : "Pending";
-		this.Privileges = privileges;
+		this.SystemID = AppUtility.isNotEmpty(organizationID) ? organizationID : "";
+		this.Title = AppUtility.isNotEmpty(title) ? title : "";
+		this.OriginalPrivileges = privileges;
 	}
 
-	public static instructionElements = ["Activate", "Invite", "Reset", "Password", "Email"];
+	/** All instances of module */
+	public static instances = new Dictionary<string, Module>();
 
-	/** All instances of organization */
-	public static instances = new Dictionary<string, Organization>();
-
-	/** All instances of organization */
+	/** All instances of module */
 	public static get all() {
 		return this.instances.values();
 	}
 
-	/** Active organization */
-	public static active: Organization;
-
 	Title = undefined as string;
 	Description = undefined as string;
-	OwnerID = undefined as string;
-	Status = undefined as string;
-	Alias = undefined as string;
-	ExpiredDate = "-";
-	FilesQuotes = 10;
-	Required2FA = false;
-	TrackDownloadFiles = false;
-	Theme = "default";
-	HomeDesktopID = undefined as string;
-	SearchDesktopID = undefined as string;
+	DesktopID = undefined as string;
 	Notifications = undefined as {
 		Events?: Array<string>;
 		Methods?: Array<string>;
@@ -63,27 +48,8 @@ export class Organization extends BaseModel {
 			AdditionalHeader?: string;
 		};
 	};
-	Instructions = undefined as {
-		[type: string]: {
-			[language: string]: {
-				Subject?: string;
-				Body?: string;
-			}
-		}
-	};
-	Socials = undefined as Array<string>;
 	Trackings = undefined as {
 		[key: string]: string
-	};
-	MetaTags = undefined as string;
-	Scripts = undefined as string;
-	RefreshUrls = undefined as {
-		Addresses?: Array<string>;
-		Interval?: number;
-	};
-	RedirectUrls = undefined as {
-		Addresses?: Array<string>;
-		AllHttp404?: boolean;
 	};
 	EmailSettings = undefined as {
 		Sender?: string;
@@ -100,17 +66,18 @@ export class Organization extends BaseModel {
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;
 	LastModifiedID = undefined as string;
+	SystemID = undefined as string;
+	ModuleDefinitionID = undefined as string;
 	ID = undefined as string;
 
 	ansiTitle: string;
-	owner: string;
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, organization?: Organization) {
-		organization = organization || new Organization();
-		organization.copy(json);
-		organization.ansiTitle = AppUtility.toANSI(organization.Title).toLowerCase();
-		return organization;
+	public static deserialize(json: any, modul?: Module) {
+		modul = modul || new Module();
+		modul.copy(json);
+		modul.ansiTitle = AppUtility.toANSI(modul.Title).toLowerCase();
+		return modul;
 	}
 
 	/** Gets by identity */
@@ -121,17 +88,17 @@ export class Organization extends BaseModel {
 	}
 
 	/** Sets by identity */
-	public static set(organization: Organization) {
-		if (organization !== undefined) {
-			this.instances.setValue(organization.ID, organization);
+	public static set(modul: Module) {
+		if (modul !== undefined) {
+			this.instances.setValue(modul.ID, modul);
 		}
-		return organization;
+		return modul;
 	}
 
 	/** Updates into dictionary */
 	public static update(data: any) {
 		return AppUtility.isObject(data, true)
-			? this.set(data instanceof Organization ? data as Organization : this.deserialize(data, this.get(data.ID)))
+			? this.set(data instanceof Module ? data as Module : this.deserialize(data, this.get(data.ID)))
 			: undefined;
 	}
 

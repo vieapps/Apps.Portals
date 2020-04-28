@@ -27,8 +27,8 @@ export abstract class PortalBase extends BaseModel {
 
 }
 
-export interface PortalNested {
-
+/** Interface of all nested classes */
+export interface NestedObject {
 	/** The title */
 	Title: string;
 
@@ -54,9 +54,66 @@ export interface PortalNested {
 	LastModifiedID: string;
 
 	/** The parent object */
-	Parent: PortalNested;
+	Parent: NestedObject;
 
 	/** The children objects */
-	Children: PortalNested[];
+	Children: NestedObject[];
+}
 
+/** Definition of an extended property */
+export interface ExtendedPropertyDefinition {
+	/** The name */
+	Name: string;
+
+	/** The mode (data-type) */
+	Mode: string;
+
+	/** The name of SQL table's column */
+	Column?: string;
+
+	/** The default value */
+	DefaultValue?: string;
+
+	/** The formula for computing the default value */
+	DefaultValueFormula?: string;
+}
+
+/** Definition of an UI control of an extended property */
+export interface ExtendedUIControlDefinition {
+	Name: string;
+	Excluded?: boolean;
+	Hidden?: boolean;
+	HiddenInView?: boolean;
+	Required?: boolean;
+	Label: string;
+	PlaceHolder?: string;
+	Description?: string;
+	ValidatePattern?: string;
+	Order?: number;
+	Disabled?: boolean;
+	ReadOnly?: boolean;
+	AutoFocus?: boolean;
+	MinValue?: string;
+	MaxValue?: string;
+	MinLength?: number;
+	MaxLength?: number;
+	Width?: string;
+	Height?: string;
+	AsTextEditor?: boolean;
+	DatePickerWithTimes?: boolean;
+	Multiple?: boolean;
+	SelectValues?: string;
+	SelectAsBoxes?: boolean;
+	SelectInterface?: string;
+	LookupMode?: string;
+	LookupRepositoryID?: string;
+	LookupEntityID?: string;
+	LookupProperty?: string;
+}
+
+/** Definition of UI controls for working with extended properties of an entity */
+export interface ExtendedUIDefinition {
+	Controls: Array<ExtendedUIControlDefinition>;
+	ListXslt?: string;
+	ViewXslt?: string;
 }

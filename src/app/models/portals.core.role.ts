@@ -1,6 +1,6 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
-import { PortalNested as NestedModel } from "@models/portals.base";
+import { NestedObject as NestedModel } from "@models/portals.base";
 import { PortalCoreBase as BaseModel } from "@models/portals.core.base";
 
 export class Role extends BaseModel implements NestedModel {

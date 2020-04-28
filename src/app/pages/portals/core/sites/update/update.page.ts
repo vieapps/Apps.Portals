@@ -3,7 +3,7 @@ import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@components/app.crypto";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
-import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
+import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { UsersService } from "@services/users.service";
 import { AuthenticationService } from "@services/authentication.service";
@@ -82,11 +82,11 @@ export class SitesUpdatePage implements OnInit {
 			return;
 		}
 
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.sites.title.${(this.site.ID === "" ? "create" : "update")}`);
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.sites.title.${(AppUtility.isNotEmpty(this.site.ID) ? "update" : "create")}`);
 		await this.appFormsSvc.showLoadingAsync(this.title);
 
 		this.button = {
-			update: await this.configSvc.getResourceAsync(`common.buttons.${(this.site.ID === "" ? "create" : "update")}`),
+			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.site.ID) ? "update" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
@@ -135,9 +135,15 @@ export class SitesUpdatePage implements OnInit {
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		control.Options.AutoFocus = true;
+		if (!AppUtility.isNotEmpty(this.site.ID)) {
+			control.Options.OnBlur = (_, formControl) => (this.form.controls.SEOInfo as FormGroup).controls.Title.setValue(formControl.value, { onlySelf: true });
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
 		control.Options.Rows = 2;
+		if (!AppUtility.isNotEmpty(this.site.ID)) {
+			control.Options.OnBlur = (_, formControl) => (this.form.controls.SEOInfo as FormGroup).controls.Description.setValue(formControl.value, { onlySelf: true });
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "AlwaysUseHTTPs"));
 		control.Options.Type = "toggle";
@@ -253,6 +259,9 @@ export class SitesUpdatePage implements OnInit {
 
 	onFormInitialized() {
 		const site = AppUtility.clone(this.site, false);
+		if (!AppUtility.isNotEmpty(this.site.ID)) {
+			site.Title = this.organization.Title;
+		}
 		this.form.patchValue(site);
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync();

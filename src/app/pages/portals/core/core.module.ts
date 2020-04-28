@@ -25,6 +25,14 @@ import { IonicModule } from "@ionic/angular";
 				path: "sites",
 				loadChildren: "@pages/portals/core/sites/sites.module#SitesModule"
 			},
+			{
+				path: "modules",
+				loadChildren: "@pages/portals/core/modules/modules.module#ModulesModule"
+			},
+			{
+				path: "content.types",
+				loadChildren: "@pages/portals/core/content.types/content.types.module#ContentTypesModule"
+			}
 		])
 	],
 	exports: [RouterModule],

@@ -13,6 +13,8 @@ import { Organization } from "@models/portals.core.organization";
 import { Role } from "@models/portals.core.role";
 import { Desktop } from "@models/portals.core.desktop";
 import { Site } from "@models/portals.core.site";
+import { Module } from "@models/portals.core.module";
+import { ContentType } from "@models/portals.core.content.type";
 
 @Injectable()
 export class PortalsCoreService extends BaseService {
@@ -28,6 +30,8 @@ export class PortalsCoreService extends BaseService {
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Role", message => this.processRoleUpdateMessageAsync(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Desktop", message => this.processDesktopUpdateMessageAsync(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Site", message => this.processSiteUpdateMessageAsync(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Module", message => this.processModuleUpdateMessageAsync(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "ContentType", message => this.processContentTypeUpdateMessageAsync(message));
 	}
 
 	public get activeOrganization() {
@@ -57,7 +61,7 @@ export class PortalsCoreService extends BaseService {
 			: AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isModerator(this.name, "Organization", organization.Privileges, account);
 	}
 
-	public getEmailNotificationFormControl(allowInheritFromParent: boolean = true, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
+	public getEmailNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
 		const placeholder = "{{portals.common.controls.notifications.emails.toAddresses.placeholder}}";
 		const formConfig: AppFormsControlConfig = {
 			Name: "Emails",
@@ -68,6 +72,7 @@ export class PortalsCoreService extends BaseService {
 				Controls: [
 					{
 						Name: "ToAddresses",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.emails.toAddresses.label}}",
 							PlaceHolder: placeholder,
@@ -76,6 +81,7 @@ export class PortalsCoreService extends BaseService {
 					},
 					{
 						Name: "CcAddresses",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.emails.ccAddresses.label}}",
 							PlaceHolder: placeholder,
@@ -84,6 +90,7 @@ export class PortalsCoreService extends BaseService {
 					},
 					{
 						Name: "BccAddresses",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.emails.bccAddresses.label}}",
 							PlaceHolder: placeholder,
@@ -92,6 +99,7 @@ export class PortalsCoreService extends BaseService {
 					},
 					{
 						Name: "Subject",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.emails.subject.label}}"
 						}
@@ -99,6 +107,7 @@ export class PortalsCoreService extends BaseService {
 					{
 						Name: "Body",
 						Type: "TextArea",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.emails.body.label}}",
 							Description: "{{portals.common.controls.notifications.emails.body.description}}",
@@ -116,7 +125,7 @@ export class PortalsCoreService extends BaseService {
 					Name: "InheritFromParent",
 					Type: "YesNo",
 					Options: {
-						Label: "{{portals.common.controls.notifications.inheritFromParent}}",
+						Label: "{{portals.common.controls.notifications.emails.inheritFromParent}}",
 						Type: "toggle",
 						OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name !== "InheritFromParent").forEach(ctrl => ctrl.Hidden = event.detail.checked)
 					}
@@ -125,13 +134,14 @@ export class PortalsCoreService extends BaseService {
 			);
 		}
 
+		formConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
 			onCompleted(formConfig);
 		}
 		return formConfig;
 	}
 
-	public getWebHookNotificationFormControl(allowInheritFromParent: boolean = true, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
+	public getWebHookNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
 		const formConfig: AppFormsControlConfig = {
 			Name: "WebHooks",
 			Options: {
@@ -142,6 +152,7 @@ export class PortalsCoreService extends BaseService {
 					{
 						Name: "EndpointURLs",
 						Type: "TextArea",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.webhooks.endpointURLs.label}}",
 							PlaceHolder: "{{portals.common.controls.notifications.webhooks.endpointURLs.placeholder}}",
@@ -151,6 +162,7 @@ export class PortalsCoreService extends BaseService {
 					{
 						Name: "SignAlgorithm",
 						Type: "Select",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.webhooks.signAlgorithm.label}}",
 							Description: "{{portals.common.controls.notifications.webhooks.signAlgorithm.description}}",
@@ -162,6 +174,7 @@ export class PortalsCoreService extends BaseService {
 					},
 					{
 						Name: "SignKey",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.webhooks.signKey.label}}",
 							Description: "{{portals.common.controls.notifications.webhooks.signKey.description}}"
@@ -169,6 +182,7 @@ export class PortalsCoreService extends BaseService {
 					},
 					{
 						Name: "SignatureName",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.webhooks.signatureName.label}}",
 							Description: "{{portals.common.controls.notifications.webhooks.signatureName.description}}"
@@ -177,6 +191,7 @@ export class PortalsCoreService extends BaseService {
 					{
 						Name: "SignatureAsHex",
 						Type: "YesNo",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.webhooks.signatureAsHex.label}}",
 							Type: "toggle"
@@ -185,6 +200,7 @@ export class PortalsCoreService extends BaseService {
 					{
 						Name: "SignatureInQuery",
 						Type: "YesNo",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.webhooks.signatureInQuery.label}}",
 							Type: "toggle"
@@ -193,6 +209,7 @@ export class PortalsCoreService extends BaseService {
 					{
 						Name: "AdditionalQuery",
 						Type: "TextArea",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.webhooks.additionalQuery.label}}",
 							Description: "{{portals.common.controls.notifications.webhooks.additionalQuery.description}}",
@@ -202,6 +219,7 @@ export class PortalsCoreService extends BaseService {
 					{
 						Name: "AdditionalHeader",
 						Type: "TextArea",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.webhooks.additionalHeader.label}}",
 							Description: "{{portals.common.controls.notifications.webhooks.additionalHeader.description}}",
@@ -219,7 +237,7 @@ export class PortalsCoreService extends BaseService {
 					Name: "InheritFromParent",
 					Type: "YesNo",
 					Options: {
-						Label: "{{portals.common.controls.notifications.inheritFromParent}}",
+						Label: "{{portals.common.controls.notifications.webhooks.inheritFromParent}}",
 						Type: "toggle",
 						OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name !== "InheritFromParent").forEach(ctrl => ctrl.Hidden = event.detail.checked)
 					}
@@ -228,13 +246,14 @@ export class PortalsCoreService extends BaseService {
 			);
 		}
 
+		formConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
 			onCompleted(formConfig);
 		}
 		return formConfig;
 	}
 
-	public getNotificationsFormControl(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
+	public getNotificationsFormControl(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true, inheritEventsAndMethodsFromParent: boolean = false, inheritEmailFromParent: boolean = false, inheritWebHookFromParent: boolean = false, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
 		const formConfig: AppFormsControlConfig = {
 			Name: name,
 			Segment: segment,
@@ -243,6 +262,7 @@ export class PortalsCoreService extends BaseService {
 					{
 						Name: "Events",
 						Type: "Select",
+						Hidden: inheritEventsAndMethodsFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.events}}",
 							SelectOptions: {
@@ -260,6 +280,7 @@ export class PortalsCoreService extends BaseService {
 					{
 						Name: "Methods",
 						Type: "Select",
+						Hidden: inheritEventsAndMethodsFromParent,
 						Options: {
 							Label: "{{portals.common.controls.notifications.methods}}",
 							SelectOptions: {
@@ -273,23 +294,60 @@ export class PortalsCoreService extends BaseService {
 			}
 		};
 
+		if (allowInheritFromParent) {
+			AppUtility.insertAt(
+				formConfig.SubControls.Controls,
+				{
+					Name: "InheritFromParent",
+					Type: "YesNo",
+					Options: {
+						Label: "{{portals.common.controls.notifications.inheritFromParent}}",
+						Type: "toggle",
+						OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name === "Events" || ctrl.Name === "Methods").forEach(ctrl => ctrl.Hidden = event.detail.checked)
+					}
+				},
+				0
+			);
+		}
+
 		if (methods === undefined || methods.indexOf("Email") > -1) {
-			formConfig.SubControls.Controls.push(this.getEmailNotificationFormControl(allowInheritFromParent));
+			formConfig.SubControls.Controls.push(this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmailFromParent));
 		}
 
 		if (methods === undefined || methods.indexOf("WebHook") > -1) {
-			formConfig.SubControls.Controls.push(this.getWebHookNotificationFormControl(allowInheritFromParent));
+			formConfig.SubControls.Controls.push(this.getWebHookNotificationFormControl(allowInheritFromParent, inheritWebHookFromParent));
 		}
 
+		formConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
 			onCompleted(formConfig);
 		}
 		return formConfig;
 	}
 
-	public getEmailSettingsFormControl(name: string, segment?: string, allowInheritFromParent: boolean = true, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
+	public getEmailSettingsFormControl(name: string, segment?: string, allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
+		const formButtons = this.appFormsSvc.getButtonControls(
+			undefined,
+			{
+				Name: "TestEmail",
+				Label: "{{portals.common.controls.emails.test.label}}",
+				OnClick: (event, formControl) => {
+					console.warn("Test email settings", event, formControl);
+				},
+				Options: {
+					Fill: "clear",
+					Color: "primary",
+					Css: "ion-float-end",
+					Icon: {
+						Name: "send",
+						Slot: "end"
+					}
+				}
+			}
+		);
+		formButtons.Hidden = inheritFromParent;
 		const formConfig: AppFormsControlConfig = {
-			Name: name,
+		Name: name,
 			Segment: segment,
 			Options: {
 				Label: "{{portals.common.controls.emails.label}}",
@@ -298,6 +356,7 @@ export class PortalsCoreService extends BaseService {
 				Controls: [
 					{
 						Name: "Sender",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.emails.sender.label}}",
 							PlaceHolder: "{{portals.common.controls.emails.sender.placeholder}}",
@@ -307,6 +366,7 @@ export class PortalsCoreService extends BaseService {
 					{
 						Name: "Signature",
 						Type: "TextArea",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.emails.signature.label}}",
 							Description: "{{portals.common.controls.emails.signature.description}}"
@@ -314,6 +374,7 @@ export class PortalsCoreService extends BaseService {
 					},
 					{
 						Name: "Smtp",
+						Hidden: inheritFromParent,
 						Options: {
 							Label: "{{portals.common.controls.emails.smtp.label}}"
 						},
@@ -365,25 +426,7 @@ export class PortalsCoreService extends BaseService {
 							]
 						}
 					},
-					this.appFormsSvc.getButtonControls(
-						undefined,
-						{
-							Name: "TestEmail",
-							Label: "{{portals.common.controls.emails.test.label}}",
-							OnClick: (event, formControl) => {
-								console.warn("Test email settings", event, formControl);
-							},
-							Options: {
-								Fill: "clear",
-								Color: "primary",
-								Css: "ion-float-end",
-								Icon: {
-									Name: "send",
-									Slot: "end"
-								}
-							}
-						}
-					)
+					formButtons
 				]
 			}
 		};
@@ -404,6 +447,7 @@ export class PortalsCoreService extends BaseService {
 			);
 		}
 
+		formConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
 			onCompleted(formConfig);
 		}
@@ -1176,7 +1220,7 @@ export class PortalsCoreService extends BaseService {
 						}
 					},
 					error => {
-						console.error(super.getErrorMessage("Error occurred while getting an site", error));
+						console.error(super.getErrorMessage("Error occurred while getting a site", error));
 						if (onError !== undefined) {
 							onError(error);
 						}
@@ -1240,6 +1284,342 @@ export class PortalsCoreService extends BaseService {
 
 			default:
 				console.warn(super.getLogMessage("Got an update message of a site"), message);
+				break;
+		}
+	}
+
+	public get moduleCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const modul = data !== undefined
+				? data instanceof Module
+					? data as Module
+					: Module.deserialize(data)
+				: undefined;
+			return modul !== undefined
+				? { title: modul.Title, description: modul.Description, originalObject: modul }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(super.getSearchURI("module", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => Module.contains(obj.ID) ? convertToCompleterItem(Module.get(obj.ID)) : convertToCompleterItem(Module.update(Module.deserialize(obj)))),
+			convertToCompleterItem
+		);
+	}
+
+	public searchModule(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.search(
+			super.getSearchURI("module", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!Module.contains(obj.ID)) {
+							Module.update(obj);
+						}
+					});
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching module(s)", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public searchModuleAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
+		return super.searchAsync(
+			super.getSearchURI("module", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!Module.contains(obj.ID)) {
+							Module.update(obj);
+						}
+					});
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching module(s)", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			},
+			dontProcessPagination,
+			useXHR
+		);
+	}
+
+	public createModuleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.createAsync(
+			super.getURI("module"),
+			body,
+			data => {
+				Module.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while creating new module", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public getModuleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return Module.contains(id)
+			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
+			: super.readAsync(
+					super.getURI("module", id),
+					data => {
+						Module.update(data);
+						if (onNext !== undefined) {
+							onNext(data);
+						}
+					},
+					error => {
+						console.error(super.getErrorMessage("Error occurred while getting a module", error));
+						if (onError !== undefined) {
+							onError(error);
+						}
+					},
+					undefined,
+					useXHR
+				);
+	}
+
+	public updateModuleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.updateAsync(
+			super.getURI("module", body.ID),
+			body,
+			data => {
+				Module.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while updating a module", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+	);
+	}
+
+	public deleteModuleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.deleteAsync(
+			super.getURI("module", id),
+			data => {
+				Module.instances.remove(id);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while deleting a module", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	private async processModuleUpdateMessageAsync(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				Module.update(message.Data);
+				AppEvents.broadcast("Portals", { Object: "Module", Type: "Updated", ID: message.Data.ID });
+				break;
+
+			case "Delete":
+				if (Module.contains(message.Data.ID)) {
+					Module.instances.remove(message.Data.ID);
+					AppEvents.broadcast("Portals", { Object: "Module", Type: "Deleted", ID: message.Data.ID });
+				}
+				break;
+
+			default:
+				console.warn(super.getLogMessage("Got an update message of a modul"), message);
+				break;
+		}
+	}
+
+	public get contentTypeCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const contentType = data !== undefined
+				? data instanceof ContentType
+					? data as ContentType
+					: ContentType.deserialize(data)
+				: undefined;
+			return contentType !== undefined
+				? { title: contentType.Title, description: contentType.Description, originalObject: contentType }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(super.getSearchURI("content.type", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => ContentType.contains(obj.ID) ? convertToCompleterItem(ContentType.get(obj.ID)) : convertToCompleterItem(ContentType.update(ContentType.deserialize(obj)))),
+			convertToCompleterItem
+		);
+	}
+
+	public searchContentType(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.search(
+			super.getSearchURI("content.type", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!ContentType.contains(obj.ID)) {
+							ContentType.update(obj);
+						}
+					});
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching content-type(s)", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public searchContentTypeAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.searchAsync(
+			super.getSearchURI("content.type", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!ContentType.contains(obj.ID)) {
+							ContentType.update(obj);
+						}
+					});
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching content-type(s)", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public createContentTypeAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.createAsync(
+			super.getURI("content.type"),
+			body,
+			data => {
+				ContentType.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while creating new content-type", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public getContentTypeAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return ContentType.contains(id)
+			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
+			: super.readAsync(
+					super.getURI("content.type", id),
+					data => {
+						ContentType.update(data);
+						if (onNext !== undefined) {
+							onNext(data);
+						}
+					},
+					error => {
+						console.error(super.getErrorMessage("Error occurred while getting a content-type", error));
+						if (onError !== undefined) {
+							onError(error);
+						}
+					},
+					undefined,
+					useXHR
+				);
+	}
+
+	public updateContentTypeAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.updateAsync(
+			super.getURI("content.type", body.ID),
+			body,
+			data => {
+				ContentType.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while updating a content-type", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+	);
+	}
+
+	public deleteContentTypeAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.deleteAsync(
+			super.getURI("content.type", id),
+			data => {
+				ContentType.instances.remove(id);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while deleting a content-type", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	private async processContentTypeUpdateMessageAsync(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				ContentType.update(message.Data);
+				AppEvents.broadcast("Portals", { Object: "ContentType", Type: "Updated", ID: message.Data.ID });
+				break;
+
+			case "Delete":
+				if (ContentType.contains(message.Data.ID)) {
+					ContentType.instances.remove(message.Data.ID);
+					AppEvents.broadcast("Portals", { Object: "ContentType", Type: "Deleted", ID: message.Data.ID });
+				}
+				break;
+
+			default:
+				console.warn(super.getLogMessage("Got an update message of a content-type"), message);
 				break;
 		}
 	}
