@@ -224,4 +224,18 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 		}
 	}
 
+	async openAsync(event: Event, organization: Organization) {
+		event.stopPropagation();
+		await this.configSvc.navigateForwardAsync(organization.routerURI);
+	}
+
+	setActive(event: Event, organization: Organization) {
+		event.stopPropagation();
+		Organization.active = Organization.get(organization.ID);
+	}
+
+	isActive(organization: Organization) {
+		return organization !== undefined && Organization.active !== undefined && AppUtility.isEquals(organization.ID, Organization.active.ID);
+	}
+
 }

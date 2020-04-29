@@ -11,6 +11,7 @@ import { AuthenticationService } from "@services/authentication.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { Privileges } from "@models/privileges";
 import { Organization } from "@models/portals.core.organization";
+import { ModuleDefinition } from "@models/portals.base";
 import { Module } from "@models/portals.core.module";
 import { Desktop } from "@models/portals.core.desktop";
 import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.modal.page";
@@ -34,6 +35,7 @@ export class ModulesUpdatePage implements OnInit {
 
 	private module: Module;
 	private organization: Organization;
+	private definitions: Array<ModuleDefinition>;
 	private isSystemModerator = false;
 	private canModerateOrganization = false;
 	private hash = "";
@@ -93,6 +95,7 @@ export class ModulesUpdatePage implements OnInit {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
+		this.definitions = await this.portalsCoreSvc.getDefinitionsAsync();
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 	}
@@ -111,13 +114,6 @@ export class ModulesUpdatePage implements OnInit {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
-		const moduleDefinitions = (await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "module.definitions") as Array<any>).map(definition => {
-			return {
-				Value: definition.ID,
-				Label: definition.Title,
-				Description: definition.Description
-			} as AppFormsLookupValue;
-		});
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "module", "form-controls");
 
@@ -151,7 +147,7 @@ export class ModulesUpdatePage implements OnInit {
 					Name: "ModuleDefinition",
 					Type: "Text",
 					Segment: "basic",
-					Extras: { Text: moduleDefinitions.find(definition => definition.Value === this.module.ModuleDefinitionID).Label },
+					Extras: { Text: this.definitions.find(definition => definition.ID === this.module.ModuleDefinitionID).Title },
 					Options: {
 						Label: control.Options.Label,
 						ReadOnly: true
@@ -162,8 +158,17 @@ export class ModulesUpdatePage implements OnInit {
 		}
 		else {
 			control.Options.Type = "dropdown";
-			control.Options.SelectOptions.Values = moduleDefinitions;
-			control.Options.OnBlur = (_, formControl) => this.form.controls.Title.setValue(formControl.selectOptions[0].Label, { onlySelf: true });
+			control.Options.SelectOptions.Values = this.definitions.map(definition => {
+				return {
+					Value: definition.ID,
+					Label: definition.Title,
+					Description: definition.Description
+				} as AppFormsLookupValue;
+			});
+			control.Options.OnChanged = (_, formControl) => {
+				this.form.controls.Title.setValue(formControl.selectOptions.find(o => o.Value === formControl.value).Label, { onlySelf: true });
+				this.form.controls.Description.setValue(formControl.selectOptions.find(o => o.Value === formControl.value).Description, { onlySelf: true });
+			};
 		}
 
 		let desktop = Desktop.get(this.module.DesktopID);

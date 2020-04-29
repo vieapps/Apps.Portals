@@ -12,6 +12,7 @@ import { AuthenticationService } from "@services/authentication.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { Privileges } from "@models/privileges";
 import { Organization } from "@models/portals.core.organization";
+import { ModuleDefinition } from "@models/portals.base";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
 import { Desktop } from "@models/portals.core.desktop";
@@ -34,9 +35,9 @@ export class ContentTypesUpdatePage implements OnInit {
 	) {
 	}
 
-	private moduleDefinitions: Array<any>;
 	private contentType: ContentType;
 	private organization: Organization;
+	private definitions: Array<ModuleDefinition>;
 	private isSystemModerator = false;
 	private canModerateOrganization = false;
 	private hash = "";
@@ -91,13 +92,7 @@ export class ContentTypesUpdatePage implements OnInit {
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.contenttypes.title.${(AppUtility.isNotEmpty(this.contentType.ID) ? "update" : "create")}`);
 		await this.appFormsSvc.showLoadingAsync(this.title);
 
-		this.button = {
-			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.contentType.ID) ? "update" : "create")}`),
-			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
-		};
-
-		this.moduleDefinitions = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "module.definitions");
-		if (Module.all.filter(m => m.SystemID === this.organization.ID).length < 1) {
+		if (Module.all.filter(o => o.SystemID === this.organization.ID).length < 1) {
 			const request = AppPagination.buildRequest(
 				{ And: [{ SystemID: { Equals: this.organization.ID } }] },
 				{ Title: "Ascending" },
@@ -106,36 +101,56 @@ export class ContentTypesUpdatePage implements OnInit {
 			await this.portalsCoreSvc.searchModuleAsync(request, undefined, undefined, true, true);
 		}
 
+		if (Module.all.filter(o => o.SystemID === this.organization.ID).length < 1) {
+			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"));
+			return;
+		}
+
+		this.button = {
+			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.contentType.ID) ? "update" : "create")}`),
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
+		};
+
+		this.definitions = await this.portalsCoreSvc.getDefinitionsAsync();
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 	}
 
+	private getModuleDefinition(moduleID: string) {
+		const current = Module.all.find(o => o.ID === moduleID);
+		return this.definitions.find(definition => definition.ID === current.ModuleDefinitionID);
+	}
+
+	private getContentTypeDefinitions(moduleID: string) {
+		const moduleDefinition = this.getModuleDefinition(moduleID);
+		return moduleDefinition !== undefined ? moduleDefinition.ContentTypeDefinitions : [];
+	}
+
 	private getRepositories() {
-		return Module.all.filter(m => m.SystemID === this.organization.ID)
+		return Module.all.filter(o => o.SystemID === this.organization.ID)
 			.sort(AppUtility.getCompareFunction("Title"))
-			.map(m => {
+			.map(o => {
 				return {
-					Value: m.ID,
-					Label: m.Title,
-					Description: m.Description
+					Value: o.ID,
+					Label: o.Title,
+					Description: o.Description
 				} as AppFormsLookupValue;
 			});
 	}
 
-	private getContentTypeDefinitions(moduleID: string) {
-		const current = Module.all.find(m => m.ID === moduleID);
-		const moduleDefinition = this.moduleDefinitions.find(definition => definition.ID === current.ModuleDefinitionID);
-		const contentTypeDefinitions: Array<any> = moduleDefinition !== undefined
-			? moduleDefinition.ContentTypeDefinitions
-			: [];
-		return contentTypeDefinitions.sort(AppUtility.getCompareFunction("Title"))
-			.map(definition => {
-				return {
-					Value: definition.ID,
-					Label: definition.Title,
-					Description: definition.Description
-				} as AppFormsLookupValue;
-			});
+	private getDefinitions(moduleID: string, onlyMultiple: boolean = false) {
+		let contentTypeDefinitions = this.getContentTypeDefinitions(moduleID).sort(AppUtility.getCompareFunction("Title"));
+		if (onlyMultiple) {
+			const contentTypeIDs = ContentType.all.filter(o => o.RepositoryID === moduleID).map(o => o.ContentTypeDefinitionID);
+			contentTypeDefinitions = contentTypeDefinitions.filter(o => o.MultipleIntances || (!o.MultipleIntances && contentTypeIDs.indexOf(o.ID) < 0));
+		}
+		return contentTypeDefinitions.map(definition => {
+			return {
+				Value: definition.ID,
+				Label: definition.Title,
+				Description: definition.Description
+			} as AppFormsLookupValue;
+		});
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
@@ -146,7 +161,10 @@ export class ContentTypesUpdatePage implements OnInit {
 			new AppFormsSegment("emails", await this.configSvc.getResourceAsync("portals.contenttypes.update.segments.emails"))
 		];
 		if (AppUtility.isNotEmpty(this.contentType.ID)) {
-			formSegments.push(new AppFormsSegment("extend", await this.configSvc.getResourceAsync("portals.contenttypes.update.segments.extend")));
+			const contentTypeDefinition = this.getContentTypeDefinitions(this.contentType.RepositoryID).find(definition => definition.ID === this.contentType.ContentTypeDefinitionID);
+			if (contentTypeDefinition !== undefined && contentTypeDefinition.Extendable) {
+				formSegments.push(new AppFormsSegment("extend", await this.configSvc.getResourceAsync("portals.contenttypes.update.segments.extend")));
+			}
 		}
 		if (onCompleted !== undefined) {
 			onCompleted(formSegments);
@@ -200,7 +218,13 @@ export class ContentTypesUpdatePage implements OnInit {
 		else {
 			control.Options.Type = "dropdown";
 			control.Options.SelectOptions.Values = this.getRepositories();
-			control.Options.OnChanged = (_, formControl) => formControl.control.next.Options.SelectOptions.Values = this.getContentTypeDefinitions(formControl.value);
+			control.Options.OnChanged = (_, formControl) => {
+				const definitions = this.getDefinitions(formControl.value, true);
+				formControl.control.next.Options.SelectOptions.Values = definitions;
+				formControl.control.next.controlRef.setValue(definitions[0].Value, { onlySelf: true });
+				this.form.controls.Title.setValue(definitions[0].Label, { onlySelf: true });
+				this.form.controls.Description.setValue(definitions[0].Description, { onlySelf: true });
+			};
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ContentTypeDefinitionID"));
@@ -212,7 +236,7 @@ export class ContentTypesUpdatePage implements OnInit {
 					Name: "ContentTypeDefinition",
 					Type: "Text",
 					Segment: "basic",
-					Extras: { Text: this.getContentTypeDefinitions(this.contentType.RepositoryID).find(definition => definition.Value === this.contentType.ContentTypeDefinitionID).Label },
+					Extras: { Text: this.getDefinitions(this.contentType.RepositoryID).find(definition => definition.Value === this.contentType.ContentTypeDefinitionID).Label },
 					Options: {
 						Label: control.Options.Label,
 						ReadOnly: true
@@ -223,10 +247,11 @@ export class ContentTypesUpdatePage implements OnInit {
 		}
 		else {
 			control.Options.Type = "dropdown";
-			control.Options.SelectOptions.Values = this.getContentTypeDefinitions(Module.instances.size() > 0 ? Module.all[0].ID : undefined);
-			control.Options.OnBlur = (_, formControl) => {
+			control.Options.SelectOptions.Values = this.getDefinitions(Module.instances.size() > 0 ? Module.all[0].ID : undefined, true);
+			control.Options.OnChanged = (_, formControl) => {
 				if (formControl.selectOptions.length > 0) {
-					this.form.controls.Title.setValue(formControl.selectOptions[0].Label, { onlySelf: true });
+					this.form.controls.Title.setValue(formControl.selectOptions.find(o => o.Value === formControl.value).Label, { onlySelf: true });
+					this.form.controls.Description.setValue(formControl.selectOptions.find(o => o.Value === formControl.value).Description, { onlySelf: true });
 				}
 			};
 		}
@@ -261,14 +286,7 @@ export class ContentTypesUpdatePage implements OnInit {
 			}
 		};
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CreateNewVersionWhenUpdated"));
-		control.Options.Type = "toggle";
-
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "AllowComments"));
-		control.Options.Type = "toggle";
-
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "UseSocialNetworkComments"));
-		control.Options.Type = "toggle";
+		["CreateNewVersionWhenUpdated", "AllowComments", "UseSocialNetworkComments"].forEach(name => formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, name)).Options.Type = "toggle");
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "DefaultCommentStatus"));
 		control.Options.SelectOptions.Interface = "popover";

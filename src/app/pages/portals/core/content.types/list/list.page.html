@@ -41,16 +41,16 @@
     </ion-fab-button>
   </ion-fab>
 	<ion-list class="ion-padding-end">
-		<ion-item *ngFor="let module of modules; trackBy: track" [color]="configSvc.color" [routerLink]="module.routerLink" [queryParams]="module.routerParams" routerDirection="forward" detail="false">
+		<ion-item *ngFor="let contentType of contentTypes; trackBy: track" [color]="configSvc.color" [routerLink]="contentType.routerLink" [queryParams]="contentType.routerParams" routerDirection="forward" detail="false">
 			<ion-label>
 				<span class="time ion-float-end" [hidden]="configSvc.screenWidth < 768">
-					{{ module.Created | date:'h:mm a @ d/M/y' }} <br/> {{ module.LastModified | date:'h:mm a @ d/M/y' }}
+					{{ contentType.Created | date:'h:mm a @ d/M/y' }} <br/> {{ contentType.LastModified | date:'h:mm a @ d/M/y' }}
 				</span>
 				<span>
-					{{ module.Title }}
+					{{ contentType.Title }}
 				</span>
 				<div>
-					{{ module.Description }}
+					{{ getInfo(contentType) }}
 				</div>
 			</ion-label>
 		</ion-item>

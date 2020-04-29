@@ -15,6 +15,7 @@ import { Desktop } from "@models/portals.core.desktop";
 import { Site } from "@models/portals.core.site";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
+import { ModuleDefinition } from "@models/portals.base";
 
 @Injectable()
 export class PortalsCoreService extends BaseService {
@@ -26,12 +27,12 @@ export class PortalsCoreService extends BaseService {
 	) {
 		super("Portals");
 		this.initialize();
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Organization", message => this.processOrganizationUpdateMessageAsync(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Role", message => this.processRoleUpdateMessageAsync(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Desktop", message => this.processDesktopUpdateMessageAsync(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Site", message => this.processSiteUpdateMessageAsync(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Module", message => this.processModuleUpdateMessageAsync(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "ContentType", message => this.processContentTypeUpdateMessageAsync(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Organization", message => this.processOrganizationUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Role", message => this.processRoleUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Desktop", message => this.processDesktopUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Site", message => this.processSiteUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Module", message => this.processModuleUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "ContentType", message => this.processContentTypeUpdateMessage(message));
 	}
 
 	public get activeOrganization() {
@@ -59,6 +60,10 @@ export class PortalsCoreService extends BaseService {
 		return organization === undefined || !AppUtility.isNotEmpty(organization.ID)
 			? this.authSvc.isModerator(this.name, "Organization", undefined, account)
 			: AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isModerator(this.name, "Organization", organization.Privileges, account);
+	}
+
+	public async getDefinitionsAsync() {
+		return await this.configSvc.getDefinitionAsync(this.name, "module.definitions") as ModuleDefinition[];
 	}
 
 	public getEmailNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
@@ -613,7 +618,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	private async processOrganizationUpdateMessageAsync(message: AppMessage) {
+	private processOrganizationUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Create":
 			case "Update":
@@ -813,7 +818,7 @@ export class PortalsCoreService extends BaseService {
 		}
 }
 
-	private async processRoleUpdateMessageAsync(message: AppMessage) {
+	private processRoleUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Update":
 				this.updateRole(message.Data, message.Data.ParentID);
@@ -1058,7 +1063,7 @@ export class PortalsCoreService extends BaseService {
 		}
 }
 
-	private async processDesktopUpdateMessageAsync(message: AppMessage) {
+	private processDesktopUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Update":
 				this.updateDesktop(message.Data, message.Data.ParentID);
@@ -1195,6 +1200,7 @@ export class PortalsCoreService extends BaseService {
 			body,
 			data => {
 				Site.update(data);
+				AppEvents.broadcast("Portals", { Object: "Site", Type: "Updated", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1236,6 +1242,7 @@ export class PortalsCoreService extends BaseService {
 			body,
 			data => {
 				Site.update(data);
+				AppEvents.broadcast("Portals", { Object: "Site", Type: "Updated", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1253,7 +1260,8 @@ export class PortalsCoreService extends BaseService {
 		return super.deleteAsync(
 			super.getURI("site", id),
 			data => {
-				Site.instances.remove(id);
+				Site.instances.remove(data.ID);
+				AppEvents.broadcast("Portals", { Object: "Site", Type: "Deleted", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1267,7 +1275,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	private async processSiteUpdateMessageAsync(message: AppMessage) {
+	private processSiteUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Create":
 			case "Update":
@@ -1364,6 +1372,7 @@ export class PortalsCoreService extends BaseService {
 			body,
 			data => {
 				Module.update(data);
+				AppEvents.broadcast("Portals", { Object: "Module", Type: "Updated", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1405,6 +1414,7 @@ export class PortalsCoreService extends BaseService {
 			body,
 			data => {
 				Module.update(data);
+				AppEvents.broadcast("Portals", { Object: "Module", Type: "Updated", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1422,7 +1432,8 @@ export class PortalsCoreService extends BaseService {
 		return super.deleteAsync(
 			super.getURI("module", id),
 			data => {
-				Module.instances.remove(id);
+				Module.instances.remove(data.ID);
+				AppEvents.broadcast("Portals", { Object: "Module", Type: "Deleted", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1436,7 +1447,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	private async processModuleUpdateMessageAsync(message: AppMessage) {
+	private processModuleUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Create":
 			case "Update":
@@ -1531,6 +1542,7 @@ export class PortalsCoreService extends BaseService {
 			body,
 			data => {
 				ContentType.update(data);
+				AppEvents.broadcast("Portals", { Object: "ContentType", Type: "Updated", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1572,6 +1584,7 @@ export class PortalsCoreService extends BaseService {
 			body,
 			data => {
 				ContentType.update(data);
+				AppEvents.broadcast("Portals", { Object: "ContentType", Type: "Updated", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1589,7 +1602,8 @@ export class PortalsCoreService extends BaseService {
 		return super.deleteAsync(
 			super.getURI("content.type", id),
 			data => {
-				ContentType.instances.remove(id);
+				ContentType.instances.remove(data.ID);
+				AppEvents.broadcast("Portals", { Object: "ContentType", Type: "Deleted", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1603,7 +1617,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	private async processContentTypeUpdateMessageAsync(message: AppMessage) {
+	private processContentTypeUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Create":
 			case "Update":

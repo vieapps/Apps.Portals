@@ -262,6 +262,13 @@ export class AppComponent implements OnInit {
 				detail: false
 			});
 			this.updateSidebarItem(index, -1, {
+				title: "Sites",
+				url: "/portals/core/sites/list/all",
+				direction: "root",
+				icon: "globe",
+				detail: false
+			});
+			this.updateSidebarItem(index, -1, {
 				title: "Roles",
 				url: "/portals/core/roles/list/all",
 				direction: "root",
@@ -273,13 +280,6 @@ export class AppComponent implements OnInit {
 				url: "/portals/core/desktops/list/all",
 				direction: "root",
 				icon: "desktop",
-				detail: false
-			});
-			this.updateSidebarItem(index, -1, {
-				title: "Sites",
-				url: "/portals/core/sites/list/all",
-				direction: "root",
-				icon: "globe",
 				detail: false
 			});
 			this.updateSidebarItem(index, -1, {

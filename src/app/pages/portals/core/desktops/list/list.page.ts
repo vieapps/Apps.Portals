@@ -115,7 +115,7 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.desktops.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { title: "" });
+		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: "" });
 		this.children = await this.configSvc.getResourceAsync("portals.desktops.list.children");
 		this.alias = await this.configSvc.getResourceAsync("portals.desktops.controls.Alias.label");
 
@@ -135,7 +135,7 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 
 			if (this.parentDesktop !== undefined) {
 				this.desktops = this.parentDesktop.Children;
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { title: `[${this.parentDesktop.FullTitle}]` });
+				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentDesktop.FullTitle}]` });
 				AppEvents.on("Portals", info => {
 					if (info.args.Object === "Desktop" && (this.parentDesktop.ID === info.args.ID || this.parentDesktop.ID === info.args.ParentID)) {
 						this.desktops = this.parentDesktop.Children;
@@ -143,6 +143,7 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 				}, `Desktops:Refresh:${this.parentID}`);
 			}
 			else {
+				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
 				this.filterBy.And = [
 					{ SystemID: { Equals: this.organization.ID } },
 					{ ParentID: "IsNull" }

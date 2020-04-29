@@ -347,7 +347,7 @@
 		"roles": {
 			"title": {
 				"search": "Tìm kiếm vai trò sử dụng",
-				"list": "Danh sách vai trò sử dụng {{title}}",
+				"list": "Danh sách vai trò sử dụng {{info}}",
 				"create": "Tạo mới vai trò sử dụng",
 				"update": "Cập nhật vai trò sử dụng"
 			},
@@ -403,7 +403,7 @@
 		"desktops": {
 			"title": {
 				"search": "Tìm kiếm desktop hiển thị",
-				"list": "Danh sách desktop hiển thị {{title}}",
+				"list": "Danh sách desktop hiển thị {{info}}",
 				"create": "Tạo mới desktop hiển thị",
 				"update": "Cập nhật desktop hiển thị"
 			},
@@ -559,7 +559,7 @@
 		"sites": {
 			"title": {
 				"search": "Tìm kiếm site",
-				"list": "Danh sách site {{organization}}",
+				"list": "Danh sách site {{info}}",
 				"create": "Tạo mới site",
 				"update": "Cập nhật site"
 			},
@@ -697,16 +697,16 @@
 		"modules": {
 			"title": {
 				"search": "Tìm kiếm module nghiệp vụ",
-				"list": "Danh sách module nghiệp vụ {{organization}}",
+				"list": "Danh sách module nghiệp vụ {{info}}",
 				"create": "Tạo mới module nghiệp vụ",
 				"update": "Cập nhật module nghiệp vụ"
 			},
 			"controls": {
 				"Organization": "Module nghiệp vụ của đơn vị - tổ chức",
 				"ModuleDefinitionID": {
-					"label": "Module chức năng",
+					"label": "Module mẫu",
 					"placeholder": "",
-					"description": "Các chức năng của module nghiệp vụ này sẽ được cung cấp bởi module chức năng chỉ định ở trên"
+					"description": "Các chức năng của module nghiệp vụ này sẽ được cung cấp bởi module mẫu chỉ định ở trên"
 				},
 				"Title": {
 					"label": "Tên module nghiệp vụ",
@@ -767,7 +767,7 @@
 		"contenttypes": {
 			"title": {
 				"search": "Tìm kiếm kiểu dữ liệu nghiệp vụ",
-				"list": "Danh sách kiểu dữ liệu nghiệp vụ {{organization}}",
+				"list": "Danh sách kiểu dữ liệu nghiệp vụ {{info}}",
 				"create": "Tạo mới kiểu dữ liệu nghiệp vụ",
 				"update": "Cập nhật kiểu dữ liệu nghiệp vụ"
 			},
@@ -799,7 +799,7 @@
 					"description": "Desktop mặc định sử dụng để hiển thị các nội dung nghiệp vụ của kiểu dữ liệu"
 				},
 				"CreateNewVersionWhenUpdated": {
-					"label": "Luôn tạo phiên bản nội dung khi có thay đổi",
+					"label": "Tạo phiên bản nội dung khi cập nhật dữ liệu nghiệp vụ",
 					"placeholder": "",
 					"description": ""
 				},
@@ -831,7 +831,8 @@
 				}
 			},
 			"list": {
-				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác kiểu dữ liệu nghiệp vụ"
+				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác kiểu dữ liệu nghiệp vụ",
+				"invalid": "Chưa có module nghiệp vụ"
 			},
 			"update": {
 				"segments": {

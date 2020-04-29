@@ -27,54 +27,47 @@ export abstract class PortalBase extends BaseModel {
 
 }
 
+/** Interface of a module definition */
+export interface ModuleDefinition {
+	ID?: string;
+	Title?: string;
+	Description?: string;
+	Icon?: string;
+	ContentTypeDefinitions?: ContentTypeDefinition[];
+}
+
+/** Interface of a content-type definition */
+export interface ContentTypeDefinition {
+	ID?: string;
+	Title?: string;
+	Description?: string;
+	Icon?: string;
+	MultipleIntances?: boolean;
+	Extendable?: boolean;
+	Indexable?: boolean;
+	ObjectName?: string;
+}
+
 /** Interface of all nested classes */
 export interface NestedObject {
-	/** The title */
 	Title: string;
-
-	/** The full title */
 	FullTitle: string;
-
-	/** The identity of the parent object */
 	ParentID: string;
-
-	/** The order-index for sorting */
 	OrderIndex: number;
-
-	/** The time when the object was created */
 	Created: Date;
-
-	/** The identity of user who was created the object */
 	CreatedID: string;
-
-	/** The last time when the object was modified */
 	LastModified: Date;
-
-	/** The identity of user who was modified the object at the last time */
 	LastModifiedID: string;
-
-	/** The parent object */
 	Parent: NestedObject;
-
-	/** The children objects */
 	Children: NestedObject[];
 }
 
 /** Definition of an extended property */
 export interface ExtendedPropertyDefinition {
-	/** The name */
 	Name: string;
-
-	/** The mode (data-type) */
 	Mode: string;
-
-	/** The name of SQL table's column */
 	Column?: string;
-
-	/** The default value */
 	DefaultValue?: string;
-
-	/** The formula for computing the default value */
 	DefaultValueFormula?: string;
 }
 

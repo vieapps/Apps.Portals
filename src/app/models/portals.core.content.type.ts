@@ -115,4 +115,8 @@ export class ContentType extends BaseModel {
 		return id !== undefined && this.instances.containsKey(id);
 	}
 
+	public get routerLink() {
+		return `/portals/core/content.types/update/${AppUtility.toURI(this.ansiTitle)}`;
+	}
+
 }

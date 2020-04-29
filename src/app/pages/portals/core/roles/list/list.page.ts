@@ -114,7 +114,7 @@ export class RolesListPage implements OnInit, OnDestroy {
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.roles.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { title: "" });
+		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: "" });
 		this.children = await this.configSvc.getResourceAsync("portals.roles.list.children");
 
 		if (this.searching) {
@@ -133,7 +133,7 @@ export class RolesListPage implements OnInit, OnDestroy {
 
 			if (this.parentRole !== undefined) {
 				this.roles = this.parentRole.Children;
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { title: `[${this.parentRole.FullTitle}]` });
+				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentRole.FullTitle}]` });
 				AppEvents.on("Portals", info => {
 					if (info.args.Object === "Role" && (this.parentRole.ID === info.args.ID || this.parentRole.ID === info.args.ParentID)) {
 						this.roles = this.parentRole.Children;
@@ -141,6 +141,7 @@ export class RolesListPage implements OnInit, OnDestroy {
 				}, `Roles:Refresh:${this.parentID}`);
 			}
 			else {
+				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
 				this.filterBy.And = [
 					{ SystemID: { Equals: this.organization.ID } },
 					{ ParentID: "IsNull" }

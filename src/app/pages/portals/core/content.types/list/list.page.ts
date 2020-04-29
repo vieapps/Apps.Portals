@@ -13,6 +13,8 @@ import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { Organization } from "@models/portals.core.organization";
+import { ModuleDefinition } from "@models/portals.base";
+import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
 
 @Component({
@@ -42,6 +44,7 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 	private systemID: string;
 	private repositoryID: string;
 	private definitionID: string;
+	private definitions: Array<ModuleDefinition>;
 
 	title = "ContentTypes";
 	contentTypes = new Array<ContentType>();
@@ -110,9 +113,14 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 			return;
 		}
 
+		if (!AppUtility.isNotEmpty(this.systemID) && !AppUtility.isNotEmpty(this.repositoryID) && !AppUtility.isNotEmpty(this.definitionID)) {
+			this.systemID = this.organization.ID;
+		}
+
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.contenttypes.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { organization: this.isSystemModerator ? "" : `[${this.organization.Title}]` });
+		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: AppUtility.isNotEmpty(this.repositoryID) ? `[${Module.get(this.repositoryID).Title}]` : `[${this.organization.Title}]` });
+		this.definitions = await this.portalsCoreSvc.getDefinitionsAsync();
 
 		if (AppUtility.isNotEmpty(this.systemID)) {
 			this.filterBy.And.push({ SystemID: { Equals: this.systemID } });
@@ -139,7 +147,7 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 			await this.searchAsync();
 			AppEvents.on("Portals", info => {
 				if (info.args.Object === "ContentType") {
-					this.contentTypes = (this.isSystemModerator ? ContentType.all : ContentType.all.filter(contentType => contentType.SystemID === this.organization.ID)).sort(AppUtility.getCompareFunction("Title"));
+					this.prepareResults();
 				}
 			}, "ContentTypes:Refresh");
 		}
@@ -147,6 +155,15 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 
 	track(index: number, contentType: ContentType) {
 		return `${contentType.ID}@${index}`;
+	}
+
+	getInfo(contentType: ContentType) {
+		const modul = Module.get(contentType.RepositoryID);
+		if (modul === undefined) {
+			return AppUtility.isNotEmpty(contentType.Description) ? " - " + contentType.Description : "";
+		}
+		const contentTypeDefinition = this.definitions.find(definition => definition.ID === modul.ModuleDefinitionID).ContentTypeDefinitions.find(definition => definition.ID === contentType.ContentTypeDefinitionID);
+		return `Module: ${modul.Title} - Definition: ${contentTypeDefinition.Title}${(AppUtility.isNotEmpty(contentType.Description) ? " - " + contentType.Description : "")}`;
 	}
 
 	showActionsAsync() {
@@ -237,28 +254,31 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(m => this.contentTypes.push(ContentType.get(m.ID)));
+			(results || []).forEach(o => this.contentTypes.push(ContentType.get(o.ID)));
 		}
 		else {
 			let filterFn: (value: ContentType) => boolean;
 			if (AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.repositoryID) && AppUtility.isNotEmpty(this.definitionID)) {
-				filterFn = value => value.SystemID === this.systemID && value.RepositoryID === this.repositoryID && value.ContentTypeDefinitionID === this.definitionID;
-			}
-			else if (AppUtility.isNotEmpty(this.repositoryID)) {
-				filterFn = value => value.RepositoryID === this.repositoryID;
+				filterFn = o => o.SystemID === this.systemID && o.RepositoryID === this.repositoryID && o.ContentTypeDefinitionID === this.definitionID;
 			}
 			else if (AppUtility.isNotEmpty(this.definitionID)) {
 				filterFn = this.isSystemModerator
-					? (value: ContentType) => value.ContentTypeDefinitionID === this.definitionID
-					: (value: ContentType) => value.SystemID === this.systemID && value.ContentTypeDefinitionID === this.definitionID;
+					? o => o.ContentTypeDefinitionID === this.definitionID
+					: o => o.SystemID === this.systemID && o.ContentTypeDefinitionID === this.definitionID;
+			}
+			else if (AppUtility.isNotEmpty(this.repositoryID)) {
+				filterFn = o => o.RepositoryID === this.repositoryID;
 			}
 			else if (AppUtility.isNotEmpty(this.systemID)) {
-				filterFn = value => value.SystemID === this.systemID;
+				filterFn = o => o.SystemID === this.systemID;
+			}
+			else if (this.organization !== undefined) {
+				filterFn = o => o.SystemID === this.organization.ID;
 			}
 			const objects = new List(results !== undefined
-				? results.map(m => ContentType.get(m.ID))
+				? results.map(o => ContentType.get(o.ID))
 				: filterFn !== undefined ? ContentType.all.filter(filterFn) : ContentType.all
-			).OrderBy(m => m.Title).ThenByDescending(d => d.LastModified);
+			).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
 			this.contentTypes = results !== undefined
 				? this.contentTypes.concat(objects.ToArray())
 				: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();

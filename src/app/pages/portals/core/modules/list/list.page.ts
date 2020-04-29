@@ -13,6 +13,7 @@ import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { Organization } from "@models/portals.core.organization";
+import { ModuleDefinition } from "@models/portals.base";
 import { Module } from "@models/portals.core.module";
 
 @Component({
@@ -41,6 +42,7 @@ export class ModulesListPage implements OnInit, OnDestroy {
 	private canModerateOrganization = false;
 	private systemID: string;
 	private definitionID: string;
+	private definitions: Array<ModuleDefinition>;
 
 	title = "Modules";
 	modules = new Array<Module>();
@@ -110,7 +112,12 @@ export class ModulesListPage implements OnInit, OnDestroy {
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.modules.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { organization: this.isSystemModerator ? "" : `[${this.organization.Title}]` });
+		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
+		this.definitions = await this.portalsCoreSvc.getDefinitionsAsync();
+
+		if (!AppUtility.isNotEmpty(this.systemID) && !AppUtility.isNotEmpty(this.definitionID)) {
+			this.systemID = this.organization.ID;
+		}
 
 		if (AppUtility.isNotEmpty(this.systemID)) {
 			this.filterBy.And.push({ SystemID: { Equals: this.systemID } });
@@ -134,14 +141,19 @@ export class ModulesListPage implements OnInit, OnDestroy {
 			await this.searchAsync();
 			AppEvents.on("Portals", info => {
 				if (info.args.Object === "Module") {
-					this.modules = (this.isSystemModerator ? Module.all : Module.all.filter(module => module.SystemID === this.organization.ID)).sort(AppUtility.getCompareFunction("Title"));
+					this.prepareResults();
 				}
 			}, "Modules:Refresh");
 		}
 	}
 
-	track(index: number, module: Module) {
-		return `${module.ID}@${index}`;
+	track(index: number, modul: Module) {
+		return `${modul.ID}@${index}`;
+	}
+
+	getInfo(modul: Module) {
+		const moduleDefinition = this.definitions.find(definition => definition.ID === modul.ModuleDefinitionID);
+		return `Definition: ${moduleDefinition.Title}${(AppUtility.isNotEmpty(modul.Description) ? " - " + modul.Description : "")}`;
 	}
 
 	showActionsAsync() {
@@ -232,25 +244,28 @@ export class ModulesListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(m => this.modules.push(Module.get(m.ID)));
+			(results || []).forEach(o => this.modules.push(Module.get(o.ID)));
 		}
 		else {
 			let filterFn: (value: Module) => boolean;
 			if (AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.definitionID)) {
-				filterFn = value => value.SystemID === this.systemID && value.ModuleDefinitionID === this.definitionID;
+				filterFn = o => o.SystemID === this.systemID && o.ModuleDefinitionID === this.definitionID;
 			}
 			else if (AppUtility.isNotEmpty(this.definitionID)) {
 				filterFn = this.isSystemModerator
-					? (value: Module) => value.ModuleDefinitionID === this.definitionID
-					: (value: Module) => value.SystemID === this.systemID && value.ModuleDefinitionID === this.definitionID;
+					? o => o.ModuleDefinitionID === this.definitionID
+					: o => o.SystemID === this.systemID && o.ModuleDefinitionID === this.definitionID;
 			}
 			else if (AppUtility.isNotEmpty(this.systemID)) {
-				filterFn = value => value.SystemID === this.systemID;
+				filterFn = o => o.SystemID === this.systemID;
+			}
+			else if (this.organization !== undefined) {
+				filterFn = o => o.SystemID === this.organization.ID;
 			}
 			const objects = new List(results !== undefined
-				? results.map(m => Module.get(m.ID))
+				? results.map(o => Module.get(o.ID))
 				: filterFn !== undefined ? Module.all.filter(filterFn) : Module.all
-			).OrderBy(m => m.Title).ThenByDescending(d => d.LastModified);
+			).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
 			this.modules = results !== undefined
 				? this.modules.concat(objects.ToArray())
 				: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();

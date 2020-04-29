@@ -105,7 +105,7 @@ export class SitesListPage implements OnInit, OnDestroy {
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.sites.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { organization: this.isSystemModerator ? "" : `[${this.organization.Title}]` });
+		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: this.isSystemModerator ? "" : `[${this.organization.Title}]` });
 
 		this.filterBy.And = this.isSystemModerator
 			? []
@@ -228,15 +228,15 @@ export class SitesListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(r => this.sites.push(Site.get(r.ID)));
+			(results || []).forEach(o => this.sites.push(Site.get(o.ID)));
 		}
 		else {
 			const objects = new List(results !== undefined
-				? results.map(d => Site.get(d.ID))
+				? results.map(o => Site.get(o.ID))
 				: this.isSystemModerator
 					? Site.all
-					: Site.all.filter(d => d.SystemID === this.organization.ID)
-			).OrderBy(d => d.Title).ThenByDescending(d => d.LastModified);
+					: Site.all.filter(o => o.SystemID === this.organization.ID)
+			).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
 			this.sites = results !== undefined
 				? this.sites.concat(objects.ToArray())
 				: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();
