@@ -40,7 +40,7 @@ export class AppConfig {
 		os: "",
 		shell: "",
 		persistence: true,
-		debug: false,
+		debug: true,
 		offline: false
 	};
 
@@ -125,7 +125,7 @@ export class AppConfig {
 
 	/** Information for working with url (stack, host, ...) */
 	public static url = {
-		stack: new Array<{ url: string, params: { [key: string]: any } }>(),
+		stack: [] as Array<{ url: string, params: { [key: string]: any } }>,
 		home: "/home",
 		base: undefined as string,
 		host: undefined as string,
@@ -234,7 +234,7 @@ export class AppConfig {
 
 	/** Gets the available locales for working with the app */
 	public static get locales() {
-		return this.languages.map(language => language.Value.replace("-", "_"));
+		return this.languages.map(language => language.Value).map(language => language.replace("-", "_"));
 	}
 
 	/** Gets the locale data for working with i18n globalization */
@@ -247,8 +247,8 @@ export class AppConfig {
 		}
 	}
 
-	/** Gets the JSON query with related service, culture language and host */
-	public static getRelatedJson(service?: string, additional?: { [key: string]: string }) {
+	/** Gets the related JSON with active/related service, culture language and host */
+	public static getRelatedJson(additional?: { [key: string]: string }, service?: string) {
 		const json: { [key: string]: string } = {
 			"language": this.language,
 			"host": this.url.host,
@@ -260,9 +260,9 @@ export class AppConfig {
 		return json;
 	}
 
-	/** Gets the query with related service, culture language and host */
+	/** Gets the related query with active/related service, culture language and host */
 	public static getRelatedQuery(service?: string) {
-		return AppUtility.getQueryOfJson(this.getRelatedJson(service));
+		return AppUtility.getQueryOfJson(this.getRelatedJson(undefined, service));
 	}
 
 	/** Gets the authenticated headers (JSON) for making requests to APIs */
