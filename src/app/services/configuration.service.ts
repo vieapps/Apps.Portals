@@ -1,5 +1,4 @@
 declare var FB: any;
-import { List } from "linqts";
 import { Injectable } from "@angular/core";
 import { PlatformLocation } from "@angular/common";
 import { Title as BrowserTitle } from "@angular/platform-browser";
@@ -283,7 +282,7 @@ export class ConfigurationService extends BaseService {
 		}
 	}
 
-	/** Initializes the session with REST API */
+	/** Initializes the session with remote APIs */
 	public initializeSessionAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.fetchAsync(
 			"users/session",
@@ -291,7 +290,7 @@ export class ConfigurationService extends BaseService {
 				if (this.isDebug) {
 					console.log(super.getLogMessage("The session is initialized by APIs"));
 				}
-				await this.updateSessionAsync(data, () => {
+				await this.updateSessionAsync(data, _ => {
 					this.appConfig.session.account = this.getAccount(!this.isAuthenticated);
 					if (this.isAuthenticated) {
 						this.appConfig.session.account.id = this.appConfig.session.token.uid;
@@ -306,11 +305,11 @@ export class ConfigurationService extends BaseService {
 		);
 	}
 
-	/** Registers the initialized session (anonymous) with REST API */
+	/** Registers the initialized session (anonymous) with remote APIs */
 	public registerSessionAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.fetchAsync(
 			`users/session?register=${this.appConfig.session.id}`,
-			async () => {
+			async _ => {
 				this.appConfig.session.account = this.getAccount(true);
 				if (this.isDebug) {
 					console.log(super.getLogMessage("The session is registered by APIs"));
@@ -368,14 +367,12 @@ export class ConfigurationService extends BaseService {
 			super.send({
 				ServiceName: "Users",
 				ObjectName: "Account",
-				Query: {
-					"x-status": ""
-				}
+				Query: this.appConfig.getRelatedJson({ "x-status": "" })
 			});
 			super.send({
 				ServiceName: "Users",
 				ObjectName: "Profile",
-				Query: this.appConfig.getRelatedJson(undefined, { "object-identity": this.appConfig.session.account.id })
+				Query: this.appConfig.getRelatedJson({ "object-identity": this.appConfig.session.account.id })
 			});
 		}
 
@@ -462,10 +459,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the information of the current/default account */
 	public getAccount(getDefault: boolean = false) {
-		const account = getDefault || this.appConfig.session.account === undefined
-			? undefined
-			: this.appConfig.session.account;
-		return account || new Account();
+		return (getDefault ? undefined : this.appConfig.session.account) || new Account();
 	}
 
 	/** Updates information of the account */
@@ -478,11 +472,11 @@ export class ConfigurationService extends BaseService {
 		}
 
 		if (AppUtility.isArray(data.Roles, true)) {
-			account.roles = new List<string>(data.Roles).Select(r => r.trim()).Distinct().ToArray();
+			account.roles = (data.Roles as Array<string>).filter((role, index, array) => array.indexOf(role) === index);
 		}
 
 		if (AppUtility.isArray(data.Privileges, true)) {
-			account.privileges = (data.Privileges as Array<any>).map(p => Privilege.deserialize(p));
+			account.privileges = (data.Privileges as Array<any>).map(privilege => Privilege.deserialize(privilege));
 		}
 
 		if (AppUtility.isNotEmpty(data.Status)) {
