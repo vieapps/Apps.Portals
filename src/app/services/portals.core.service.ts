@@ -27,12 +27,6 @@ export class PortalsCoreService extends BaseService {
 	) {
 		super("Portals");
 		this.initialize();
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Organization", message => this.processOrganizationUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Role", message => this.processRoleUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Desktop", message => this.processDesktopUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Site", message => this.processSiteUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Module", message => this.processModuleUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "ContentType", message => this.processContentTypeUpdateMessage(message));
 	}
 
 	public get activeOrganization() {
@@ -43,23 +37,41 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	private initialize() {
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Organization", message => this.processOrganizationUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Role", message => this.processRoleUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Desktop", message => this.processDesktopUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Site", message => this.processSiteUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Module", message => this.processModuleUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "ContentType", message => this.processContentTypeUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Content.Type", message => this.processContentTypeUpdateMessage(message));
 	}
 
-	public async initializeAsync(onNext?: () => void) {
+	public async initializeAsync(organizationID?: string, onNext?: () => void) {
+		if (AppUtility.isNotEmpty(organizationID)) {
+			await this.getOrganizationAsync(organizationID, () => {
+				Organization.active = Organization.get(organizationID);
+				if (onNext !== undefined) {
+					onNext();
+				}
+			});
+		}
+		else if (onNext !== undefined) {
+			onNext();
+		}
 	}
 
 	public canManageOrganization(organization?: Organization, account?: Account) {
 		account = account || this.configSvc.getAccount();
-		return organization === undefined || !AppUtility.isNotEmpty(organization.ID)
-			? this.authSvc.isAdministrator(this.name, "Organization", undefined, account)
-			: AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isAdministrator(this.name, "Organization", organization.Privileges, account);
+		return organization !== undefined && AppUtility.isNotEmpty(organization.ID)
+			? AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isAdministrator(this.name, "Organization", organization.Privileges, account)
+			: this.authSvc.isAdministrator(this.name, "Organization", undefined, account);
 	}
 
 	public canModerateOrganization(organization?: Organization, account?: Account) {
 		account = account || this.configSvc.getAccount();
-		return organization === undefined || !AppUtility.isNotEmpty(organization.ID)
-			? this.authSvc.isModerator(this.name, "Organization", undefined, account)
-			: AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isModerator(this.name, "Organization", organization.Privileges, account);
+		return organization !== undefined && AppUtility.isNotEmpty(organization.ID)
+			? AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isModerator(this.name, "Organization", organization.Privileges, account)
+			: this.authSvc.isModerator(this.name, "Organization", undefined, account);
 	}
 
 	public async getDefinitionsAsync() {
@@ -515,8 +527,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchOrganizationAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.searchAsync(
+	public async searchOrganizationAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
+		await super.searchAsync(
 			super.getSearchURI("organization", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -536,12 +548,15 @@ export class PortalsCoreService extends BaseService {
 				if (onError !== undefined) {
 					onError(error);
 				}
-			}
+			},
+			dontProcessPagination,
+			useXHR,
+			headers
 		);
 	}
 
-	public createOrganizationAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.createAsync(
+	public async createOrganizationAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.createAsync(
 			super.getURI("organization"),
 			body,
 			data => {
@@ -559,30 +574,35 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public getOrganizationAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return Organization.contains(id)
-			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
-			: super.readAsync(
-					super.getURI("organization", id),
-					data => {
-						Organization.update(data);
-						if (onNext !== undefined) {
-							onNext(data);
-						}
-					},
-					error => {
-						console.error(super.getErrorMessage("Error occurred while getting an organization", error));
-						if (onError !== undefined) {
-							onError(error);
-						}
-					},
-					undefined,
-					useXHR
-				);
+	public async getOrganizationAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		if (Organization.contains(id)) {
+			if (onNext !== undefined) {
+				onNext();
+			}
+		}
+		else {
+			await super.readAsync(
+				super.getURI("organization", id),
+				data => {
+					Organization.update(data);
+					if (onNext !== undefined) {
+						onNext(data);
+					}
+				},
+				error => {
+					console.error(super.getErrorMessage("Error occurred while getting an organization", error));
+					if (onError !== undefined) {
+						onError(error);
+					}
+				},
+				undefined,
+				useXHR
+			);
+		}
 	}
 
-	public updateOrganizationAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.updateAsync(
+	public async updateOrganizationAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.updateAsync(
 			super.getURI("organization", body.ID),
 			body,
 			data => {
@@ -597,11 +617,11 @@ export class PortalsCoreService extends BaseService {
 					onError(error);
 				}
 			}
-	);
+		);
 	}
 
-	public deleteOrganizationAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.deleteAsync(
+	public async deleteOrganizationAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.deleteAsync(
 			super.getURI("organization", id),
 			data => {
 				Organization.instances.remove(id);
@@ -623,20 +643,17 @@ export class PortalsCoreService extends BaseService {
 			case "Create":
 			case "Update":
 				Organization.update(message.Data);
-				AppEvents.broadcast("Portals", { Object: "Organization", Type: "Updated", ID: message.Data.ID });
 				break;
 
 			case "Delete":
-				if (Organization.contains(message.Data.ID)) {
-					Organization.instances.remove(message.Data.ID);
-					AppEvents.broadcast("Portals", { Object: "Organization", Type: "Deleted", ID: message.Data.ID });
-				}
+				Organization.instances.remove(message.Data.ID);
 				break;
 
 			default:
 				console.warn(super.getLogMessage("Got an update message of an organization"), message);
 				break;
 		}
+		AppEvents.broadcast("Portals", { Object: "Organization", Type: `${message.Type.Event}d`, ID: message.Data.ID });
 	}
 
 	public get roleCompleterDataSource() {
@@ -693,8 +710,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchRoleAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.searchAsync(
+	public async searchRoleAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.searchAsync(
 			super.getSearchURI("role", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -722,13 +739,12 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public createRoleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.createAsync(
+	public async createRoleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.createAsync(
 			super.getURI("role"),
 			body,
 			data => {
 				this.updateRole(data);
-				this.broadcastRoleUpdatedEventMessage(body.ID, body.ParentID);
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -742,40 +758,41 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public getRoleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public async getRoleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const role = Role.get(id);
-		return role !== undefined && role.childrenIDs !== undefined
-			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
-			: super.readAsync(
-					super.getURI("role", id),
-					data => {
-						this.updateRole(data);
-						if (onNext !== undefined) {
-							onNext(data);
-						}
-					},
-					error => {
-						console.error(super.getErrorMessage("Error occurred while getting a role", error));
-						if (onError !== undefined) {
-							onError(error);
-						}
-					},
-					undefined,
-					useXHR
-				);
+		if (role !== undefined && role.childrenIDs !== undefined) {
+			if (onNext !== undefined) {
+				onNext();
+			}
+		}
+		else {
+			await super.readAsync(
+				super.getURI("role", id),
+				data => {
+					this.updateRole(data);
+					if (onNext !== undefined) {
+						onNext(data);
+					}
+				},
+				error => {
+					console.error(super.getErrorMessage("Error occurred while getting a role", error));
+					if (onError !== undefined) {
+						onError(error);
+					}
+				},
+				undefined,
+				useXHR
+			);
+		}
 	}
 
-	public updateRoleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.updateAsync(
+	public async updateRoleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		const parentID = Role.contains(body.ID) ? Role.get(body.ID).ParentID : undefined;
+		await super.updateAsync(
 			super.getURI("role", body.ID),
 			body,
 			data => {
-				const oldParentID = Role.contains(body.ID) ? Role.get(body.ID).ParentID : undefined;
-				this.updateRole(data, oldParentID);
-				this.broadcastRoleUpdatedEventMessage(body.ID, body.ParentID);
-				if (oldParentID !== body.ParentID) {
-					this.broadcastRoleUpdatedEventMessage(body.ID, oldParentID);
-				}
+				this.updateRole(data, parentID);
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -789,13 +806,12 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public deleteRoleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		return super.deleteAsync(
+	public async deleteRoleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		const parentID = Role.contains(id) ? Role.get(id).ParentID : undefined;
+		await super.deleteAsync(
 			super.getURI("role", id),
 			data => {
-				const parentID = Role.contains(id) ? Role.get(id).ParentID : undefined;
 				this.deleteRole(data, parentID);
-				this.broadcastRoleUpdatedEventMessage(id, parentID, "Deleted");
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -810,29 +826,24 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	private broadcastRoleUpdatedEventMessage(id: string, parentID: string, type?: string) {
-		type = type || "Updated";
-		AppEvents.broadcast("Portals", { Object: "Role", Type: type, ID: id, ParentID: AppUtility.isNotEmpty(parentID) ? parentID : undefined });
-		if (AppUtility.isNotEmpty(parentID)) {
-			AppEvents.broadcast("Portals", { Object: "Role", Type: type, ID: id, ParentID: undefined });
-		}
-}
-
 	private processRoleUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
+			case "Create":
 			case "Update":
-				this.updateRole(message.Data, message.Data.ParentID);
-				this.broadcastRoleUpdatedEventMessage(message.Data.ID, message.Data.ParentID);
+				this.updateRole(message.Data);
 				break;
 
 			case "Delete":
 				this.deleteRole(message.Data.ID, message.Data.ParentID);
-				this.broadcastRoleUpdatedEventMessage(message.Data.ID, message.Data.ParentID, "Deleted");
 				break;
 
 			default:
 				console.warn(super.getLogMessage("Got an update message of a role"), message);
 				break;
+		}
+		AppEvents.broadcast("Portals", { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
+		if (AppUtility.isNotEmpty(message.Data.ParentID)) {
+			AppEvents.broadcast("Portals", { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
 		}
 	}
 
@@ -848,7 +859,7 @@ export class PortalsCoreService extends BaseService {
 		return role;
 	}
 
-	private updateRole(json: any, oldParentID?: string) {
+	private updateRole(json: any, parentID?: string) {
 		if (AppUtility.isObject(json, true)) {
 			const role = Role.set(Role.deserialize(json, Role.get(json.ID)));
 			if (AppUtility.isArray(json.Children, true)) {
@@ -856,7 +867,7 @@ export class PortalsCoreService extends BaseService {
 				(json.Children as Array<any>).map(c => this.updateRole(c)).filter(r => r !== undefined).forEach(r => role.childrenIDs.push(r.ID));
 				role.childrenIDs = role.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
 			}
-			let parentRole = Role.get(oldParentID);
+			let parentRole = Role.get(parentID);
 			if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.ID !== role.ParentID) {
 				AppUtility.removeAt(parentRole.childrenIDs, parentRole.childrenIDs.indexOf(role.ID));
 			}
@@ -935,8 +946,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchDesktopAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.searchAsync(
+	public async searchDesktopAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.searchAsync(
 			super.getSearchURI("desktop", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -964,13 +975,12 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public createDesktopAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.createAsync(
+	public async createDesktopAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.createAsync(
 			super.getURI("desktop"),
 			body,
 			data => {
 				this.updateDesktop(data);
-				this.broadcastDesktopUpdatedEventMessage(body.ID, body.ParentID);
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -984,43 +994,44 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public getDesktopAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public async getDesktopAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const desktop = Desktop.get(id);
-		return desktop !== undefined && desktop.childrenIDs !== undefined
-			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
-			: super.readAsync(
-					super.getURI("desktop", id),
-					data => {
-						this.updateDesktop(data);
-						if (onNext !== undefined) {
-							onNext(data);
-						}
-						if (onNext !== undefined) {
-							onNext(data);
-						}
-					},
-					error => {
-						console.error(super.getErrorMessage("Error occurred while getting a desktop", error));
-						if (onError !== undefined) {
-							onError(error);
-						}
-					},
-					undefined,
-					useXHR
-				);
+		if (desktop !== undefined && desktop.childrenIDs !== undefined) {
+			if (onNext !== undefined) {
+				onNext();
+			}
+		}
+		else {
+			await super.readAsync(
+				super.getURI("desktop", id),
+				data => {
+					this.updateDesktop(data);
+					if (onNext !== undefined) {
+						onNext(data);
+					}
+					if (onNext !== undefined) {
+						onNext(data);
+					}
+				},
+				error => {
+					console.error(super.getErrorMessage("Error occurred while getting a desktop", error));
+					if (onError !== undefined) {
+						onError(error);
+					}
+				},
+				undefined,
+				useXHR
+			);
+		}
 	}
 
-	public updateDesktopAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.updateAsync(
+	public async updateDesktopAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		const parentID = Role.contains(body.ID) ? Role.get(body.ID).ParentID : undefined;
+		await super.updateAsync(
 			super.getURI("desktop", body.ID),
 			body,
 			data => {
-				const oldParentID = Desktop.contains(body.ID) ? Desktop.get(body.ID).ParentID : undefined;
-				this.updateDesktop(data, oldParentID);
-				this.broadcastDesktopUpdatedEventMessage(body.ID, body.ParentID);
-				if (oldParentID !== body.ParentID) {
-					this.broadcastDesktopUpdatedEventMessage(body.ID, oldParentID);
-				}
+				this.updateDesktop(data, parentID);
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1034,13 +1045,12 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public deleteDesktopAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		return super.deleteAsync(
+	public async deleteDesktopAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		const parentID = Role.contains(id) ? Role.get(id).ParentID : undefined;
+		await super.deleteAsync(
 			super.getURI("desktop", id),
 			data => {
-				const parentID = Desktop.contains(id) ? Desktop.get(id).ParentID : undefined;
 				this.deleteDesktop(data, parentID);
-				this.broadcastDesktopUpdatedEventMessage(id, parentID, "Deleted");
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1055,29 +1065,24 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	private broadcastDesktopUpdatedEventMessage(id: string, parentID: string, type?: string) {
-		type = type || "Updated";
-		AppEvents.broadcast("Portals", { Object: "Desktop", Type: type, ID: id, ParentID: AppUtility.isNotEmpty(parentID) ? parentID : undefined });
-		if (AppUtility.isNotEmpty(parentID)) {
-			AppEvents.broadcast("Portals", { Object: "Desktop", Type: type, ID: id, ParentID: undefined });
-		}
-}
-
 	private processDesktopUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
+			case "Create":
 			case "Update":
-				this.updateDesktop(message.Data, message.Data.ParentID);
-				this.broadcastDesktopUpdatedEventMessage(message.Data.ID, message.Data.ParentID);
+				this.updateDesktop(message.Data);
 				break;
 
 			case "Delete":
 				this.deleteDesktop(message.Data.ID, message.Data.ParentID);
-				this.broadcastDesktopUpdatedEventMessage(message.Data.ID, message.Data.ParentID, "Deleted");
 				break;
 
 			default:
 				console.warn(super.getLogMessage("Got an update message of a desktop"), message);
 				break;
+		}
+		AppEvents.broadcast("Portals", { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
+		if (AppUtility.isNotEmpty(message.Data.ParentID)) {
+			AppEvents.broadcast("Portals", { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
 		}
 	}
 
@@ -1169,8 +1174,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchSiteAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.searchAsync(
+	public async searchSiteAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.searchAsync(
 			super.getSearchURI("site", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -1194,13 +1199,12 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public createSiteAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.createAsync(
+	public async createSiteAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.createAsync(
 			super.getURI("site"),
 			body,
 			data => {
 				Site.update(data);
-				AppEvents.broadcast("Portals", { Object: "Site", Type: "Updated", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1214,35 +1218,39 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public getSiteAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return Site.contains(id)
-			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
-			: super.readAsync(
-					super.getURI("site", id),
-					data => {
-						Site.update(data);
-						if (onNext !== undefined) {
-							onNext(data);
-						}
-					},
-					error => {
-						console.error(super.getErrorMessage("Error occurred while getting a site", error));
-						if (onError !== undefined) {
-							onError(error);
-						}
-					},
-					undefined,
-					useXHR
-				);
+	public async getSiteAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		if (Site.contains(id)) {
+			if (onNext !== undefined) {
+				onNext();
+			}
+		}
+		else {
+			await super.readAsync(
+				super.getURI("site", id),
+				data => {
+					Site.update(data);
+					if (onNext !== undefined) {
+						onNext(data);
+					}
+				},
+				error => {
+					console.error(super.getErrorMessage("Error occurred while getting a site", error));
+					if (onError !== undefined) {
+						onError(error);
+					}
+				},
+				undefined,
+				useXHR
+			);
+		}
 	}
 
-	public updateSiteAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.updateAsync(
+	public async updateSiteAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.updateAsync(
 			super.getURI("site", body.ID),
 			body,
 			data => {
 				Site.update(data);
-				AppEvents.broadcast("Portals", { Object: "Site", Type: "Updated", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1253,15 +1261,14 @@ export class PortalsCoreService extends BaseService {
 					onError(error);
 				}
 			}
-	);
+		);
 	}
 
-	public deleteSiteAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.deleteAsync(
+	public async deleteSiteAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.deleteAsync(
 			super.getURI("site", id),
 			data => {
 				Site.instances.remove(data.ID);
-				AppEvents.broadcast("Portals", { Object: "Site", Type: "Deleted", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1280,20 +1287,17 @@ export class PortalsCoreService extends BaseService {
 			case "Create":
 			case "Update":
 				Site.update(message.Data);
-				AppEvents.broadcast("Portals", { Object: "Site", Type: "Updated", ID: message.Data.ID });
 				break;
 
 			case "Delete":
-				if (Site.contains(message.Data.ID)) {
-					Site.instances.remove(message.Data.ID);
-					AppEvents.broadcast("Portals", { Object: "Site", Type: "Deleted", ID: message.Data.ID });
-				}
+				Site.instances.remove(message.Data.ID);
 				break;
 
 			default:
 				console.warn(super.getLogMessage("Got an update message of a site"), message);
 				break;
 		}
+		AppEvents.broadcast("Portals", { Object: "Site", Type: `${message.Type.Event}d`, ID: message.Data.ID });
 	}
 
 	public get moduleCompleterDataSource() {
@@ -1339,8 +1343,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchModuleAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
-		return super.searchAsync(
+	public async searchModuleAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
+		await super.searchAsync(
 			super.getSearchURI("module", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -1366,13 +1370,12 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public createModuleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.createAsync(
+	public async createModuleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.createAsync(
 			super.getURI("module"),
 			body,
 			data => {
 				Module.update(data);
-				AppEvents.broadcast("Portals", { Object: "Module", Type: "Updated", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1386,35 +1389,39 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public getModuleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return Module.contains(id)
-			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
-			: super.readAsync(
-					super.getURI("module", id),
-					data => {
-						Module.update(data);
-						if (onNext !== undefined) {
-							onNext(data);
-						}
-					},
-					error => {
-						console.error(super.getErrorMessage("Error occurred while getting a module", error));
-						if (onError !== undefined) {
-							onError(error);
-						}
-					},
-					undefined,
-					useXHR
-				);
+	public async getModuleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		if (Module.contains(id)) {
+			if (onNext) {
+				onNext();
+			}
+		}
+		else {
+			await super.readAsync(
+				super.getURI("module", id),
+				data => {
+					Module.update(data);
+					if (onNext !== undefined) {
+						onNext(data);
+					}
+				},
+				error => {
+					console.error(super.getErrorMessage("Error occurred while getting a module", error));
+					if (onError !== undefined) {
+						onError(error);
+					}
+				},
+				undefined,
+				useXHR
+			);
+		}
 	}
 
-	public updateModuleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.updateAsync(
+	public async updateModuleAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.updateAsync(
 			super.getURI("module", body.ID),
 			body,
 			data => {
 				Module.update(data);
-				AppEvents.broadcast("Portals", { Object: "Module", Type: "Updated", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1425,15 +1432,14 @@ export class PortalsCoreService extends BaseService {
 					onError(error);
 				}
 			}
-	);
+		);
 	}
 
-	public deleteModuleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.deleteAsync(
+	public async deleteModuleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.deleteAsync(
 			super.getURI("module", id),
 			data => {
 				Module.instances.remove(data.ID);
-				AppEvents.broadcast("Portals", { Object: "Module", Type: "Deleted", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1452,20 +1458,17 @@ export class PortalsCoreService extends BaseService {
 			case "Create":
 			case "Update":
 				Module.update(message.Data);
-				AppEvents.broadcast("Portals", { Object: "Module", Type: "Updated", ID: message.Data.ID });
 				break;
 
 			case "Delete":
-				if (Module.contains(message.Data.ID)) {
-					Module.instances.remove(message.Data.ID);
-					AppEvents.broadcast("Portals", { Object: "Module", Type: "Deleted", ID: message.Data.ID });
-				}
+				Module.instances.remove(message.Data.ID);
 				break;
 
 			default:
 				console.warn(super.getLogMessage("Got an update message of a modul"), message);
 				break;
 		}
+		AppEvents.broadcast("Portals", { Object: "Module", Type: `${message.Type.Event}d`, ID: message.Data.ID });
 	}
 
 	public get contentTypeCompleterDataSource() {
@@ -1511,8 +1514,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchContentTypeAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.searchAsync(
+	public async searchContentTypeAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.searchAsync(
 			super.getSearchURI("content.type", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -1536,13 +1539,12 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public createContentTypeAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.createAsync(
+	public async createContentTypeAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.createAsync(
 			super.getURI("content.type"),
 			body,
 			data => {
 				ContentType.update(data);
-				AppEvents.broadcast("Portals", { Object: "ContentType", Type: "Updated", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1556,35 +1558,39 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public getContentTypeAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return ContentType.contains(id)
-			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
-			: super.readAsync(
-					super.getURI("content.type", id),
-					data => {
-						ContentType.update(data);
-						if (onNext !== undefined) {
-							onNext(data);
-						}
-					},
-					error => {
-						console.error(super.getErrorMessage("Error occurred while getting a content-type", error));
-						if (onError !== undefined) {
-							onError(error);
-						}
-					},
-					undefined,
-					useXHR
-				);
+	public async getContentTypeAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		if (ContentType.contains(id)) {
+			if (onNext !== undefined) {
+				onNext();
+			}
+		}
+		else {
+			await super.readAsync(
+				super.getURI("content.type", id),
+				data => {
+					ContentType.update(data);
+					if (onNext !== undefined) {
+						onNext(data);
+					}
+				},
+				error => {
+					console.error(super.getErrorMessage("Error occurred while getting a content-type", error));
+					if (onError !== undefined) {
+						onError(error);
+					}
+				},
+				undefined,
+				useXHR
+			);
+		}
 	}
 
-	public updateContentTypeAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.updateAsync(
+	public async updateContentTypeAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.updateAsync(
 			super.getURI("content.type", body.ID),
 			body,
 			data => {
 				ContentType.update(data);
-				AppEvents.broadcast("Portals", { Object: "ContentType", Type: "Updated", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1595,15 +1601,14 @@ export class PortalsCoreService extends BaseService {
 					onError(error);
 				}
 			}
-	);
+		);
 	}
 
-	public deleteContentTypeAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.deleteAsync(
+	public async deleteContentTypeAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.deleteAsync(
 			super.getURI("content.type", id),
 			data => {
 				ContentType.instances.remove(data.ID);
-				AppEvents.broadcast("Portals", { Object: "ContentType", Type: "Deleted", ID: data.ID });
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1622,13 +1627,11 @@ export class PortalsCoreService extends BaseService {
 			case "Create":
 			case "Update":
 				ContentType.update(message.Data);
-				AppEvents.broadcast("Portals", { Object: "ContentType", Type: "Updated", ID: message.Data.ID });
 				break;
 
 			case "Delete":
 				if (ContentType.contains(message.Data.ID)) {
 					ContentType.instances.remove(message.Data.ID);
-					AppEvents.broadcast("Portals", { Object: "ContentType", Type: "Deleted", ID: message.Data.ID });
 				}
 				break;
 
@@ -1636,6 +1639,7 @@ export class PortalsCoreService extends BaseService {
 				console.warn(super.getLogMessage("Got an update message of a content-type"), message);
 				break;
 		}
+		AppEvents.broadcast("Portals", { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
 	}
 
 }

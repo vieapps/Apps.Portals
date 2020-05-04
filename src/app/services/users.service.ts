@@ -69,8 +69,8 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public searchAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.searchAsync(
+	public async searchAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.searchAsync(
 			super.getSearchURI("profile", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -94,8 +94,8 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public registerAsync(registerInfo: any, captcha: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.createAsync(
+	public async registerAsync(registerInfo: any, captcha: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.createAsync(
 			super.getURI("account", undefined, `uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`),
 			AppUtility.clone(registerInfo, ["ConfirmEmail", "ConfirmPassword", "Captcha"], undefined, body => {
 				body.Email = AppCrypto.rsaEncrypt(body.Email);
@@ -109,7 +109,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public sendInvitationAsync(name: string, email: string, privileges?: Array<Privilege>, relatedInfo?: { [key: string]: any }, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async sendInvitationAsync(name: string, email: string, privileges?: Array<Privilege>, relatedInfo?: { [key: string]: any }, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		const body = {
 			Name: name,
 			Email: AppCrypto.rsaEncrypt(email),
@@ -122,7 +122,7 @@ export class UsersService extends BaseService {
 		if (relatedInfo !== undefined) {
 			body["RelatedInfo"] = AppCrypto.aesEncrypt(JSON.stringify(relatedInfo));
 		}
-		return super.createAsync(
+		await super.createAsync(
 			super.getURI("account", "invite", `uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`),
 			body,
 			onNext,
@@ -154,31 +154,36 @@ export class UsersService extends BaseService {
 		}
 	}
 
-	public getProfileAsync(id?: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public async getProfileAsync(id?: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		id = id || this.configSvc.getAccount().id;
-		return UserProfile.contains(id)
-			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
-			: super.readAsync(
-					super.getURI("profile", id, this.configSvc.relatedQuery),
-					data => {
-						UserProfile.update(data);
-						if (onNext !== undefined) {
-							onNext(data);
-						}
-					},
-					error => {
-						console.error(super.getErrorMessage("Error occurred while reading profile", error));
-						if (onError !== undefined) {
-							onError(error);
-						}
-					},
-					undefined,
-					useXHR
-				);
+		if (UserProfile.contains(id)) {
+			if (onNext !== undefined) {
+				onNext();
+			}
+		}
+		else {
+			await super.readAsync(
+				super.getURI("profile", id, this.configSvc.relatedQuery),
+				data => {
+					UserProfile.update(data);
+					if (onNext !== undefined) {
+						onNext(data);
+					}
+				},
+				error => {
+					console.error(super.getErrorMessage("Error occurred while reading profile", error));
+					if (onError !== undefined) {
+						onError(error);
+					}
+				},
+				undefined,
+				useXHR
+			);
+		}
 	}
 
-	public updateProfileAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.updateAsync(
+	public async updateProfileAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.updateAsync(
 			super.getURI("profile", body.ID || this.configSvc.getAccount().id, this.configSvc.relatedQuery),
 			body,
 			data => {
@@ -196,8 +201,8 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public updatePasswordAsync(password: string, newPassword: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.updateAsync(
+	public async updatePasswordAsync(password: string, newPassword: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.updateAsync(
 			super.getURI("account", "password", this.configSvc.relatedQuery),
 			{
 				OldPassword: AppCrypto.rsaEncrypt(password),
@@ -213,8 +218,8 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public updateEmailAsync(password: string, newEmail: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.updateAsync(
+	public async updateEmailAsync(password: string, newEmail: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.updateAsync(
 			super.getURI("account", "email", this.configSvc.relatedQuery),
 			{
 				OldPassword: AppCrypto.rsaEncrypt(password),
@@ -230,8 +235,8 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public prepare2FAMethodAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.readAsync(
+	public async prepare2FAMethodAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.readAsync(
 			super.getURI("otp", undefined, this.configSvc.relatedQuery),
 			onNext,
 			error => {
@@ -243,8 +248,8 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public add2FAMethodAsync(password: string, provisioning: string, otp: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.updateAsync(
+	public async add2FAMethodAsync(password: string, provisioning: string, otp: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.updateAsync(
 			super.getURI("otp", undefined, this.configSvc.relatedQuery),
 			{
 				Provisioning: provisioning,
@@ -263,8 +268,8 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public delete2FAMethodAsync(password: string, info: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.deleteAsync(
+	public async delete2FAMethodAsync(password: string, info: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.deleteAsync(
 			super.getURI("otp", undefined, `info=${info}&${this.configSvc.relatedQuery}`),
 			data => this.configSvc.updateAccount(data, onNext),
 			error => {
@@ -279,23 +284,28 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public getServicePrivilegesAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return Account.contains(id)
-			? new Promise<void>(onNext !== undefined ? () => onNext() : () => {})
-			: super.readAsync(
-					super.getURI("account", id, this.configSvc.relatedQuery),
-					data => this.configSvc.updateAccount(data, onNext, true),
-					error => {
-						console.error(super.getErrorMessage("Error occurred while reading privileges", error));
-						if (onError !== undefined) {
-							onError(error);
-						}
+	public async getServicePrivilegesAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		if (Account.contains(id)) {
+			if (onNext !== undefined) {
+				onNext();
+			}
+		}
+		else {
+			await super.readAsync(
+				super.getURI("account", id, this.configSvc.relatedQuery),
+				data => this.configSvc.updateAccount(data, onNext, true),
+				error => {
+					console.error(super.getErrorMessage("Error occurred while reading privileges", error));
+					if (onError !== undefined) {
+						onError(error);
 					}
-				);
+				}
+			);
+		}
 	}
 
-	public updateServicePrivilegesAsync(id: string, privileges: { [key: string]: Array<Privilege> }, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.updateAsync(
+	public async updateServicePrivilegesAsync(id: string, privileges: { [key: string]: Array<Privilege> }, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.updateAsync(
 			super.getURI("account", id, this.configSvc.relatedQuery),
 			{
 				Privileges: AppCrypto.aesEncrypt(JSON.stringify(privileges))

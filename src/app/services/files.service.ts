@@ -123,8 +123,8 @@ export class FilesService extends BaseService {
 	}
 
 	/** Uploads an avatar image (multipart/form-data or base64) to HTTP service of files */
-	public uploadAvatarAsync(data: string | Array<string> | FormData, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.uploadAsync("avatars", data, undefined, onNext, onError);
+	public async uploadAvatarAsync(data: string | Array<string> | FormData, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await this.uploadAsync("avatars", data, undefined, onNext, onError);
 	}
 
 	private getFilesHeader(header: FilesHeader): { [key: string]: string } {
@@ -147,8 +147,8 @@ export class FilesService extends BaseService {
 	}
 
 	/** Uploads thumbnail images (multipart/form-data or base64) to HTTP service of files */
-	public uploadThumbnailsAsync(data: string | Array<string> | FormData, header: FilesHeader, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.uploadAsync("thumbnails", data, this.getFilesHeader(header), onNext, onError);
+	public async uploadThumbnailsAsync(data: string | Array<string> | FormData, header: FilesHeader, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await this.uploadAsync("thumbnails", data, this.getFilesHeader(header), onNext, onError);
 	}
 
 	/** Uploads files (multipart/form-data or base64) to HTTP service of files */
@@ -157,8 +157,8 @@ export class FilesService extends BaseService {
 	}
 
 	/** Uploads files (multipart/form-data or base64) to HTTP service of files */
-	public uploadFilesAsync(data: FormData, header: FilesHeader, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.uploadAsync("files", data, this.getFilesHeader(header), onNext, onError);
+	public async uploadFilesAsync(data: FormData, header: FilesHeader, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await this.uploadAsync("files", data, this.getFilesHeader(header), onNext, onError);
 	}
 
 }

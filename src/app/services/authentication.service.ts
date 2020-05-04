@@ -146,8 +146,8 @@ export class AuthenticationService extends BaseService {
 		return this.configSvc.appConfig.accountRegistrations.setServicePrivilegs && this.canDo(this.configSvc.appConfig.accountRegistrations.setServicePrivilegsRole);
 	}
 
-	public logInAsync(email: string, password: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.createAsync(
+	public async logInAsync(email: string, password: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.createAsync(
 			"users/session",
 			{
 				Email: AppCrypto.rsaEncrypt(email),
@@ -185,8 +185,8 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public logInOTPAsync(userID: string, otpProvider: string, otpCode: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.updateAsync(
+	public async logInOTPAsync(userID: string, otpProvider: string, otpCode: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.updateAsync(
 			"users/session",
 			{
 				ID: AppCrypto.rsaEncrypt(userID),
@@ -210,8 +210,8 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public logOutAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.deleteAsync(
+	public async logOutAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.deleteAsync(
 			"users/session",
 			async data => {
 				AppEvents.broadcast("Session", { Type: "LogOut" });
@@ -238,8 +238,8 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public resetPasswordAsync(email: string, captcha: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.updateAsync(
+	public async resetPasswordAsync(email: string, captcha: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.updateAsync(
 			`users/account/reset?uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`,
 			{
 				Email: AppCrypto.rsaEncrypt(email)
@@ -257,8 +257,8 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public registerCaptchaAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.readAsync(
+	public async registerCaptchaAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.readAsync(
 			`users/captcha?register=${this.configSvc.appConfig.session.id}`,
 			data => {
 				this.configSvc.appConfig.session.captcha = {
@@ -280,10 +280,10 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	private updateSessionAsync(data: any, onNext: (data?: any) => void) {
+	private async updateSessionAsync(data: any, onNext: (data?: any) => void) {
 		AppEvents.broadcast("Session", { Type: "LogIn" });
 		AppEvents.sendToElectron("Users", { Type: "LogIn", Data: data });
-		return this.configSvc.updateSessionAsync(data, () => AppRTU.start(() => {
+		await this.configSvc.updateSessionAsync(data, () => AppRTU.start(() => {
 			if (onNext !== undefined) {
 				onNext(data);
 			}

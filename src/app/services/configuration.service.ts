@@ -283,8 +283,8 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Initializes the session with remote APIs */
-	public initializeSessionAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.fetchAsync(
+	public async initializeSessionAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.fetchAsync(
 			"users/session",
 			async data => {
 				if (this.isDebug) {
@@ -306,8 +306,8 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Registers the initialized session (anonymous) with remote APIs */
-	public registerSessionAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.fetchAsync(
+	public async registerSessionAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.fetchAsync(
 			`users/session?register=${this.appConfig.session.id}`,
 			async _ => {
 				this.appConfig.session.account = this.getAccount(true);
@@ -449,12 +449,12 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Resets session information and re-store into storage */
-	public resetSessionAsync(onNext?: (data?: any) => void, doStore: boolean = true) {
+	public async resetSessionAsync(onNext?: (data?: any) => void, doStore: boolean = true) {
 		this.appConfig.session.id = undefined;
 		this.appConfig.session.token = undefined;
 		this.appConfig.session.keys = undefined;
 		this.appConfig.session.account = this.getAccount(true);
-		return this.deleteSessionAsync(doStore ? () => this.storeSessionAsync(onNext) : onNext);
+		await this.deleteSessionAsync(doStore ? async () => await this.storeSessionAsync(onNext) : onNext);
 	}
 
 	/** Gets the information of the current/default account */
@@ -578,18 +578,18 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Sends a request to navigates to home screen */
-	public navigateHomeAsync(url?: string, extras?: { [key: string]: any }) {
-		return this.navController.navigateRoot(url || this.appConfig.url.home, extras);
+	public async navigateHomeAsync(url?: string, extras?: { [key: string]: any }) {
+		await this.navController.navigateRoot(url || this.appConfig.url.home, extras);
 	}
 
 	/** Sends a request to navigates back one step */
-	public navigateBackAsync(url?: string, extras?: { [key: string]: any }) {
-		return this.navController.navigateBack(url || this.previousUrl, extras);
+	public async navigateBackAsync(url?: string, extras?: { [key: string]: any }) {
+		await this.navController.navigateBack(url || this.previousUrl, extras);
 	}
 
 	/** Sends a request to navigates forward one step */
-	public navigateForwardAsync(url: string, extras?: { [key: string]: any }) {
-		return this.navController.navigateForward(url || this.appConfig.url.home, extras);
+	public async navigateForwardAsync(url: string, extras?: { [key: string]: any }) {
+		await this.navController.navigateForward(url || this.appConfig.url.home, extras);
 	}
 
 	private async loadGeoMetaAsync() {
@@ -616,14 +616,14 @@ export class ConfigurationService extends BaseService {
 		);
 	}
 
-	private saveGeoMetaAsync(data: any, onNext?: (data?: any) => void) {
+	private async saveGeoMetaAsync(data: any, onNext?: (data?: any) => void) {
 		if (AppUtility.isObject(data, true) && AppUtility.isNotEmpty(data.code) && AppUtility.isArray(data.provinces, true)) {
 			this.appConfig.geoMeta.provinces[data.code] = data;
 		}
 		else if (AppUtility.isObject(data, true) && AppUtility.isArray(data.countries, true)) {
 			this.appConfig.geoMeta.countries = data.countries;
 		}
-		return Promise.all([
+		await Promise.all([
 			AppStorage.setAsync("GeoMeta-Country", this.appConfig.geoMeta.country),
 			AppStorage.setAsync("GeoMeta-Countries", this.appConfig.geoMeta.countries),
 			AppStorage.setAsync("GeoMeta-Provinces", this.appConfig.geoMeta.provinces)
@@ -648,8 +648,8 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Stores the URI settings of the app */
-	public storeURIsAsync(onNext?: (data?: any) => void) {
-		return AppStorage.setAsync("URIs", this.appConfig.URIs).then(() => {
+	public async storeURIsAsync(onNext?: (data?: any) => void) {
+		await AppStorage.setAsync("URIs", this.appConfig.URIs).then(() => {
 			AppEvents.broadcast("App", { Type: "URIsUpdated" });
 			if (this.isDebug) {
 				console.log(super.getLogMessage("URIs are updated"), this.appConfig.URIs);
@@ -676,8 +676,8 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Stores the options of the app */
-	public storeOptionsAsync(onNext?: (data?: any) => void) {
-		return AppStorage.setAsync("Options", this.appConfig.options).then(() => {
+	public async storeOptionsAsync(onNext?: (data?: any) => void) {
+		await AppStorage.setAsync("Options", this.appConfig.options).then(() => {
 			AppEvents.broadcast("App", { Type: "OptionsUpdated" });
 			if (this.isDebug) {
 				console.log(super.getLogMessage("Options are updated"), this.appConfig.options);
@@ -689,34 +689,34 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Prepares the UI languages */
-	public prepareLanguagesAsync() {
+	public async prepareLanguagesAsync() {
 		this.translateSvc.addLangs(this.languages.map(language => language.Value));
 		this.translateSvc.setDefaultLang(this.appConfig.language);
-		return this.setResourceLanguageAsync(this.appConfig.language);
+		await this.setResourceLanguageAsync(this.appConfig.language);
 	}
 
 	/** Changes the language & locale of resources to use in the app */
-	public changeLanguageAsync(language: string, storeOptions: boolean = true) {
+	public async changeLanguageAsync(language: string, storeOptions: boolean = true) {
 		this.appConfig.options.i18n = language;
-		return Promise.all([
+		await Promise.all([
 			storeOptions ? this.storeOptionsAsync() : new Promise<void>(() => {}),
 			this.setResourceLanguageAsync(language)
 		]).then(() => AppEvents.broadcast("App", { Type: "LanguageChanged" }));
 	}
 
 	/** Sets the language & locale of resources to use in the app */
-	public setResourceLanguageAsync(language: string) {
-		return this.translateSvc.use(language).toPromise<void>();
+	public async setResourceLanguageAsync(language: string) {
+		await this.translateSvc.use(language).toPromise<void>();
 	}
 
 	/** Gets the resource (of the current language) by a key */
-	public getResourceAsync(key: string, interpolateParams?: object) {
-		return this.translateSvc.get(key, interpolateParams).toPromise<string>();
+	public async getResourceAsync(key: string, interpolateParams?: object) {
+		return await this.translateSvc.get(key, interpolateParams).toPromise<string>();
 	}
 
 	/** Gets the resources (of the current language) by a key */
-	public getResourcesAsync(key: string) {
-		return this.translateSvc.get(key).toPromise<{ [key: string]: string }>();
+	public async getResourcesAsync(key: string) {
+		return await this.translateSvc.get(key).toPromise<{ [key: string]: string }>();
 	}
 
 	/** Definitions (forms, views, resources, ...) */
@@ -760,8 +760,8 @@ export class ConfigurationService extends BaseService {
 		this.addDefinition(this.getDefinitionPath(serviceName, objectName, definitionName, query), definition);
 	}
 
-	public getDefinitionAsync(serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {
-		return this.fetchDefinitionAsync(this.getDefinitionPath(serviceName, objectName, definitionName, query));
+	public async getDefinitionAsync(serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {
+		return await this.fetchDefinitionAsync(this.getDefinitionPath(serviceName, objectName, definitionName, query));
 	}
 
 }
