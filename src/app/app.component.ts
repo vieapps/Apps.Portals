@@ -458,7 +458,7 @@ export class AppComponent implements OnInit {
 
 	private initializeAsync(onNext?: () => void, noInitializeSession?: boolean) {
 		return this.configSvc.initializeAsync(
-			async () => {
+			async _ => {
 				if (this.configSvc.isReady && this.configSvc.isAuthenticated) {
 					console.log("<AppComponent>: The session is initialized & registered (user)", this.configSvc.isDebug ? this.configSvc.isNativeApp ? JSON.stringify(this.configSvc.appConfig.session) : this.configSvc.appConfig.session : "");
 					this.finalize(onNext);
