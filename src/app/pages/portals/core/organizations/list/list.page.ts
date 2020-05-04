@@ -66,18 +66,15 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.initializeAsync();
-		AppEvents.on("Portals", info => {
-			if (!this.searching && info.args.Object === "Organization" && (info.args.Type === "Updated" || info.args.Type === "Deleted")) {
-				this.prepareResults();
-			}
-		}, "Organizations:RefreshList");
 	}
 
 	ngOnDestroy() {
-		if (this.subscription !== undefined) {
+		if (!this.searching) {
+			AppEvents.off("Portals", "Organizations:Refresh");
+		}
+		else if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 		}
-		AppEvents.off("Portals", "Organizations:RefreshList");
 	}
 
 	private async initializeAsync() {
@@ -96,6 +93,11 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.organizations.list.searchbar");
 		}
 		else {
+			AppEvents.on("Portals", info => {
+				if (info.args.Object === "Organization" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
+					this.prepareResults();
+				}
+			}, "Organizations:Refresh");
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.create"), "create", () => this.openCreateAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.search"), "search", () => this.openSearchAsync())
@@ -109,7 +111,8 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 	}
 
 	getInfo(organization: Organization) {
-		return AppUtility.format(this.owner, { owner: organization.owner }) + (AppUtility.isNotEmpty(organization.Description) ? ` - ${organization.Description.substr(0, 30)}` : "");
+		return AppUtility.format(this.owner, { owner: organization.owner })
+			+ (this.configSvc.screenWidth < 1024 ? "" : (AppUtility.isNotEmpty(organization.Description) ? ` - ${(organization.Description.length > 30 ? organization.Description.substr(0, 30) + " ..." : organization.Description)}` : ""));
 	}
 
 	showActionsAsync() {
@@ -203,9 +206,13 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.organizations.push(Organization.get(o.ID)));
 		}
 		else {
-			const objects = new List(results === undefined ? Organization.all : results.map(o => Organization.get(o.ID))).OrderBy(o => o.Title).ThenByDescending(o => o.Created);
+			let objects = new List(results === undefined ? Organization.all : results.map(o => Organization.get(o.ID)));
+			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			if (results === undefined) {
+				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
+			}
 			this.organizations = results === undefined
-				? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
+				? objects.ToArray()
 				: this.organizations.concat(objects.ToArray());
 		}
 		this.organizations.forEach(organization => this.getOwnerAsync(organization));

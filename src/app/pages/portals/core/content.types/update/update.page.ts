@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@components/app.crypto";
+import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { PlatformUtility } from "@components/app.utility.platform";
 import { TrackingUtility } from "@components/app.utility.trackings";
@@ -71,7 +72,7 @@ export class ContentTypesUpdatePage implements OnInit {
 			await this.portalsCoreSvc.getOrganizationAsync(this.contentType.SystemID, _ => this.organization = Organization.get(this.contentType.SystemID), undefined, true);
 		}
 
-		this.isSystemModerator = this.authSvc.isSystemModerator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
+		this.isSystemModerator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canModerateOrganization = this.isSystemModerator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 		if (this.canModerateOrganization) {
 			await this.initializeFormAsync();
@@ -418,11 +419,14 @@ export class ContentTypesUpdatePage implements OnInit {
 				if (AppUtility.isNotEmpty(contentType.ID)) {
 					await this.portalsCoreSvc.updateContentTypeAsync(
 						contentType,
-						async () => await Promise.all([
-							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.update")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]),
+						async data => {
+							AppEvents.broadcast("Portals", { Object: "Content.Type", Type: "Updated", ID: data.ID });
+							await Promise.all([
+								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.update")),
+								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							]);
+						},
 						async error => {
 							this.processing = false;
 							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
@@ -432,11 +436,14 @@ export class ContentTypesUpdatePage implements OnInit {
 				else {
 					await this.portalsCoreSvc.createContentTypeAsync(
 						contentType,
-						async () => await Promise.all([
-							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.new")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]),
+						async data => {
+							AppEvents.broadcast("Portals", { Object: "Content.Type", Type: "Created", ID: data.ID });
+							await Promise.all([
+								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.new")),
+								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							]);
+						},
 						async error => {
 							this.processing = false;
 							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
@@ -467,11 +474,14 @@ export class ContentTypesUpdatePage implements OnInit {
 				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.buttons.delete"));
 				await this.portalsCoreSvc.deleteContentTypeAsync(
 					this.contentType.ID,
-					async () => await Promise.all([
-						TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.buttons.delete"), this.configSvc.currentUrl),
-						this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.delete")),
-						this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-					]),
+					async data => {
+						AppEvents.broadcast("Portals", { Object: "Content.Type", Type: "Deleted", ID: data.ID });
+						await Promise.all([
+							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.buttons.delete"), this.configSvc.currentUrl),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.delete")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]);
+					},
 					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error))
 				);
 			},

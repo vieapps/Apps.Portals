@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@components/app.crypto";
+import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
@@ -145,6 +146,7 @@ export class DesktopsUpdatePage implements OnInit {
 		const parentDesktop = this.desktop.Parent;
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID"));
 		control.Type = "Lookup";
+		control.Required = false;
 		control.Extras = { LookupDisplayValues: parentDesktop !== undefined ? [{ Value: parentDesktop.ID, Label: parentDesktop.FullTitle }] : undefined };
 		control.Options.LookupOptions = {
 			Multiple: false,
@@ -266,6 +268,7 @@ export class DesktopsUpdatePage implements OnInit {
 	onFormInitialized() {
 		const desktop = AppUtility.clone(this.desktop, false);
 		desktop.Language = AppUtility.isNotEmpty(desktop.Language) ? desktop.Language : "-";
+		desktop.SEOSettings = desktop.SEOSettings || {};
 		this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "SEOSettings")).SubControls.Controls.filter(ctrl => ctrl.Type === "Select").forEach(ctrl => {
 			const value = desktop.SEOSettings[ctrl.Name];
 			desktop.SEOSettings[ctrl.Name] = AppUtility.isNotEmpty(value) ? value : "-";
@@ -294,11 +297,14 @@ export class DesktopsUpdatePage implements OnInit {
 				if (AppUtility.isNotEmpty(desktop.ID)) {
 					await this.portalsCoreSvc.updateDesktopAsync(
 						desktop,
-						async () => await Promise.all([
-							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.desktops.update.messages.success.update")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]),
+						async data => {
+							AppEvents.broadcast("Portals", { Object: "Desktop", Type: "Updated", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
+							await Promise.all([
+								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.desktops.update.messages.success.update")),
+								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							]);
+						},
 						async error => {
 							this.processing = false;
 							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
@@ -308,11 +314,14 @@ export class DesktopsUpdatePage implements OnInit {
 				else {
 					await this.portalsCoreSvc.createDesktopAsync(
 						desktop,
-						async () => await Promise.all([
-							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.desktops.update.messages.success.new")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]),
+						async data => {
+							AppEvents.broadcast("Portals", { Object: "Desktop", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
+							await Promise.all([
+								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.desktops.update.messages.success.new")),
+								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							]);
+						},
 						async error => {
 							this.processing = false;
 							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
@@ -342,11 +351,14 @@ export class DesktopsUpdatePage implements OnInit {
 				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete"));
 				await this.portalsCoreSvc.deleteDesktopAsync(
 					this.desktop.ID,
-					async () => await Promise.all([
-						TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete"), this.configSvc.currentUrl),
-						this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.desktops.update.messages.success.delete")),
-						this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-					]),
+					async data => {
+						AppEvents.broadcast("Portals", { Object: "Desktop", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
+						await Promise.all([
+							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete"), this.configSvc.currentUrl),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.desktops.update.messages.success.delete")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]);
+					},
 					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error)),
 					{ "x-children": mode }
 				);

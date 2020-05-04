@@ -38,7 +38,7 @@ export class ModulesListPage implements OnInit, OnDestroy {
 
 	private organization: Organization;
 	private subscription: Subscription;
-	private isSystemModerator = false;
+	private isSystemAdministrator = false;
 	private canModerateOrganization = false;
 	private systemID: string;
 	private definitionID: string;
@@ -79,10 +79,12 @@ export class ModulesListPage implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		if (this.subscription !== undefined) {
+		if (!this.searching) {
+			AppEvents.off("Portals", AppUtility.isNotEmpty(this.definitionID) ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
+		}
+		else if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 		}
-		AppEvents.off("Portals", "Modules:Refresh");
 	}
 
 	private async initializeAsync() {
@@ -90,10 +92,10 @@ export class ModulesListPage implements OnInit, OnDestroy {
 		this.definitionID = this.configSvc.requestParams["DefinitionID"];
 
 		this.organization = Organization.get(this.systemID) || this.portalsCoreSvc.activeOrganization || new Organization();
-		this.isSystemModerator = this.authSvc.isSystemModerator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
-		this.canModerateOrganization = this.isSystemModerator || this.portalsCoreSvc.canModerateOrganization(this.organization);
+		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
+		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 
-		if (!this.isSystemModerator && (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID))) {
+		if (!this.isSystemAdministrator && (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID))) {
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
@@ -110,11 +112,6 @@ export class ModulesListPage implements OnInit, OnDestroy {
 			return;
 		}
 
-		this.searching = this.configSvc.currentUrl.endsWith("/search");
-		const title = await this.configSvc.getResourceAsync(`portals.modules.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
-		this.definitions = await this.portalsCoreSvc.getDefinitionsAsync();
-
 		if (!AppUtility.isNotEmpty(this.systemID) && !AppUtility.isNotEmpty(this.definitionID)) {
 			this.systemID = this.organization.ID;
 		}
@@ -125,6 +122,11 @@ export class ModulesListPage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(this.definitionID)) {
 			this.filterBy.And.push({ ModuleDefinitionID: { Equals: this.definitionID } });
 		}
+
+		this.searching = this.configSvc.currentUrl.endsWith("/search");
+		const title = await this.configSvc.getResourceAsync(`portals.modules.title.${(this.searching ? "search" : "list")}`);
+		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
+		this.definitions = await this.portalsCoreSvc.getDefinitionsAsync();
 
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.modules.list.searchbar");
@@ -139,11 +141,12 @@ export class ModulesListPage implements OnInit, OnDestroy {
 			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `module@${this.portalsCoreSvc.name}`) || AppPagination.getDefault();
 			this.pagination.PageNumber = this.pageNumber;
 			await this.searchAsync();
+
 			AppEvents.on("Portals", info => {
-				if (info.args.Object === "Module") {
+				if (info.args.Object === "Module" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
 					this.prepareResults();
 				}
-			}, "Modules:Refresh");
+			}, AppUtility.isNotEmpty(this.definitionID) ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
 		}
 	}
 
@@ -247,28 +250,28 @@ export class ModulesListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.modules.push(Module.get(o.ID)));
 		}
 		else {
-			let filterFn: (value: Module) => boolean;
+			let objects = new List(results === undefined ? Module.all : results.map(o => Module.get(o.ID)));
 			if (AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.definitionID)) {
-				filterFn = o => o.SystemID === this.systemID && o.ModuleDefinitionID === this.definitionID;
+				objects = objects.Where(o => o.SystemID === this.systemID && o.ModuleDefinitionID === this.definitionID);
 			}
 			else if (AppUtility.isNotEmpty(this.definitionID)) {
-				filterFn = this.isSystemModerator
-					? o => o.ModuleDefinitionID === this.definitionID
-					: o => o.SystemID === this.systemID && o.ModuleDefinitionID === this.definitionID;
+				if (this.isSystemAdministrator) {
+					objects = objects.Where(o => o.ModuleDefinitionID === this.definitionID);
+				}
+				else {
+					objects = objects.Where(o => o.SystemID === this.systemID && o.ModuleDefinitionID === this.definitionID);
+				}
 			}
-			else if (AppUtility.isNotEmpty(this.systemID)) {
-				filterFn = o => o.SystemID === this.systemID;
+			else {
+				objects = objects.Where(o => o.SystemID === this.systemID);
 			}
-			else if (this.organization !== undefined) {
-				filterFn = o => o.SystemID === this.organization.ID;
+			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			if (results === undefined) {
+				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
-			const objects = new List(results !== undefined
-				? results.map(o => Module.get(o.ID))
-				: filterFn !== undefined ? Module.all.filter(filterFn) : Module.all
-			).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
-			this.modules = results !== undefined
-				? this.modules.concat(objects.ToArray())
-				: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();
+			this.modules = results === undefined
+				? objects.ToArray()
+				: this.modules.concat(objects.ToArray());
 		}
 		if (onNext !== undefined) {
 			onNext();

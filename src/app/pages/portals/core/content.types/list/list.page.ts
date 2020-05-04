@@ -39,7 +39,7 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 
 	private organization: Organization;
 	private subscription: Subscription;
-	private isSystemModerator = false;
+	private isSystemAdministrator = false;
 	private canModerateOrganization = false;
 	private systemID: string;
 	private repositoryID: string;
@@ -81,10 +81,19 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		if (this.subscription !== undefined) {
+		if (!this.searching) {
+			let identity = "ContentTypes:Refresh";
+			if (AppUtility.isNotEmpty(this.definitionID)) {
+				identity = `ContentTypes:${this.definitionID}:Refresh`;
+			}
+			else if (AppUtility.isNotEmpty(this.repositoryID)) {
+				identity = `ContentTypes:${this.repositoryID}:Refresh`;
+			}
+			AppEvents.off("Portals", identity);
+		}
+		else if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 		}
-		AppEvents.off("Portals", "ContentTypes:Refresh");
 	}
 
 	private async initializeAsync() {
@@ -93,10 +102,10 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 		this.definitionID = this.configSvc.requestParams["DefinitionID"];
 
 		this.organization = Organization.get(this.systemID) || this.portalsCoreSvc.activeOrganization || new Organization();
-		this.isSystemModerator = this.authSvc.isSystemModerator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
-		this.canModerateOrganization = this.isSystemModerator || this.portalsCoreSvc.canModerateOrganization(this.organization);
+		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
+		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 
-		if (!this.isSystemModerator && (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID))) {
+		if (!this.isSystemAdministrator && (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID))) {
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
@@ -117,11 +126,6 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 			this.systemID = this.organization.ID;
 		}
 
-		this.searching = this.configSvc.currentUrl.endsWith("/search");
-		const title = await this.configSvc.getResourceAsync(`portals.contenttypes.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: AppUtility.isNotEmpty(this.repositoryID) ? `[${Module.get(this.repositoryID).Title}]` : `[${this.organization.Title}]` });
-		this.definitions = await this.portalsCoreSvc.getDefinitionsAsync();
-
 		if (AppUtility.isNotEmpty(this.systemID)) {
 			this.filterBy.And.push({ SystemID: { Equals: this.systemID } });
 		}
@@ -131,6 +135,11 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(this.definitionID)) {
 			this.filterBy.And.push({ ContentTypeDefinitionID: { Equals: this.definitionID } });
 		}
+
+		this.searching = this.configSvc.currentUrl.endsWith("/search");
+		const title = await this.configSvc.getResourceAsync(`portals.contenttypes.title.${(this.searching ? "search" : "list")}`);
+		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: AppUtility.isNotEmpty(this.repositoryID) ? `[${Module.get(this.repositoryID).Title}]` : `[${this.organization.Title}]` });
+		this.definitions = await this.portalsCoreSvc.getDefinitionsAsync();
 
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.contenttypes.list.searchbar");
@@ -145,11 +154,19 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `content.type@${this.portalsCoreSvc.name}`) || AppPagination.getDefault();
 			this.pagination.PageNumber = this.pageNumber;
 			await this.searchAsync();
+
+			let identity = "ContentTypes:Refresh";
+			if (AppUtility.isNotEmpty(this.definitionID)) {
+				identity = `ContentTypes:${this.definitionID}:Refresh`;
+			}
+			else if (AppUtility.isNotEmpty(this.repositoryID)) {
+				identity = `ContentTypes:${this.repositoryID}:Refresh`;
+			}
 			AppEvents.on("Portals", info => {
-				if (info.args.Object === "ContentType") {
+				if (info.args.Object === "Content.Type" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
 					this.prepareResults();
 				}
-			}, "ContentTypes:Refresh");
+			}, identity);
 		}
 	}
 
@@ -257,31 +274,31 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.contentTypes.push(ContentType.get(o.ID)));
 		}
 		else {
-			let filterFn: (value: ContentType) => boolean;
+			let objects = new List(results === undefined ? ContentType.all : results.map(o => ContentType.get(o.ID)));
 			if (AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.repositoryID) && AppUtility.isNotEmpty(this.definitionID)) {
-				filterFn = o => o.SystemID === this.systemID && o.RepositoryID === this.repositoryID && o.ContentTypeDefinitionID === this.definitionID;
+				objects = objects.Where(o => o.SystemID === this.systemID && o.RepositoryID === this.repositoryID && o.ContentTypeDefinitionID === this.definitionID);
 			}
 			else if (AppUtility.isNotEmpty(this.definitionID)) {
-				filterFn = this.isSystemModerator
-					? o => o.ContentTypeDefinitionID === this.definitionID
-					: o => o.SystemID === this.systemID && o.ContentTypeDefinitionID === this.definitionID;
+				if (this.isSystemAdministrator) {
+					objects = objects.Where(o => o.ContentTypeDefinitionID === this.definitionID);
+				}
+				else {
+					objects = objects.Where(o => o.SystemID === this.systemID && o.ContentTypeDefinitionID === this.definitionID);
+				}
 			}
 			else if (AppUtility.isNotEmpty(this.repositoryID)) {
-				filterFn = o => o.RepositoryID === this.repositoryID;
+				objects = objects.Where(o => o.RepositoryID === this.repositoryID);
 			}
-			else if (AppUtility.isNotEmpty(this.systemID)) {
-				filterFn = o => o.SystemID === this.systemID;
+			else {
+				objects = objects.Where(o => o.SystemID === this.systemID);
 			}
-			else if (this.organization !== undefined) {
-				filterFn = o => o.SystemID === this.organization.ID;
+			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			if (results === undefined) {
+				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
-			const objects = new List(results !== undefined
-				? results.map(o => ContentType.get(o.ID))
-				: filterFn !== undefined ? ContentType.all.filter(filterFn) : ContentType.all
-			).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
-			this.contentTypes = results !== undefined
-				? this.contentTypes.concat(objects.ToArray())
-				: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();
+			this.contentTypes = results === undefined
+				? objects.ToArray()
+				: this.contentTypes.concat(objects.ToArray());
 		}
 		if (onNext !== undefined) {
 			onNext();

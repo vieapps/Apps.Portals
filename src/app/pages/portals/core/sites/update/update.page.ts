@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@components/app.crypto";
+import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
@@ -64,7 +65,7 @@ export class SitesUpdatePage implements OnInit {
 			await this.portalsCoreSvc.getOrganizationAsync(this.site.SystemID, _ => this.organization = Organization.get(this.site.SystemID), undefined, true);
 		}
 
-		this.isSystemModerator = this.authSvc.isSystemModerator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
+		this.isSystemModerator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canModerateOrganization = this.isSystemModerator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 		if (this.canModerateOrganization) {
 			await this.initializeFormAsync();
@@ -279,11 +280,14 @@ export class SitesUpdatePage implements OnInit {
 				if (AppUtility.isNotEmpty(site.ID)) {
 					await this.portalsCoreSvc.updateSiteAsync(
 						site,
-						async () => await Promise.all([
-							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.sites.update.messages.success.update")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]),
+						async data => {
+							AppEvents.broadcast("Portals", { Object: "Site", Type: "Updated", ID: data.ID });
+							await Promise.all([
+								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.sites.update.messages.success.update")),
+								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							]);
+						},
 						async error => {
 							this.processing = false;
 							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
@@ -293,11 +297,14 @@ export class SitesUpdatePage implements OnInit {
 				else {
 					await this.portalsCoreSvc.createSiteAsync(
 						site,
-						async () => await Promise.all([
-							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.sites.update.messages.success.new")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]),
+						async data => {
+							AppEvents.broadcast("Portals", { Object: "Site", Type: "Created", ID: data.ID });
+							await Promise.all([
+								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.sites.update.messages.success.new")),
+								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							]);
+						},
 						async error => {
 							this.processing = false;
 							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
@@ -313,15 +320,18 @@ export class SitesUpdatePage implements OnInit {
 			undefined,
 			await this.configSvc.getResourceAsync("portals.sites.update.messages.confirm.delete"),
 			undefined,
-			async mode => {
+			async () => {
 				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.sites.update.buttons.delete"));
 				await this.portalsCoreSvc.deleteSiteAsync(
 					this.site.ID,
-					async () => await Promise.all([
-						TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.sites.update.buttons.delete"), this.configSvc.currentUrl),
-						this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.sites.update.messages.success.delete")),
-						this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-					]),
+					async data => {
+						AppEvents.broadcast("Portals", { Object: "Site", Type: "Deleted", ID: data.ID });
+						await Promise.all([
+							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.sites.update.buttons.delete"), this.configSvc.currentUrl),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.sites.update.messages.success.delete")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]);
+					},
 					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error))
 				);
 			},

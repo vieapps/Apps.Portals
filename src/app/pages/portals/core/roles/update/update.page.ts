@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@components/app.crypto";
+import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
@@ -30,7 +31,7 @@ export class RolesUpdatePage implements OnInit {
 
 	private role: Role;
 	private organization: Organization;
-	private canManageOrganizations = false;
+	private canModerateOrganization = false;
 	private users = new Array<AppFormsLookupValue>();
 	private hash = "";
 
@@ -53,14 +54,14 @@ export class RolesUpdatePage implements OnInit {
 
 		this.organization = this.role !== undefined
 			? Organization.get(this.role.SystemID)
-			: this.portalsCoreSvc.activeOrganization || new Organization();
+			: this.portalsCoreSvc.activeOrganization;
 
 		if (this.organization === undefined) {
 			await this.portalsCoreSvc.getOrganizationAsync(this.role.SystemID, _ => this.organization = Organization.get(this.role.SystemID), undefined, true);
 		}
 
-		this.canManageOrganizations = this.portalsCoreSvc.canModerateOrganization(this.organization);
-		if (this.canManageOrganizations) {
+		this.canModerateOrganization = this.portalsCoreSvc.canModerateOrganization(this.organization);
+		if (this.canModerateOrganization) {
 			await this.initializeFormAsync();
 		}
 		else {
@@ -128,6 +129,7 @@ export class RolesUpdatePage implements OnInit {
 		const parentRole = this.role.Parent;
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID"));
 		control.Type = "Lookup";
+		control.Required = false;
 		control.Extras = { LookupDisplayValues: parentRole !== undefined ? [{ Value: parentRole.ID, Label: parentRole.FullTitle }] : undefined };
 		control.Options.LookupOptions = {
 			AsModal: true,
@@ -201,7 +203,7 @@ export class RolesUpdatePage implements OnInit {
 			}
 		};
 
-		if (!AppUtility.isNotEmpty(this.role.ID)) {
+		if (AppUtility.isNotEmpty(this.role.ID)) {
 			formConfig.push(
 				await this.usersSvc.getAuditFormControlAsync(this.role.Created, this.role.CreatedID, this.role.LastModified, this.role.LastModifiedID),
 				this.appFormsSvc.getButtonControls(
@@ -239,7 +241,7 @@ export class RolesUpdatePage implements OnInit {
 				await this.usersSvc.getProfileAsync(user.Value, _ => profile = UserProfile.get(user.Value) || new UserProfile(), undefined, true);
 			}
 			user.Label = profile.Name;
-			user.Description = profile.getEmail(!this.canManageOrganizations);
+			user.Description = profile.getEmail(!this.canModerateOrganization);
 			user.Image = profile.avatarURI;
 		}));
 		this.users = this.users.sort(AppUtility.getCompareFunction("Label", "Description"));
@@ -264,11 +266,14 @@ export class RolesUpdatePage implements OnInit {
 				if (AppUtility.isNotEmpty(role.ID)) {
 					await this.portalsCoreSvc.updateRoleAsync(
 						role,
-						async () => await Promise.all([
-							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.update")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]),
+						async data => {
+							AppEvents.broadcast("Portals", { Object: "Role", Type: "Updated", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
+							await Promise.all([
+								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.update")),
+								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							]);
+						},
 						async error => {
 							this.processing = false;
 							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
@@ -278,11 +283,14 @@ export class RolesUpdatePage implements OnInit {
 				else {
 					await this.portalsCoreSvc.createRoleAsync(
 						role,
-						async () => await Promise.all([
-							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.new")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]),
+						async data => {
+							AppEvents.broadcast("Portals", { Object: "Role", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
+							await Promise.all([
+								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.new")),
+								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							]);
+						},
 						async error => {
 							this.processing = false;
 							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
@@ -312,11 +320,14 @@ export class RolesUpdatePage implements OnInit {
 				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.roles.update.buttons.delete"));
 				await this.portalsCoreSvc.deleteRoleAsync(
 					this.role.ID,
-					async () => await Promise.all([
-						TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.roles.update.buttons.delete"), this.configSvc.currentUrl),
-						this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.delete")),
-						this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-					]),
+					async data => {
+						AppEvents.broadcast("Portals", { Object: "Role", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
+						await Promise.all([
+							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.roles.update.buttons.delete"), this.configSvc.currentUrl),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.delete")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]);
+					},
 					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error)),
 					{ "x-children": mode }
 				);

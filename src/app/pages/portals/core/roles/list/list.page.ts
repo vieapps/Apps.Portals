@@ -82,14 +82,16 @@ export class RolesListPage implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		if (this.subscription !== undefined) {
+		if (!this.searching) {
+			if (this.parentRole !== undefined) {
+				AppEvents.off("Portals", `Roles:${this.parentRole.ID}:Refresh`);
+			}
+			else {
+				AppEvents.off("Portals", "Roles:Refresh");
+			}
+		}
+		else if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
-		}
-		if (this.parentID === undefined) {
-			AppEvents.off("Portals", "Roles:Refresh");
-		}
-		else {
-			AppEvents.off("Portals", `Roles:Refresh:${this.parentID}`);
 		}
 	}
 
@@ -138,7 +140,7 @@ export class RolesListPage implements OnInit, OnDestroy {
 					if (info.args.Object === "Role" && (this.parentRole.ID === info.args.ID || this.parentRole.ID === info.args.ParentID)) {
 						this.roles = this.parentRole.Children;
 					}
-				}, `Roles:Refresh:${this.parentID}`);
+				}, `Roles:${this.parentRole.ID}:Refresh`);
 			}
 			else {
 				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
@@ -150,8 +152,8 @@ export class RolesListPage implements OnInit, OnDestroy {
 				this.pagination.PageNumber = this.pageNumber;
 				await this.searchAsync();
 				AppEvents.on("Portals", info => {
-					if (info.args.Object === "Role" && !info.args.ParentID) {
-						this.roles = Role.all.filter(role => role.SystemID === this.organization.ID && role.ParentID === undefined).sort(AppUtility.getCompareFunction("Title"));
+					if (info.args.Object === "Role" && info.args.ParentID === undefined) {
+						this.prepareResults();
 					}
 				}, "Roles:Refresh");
 			}
@@ -256,13 +258,15 @@ export class RolesListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(r => this.roles.push(Role.get(r.ID)));
+			(results || []).forEach(o => this.roles.push(Role.get(o.ID)));
 		}
 		else {
-			const objects = new List(results !== undefined ? results.map(r => Role.get(r.ID)) : Role.all.filter(r => r.SystemID === this.organization.ID && r.ParentID === this.parentID)).OrderBy(r => r.Title).ThenByDescending(r => r.LastModified);
-			this.roles = results !== undefined
-				? this.roles.concat(objects.ToArray())
-				: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();
+			let objects = new List(results === undefined ? Role.all : results.map(r => Role.get(r.ID)));
+			objects = objects.Where(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID);
+			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			this.roles = results === undefined
+				? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
+				: this.roles.concat(objects.ToArray());
 		}
 		if (onNext !== undefined) {
 			onNext();

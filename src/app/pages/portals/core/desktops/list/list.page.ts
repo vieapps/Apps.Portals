@@ -83,14 +83,16 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		if (this.subscription !== undefined) {
+		if (!this.searching) {
+			if (this.parentDesktop !== undefined) {
+				AppEvents.off("Portals", `Desktops:${this.parentDesktop.ID}:Refresh`);
+			}
+			else {
+				AppEvents.off("Portals", "Desktops:Refresh");
+			}
+		}
+		else if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
-		}
-		if (this.parentID === undefined) {
-			AppEvents.off("Portals", "Desktops:Refresh");
-		}
-		else {
-			AppEvents.off("Portals", `Desktops:Refresh:${this.parentID}`);
 		}
 	}
 
@@ -140,7 +142,7 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 					if (info.args.Object === "Desktop" && (this.parentDesktop.ID === info.args.ID || this.parentDesktop.ID === info.args.ParentID)) {
 						this.desktops = this.parentDesktop.Children;
 					}
-				}, `Desktops:Refresh:${this.parentID}`);
+				}, `Desktops:${this.parentDesktop.ID}:Refresh`);
 			}
 			else {
 				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
@@ -152,8 +154,8 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 				this.pagination.PageNumber = this.pageNumber;
 				await this.searchAsync();
 				AppEvents.on("Portals", info => {
-					if (info.args.Object === "Desktop" && !info.args.ParentID) {
-						this.desktops = Desktop.all.filter(desktop => desktop.SystemID === this.organization.ID && desktop.ParentID === undefined).sort(AppUtility.getCompareFunction("Title"));
+					if (info.args.Object === "Desktop") {
+						this.prepareResults();
 					}
 				}, "Desktops:Refresh");
 			}
@@ -258,13 +260,18 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(r => this.desktops.push(Desktop.get(r.ID)));
+			(results || []).forEach(o => this.desktops.push(Desktop.get(o.ID)));
 		}
 		else {
-			const objects = new List(results !== undefined ? results.map(d => Desktop.get(d.ID)) : Desktop.all.filter(d => d.SystemID === this.organization.ID && d.ParentID === this.parentID)).OrderBy(d => d.Title).ThenByDescending(d => d.LastModified);
-			this.desktops = results !== undefined
-				? this.desktops.concat(objects.ToArray())
-				: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();
+			let objects = new List(results === undefined ? Desktop.all : results.map(o => Desktop.get(o.ID)));
+			objects = objects.Where(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID);
+			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			if (results === undefined) {
+				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
+			}
+			this.desktops = results === undefined
+				? objects.ToArray()
+				: this.desktops.concat(objects.ToArray());
 		}
 		if (onNext !== undefined) {
 			onNext();

@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@components/app.crypto";
+import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { PlatformUtility } from "@components/app.utility.platform";
 import { TrackingUtility } from "@components/app.utility.trackings";
@@ -550,11 +551,14 @@ export class OrganizationsUpdatePage implements OnInit {
 					Organization.get(organization.ID).owner = undefined;
 					await this.portalsCoreSvc.updateOrganizationAsync(
 						organization,
-						async () => await Promise.all([
-							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.update")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]),
+						async data => {
+							AppEvents.broadcast("Portals", { Object: "Organization", Type: "Updated", ID: data.ID });
+							await Promise.all([
+								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.update")),
+								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							]);
+						},
 						async error => {
 							this.processing = false;
 							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
@@ -564,11 +568,14 @@ export class OrganizationsUpdatePage implements OnInit {
 				else {
 					await this.portalsCoreSvc.createOrganizationAsync(
 						organization,
-						async () => await Promise.all([
-							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.new")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]),
+						async data => {
+							AppEvents.broadcast("Portals", { Object: "Organization", Type: "Created", ID: data.ID });
+							await Promise.all([
+								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.new")),
+								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							]);
+						},
 						async error => {
 							this.processing = false;
 							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));

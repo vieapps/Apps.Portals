@@ -37,7 +37,7 @@ export class SitesListPage implements OnInit, OnDestroy {
 
 	private organization: Organization;
 	private subscription: Subscription;
-	private isSystemModerator = false;
+	private isSystemAdministrator = false;
 	private canModerateOrganization = false;
 
 	title = "Sites";
@@ -75,18 +75,25 @@ export class SitesListPage implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		if (this.subscription !== undefined) {
+		if (!this.searching) {
+			AppEvents.off("Portals", "Sites:Refresh");
+		}
+		else if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 		}
-		AppEvents.off("Portals", "Sites:Refresh");
 	}
 
 	private async initializeAsync() {
-		this.organization = Organization.get(this.configSvc.requestParams["SystemID"]) || this.portalsCoreSvc.activeOrganization || new Organization();
-		this.isSystemModerator = this.authSvc.isSystemModerator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
-		this.canModerateOrganization = this.isSystemModerator || this.portalsCoreSvc.canModerateOrganization(this.organization);
+		this.organization = Organization.get(this.configSvc.requestParams["SystemID"]) || this.portalsCoreSvc.activeOrganization;
+		if (this.organization === undefined && Organization.instances.size() < 1) {
+			await this.portalsCoreSvc.searchOrganizationAsync(AppPagination.buildRequest({And: []}, { Title: "Ascending" }), undefined, undefined, false, true, { "x-brief": "" });
+			this.organization = Organization.get(this.configSvc.requestParams["SystemID"]) || this.portalsCoreSvc.activeOrganization;
+		}
 
-		if (!this.isSystemModerator && (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID))) {
+		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
+		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
+
+		if (!this.isSystemAdministrator && (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID))) {
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
@@ -105,9 +112,9 @@ export class SitesListPage implements OnInit, OnDestroy {
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.sites.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: this.isSystemModerator ? "" : `[${this.organization.Title}]` });
+		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: this.isSystemAdministrator ? "" : `[${this.organization.Title}]` });
 
-		this.filterBy.And = this.isSystemModerator
+		this.filterBy.And = this.isSystemAdministrator
 			? []
 			: [{ SystemID: { Equals: this.organization.ID } }];
 
@@ -124,9 +131,10 @@ export class SitesListPage implements OnInit, OnDestroy {
 			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `site@${this.portalsCoreSvc.name}`) || AppPagination.getDefault();
 			this.pagination.PageNumber = this.pageNumber;
 			await this.searchAsync();
+
 			AppEvents.on("Portals", info => {
-				if (info.args.Object === "Site") {
-					this.sites = (this.isSystemModerator ? Site.all : Site.all.filter(site => site.SystemID === this.organization.ID)).sort(AppUtility.getCompareFunction("Title"));
+				if (info.args.Object === "Site" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
+					this.prepareResults();
 				}
 			}, "Sites:Refresh");
 		}
@@ -231,15 +239,17 @@ export class SitesListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.sites.push(Site.get(o.ID)));
 		}
 		else {
-			const objects = new List(results !== undefined
-				? results.map(o => Site.get(o.ID))
-				: this.isSystemModerator
-					? Site.all
-					: Site.all.filter(o => o.SystemID === this.organization.ID)
-			).OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
-			this.sites = results !== undefined
-				? this.sites.concat(objects.ToArray())
-				: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();
+			let objects = new List(results === undefined ? Site.all : results.map(o => Site.get(o.ID)));
+			if (!this.isSystemAdministrator) {
+				objects = objects.Where(o => o.SystemID === this.organization.ID);
+			}
+			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			if (results === undefined) {
+				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
+			}
+			this.sites = results === undefined
+				? objects.ToArray()
+				: this.sites.concat(objects.ToArray());
 		}
 		if (onNext !== undefined) {
 			onNext();
