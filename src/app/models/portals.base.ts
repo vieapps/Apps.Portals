@@ -46,6 +46,7 @@ export interface ContentTypeDefinition {
 	Extendable?: boolean;
 	Indexable?: boolean;
 	ObjectName?: string;
+	ModuleDefinition?: ModuleDefinition;
 }
 
 /** Interface of all nested classes */
@@ -82,7 +83,7 @@ export interface ExtendedUIControlDefinition {
 	PlaceHolder?: string;
 	Description?: string;
 	ValidatePattern?: string;
-	Order?: number;
+	PlaceBefore?: string;
 	Disabled?: boolean;
 	ReadOnly?: boolean;
 	AutoFocus?: boolean;
@@ -100,13 +101,25 @@ export interface ExtendedUIControlDefinition {
 	SelectInterface?: string;
 	LookupMode?: string;
 	LookupRepositoryID?: string;
-	LookupEntityID?: string;
+	LookupRepositoryEntityID?: string;
 	LookupProperty?: string;
+}
+
+/** Definition for working with a standard property */
+export interface StandardUIDefinition {
+	Name: string;
+	Label?: string;
+	PlaceHolder?: string;
+	Description?: string;
+	Hidden?: boolean;
+	HiddenInView?: boolean;
+	Formula?: string;
 }
 
 /** Definition of UI controls for working with extended properties of an entity */
 export interface ExtendedUIDefinition {
 	Controls: Array<ExtendedUIControlDefinition>;
+	Specials?: Array<StandardUIDefinition>;
 	ListXslt?: string;
 	ViewXslt?: string;
 }
