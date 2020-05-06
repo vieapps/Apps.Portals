@@ -38,12 +38,30 @@ export class PortalsCoreService extends BaseService {
 
 	private initialize() {
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Organization", message => this.processOrganizationUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Organization", message => this.processOrganizationUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Role", message => this.processRoleUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Role", message => this.processRoleUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Desktop", message => this.processDesktopUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Desktop", message => this.processDesktopUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Site", message => this.processSiteUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Site", message => this.processSiteUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Module", message => this.processModuleUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Module", message => this.processModuleUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "ContentType", message => this.processContentTypeUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Content.Type", message => this.processContentTypeUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.ContentType", message => this.processContentTypeUpdateMessage(message));
+		AppEvents.on("Portals", info => {
+			if (info.args.Type === "RequestInfo" && AppUtility.isNotEmpty(info.args.ID)) {
+				if (info.args.Object === "Organization") {
+					this.getOrganizationAsync(info.args.ID);
+				}
+				else if (info.args.Object === "Module") {
+					this.getModuleAsync(info.args.ID);
+				}
+				else if (info.args.Object === "ContentType") {
+					this.getContentTypeAsync(info.args.ID);
+				}
+			}
+		});
 	}
 
 	public async initializeAsync(organizationID?: string, onNext?: () => void) {
@@ -75,7 +93,13 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getDefinitionsAsync() {
-		return await this.configSvc.getDefinitionAsync(this.name, "module.definitions") as ModuleDefinition[];
+		const path = this.configSvc.getDefinitionPath(this.name, "module.definitions");
+		let definitions: ModuleDefinition[] = this.configSvc.getDefinition(path);
+		if (definitions === undefined) {
+			definitions = await this.configSvc.fetchDefinitionAsync(path, false);
+			definitions.forEach(definition => definition.ContentTypeDefinitions.forEach(contentTypeDefinition => contentTypeDefinition.ModuleDefinition = definition));
+		}
+		return definitions;
 	}
 
 	public getEmailNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
@@ -585,6 +609,14 @@ export class PortalsCoreService extends BaseService {
 				super.getURI("organization", id),
 				data => {
 					Organization.update(data);
+					if (AppUtility.isArray(data.Modules, true)) {
+						(data.Modules as Array<any>).forEach(modul => {
+							Module.update(modul);
+							if (AppUtility.isArray(modul.ContentTypes, true)) {
+								(modul.ContentTypes as Array<any>).forEach(contentType => ContentType.update(contentType));
+							}
+						});
+					}
 					if (onNext !== undefined) {
 						onNext(data);
 					}
@@ -850,9 +882,9 @@ export class PortalsCoreService extends BaseService {
 	private fetchRole(role: Role) {
 		if (role !== undefined && role.childrenIDs === undefined) {
 			this.getRoleAsync(role.ID, _ => {
-				const r = Role.get(role.ID);
-				if (r.childrenIDs !== undefined && r.childrenIDs.length > 0) {
-					r.Children.forEach(c => this.fetchRole(c));
+				const o = Role.get(role.ID);
+				if (o.childrenIDs !== undefined && o.childrenIDs.length > 0) {
+					o.Children.forEach(c => this.fetchRole(c));
 				}
 			});
 		}
@@ -864,7 +896,7 @@ export class PortalsCoreService extends BaseService {
 			const role = Role.set(Role.deserialize(json, Role.get(json.ID)));
 			if (AppUtility.isArray(json.Children, true)) {
 				role.childrenIDs = [];
-				(json.Children as Array<any>).map(c => this.updateRole(c)).filter(r => r !== undefined).forEach(r => role.childrenIDs.push(r.ID));
+				(json.Children as Array<any>).map(c => this.updateRole(c)).filter(o => o !== undefined).forEach(o => role.childrenIDs.push(o.ID));
 				role.childrenIDs = role.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
 			}
 			let parentRole = Role.get(parentID);
@@ -1089,9 +1121,9 @@ export class PortalsCoreService extends BaseService {
 	private fetchDesktop(desktop: Desktop) {
 		if (desktop !== undefined && desktop.childrenIDs === undefined) {
 			this.getDesktopAsync(desktop.ID, _ => {
-				const d = Desktop.get(desktop.ID);
-				if (d.childrenIDs !== undefined && d.childrenIDs.length > 0) {
-					d.Children.forEach(c => this.fetchDesktop(c));
+				const o = Desktop.get(desktop.ID);
+				if (o.childrenIDs !== undefined && o.childrenIDs.length > 0) {
+					o.Children.forEach(c => this.fetchDesktop(c));
 				}
 			});
 		}
@@ -1103,7 +1135,7 @@ export class PortalsCoreService extends BaseService {
 			const desktop = Desktop.set(Desktop.deserialize(json, Desktop.get(json.ID)));
 			if (AppUtility.isArray(json.Children, true)) {
 				desktop.childrenIDs = [];
-				(json.Children as Array<any>).map(c => this.updateDesktop(c)).filter(d => d !== undefined).forEach(d => desktop.childrenIDs.push(d.ID));
+				(json.Children as Array<any>).map(c => this.updateDesktop(c)).filter(o => o !== undefined).forEach(o => desktop.childrenIDs.push(o.ID));
 				desktop.childrenIDs = desktop.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
 			}
 			let parentDesktop = Desktop.get(oldParentID);

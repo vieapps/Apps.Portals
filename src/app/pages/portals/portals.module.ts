@@ -17,11 +17,11 @@ import { PortalsControlsModule } from "@controls/portals.controls.module";
 				canActivate: [AuthenticatedGuardService],
 				loadChildren: "@pages/portals/core/core.module#PortalsCoreModule"
 			},
-			// {
-			// 	path: "cms",
-			// 	canActivate: [AuthenticatedGuardService],
-			// 	loadChildren: "@pages/portals/cms/cms.module#PortalsCmsModule"
-			// },
+			{
+				path: "cms",
+				canActivate: [AuthenticatedGuardService],
+				loadChildren: "@pages/portals/cms/cms.module#PortalsCmsModule"
+			},
 			// {
 			// 	path: "search",
 			// 	canActivate: [AuthenticatedGuardService],

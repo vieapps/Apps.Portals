@@ -296,6 +296,13 @@ export class AppComponent implements OnInit {
 				icon: "git-compare",
 				detail: false
 			});
+			this.updateSidebarItem(index, -1, {
+				title: "CMS Categories",
+				url: "/portals/cms/categories/list/all",
+				direction: "root",
+				icon: "color-filter",
+				detail: false
+			});
 		}
 		else {
 			this.sidebar.left.menu[index].title = info.title;

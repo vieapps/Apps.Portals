@@ -728,18 +728,20 @@ export class ConfigurationService extends BaseService {
 		return this._definitions[AppCrypto.md5(path.toLowerCase())];
 	}
 
-	public async fetchDefinitionAsync(path: string) {
-		if (this.getDefinition(path) === undefined) {
+	public async fetchDefinitionAsync(path: string, doClone: boolean = true) {
+		let definition = this.getDefinition(path);
+		if (definition === undefined) {
 			await super.fetchAsync(
 				path,
 				data => this.addDefinition(path, data),
 				error => super.showError("Error occurred while working with definitions", error)
 			);
+			definition = this.getDefinition(path);
 		}
-		return AppUtility.clone(this.getDefinition(path));
+		return doClone ? AppUtility.clone(definition) : definition;
 	}
 
-	private getDefinitionPath(serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {
+	public getDefinitionPath(serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {
 		let path = "discovery/definitions?";
 		if (AppUtility.isNotEmpty(serviceName)) {
 			path += `x-service-name=${serviceName.toLowerCase()}&`;
@@ -753,7 +755,11 @@ export class ConfigurationService extends BaseService {
 		if (AppUtility.isObject(query, true)) {
 			Object.keys(query).forEach(key => path += `${key}=${encodeURIComponent(query[key])}`);
 		}
-		return path + this.relatedQuery;
+		return path + this.appConfig.getRelatedQuery(serviceName, json => {
+			if (AppUtility.isNotEmpty(serviceName) && AppUtility.isEquals(serviceName, json["related-service"])) {
+				delete json["related-service"];
+			}
+		});
 	}
 
 	public setDefinition(definition: any, serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {

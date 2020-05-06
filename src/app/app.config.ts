@@ -248,7 +248,7 @@ export class AppConfig {
 	}
 
 	/** Gets the related JSON with active/related service, culture language and host */
-	public static getRelatedJson(additional?: { [key: string]: string }, service?: string) {
+	public static getRelatedJson(additional?: { [key: string]: string }, service?: string, onPreCompleted?: (json: any) => void) {
 		const json: { [key: string]: string } = {
 			"language": this.language,
 			"host": this.url.host,
@@ -257,12 +257,19 @@ export class AppConfig {
 		if (AppUtility.isObject(additional, true)) {
 			Object.keys(additional).forEach(key => json[key] = additional[key]);
 		}
+		if (onPreCompleted !== undefined) {
+			onPreCompleted(json);
+		}
 		return json;
 	}
 
 	/** Gets the related query with active/related service, culture language and host */
-	public static getRelatedQuery(service?: string) {
-		return AppUtility.getQueryOfJson(this.getRelatedJson(undefined, service));
+	public static getRelatedQuery(service?: string, onPreCompleted?: (json: any) => void) {
+		const json = this.getRelatedJson(undefined, service);
+		if (onPreCompleted !== undefined) {
+			onPreCompleted(json);
+		}
+		return AppUtility.getQueryOfJson(json);
 	}
 
 	/** Gets the authenticated headers (JSON) for making requests to APIs */
