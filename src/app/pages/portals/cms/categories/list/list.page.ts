@@ -13,6 +13,7 @@ import { ConfigurationService } from "@services/configuration.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
 import { Organization } from "@models/portals.core.organization";
+import { ContentType } from "@models/portals.core.content.type";
 import { Category } from "@models/portals.cms.category";
 
 @Component({
@@ -36,6 +37,7 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
 	private organization: Organization;
+	private contentType: ContentType;
 	private parentID: string;
 	private parentCategory: Category;
 	private subscription: Subscription;
@@ -87,10 +89,10 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 	ngOnDestroy() {
 		if (!this.searching) {
 			if (this.parentCategory !== undefined) {
-				AppEvents.off("Portals", `Categorys:${this.parentCategory.ID}:Refresh`);
+				AppEvents.off("Portals", `Categories:${this.parentCategory.ID}:Refresh`);
 			}
 			else {
-				AppEvents.off("Portals", "Categorys:Refresh");
+				AppEvents.off("Portals", "Categories:Refresh");
 			}
 		}
 		else if (this.subscription !== undefined) {
@@ -99,8 +101,12 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
-		this.organization = Organization.get(this.configSvc.requestParams["SystemID"]) || this.portalsCoreSvc.activeOrganization || new Organization();
-		if (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID)) {
+		this.contentType = ContentType.get(this.configSvc.requestParams["RepositoryEntityID"]);
+		this.organization = this.contentType !== undefined
+			? this.contentType.Organization
+			: this.portalsCoreSvc.getOrganization(this.configSvc.requestParams["SystemID"]);
+
+		if (this.organization === undefined) {
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),

@@ -1,2 +1,11 @@
 {
+	"portals": {
+		"cms": {
+			"common": {
+				"buttons": {
+					"list": "Danh sách nội dung"
+				}
+			}
+		}
+	}
 }

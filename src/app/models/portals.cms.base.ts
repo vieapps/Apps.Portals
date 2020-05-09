@@ -4,7 +4,6 @@ import { PortalBase as BaseModel } from "@models/portals.base";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
-import { ModuleDefinition, ContentTypeDefinition } from "@models/portals.base";
 
 /** Abstract class for all portals' core entity classes */
 export abstract class PortalCmsBase extends BaseModel {
@@ -43,6 +42,20 @@ export abstract class PortalCmsBase extends BaseModel {
 			AppEvents.broadcast("Portals", { Object: "ContentType", Type: "RequestInfo", ID: this.RepositoryEntityID });
 		}
 		return contentType;
+	}
+
+	public get ModuleDefinition() {
+		const definitionID = this.Module !== undefined ? this.Module.ModuleDefinitionID : undefined;
+		return definitionID !== undefined && Organization.ModuleDefinitions !== undefined
+			? Organization.ModuleDefinitions.find(definition => definition.ID === definitionID)
+			: undefined;
+	}
+
+	public get ContentTypeDefinition() {
+		const definitionID = this.ContentType !== undefined ? this.ContentType.ContentTypeDefinitionID : undefined;
+		return definitionID !== undefined && Organization.ContentTypeDefinitions !== undefined
+			? Organization.ContentTypeDefinitions.find(definition => definition.ID === definitionID)
+			: undefined;
 	}
 
 }

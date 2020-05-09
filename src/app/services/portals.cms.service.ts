@@ -10,17 +10,19 @@ import { AppCustomCompleter } from "@components/app.completer";
 import { AppPagination } from "@components/app.pagination";
 import { Base as BaseService } from "@services/base.service";
 import { ConfigurationService } from "@services/configuration.service";
+import { PortalsCoreService } from "@services/portals.core.service";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
-import { ModuleDefinition } from "@models/portals.base";
+import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
 import { Category } from "@models/portals.cms.category";
 
 @Injectable()
 export class PortalsCmsService extends BaseService {
 
 	constructor(
-		private configSvc: ConfigurationService
+		private configSvc: ConfigurationService,
+		private portalsCoreSvc: PortalsCoreService
 	) {
 		super("Portals");
 		this.initialize();
@@ -29,6 +31,34 @@ export class PortalsCmsService extends BaseService {
 	private initialize() {
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Category", message => this.processCategoryUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "CMS.Category", message => this.processCategoryUpdateMessage(message));
+	}
+
+	public getUrl(object: CmsBaseModel, action?: string, contentType?: ContentType) {
+		action = action || "list";
+		contentType = contentType || (object !== undefined ? object.ContentType : undefined);
+		if (contentType === undefined) {
+			return undefined;
+		}
+		const definition = Organization.ContentTypeDefinitions.find(def => def.ID === contentType.ContentTypeDefinitionID);
+		const objectName = AppUtility.isEquals(definition.ObjectName, "Category") ? "categories" : definition.ObjectName + "s";
+		const title = AppUtility.toURI(object !== undefined ? object.ansiTitle : contentType.ansiTitle);
+		const params: { [key: string]: string } = { RepositoryEntityID: contentType.ID };
+		if (object !== undefined ) {
+			params["ID"] = object.ID;
+		}
+		return `/portals/cms/${objectName.toLowerCase()}/${action}/${title}?x-request=${AppUtility.toBase64Url(params)}`;
+	}
+
+	public getListUrl(contentType: ContentType) {
+		return this.getUrl(undefined, "list", contentType);
+	}
+
+	public getViewUrl(object: CmsBaseModel) {
+		return this.getUrl(object, "view");
+	}
+
+	public getUpdateUrl(object: CmsBaseModel) {
+		return this.getUrl(object, "update");
 	}
 
 	public get categoryCompleterDataSource() {

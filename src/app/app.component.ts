@@ -14,6 +14,7 @@ import { TrackingUtility } from "@components/app.utility.trackings";
 import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { UsersService } from "@services/users.service";
+import { PortalsCoreService } from "@services/portals.core.service";
 
 @Component({
 	selector: "app-root",

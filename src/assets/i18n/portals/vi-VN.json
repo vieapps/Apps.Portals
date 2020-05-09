@@ -736,7 +736,8 @@
 				}
 			},
 			"list": {
-				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác module nghiệp vụ"
+				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác module nghiệp vụ",
+				"invalid": "Chưa chỉ định module nghiệp vụ"
 			},
 			"update": {
 				"segments": {
@@ -832,7 +833,7 @@
 			},
 			"list": {
 				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác kiểu dữ liệu nghiệp vụ",
-				"invalid": "Chưa có module nghiệp vụ"
+				"invalid": "Chưa chỉ định kiểu dữ liệu nghiệp vụ"
 			},
 			"update": {
 				"segments": {
