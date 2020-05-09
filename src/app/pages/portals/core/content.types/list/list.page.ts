@@ -12,6 +12,7 @@ import { AppFormsService } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { PortalsCoreService } from "@services/portals.core.service";
+import { PortalsCmsService } from "@services/portals.cms.service";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
@@ -28,7 +29,8 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 		public configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
-		private portalsCoreSvc: PortalsCoreService
+		private portalsCoreSvc: PortalsCoreService,
+		private portalsCmsSvc: PortalsCmsService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
@@ -63,8 +65,8 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 		handler: () => void
 	}>;
 	labels = {
-		update: undefined as string,
-		view: undefined as string
+		update: "Update this content-type",
+		list: "View the list of contents"
 	};
 
 	get locale() {
@@ -125,7 +127,7 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 			return;
 		}
 
-		if (!AppUtility.isNotEmpty(this.systemID) && !AppUtility.isNotEmpty(this.repositoryID) && !AppUtility.isNotEmpty(this.definitionID)) {
+		if (!AppUtility.isNotEmpty(this.systemID) && !AppUtility.isNotEmpty(this.repositoryID) && !AppUtility.isNotEmpty(this.definitionID) && this.organization !== undefined) {
 			this.systemID = this.organization.ID;
 		}
 
@@ -141,12 +143,19 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 
 		this.labels = {
 			update: await this.configSvc.getResourceAsync("common.buttons.update"),
-			view: await this.configSvc.getResourceAsync("portals.cms.common.buttons.update")
+			list: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list")
 		};
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.contenttypes.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: AppUtility.isNotEmpty(this.repositoryID) ? `[${Module.get(this.repositoryID).Title}]` : `[${this.organization.Title}]` });
+		const titleInfo = AppUtility.isNotEmpty(this.repositoryID)
+			? Module.contains(this.repositoryID)
+				? Module.get(this.repositoryID).Title
+				: undefined
+			: this.organization !== undefined
+				? this.organization.Title
+				: undefined;
+		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: titleInfo !== undefined ? `[${titleInfo}]` : "" });
 
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.contenttypes.list.searchbar");
@@ -318,9 +327,7 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 	async viewAsync(event: Event, contentType: ContentType) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		const definition = Organization.ContentTypeDefinitions.find(def => def.ID === contentType.ContentTypeDefinitionID);
-		const objectName = AppUtility.isEquals(definition.ObjectName, "Category") ? "categories" : definition.ObjectName + "s";
-		await this.configSvc.navigateForwardAsync(`/portals/cms/${objectName.toLowerCase()}/list/${AppUtility.toURI(contentType.ansiTitle)}?x-request=${AppUtility.toBase64Url({ RepositoryEntityID: contentType.ID })}`);
+		await this.configSvc.navigateForwardAsync(this.portalsCmsSvc.getListUrl(contentType));
 	}
 
 }
