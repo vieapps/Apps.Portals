@@ -168,8 +168,12 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 		}
 	}
 
+	private get paginationPrefix() {
+		return this.portalsCoreSvc.getPaginationPrefix("organization");
+	}
+
 	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
-		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `organization@${this.portalsCoreSvc.name}`.toLowerCase()) || AppPagination.getDefault();
+		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
 		await this.searchAsync(onNext);
 	}
@@ -178,7 +182,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
 			this.pageNumber++;
-			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `organization@${this.portalsCoreSvc.name}`.toLowerCase());
+			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
@@ -238,7 +242,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 
 	setActive(event: Event, organization: Organization) {
 		event.stopPropagation();
-		Organization.active = Organization.get(organization.ID);
+		this.portalsCoreSvc.setActiveOrganizationAsync(organization);
 	}
 
 	isActive(organization: Organization) {

@@ -84,16 +84,11 @@ export class SitesListPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
-		this.organization = Organization.get(this.configSvc.requestParams["SystemID"]) || this.portalsCoreSvc.activeOrganization;
-		if (this.organization === undefined && Organization.instances.size() < 1) {
-			await this.portalsCoreSvc.searchOrganizationAsync(AppPagination.buildRequest({And: []}, { Title: "Ascending" }), undefined, undefined, false, true, { "x-brief": "" });
-			this.organization = Organization.get(this.configSvc.requestParams["SystemID"]) || this.portalsCoreSvc.activeOrganization;
-		}
-
+		this.organization = this.portalsCoreSvc.getOrganization(this.configSvc.requestParams["SystemID"]);
 		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 
-		if (!this.isSystemAdministrator && (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID))) {
+		if (!this.isSystemAdministrator && this.organization === undefined) {
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
@@ -123,20 +118,16 @@ export class SitesListPage implements OnInit, OnDestroy {
 			PlatformUtility.focus(this.searchCtrl);
 		}
 		else {
-			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.create"), "create", () => this.openCreateAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.search"), "search", () => this.openSearchAsync())
-			];
-
-			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `site@${this.portalsCoreSvc.name}`) || AppPagination.getDefault();
-			this.pagination.PageNumber = this.pageNumber;
-			await this.searchAsync();
-
 			AppEvents.on("Portals", info => {
 				if (info.args.Object === "Site" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
 					this.prepareResults();
 				}
 			}, "Sites:Refresh");
+			this.actions = [
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.create"), "create", () => this.openCreateAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.search"), "search", () => this.openSearchAsync())
+			];
+			await this.startSearchAsync();
 		}
 	}
 
@@ -201,8 +192,12 @@ export class SitesListPage implements OnInit, OnDestroy {
 		}
 	}
 
+	private get paginationPrefix() {
+		return this.portalsCoreSvc.getPaginationPrefix("site");
+	}
+
 	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
-		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `site@${this.portalsCoreSvc.name}`.toLowerCase()) || AppPagination.getDefault();
+		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
 		await this.searchAsync(onNext);
 	}
@@ -211,7 +206,7 @@ export class SitesListPage implements OnInit, OnDestroy {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
 			this.pageNumber++;
-			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `site@${this.portalsCoreSvc.name}`.toLowerCase());
+			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);

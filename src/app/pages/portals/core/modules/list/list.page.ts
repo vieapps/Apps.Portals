@@ -91,11 +91,11 @@ export class ModulesListPage implements OnInit, OnDestroy {
 		this.systemID = this.configSvc.requestParams["SystemID"];
 		this.definitionID = this.configSvc.requestParams["DefinitionID"];
 
-		this.organization = Organization.get(this.systemID) || this.portalsCoreSvc.activeOrganization || new Organization();
+		this.organization = this.portalsCoreSvc.getOrganization(this.systemID);
 		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 
-		if (!this.isSystemAdministrator && (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID))) {
+		if (!this.isSystemAdministrator && this.organization === undefined) {
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
@@ -133,20 +133,16 @@ export class ModulesListPage implements OnInit, OnDestroy {
 			PlatformUtility.focus(this.searchCtrl);
 		}
 		else {
-			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.create"), "create", () => this.openCreateAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.search"), "search", () => this.openSearchAsync())
-			];
-
-			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `module@${this.portalsCoreSvc.name}`) || AppPagination.getDefault();
-			this.pagination.PageNumber = this.pageNumber;
-			await this.searchAsync();
-
 			AppEvents.on("Portals", info => {
 				if (info.args.Object === "Module" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
 					this.prepareResults();
 				}
 			}, AppUtility.isNotEmpty(this.definitionID) ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
+			this.actions = [
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.create"), "create", () => this.openCreateAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.search"), "search", () => this.openSearchAsync())
+			];
+			await this.startSearchAsync();
 		}
 	}
 
@@ -212,8 +208,12 @@ export class ModulesListPage implements OnInit, OnDestroy {
 		}
 	}
 
+	private get paginationPrefix() {
+		return this.portalsCoreSvc.getPaginationPrefix("module");
+	}
+
 	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
-		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `module@${this.portalsCoreSvc.name}`.toLowerCase()) || AppPagination.getDefault();
+		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
 		await this.searchAsync(onNext);
 	}
@@ -222,7 +222,7 @@ export class ModulesListPage implements OnInit, OnDestroy {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
 			this.pageNumber++;
-			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `module@${this.portalsCoreSvc.name}`.toLowerCase());
+			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);

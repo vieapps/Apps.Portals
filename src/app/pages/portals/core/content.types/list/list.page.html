@@ -41,19 +41,31 @@
     </ion-fab-button>
   </ion-fab>
 	<ion-list class="ion-padding-end">
-		<ion-item *ngFor="let contentType of contentTypes; trackBy: track" [color]="configSvc.color" [routerLink]="contentType.routerLink" [queryParams]="contentType.routerParams" routerDirection="forward" detail="false">
-			<ion-label>
-				<span class="time ion-float-end" [hidden]="configSvc.screenWidth < 768">
-					{{ contentType.Created | date:'h:mm a @ d/M/y' }} <br/> {{ contentType.LastModified | date:'h:mm a @ d/M/y' }}
-				</span>
-				<span>
-					{{ contentType.Title }}
-				</span>
-				<div>
-					{{ getInfo(contentType) }}
-				</div>
-			</ion-label>
-		</ion-item>
+		<ion-item-sliding *ngFor="let contentType of contentTypes; trackBy: track">
+			<ion-item [color]="configSvc.color" (click)="openAsync($event, contentType)" detail="false">
+				<ion-label>
+					<span class="time ion-float-end" [hidden]="configSvc.screenWidth < 768">
+						{{ contentType.Created | date:'h:mm a @ d/M/y' }} <br/> {{ contentType.LastModified | date:'h:mm a @ d/M/y' }}
+					</span>
+					<span>
+						{{ contentType.Title }}
+					</span>
+					<div>
+						{{ getInfo(contentType) }}
+					</div>
+				</ion-label>
+			</ion-item>
+			<ion-item-options>
+				<ion-item-option color="primary" (click)="openAsync($event, contentType)">
+					<ion-icon name="create" slot="top"></ion-icon>
+					{{ labels.update }}
+				</ion-item-option>
+				<ion-item-option color="secondary" (click)="viewAsync($event, contentType)">
+					<ion-icon name="color-wand" slot="top"></ion-icon>
+					{{ labels.view }}
+				</ion-item-option>
+			</ion-item-options>
+		</ion-item-sliding>
 	</ion-list>
 	<ion-infinite-scroll threshold="288px" position="bottom" (ionInfinite)="onInfiniteScrollAsync()">
 		<ion-infinite-scroll-content></ion-infinite-scroll-content>

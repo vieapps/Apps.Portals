@@ -2,7 +2,7 @@ import { Subscription } from "rxjs";
 import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
+import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
@@ -13,7 +13,6 @@ import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { Organization } from "@models/portals.core.organization";
-import { ModuleDefinition } from "@models/portals.base";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
 
@@ -36,6 +35,7 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
+	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
 
 	private organization: Organization;
 	private subscription: Subscription;
@@ -44,7 +44,6 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 	private systemID: string;
 	private repositoryID: string;
 	private definitionID: string;
-	private definitions: Array<ModuleDefinition>;
 
 	title = "ContentTypes";
 	contentTypes = new Array<ContentType>();
@@ -63,6 +62,10 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 		icon?: string,
 		handler: () => void
 	}>;
+	labels = {
+		update: undefined as string,
+		view: undefined as string
+	};
 
 	get locale() {
 		return this.configSvc.locale;
@@ -101,11 +104,11 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 		this.repositoryID = this.configSvc.requestParams["RepositoryID"];
 		this.definitionID = this.configSvc.requestParams["DefinitionID"];
 
-		this.organization = Organization.get(this.systemID) || this.portalsCoreSvc.activeOrganization || new Organization();
+		this.organization = this.portalsCoreSvc.getOrganization(this.systemID);
 		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 
-		if (!this.isSystemAdministrator && (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID))) {
+		if (!this.isSystemAdministrator && this.organization === undefined) {
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
@@ -136,25 +139,20 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 			this.filterBy.And.push({ ContentTypeDefinitionID: { Equals: this.definitionID } });
 		}
 
+		this.labels = {
+			update: await this.configSvc.getResourceAsync("common.buttons.update"),
+			view: await this.configSvc.getResourceAsync("portals.cms.common.buttons.update")
+		};
+
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.contenttypes.title.${(this.searching ? "search" : "list")}`);
 		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: AppUtility.isNotEmpty(this.repositoryID) ? `[${Module.get(this.repositoryID).Title}]` : `[${this.organization.Title}]` });
-		this.definitions = await this.portalsCoreSvc.getDefinitionsAsync();
 
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.contenttypes.list.searchbar");
 			PlatformUtility.focus(this.searchCtrl);
 		}
 		else {
-			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.contenttypes.title.create"), "create", () => this.openCreateAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.contenttypes.title.search"), "search", () => this.openSearchAsync())
-			];
-
-			this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `content.type@${this.portalsCoreSvc.name}`) || AppPagination.getDefault();
-			this.pagination.PageNumber = this.pageNumber;
-			await this.searchAsync();
-
 			let identity = "ContentTypes:Refresh";
 			if (AppUtility.isNotEmpty(this.definitionID)) {
 				identity = `ContentTypes:${this.definitionID}:Refresh`;
@@ -167,6 +165,11 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 					this.prepareResults();
 				}
 			}, identity);
+			this.actions = [
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.contenttypes.title.create"), "create", () => this.openCreateAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.contenttypes.title.search"), "search", () => this.openSearchAsync())
+			];
+			await this.startSearchAsync();
 		}
 	}
 
@@ -176,11 +179,8 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 
 	getInfo(contentType: ContentType) {
 		const modul = Module.get(contentType.RepositoryID);
-		if (modul === undefined) {
-			return AppUtility.isNotEmpty(contentType.Description) ? " - " + contentType.Description : "";
-		}
-		const contentTypeDefinition = this.definitions.find(definition => definition.ID === modul.ModuleDefinitionID).ContentTypeDefinitions.find(definition => definition.ID === contentType.ContentTypeDefinitionID);
-		return `Module: ${modul.Title} - Definition: ${contentTypeDefinition.Title}${(AppUtility.isNotEmpty(contentType.Description) ? " - " + contentType.Description : "")}`;
+		const contentTypeDefinition = Organization.ContentTypeDefinitions.find(definition => definition.ID === contentType.ContentTypeDefinitionID);
+		return `${(modul !== undefined ? `Module: ${modul.Title} - ` : "")}Definition: ${contentTypeDefinition.Title}${(AppUtility.isNotEmpty(contentType.Description) ? " - " + contentType.Description : "")}`;
 	}
 
 	showActionsAsync() {
@@ -236,8 +236,12 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 		}
 	}
 
+	private get paginationPrefix() {
+		return this.portalsCoreSvc.getPaginationPrefix("content.type");
+	}
+
 	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
-		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `content.type@${this.portalsCoreSvc.name}`.toLowerCase()) || AppPagination.getDefault();
+		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
 		await this.searchAsync(onNext);
 	}
@@ -246,7 +250,7 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
 			this.pageNumber++;
-			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `content.type@${this.portalsCoreSvc.name}`.toLowerCase());
+			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
@@ -303,6 +307,20 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 		if (onNext !== undefined) {
 			onNext();
 		}
+	}
+
+	async openAsync(event: Event, contentType: ContentType) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.configSvc.navigateForwardAsync(contentType.routerURI);
+	}
+
+	async viewAsync(event: Event, contentType: ContentType) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		const definition = Organization.ContentTypeDefinitions.find(def => def.ID === contentType.ContentTypeDefinitionID);
+		const objectName = AppUtility.isEquals(definition.ObjectName, "Category") ? "categories" : definition.ObjectName + "s";
+		await this.configSvc.navigateForwardAsync(`/portals/cms/${objectName.toLowerCase()}/list/${AppUtility.toURI(contentType.ansiTitle)}?x-request=${AppUtility.toBase64Url({ RepositoryEntityID: contentType.ID })}`);
 	}
 
 }

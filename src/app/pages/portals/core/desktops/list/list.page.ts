@@ -97,8 +97,8 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
-		this.organization = Organization.get(this.configSvc.requestParams["SystemID"]) || this.portalsCoreSvc.activeOrganization || new Organization();
-		if (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID)) {
+		this.organization = this.portalsCoreSvc.getOrganization(this.configSvc.requestParams["SystemID"]);
+		if (this.organization === undefined) {
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
@@ -136,28 +136,26 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 			this.parentDesktop = Desktop.get(this.parentID);
 
 			if (this.parentDesktop !== undefined) {
-				this.desktops = this.parentDesktop.Children;
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentDesktop.FullTitle}]` });
 				AppEvents.on("Portals", info => {
 					if (info.args.Object === "Desktop" && (this.parentDesktop.ID === info.args.ID || this.parentDesktop.ID === info.args.ParentID)) {
 						this.desktops = this.parentDesktop.Children;
 					}
 				}, `Desktops:${this.parentDesktop.ID}:Refresh`);
+				this.desktops = this.parentDesktop.Children;
+				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentDesktop.FullTitle}]` });
 			}
 			else {
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
-				this.filterBy.And = [
-					{ SystemID: { Equals: this.organization.ID } },
-					{ ParentID: "IsNull" }
-				];
-				this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `desktop@${this.portalsCoreSvc.name}`) || AppPagination.getDefault();
-				this.pagination.PageNumber = this.pageNumber;
-				await this.searchAsync();
 				AppEvents.on("Portals", info => {
 					if (info.args.Object === "Desktop") {
 						this.prepareResults();
 					}
 				}, "Desktops:Refresh");
+				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
+				this.filterBy.And = [
+					{ SystemID: { Equals: this.organization.ID } },
+					{ ParentID: "IsNull" }
+				];
+				await this.startSearchAsync();
 			}
 		}
 	}
@@ -225,8 +223,12 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 		}
 	}
 
+	private get paginationPrefix() {
+		return this.portalsCoreSvc.getPaginationPrefix("desktop");
+	}
+
 	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
-		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `desktop@${this.portalsCoreSvc.name}`.toLowerCase()) || AppPagination.getDefault();
+		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
 		await this.searchAsync(onNext);
 	}
@@ -235,7 +237,7 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
 			this.pageNumber++;
-			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `desktop@${this.portalsCoreSvc.name}`.toLowerCase());
+			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);

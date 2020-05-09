@@ -1,8 +1,11 @@
-ion-list > ion-item {
+ion-list > ion-item,
+ion-list > ion-item-sliding > ion-item {
 	cursor: pointer;
 }
 ion-list > ion-item > ion-label > span.time,
-ion-list > ion-item > ion-label > div {
+ion-list > ion-item-sliding > ion-item > ion-label > span.time,
+ion-list > ion-item > ion-label > div,
+ion-list > ion-item-sliding > ion-item > ion-label > div {
 	font-size: 0.85em;
 	padding-top: 5px;
 }
