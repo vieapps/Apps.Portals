@@ -2,6 +2,8 @@ import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
 import { PortalCoreBase as BaseModel } from "@models/portals.core.base";
+import { Organization } from "@models/portals.core.organization";
+import { ContentType } from "@models/portals.core.content.type";
 
 export class Module extends BaseModel {
 
@@ -69,6 +71,20 @@ export class Module extends BaseModel {
 	SystemID = undefined as string;
 	ModuleDefinitionID = undefined as string;
 	ID = undefined as string;
+
+	public get Organization() {
+		return AppUtility.isNotEmpty(this.SystemID) ? Organization.get(this.SystemID) : undefined;
+	}
+
+	public get ContentTypes() {
+		return AppUtility.isNotEmpty(this.ID) ? ContentType.all.filter(contentType => contentType.RepositoryID === this.ID).sort(AppUtility.getCompareFunction("Title")) : undefined;
+	}
+
+	public get ModuleDefinition() {
+		return AppUtility.isNotEmpty(this.ModuleDefinitionID) && Organization.ModuleDefinitions !== undefined
+			? Organization.ModuleDefinitions.find(definition => definition.ID === this.ModuleDefinitionID)
+			: undefined;
+	}
 
 	ansiTitle: string;
 

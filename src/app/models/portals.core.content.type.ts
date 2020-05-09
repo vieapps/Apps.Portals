@@ -3,6 +3,8 @@ import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
 import { ExtendedPropertyDefinition, ExtendedUIDefinition } from "@models/portals.base";
 import { PortalCoreBase as BaseModel } from "@models/portals.core.base";
+import { Organization } from "@models/portals.core.organization";
+import { Module } from "@models/portals.core.module";
 
 export class ContentType extends BaseModel {
 
@@ -77,6 +79,20 @@ export class ContentType extends BaseModel {
 	RepositoryID = undefined as string;
 	ContentTypeDefinitionID = undefined as string;
 	ID = undefined as string;
+
+	public get Organization() {
+		return Organization.get(this.SystemID);
+	}
+
+	public get Module() {
+		return Module.get(this.RepositoryID);
+	}
+
+	public get ContentTypeDefinition() {
+		return AppUtility.isNotEmpty(this.ContentTypeDefinitionID) && Organization.ContentTypeDefinitions !== undefined
+			? Organization.ContentTypeDefinitions.find(definition => definition.ID === this.ContentTypeDefinitionID)
+			: undefined;
+	}
 
 	ansiTitle: string;
 

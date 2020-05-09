@@ -2,6 +2,8 @@ import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
 import { PortalCoreBase as BaseModel } from "@models/portals.core.base";
+import { Module } from "@models/portals.core.module";
+import { ContentType } from "@models/portals.core.content.type";
 
 export class Organization extends BaseModel {
 
@@ -101,6 +103,14 @@ export class Organization extends BaseModel {
 	LastModified = undefined as Date;
 	LastModifiedID = undefined as string;
 	ID = undefined as string;
+
+	public get Modules() {
+		return AppUtility.isNotEmpty(this.ID) ? Module.all.filter(modul => modul.SystemID === this.ID).sort(AppUtility.getCompareFunction("Title")) : undefined;
+	}
+
+	public get ContentTypes() {
+		return AppUtility.isNotEmpty(this.ID) ? ContentType.all.filter(contentType => contentType.SystemID === this.ID).sort(AppUtility.getCompareFunction("Title")) : undefined;
+	}
 
 	ansiTitle: string;
 	owner: string;
