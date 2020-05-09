@@ -109,9 +109,7 @@ export class Module extends BaseModel {
 	}
 
 	public get ModuleDefinition() {
-		return AppUtility.isNotEmpty(this.ModuleDefinitionID) && Module.ModuleDefinitions !== undefined
-			? Module.ModuleDefinitions.find(definition => definition.ID === this.ModuleDefinitionID)
-			: undefined;
+		return (Module.ModuleDefinitions || []).find(definition => definition.ID === this.ModuleDefinitionID);
 	}
 
 	public get ContentTypes() {

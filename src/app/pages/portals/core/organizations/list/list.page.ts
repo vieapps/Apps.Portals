@@ -242,7 +242,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 
 	async setActiveAsync(event: Event, organization: Organization) {
 		event.stopPropagation();
-		await this.portalsCoreSvc.setActiveOrganizationAsync(organization);
+		await this.portalsCoreSvc.setActiveOrganizationAsync(organization.ID);
 	}
 
 	isActive(organization: Organization) {

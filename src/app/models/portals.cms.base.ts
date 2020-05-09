@@ -45,17 +45,13 @@ export abstract class PortalCmsBase extends BaseModel {
 	}
 
 	public get ModuleDefinition() {
-		const definitionID = this.Module !== undefined ? this.Module.ModuleDefinitionID : undefined;
-		return definitionID !== undefined && Organization.ModuleDefinitions !== undefined
-			? Organization.ModuleDefinitions.find(definition => definition.ID === definitionID)
-			: undefined;
+		const definitionID = (this.Module || {}).ModuleDefinitionID;
+		return (Organization.ModuleDefinitions || []).find(definition => definition.ID === definitionID);
 	}
 
 	public get ContentTypeDefinition() {
-		const definitionID = this.ContentType !== undefined ? this.ContentType.ContentTypeDefinitionID : undefined;
-		return definitionID !== undefined && Organization.ContentTypeDefinitions !== undefined
-			? Organization.ContentTypeDefinitions.find(definition => definition.ID === definitionID)
-			: undefined;
+		const definitionID = (this.ContentType || {}).ContentTypeDefinitionID;
+		return (Organization.ContentTypeDefinitions || []).find(definition => definition.ID === definitionID);
 	}
 
 }

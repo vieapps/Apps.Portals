@@ -114,20 +114,20 @@ export class Category extends BaseModel implements INestedObject {
 		return id !== undefined && this.instances.containsKey(id);
 	}
 
-	get FullTitle() {
-		const parent = this.Parent;
-		return (parent !== undefined ? `${parent.FullTitle} > ` : "") + this.Title;
-	}
-
-	get Parent() {
+	public get Parent() {
 		return Category.get(this.ParentID);
 	}
 
-	get Children() {
+	public get Children() {
 		const categories = AppUtility.isArray(this.childrenIDs, true)
 			? this.childrenIDs.map(id => Category.get(id))
 			: Category.all.filter(category => category.ParentID === this.ID);
 		return categories.sort(AppUtility.getCompareFunction("Title"));
+	}
+
+	public get FullTitle(): string {
+		const parent = this.Parent;
+		return (parent !== undefined ? `${parent.FullTitle} > ` : "") + this.Title;
 	}
 
 	public get routerLink() {

@@ -107,24 +107,24 @@ export class Desktop extends BaseModel implements INestedObject {
 		return id !== undefined && this.instances.containsKey(id);
 	}
 
-	get FullTitle() {
-		const parent = this.Parent;
-		return (parent !== undefined ? `${parent.FullTitle} > ` : "") + this.Title;
-	}
-
-	get OrderIndex() {
-		return 0;
-	}
-
-	get Parent() {
+	public get Parent() {
 		return Desktop.get(this.ParentID);
 	}
 
-	get Children() {
+	public get Children() {
 		const desktops = AppUtility.isArray(this.childrenIDs, true)
 			? this.childrenIDs.map(id => Desktop.get(id))
 			: Desktop.all.filter(desktop => desktop.ParentID === this.ID);
 		return desktops.sort(AppUtility.getCompareFunction("Title"));
+	}
+
+	public get FullTitle(): string {
+		const parent = this.Parent;
+		return (parent !== undefined ? `${parent.FullTitle} > ` : "") + this.Title;
+	}
+
+	public get OrderIndex() {
+		return 0;
 	}
 
 	public get listURI() {

@@ -12,7 +12,6 @@ import { Base as BaseService } from "@services/base.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { Organization } from "@models/portals.core.organization";
-import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
 import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
 import { Category } from "@models/portals.cms.category";
@@ -40,7 +39,7 @@ export class PortalsCmsService extends BaseService {
 			return undefined;
 		}
 		const definition = Organization.ContentTypeDefinitions.find(def => def.ID === contentType.ContentTypeDefinitionID);
-		const objectName = AppUtility.isEquals(definition.ObjectName, "Category") ? "categories" : definition.ObjectName + "s";
+		const objectName = AppUtility.isEquals(definition.ObjectName, "Category") ? "categories" : `${definition.ObjectName}s`;
 		const title = AppUtility.toURI(object !== undefined ? object.ansiTitle : contentType.ansiTitle);
 		const params: { [key: string]: string } = { RepositoryEntityID: contentType.ID };
 		if (object !== undefined ) {
@@ -243,7 +242,7 @@ export class PortalsCmsService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a category"), message);
+				console.warn(super.getLogMessage("Got an update message of a CMS category"), message);
 				break;
 		}
 		AppEvents.broadcast("Portals", { Object: "CMS.Category", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });

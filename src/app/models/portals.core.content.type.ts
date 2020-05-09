@@ -120,9 +120,7 @@ export class ContentType extends BaseModel {
 	}
 
 	public get ContentTypeDefinition() {
-		return AppUtility.isNotEmpty(this.ContentTypeDefinitionID) && ContentType.ContentTypeDefinitions !== undefined
-			? ContentType.ContentTypeDefinitions.find(definition => definition.ID === this.ContentTypeDefinitionID)
-			: undefined;
+		return (ContentType.ContentTypeDefinitions || []).find(definition => definition.ID === this.ContentTypeDefinitionID);
 	}
 
 }

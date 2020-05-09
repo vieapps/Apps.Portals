@@ -73,24 +73,24 @@ export class Role extends BaseModel implements INestedObject {
 		return id !== undefined && this.instances.containsKey(id);
 	}
 
-	get FullTitle() {
-		const parent = this.Parent;
-		return (parent !== undefined ? `${parent.FullTitle} > ` : "") + this.Title;
-	}
-
-	get OrderIndex() {
-		return 0;
-	}
-
-	get Parent() {
+	public get Parent() {
 		return Role.get(this.ParentID);
 	}
 
-	get Children() {
+	public get Children() {
 		const roles = AppUtility.isArray(this.childrenIDs, true)
 			? this.childrenIDs.map(id => Role.get(id))
 			: Role.all.filter(role => role.ParentID === this.ID);
 		return roles.sort(AppUtility.getCompareFunction("Title"));
+	}
+
+	public get FullTitle(): string {
+		const parent = this.Parent;
+		return (parent !== undefined ? `${parent.FullTitle} > ` : "") + this.Title;
+	}
+
+	public get OrderIndex() {
+		return 0;
 	}
 
 	public get listURI() {

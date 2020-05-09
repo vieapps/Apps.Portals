@@ -1,4 +1,3 @@
-import { List } from "linqts";
 import { Injectable } from "@angular/core";
 import { AppRTU, AppMessage } from "@components/app.apis";
 import { AppEvents } from "@components/app.events";
@@ -11,11 +10,11 @@ import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { Account } from "@models/account";
 import { Organization } from "@models/portals.core.organization";
+import { Module } from "@models/portals.core.module";
+import { ContentType } from "@models/portals.core.content.type";
 import { Site } from "@models/portals.core.site";
 import { Role } from "@models/portals.core.role";
 import { Desktop } from "@models/portals.core.desktop";
-import { Module } from "@models/portals.core.module";
-import { ContentType } from "@models/portals.core.content.type";
 
 @Injectable()
 export class PortalsCoreService extends BaseService {
@@ -70,12 +69,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async initializeAsync(organizationID?: string, onNext?: () => void) {
 		if (AppUtility.isNotEmpty(organizationID)) {
-			await this.getOrganizationAsync(organizationID, () => {
-				Organization.active = Organization.get(organizationID);
-				if (onNext !== undefined) {
-					onNext();
-				}
-			});
+			await this.getOrganizationAsync(organizationID, async _ => await this.setActiveOrganizationAsync(organizationID, onNext));
 		}
 		else if (onNext !== undefined) {
 			onNext();
@@ -127,14 +121,17 @@ export class PortalsCoreService extends BaseService {
 		return Organization.active;
 	}
 
-	public async setActiveOrganizationAsync(organization: Organization) {
-		if (organization !== undefined && Organization.contains(organization.ID) && (Organization.active === undefined || Organization.active.ID !== organization.ID)) {
-			Organization.active = Organization.get(organization.ID);
-			this.configSvc.appConfig.options.extras["organization"] = organization.ID;
+	public async setActiveOrganizationAsync(organizationID: string, onNext?: () => void) {
+		if (AppUtility.isNotEmpty(organizationID) && Organization.contains(organizationID) && (Organization.active === undefined || Organization.active.ID !== organizationID)) {
+			Organization.active = Organization.get(organizationID);
+			this.configSvc.appConfig.options.extras["organization"] = Organization.active.ID;
 			await this.configSvc.storeOptionsAsync();
 			AppEvents.broadcast("Portals", { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
 		}
-		return organization;
+		if (onNext !== undefined) {
+			onNext();
+		}
+		return Organization.active;
 	}
 
 	public getPaginationPrefix(objectName: string) {
@@ -1453,6 +1450,9 @@ export class PortalsCoreService extends BaseService {
 			body,
 			data => {
 				Module.update(data);
+				if (AppUtility.isArray(data.ContentTypes, true)) {
+					(data.ContentTypes as Array<any>).forEach(contentType => ContentType.update(contentType));
+				}
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1477,6 +1477,9 @@ export class PortalsCoreService extends BaseService {
 				super.getURI("module", id),
 				data => {
 					Module.update(data);
+					if (AppUtility.isArray(data.ContentTypes, true)) {
+						(data.ContentTypes as Array<any>).forEach(contentType => ContentType.update(contentType));
+					}
 					if (onNext !== undefined) {
 						onNext(data);
 					}
@@ -1499,6 +1502,9 @@ export class PortalsCoreService extends BaseService {
 			body,
 			data => {
 				Module.update(data);
+				if (AppUtility.isArray(data.ContentTypes, true)) {
+					(data.ContentTypes as Array<any>).forEach(contentType => ContentType.update(contentType));
+				}
 				if (onNext !== undefined) {
 					onNext(data);
 				}
