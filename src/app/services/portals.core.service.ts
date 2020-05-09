@@ -1,3 +1,4 @@
+import { List } from "linqts";
 import { Injectable } from "@angular/core";
 import { AppRTU, AppMessage } from "@components/app.apis";
 import { AppEvents } from "@components/app.events";
@@ -31,12 +32,16 @@ export class PortalsCoreService extends BaseService {
 
 	public get activeOrganization() {
 		if (Organization.active === undefined) {
-			Organization.active = Organization.instances.size() > 0 ? Organization.instances.values()[0] : undefined;
+			Organization.active = Organization.instances.size() > 0 ? Organization.all[0] : undefined;
+			if (Organization.active !== undefined && (Organization.active.Modules === undefined || Organization.active.Modules.length < 1)) {
+				this.getOrganizationAsync(Organization.active.ID);
+			}
 		}
 		return Organization.active;
 	}
 
 	private initialize() {
+		this.getDefinitionsAsync();
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Organization", message => this.processOrganizationUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Organization", message => this.processOrganizationUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Role", message => this.processRoleUpdateMessage(message));
@@ -93,13 +98,48 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getDefinitionsAsync() {
-		const path = this.configSvc.getDefinitionPath(this.name, "module.definitions");
-		let definitions: ModuleDefinition[] = this.configSvc.getDefinition(path);
-		if (definitions === undefined) {
-			definitions = await this.configSvc.fetchDefinitionAsync(path, false);
-			definitions.forEach(definition => definition.ContentTypeDefinitions.forEach(contentTypeDefinition => contentTypeDefinition.ModuleDefinition = definition));
+		if (Organization.ModuleDefinitions === undefined) {
+			const path = this.configSvc.getDefinitionPath(this.name, "module.definitions");
+			Organization.ModuleDefinitions = this.configSvc.getDefinition(path);
+			if (Organization.ModuleDefinitions === undefined) {
+				Organization.ModuleDefinitions = await this.configSvc.fetchDefinitionAsync(path, false);
+				Organization.ModuleDefinitions.forEach(definition => definition.ContentTypeDefinitions.forEach(contentTypeDefinition => contentTypeDefinition.ModuleDefinition = definition));
+			}
 		}
-		return definitions;
+		return Organization.ModuleDefinitions;
+	}
+
+	public async getActiveOrganizationAsync() {
+		if (Organization.active === undefined) {
+			const preferID: string = this.configSvc.appConfig.options.extras["organization"];
+			if (AppUtility.isNotEmpty(preferID)) {
+				if (!Organization.contains(preferID)) {
+					await this.getOrganizationAsync(preferID, undefined, undefined, true);
+				}
+				Organization.active = Organization.get(preferID);
+			}
+			else if (Organization.instances.size() > 0) {
+				Organization.active = Organization.all[0];
+			}
+			if (Organization.active !== undefined) {
+				AppEvents.broadcast("Portals", { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
+			}
+		}
+		return Organization.active;
+	}
+
+	public async setActiveOrganizationAsync(organization: Organization) {
+		if (organization !== undefined && Organization.contains(organization.ID) && (Organization.active === undefined || Organization.active.ID !== organization.ID)) {
+			Organization.active = Organization.get(organization.ID);
+			this.configSvc.appConfig.options.extras["organization"] = organization.ID;
+			await this.configSvc.storeOptionsAsync();
+			AppEvents.broadcast("Portals", { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
+		}
+		return organization;
+	}
+
+	public getPaginationPrefix(objectName: string) {
+		return `${objectName}@${this.name}`.toLowerCase();
 	}
 
 	public getEmailNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
@@ -370,7 +410,7 @@ export class PortalsCoreService extends BaseService {
 		const formButtons = this.appFormsSvc.getButtonControls(
 			undefined,
 			{
-				Name: "TestEmail",
+				Name: "TestEmailSettings",
 				Label: "{{portals.common.controls.emails.test.label}}",
 				OnClick: (event, formControl) => {
 					console.warn("Test email settings", event, formControl);
@@ -551,7 +591,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async searchOrganizationAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
+	public async searchOrganizationAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
 			super.getSearchURI("organization", this.configSvc.relatedQuery),
 			request,
@@ -572,10 +612,7 @@ export class PortalsCoreService extends BaseService {
 				if (onError !== undefined) {
 					onError(error);
 				}
-			},
-			dontProcessPagination,
-			useXHR,
-			headers
+			}
 		);
 	}
 
@@ -599,7 +636,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getOrganizationAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		if (Organization.contains(id)) {
+		const organization = Organization.get(id);
+		if (organization !== undefined && organization.Modules !== undefined && organization.Modules.length > 0 && organization.ContentTypes !== undefined && organization.ContentTypes.length > 0) {
 			if (onNext !== undefined) {
 				onNext();
 			}
@@ -631,6 +669,14 @@ export class PortalsCoreService extends BaseService {
 				useXHR
 			);
 		}
+	}
+
+	public getOrganization(id: string, getActiveOrganizationWhenNotFound: boolean = true) {
+		const organization = Organization.get(id);
+		if (organization !== undefined && (organization.Modules === undefined || organization.Modules.length < 1 || organization.ContentTypes === undefined || organization.ContentTypes.length < 1)) {
+			this.getOrganizationAsync(organization.ID);
+		}
+		return organization || (getActiveOrganizationWhenNotFound ? this.activeOrganization : undefined);
 	}
 
 	public async updateOrganizationAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
