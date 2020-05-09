@@ -1,3 +1,4 @@
+import { List } from "linqts";
 import { Base as BaseModel } from "@models/base";
 
 /** Abstract class for all portals' entity classes */
@@ -5,6 +6,16 @@ export abstract class PortalBase extends BaseModel {
 
 	constructor() {
 		super();
+	}
+
+	/** Get the collection of all module definitions */
+	public static ModuleDefinitions: ModuleDefinition[];
+
+	/** Get the collection of all content-type definition */
+	public static get ContentTypeDefinitions() {
+		return this.ModuleDefinitions !== undefined
+			? new List(this.ModuleDefinitions).Select(definition => definition.ContentTypeDefinitions).SelectMany(definition => new List(definition)).ToArray()
+			: undefined;
 	}
 
 	/** The title */
@@ -46,6 +57,8 @@ export interface ContentTypeDefinition {
 	Extendable?: boolean;
 	Indexable?: boolean;
 	ObjectName?: string;
+	ObjectNamePrefix?: string;
+	ObjectNameSuffix?: string;
 	ModuleDefinition?: ModuleDefinition;
 }
 
