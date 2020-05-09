@@ -13,9 +13,7 @@ export abstract class PortalBase extends BaseModel {
 
 	/** Get the collection of all content-type definition */
 	public static get ContentTypeDefinitions() {
-		return this.ModuleDefinitions !== undefined
-			? new List(this.ModuleDefinitions).Select(definition => definition.ContentTypeDefinitions).SelectMany(definition => new List(definition)).ToArray()
-			: undefined;
+		return new List(this.ModuleDefinitions || []).Select(definition => definition.ContentTypeDefinitions).SelectMany(definition => new List(definition)).ToArray();
 	}
 
 	/** The title */
@@ -40,30 +38,31 @@ export abstract class PortalBase extends BaseModel {
 
 /** Interface of a module definition */
 export interface ModuleDefinition {
-	ID?: string;
-	Title?: string;
-	Description?: string;
+	ID: string;
+	Title: string;
+	Description: string;
 	Icon?: string;
-	ContentTypeDefinitions?: ContentTypeDefinition[];
+	ContentTypeDefinitions: ContentTypeDefinition[];
 }
 
 /** Interface of a content-type definition */
 export interface ContentTypeDefinition {
-	ID?: string;
-	Title?: string;
-	Description?: string;
+	ID: string;
+	Title: string;
+	Description: string;
 	Icon?: string;
-	MultipleIntances?: boolean;
-	Extendable?: boolean;
-	Indexable?: boolean;
-	ObjectName?: string;
+	MultipleIntances: boolean;
+	Extendable: boolean;
+	Indexable: boolean;
+	ObjectName: string;
 	ObjectNamePrefix?: string;
 	ObjectNameSuffix?: string;
-	ModuleDefinition?: ModuleDefinition;
+	ParentObjectName?: string;
+	ModuleDefinition: ModuleDefinition;
 }
 
-/** Interface of all nested classes */
-export interface NestedObject {
+/** Interface of all nested objects */
+export interface INestedObject {
 	Title: string;
 	FullTitle: string;
 	ParentID: string;
@@ -72,8 +71,8 @@ export interface NestedObject {
 	CreatedID: string;
 	LastModified: Date;
 	LastModifiedID: string;
-	Parent: NestedObject;
-	Children: NestedObject[];
+	Parent: INestedObject;
+	Children: INestedObject[];
 }
 
 /** Definition of an extended property */

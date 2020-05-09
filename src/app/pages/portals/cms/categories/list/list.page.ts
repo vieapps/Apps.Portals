@@ -102,9 +102,7 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 
 	private async initializeAsync() {
 		this.contentType = ContentType.get(this.configSvc.requestParams["RepositoryEntityID"]);
-		this.organization = this.contentType !== undefined
-			? this.contentType.Organization
-			: this.portalsCoreSvc.getOrganization(this.configSvc.requestParams["SystemID"]);
+		this.organization = this.portalsCoreSvc.getOrganization(this.contentType !== undefined ? this.contentType.SystemID : this.configSvc.requestParams["SystemID"]);
 
 		if (this.organization === undefined) {
 			await this.appFormsSvc.showAlertAsync(

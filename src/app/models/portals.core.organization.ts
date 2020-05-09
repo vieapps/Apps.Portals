@@ -1,9 +1,9 @@
+import { List } from "linqts";
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
 import { PortalCoreBase as BaseModel } from "@models/portals.core.base";
 import { Module } from "@models/portals.core.module";
-import { ContentType } from "@models/portals.core.content.type";
 
 export class Organization extends BaseModel {
 
@@ -104,14 +104,6 @@ export class Organization extends BaseModel {
 	LastModifiedID = undefined as string;
 	ID = undefined as string;
 
-	public get Modules() {
-		return AppUtility.isNotEmpty(this.ID) ? Module.all.filter(modul => modul.SystemID === this.ID).sort(AppUtility.getCompareFunction("Title")) : undefined;
-	}
-
-	public get ContentTypes() {
-		return AppUtility.isNotEmpty(this.ID) ? ContentType.all.filter(contentType => contentType.SystemID === this.ID).sort(AppUtility.getCompareFunction("Title")) : undefined;
-	}
-
 	ansiTitle: string;
 	owner: string;
 
@@ -148,6 +140,14 @@ export class Organization extends BaseModel {
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
 		return id !== undefined && this.instances.containsKey(id);
+	}
+
+	public get Modules() {
+		return new List(Module.all).Where(mod => mod.SystemID === this.ID).OrderBy(mod => mod.Title).ToArray();
+	}
+
+	public get ContentTypes() {
+		return new List(Module.all).Where(mod => mod.SystemID === this.ID).Select(mod => mod.ContentTypes).SelectMany(contentTypes => new List(contentTypes)).OrderBy(contentType => contentType.Title).ToArray();
 	}
 
 }

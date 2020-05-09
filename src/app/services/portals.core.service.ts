@@ -11,12 +11,11 @@ import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { Account } from "@models/account";
 import { Organization } from "@models/portals.core.organization";
+import { Site } from "@models/portals.core.site";
 import { Role } from "@models/portals.core.role";
 import { Desktop } from "@models/portals.core.desktop";
-import { Site } from "@models/portals.core.site";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
-import { ModuleDefinition } from "@models/portals.base";
 
 @Injectable()
 export class PortalsCoreService extends BaseService {

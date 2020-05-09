@@ -46,7 +46,7 @@
 				<ion-button *ngIf="isActive(organization)" fill="clear" color="primary" (click)="openAsync($event, organization)">
 					<ion-icon name="checkmark-circle" slot="icon-only"></ion-icon>
 				</ion-button>
-				<ion-button *ngIf="!isActive(organization)" fill="clear" color="secondary" (click)="setActive($event, organization)">
+				<ion-button *ngIf="!isActive(organization)" fill="clear" color="secondary" (click)="setActiveAsync($event, organization)">
 					<ion-icon name="log-in" slot="icon-only"></ion-icon>
 				</ion-button>
 			</ion-buttons>

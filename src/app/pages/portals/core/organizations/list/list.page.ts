@@ -240,9 +240,9 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 		await this.configSvc.navigateForwardAsync(organization.routerURI);
 	}
 
-	setActive(event: Event, organization: Organization) {
+	async setActiveAsync(event: Event, organization: Organization) {
 		event.stopPropagation();
-		this.portalsCoreSvc.setActiveOrganizationAsync(organization);
+		await this.portalsCoreSvc.setActiveOrganizationAsync(organization);
 	}
 
 	isActive(organization: Organization) {
