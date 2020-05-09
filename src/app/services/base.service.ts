@@ -198,19 +198,22 @@ export class Base {
 	 * @param useXHR Set to true to use XHR, false to system decides
 	 * @param headers The additional header
 	*/
-	protected searchAsync(path: string, request: any = {}, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
+	protected async searchAsync(path: string, request: any = {}, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
 		const processPagination = AppUtility.isFalse(dontProcessPagination);
 		const requestedPath = processPagination ? this.parseRequestedPath(path) : undefined;
-		const pagination = processPagination ? AppPagination.get(request, `${requestedPath.objectName}@${requestedPath.serviceName}`.toLowerCase()) : undefined;
+		const paginationPrefix = processPagination ? `${requestedPath.objectName}@${requestedPath.serviceName}`.toLowerCase() : undefined;
+		const pagination = processPagination ? AppPagination.get(request, paginationPrefix) : undefined;
 		const pageNumber = processPagination && request.Pagination !== undefined ? request.Pagination.PageNumber : pagination !== undefined ? pagination.PageNumber : 0;
 		if (pagination !== undefined && (pageNumber < pagination.PageNumber || pagination.TotalPages <= pagination.PageNumber)) {
-			return new Promise<void>(onNext !== undefined ? () => onNext() : () => {});
+			if (onNext !== undefined) {
+				onNext();
+			}
 		}
 		else {
 			if (request.Pagination !== undefined && request.Pagination.PageNumber !== undefined) {
 				request.Pagination.PageNumber++;
 			}
-			return this.sendAsync(
+			await this.sendAsync(
 				{
 					Path: AppUtility.format(path, { request: AppUtility.toBase64Url(request) }),
 					Verb: "GET",
@@ -218,7 +221,7 @@ export class Base {
 				},
 				data => {
 					if (processPagination) {
-						AppPagination.set(data, `${requestedPath.objectName}@${requestedPath.serviceName}`.toLowerCase());
+						AppPagination.set(data, paginationPrefix);
 					}
 					if (onNext !== undefined) {
 						onNext(data);
