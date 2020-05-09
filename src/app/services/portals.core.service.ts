@@ -31,7 +31,7 @@ export class PortalsCoreService extends BaseService {
 	public get activeOrganization() {
 		if (Organization.active === undefined) {
 			Organization.active = Organization.instances.size() > 0 ? Organization.all[0] : undefined;
-			if (Organization.active !== undefined && (Organization.active.Modules === undefined || Organization.active.Modules.length < 1)) {
+			if (Organization.active !== undefined && Organization.active.Modules.length < 1) {
 				this.getOrganizationAsync(Organization.active.ID);
 			}
 		}
@@ -65,14 +65,15 @@ export class PortalsCoreService extends BaseService {
 				}
 			}
 		});
-	}
-
-	public async initializeAsync(organizationID?: string, onNext?: () => void) {
-		if (AppUtility.isNotEmpty(organizationID)) {
-			await this.getOrganizationAsync(organizationID, async _ => await this.setActiveOrganizationAsync(organizationID, onNext));
+		if (this.configSvc.isReady) {
+			this.getActiveOrganizationAsync(false);
 		}
-		else if (onNext !== undefined) {
-			onNext();
+		else {
+			AppEvents.on("App", info => {
+				if (info.args.Type === "Initialized") {
+					this.getActiveOrganizationAsync(false);
+				}
+			});
 		}
 	}
 
@@ -102,14 +103,19 @@ export class PortalsCoreService extends BaseService {
 		return Organization.ModuleDefinitions;
 	}
 
-	public async getActiveOrganizationAsync() {
+	public async getActiveOrganizationAsync(useXHR: boolean = true) {
 		if (Organization.active === undefined) {
 			const preferID: string = this.configSvc.appConfig.options.extras["organization"];
 			if (AppUtility.isNotEmpty(preferID)) {
-				if (!Organization.contains(preferID)) {
-					await this.getOrganizationAsync(preferID, undefined, undefined, true);
-				}
 				Organization.active = Organization.get(preferID);
+				if (Organization.active === undefined) {
+					await this.getOrganizationAsync(preferID, _ => {
+						Organization.active = Organization.get(preferID);
+						if (Organization.active !== undefined && !useXHR) {
+							AppEvents.broadcast("Portals", { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
+						}
+					}, undefined, useXHR);
+				}
 			}
 			else if (Organization.instances.size() > 0) {
 				Organization.active = Organization.all[0];
@@ -632,8 +638,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getOrganizationAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		const organization = Organization.get(id);
-		if (organization !== undefined && organization.Modules !== undefined && organization.Modules.length > 0 && organization.ContentTypes !== undefined && organization.ContentTypes.length > 0) {
+		if (Organization.contains(id) && Organization.get(id).Modules.length > 0) {
 			if (onNext !== undefined) {
 				onNext();
 			}
@@ -644,10 +649,10 @@ export class PortalsCoreService extends BaseService {
 				data => {
 					Organization.update(data);
 					if (AppUtility.isArray(data.Modules, true)) {
-						(data.Modules as Array<any>).forEach(modul => {
-							Module.update(modul);
-							if (AppUtility.isArray(modul.ContentTypes, true)) {
-								(modul.ContentTypes as Array<any>).forEach(contentType => ContentType.update(contentType));
+						(data.Modules as Array<any>).forEach(module => {
+							Module.update(module);
+							if (AppUtility.isArray(module.ContentTypes, true)) {
+								(module.ContentTypes as Array<any>).forEach(contentType => ContentType.update(contentType));
 							}
 						});
 					}
@@ -1376,13 +1381,13 @@ export class PortalsCoreService extends BaseService {
 
 	public get moduleCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
-			const modul = data !== undefined
+			const module = data !== undefined
 				? data instanceof Module
 					? data as Module
 					: Module.deserialize(data)
 				: undefined;
-			return modul !== undefined
-				? { title: modul.Title, description: modul.Description, originalObject: modul }
+			return module !== undefined
+				? { title: module.Title, description: module.Description, originalObject: module }
 				: undefined;
 		};
 		return new AppCustomCompleter(
