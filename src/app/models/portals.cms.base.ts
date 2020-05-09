@@ -45,13 +45,11 @@ export abstract class PortalCmsBase extends BaseModel {
 	}
 
 	public get ModuleDefinition() {
-		const definitionID = (this.Module || new Module()).ModuleDefinitionID;
-		return definitionID === undefined ? undefined : (Module.ModuleDefinitions || []).find(definition => definition.ID === definitionID);
+		return (this.Module || new Module()).ModuleDefinition;
 	}
 
 	public get ContentTypeDefinition() {
-		const definitionID = (this.ContentType || new ContentType()).ContentTypeDefinitionID;
-		return definitionID === undefined ? undefined : (ContentType.ContentTypeDefinitions || []).find(definition => definition.ID === definitionID);
+		return (this.ContentType || new ContentType()).ContentTypeDefinition;
 	}
 
 }

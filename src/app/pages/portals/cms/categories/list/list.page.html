@@ -21,7 +21,7 @@
 <ion-footer *ngIf="gotPagination || actions">
 	<ion-toolbar [color]="configSvc.color">
 		<span *ngIf="gotPagination" slot="start">
-			<ion-icon name="desktop" color="primary" slot="start"></ion-icon>
+			<ion-icon name="color-filter" color="primary" slot="start"></ion-icon>
 			<span>
 				{{ totalDisplays | number:'':locale }} / {{ totalRecords | number:'':locale }}	
 			</span>
@@ -35,30 +35,30 @@
 </ion-footer>
 
 <ion-content [color]="configSvc.color">
-	<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+	<ion-fab *ngIf="canUpdate" vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button (click)="openCreateAsync()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 	<ion-list class="ion-padding-end">
-		<ion-item *ngFor="let desktop of desktops; trackBy: track" [color]="configSvc.color" (click)="openAsync($event, desktop)" class="ion-activatable" detail="false">
+		<ion-item *ngFor="let category of categories; trackBy: track" [color]="configSvc.color" (click)="openAsync($event, category)" class="ion-activatable" detail="false">
 			<ion-buttons slot="end">
-				<ion-button *ngIf="!desktop.childrenIDs || desktop.childrenIDs.length < 1" fill="clear" color="primary" (click)="openAsync($event, desktop)">
+				<ion-button *ngIf="!category.childrenIDs || category.childrenIDs.length < 1" fill="clear" color="primary" (click)="openAsync($event, category)">
 					<ion-icon name="create" slot="icon-only"></ion-icon>
 				</ion-button>
-				<ion-button *ngIf="desktop.childrenIDs && desktop.childrenIDs.length > 0" fill="clear" color="primary" (click)="showChildrenAsync($event, desktop)">
+				<ion-button *ngIf="category.childrenIDs && category.childrenIDs.length > 0" fill="clear" color="primary" (click)="showChildrenAsync($event, category)">
 					<ion-icon name="chevron-forward" slot="icon-only"></ion-icon>
 				</ion-button>
 			</ion-buttons>
 			<ion-label>
 				<span class="time ion-float-end" [hidden]="configSvc.screenWidth < 768">
-					{{ desktop.Created | date:'h:mm a @ d/M/y' }} <br/> {{ desktop.LastModified | date:'h:mm a @ d/M/y' }}
+					{{ category.Created | date:'h:mm a @ d/M/y' }} <br/> {{ category.LastModified | date:'h:mm a @ d/M/y' }}
 				</span>
 				<span>
-					{{ desktop.Title }}
+					{{ category.Title }}
 				</span>
 				<div>
-					{{ getInfo(desktop) }}
+					{{ getInfo(category) }}
 				</div>
 			</ion-label>
 		</ion-item>

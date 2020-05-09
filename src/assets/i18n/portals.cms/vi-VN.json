@@ -5,6 +5,69 @@
 				"buttons": {
 					"list": "Danh sách nội dung"
 				}
+			},
+			"categories": {
+				"title": {
+					"search": "Tìm kiếm chuyên mục",
+					"list": "Danh sách chuyên mục {{info}}",
+					"create": "Tạo mới chuyên mục",
+					"update": "Cập nhật chuyên mục"
+				},
+				"controls": {
+					"Info": "Chuyên mục của",
+					"ParentID": {
+						"label": "Chuyên mục cấp trên",
+						"placeholder": "",
+						"description": ""
+					},
+					"Title": {
+						"label": "Tên chuyên mục",
+						"placeholder": "",
+						"description": ""
+					},
+					"Alias": {
+						"label": "Tên rút gọn",
+						"placeholder": "",
+						"description": "Tên rút gọn sẽ được sử dụng để tạo các liên kết quản trị và xem trước nội dung"
+					},
+					"Description": {
+						"label": "Diễn giải",
+						"placeholder": "",
+						"description": "Diễn giải được sử dụng cho thẻ <b>Description</b> khi làm việc với SEO"
+					},
+					"DesktopID": {
+						"label": "Desktop hiển thị",
+						"placeholder": "",
+						"description": "Desktop mặc định sử dụng để hiển thị các nội dung của chuyên mục, sẽ sử dụng desktop của kiểu dữ liệu nghiêp vụ nội dung tương ứng nếu không có desktop nào được chỉ định"
+					}
+				},
+				"list": {
+					"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác chuyên mục"
+				},
+				"update": {
+					"segments": {
+						"basic": "Thông tin cơ bản",
+						"privileges": "Quyền truy cập",
+						"notifications": "Thông báo"
+					},
+					"messages": {
+						"confirm": {
+							"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo chuyên mục?",
+							"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của chuyên mục?",
+							"delete": "Chắc chắn muốn xoá bỏ chuyên mục và các thông tin liên quan?",
+							"remove": "Chuyên mục và toàn bộ nội dung tin/bài của chuyên mục này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
+						},
+						"success": {
+							"new": "Đã khởi tạo chuyên mục thành công",
+							"update": "Đã cập nhật các thay đổi của chuyên mục thành công",
+							"delete": "Đã đưa chuyên mục và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
+						}
+					},
+					"buttons": {
+						"delete": "Xoá chuyên mục",
+						"remove": "Đồng ý xoá"
+					}
+				}
 			}
 		}
 	}

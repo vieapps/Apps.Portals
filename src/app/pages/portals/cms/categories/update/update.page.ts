@@ -7,11 +7,14 @@ import { PlatformUtility } from "@components/app.utility.platform";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
+import { AuthenticationService } from "@services/authentication.service";
 import { UsersService } from "@services/users.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
 import { Privileges } from "@models/privileges";
 import { Organization } from "@models/portals.core.organization";
+import { Module } from "@models/portals.core.module";
+import { ContentType } from "@models/portals.core.content.type";
 import { Desktop } from "@models/portals.core.desktop";
 import { Category } from "@models/portals.cms.category";
 import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.modal.page";
@@ -26,16 +29,18 @@ import { RolesSelectorModalPage } from "@controls/portals/role.selector.modal.pa
 export class CategoriesUpdatePage implements OnInit {
 	constructor(
 		public configSvc: ConfigurationService,
-		private appFormsSvc: AppFormsService,
+		private authSvc: AuthenticationService,
 		private usersSvc: UsersService,
+		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService
 	) {
 	}
 
-	private category: Category;
 	private organization: Organization;
-	private canModerateOrganization = false;
+	private module: Module;
+	private contentType: ContentType;
+	private category: Category;
 	private hash = "";
 
 	title = "";
@@ -59,16 +64,38 @@ export class CategoriesUpdatePage implements OnInit {
 	private async initializeAsync() {
 		this.category = Category.get(this.configSvc.requestParams["ID"]);
 
+		this.contentType = this.category !== undefined
+			? this.category.ContentType
+			: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
+
 		this.organization = this.category !== undefined
 			? Organization.get(this.category.SystemID)
-			: this.portalsCoreSvc.activeOrganization || new Organization();
+			: this.contentType !== undefined
+				? Organization.get(this.contentType.SystemID)
+				: await this.portalsCoreSvc.getActiveOrganizationAsync();
+
+		console.warn("Data", this.category, this.contentType, this.organization);
 
 		if (this.organization === undefined) {
-			await this.portalsCoreSvc.getOrganizationAsync(this.category.SystemID, _ => this.organization = Organization.get(this.category.SystemID), undefined, true);
+			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all");
+			return;
 		}
 
-		this.canModerateOrganization = this.portalsCoreSvc.canModerateOrganization(this.organization);
-		if (this.canModerateOrganization) {
+		if (this.contentType === undefined) {
+			await this.portalsCoreSvc.getOrganizationAsync(this.organization.ID, undefined, undefined, true);
+			this.contentType = this.category !== undefined
+				? this.category.ContentType
+				: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
+			if (this.contentType === undefined) {
+				await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all");
+				return;
+			}
+		}
+
+		this.module = Module.get(this.contentType.RepositoryID);
+
+		const canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.category !== undefined ? this.category.Privileges : this.module.Privileges);
+		if (canUpdate) {
 			await this.initializeFormAsync();
 		}
 		else {
@@ -78,11 +105,7 @@ export class CategoriesUpdatePage implements OnInit {
 	}
 
 	private async initializeFormAsync() {
-		this.category = this.category || new Category(this.organization.ID, "", this.configSvc.requestParams["ParentID"]);
-		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.category.SystemID) {
-			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"));
-			return;
-		}
+		this.category = this.category || new Category(this.organization.ID, this.module.ID, this.contentType.ID, this.configSvc.requestParams["ParentID"]);
 
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.cms.categories.title.${(AppUtility.isNotEmpty(this.category.ID) ? "update" : "create")}`);
 		await this.appFormsSvc.showLoadingAsync(this.title);
@@ -104,8 +127,7 @@ export class CategoriesUpdatePage implements OnInit {
 		const formSegments = [
 			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.cms.categories.update.segments.basic")),
 			new AppFormsSegment("privileges", await this.configSvc.getResourceAsync("portals.cms.categories.update.segments.privileges")),
-			new AppFormsSegment("notifications", await this.configSvc.getResourceAsync("portals.cms.categories.update.segments.notifications")),
-			new AppFormsSegment("emails", await this.configSvc.getResourceAsync("portals.cms.categories.update.segments.emails"))
+			new AppFormsSegment("notifications", await this.configSvc.getResourceAsync("portals.cms.categories.update.segments.notifications"))
 		];
 		if (onCompleted !== undefined) {
 			onCompleted(formSegments);
@@ -114,18 +136,17 @@ export class CategoriesUpdatePage implements OnInit {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
-		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.category", "form-controls");
 
 		AppUtility.insertAt(
 			formConfig,
 			{
-				Name: "Organization",
+				Name: "Info",
 				Type: "Text",
 				Segment: "basic",
-				Extras: { Text: this.organization.Title },
+				Extras: { Text: `${this.organization.Title} - ${this.module.Title}` },
 				Options: {
-					Label: "{{portals.cms.categories.controls.Organization}}",
+					Label: "{{portals.cms.categories.controls.Info}}",
 					ReadOnly: true
 				}
 			},
@@ -137,41 +158,6 @@ export class CategoriesUpdatePage implements OnInit {
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
 		control.Options.Rows = 2;
-
-		/*
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CategoryDefinitionID"));
-		if (AppUtility.isNotEmpty(this.category.ID)) {
-			control.Hidden = true;
-			AppUtility.insertAt(
-				formConfig,
-				{
-					Name: "CategoryDefinition",
-					Type: "Text",
-					Segment: "basic",
-					Extras: { Text: this.definitions.find(definition => definition.ID === this.category.CategoryDefinitionID).Title },
-					Options: {
-						Label: control.Options.Label,
-						ReadOnly: true
-					}
-				},
-				formConfig.findIndex(ctrl => AppUtility.isEquals(ctrl.Name, "CategoryDefinitionID"))
-			);
-		}
-		else {
-			control.Options.Type = "dropdown";
-			control.Options.SelectOptions.Values = this.definitions.map(definition => {
-				return {
-					Value: definition.ID,
-					Label: definition.Title,
-					Description: definition.Description
-				} as AppFormsLookupValue;
-			});
-			control.Options.OnChanged = (_, formControl) => {
-				this.form.controls.Title.setValue(formControl.selectOptions.find(o => o.Value === formControl.value).Label, { onlySelf: true });
-				this.form.controls.Description.setValue(formControl.selectOptions.find(o => o.Value === formControl.value).Description, { onlySelf: true });
-			};
-		}
-		*/
 
 		let desktop = Desktop.get(this.category.DesktopID);
 		if (desktop === undefined && AppUtility.isNotEmpty(this.category.DesktopID)) {
@@ -218,25 +204,7 @@ export class CategoriesUpdatePage implements OnInit {
 				}
 			},
 			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, true, inheritEventsAndMethods, inheritEmailSettings, inheritWebHookSettings),
-			{
-				Name: "Trackings",
-				Segment: "emails",
-				Options: {
-					Label: "{{portals.cms.categories.controls.Trackings.label}}"
-				},
-				SubControls: {
-					Controls: trackings.map(tracking => {
-						return {
-							Name: tracking,
-							Options: {
-								Label: `{{portals.cms.categories.controls.Trackings.${tracking}.label}}`,
-								Description: `{{portals.cms.categories.controls.Trackings.${tracking}.description}}`
-							}
-						};
-					})
-				}
-			},
-			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "emails", true, AppUtility.isNull(this.category.EmailSettings))
+			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "notifications", true, AppUtility.isNull(this.category.EmailSettings))
 		);
 
 		if (AppUtility.isNotEmpty(this.category.ID)) {
@@ -413,12 +381,12 @@ export class CategoriesUpdatePage implements OnInit {
 		);
 	}
 
-	async cancelAsync(message?: string) {
+	async cancelAsync(message?: string, url?: string) {
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			message || await this.configSvc.getResourceAsync(`portals.cms.categories.update.messages.confirm.${AppUtility.isNotEmpty(this.category.ID) ? "cancel" : "new"}`),
 			undefined,
-			async () => await this.configSvc.navigateBackAsync(),
+			async () => await this.configSvc.navigateBackAsync(url),
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);

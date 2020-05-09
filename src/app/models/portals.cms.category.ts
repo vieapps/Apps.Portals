@@ -131,7 +131,7 @@ export class Category extends BaseModel implements INestedObject {
 	}
 
 	public get routerLink() {
-		return `/portals/cms/${this.constructor.name.toLowerCase()}s/update/${AppUtility.toURI(this.ansiTitle)}`;
+		return `/portals/cms/categories/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
 	public get listURI() {
