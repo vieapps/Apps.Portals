@@ -148,7 +148,6 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	onClearSearch() {
 		this.cancelSearch();
 		this.filterBy.Query = undefined;
-		this.prepareFilter(true);
 		this.results = [];
 		this.selected.clear();
 	}
@@ -156,6 +155,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	onCancelSearch() {
 		this.onClearSearch();
 		this.searching = false;
+		this.prepareFilter(true);
 	}
 
 	async onInfiniteScrollAsync() {
@@ -230,7 +230,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			else {
 				let objects = new List(data.Objects as Array<DataItem>).Where(o => this.excludedIDs.indexOf(o.ID) < 0);
 				objects = this.nested
-					? objects.OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title)
+					? objects.OrderBy(o => o.OrderIndex).ThenBy(o => o.Title)
 					: objects.OrderBy(o => o.LastModified);
 				this.items = data !== undefined
 					? this.items.concat(objects.ToArray())
@@ -280,13 +280,13 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	back(event: Event) {
 		event.stopPropagation();
 		this.parent = this.parent.Parent;
-		this.items = (this.parent !== undefined ? this.parent.Children : this.rootItems).filter(d => this.excludedIDs.indexOf(d.ID) < 0);
+		this.items = (this.parent !== undefined ? this.parent.Children : this.rootItems).filter(o => this.excludedIDs.indexOf(o.ID) < 0);
 	}
 
 	show(event: Event, item: DataItem) {
 		event.stopPropagation();
 		this.parent = item;
-		this.items = this.parent.Children.filter(d => this.excludedIDs.indexOf(d.ID) < 0);
+		this.items = this.parent.Children.filter(o => this.excludedIDs.indexOf(o.ID) < 0);
 	}
 }
 

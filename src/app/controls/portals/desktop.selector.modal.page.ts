@@ -67,13 +67,7 @@ export class DesktopsSelectorModalPage implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.multiple = this.multiple === undefined ? true : AppUtility.isTrue(this.multiple);
-		this.organization = Organization.get(this.organizationID) || new Organization();
 		this.excludedIDs = AppUtility.isArray(this.excludedIDs, true) ? this.excludedIDs.filter(id => AppUtility.isNotEmpty(id)).map(id => id.trim()) : [];
-		this.parentDesktop = Desktop.get(this.parentID);
-		this.filterBy.And = [
-			{ SystemID: { Equals: this.organization.ID } },
-			{ ParentID: "IsNull" }
-		];
 		this.initializeAsync();
 	}
 
@@ -85,6 +79,12 @@ export class DesktopsSelectorModalPage implements OnInit, OnDestroy {
 
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
+		this.organization = Organization.get(this.organizationID) || await this.portalsCoreSvc.getActiveOrganizationAsync();
+		this.parentDesktop = Desktop.get(this.parentID);
+		this.filterBy.And = [
+			{ SystemID: { Equals: this.organization.ID } },
+			{ ParentID: "IsNull" }
+		];
 		this.children = await this.configSvc.getResourceAsync("portals.desktops.list.children");
 		this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.desktops.list.searchbar");
 		this.labels = {
@@ -223,15 +223,13 @@ export class DesktopsSelectorModalPage implements OnInit, OnDestroy {
 	back(event: Event) {
 		event.stopPropagation();
 		this.parentDesktop = this.parentDesktop.Parent;
-		this.desktops = this.parentDesktop !== undefined
-			? this.parentDesktop.Children.filter(d => this.excludedIDs.indexOf(d.ID) < 0)
-			: Desktop.all.filter(d => d.SystemID === this.organization.ID && d.ParentID === undefined).sort(AppUtility.getCompareFunction("Title"));
+		this.desktops = (this.parentDesktop !== undefined ? this.parentDesktop.Children : Desktop.all.filter(o => o.SystemID === this.organization.ID && o.ParentID === undefined)).filter(o => this.excludedIDs.indexOf(o.ID) < 0).sort(AppUtility.getCompareFunction("Title"));
 	}
 
 	show(event: Event, desktop: Desktop) {
 		event.stopPropagation();
 		this.parentDesktop = desktop;
-		this.desktops = this.parentDesktop.Children.filter(d => this.excludedIDs.indexOf(d.ID) < 0);
+		this.desktops = this.parentDesktop.Children.filter(o => this.excludedIDs.indexOf(o.ID) < 0);
 	}
 
 }

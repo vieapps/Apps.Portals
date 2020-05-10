@@ -81,13 +81,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		this.allowSystemRoles = this.allowSystemRoles === undefined ? true : AppUtility.isTrue(this.allowSystemRoles);
 		this.allowVisitorInContributiveSection = this.allowVisitorInContributiveSection === undefined ? false : AppUtility.isTrue(this.allowVisitorInContributiveSection);
 		this.section = AppUtility.isNotEmpty(this.section) ? this.section : "Viewable";
-		this.organization = Organization.get(this.organizationID) || new Organization();
 		this.excludedIDs = AppUtility.isArray(this.excludedIDs, true) ? this.excludedIDs.filter(id => AppUtility.isNotEmpty(id)).map(id => id.trim()) : [];
-		this.parentRole = Role.get(this.parentID);
-		this.filterBy.And = [
-			{ SystemID: { Equals: this.organization.ID } },
-			{ ParentID: "IsNull" }
-		];
 		this.initializeAsync();
 	}
 
@@ -99,6 +93,12 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
+		this.organization = Organization.get(this.organizationID) || await this.portalsCoreSvc.getActiveOrganizationAsync();
+		this.parentRole = Role.get(this.parentID);
+		this.filterBy.And = [
+			{ SystemID: { Equals: this.organization.ID } },
+			{ ParentID: "IsNull" }
+		];
 		this.children = await this.configSvc.getResourceAsync("portals.roles.list.children");
 		this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.roles.list.searchbar");
 		this.labels = {
@@ -259,9 +259,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	back(event: Event) {
 		event.stopPropagation();
 		this.parentRole = this.parentRole.Parent;
-		this.roles = this.parentRole !== undefined
-			? this.parentRole.Children.filter(o => this.excludedIDs.indexOf(o.ID) < 0)
-			: Role.all.filter(o => o.SystemID === this.organization.ID && o.ParentID === undefined).sort(AppUtility.getCompareFunction("Title"));
+		this.roles = (this.parentRole !== undefined ? this.parentRole.Children : Role.all.filter(o => o.SystemID === this.organization.ID && o.ParentID === undefined)).filter(o => this.excludedIDs.indexOf(o.ID) < 0).sort(AppUtility.getCompareFunction("Title"));
 	}
 
 	show(event: Event, role: Role) {
