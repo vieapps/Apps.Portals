@@ -184,16 +184,18 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		}
 	}
 
+	private get paginationPrefix() {
+		return this.portalsCoreSvc.getPaginationPrefix("role");
+	}
+
 	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
-		if (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID)) {
-			if (onNext !== undefined) {
-				onNext();
-			}
-		}
-		else {
-			this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `role@${this.portalsCoreSvc.name}`.toLowerCase()) || AppPagination.getDefault();
+		if (this.organization !== undefined && AppUtility.isNotEmpty(this.organization.ID)) {
+			this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 			this.pagination.PageNumber = this.pageNumber = 0;
 			await this.searchAsync(onNext);
+		}
+		else if (onNext !== undefined) {
+			onNext();
 		}
 	}
 
@@ -201,15 +203,15 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
 			this.pageNumber++;
-			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `role@${this.portalsCoreSvc.name}`.toLowerCase());
+			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			if (this.searching) {
 				(data !== undefined ? data.Objects as Array<any> : []).filter(o => this.excludedIDs.indexOf(o.ID) < 0).forEach(o => this.results.push(Role.get(o.ID)));
 			}
 			else {
-				const objects = new List(data !== undefined ? (data.Objects as Array<any>).map(r => Role.get(r.ID)) : Role.all.filter(r => r.SystemID === this.organization.ID && r.ParentID === this.parentID))
-					.Where(r => this.excludedIDs.indexOf(r.ID) < 0)
-					.OrderBy(r => r.Title).ThenByDescending(r => r.LastModified);
+				const objects = new List(data !== undefined ? (data.Objects as Array<any>).map(o => Role.get(o.ID)) : Role.all.filter(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID))
+					.Where(o => this.excludedIDs.indexOf(o.ID) < 0)
+					.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
 				this.roles = data !== undefined
 					? this.roles.concat(objects.ToArray())
 					: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();
@@ -258,14 +260,14 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		event.stopPropagation();
 		this.parentRole = this.parentRole.Parent;
 		this.roles = this.parentRole !== undefined
-			? this.parentRole.Children.filter(r => this.excludedIDs.indexOf(r.ID) < 0)
-			: Role.all.filter(r => r.SystemID === this.organization.ID && r.ParentID === undefined).sort(AppUtility.getCompareFunction("Title"));
+			? this.parentRole.Children.filter(o => this.excludedIDs.indexOf(o.ID) < 0)
+			: Role.all.filter(o => o.SystemID === this.organization.ID && o.ParentID === undefined).sort(AppUtility.getCompareFunction("Title"));
 	}
 
 	show(event: Event, role: Role) {
 		event.stopPropagation();
 		this.parentRole = role;
-		this.roles = this.parentRole.Children.filter(r => this.excludedIDs.indexOf(r.ID) < 0);
+		this.roles = this.parentRole.Children.filter(o => this.excludedIDs.indexOf(o.ID) < 0);
 	}
 
 }
