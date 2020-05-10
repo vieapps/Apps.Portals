@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { IonicModule } from "@ionic/angular";
 import { RolesSelectorModule } from "@controls/portals/role.selector.module";
 import { DesktopsSelectorModule } from "@controls/portals/desktop.selector.module";
+import { DataLookupModule } from "@controls/portals/data.lookup.module";
 
 @NgModule({
 	providers: [],
@@ -10,7 +11,8 @@ import { DesktopsSelectorModule } from "@controls/portals/desktop.selector.modul
 		CommonModule,
 		IonicModule,
 		RolesSelectorModule,
-		DesktopsSelectorModule
+		DesktopsSelectorModule,
+		DataLookupModule
 	],
 	exports: [
 	],
