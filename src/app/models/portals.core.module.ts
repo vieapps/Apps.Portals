@@ -25,6 +25,9 @@ export class Module extends BaseModel {
 		return this.instances.values();
 	}
 
+	/** Active module */
+	public static active: Module;
+
 	Title = undefined as string;
 	Description = undefined as string;
 	DesktopID = undefined as string;
