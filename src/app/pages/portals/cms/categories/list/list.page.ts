@@ -2,7 +2,7 @@ import { Subscription } from "rxjs";
 import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
+import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
@@ -38,18 +38,20 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
+	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
 
 	private organization: Organization;
 	private module: Module;
 	private contentType: ContentType;
 	private parentID: string;
 	private parentCategory: Category;
-	private canContribute = false;
 	private subscription: Subscription;
 	private children = "{{number}} children: {{children}}";
 	private alias = "Alias";
 
 	canUpdate = false;
+	canContribute = false;
+
 	title = "Categories";
 	categories = new Array<Category>();
 	searching = false;
@@ -77,13 +79,13 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	get totalDisplays() {
-		return this.parentID !== undefined
+		return this.parentCategory !== undefined
 			? this.parentCategory.childrenIDs.length
 			: AppPagination.computeTotal(this.pageNumber, this.pagination);
 	}
 
 	get totalRecords() {
-		return this.parentID !== undefined
+		return this.parentCategory !== undefined
 			? this.parentCategory.childrenIDs.length
 			: this.pagination.TotalRecords;
 	}
@@ -95,10 +97,10 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 	ngOnDestroy() {
 		if (!this.searching) {
 			if (this.parentCategory !== undefined) {
-				AppEvents.off("Portals", `CMS.Categories:${this.parentCategory.ID}:Refresh`);
+				AppEvents.off(this.portalsCoreSvc.name, `CMS.Categories:${this.parentCategory.ID}:Refresh`);
 			}
 			else {
-				AppEvents.off("Portals", "CMS.Categories:Refresh");
+				AppEvents.off(this.portalsCoreSvc.name, "CMS.Categories:Refresh");
 			}
 		}
 		else if (this.subscription !== undefined) {
@@ -125,7 +127,9 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 
 		this.module = this.contentType !== undefined
 			? Module.get(this.contentType.RepositoryID)
-			: undefined;
+			: await this.portalsCmsSvc.getActiveModuleAsync();
+
+		this.contentType = this.contentType || this.portalsCmsSvc.getDefaultCategoryContentType(this.module);
 
 		this.canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
 		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
@@ -156,7 +160,7 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 			this.parentCategory = Category.get(this.parentID);
 
 			if (this.parentCategory !== undefined) {
-				AppEvents.on("Portals", info => {
+				AppEvents.on(this.portalsCoreSvc.name, info => {
 					if (info.args.Object === "CMS.Category" && (this.parentCategory.ID === info.args.ID || this.parentCategory.ID === info.args.ParentID)) {
 						this.categories = this.parentCategory.Children;
 					}
@@ -165,20 +169,27 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentCategory.FullTitle}]` });
 			}
 			else {
-				AppEvents.on("Portals", info => {
+				AppEvents.on(this.portalsCoreSvc.name, info => {
 					if (info.args.Object === "CMS.Category") {
 						this.prepareResults();
 					}
 				}, "CMS.Categories:Refresh");
 				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.module === undefined ? this.organization.Title : this.organization.Title + " - " + this.module.Title)}]` });
-				this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
-				if (this.module !== undefined) {
-					this.filterBy.And.push({ RepositoryID: { Equals: this.module.ID } });
-				}
-				this.filterBy.And.push({ ParentID: "IsNull" });
+				this.prepareFilterBy();
 				await this.startSearchAsync();
 			}
 		}
+	}
+
+	private prepareFilterBy() {
+		this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
+		if (this.module !== undefined) {
+			this.filterBy.And.push({ RepositoryID: { Equals: this.module.ID } });
+		}
+		if (this.contentType !== undefined) {
+			this.filterBy.And.push({ RepositoryEntityID: { Equals: this.contentType.ID } });
+		}
+		this.filterBy.And.push({ ParentID: "IsNull" });
 	}
 
 	track(index: number, category: Category) {
@@ -305,7 +316,7 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 		else {
 			let objects = new List(results === undefined ? Category.all : results.map(o => Category.get(o.ID)));
 			objects = objects.Where(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID);
-			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			objects = objects.OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title);
 			if (results === undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}

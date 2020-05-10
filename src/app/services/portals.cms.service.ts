@@ -1,17 +1,14 @@
-import { Dictionary } from "typescript-collections";
-import { List } from "linqts";
 import { Injectable } from "@angular/core";
-import { AppStorage } from "@components/app.storage";
 import { AppRTU, AppMessage } from "@components/app.apis";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
 import { AppCustomCompleter } from "@components/app.completer";
 import { AppPagination } from "@components/app.pagination";
 import { Base as BaseService } from "@services/base.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { Organization } from "@models/portals.core.organization";
+import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
 import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
 import { Category } from "@models/portals.cms.category";
@@ -30,6 +27,7 @@ export class PortalsCmsService extends BaseService {
 	private initialize() {
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Category", message => this.processCategoryUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "CMS.Category", message => this.processCategoryUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Cms.Category", message => this.processCategoryUpdateMessage(message));
 	}
 
 	public getUrl(object: CmsBaseModel, action?: string, contentType?: ContentType) {
@@ -58,6 +56,58 @@ export class PortalsCmsService extends BaseService {
 
 	public getUpdateUrl(object: CmsBaseModel) {
 		return this.getUrl(object, "update");
+	}
+
+	public async getActiveModuleAsync(useXHR: boolean = true) {
+		if (Module.active === undefined) {
+			const preferID: string = this.configSvc.appConfig.options.extras["module"];
+			if (AppUtility.isNotEmpty(preferID)) {
+				Module.active = Module.get(preferID);
+				if (Module.active === undefined) {
+					await this.portalsCoreSvc.getModuleAsync(preferID, _ => {
+						Module.active = Module.get(preferID);
+						if (Module.active !== undefined && !useXHR) {
+							AppEvents.broadcast(this.name, { Object: "Module", Type: "Changed", ID: Module.active.ID });
+						}
+					}, undefined, useXHR);
+				}
+			}
+			else if (Module.instances.size() > 0) {
+				Module.active = this.portalsCoreSvc.activeOrganization.Modules.find(module => module.ModuleDefinitionID === "A0000000000000000000000000000001");
+				if (Module.active === undefined) {
+					Module.active = Module.all[0];
+				}
+			}
+			if (Module.active !== undefined) {
+				AppEvents.broadcast(this.name, { Object: "Module", Type: "Changed", ID: Module.active.ID });
+			}
+		}
+		return Module.active;
+	}
+
+	public async setActiveModuleAsync(moduleID: string, onNext?: () => void) {
+		if (AppUtility.isNotEmpty(moduleID) && Module.contains(moduleID) && (Module.active === undefined || Module.active.ID !== moduleID)) {
+			Module.active = Module.get(moduleID);
+			this.configSvc.appConfig.options.extras["module"] = Module.active.ID;
+			await this.configSvc.storeOptionsAsync();
+			AppEvents.broadcast(this.name, { Object: "Module", Type: "Changed", ID: Module.active.ID });
+		}
+		if (onNext !== undefined) {
+			onNext();
+		}
+		return Module.active;
+	}
+
+	public lookup(objectName: string, request: any, onNext: (data: any) => void, headers?: { [header: string]: string }) {
+		return super.search(super.getSearchURI(objectName, this.configSvc.relatedQuery), request, onNext, undefined, true, headers);
+	}
+
+	public async lookupAsync(objectName: string, request: any, onNext: (data: any) => void, headers?: { [header: string]: string }) {
+		await super.searchAsync(super.getSearchURI(objectName, this.configSvc.relatedQuery), request, onNext, undefined, true, false, headers);
+	}
+
+	public async getAsync(objectName: string, id: string, onNext: (data: any) => void, headers?: { [header: string]: string }) {
+		await super.readAsync(super.getURI(objectName, id), onNext, undefined, headers, true);
 	}
 
 	public get categoryCompleterDataSource() {
@@ -215,7 +265,7 @@ export class PortalsCmsService extends BaseService {
 		await super.deleteAsync(
 			super.getURI("cms.category", id),
 			data => {
-				this.deleteCategory(data, parentID);
+				this.deleteCategory(data.ID, parentID);
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -245,9 +295,9 @@ export class PortalsCmsService extends BaseService {
 				console.warn(super.getLogMessage("Got an update message of a CMS category"), message);
 				break;
 		}
-		AppEvents.broadcast("Portals", { Object: "CMS.Category", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
+		AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
 		if (AppUtility.isNotEmpty(message.Data.ParentID)) {
-			AppEvents.broadcast("Portals", { Object: "CMS.Category", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+			AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
 		}
 	}
 
@@ -291,9 +341,14 @@ export class PortalsCmsService extends BaseService {
 			if (parentCategory !== undefined && parentCategory.childrenIDs !== undefined) {
 				AppUtility.removeAt(parentCategory.childrenIDs, parentCategory.childrenIDs.indexOf(id));
 			}
+			console.warn("Delete from parent", parentCategory, parentCategory.childrenIDs);
 			Category.all.filter(category => category.ParentID === id).forEach(category => this.deleteCategory(category.ID));
 			Category.instances.remove(id);
 		}
+	}
+
+	public getDefaultCategoryContentType(module: Module) {
+		return (module || new Module()).ContentTypes.find(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000001");
 	}
 
 }

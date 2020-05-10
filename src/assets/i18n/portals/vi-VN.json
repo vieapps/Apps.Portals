@@ -171,6 +171,10 @@
 					}
 				}
 			},
+			"lookup": {
+				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác",
+				"children": "{{number}} nội dung cấp dưới: {{children}}"
+			},
 			"unspecified": "Không xác định"
 		},
 		"organizations": {

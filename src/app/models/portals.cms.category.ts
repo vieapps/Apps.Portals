@@ -122,7 +122,7 @@ export class Category extends BaseModel implements INestedObject {
 		const categories = AppUtility.isArray(this.childrenIDs, true)
 			? this.childrenIDs.map(id => Category.get(id))
 			: Category.all.filter(category => category.ParentID === this.ID);
-		return categories.sort(AppUtility.getCompareFunction("Title"));
+		return categories.sort(AppUtility.getCompareFunction("OrderIndex", "Title"));
 	}
 
 	public get FullTitle(): string {

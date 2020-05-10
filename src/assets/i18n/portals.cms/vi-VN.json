@@ -42,7 +42,8 @@
 					}
 				},
 				"list": {
-					"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác chuyên mục"
+					"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác chuyên mục",
+					"children": "{{number}} chuyên mục cấp dưới: {{children}}"
 				},
 				"update": {
 					"segments": {

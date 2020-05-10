@@ -5,7 +5,7 @@ import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { PlatformUtility } from "@components/app.utility.platform";
 import { TrackingUtility } from "@components/app.utility.trackings";
-import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
+import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { UsersService } from "@services/users.service";
@@ -19,6 +19,7 @@ import { Desktop } from "@models/portals.core.desktop";
 import { Category } from "@models/portals.cms.category";
 import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.modal.page";
 import { RolesSelectorModalPage } from "@controls/portals/role.selector.modal.page";
+import { DataLookupModalPage } from "@controls/portals/data.lookup.modal.page";
 
 @Component({
 	selector: "page-portals-cms-categories-update",
@@ -73,8 +74,6 @@ export class CategoriesUpdatePage implements OnInit {
 			: this.contentType !== undefined
 				? Organization.get(this.contentType.SystemID)
 				: await this.portalsCoreSvc.getActiveOrganizationAsync();
-
-		console.warn("Data", this.category, this.contentType, this.organization);
 
 		if (this.organization === undefined) {
 			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all");
@@ -153,8 +152,38 @@ export class CategoriesUpdatePage implements OnInit {
 			0
 		);
 
-		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
-		control.Options.AutoFocus = true;
+		const parentCategory = this.category.Parent;
+		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID"));
+		control.Type = "Lookup";
+		control.Required = false;
+		control.Extras = { LookupDisplayValues: parentCategory !== undefined ? [{ Value: parentCategory.ID, Label: parentCategory.FullTitle }] : undefined };
+		control.Options.LookupOptions = {
+			Multiple: false,
+			OnDelete: (_, formControl) => {
+				formControl.setValue(undefined);
+				formControl.lookupDisplayValues = undefined;
+			},
+			ModalOptions: {
+				Component: DataLookupModalPage,
+				ComponentProps: {
+					organizationID: this.organization.ID,
+					moduleID: this.module.ID,
+					contentTypeID: this.contentType.ID,
+					objectName: "CMS.Category",
+					nested: true,
+					parentID: parentCategory !== undefined ? parentCategory.ID : undefined,
+					multiple: false,
+					excludedIDs: AppUtility.isNotEmpty(this.category.ID) ? [this.category.ID] : undefined
+				},
+				OnDismiss: (data, formControl) => {
+					if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
+						const category = Category.get(data[0]);
+						formControl.setValue(category.ID);
+						formControl.lookupDisplayValues = [{ Value: category.ID, Label: category.FullTitle }];
+					}
+				}
+			}
+		};
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
 		control.Options.Rows = 2;
@@ -207,6 +236,9 @@ export class CategoriesUpdatePage implements OnInit {
 			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "notifications", true, AppUtility.isNull(this.category.EmailSettings))
 		);
 
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
+		control.Options.AutoFocus = true;
+
 		if (AppUtility.isNotEmpty(this.category.ID)) {
 			formConfig.push(
 				await this.usersSvc.getAuditFormControlAsync(this.category.Created, this.category.CreatedID, this.category.LastModified, this.category.LastModifiedID, "basic"),
@@ -228,6 +260,9 @@ export class CategoriesUpdatePage implements OnInit {
 					}
 				)
 			);
+		}
+		else {
+			control.Options.OnBlur = (_, formControl) => this.form.controls.Alias.setValue(AppUtility.toANSI(formControl.value, true), { onlySelf: true });
 		}
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
@@ -254,15 +289,6 @@ export class CategoriesUpdatePage implements OnInit {
 
 		this.form.patchValue(category);
 		this.hash = AppCrypto.hash(this.form.value);
-
-		if (!AppUtility.isNotEmpty(this.category.ID)) {
-			/*
-			const first = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "CategoryDefinitionID")).Options.SelectOptions.Values[0];
-			this.form.controls.CategoryDefinitionID.setValue(first.Value, { onlySelf: true });
-			this.form.controls.Title.setValue(first.Label, { onlySelf: true });
-			this.form.controls.Description.setValue(first.Description, { onlySelf: true });
-			*/
-		}
 		this.appFormsSvc.hideLoadingAsync();
 	}
 
@@ -289,10 +315,14 @@ export class CategoriesUpdatePage implements OnInit {
 				}
 
 				if (AppUtility.isNotEmpty(category.ID)) {
+					const oldParentID = this.category.ParentID;
 					await this.portalsCmsSvc.updateCategoryAsync(
 						category,
 						async data => {
-							AppEvents.broadcast("Portals", { Object: "Category", Type: "Updated", ID: data.ID });
+							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Updated", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
+							if (oldParentID !== data.ParentID) {
+								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Updated", ID: oldParentID });
+							}
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.update")),
@@ -309,7 +339,7 @@ export class CategoriesUpdatePage implements OnInit {
 					await this.portalsCmsSvc.createCategoryAsync(
 						category,
 						async data => {
-							AppEvents.broadcast("Portals", { Object: "Category", Type: "Created", ID: data.ID });
+							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.new")),
@@ -357,7 +387,7 @@ export class CategoriesUpdatePage implements OnInit {
 				await this.portalsCmsSvc.deleteCategoryAsync(
 					this.category.ID,
 					async data => {
-						AppEvents.broadcast("Portals", { Object: "Category", Type: "Deleted", ID: data.ID });
+						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 						await Promise.all([
 							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.buttons.delete"), this.configSvc.currentUrl),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.delete")),
