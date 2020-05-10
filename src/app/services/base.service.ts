@@ -172,9 +172,10 @@ export class Base {
 	 * @param onNext The handler to run when the process is completed
 	 * @param onError The handler to run when got any error
 	 * @param dontProcessPagination Set to true to by-pass process pagination
+	 * @param headers The additional header
 	*/
-	protected search(path: string, request: any = {}, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean) {
-		return AppXHR.get(AppUtility.format(path, { request: AppUtility.toBase64Url(request) })).subscribe(
+	protected search(path: string, request: any = {}, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }) {
+		return AppXHR.get(AppUtility.format(path, { request: AppUtility.toBase64Url(request) }), headers).subscribe(
 			data => {
 				if (AppUtility.isFalse(dontProcessPagination)) {
 					const requestedPath = this.parseRequestedPath(path);
@@ -198,7 +199,7 @@ export class Base {
 	 * @param useXHR Set to true to use XHR, false to system decides
 	 * @param headers The additional header
 	*/
-	protected async searchAsync(path: string, request: any = {}, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
+	protected async searchAsync(path: string, request: any = {}, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false, headers?: { [header: string]: string }) {
 		const processPagination = AppUtility.isFalse(dontProcessPagination);
 		const requestedPath = processPagination ? this.parseRequestedPath(path) : undefined;
 		const paginationPrefix = processPagination ? `${requestedPath.objectName}@${requestedPath.serviceName}`.toLowerCase() : undefined;
