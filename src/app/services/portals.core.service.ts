@@ -112,7 +112,7 @@ export class PortalsCoreService extends BaseService {
 					await this.getOrganizationAsync(preferID, _ => {
 						Organization.active = Organization.get(preferID);
 						if (Organization.active !== undefined && !useXHR) {
-							AppEvents.broadcast("Portals", { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
+							AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
 						}
 					}, undefined, useXHR);
 				}
@@ -121,7 +121,7 @@ export class PortalsCoreService extends BaseService {
 				Organization.active = Organization.all[0];
 			}
 			if (Organization.active !== undefined) {
-				AppEvents.broadcast("Portals", { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
+				AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
 			}
 		}
 		return Organization.active;
@@ -132,7 +132,7 @@ export class PortalsCoreService extends BaseService {
 			Organization.active = Organization.get(organizationID);
 			this.configSvc.appConfig.options.extras["organization"] = Organization.active.ID;
 			await this.configSvc.storeOptionsAsync();
-			AppEvents.broadcast("Portals", { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
+			AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
 		}
 		if (onNext !== undefined) {
 			onNext();
@@ -732,7 +732,7 @@ export class PortalsCoreService extends BaseService {
 				console.warn(super.getLogMessage("Got an update message of an organization"), message);
 				break;
 		}
-		AppEvents.broadcast("Portals", { Object: "Organization", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		AppEvents.broadcast(this.name, { Object: "Organization", Type: `${message.Type.Event}d`, ID: message.Data.ID });
 	}
 
 	public get roleCompleterDataSource() {
@@ -890,7 +890,7 @@ export class PortalsCoreService extends BaseService {
 		await super.deleteAsync(
 			super.getURI("role", id),
 			data => {
-				this.deleteRole(data, parentID);
+				this.deleteRole(data.ID, parentID);
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -920,9 +920,9 @@ export class PortalsCoreService extends BaseService {
 				console.warn(super.getLogMessage("Got an update message of a role"), message);
 				break;
 		}
-		AppEvents.broadcast("Portals", { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
+		AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
 		if (AppUtility.isNotEmpty(message.Data.ParentID)) {
-			AppEvents.broadcast("Portals", { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+			AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
 		}
 	}
 
@@ -1105,7 +1105,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async updateDesktopAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		const parentID = Role.contains(body.ID) ? Role.get(body.ID).ParentID : undefined;
+		const parentID = Desktop.contains(body.ID) ? Desktop.get(body.ID).ParentID : undefined;
 		await super.updateAsync(
 			super.getURI("desktop", body.ID),
 			body,
@@ -1125,11 +1125,11 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async deleteDesktopAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		const parentID = Role.contains(id) ? Role.get(id).ParentID : undefined;
+		const parentID = Desktop.contains(id) ? Desktop.get(id).ParentID : undefined;
 		await super.deleteAsync(
 			super.getURI("desktop", id),
 			data => {
-				this.deleteDesktop(data, parentID);
+				this.deleteDesktop(data.ID, parentID);
 				if (onNext !== undefined) {
 					onNext(data);
 				}
@@ -1159,9 +1159,9 @@ export class PortalsCoreService extends BaseService {
 				console.warn(super.getLogMessage("Got an update message of a desktop"), message);
 				break;
 		}
-		AppEvents.broadcast("Portals", { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
+		AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
 		if (AppUtility.isNotEmpty(message.Data.ParentID)) {
-			AppEvents.broadcast("Portals", { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+			AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
 		}
 	}
 
@@ -1376,7 +1376,7 @@ export class PortalsCoreService extends BaseService {
 				console.warn(super.getLogMessage("Got an update message of a site"), message);
 				break;
 		}
-		AppEvents.broadcast("Portals", { Object: "Site", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		AppEvents.broadcast(this.name, { Object: "Site", Type: `${message.Type.Event}d`, ID: message.Data.ID });
 	}
 
 	public get moduleCompleterDataSource() {
@@ -1556,7 +1556,7 @@ export class PortalsCoreService extends BaseService {
 				console.warn(super.getLogMessage("Got an update message of a modul"), message);
 				break;
 		}
-		AppEvents.broadcast("Portals", { Object: "Module", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		AppEvents.broadcast(this.name, { Object: "Module", Type: `${message.Type.Event}d`, ID: message.Data.ID });
 	}
 
 	public get contentTypeCompleterDataSource() {
@@ -1727,7 +1727,7 @@ export class PortalsCoreService extends BaseService {
 				console.warn(super.getLogMessage("Got an update message of a content-type"), message);
 				break;
 		}
-		AppEvents.broadcast("Portals", { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
 	}
 
 }
