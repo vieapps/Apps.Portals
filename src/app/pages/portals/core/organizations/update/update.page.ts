@@ -552,7 +552,7 @@ export class OrganizationsUpdatePage implements OnInit {
 					await this.portalsCoreSvc.updateOrganizationAsync(
 						organization,
 						async data => {
-							AppEvents.broadcast("Portals", { Object: "Organization", Type: "Updated", ID: data.ID });
+							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Organization", Type: "Updated", ID: data.ID });
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.update")),
@@ -569,7 +569,7 @@ export class OrganizationsUpdatePage implements OnInit {
 					await this.portalsCoreSvc.createOrganizationAsync(
 						organization,
 						async data => {
-							AppEvents.broadcast("Portals", { Object: "Organization", Type: "Created", ID: data.ID });
+							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Organization", Type: "Created", ID: data.ID });
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.new")),

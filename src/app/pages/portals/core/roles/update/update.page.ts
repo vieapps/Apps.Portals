@@ -264,10 +264,14 @@ export class RolesUpdatePage implements OnInit {
 				await this.appFormsSvc.showLoadingAsync(this.title);
 				const role = this.form.value;
 				if (AppUtility.isNotEmpty(role.ID)) {
+					const oldParentID = this.role.ParentID;
 					await this.portalsCoreSvc.updateRoleAsync(
 						role,
 						async data => {
-							AppEvents.broadcast("Portals", { Object: "Role", Type: "Updated", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
+							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Role", Type: "Updated", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
+							if (oldParentID !== data.ParentID) {
+								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Role", Type: "Updated", ID: oldParentID });
+							}
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.update")),
@@ -284,7 +288,7 @@ export class RolesUpdatePage implements OnInit {
 					await this.portalsCoreSvc.createRoleAsync(
 						role,
 						async data => {
-							AppEvents.broadcast("Portals", { Object: "Role", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
+							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Role", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.new")),
@@ -321,7 +325,7 @@ export class RolesUpdatePage implements OnInit {
 				await this.portalsCoreSvc.deleteRoleAsync(
 					this.role.ID,
 					async data => {
-						AppEvents.broadcast("Portals", { Object: "Role", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
+						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Role", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 						await Promise.all([
 							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.roles.update.buttons.delete"), this.configSvc.currentUrl),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.delete")),

@@ -70,7 +70,7 @@ export class OrganizationsListPage implements OnInit, OnDestroy {
 
 	ngOnDestroy() {
 		if (!this.searching) {
-			AppEvents.off("Portals", "Organizations:Refresh");
+			AppEvents.off(this.portalsCoreSvc.name, "Organizations:Refresh");
 		}
 		else if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();

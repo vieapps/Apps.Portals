@@ -420,7 +420,7 @@ export class ContentTypesUpdatePage implements OnInit {
 					await this.portalsCoreSvc.updateContentTypeAsync(
 						contentType,
 						async data => {
-							AppEvents.broadcast("Portals", { Object: "Content.Type", Type: "Updated", ID: data.ID });
+							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Updated", ID: data.ID });
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.update")),
@@ -437,7 +437,7 @@ export class ContentTypesUpdatePage implements OnInit {
 					await this.portalsCoreSvc.createContentTypeAsync(
 						contentType,
 						async data => {
-							AppEvents.broadcast("Portals", { Object: "Content.Type", Type: "Created", ID: data.ID });
+							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Created", ID: data.ID });
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.new")),
@@ -475,7 +475,7 @@ export class ContentTypesUpdatePage implements OnInit {
 				await this.portalsCoreSvc.deleteContentTypeAsync(
 					this.contentType.ID,
 					async data => {
-						AppEvents.broadcast("Portals", { Object: "Content.Type", Type: "Deleted", ID: data.ID });
+						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Deleted", ID: data.ID });
 						await Promise.all([
 							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.buttons.delete"), this.configSvc.currentUrl),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.delete")),

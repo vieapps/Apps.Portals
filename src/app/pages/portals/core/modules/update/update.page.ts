@@ -321,7 +321,7 @@ export class ModulesUpdatePage implements OnInit {
 					await this.portalsCoreSvc.updateModuleAsync(
 						modul,
 						async data => {
-							AppEvents.broadcast("Portals", { Object: "Module", Type: "Updated", ID: data.ID });
+							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Module", Type: "Updated", ID: data.ID });
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.modules.update.messages.success.update")),
@@ -338,7 +338,7 @@ export class ModulesUpdatePage implements OnInit {
 					await this.portalsCoreSvc.createModuleAsync(
 						modul,
 						async data => {
-							AppEvents.broadcast("Portals", { Object: "Module", Type: "Created", ID: data.ID });
+							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Module", Type: "Created", ID: data.ID });
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.modules.update.messages.success.new")),
@@ -376,7 +376,7 @@ export class ModulesUpdatePage implements OnInit {
 				await this.portalsCoreSvc.deleteModuleAsync(
 					this.module.ID,
 					async data => {
-						AppEvents.broadcast("Portals", { Object: "Module", Type: "Deleted", ID: data.ID });
+						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Module", Type: "Deleted", ID: data.ID });
 						await Promise.all([
 							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.modules.update.buttons.delete"), this.configSvc.currentUrl),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.modules.update.messages.success.delete")),

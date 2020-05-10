@@ -66,13 +66,13 @@ export class RolesListPage implements OnInit, OnDestroy {
 	}
 
 	get totalDisplays() {
-		return this.parentID !== undefined
+		return this.parentRole !== undefined
 			? this.parentRole.childrenIDs.length
 			: AppPagination.computeTotal(this.pageNumber, this.pagination);
 	}
 
 	get totalRecords() {
-		return this.parentID !== undefined
+		return this.parentRole !== undefined
 			? this.parentRole.childrenIDs.length
 			: this.pagination.TotalRecords;
 	}
@@ -84,10 +84,10 @@ export class RolesListPage implements OnInit, OnDestroy {
 	ngOnDestroy() {
 		if (!this.searching) {
 			if (this.parentRole !== undefined) {
-				AppEvents.off("Portals", `Roles:${this.parentRole.ID}:Refresh`);
+				AppEvents.off(this.portalsCoreSvc.name, `Roles:${this.parentRole.ID}:Refresh`);
 			}
 			else {
-				AppEvents.off("Portals", "Roles:Refresh");
+				AppEvents.off(this.portalsCoreSvc.name, "Roles:Refresh");
 			}
 		}
 		else if (this.subscription !== undefined) {

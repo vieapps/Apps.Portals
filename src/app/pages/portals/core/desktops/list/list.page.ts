@@ -67,13 +67,13 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 	}
 
 	get totalDisplays() {
-		return this.parentID !== undefined
+		return this.parentDesktop !== undefined
 			? this.parentDesktop.childrenIDs.length
 			: AppPagination.computeTotal(this.pageNumber, this.pagination);
 	}
 
 	get totalRecords() {
-		return this.parentID !== undefined
+		return this.parentDesktop !== undefined
 			? this.parentDesktop.childrenIDs.length
 			: this.pagination.TotalRecords;
 	}
@@ -85,10 +85,10 @@ export class DesktopsListPage implements OnInit, OnDestroy {
 	ngOnDestroy() {
 		if (!this.searching) {
 			if (this.parentDesktop !== undefined) {
-				AppEvents.off("Portals", `Desktops:${this.parentDesktop.ID}:Refresh`);
+				AppEvents.off(this.portalsCoreSvc.name, `Desktops:${this.parentDesktop.ID}:Refresh`);
 			}
 			else {
-				AppEvents.off("Portals", "Desktops:Refresh");
+				AppEvents.off(this.portalsCoreSvc.name, "Desktops:Refresh");
 			}
 		}
 		else if (this.subscription !== undefined) {

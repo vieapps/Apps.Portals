@@ -94,7 +94,7 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 			else if (AppUtility.isNotEmpty(this.repositoryID)) {
 				identity = `ContentTypes:${this.repositoryID}:Refresh`;
 			}
-			AppEvents.off("Portals", identity);
+			AppEvents.off(this.portalsCoreSvc.name, identity);
 		}
 		else if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
@@ -169,7 +169,7 @@ export class ContentTypesListPage implements OnInit, OnDestroy {
 			else if (AppUtility.isNotEmpty(this.repositoryID)) {
 				identity = `ContentTypes:${this.repositoryID}:Refresh`;
 			}
-			AppEvents.on("Portals", info => {
+			AppEvents.on(this.portalsCoreSvc.name, info => {
 				if (info.args.Object === "Content.Type" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
 					this.prepareResults();
 				}

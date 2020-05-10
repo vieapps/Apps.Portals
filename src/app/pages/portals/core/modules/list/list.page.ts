@@ -80,7 +80,7 @@ export class ModulesListPage implements OnInit, OnDestroy {
 
 	ngOnDestroy() {
 		if (!this.searching) {
-			AppEvents.off("Portals", AppUtility.isNotEmpty(this.definitionID) ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
+			AppEvents.off(this.portalsCoreSvc.name, AppUtility.isNotEmpty(this.definitionID) ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
 		}
 		else if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();

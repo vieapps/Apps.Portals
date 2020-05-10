@@ -76,7 +76,7 @@ export class SitesListPage implements OnInit, OnDestroy {
 
 	ngOnDestroy() {
 		if (!this.searching) {
-			AppEvents.off("Portals", "Sites:Refresh");
+			AppEvents.off(this.portalsCoreSvc.name, "Sites:Refresh");
 		}
 		else if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
