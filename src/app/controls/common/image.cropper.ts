@@ -22,7 +22,7 @@ export class ImageCropperControl implements OnInit, OnDestroy {
 	}
 
 	/** Settings of the image cropper */
-	@Input() settings: {
+	@Input() private settings: {
 		currentImage?: string;
 		selectorWidth?: number;
 		selectorHeight?: number;
@@ -35,7 +35,7 @@ export class ImageCropperControl implements OnInit, OnDestroy {
 	};
 
 	/** The form control that contains this control */
-	@Input() control: AppFormsControl;
+	@Input() private control: AppFormsControl;
 
 	/** The event handler to run when the controls was initialized */
 	@Output() init = new EventEmitter();

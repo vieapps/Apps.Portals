@@ -19,7 +19,7 @@ export class DataSelectorControl implements OnInit, OnDestroy {
 	}
 
 	/** The form control that contains this control */
-	@Input() control: AppFormsControl;
+	@Input() private control: AppFormsControl;
 
 	/** The current items for displying */
 	@Input() items: Array<AppFormsLookupValue>;
@@ -28,13 +28,13 @@ export class DataSelectorControl implements OnInit, OnDestroy {
 	@Input() resources: { header: string; confirm: string; ok: string; cancel: string; };
 
 	/** The handlers to process the request on add/delete */
-	@Input() handlers: { add: () => void; delete: (selected: Array<string>) => void; };
+	@Input() private handlers: { add: () => void; delete: (selected: Array<string>) => void; };
 
 	/** Set to 'true' to allow select multiple item */
-	@Input() multiple: boolean;
+	@Input() private multiple: boolean;
 
 	/** The settings (allow add/delete, show show item's image/description, position of desscription) */
-	@Input() settings: { [key: string]: any };
+	@Input() private settings: { [key: string]: any };
 
 	/** The event handler to run when the controls was initialized */
 	@Output() init = new EventEmitter<DataSelectorControl>();

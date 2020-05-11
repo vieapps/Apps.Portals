@@ -28,25 +28,25 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	}
 
 	/** Set to 'true' to allow select multiple roles */
-	@Input() multiple: boolean;
+	@Input() private multiple: boolean;
 
 	/** Set to 'true' to allow system roles (Authorized and All) */
-	@Input() allowSystemRoles: boolean;
+	@Input() private allowSystemRoles: boolean;
 
 	/** Set to 'true' to allow visitor role to show in 'Contributive' section */
-	@Input() allowVisitorInContributiveSection: boolean;
+	@Input() private allowVisitorInContributiveSection: boolean;
 
 	/** The working section */
-	@Input() section: string;
+	@Input() private section: string;
 
 	/** The identity of organization */
-	@Input() organizationID: string;
+	@Input() private organizationID: string;
 
 	/** The identity of parent role */
-	@Input() parentID: string;
+	@Input() private parentID: string;
 
 	/** The excluded identities */
-	@Input() excludedIDs: Array<string>;
+	@Input() private excludedIDs: Array<string>;
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;

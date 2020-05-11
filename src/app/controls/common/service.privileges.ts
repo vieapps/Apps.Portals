@@ -18,13 +18,13 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 	}
 
 	/** The form control that contains this control */
-	@Input() control: AppFormsControl;
+	@Input() private control: AppFormsControl;
 
 	/** The name of the service */
-	@Input() service: string;
+	@Input() private service: string;
 
 	/** The privileges of the service */
-	@Input() privileges: Array<Privilege>;
+	@Input() private privileges: Array<Privilege>;
 
 	/** The position of labels (default is 'stacked') */
 	@Input() labelPosition: string;

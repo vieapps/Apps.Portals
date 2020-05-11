@@ -28,16 +28,16 @@ export class DesktopsSelectorModalPage implements OnInit, OnDestroy {
 	}
 
 	/** Set to 'true' to allow select multiple desktops */
-	@Input() multiple: boolean;
+	@Input() private multiple: boolean;
 
 	/** The identity of organization */
-	@Input() organizationID: string;
+	@Input() private organizationID: string;
 
 	/** The identity of parent desktop */
-	@Input() parentID: string;
+	@Input() private parentID: string;
 
 	/** The excluded identities */
-	@Input() excludedIDs: Array<string>;
+	@Input() private excludedIDs: Array<string>;
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;

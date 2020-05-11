@@ -29,7 +29,7 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 	}
 
 	/** Set to 'true' to allow select multiple users */
-	@Input() multiple: boolean;
+	@Input() private multiple: boolean;
 
 	/** Set to 'true' to hide all email addresses */
 	@Input() hideEmails: boolean;

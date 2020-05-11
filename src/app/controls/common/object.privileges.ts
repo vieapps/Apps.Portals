@@ -26,20 +26,22 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	/** The form control that contains this control */
-	@Input() control: AppFormsControl;
+	@Input() private control: AppFormsControl;
 
 	/** The privileges of the service */
-	@Input() privileges: Privileges;
+	@Input() private privileges: Privileges;
 
 	/** Set to 'false' to don't allow to inherit the privileges from parent (default is true) */
-	@Input() allowInheritFromParent: boolean;
+	@Input() private allowInheritFromParent: boolean;
 
 	/** The information for working with roles selector (prepare name function, modal component, modal properties) */
-	@Input() rolesSelector: {
+	@Input() private rolesSelector: {
 		/** The function to prepare the information of a role */
 		prepare: (role: AppFormsLookupValue) => Promise<void>;
+
 		/** The component to show as the modal to select role(s) */
 		modalComponent: any;
+
 		/** The properties of modal component to to select role(s) */
 		modalComponentProperties: { [key: string]: any };
 	};
