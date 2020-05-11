@@ -386,7 +386,10 @@ export class PortalsCoreService extends BaseService {
 					Options: {
 						Label: "{{portals.common.controls.notifications.inheritFromParent}}",
 						Type: "toggle",
-						OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name === "Events" || ctrl.Name === "Methods").forEach(ctrl => ctrl.Hidden = event.detail.checked)
+						OnChanged: (event, formControl) => formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name === "Events" || ctrl.Name === "Methods").forEach(ctrl => {
+							ctrl.Hidden = event.detail.checked;
+							formControl.formGroup.controls[ctrl.Name].setValue([], { onlySelf: true });
+						})
 					}
 				},
 				0
