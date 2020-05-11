@@ -31,28 +31,28 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	}
 
 	/** The identity of organization */
-	@Input() organizationID: string;
+	@Input() private organizationID: string;
 
 	/** The identity of module */
-	@Input() moduleID: string;
+	@Input() private moduleID: string;
 
 	/** The identity of content-type */
-	@Input() contentTypeID: string;
+	@Input() private contentTypeID: string;
 
 	/** The object name */
-	@Input() objectName: string;
+	@Input() private objectName: string;
 
 	/** Set to 'true' to act like nestest items */
-	@Input() nested: boolean;
-
-	/** The identity of parent item */
-	@Input() parentID: string;
+	@Input() private nested: boolean;
 
 	/** Set to 'true' to allow select multiple items */
-	@Input() multiple: boolean;
+	@Input() private multiple: boolean;
 
 	/** The excluded identities */
-	@Input() excludedIDs: Array<string>;
+	@Input() private excludedIDs: Array<string>;
+
+	/** The function to pre-process items */
+	@Input() private preProcess: (items: Array<any>) => void;
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
@@ -62,9 +62,10 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	private module: Module;
 	private contentType: ContentType;
 	private children = "{{number}} children: {{children}}";
+	private rootItems = new Array<DataItem>();
 
+	parent: DataItem;
 	items = new Array<DataItem>();
-	rootItems = new Array<DataItem>();
 	results = new Array<DataItem>();
 	searching = false;
 	pageNumber = 0;
@@ -72,7 +73,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	request: AppDataRequest;
 	filterBy = {
 		Query: undefined as string,
-		And: new Array<{ [key: string]: any }>()
+		And: undefined as Array<{ [key: string]: any }>
 	};
 	sortBy = undefined as { [key: string]: string };
 	labels = {
@@ -81,10 +82,9 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		search: "Search"
 	};
 	selected = new Set<string>();
-	parent: DataItem;
 
 	ngOnInit() {
-		this.nested = this.nested === undefined ? true : AppUtility.isTrue(this.nested);
+		this.nested = this.nested === undefined ? false : AppUtility.isTrue(this.nested);
 		this.multiple = this.multiple === undefined ? true : AppUtility.isTrue(this.multiple);
 		this.excludedIDs = AppUtility.isArray(this.excludedIDs, true) ? this.excludedIDs.filter(id => AppUtility.isNotEmpty(id)).map(id => id.trim()) : [];
 		this.initializeAsync();
@@ -101,9 +101,6 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		this.organization = Organization.get(this.organizationID) || await this.portalsCoreSvc.getActiveOrganizationAsync();
 		this.module = Module.get(this.moduleID);
 		this.contentType = ContentType.get(this.contentTypeID);
-		if (AppUtility.isNotEmpty(this.parentID)) {
-			this.parent = await this.getParentAsync(this.parentID);
-		}
 		this.prepareFilter(true);
 		this.sortBy = this.nested
 			? { OrderIndex: "Ascending", Title: "Ascending" }
@@ -168,39 +165,6 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		}
 	}
 
-	private async getParentAsync(id: string) {
-		let parent: DataItem;
-		await this.portalsCmsSvc.getAsync(this.objectName, id, data => {
-			if (this.nested) {
-				parent = {
-					ID: data.ID,
-					Title: data.Title,
-					ParentID: data.ParentID,
-					OrderIndex: data.OrderIndex,
-					Children: data.Children,
-					Created: new Date(data.Created),
-					CreatedID: data.CreatedID,
-					LastModified: new Date(data.LastModified),
-					LastModifiedID: data.LastModifiedID
-				};
-			}
-			else {
-				parent = {
-					ID: data.ID,
-					Title: data.Title,
-					Created: new Date(data.Created),
-					CreatedID: data.CreatedID,
-					LastModified: new Date(data.LastModified),
-					LastModifiedID: data.LastModifiedID
-				};
-			}
-		}, this.nested ? { "x-children": "true" } : undefined);
-		if (this.nested && AppUtility.isNotEmpty(parent.ParentID)) {
-			parent.Parent = await this.getParentAsync(parent.ParentID);
-		}
-		return parent;
-	}
-
 	private prepareFilter(allowParent: boolean) {
 		this.filterBy.And = [
 			{ SystemID: { Equals: this.organization.ID } },
@@ -221,6 +185,9 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	private async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
+			if (this.preProcess !== undefined) {
+				this.preProcess(data.Objects);
+			}
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request);
 			this.pagination.PageNumber = this.pageNumber;
@@ -235,7 +202,10 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 				this.items = data !== undefined
 					? this.items.concat(objects.ToArray())
 					: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();
-				this.rootItems = this.items.map(item => item);
+				if (this.nested) {
+					this.items.forEach(item => this.updateParent(item));
+					this.rootItems = this.items.map(item => item);
+				}
 			}
 			if (onNext !== undefined) {
 				onNext();
@@ -256,6 +226,15 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		}
 		if (AppUtility.isFalse(dontDisableInfiniteScroll)) {
 			this.infiniteScrollCtrl.disabled = true;
+		}
+	}
+
+	private updateParent(item: DataItem) {
+		if (item.Children !== undefined && item.Children.length > 0) {
+			item.Children.forEach(child => {
+				child.Parent = item;
+				this.updateParent(child);
+			});
 		}
 	}
 
@@ -297,8 +276,5 @@ interface DataItem {
 	OrderIndex?: number;
 	Parent?: DataItem;
 	Children?: DataItem[];
-	Created: Date;
-	CreatedID: string;
 	LastModified: Date;
-	LastModifiedID: string;
 }
