@@ -1332,7 +1332,7 @@ export class AppFormsService {
 	public async hideModalAsync(data?: any, onNext?: (data?: any) => void) {
 		if (this._modal !== undefined) {
 			await this._modal.component.dismiss();
-			if (this._modal.onDismiss !== undefined) {
+			if (this._modal !== undefined && this._modal.onDismiss !== undefined) {
 				this._modal.onDismiss(data);
 			}
 			if (onNext !== undefined) {
