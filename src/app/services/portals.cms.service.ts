@@ -170,15 +170,7 @@ export class PortalsCmsService extends BaseService {
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						const category = Category.get(obj.ID);
-						if (category === undefined) {
-							this.fetchCategory(Category.update(obj));
-						}
-						else if (category.childrenIDs === undefined) {
-							this.fetchCategory(category);
-						}
-					});
+					this.processCategories(data.Objects as Array<any>);
 				}
 				if (onNext !== undefined) {
 					onNext(data);
@@ -299,6 +291,18 @@ export class PortalsCmsService extends BaseService {
 		if (AppUtility.isNotEmpty(message.Data.ParentID)) {
 			AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
 		}
+	}
+
+	public processCategories(categories: Array<any>) {
+		categories.forEach(data => {
+			const category = Category.get(data.ID);
+			if (category === undefined) {
+				this.fetchCategory(Category.update(data));
+			}
+			else if (category.childrenIDs === undefined) {
+				this.fetchCategory(category);
+			}
+		});
 	}
 
 	private fetchCategory(category: Category) {

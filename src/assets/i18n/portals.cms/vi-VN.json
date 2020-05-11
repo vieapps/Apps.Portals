@@ -39,6 +39,19 @@
 						"label": "Desktop hiển thị",
 						"placeholder": "",
 						"description": "Desktop mặc định sử dụng để hiển thị các nội dung của chuyên mục, sẽ sử dụng desktop của kiểu dữ liệu nghiêp vụ nội dung tương ứng nếu không có desktop nào được chỉ định"
+					},
+					"OpenBy": {
+						"label": "Cách thức mở chuyên mục",
+						"placeholder": "",
+						"description": "Chỉ định cách thức mở (tạo liên kết) của chuyên mục",
+						"DesktopWithAlias": "Mở desktop hiển thị với tên rút gọn",
+						"DesktopOnly": "Chỉ mở desktop hiển thị",
+						"SpecifiedURI": "Mở theo liên kết tĩnh được chỉ định ở dưới"
+					},
+					"SpecifiedURI": {
+						"label": "Liên kết tĩnh",
+						"placeholder": "",
+						"description": "Chỉ định liên kết tĩnh/cố định của chuyên mục.<br/>Tips: có thể sử dụng ký hiệu '<b>~/</b>' để chỉ định liên kết từ gốc (root), hoặc sử dụng '<b>javascript:</b>' để chỉ định chạy hàm Javascript."
 					}
 				},
 				"list": {

@@ -32,6 +32,8 @@ export class Category extends BaseModel implements INestedObject {
 	Alias = undefined as string;
 	Description = undefined as string;
 	DesktopID = undefined as string;
+	OpenBy = "DesktopWithAlias";
+	SpecifiedURI = undefined as string;
 	Notifications = undefined as {
 		Events?: Array<string>;
 		Methods?: Array<string>;
@@ -52,9 +54,6 @@ export class Category extends BaseModel implements INestedObject {
 			AdditionalQuery?: string;
 			AdditionalHeader?: string;
 		};
-	};
-	Trackings = undefined as {
-		[key: string]: string
 	};
 	EmailSettings = undefined as {
 		Sender?: string;

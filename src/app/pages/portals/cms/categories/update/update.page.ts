@@ -152,7 +152,11 @@ export class CategoriesUpdatePage implements OnInit {
 			0
 		);
 
-		const parentCategory = this.category.Parent;
+		let parentCategory = this.category.Parent;
+		if (parentCategory === undefined && AppUtility.isNotEmpty(this.category.ParentID)) {
+			await this.portalsCmsSvc.getCategoryAsync(this.category.ParentID, _ => parentCategory = this.category.Parent, undefined, true);
+		}
+
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID"));
 		control.Type = "Lookup";
 		control.Required = false;
@@ -171,11 +175,11 @@ export class CategoriesUpdatePage implements OnInit {
 					contentTypeID: this.contentType.ID,
 					objectName: "CMS.Category",
 					nested: true,
-					parentID: parentCategory !== undefined ? parentCategory.ID : undefined,
 					multiple: false,
-					excludedIDs: AppUtility.isNotEmpty(this.category.ID) ? [this.category.ID] : undefined
+					excludedIDs: AppUtility.isNotEmpty(this.category.ID) ? [this.category.ID] : undefined,
+					preProcess: (categories: Array<any>) => this.portalsCmsSvc.processCategories(categories)
 				},
-				OnDismiss: (data, formControl) => {
+				OnDismiss: async (data, formControl) => {
 					if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
 						const category = Category.get(data[0]);
 						formControl.setValue(category.ID);
@@ -217,6 +221,14 @@ export class CategoriesUpdatePage implements OnInit {
 				}
 			}
 		};
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OpenBy"));
+		control.Options.SelectOptions.AsBoxes = true;
+		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
+			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values) as Array<string>).map(value => {
+				return { Value: value, Label: `{{portals.cms.categories.controls.OpenBy.${value}}}` };
+			});
+		}
 
 		const inheritEventsAndMethods = AppUtility.isNull(this.category.Notifications) || (AppUtility.isNull(this.category.Notifications.Events) && AppUtility.isNull(this.category.Notifications.Methods));
 		const inheritEmailSettings = AppUtility.isNull(this.category.Notifications) || AppUtility.isNull(this.category.Notifications.Emails);
@@ -304,6 +316,10 @@ export class CategoriesUpdatePage implements OnInit {
 				const category = this.form.value;
 				category.OriginalPrivileges = Privileges.getPrivileges(category.OriginalPrivileges);
 
+				if (category.Notifications && category.Notifications.InheritFromParent) {
+					category.Notifications.Events = undefined;
+					category.Notifications.Methods = undefined;
+				}
 				if (category.Notifications && category.Notifications.Emails && category.Notifications.Emails.InheritFromParent) {
 					category.Notifications.Emails = undefined;
 				}
