@@ -270,20 +270,20 @@ export class ModulesUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const modul = AppUtility.clone(this.module, false);
-		delete modul["Privileges"];
-		modul.OriginalPrivileges = Privileges.clonePrivileges(this.module.OriginalPrivileges);
-		modul.Notifications = modul.Notifications || {};
-		modul.Notifications.InheritFromParent = AppUtility.isNull(this.module.Notifications) || (AppUtility.isNull(this.module.Notifications.Events) && AppUtility.isNull(this.module.Notifications.Methods));
-		modul.Notifications.Emails = modul.Notifications.Emails || {};
-		modul.Notifications.Emails.InheritFromParent = AppUtility.isNull(this.module.Notifications) || AppUtility.isNull(this.module.Notifications.Emails);
-		modul.Notifications.WebHooks = modul.Notifications.WebHooks || {};
-		modul.Notifications.WebHooks.InheritFromParent = AppUtility.isNull(this.module.Notifications) || AppUtility.isNull(this.module.Notifications.WebHooks);
-		modul.EmailSettings = modul.EmailSettings || {};
-		modul.EmailSettings.InheritFromParent = AppUtility.isNull(this.module.EmailSettings);
-		modul.EmailSettings.Smtp = modul.EmailSettings.Smtp || { Port: 25, EnableSsl: false };
+		const module = AppUtility.clone(this.module, false);
+		delete module["Privileges"];
+		module.OriginalPrivileges = Privileges.clonePrivileges(this.module.OriginalPrivileges);
+		module.Notifications = module.Notifications || {};
+		module.Notifications.InheritFromParent = AppUtility.isNull(this.module.Notifications) || (AppUtility.isNull(this.module.Notifications.Events) && AppUtility.isNull(this.module.Notifications.Methods));
+		module.Notifications.Emails = module.Notifications.Emails || {};
+		module.Notifications.Emails.InheritFromParent = AppUtility.isNull(this.module.Notifications) || AppUtility.isNull(this.module.Notifications.Emails);
+		module.Notifications.WebHooks = module.Notifications.WebHooks || {};
+		module.Notifications.WebHooks.InheritFromParent = AppUtility.isNull(this.module.Notifications) || AppUtility.isNull(this.module.Notifications.WebHooks);
+		module.EmailSettings = module.EmailSettings || {};
+		module.EmailSettings.InheritFromParent = AppUtility.isNull(this.module.EmailSettings);
+		module.EmailSettings.Smtp = module.EmailSettings.Smtp || { Port: 25, EnableSsl: false };
 
-		this.form.patchValue(modul);
+		this.form.patchValue(module);
 		this.hash = AppCrypto.hash(this.form.value);
 
 		if (!AppUtility.isNotEmpty(this.module.ID)) {
@@ -304,22 +304,26 @@ export class ModulesUpdatePage implements OnInit {
 				this.processing = true;
 				await this.appFormsSvc.showLoadingAsync(this.title);
 
-				const modul = this.form.value;
-				modul.OriginalPrivileges = Privileges.getPrivileges(modul.OriginalPrivileges);
+				const module = this.form.value;
+				module.OriginalPrivileges = Privileges.getPrivileges(module.OriginalPrivileges);
 
-				if (modul.Notifications && modul.Notifications.Emails && modul.Notifications.Emails.InheritFromParent) {
-					modul.Notifications.Emails = undefined;
+				if (module.Notifications && module.Notifications.InheritFromParent) {
+					module.Notifications.Events = undefined;
+					module.Notifications.Methods = undefined;
 				}
-				if (modul.Notifications && modul.Notifications.WebHooks && modul.Notifications.WebHooks.InheritFromParent) {
-					modul.Notifications.WebHooks = undefined;
+				if (module.Notifications && module.Notifications.Emails && module.Notifications.Emails.InheritFromParent) {
+					module.Notifications.Emails = undefined;
 				}
-				if (modul.EmailSettings && modul.EmailSettings.InheritFromParent) {
-					modul.EmailSettings = undefined;
+				if (module.Notifications && module.Notifications.WebHooks && module.Notifications.WebHooks.InheritFromParent) {
+					module.Notifications.WebHooks = undefined;
+				}
+				if (module.EmailSettings && module.EmailSettings.InheritFromParent) {
+					module.EmailSettings = undefined;
 				}
 
-				if (AppUtility.isNotEmpty(modul.ID)) {
+				if (AppUtility.isNotEmpty(module.ID)) {
 					await this.portalsCoreSvc.updateModuleAsync(
-						modul,
+						module,
 						async data => {
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Module", Type: "Updated", ID: data.ID });
 							await Promise.all([
@@ -336,7 +340,7 @@ export class ModulesUpdatePage implements OnInit {
 				}
 				else {
 					await this.portalsCoreSvc.createModuleAsync(
-						modul,
+						module,
 						async data => {
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Module", Type: "Created", ID: data.ID });
 							await Promise.all([

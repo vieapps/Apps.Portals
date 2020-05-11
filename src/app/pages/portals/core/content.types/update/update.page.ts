@@ -406,6 +406,10 @@ export class ContentTypesUpdatePage implements OnInit {
 				const contentType = this.form.value;
 				contentType.OriginalPrivileges = Privileges.getPrivileges(contentType.OriginalPrivileges);
 
+				if (contentType.Notifications && contentType.Notifications.InheritFromParent) {
+					contentType.Notifications.Events = undefined;
+					contentType.Notifications.Methods = undefined;
+				}
 				if (contentType.Notifications && contentType.Notifications.Emails && contentType.Notifications.Emails.InheritFromParent) {
 					contentType.Notifications.Emails = undefined;
 				}
