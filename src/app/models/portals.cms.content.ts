@@ -1,0 +1,98 @@
+import { Dictionary } from "typescript-collections";
+import { AppUtility } from "@components/app.utility";
+import { PortalCmsBase as PortalCmsBaseModel } from "@models/portals.cms.base";
+
+export class Content extends PortalCmsBaseModel {
+
+	constructor(
+		organizationID?: string,
+		repositoryID?: string,
+		repositoryEntityID?: string,
+		categoryID?: string
+	) {
+		super();
+		this.SystemID = AppUtility.isNotEmpty(organizationID) ? organizationID : "";
+		this.RepositoryID = AppUtility.isNotEmpty(repositoryID) ? repositoryID : "";
+		this.RepositoryEntityID = AppUtility.isNotEmpty(repositoryEntityID) ? repositoryEntityID : "";
+		this.CategoryID = AppUtility.isNotEmpty(categoryID) ? categoryID : "";
+	}
+
+	/** All instances of content */
+	public static instances = new Dictionary<string, Content>();
+
+	/** All instances of content */
+	public static get all() {
+		return this.instances.values();
+	}
+
+	Status = undefined as string;
+	CategoryID = undefined as string;
+	OtherCategories = undefined as Array<string>;
+	Alias = undefined as string;
+	StartDate = undefined as string;
+	EndDate = undefined as string;
+	PublishedTime = undefined as Date;
+	Tags = undefined as string;
+	AllowComments = false;
+	Title = undefined as string;
+	SubTitle = undefined as string;
+	Author = undefined as string;
+	Source = undefined as string;
+	SourceURL = undefined as string;
+	Summary = undefined as string;
+	Details = undefined as string;
+	Relateds = undefined as Array<string>;
+	ExternalRelateds = undefined as Array<ExternalRelated>;
+	Created = undefined as Date;
+	CreatedID = undefined as string;
+	LastModified = undefined as Date;
+	LastModifiedID = undefined as string;
+	SystemID = undefined as string;
+	RepositoryID = undefined as string;
+	RepositoryEntityID = undefined as string;
+	ID = undefined as string;
+
+	ansiTitle: string;
+
+	/** Deserializes data to object */
+	public static deserialize(json: any, content?: Content) {
+		content = content || new Content();
+		content.copy(json);
+		content.ansiTitle = AppUtility.toANSI(content.Title).toLowerCase();
+		return content;
+	}
+
+	/** Gets by identity */
+	public static get(id: string) {
+		return id !== undefined
+			? this.instances.getValue(id)
+			: undefined;
+	}
+
+	/** Sets by identity */
+	public static set(content: Content) {
+		if (content !== undefined) {
+			this.instances.setValue(content.ID, content);
+		}
+		return content;
+	}
+
+	/** Updates into dictionary */
+	public static update(data: any) {
+		return AppUtility.isObject(data, true)
+			? this.set(data instanceof Content ? data as Content : this.deserialize(data, this.get(data.ID)))
+			: undefined;
+	}
+
+	/** Checks to see the dictionary is contains the object by identity or not */
+	public static contains(id: string) {
+		return id !== undefined && this.instances.containsKey(id);
+	}
+
+}
+
+export interface ExternalRelated {
+	Title: string;
+	Summary?: string;
+	URL: string;
+}
