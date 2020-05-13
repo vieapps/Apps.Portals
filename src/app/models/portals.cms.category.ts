@@ -1,9 +1,9 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { INestedObject } from "@models/portals.base";
-import { PortalCmsBase as BaseModel } from "@models/portals.cms.base";
+import { PortalCmsBase as PortalCmsBaseModel } from "@models/portals.cms.base";
 
-export class Category extends BaseModel implements INestedObject {
+export class Category extends PortalCmsBaseModel implements INestedObject {
 
 	constructor(
 		organizationID?: string,

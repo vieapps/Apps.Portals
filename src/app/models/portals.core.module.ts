@@ -1,10 +1,10 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
-import { PortalCoreBase as BaseModel } from "@models/portals.core.base";
+import { PortalCoreBase as PortalCoreBaseModel } from "@models/portals.core.base";
 import { ContentType } from "@models/portals.core.content.type";
 
-export class Module extends BaseModel {
+export class Module extends PortalCoreBaseModel {
 
 	constructor(
 		organizationID?: string,
@@ -112,7 +112,7 @@ export class Module extends BaseModel {
 	}
 
 	public get ModuleDefinition() {
-		return (Module.ModuleDefinitions || []).find(definition => definition.ID === this.ModuleDefinitionID);
+		return (PortalCoreBaseModel.ModuleDefinitions || []).find(definition => definition.ID === this.ModuleDefinitionID);
 	}
 
 	public get ContentTypes() {

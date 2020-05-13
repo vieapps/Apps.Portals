@@ -1,8 +1,8 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
-import { PortalCoreBase as BaseModel } from "@models/portals.core.base";
+import { PortalCoreBase as PortalCoreBaseModel } from "@models/portals.core.base";
 
-export class Site extends BaseModel {
+export class Site extends PortalCoreBaseModel {
 
 	constructor(
 		organizationID?: string,
