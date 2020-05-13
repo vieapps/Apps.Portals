@@ -355,22 +355,19 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 	async viewAsync(event: Event, category: Category) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		const contentTypes = this.portalsCmsSvc.getContentTypesOfContent(category.Module);
 		const definitionOfCategory = category.ContentTypeDefinition;
 		const definitionOfContent = ContentType.ContentTypeDefinitions.find(definition => definition.ParentObjectName === definitionOfCategory.ObjectName);
-		console.warn("Definitions", ContentType.ModuleDefinitions, ContentType.ContentTypeDefinitions);
-		console.log("Info", contentTypes, category.ContentType, category.ContentTypeDefinition);
 		const objectName = `${definitionOfContent.ObjectName}s`;
 		const params: { [key: string]: string } = {
 			SystemID: category.SystemID,
 			RepositoryID: category.RepositoryID
 		};
+		const contentTypes = this.portalsCmsSvc.getContentTypesOfContent(category.Module);
 		if (contentTypes.length === 1) {
 			params["RepositoryEntityID"] = contentTypes[0].ID;
 		}
 		params["CategoryID"] = category.ID;
 		const url = `/portals/cms/${objectName.toLowerCase()}/list/${AppUtility.toURI(category.ansiTitle)}?x-request=${AppUtility.toBase64Url(params)}`;
-		console.warn("URL to list contents", url);
 		await this.configSvc.navigateForwardAsync(url);
 	}
 
