@@ -110,6 +110,15 @@ export class PortalsCmsService extends BaseService {
 		await super.readAsync(super.getURI(objectName, id), onNext, undefined, headers, true);
 	}
 
+	public getContentTypesOfCategory(module: Module) {
+		return (module || new Module()).ContentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000001");
+	}
+
+	public getDefaultContentTypeOfCategory(module: Module) {
+		const contentTypes = this.getContentTypesOfCategory(module);
+		return contentTypes.length > 0 ? contentTypes[0] : undefined;
+	}
+
 	public get categoryCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const category = data !== undefined
@@ -351,8 +360,13 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	public getDefaultCategoryContentType(module: Module) {
-		return (module || new Module()).ContentTypes.find(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000001");
+	public getContentTypesOfContent(module: Module) {
+		return (module || new Module()).ContentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000002");
+	}
+
+	public getDefaultContentTypeOfContent(module: Module) {
+		const contentTypes = this.getContentTypesOfContent(module);
+		return contentTypes.length > 0 ? contentTypes[0] : undefined;
 	}
 
 }

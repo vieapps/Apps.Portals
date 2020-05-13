@@ -9,6 +9,7 @@ import { Base as BaseService } from "@services/base.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { Account } from "@models/account";
+import { PortalBase as BaseModel } from "@models/portals.base";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
@@ -92,15 +93,15 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getDefinitionsAsync() {
-		if (Organization.ModuleDefinitions === undefined) {
+		if (BaseModel.ModuleDefinitions === undefined) {
 			const path = this.configSvc.getDefinitionPath(this.name, "module.definitions");
-			Organization.ModuleDefinitions = this.configSvc.getDefinition(path);
-			if (Organization.ModuleDefinitions === undefined) {
-				Organization.ModuleDefinitions = await this.configSvc.fetchDefinitionAsync(path, false);
-				Organization.ModuleDefinitions.forEach(definition => definition.ContentTypeDefinitions.forEach(contentTypeDefinition => contentTypeDefinition.ModuleDefinition = definition));
+			BaseModel.ModuleDefinitions = this.configSvc.getDefinition(path);
+			if (BaseModel.ModuleDefinitions === undefined) {
+				BaseModel.ModuleDefinitions = await this.configSvc.fetchDefinitionAsync(path, false);
+				BaseModel.ModuleDefinitions.forEach(definition => definition.ContentTypeDefinitions.forEach(contentTypeDefinition => contentTypeDefinition.ModuleDefinition = definition));
 			}
 		}
-		return Organization.ModuleDefinitions;
+		return BaseModel.ModuleDefinitions;
 	}
 
 	public async getActiveOrganizationAsync(useXHR: boolean = true) {
