@@ -1,9 +1,9 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { INestedObject } from "@models/portals.base";
-import { PortalCmsBase as PortalCmsBaseModel } from "@models/portals.cms.base";
+import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
 
-export class Link extends PortalCmsBaseModel implements INestedObject {
+export class Link extends CmsBaseModel implements INestedObject {
 
 	constructor(
 		organizationID?: string,
@@ -18,10 +18,10 @@ export class Link extends PortalCmsBaseModel implements INestedObject {
 		this.ParentID = AppUtility.isNotEmpty(parentID) ? parentID : "";
 	}
 
-	/** All instances of link */
+	/** All instances of first 60 links */
 	public static instances = new Dictionary<string, Link>();
 
-	/** All instances of link */
+	/** All instances of first 60 links */
 	public static get all() {
 		return this.instances.values();
 	}

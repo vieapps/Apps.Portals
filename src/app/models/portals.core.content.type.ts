@@ -2,9 +2,10 @@ import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
 import { ExtendedPropertyDefinition, ExtendedUIDefinition } from "@models/portals.base";
-import { PortalCoreBase as PortalCoreBaseModel } from "@models/portals.core.base";
+import { PortalBase as BaseModel } from "@models/portals.base";
+import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
 
-export class ContentType extends PortalCoreBaseModel {
+export class ContentType extends CoreBaseModel {
 
 	constructor(
 		organizationID?: string,
@@ -120,7 +121,7 @@ export class ContentType extends PortalCoreBaseModel {
 	}
 
 	public get ContentTypeDefinition() {
-		return (PortalCoreBaseModel.ContentTypeDefinitions || []).find(definition => definition.ID === this.ContentTypeDefinitionID);
+		return AppUtility.isNotEmpty(this.ContentTypeDefinitionID) ? (BaseModel.ContentTypeDefinitions || []).find(definition => definition.ID === this.ContentTypeDefinitionID) : undefined;
 	}
 
 }

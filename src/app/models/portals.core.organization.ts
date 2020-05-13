@@ -2,10 +2,10 @@ import { List } from "linqts";
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
-import { PortalCoreBase as PortalCoreBaseModel } from "@models/portals.core.base";
+import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
 import { Module } from "@models/portals.core.module";
 
-export class Organization extends PortalCoreBaseModel {
+export class Organization extends CoreBaseModel {
 
 	constructor(
 		id?: string,

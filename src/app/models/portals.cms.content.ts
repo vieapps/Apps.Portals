@@ -1,8 +1,8 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
-import { PortalCmsBase as PortalCmsBaseModel } from "@models/portals.cms.base";
+import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
 
-export class Content extends PortalCmsBaseModel {
+export class Content extends CmsBaseModel {
 
 	constructor(
 		organizationID?: string,
@@ -17,20 +17,20 @@ export class Content extends PortalCmsBaseModel {
 		this.CategoryID = AppUtility.isNotEmpty(categoryID) ? categoryID : "";
 	}
 
-	/** All instances of content */
+	/** All instances of first 60 contents */
 	public static instances = new Dictionary<string, Content>();
 
-	/** All instances of content */
+	/** All instances of first 60 contents */
 	public static get all() {
 		return this.instances.values();
 	}
 
-	Status = undefined as string;
+	Status = "Pending";
 	CategoryID = undefined as string;
 	OtherCategories = undefined as Array<string>;
 	Alias = undefined as string;
-	StartDate = undefined as string;
-	EndDate = undefined as string;
+	StartDate = undefined as Date;
+	EndDate = undefined as Date;
 	PublishedTime = undefined as Date;
 	Tags = undefined as string;
 	AllowComments = false;

@@ -12,9 +12,9 @@ export abstract class PortalCmsBase extends BaseModel {
 		super();
 	}
 
-	SystemID = undefined as string;
-	RepositoryID = undefined as string;
-	RepositoryEntityID = undefined as string;
+	public abstract SystemID: string;
+	public abstract RepositoryID: string;
+	public abstract RepositoryEntityID: string;
 
 	public get routerLink() {
 		return `/portals/cms/${this.constructor.name.toLowerCase()}s/view/${AppUtility.toURI(this.ansiTitle)}`;
@@ -29,11 +29,11 @@ export abstract class PortalCmsBase extends BaseModel {
 	}
 
 	public get Module() {
-		const modul = AppUtility.isNotEmpty(this.RepositoryID) ? Module.get(this.RepositoryID) : undefined;
-		if (modul === undefined && AppUtility.isNotEmpty(this.RepositoryID)) {
+		const module = AppUtility.isNotEmpty(this.RepositoryID) ? Module.get(this.RepositoryID) : undefined;
+		if (module === undefined && AppUtility.isNotEmpty(this.RepositoryID)) {
 			AppEvents.broadcast("Portals", { Object: "Module", Type: "RequestInfo", ID: this.RepositoryID });
 		}
-		return modul;
+		return module;
 	}
 
 	public get ContentType() {

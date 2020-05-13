@@ -1,10 +1,11 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
-import { PortalCoreBase as PortalCoreBaseModel } from "@models/portals.core.base";
+import { PortalBase as BaseModel } from "@models/portals.base";
+import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
 import { ContentType } from "@models/portals.core.content.type";
 
-export class Module extends PortalCoreBaseModel {
+export class Module extends CoreBaseModel {
 
 	constructor(
 		organizationID?: string,
@@ -77,11 +78,11 @@ export class Module extends PortalCoreBaseModel {
 	ansiTitle: string;
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, modul?: Module) {
-		modul = modul || new Module();
-		modul.copy(json);
-		modul.ansiTitle = AppUtility.toANSI(modul.Title).toLowerCase();
-		return modul;
+	public static deserialize(json: any, module?: Module) {
+		module = module || new Module();
+		module.copy(json);
+		module.ansiTitle = AppUtility.toANSI(module.Title).toLowerCase();
+		return module;
 	}
 
 	/** Gets by identity */
@@ -92,11 +93,11 @@ export class Module extends PortalCoreBaseModel {
 	}
 
 	/** Sets by identity */
-	public static set(modul: Module) {
-		if (modul !== undefined) {
-			this.instances.setValue(modul.ID, modul);
+	public static set(module: Module) {
+		if (module !== undefined) {
+			this.instances.setValue(module.ID, module);
 		}
-		return modul;
+		return module;
 	}
 
 	/** Updates into dictionary */
@@ -112,7 +113,7 @@ export class Module extends PortalCoreBaseModel {
 	}
 
 	public get ModuleDefinition() {
-		return (PortalCoreBaseModel.ModuleDefinitions || []).find(definition => definition.ID === this.ModuleDefinitionID);
+		return AppUtility.isNotEmpty(this.ModuleDefinitionID) ? (BaseModel.ModuleDefinitions || []).find(definition => definition.ID === this.ModuleDefinitionID) : undefined;
 	}
 
 	public get ContentTypes() {

@@ -1,8 +1,8 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
-import { PortalCmsBase as PortalCmsBaseModel } from "@models/portals.cms.base";
+import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
 
-export class Item extends PortalCmsBaseModel {
+export class Item extends CmsBaseModel {
 
 	constructor(
 		organizationID?: string,
@@ -15,10 +15,10 @@ export class Item extends PortalCmsBaseModel {
 		this.RepositoryEntityID = AppUtility.isNotEmpty(repositoryEntityID) ? repositoryEntityID : "";
 	}
 
-	/** All instances of item */
+	/** All instances of first 60 items */
 	public static instances = new Dictionary<string, Item>();
 
-	/** All instances of item */
+	/** All instances of first 60 items */
 	public static get all() {
 		return this.instances.values();
 	}
@@ -75,10 +75,4 @@ export class Item extends PortalCmsBaseModel {
 		return id !== undefined && this.instances.containsKey(id);
 	}
 
-}
-
-export interface ExternalRelated {
-	Title: string;
-	Summary?: string;
-	URL: string;
 }
