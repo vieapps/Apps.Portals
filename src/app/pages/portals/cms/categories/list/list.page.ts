@@ -69,6 +69,10 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 		icon?: string,
 		handler: () => void
 	}>;
+	labels = {
+		update: "Update this category",
+		list: "View the list of contents"
+	};
 
 	get locale() {
 		return this.configSvc.locale;
@@ -129,7 +133,7 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 			? Module.get(this.contentType.RepositoryID)
 			: await this.portalsCmsSvc.getActiveModuleAsync();
 
-		this.contentType = this.contentType || this.portalsCmsSvc.getDefaultCategoryContentType(this.module);
+		this.contentType = this.contentType || this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.module);
 
 		this.canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
 		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
@@ -138,6 +142,11 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 			await this.configSvc.navigateHomeAsync();
 			return;
 		}
+
+		this.labels = {
+			update: await this.configSvc.getResourceAsync("common.buttons.update"),
+			list: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list")
+		};
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.cms.categories.title.${(this.searching ? "search" : "list")}`);
@@ -331,6 +340,7 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 
 	async openAsync(event: Event, category: Category) {
 		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
 		if (this.canUpdate) {
 			await this.configSvc.navigateForwardAsync(category.routerURI);
 		}
@@ -338,7 +348,30 @@ export class CategoriesListPage implements OnInit, OnDestroy {
 
 	async showChildrenAsync(event: Event, category: Category) {
 		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(category.listURI);
+	}
+
+	async viewAsync(event: Event, category: Category) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		const contentTypes = this.portalsCmsSvc.getContentTypesOfContent(category.Module);
+		const definitionOfCategory = category.ContentTypeDefinition;
+		const definitionOfContent = ContentType.ContentTypeDefinitions.find(definition => definition.ParentObjectName === definitionOfCategory.ObjectName);
+		console.warn("Definitions", ContentType.ModuleDefinitions, ContentType.ContentTypeDefinitions);
+		console.log("Info", contentTypes, category.ContentType, category.ContentTypeDefinition);
+		const objectName = `${definitionOfContent.ObjectName}s`;
+		const params: { [key: string]: string } = {
+			SystemID: category.SystemID,
+			RepositoryID: category.RepositoryID
+		};
+		if (contentTypes.length === 1) {
+			params["RepositoryEntityID"] = contentTypes[0].ID;
+		}
+		params["CategoryID"] = category.ID;
+		const url = `/portals/cms/${objectName.toLowerCase()}/list/${AppUtility.toURI(category.ansiTitle)}?x-request=${AppUtility.toBase64Url(params)}`;
+		console.warn("URL to list contents", url);
+		await this.configSvc.navigateForwardAsync(url);
 	}
 
 }
