@@ -11,8 +11,12 @@ import { IonicModule } from "@ionic/angular";
 		RouterModule.forChild([
 			{
 				path: "categories",
-				loadChildren: "@pages/portals/cms/categories/categories.module#CategoriesModule"
+				loadChildren: "@pages/portals/cms/categories/categories.module#CmsCategoriesModule"
 			},
+			{
+				path: "contents",
+				loadChildren: "@pages/portals/cms/contents/contents.module#CmsContentsModule"
+			}
 		])
 	],
 	exports: [RouterModule],

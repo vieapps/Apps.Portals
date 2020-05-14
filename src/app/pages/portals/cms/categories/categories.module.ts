@@ -11,19 +11,19 @@ import { IonicModule } from "@ionic/angular";
 		RouterModule.forChild([
 			{
 				path: "search",
-				loadChildren: "@pages/portals/cms/categories/list/list.module#CategoriesListPageModule"
+				loadChildren: "@pages/portals/cms/categories/list/list.module#CmsCategoriesListPageModule"
 			},
 			{
 				path: "list/:data",
-				loadChildren: "@pages/portals/cms/categories/list/list.module#CategoriesListPageModule"
+				loadChildren: "@pages/portals/cms/categories/list/list.module#CmsCategoriesListPageModule"
 			},
 			{
 				path: "create",
-				loadChildren: "@pages/portals/cms/categories/update/update.module#CategoriesUpdatePageModule"
+				loadChildren: "@pages/portals/cms/categories/update/update.module#CmsCategoriesUpdatePageModule"
 			},
 			{
 				path: "update/:data",
-				loadChildren: "@pages/portals/cms/categories/update/update.module#CategoriesUpdatePageModule"
+				loadChildren: "@pages/portals/cms/categories/update/update.module#CmsCategoriesUpdatePageModule"
 			}
 		])
 	],
@@ -31,4 +31,4 @@ import { IonicModule } from "@ionic/angular";
 	declarations: []
 })
 
-export class CategoriesModule {}
+export class CmsCategoriesModule {}

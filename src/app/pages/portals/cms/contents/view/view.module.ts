@@ -3,7 +3,7 @@ import { CommonModule } from "@angular/common";
 import { RouterModule } from "@angular/router";
 import { IonicModule } from "@ionic/angular";
 import { AppFormsModule } from "@components/forms.module";
-import { CmsCategoriesUpdatePage } from "./update.page";
+import { CmsContentsViewPage } from "./view.page";
 
 @NgModule({
 	providers: [],
@@ -11,10 +11,10 @@ import { CmsCategoriesUpdatePage } from "./update.page";
 		CommonModule,
 		IonicModule,
 		AppFormsModule,
-		RouterModule.forChild([{ path: "", component: CmsCategoriesUpdatePage }])
+		RouterModule.forChild([{ path: "", component: CmsContentsViewPage }])
 	],
 	exports: [],
-	declarations: [CmsCategoriesUpdatePage]
+	declarations: [CmsContentsViewPage]
 })
 
-export class CmsCategoriesUpdatePageModule {}
+export class CmsContentsViewPageModule {}

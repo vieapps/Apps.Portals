@@ -19,12 +19,12 @@ import { ContentType } from "@models/portals.core.content.type";
 import { Category } from "@models/portals.cms.category";
 
 @Component({
-	selector: "page-portals-cms-categories-list",
+	selector: "page-portals-cms-contents-list",
 	templateUrl: "./list.page.html",
 	styleUrls: ["./list.page.scss"]
 })
 
-export class CmsCategoriesListPage implements OnInit, OnDestroy {
+export class CmsContentListPage implements OnInit, OnDestroy {
 
 	constructor(
 		public configSvc: ConfigurationService,

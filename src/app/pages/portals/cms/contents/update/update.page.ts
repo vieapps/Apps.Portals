@@ -22,12 +22,12 @@ import { RolesSelectorModalPage } from "@controls/portals/role.selector.modal.pa
 import { DataLookupModalPage } from "@controls/portals/data.lookup.modal.page";
 
 @Component({
-	selector: "page-portals-cms-categories-update",
+	selector: "page-portals-cms-contents-update",
 	templateUrl: "./update.page.html",
 	styleUrls: ["./update.page.scss"]
 })
 
-export class CmsCategoriesUpdatePage implements OnInit {
+export class CmsContentsUpdatePage implements OnInit {
 	constructor(
 		public configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
