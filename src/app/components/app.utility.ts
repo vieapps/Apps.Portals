@@ -272,6 +272,28 @@ export class AppUtility {
 		};
 	}
 
+	/** Gets the sort function for sorting a sequence */
+	public static getSortFunction(sorts: Array<{ name: string, reverse?: boolean, primer?: (object: any) => any }>) {
+		// preprocess sorting options
+		const compareFn = (a: any, b: any): number => a === b ? 0 : a < b ? -1 : 1;
+		const sortBy = sorts.map(sort => {
+			return { name: sort.name, compare: (a: any, b: any) => (sort.reverse ? -1 : 1) * (sort.primer !== undefined ? compareFn(sort.primer(a), sort.primer(b)) : compareFn(a, b)) };
+		});
+
+		// final comparison function
+		return (a: any, b: any) => {
+			let result = 0;
+			for (let index = 0; index < sortBy.length; index++) {
+				const name = sortBy[index].name;
+				result = sortBy[index].compare(a[name], b[name]);
+				if (result !== 0) {
+					break;
+				}
+			}
+			return result;
+		};
+	}
+
 	/**
 	 * Removes an item from the sequence base on index
 	 * @param sequence The sequence for processing
