@@ -51,6 +51,9 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	/** The excluded identities */
 	@Input() private excludedIDs: Array<string>;
 
+	/** The sorting expression */
+	@Input() private sortBy: { [key: string]: string };
+
 	/** The function to pre-process items */
 	@Input() private preProcess: (items: Array<any>) => void;
 
@@ -75,7 +78,6 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		Query: undefined as string,
 		And: undefined as Array<{ [key: string]: any }>
 	};
-	sortBy = undefined as { [key: string]: string };
 	labels = {
 		select: "Select",
 		cancel: "Cancel",
@@ -101,10 +103,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		this.organization = Organization.get(this.organizationID) || await this.portalsCoreSvc.getActiveOrganizationAsync();
 		this.module = Module.get(this.moduleID);
 		this.contentType = ContentType.get(this.contentTypeID);
-		this.prepareFilter(true);
-		this.sortBy = this.nested
-			? { OrderIndex: "Ascending", Title: "Ascending" }
-			: { Title: "Ascending" };
+		this.prepareFilterBy(true);
 		this.children = await this.configSvc.getResourceAsync("portals.common.lookup.children");
 		this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.common.lookup.searchbar");
 		this.labels = {
@@ -126,7 +125,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	}
 
 	openSearch() {
-		this.prepareFilter(false);
+		this.prepareFilterBy(false);
 		this.results = [];
 		this.searching = true;
 		PlatformUtility.focus(this.searchCtrl);
@@ -152,7 +151,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	onCancelSearch() {
 		this.onClearSearch();
 		this.searching = false;
-		this.prepareFilter(true);
+		this.prepareFilterBy(true);
 	}
 
 	async onInfiniteScrollAsync() {
@@ -165,7 +164,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		}
 	}
 
-	private prepareFilter(allowParent: boolean) {
+	private prepareFilterBy(allowParent: boolean) {
 		this.filterBy.And = [
 			{ SystemID: { Equals: this.organization.ID } },
 			{ RepositoryID: { Equals: this.module.ID } },
@@ -176,14 +175,20 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		}
 	}
 
+	private prepareSortBy() {
+		return this.nested
+			? { OrderIndex: "Ascending", Title: "Ascending" }
+			: this.sortBy || { LastModified: "Descending" };
+	}
+
 	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
-		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }) || AppPagination.getDefault();
+		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.prepareSortBy() }) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
 		await this.searchAsync(onNext);
 	}
 
 	private async searchAsync(onNext?: () => void) {
-		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
+		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.prepareSortBy(), this.pagination);
 		const onNextAsync = async (data: any) => {
 			if (this.preProcess !== undefined) {
 				this.preProcess(data.Objects);
@@ -195,13 +200,20 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 				(data.Objects as Array<DataItem>).filter(o => this.excludedIDs.indexOf(o.ID) < 0).forEach(o => this.results.push(o));
 			}
 			else {
-				let objects = new List(data.Objects as Array<DataItem>).Where(o => this.excludedIDs.indexOf(o.ID) < 0);
-				objects = this.nested
-					? objects.OrderBy(o => o.OrderIndex).ThenBy(o => o.Title)
-					: objects.OrderBy(o => o.LastModified);
+				let objects = (data.Objects as Array<DataItem>).filter(o => this.excludedIDs.indexOf(o.ID) < 0);
+				if (this.nested) {
+					objects = objects.sort(AppUtility.getCompareFunction("OrderIndex", "Title"));
+				}
+				else {
+					const sortBy = this.prepareSortBy();
+					const sorts = Object.keys(sortBy).map(key => {
+						return { name: key, reverse: "Descending" === sortBy[key] };
+					});
+					objects.sort(AppUtility.getSortFunction(sorts));
+				}
 				this.items = data !== undefined
-					? this.items.concat(objects.ToArray())
-					: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();
+					? this.items.concat(objects)
+					: new List(objects).Take(this.pageNumber * this.pagination.PageSize).ToArray();
 				if (this.nested) {
 					this.items.forEach(item => this.updateParent(item));
 					this.rootItems = this.items.map(item => item);
@@ -212,10 +224,10 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			}
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.lookup(this.objectName, this.request, onNextAsync);
+			this.subscription = this.portalsCmsSvc.lookup(this.objectName, this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error), this.nested ? { "x-children": "true" } : undefined);
 		}
 		else {
-			await this.portalsCmsSvc.lookupAsync(this.objectName, this.request, onNextAsync, this.nested ? { "x-children": "true" } : undefined);
+			await this.portalsCmsSvc.lookupAsync(this.objectName, this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error), this.nested ? { "x-children": "true" } : undefined);
 		}
 	}
 
