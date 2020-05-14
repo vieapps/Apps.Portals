@@ -213,17 +213,19 @@
 </ion-item>
 
 <ion-item *ngIf="visible && (isCompleter || isModal) && lookupMultiple" [color]="theme">
-	<ion-chip *ngFor="let lookup of lookupDisplayValues">
-		<ion-label>
-			<ion-thumbnail *ngIf="lookup.Image" class="ion-float-start">
-				<img [src]="lookup.Image" />
-			</ion-thumbnail>
-			<span>
-				{{ lookup.Label }}
-			</span>
-		</ion-label>
-		<ion-icon name="close-circle" (click)="deleteValue(lookup.Value)"></ion-icon>
-	</ion-chip>
+	<ion-label class="ion-text-wrap">
+		<ion-chip *ngFor="let lookup of lookupDisplayValues">
+			<ion-label>
+				<ion-thumbnail *ngIf="lookup.Image" class="ion-float-start">
+					<img [src]="lookup.Image" />
+				</ion-thumbnail>
+				<span>
+					{{ lookup.Label }}
+				</span>
+			</ion-label>
+			<ion-icon name="close-circle" (click)="deleteValue(lookup.Value)"></ion-icon>
+		</ion-chip>
+	</ion-label>
 </ion-item>
 
 <ion-list *ngIf="visible && selectAsCheckBoxes" #elementRef
