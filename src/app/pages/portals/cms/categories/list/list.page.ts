@@ -40,12 +40,12 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
 
+	private subscription: Subscription;
 	private organization: Organization;
 	private module: Module;
 	private contentType: ContentType;
 	private parentID: string;
 	private parentCategory: Category;
-	private subscription: Subscription;
 	private children = "{{number}} children: {{children}}";
 	private alias = "Alias";
 
@@ -187,6 +187,11 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 				this.prepareFilterBy();
 				await this.startSearchAsync();
 			}
+		}
+
+		if (this.configSvc.isDebug) {
+			console.log("<Categories>: show the collection of Categories", this.configSvc.requestParams, this.filterBy);
+			console.log("<Categories>: organization, module & content-type", this.organization, this.module, this.contentType);
 		}
 	}
 
