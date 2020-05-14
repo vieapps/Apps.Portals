@@ -40,7 +40,6 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	private initialize() {
-		this.getDefinitionsAsync();
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Organization", message => this.processOrganizationUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Organization", message => this.processOrganizationUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Role", message => this.processRoleUpdateMessage(message));
@@ -67,14 +66,26 @@ export class PortalsCoreService extends BaseService {
 			}
 		});
 		if (this.configSvc.isReady) {
+			this.getDefinitionsAsync();
 			this.getActiveOrganizationAsync(false);
 		}
 		else {
 			AppEvents.on("App", info => {
 				if (info.args.Type === "Initialized") {
+					this.getDefinitionsAsync();
 					this.getActiveOrganizationAsync(false);
 				}
 			});
+		}
+	}
+
+	public async initializeAysnc() {
+		await this.getDefinitionsAsync();
+		if (Organization.active === undefined) {
+			await this.getActiveOrganizationAsync(false);
+		}
+		else if (Organization.active.Modules.length < 1) {
+			await this.getActiveOrganizationAsync(false);
 		}
 	}
 
@@ -675,7 +686,7 @@ export class PortalsCoreService extends BaseService {
 
 	public getOrganization(id: string, getActiveOrganizationWhenNotFound: boolean = true) {
 		const organization = Organization.get(id);
-		if (organization !== undefined && (organization.Modules === undefined || organization.Modules.length < 1 || organization.ContentTypes === undefined || organization.ContentTypes.length < 1)) {
+		if (organization !== undefined && organization.Modules.length < 1) {
 			this.getOrganizationAsync(organization.ID);
 		}
 		return organization || (getActiveOrganizationWhenNotFound ? this.activeOrganization : undefined);
