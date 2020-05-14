@@ -11,7 +11,6 @@ import { AuthenticationService } from "@services/authentication.service";
 import { UsersService } from "@services/users.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
-import { Privileges } from "@models/privileges";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
@@ -255,6 +254,108 @@ export class CmsContentsUpdatePage implements OnInit {
 		control.Required = false;
 		control.Options.DatePickerOptions = { AllowTimes: true };
 
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "AllowComments"));
+		control.Options.Type = "toggle";
+		control.Hidden = !this.contentType.AllowComments;
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SourceURL"));
+		control.Options.Type = "url";
+		control.Options.Icon = {
+			Name: "globe",
+			Fill: "clear",
+			Color: "medium",
+			Slot: "end",
+			OnClick: (_, formControl) => PlatformUtility.openURI(formControl.value)
+		};
+
+		const relateds = new Array<AppFormsLookupValue>();
+		if (this.content !== undefined && AppUtility.isArray(this.content.Relateds, true)) {
+			await Promise.all(this.content.Relateds.map(async contentID => {
+				let content = Content.get(contentID);
+				if (content === undefined) {
+					await this.portalsCmsSvc.getContentAsync(contentID, undefined, undefined, true);
+					content = Content.get(contentID);
+					if (content !== undefined) {
+						relateds.push({ Value: content.ID, Label: content.Title });
+					}
+				}
+			}));
+		}
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Relateds"));
+		control.Extras = { LookupDisplayValues: relateds.length > 0 ? relateds : undefined };
+		control.Options.LookupOptions = {
+			Multiple: true,
+			OnDelete: (values, formControl) => {
+				const lookupDisplayValues = formControl.lookupDisplayValues;
+				values.forEach(contentID => AppUtility.removeAt(lookupDisplayValues, lookupDisplayValues.findIndex(cont => cont.Value === contentID)));
+				formControl.setValue(lookupDisplayValues.map(cont => cont.Value));
+				formControl.lookupDisplayValues = lookupDisplayValues;
+			},
+			ModalOptions: {
+				Component: DataLookupModalPage,
+				ComponentProps: {
+					organizationID: this.organization.ID,
+					moduleID: this.module.ID,
+					contentTypeID: this.contentType.ID,
+					objectName: "CMS.Content",
+					nested: false,
+					multiple: true,
+					excludedIDs: AppUtility.isNotEmpty(this.content.ID) ? [this.content.ID] : undefined,
+					sortBy: { StartDate: "Descending", PublishedTime: "Descending" },
+					preProcess: (contents: Array<any>) => contents.forEach(content => Content.update(content))
+				},
+				OnDismiss: async (values, formControl) => {
+					if (AppUtility.isArray(values, true)) {
+						const lookupDisplayValues = formControl.lookupDisplayValues;
+						(values as Array<string>).forEach(contentID => {
+							const content = Content.get(contentID);
+							if (content !== undefined && lookupDisplayValues.findIndex(cont => cont.Value === contentID) < 0) {
+								lookupDisplayValues.push({ Value: content.ID, Label: content.Title });
+							}
+						});
+						formControl.setValue(lookupDisplayValues.map(cont => cont.Value));
+						formControl.lookupDisplayValues = lookupDisplayValues;
+					}
+				}
+			}
+		};
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExternalRelateds"));
+		control.SubControls.Controls = [
+			{
+				Name: "Title",
+				Type: "TextBox",
+				Required: true,
+				Options: {
+					Type: "text",
+					Label: "{{portals.cms.contents.controls.ExternalRelateds.title}}",
+					MaxLength: 250
+				}
+			},
+			{
+				Name: "Summary",
+				Type: "TextArea",
+				Required: false,
+				Options: {
+					Type: "text",
+					Label: "{{portals.cms.contents.controls.ExternalRelateds.summary}}",
+					MaxLength: 4000,
+					Rows: 2
+				}
+			},
+			{
+				Name: "URL",
+				Type: "TextBox",
+				Required: true,
+				Options: {
+					Type: "url",
+					Label: "{{portals.cms.contents.controls.ExternalRelateds.url}}",
+					MaxLength: 1000
+				}
+			}
+		];
+
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		control.Options.AutoFocus = true;
 
@@ -293,7 +394,7 @@ export class CmsContentsUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const content = AppUtility.clone(this.content, false);
+		const content = AppUtility.clone(this.content, false, ["StartDate", "EndDate", "PublishedTime"]);
 		content.StartDate = AppUtility.toIsoDate(this.content.StartDate);
 		content.EndDate = AppUtility.toIsoDate(this.content.EndDate);
 		content.PublishedTime = AppUtility.toIsoDate(this.content.PublishedTime);

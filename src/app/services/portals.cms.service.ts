@@ -110,16 +110,16 @@ export class PortalsCmsService extends BaseService {
 		return Module.active;
 	}
 
-	public lookup(objectName: string, request: any, onNext: (data: any) => void, headers?: { [header: string]: string }) {
-		return super.search(super.getSearchURI(objectName, this.configSvc.relatedQuery), request, onNext, undefined, true, headers);
+	public lookup(objectName: string, request: any, onNext: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		return super.search(super.getSearchURI(objectName, this.configSvc.relatedQuery), request, onNext, onError, true, headers);
 	}
 
-	public async lookupAsync(objectName: string, request: any, onNext: (data: any) => void, headers?: { [header: string]: string }) {
-		await super.searchAsync(super.getSearchURI(objectName, this.configSvc.relatedQuery), request, onNext, undefined, true, false, headers);
+	public async lookupAsync(objectName: string, request: any, onNext: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		await super.searchAsync(super.getSearchURI(objectName, this.configSvc.relatedQuery), request, onNext, onError, true, false, headers);
 	}
 
-	public async getAsync(objectName: string, id: string, onNext: (data: any) => void, headers?: { [header: string]: string }) {
-		await super.readAsync(super.getURI(objectName, id), onNext, undefined, headers, true);
+	public async getAsync(objectName: string, id: string, onNext: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		await super.readAsync(super.getURI(objectName, id), onNext, onError, headers, true);
 	}
 
 	public getContentTypesOfCategory(module: Module) {

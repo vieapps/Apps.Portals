@@ -177,9 +177,12 @@
 						"description": "Chỉ định các nội dung liên quan (trong hệ thống này)"
 					},
 					"ExternalRelateds": {
-						"label": "Thông tin liên quan",
+						"label": "Thông tin liên quan từ bên ngoài hệ thống",
 						"placeholder": "",
-						"description": "Chỉ định các thông tin liên quan từ bên ngoài hệ thống"
+						"description": "",
+						"title": "Tiêu đề",
+						"summary": "Tóm tắt",
+						"url": "URL gốc"
 					}
 				},
 				"list": {

@@ -59,7 +59,10 @@ export class Content extends CmsBaseModel {
 	/** Deserializes data to object */
 	public static deserialize(json: any, content?: Content) {
 		content = content || new Content();
-		content.copy(json);
+		content.copy(json, data => {
+			content.StartDate = AppUtility.isNotEmpty(data.StartDate) ? new Date(data.StartDate) : undefined;
+			content.EndDate = AppUtility.isNotEmpty(data.EndDate) && data.EndDate !== "-" ? new Date(data.EndDate) : undefined;
+		});
 		content.ansiTitle = AppUtility.toANSI(content.Title).toLowerCase();
 		return content;
 	}
