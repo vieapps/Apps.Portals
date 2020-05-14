@@ -79,14 +79,14 @@ export class Base {
 		onError?: (error?: any) => void,
 		useXHR: boolean = false
 	) {
-		let useWS = AppRTU.isReady && !useXHR;
-		if (useWS) {
-			if (new Date().getTime() - AppRTU.pingTime > 130000) {
-				useWS = false;
+		let useWebSocket = AppRTU.isReady && !useXHR;
+		if (useWebSocket) {
+			if (new Date().getTime() - AppRTU.pingTime > 300000) { // 5 minutes
+				useWebSocket = false;
 				AppRTU.restart("[Base]: Ping period is too large...");
 			}
 		}
-		if (useWS) {
+		if (useWebSocket) {
 			const requestedPath = this.parseRequestedPath(request.Path);
 			this.send({
 				ServiceName: requestedPath.serviceName,
