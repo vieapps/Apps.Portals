@@ -231,16 +231,6 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	private async backAsync(message: string, url?: string) {
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			message,
-			undefined,
-			async () => await this.configSvc.navigateHomeAsync(url),
-			await this.configSvc.getResourceAsync("common.buttons.ok")
-		);
-	}
-
 	openSearchAsync() {
 		return this.configSvc.navigateForwardAsync("/portals/cms/categories/search");
 	}
@@ -374,6 +364,16 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		params["CategoryID"] = category.ID;
 		const url = `/portals/cms/${objectName.toLowerCase()}/list/${AppUtility.toURI(category.ansiTitle)}?x-request=${AppUtility.toBase64Url(params)}`;
 		await this.configSvc.navigateForwardAsync(url);
+	}
+
+	private async backAsync(message: string, url?: string) {
+		await this.appFormsSvc.showAlertAsync(
+			undefined,
+			message,
+			undefined,
+			async () => await this.configSvc.navigateHomeAsync(url),
+			await this.configSvc.getResourceAsync("common.buttons.ok")
+		);
 	}
 
 }

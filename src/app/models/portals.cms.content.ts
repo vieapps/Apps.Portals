@@ -8,13 +8,15 @@ export class Content extends CmsBaseModel {
 		organizationID?: string,
 		repositoryID?: string,
 		repositoryEntityID?: string,
-		categoryID?: string
+		categoryID?: string,
+		startDate?: Date
 	) {
 		super();
 		this.SystemID = AppUtility.isNotEmpty(organizationID) ? organizationID : "";
 		this.RepositoryID = AppUtility.isNotEmpty(repositoryID) ? repositoryID : "";
 		this.RepositoryEntityID = AppUtility.isNotEmpty(repositoryEntityID) ? repositoryEntityID : "";
 		this.CategoryID = AppUtility.isNotEmpty(categoryID) ? categoryID : "";
+		this.StartDate = startDate !== undefined ? new Date(startDate) : undefined;
 	}
 
 	/** All instances of first 60 contents */

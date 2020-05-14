@@ -82,6 +82,133 @@
 						"remove": "Đồng ý xoá"
 					}
 				}
+			},
+			"contents": {
+				"title": {
+					"search": "Tìm kiếm nội dung",
+					"list": "Danh sách nội dung {{info}}",
+					"create": "Tạo mới nội dung",
+					"update": "Cập nhật nội dung"
+				},
+				"controls": {
+					"Status": {
+						"label": "Trạng thái",
+						"placeholder": "",
+						"description": "Nội dung sẽ chỉ xuất hiện công khai khi trạng thái là 'Xuất bản'"
+					},
+					"CategoryID": {
+						"label": "Chuyên mục",
+						"placeholder": "",
+						"description": "Chỉ định chuyên mục mà nội dung sẽ xuất hiện chính ở đó"
+					},
+					"OtherCategories": {
+						"label": "Chuyên mục đồng thời xuất hiện",
+						"placeholder": "",
+						"description": "Chỉ định các chuyên mục mà nội dung sẽ đồng thời xuất hiện ở đó"
+					},
+					"Alias": {
+						"label": "Tên rút gọn",
+						"placeholder": "vd: my-content",
+						"description": "Tên rút gọn sẽ được sử dụng để tạo các liên kết quản trị và xem nội dung"
+					},
+					"StartDate": {
+						"label": "Ngày bắt đầu",
+						"placeholder": "",
+						"description": "Chỉ định ngày mà nội dung sẽ bắt đầu xuất hiện"
+					},
+					"EndDate": {
+						"label": "Ngày kết thúc",
+						"placeholder": "",
+						"description": "Chỉ định ngày mà nội dung sẽ kết thúc (không xuất hiện công khai). Không thiết đặt giá trị để chỉ định không bao giờ kết thúc."
+					},
+					"PublishedTime": {
+						"label": "Thời gian xuất bản",
+						"placeholder": "",
+						"description": "Chỉ định thời gian xuất bản nội dung cụ thể. Không thiết đặt giá trị để hệ thống tự chỉ định thời gian khi bắt đầu xuất bản."
+					},
+					"Tags": {
+						"label": "Thẻ (tags) phân loại",
+						"placeholder": "",
+						"description": "Phân loại chủ động theo các thẻ, các giá trị được phân cách nhau bởi dấu phẩy (,). Ngoài ra, các thẻ cũng được sử dụng như từ khoá (keywords) khi làm việc với SEO"
+					},
+					"AllowComments": {
+						"label": "Cho phép bình luận",
+						"placeholder": "",
+						"description": ""
+					},
+					"Title": {
+						"label": "Tiêu đề",
+						"placeholder": "",
+						"description": "Tiêu đề chính sẽ được sử dụng để hiện thị trên các danh sách, đồng thời sử dụng cho tiêu đều (title) khi làm việc với SEO"
+					},
+					"SubTitle": {
+						"label": "Tiêu đề phụ",
+						"placeholder": "",
+						"description": "Tiêu đề phụ được sử dụng để bổ sung thêm thông tin cho tiêu đề chính"
+					},
+					"Author": {
+						"label": "Tác giả",
+						"placeholder": "",
+						"description": "Tên tác giả của nội dung. Chú ý: không phải tên của tài khoản khởi tạo/cập nhật nội dung"
+					},
+					"Source": {
+						"label": "Nguồn",
+						"placeholder": "",
+						"description": "Chỉ định nguồn của nội dung (đối với nội dung lấy từ bên ngoài về)"
+					},
+					"SourceURL": {
+						"label": "Liên kết nguồn",
+						"placeholder": "",
+						"description": "Chỉ định liên kết nguồn của nội dung (đối với nội dung lấy từ bên ngoài về)"
+					},
+					"Summary": {
+						"label": "Tóm tắt",
+						"placeholder": "",
+						"description": "Nôi dung tóm tắt sẽ được hiển thị trên danh sách, đồng thời được sử dụng như là mô tả (description) khi làm việc với SEO"
+					},
+					"Details": {
+						"label": "Chi tiết",
+						"placeholder": "",
+						"description": ""
+					},
+					"Relateds": {
+						"label": "Liên quan",
+						"placeholder": "",
+						"description": "Chỉ định các nội dung liên quan (trong hệ thống này)"
+					},
+					"ExternalRelateds": {
+						"label": "Thông tin liên quan",
+						"placeholder": "",
+						"description": "Chỉ định các thông tin liên quan từ bên ngoài hệ thống"
+					}
+				},
+				"list": {
+					"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác"
+				},
+				"update": {
+					"segments": {
+						"management": "Quản trị",
+						"basic": "Cơ bản",
+						"related": "Liên quan",
+						"attachments": "File đính kèm"
+					},
+					"messages": {
+						"confirm": {
+							"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo nội dung?",
+							"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của nội dung?",
+							"delete": "Chắc chắn muốn xoá bỏ nội dung?"
+						},
+						"success": {
+							"new": "Đã khởi tạo nội dung thành công",
+							"update": "Đã cập nhật các thay đổi của nội dung thành công",
+							"delete": "Đã xoá nội dung (chuyển vào thùng rác) thành công"
+						}
+					},
+					"buttons": {
+						"delete": "Xoá nội dung",
+						"remove": "Đồng ý xoá"
+					}
+				}
 			}
 		}
 	}

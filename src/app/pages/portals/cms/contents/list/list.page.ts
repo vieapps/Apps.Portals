@@ -17,6 +17,7 @@ import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
 import { Category } from "@models/portals.cms.category";
+import { Content } from "@models/portals.cms.content";
 
 @Component({
 	selector: "page-portals-cms-contents-list",
@@ -43,17 +44,15 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 	private organization: Organization;
 	private module: Module;
 	private contentType: ContentType;
-	private parentID: string;
-	private parentCategory: Category;
+	private categoryID: string;
+	private category: Category;
 	private subscription: Subscription;
-	private children = "{{number}} children: {{children}}";
-	private alias = "Alias";
 
 	canUpdate = false;
 	canContribute = false;
 
-	title = "Categories";
-	categories = new Array<Category>();
+	title = "Contents";
+	contents = new Array<Content>();
 	searching = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;
@@ -62,36 +61,24 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		Query: undefined as string,
 		And: new Array<{ [key: string]: any }>()
 	};
-	sortBy = { OrderIndex: "Ascending", Title: "Ascending" };
+	sortBy = { StartDate: "Descending", PublishedTime: "Descending" };
 	actions: Array<{
 		text: string,
 		role?: string,
 		icon?: string,
 		handler: () => void
 	}>;
-	labels = {
-		update: "Update this category",
-		list: "View the list of contents"
-	};
 
 	get locale() {
 		return this.configSvc.locale;
 	}
 
-	get gotPagination() {
-		return this.pagination !== undefined || this.parentCategory !== undefined;
-	}
-
 	get totalDisplays() {
-		return this.parentCategory !== undefined
-			? this.parentCategory.childrenIDs.length
-			: AppPagination.computeTotal(this.pageNumber, this.pagination);
+		return this.pagination !== undefined ? AppPagination.computeTotal(this.pageNumber, this.pagination) : 0;
 	}
 
 	get totalRecords() {
-		return this.parentCategory !== undefined
-			? this.parentCategory.childrenIDs.length
-			: this.pagination.TotalRecords;
+		return this.pagination !== undefined ? this.pagination.TotalRecords : 0;
 	}
 
 	ngOnInit() {
@@ -100,12 +87,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 
 	ngOnDestroy() {
 		if (!this.searching) {
-			if (this.parentCategory !== undefined) {
-				AppEvents.off(this.portalsCoreSvc.name, `CMS.Categories:${this.parentCategory.ID}:Refresh`);
-			}
-			else {
-				AppEvents.off(this.portalsCoreSvc.name, "CMS.Categories:Refresh");
-			}
+			AppEvents.off(this.portalsCoreSvc.name, `CMS.Contents:${(this.category !== undefined ? ":" + this.category.ID : "")}:Refresh`);
 		}
 		else if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
@@ -133,64 +115,23 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 			? Module.get(this.contentType.RepositoryID)
 			: await this.portalsCmsSvc.getActiveModuleAsync();
 
-		this.contentType = this.contentType || this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.module);
+		this.contentType = this.contentType || this.portalsCmsSvc.getDefaultContentTypeOfContent(this.module);
 
-		this.canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
-		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
+		this.categoryID = this.configSvc.requestParams["CategoryID"];
+		this.category = Category.get(this.categoryID);
+
+		this.canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Content", this.module === undefined ? undefined : this.module.Privileges);
+		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Content", this.module === undefined ? undefined : this.module.Privileges);
 		if (!this.canContribute) {
 			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
 			await this.configSvc.navigateHomeAsync();
 			return;
 		}
 
-		this.labels = {
-			update: await this.configSvc.getResourceAsync("common.buttons.update"),
-			list: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list")
-		};
-
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
-		const title = await this.configSvc.getResourceAsync(`portals.cms.categories.title.${(this.searching ? "search" : "list")}`);
+		const title = await this.configSvc.getResourceAsync(`portals.cms.contents.title.${(this.searching ? "search" : "list")}`);
 		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: "" });
-		this.children = await this.configSvc.getResourceAsync("portals.cms.categories.list.children");
-		this.alias = await this.configSvc.getResourceAsync("portals.cms.categories.controls.Alias.label");
 
-		if (this.searching) {
-			this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
-			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.categories.list.searchbar");
-			PlatformUtility.focus(this.searchCtrl);
-		}
-		else {
-			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.create"), "create", () => this.openCreateAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.search"), "search", () => this.openSearchAsync())
-			];
-
-			this.parentID = this.configSvc.requestParams["ParentID"];
-			this.parentCategory = Category.get(this.parentID);
-
-			if (this.parentCategory !== undefined) {
-				AppEvents.on(this.portalsCoreSvc.name, info => {
-					if (info.args.Object === "CMS.Category" && (this.parentCategory.ID === info.args.ID || this.parentCategory.ID === info.args.ParentID)) {
-						this.categories = this.parentCategory.Children;
-					}
-				}, `CMS.Categoriess:${this.parentCategory.ID}:Refresh`);
-				this.categories = this.parentCategory.Children;
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentCategory.FullTitle}]` });
-			}
-			else {
-				AppEvents.on(this.portalsCoreSvc.name, info => {
-					if (info.args.Object === "CMS.Category") {
-						this.prepareResults();
-					}
-				}, "CMS.Categories:Refresh");
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.module === undefined ? this.organization.Title : this.organization.Title + " - " + this.module.Title)}]` });
-				this.prepareFilterBy();
-				await this.startSearchAsync();
-			}
-		}
-	}
-
-	private prepareFilterBy() {
 		this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
 		if (this.module !== undefined) {
 			this.filterBy.And.push({ RepositoryID: { Equals: this.module.ID } });
@@ -198,17 +139,33 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		if (this.contentType !== undefined) {
 			this.filterBy.And.push({ RepositoryEntityID: { Equals: this.contentType.ID } });
 		}
-		this.filterBy.And.push({ ParentID: "IsNull" });
+		if (this.category !== undefined) {
+			this.filterBy.And.push({ CategoryID: { Equals: this.category.ID } });
+		}
+
+		if (this.searching) {
+			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.searchbar");
+			PlatformUtility.focus(this.searchCtrl);
+		}
+		else {
+			this.actions = [
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.create"), "create", () => this.openCreateAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.search"), "search", () => this.openSearchAsync())
+			];
+
+			AppEvents.on(this.portalsCoreSvc.name, info => {
+				if (info.args.Object === "CMS.Content") {
+					this.prepareResults();
+				}
+			}, `CMS.Contents:${(this.category !== undefined ? ":" + this.category.ID : "")}:Refresh`);
+
+			this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.category === undefined ? this.organization.Title : this.organization.Title + " - " + this.category.FullTitle)}]` });
+			await this.startSearchAsync();
+		}
 	}
 
-	track(index: number, category: Category) {
-		return `${category.ID}@${index}`;
-	}
-
-	getInfo(category: Category) {
-		return category.childrenIDs === undefined || category.childrenIDs.length < 1
-			? `${this.alias}: ${category.Alias}`
-			: AppUtility.format(this.children, { number: category.childrenIDs.length, children: `${category.Children[0].Title}${(category.childrenIDs.length > 1 ? `, ${category.Children[1].Title}` : "")}, ...` });
+	track(index: number, content: Content) {
+		return `${content.ID}@${index}`;
 	}
 
 	showActionsAsync() {
@@ -217,27 +174,17 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 
 	openCreateAsync() {
 		const params: { [key: string]: string } = {};
-		if (AppUtility.isNotEmpty(this.parentID)) {
-			params["ParentID"] = this.parentID;
+		if (AppUtility.isNotEmpty(this.categoryID)) {
+			params["CategoryID"] = this.categoryID;
 		}
 		if (this.contentType !== undefined) {
 			params["RepositoryEntityID"] = this.contentType.ID;
-			return this.configSvc.navigateForwardAsync(`/portals/cms/categories/create?x-request=${AppUtility.toBase64Url(params)}`);
+			return this.configSvc.navigateForwardAsync(`/portals/cms/contents/create?x-request=${AppUtility.toBase64Url(params)}`);
 		}
 	}
 
-	private async backAsync(message: string, url?: string) {
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			message,
-			undefined,
-			async () => await this.configSvc.navigateHomeAsync(url),
-			await this.configSvc.getResourceAsync("common.buttons.ok")
-		);
-	}
-
 	openSearchAsync() {
-		return this.configSvc.navigateForwardAsync("/portals/cms/categories/search");
+		return this.configSvc.navigateForwardAsync("/portals/cms/contents/search");
 	}
 
 	onStartSearch(event: any) {
@@ -245,7 +192,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
 			if (this.searching) {
-				this.categories = [];
+				this.contents = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
 				this.searchAsync(() => this.infiniteScrollCtrl.disabled = false);
@@ -259,7 +206,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 	onClearSearch() {
 		this.cancelSearch();
 		this.filterBy.Query = undefined;
-		this.categories = [];
+		this.contents = [];
 	}
 
 	onCancelSearch() {
@@ -282,7 +229,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 	}
 
 	private get paginationPrefix() {
-		return this.portalsCoreSvc.getPaginationPrefix("cms.category");
+		return this.portalsCoreSvc.getPaginationPrefix("cms.content");
 	}
 
 	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
@@ -301,10 +248,10 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchCategory(this.request, onNextAsync);
+			this.subscription = this.portalsCmsSvc.searchContent(this.request, onNextAsync);
 		}
 		else {
-			await this.portalsCmsSvc.searchCategoryAsync(this.request, onNextAsync);
+			await this.portalsCmsSvc.searchContentAsync(this.request, onNextAsync);
 		}
 	}
 
@@ -320,55 +267,41 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.categories.push(Category.get(o.ID)));
+			(results || []).forEach(o => this.contents.push(Content.get(o.ID)));
 		}
 		else {
-			let objects = new List(results === undefined ? Category.all : results.map(o => Category.get(o.ID)));
-			objects = objects.Where(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID);
-			objects = objects.OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title);
+			let objects = new List(results === undefined ? Content.all : results.map(o => Content.get(o.ID)));
+			objects = objects.Where(o => o.SystemID === this.organization.ID);
+			if (this.module !== undefined) {
+				objects = objects.Where(o => o.RepositoryID === this.module.ID);
+			}
+			if (this.contentType !== undefined) {
+				objects = objects.Where(o => o.RepositoryEntityID === this.contentType.ID);
+			}
+			if (this.category !== undefined) {
+				objects = objects.Where(o => o.CategoryID === this.category.ID || o.OtherCategories.indexOf(this.category.ID) > -1);
+			}
+			objects = objects.OrderByDescending(o => o.StartDate).ThenByDescending(o => o.PublishedTime);
 			if (results === undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
-			this.categories = results === undefined
+			this.contents = results === undefined
 				? objects.ToArray()
-				: this.categories.concat(objects.ToArray());
+				: this.contents.concat(objects.ToArray());
 		}
 		if (onNext !== undefined) {
 			onNext();
 		}
 	}
 
-	async openAsync(event: Event, category: Category) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		if (this.canUpdate) {
-			await this.configSvc.navigateForwardAsync(category.routerURI);
-		}
-	}
-
-	async showChildrenAsync(event: Event, category: Category) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(category.listURI);
-	}
-
-	async viewAsync(event: Event, category: Category) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		const definitionOfCategory = category.ContentTypeDefinition;
-		const definitionOfContent = ContentType.ContentTypeDefinitions.find(definition => definition.ParentObjectName === definitionOfCategory.ObjectName);
-		const objectName = `${definitionOfContent.ObjectName}s`;
-		const params: { [key: string]: string } = {
-			SystemID: category.SystemID,
-			RepositoryID: category.RepositoryID
-		};
-		const contentTypes = this.portalsCmsSvc.getContentTypesOfContent(category.Module);
-		if (contentTypes.length === 1) {
-			params["RepositoryEntityID"] = contentTypes[0].ID;
-		}
-		params["CategoryID"] = category.ID;
-		const url = `/portals/cms/${objectName.toLowerCase()}/list/${AppUtility.toURI(category.ansiTitle)}?x-request=${AppUtility.toBase64Url(params)}`;
-		await this.configSvc.navigateForwardAsync(url);
+	private async backAsync(message: string, url?: string) {
+		await this.appFormsSvc.showAlertAsync(
+			undefined,
+			message,
+			undefined,
+			async () => await this.configSvc.navigateHomeAsync(url),
+			await this.configSvc.getResourceAsync("common.buttons.ok")
+		);
 	}
 
 }

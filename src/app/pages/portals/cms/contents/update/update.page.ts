@@ -5,7 +5,7 @@ import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { PlatformUtility } from "@components/app.utility.platform";
 import { TrackingUtility } from "@components/app.utility.trackings";
-import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
+import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { UsersService } from "@services/users.service";
@@ -15,10 +15,8 @@ import { Privileges } from "@models/privileges";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
-import { Desktop } from "@models/portals.core.desktop";
 import { Category } from "@models/portals.cms.category";
-import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.modal.page";
-import { RolesSelectorModalPage } from "@controls/portals/role.selector.modal.page";
+import { Content } from "@models/portals.cms.content";
 import { DataLookupModalPage } from "@controls/portals/data.lookup.modal.page";
 
 @Component({
@@ -42,6 +40,7 @@ export class CmsContentsUpdatePage implements OnInit {
 	private module: Module;
 	private contentType: ContentType;
 	private category: Category;
+	private content: Content;
 	private hash = "";
 
 	title = "";
@@ -49,7 +48,8 @@ export class CmsContentsUpdatePage implements OnInit {
 	formConfig: Array<AppFormsControlConfig>;
 	formSegments = {
 		items: undefined as Array<AppFormsSegment>,
-		default: "basic"
+		default: "basic",
+		current: "basic"
 	};
 	formControls = new Array<AppFormsControl>();
 	processing = false;
@@ -63,14 +63,20 @@ export class CmsContentsUpdatePage implements OnInit {
 	}
 
 	private async initializeAsync() {
-		this.category = Category.get(this.configSvc.requestParams["ID"]);
+		const contentID = this.configSvc.requestParams["ID"];
+		if (AppUtility.isNotEmpty(contentID)) {
+			this.content = Content.get(contentID);
+			if (this.content === undefined) {
+				await this.portalsCmsSvc.getContentAsync(contentID, _ => this.content = Content.get(contentID), undefined, true);
+			}
+		}
 
-		this.contentType = this.category !== undefined
-			? this.category.ContentType
+		this.contentType = this.content !== undefined
+			? this.content.ContentType
 			: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 
-		this.organization = this.category !== undefined
-			? Organization.get(this.category.SystemID)
+		this.organization = this.content !== undefined
+			? Organization.get(this.content.SystemID)
 			: this.contentType !== undefined
 				? Organization.get(this.contentType.SystemID)
 				: await this.portalsCoreSvc.getActiveOrganizationAsync();
@@ -82,8 +88,8 @@ export class CmsContentsUpdatePage implements OnInit {
 
 		if (this.contentType === undefined) {
 			await this.portalsCoreSvc.getOrganizationAsync(this.organization.ID, undefined, undefined, true);
-			this.contentType = this.category !== undefined
-				? this.category.ContentType
+			this.contentType = this.content !== undefined
+				? this.content.ContentType
 				: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 			if (this.contentType === undefined) {
 				await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all");
@@ -92,8 +98,15 @@ export class CmsContentsUpdatePage implements OnInit {
 		}
 
 		this.module = Module.get(this.contentType.RepositoryID);
+		this.category = this.content !== undefined
+			? Category.get(this.content.CategoryID)
+			: Category.get(this.configSvc.requestParams["CategoryID"]);
 
-		const canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.category !== undefined ? this.category.Privileges : this.module.Privileges);
+		let canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Content", this.category !== undefined ? this.category.Privileges : this.module.Privileges);
+		if (!canUpdate && this.content !== undefined && (AppUtility.isEquals(this.content.Status, "Draft") || AppUtility.isEquals(this.content.Status, "Pending"))) {
+			canUpdate = AppUtility.isEquals(this.content.CreatedID, this.configSvc.getAccount().id);
+		}
+
 		if (canUpdate) {
 			await this.initializeFormAsync();
 		}
@@ -104,19 +117,15 @@ export class CmsContentsUpdatePage implements OnInit {
 	}
 
 	private async initializeFormAsync() {
-		this.category = this.category || new Category(this.organization.ID, this.module.ID, this.contentType.ID, this.configSvc.requestParams["ParentID"]);
+		this.content = this.content || new Content(this.organization.ID, this.module.ID, this.contentType.ID, this.category !== undefined ? this.category.ID : undefined, new Date());
 
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.cms.categories.title.${(AppUtility.isNotEmpty(this.category.ID) ? "update" : "create")}`);
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.cms.contents.title.${(AppUtility.isNotEmpty(this.content.ID) ? "update" : "create")}`);
 		await this.appFormsSvc.showLoadingAsync(this.title);
 
 		this.button = {
-			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.category.ID) ? "update" : "create")}`),
+			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.content.ID) ? "update" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
-
-		if (!AppUtility.isNotEmpty(this.category.ID)) {
-
-		}
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
@@ -124,10 +133,13 @@ export class CmsContentsUpdatePage implements OnInit {
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
 		const formSegments = [
-			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.cms.categories.update.segments.basic")),
-			new AppFormsSegment("privileges", await this.configSvc.getResourceAsync("portals.cms.categories.update.segments.privileges")),
-			new AppFormsSegment("notifications", await this.configSvc.getResourceAsync("portals.cms.categories.update.segments.notifications"))
+			new AppFormsSegment("management", await this.configSvc.getResourceAsync("portals.cms.contents.update.segments.management")),
+			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.cms.contents.update.segments.basic")),
+			new AppFormsSegment("related", await this.configSvc.getResourceAsync("portals.cms.contents.update.segments.related"))
 		];
+		if (AppUtility.isNotEmpty(this.content.ID)) {
+			formSegments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.cms.contents.update.segments.attachments")));
+		}
 		if (onCompleted !== undefined) {
 			onCompleted(formSegments);
 		}
@@ -135,32 +147,21 @@ export class CmsContentsUpdatePage implements OnInit {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
-		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.category", "form-controls");
+		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content", "form-controls");
 
-		AppUtility.insertAt(
-			formConfig,
-			{
-				Name: "Info",
-				Type: "Text",
-				Segment: "basic",
-				Extras: { Text: `${this.organization.Title} - ${this.module.Title}` },
-				Options: {
-					Label: "{{portals.cms.categories.controls.Info}}",
-					ReadOnly: true
-				}
-			},
-			0
-		);
-
-		let parentCategory = this.category.Parent;
-		if (parentCategory === undefined && AppUtility.isNotEmpty(this.category.ParentID)) {
-			await this.portalsCmsSvc.getCategoryAsync(this.category.ParentID, _ => parentCategory = this.category.Parent, undefined, true);
+		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
+		control.Options.SelectOptions.Interface = "popover";
+		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
+			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values) as Array<string>).map(value => {
+				return { Value: value, Label: `{{status.approval.${value}}}` };
+			});
 		}
 
-		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID"));
-		control.Type = "Lookup";
-		control.Required = false;
-		control.Extras = { LookupDisplayValues: parentCategory !== undefined ? [{ Value: parentCategory.ID, Label: parentCategory.FullTitle }] : undefined };
+		const contentTypeOfCategory = this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.module);
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CategoryID"));
+		control.Required = true;
+		control.Extras = { LookupDisplayValues: this.category !== undefined ? [{ Value: this.category.ID, Label: this.category.FullTitle }] : undefined };
 		control.Options.LookupOptions = {
 			Multiple: false,
 			OnDelete: (_, formControl) => {
@@ -172,16 +173,15 @@ export class CmsContentsUpdatePage implements OnInit {
 				ComponentProps: {
 					organizationID: this.organization.ID,
 					moduleID: this.module.ID,
-					contentTypeID: this.contentType.ID,
+					contentTypeID: contentTypeOfCategory.ID,
 					objectName: "CMS.Category",
 					nested: true,
 					multiple: false,
-					excludedIDs: AppUtility.isNotEmpty(this.category.ID) ? [this.category.ID] : undefined,
 					preProcess: (categories: Array<any>) => this.portalsCmsSvc.processCategories(categories)
 				},
-				OnDismiss: async (data, formControl) => {
-					if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
-						const category = Category.get(data[0]);
+				OnDismiss: async (values, formControl) => {
+					if (AppUtility.isArray(values, true) && values[0] !== formControl.value) {
+						const category = Category.get(values[0]);
 						formControl.setValue(category.ID);
 						formControl.lookupDisplayValues = [{ Value: category.ID, Label: category.FullTitle }];
 					}
@@ -189,76 +189,83 @@ export class CmsContentsUpdatePage implements OnInit {
 			}
 		};
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
-		control.Options.Rows = 2;
-
-		let desktop = Desktop.get(this.category.DesktopID);
-		if (desktop === undefined && AppUtility.isNotEmpty(this.category.DesktopID)) {
-			await this.portalsCoreSvc.getDesktopAsync(this.category.DesktopID, _ => desktop = Desktop.get(this.category.DesktopID), undefined, true);
+		const otherCategories = new Array<AppFormsLookupValue>();
+		if (this.content !== undefined && AppUtility.isArray(this.content.OtherCategories, true)) {
+			await Promise.all(this.content.OtherCategories.map(async categoryID => {
+				let category = Category.get(categoryID);
+				if (category === undefined) {
+					await this.portalsCmsSvc.getCategoryAsync(categoryID, undefined, undefined, true);
+					category = Category.get(categoryID);
+					if (category !== undefined) {
+						otherCategories.push({ Value: category.ID, Label: category.FullTitle });
+					}
+				}
+			}));
 		}
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "DesktopID"));
-		control.Type = "Lookup";
-		control.Extras = { LookupDisplayValues: desktop !== undefined ? [{ Value: desktop.ID, Label: desktop.FullTitle }] : undefined };
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OtherCategories"));
+		control.Extras = { LookupDisplayValues: otherCategories.length > 0 ? otherCategories : undefined };
 		control.Options.LookupOptions = {
-			Multiple: false,
-			OnDelete: (_, formControl) => {
-				formControl.setValue(undefined);
-				formControl.lookupDisplayValues = undefined;
+			Multiple: true,
+			OnDelete: (values, formControl) => {
+				const lookupDisplayValues = formControl.lookupDisplayValues;
+				values.forEach(categoryID => AppUtility.removeAt(lookupDisplayValues, lookupDisplayValues.findIndex(cat => cat.Value === categoryID)));
+				formControl.setValue(lookupDisplayValues.map(cat => cat.Value));
+				formControl.lookupDisplayValues = lookupDisplayValues;
 			},
 			ModalOptions: {
-				Component: DesktopsSelectorModalPage,
+				Component: DataLookupModalPage,
 				ComponentProps: {
-					multiple: false,
-					organizationID: this.organization.ID
+					organizationID: this.organization.ID,
+					moduleID: this.module.ID,
+					contentTypeID: contentTypeOfCategory.ID,
+					objectName: "CMS.Category",
+					nested: true,
+					multiple: true,
+					preProcess: (categories: Array<any>) => this.portalsCmsSvc.processCategories(categories)
 				},
-				OnDismiss: (data, formControl) => {
-					if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
-						const selectedDesktop = Desktop.get(data[0]);
-						formControl.setValue(selectedDesktop.ID);
-						formControl.lookupDisplayValues = [{ Value: selectedDesktop.ID, Label: selectedDesktop.FullTitle }];
+				OnDismiss: async (values, formControl) => {
+					if (AppUtility.isArray(values, true)) {
+						const lookupDisplayValues = formControl.lookupDisplayValues;
+						(values as Array<string>).forEach(categoryID => {
+							const category = Category.get(categoryID);
+							if (category !== undefined && lookupDisplayValues.findIndex(cat => cat.Value === categoryID) < 0) {
+								lookupDisplayValues.push({ Value: category.ID, Label: category.FullTitle });
+							}
+						});
+						formControl.setValue(lookupDisplayValues.map(cat => cat.Value));
+						formControl.lookupDisplayValues = lookupDisplayValues;
 					}
 				}
 			}
 		};
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OpenBy"));
-		control.Options.SelectOptions.AsBoxes = true;
-		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
-			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values) as Array<string>).map(value => {
-				return { Value: value, Label: `{{portals.cms.categories.controls.OpenBy.${value}}}` };
-			});
-		}
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "StartDate"));
+		control.Type = "DatePicker";
+		control.Required = true;
+		control.Options.DatePickerOptions = { AllowTimes: false };
 
-		const inheritEventsAndMethods = AppUtility.isNull(this.category.Notifications) || (AppUtility.isNull(this.category.Notifications.Events) && AppUtility.isNull(this.category.Notifications.Methods));
-		const inheritEmailSettings = AppUtility.isNull(this.category.Notifications) || AppUtility.isNull(this.category.Notifications.Emails);
-		const inheritWebHookSettings = AppUtility.isNull(this.category.Notifications) || AppUtility.isNull(this.category.Notifications.WebHooks);
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "EndDate"));
+		control.Type = "DatePicker";
+		control.Required = false;
+		control.Options.DatePickerOptions = { AllowTimes: false };
 
-		formConfig.push(
-			{
-				Name: "OriginalPrivileges",
-				Type: "Custom",
-				Segment: "privileges",
-				Extras: { AllowInheritFromParent: true, RolesSelector: this.portalsCoreSvc.getRolesSelector(RolesSelectorModalPage, { organizationID: this.organization.ID }) },
-				Options: {
-					Type: "object-privileges"
-				}
-			},
-			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, true, inheritEventsAndMethods, inheritEmailSettings, inheritWebHookSettings),
-			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "notifications", true, AppUtility.isNull(this.category.EmailSettings))
-		);
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "PublishedTime"));
+		control.Type = "DatePicker";
+		control.Required = false;
+		control.Options.DatePickerOptions = { AllowTimes: true };
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		control.Options.AutoFocus = true;
 
-		if (AppUtility.isNotEmpty(this.category.ID)) {
+		if (AppUtility.isNotEmpty(this.content.ID)) {
 			formConfig.push(
-				await this.usersSvc.getAuditFormControlAsync(this.category.Created, this.category.CreatedID, this.category.LastModified, this.category.LastModifiedID, "basic"),
+				await this.usersSvc.getAuditFormControlAsync(this.content.Created, this.content.CreatedID, this.content.LastModified, this.content.LastModifiedID, "basic"),
 				this.appFormsSvc.getButtonControls(
 					"basic",
 					{
 						Name: "Delete",
-						Label: "{{portals.cms.categories.update.buttons.delete}}",
+						Label: "{{portals.cms.contents.update.buttons.delete}}",
 						OnClick: async () => await this.deleteAsync(),
 						Options: {
 							Fill: "clear",
@@ -286,20 +293,12 @@ export class CmsContentsUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const category = AppUtility.clone(this.category, false);
-		delete category["Privileges"];
-		category.OriginalPrivileges = Privileges.clonePrivileges(this.category.OriginalPrivileges);
-		category.Notifications = category.Notifications || {};
-		category.Notifications.InheritFromParent = AppUtility.isNull(this.category.Notifications) || (AppUtility.isNull(this.category.Notifications.Events) && AppUtility.isNull(this.category.Notifications.Methods));
-		category.Notifications.Emails = category.Notifications.Emails || {};
-		category.Notifications.Emails.InheritFromParent = AppUtility.isNull(this.category.Notifications) || AppUtility.isNull(this.category.Notifications.Emails);
-		category.Notifications.WebHooks = category.Notifications.WebHooks || {};
-		category.Notifications.WebHooks.InheritFromParent = AppUtility.isNull(this.category.Notifications) || AppUtility.isNull(this.category.Notifications.WebHooks);
-		category.EmailSettings = category.EmailSettings || {};
-		category.EmailSettings.InheritFromParent = AppUtility.isNull(this.category.EmailSettings);
-		category.EmailSettings.Smtp = category.EmailSettings.Smtp || { Port: 25, EnableSsl: false };
+		const content = AppUtility.clone(this.content, false);
+		content.StartDate = AppUtility.toIsoDate(this.content.StartDate);
+		content.EndDate = AppUtility.toIsoDate(this.content.EndDate);
+		content.PublishedTime = AppUtility.toIsoDate(this.content.PublishedTime);
 
-		this.form.patchValue(category);
+		this.form.patchValue(content);
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync();
 	}
@@ -313,35 +312,23 @@ export class CmsContentsUpdatePage implements OnInit {
 				this.processing = true;
 				await this.appFormsSvc.showLoadingAsync(this.title);
 
-				const category = this.form.value;
-				category.OriginalPrivileges = Privileges.getPrivileges(category.OriginalPrivileges);
+				const content = this.form.value;
 
-				if (category.Notifications && category.Notifications.InheritFromParent) {
-					category.Notifications.Events = undefined;
-					category.Notifications.Methods = undefined;
-				}
-				if (category.Notifications && category.Notifications.Emails && category.Notifications.Emails.InheritFromParent) {
-					category.Notifications.Emails = undefined;
-				}
-				if (category.Notifications && category.Notifications.WebHooks && category.Notifications.WebHooks.InheritFromParent) {
-					category.Notifications.WebHooks = undefined;
-				}
-				if (category.EmailSettings && category.EmailSettings.InheritFromParent) {
-					category.EmailSettings = undefined;
-				}
-
-				if (AppUtility.isNotEmpty(category.ID)) {
-					const oldParentID = this.category.ParentID;
-					await this.portalsCmsSvc.updateCategoryAsync(
-						category,
+				if (AppUtility.isNotEmpty(content.ID)) {
+					const oldCategoryID = this.content.CategoryID;
+					await this.portalsCmsSvc.updateContentAsync(
+						content,
 						async data => {
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Updated", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
-							if (oldParentID !== data.ParentID) {
-								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Updated", ID: oldParentID });
+							AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: data.CategoryID });
+							if (oldCategoryID !== data.CategoryID) {
+								AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: oldCategoryID });
+							}
+							if (AppUtility.isArray(data.OtherCategories)) {
+								(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
 							}
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
-								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.update")),
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 							]);
 						},
@@ -352,13 +339,16 @@ export class CmsContentsUpdatePage implements OnInit {
 					);
 				}
 				else {
-					await this.portalsCmsSvc.createCategoryAsync(
-						category,
+					await this.portalsCmsSvc.createContentAsync(
+						content,
 						async data => {
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
+							AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: data.CategoryID });
+							if (AppUtility.isArray(data.OtherCategories)) {
+								(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
+							}
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
-								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.new")),
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new")),
 								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 							]);
 						},
@@ -375,62 +365,35 @@ export class CmsContentsUpdatePage implements OnInit {
 	async deleteAsync() {
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
-			await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.confirm.delete"),
+			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete"),
 			undefined,
-			() => PlatformUtility.invoke(async () => await this.removeAsync(), 123),
-			await this.configSvc.getResourceAsync("common.buttons.delete"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
-	}
-
-	async removeAsync() {
-		const modes = [
-			{
-				label: await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete-all"),
-				value: "delete"
-			},
-			{
-				label: await this.configSvc.getResourceAsync("portals.desktops.update.buttons.set-null-all"),
-				value: "set-null"
-			}
-		];
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.confirm.delete"),
-			await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.confirm.remove"),
-			async mode => {
-				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.buttons.delete"));
-				await this.portalsCmsSvc.deleteCategoryAsync(
-					this.category.ID,
+			async () => {
+				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"));
+				await this.portalsCmsSvc.deleteContentAsync(
+					this.content.ID,
 					async data => {
-						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
+						AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: data.CategoryID });
+						if (AppUtility.isArray(data.OtherCategories)) {
+							(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
+						}
 						await Promise.all([
-							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.buttons.delete"), this.configSvc.currentUrl),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.delete")),
+							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"), this.configSvc.currentUrl),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error)),
-					{ "x-children": mode }
+					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error))
 				);
 			},
-			await this.configSvc.getResourceAsync("portals.cms.categories.update.buttons.remove"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel"),
-			this.category.childrenIDs === undefined || this.category.childrenIDs.length < 1 ? undefined : modes.map(mode => {
-				return {
-					type: "radio",
-					label: mode.label,
-					value: mode.value,
-					checked: mode.value === "delete"
-				};
-			})
+			await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove"),
+			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
 	}
 
 	async cancelAsync(message?: string, url?: string) {
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
-			message || await this.configSvc.getResourceAsync(`portals.cms.categories.update.messages.confirm.${AppUtility.isNotEmpty(this.category.ID) ? "cancel" : "new"}`),
+			message || await this.configSvc.getResourceAsync(`portals.cms.contents.update.messages.confirm.${AppUtility.isNotEmpty(this.content.ID) ? "cancel" : "new"}`),
 			undefined,
 			async () => await this.configSvc.navigateBackAsync(url),
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
