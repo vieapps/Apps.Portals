@@ -33,6 +33,7 @@ export class AppComponent implements OnInit {
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private usersSvc: UsersService,
+		private portalsCoreSvc: PortalsCoreService,
 		http: HttpClient
 	) {
 		if (this.configSvc.isDebug) {
@@ -107,11 +108,11 @@ export class AppComponent implements OnInit {
 				this.configSvc.pushUrl((event as RoutesRecognized).url, (event as RoutesRecognized).state.root.queryParams);
 				const current = this.configSvc.getCurrentUrl();
 				AppEvents.broadcast("Navigating", { Url: current.url, Params: current.params });
-			}
-			else if (event instanceof NavigationEnd) {
-				if (new Date().getTime() - AppRTU.pingTime > 130000) {
+				if (new Date().getTime() - AppRTU.pingTime > 300000) { // 5 minutes
 					AppRTU.restart("[Router]: Ping period is too large...");
 				}
+			}
+			else if (event instanceof NavigationEnd) {
 				const current = this.configSvc.getCurrentUrl();
 				AppEvents.broadcast("Navigated", { Url: current.url, Params: current.params });
 			}
@@ -522,6 +523,7 @@ export class AppComponent implements OnInit {
 				languages: appConfig.languages
 			}});
 			this.appFormsSvc.hideLoadingAsync(async () => {
+				await this.portalsCoreSvc.initializeAysnc();
 				if (onNext !== undefined) {
 					onNext();
 				}
