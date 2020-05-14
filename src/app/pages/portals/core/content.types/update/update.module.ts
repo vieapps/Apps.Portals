@@ -3,7 +3,7 @@ import { CommonModule } from "@angular/common";
 import { RouterModule } from "@angular/router";
 import { IonicModule } from "@ionic/angular";
 import { AppFormsModule } from "@components/forms.module";
-import { ContentTypesUpdatePage } from "./update.page";
+import { PortalsContentTypesUpdatePage } from "./update.page";
 
 @NgModule({
 	providers: [],
@@ -11,10 +11,10 @@ import { ContentTypesUpdatePage } from "./update.page";
 		CommonModule,
 		IonicModule,
 		AppFormsModule,
-		RouterModule.forChild([{ path: "", component: ContentTypesUpdatePage }])
+		RouterModule.forChild([{ path: "", component: PortalsContentTypesUpdatePage }])
 	],
 	exports: [],
-	declarations: [ContentTypesUpdatePage]
+	declarations: [PortalsContentTypesUpdatePage]
 })
 
-export class ContentTypesUpdatePageModule {}
+export class PortalsContentTypesUpdatePageModule {}

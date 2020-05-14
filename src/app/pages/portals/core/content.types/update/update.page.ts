@@ -26,7 +26,7 @@ import { RolesSelectorModalPage } from "@controls/portals/role.selector.modal.pa
 	styleUrls: ["./update.page.scss"]
 })
 
-export class ContentTypesUpdatePage implements OnInit {
+export class PortalsContentTypesUpdatePage implements OnInit {
 	constructor(
 		public configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,

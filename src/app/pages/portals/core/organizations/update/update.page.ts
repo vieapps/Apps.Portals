@@ -23,7 +23,7 @@ import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.mo
 	styleUrls: ["./update.page.scss"]
 })
 
-export class OrganizationsUpdatePage implements OnInit {
+export class PortalsOrganizationsUpdatePage implements OnInit {
 	constructor(
 		public configSvc: ConfigurationService,
 		private usersSvc: UsersService,

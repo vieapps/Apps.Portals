@@ -21,7 +21,7 @@ import { UserProfile } from "@models/user";
 	styleUrls: ["./list.page.scss"]
 })
 
-export class OrganizationsListPage implements OnInit, OnDestroy {
+export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	constructor(
 		public configSvc: ConfigurationService,

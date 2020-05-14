@@ -11,19 +11,19 @@ import { IonicModule } from "@ionic/angular";
 		RouterModule.forChild([
 			{
 				path: "search",
-				loadChildren: "@pages/portals/core/sites/list/list.module#SitesListPageModule"
+				loadChildren: "@pages/portals/core/sites/list/list.module#PortalsSitesListPageModule"
 			},
 			{
 				path: "list/:data",
-				loadChildren: "@pages/portals/core/sites/list/list.module#SitesListPageModule"
+				loadChildren: "@pages/portals/core/sites/list/list.module#PortalsSitesListPageModule"
 			},
 			{
 				path: "create",
-				loadChildren: "@pages/portals/core/sites/update/update.module#SitesUpdatePageModule"
+				loadChildren: "@pages/portals/core/sites/update/update.module#PortalsSitesUpdatePageModule"
 			},
 			{
 				path: "update/:data",
-				loadChildren: "@pages/portals/core/sites/update/update.module#SitesUpdatePageModule"
+				loadChildren: "@pages/portals/core/sites/update/update.module#PortalsSitesUpdatePageModule"
 			}
 		])
 	],
@@ -31,4 +31,4 @@ import { IonicModule } from "@ionic/angular";
 	declarations: []
 })
 
-export class SitesModule {}
+export class PortalsSitesModule {}

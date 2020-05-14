@@ -11,19 +11,19 @@ import { IonicModule } from "@ionic/angular";
 		RouterModule.forChild([
 			{
 				path: "search",
-				loadChildren: "@pages/portals/core/desktops/list/list.module#DesktopsListPageModule"
+				loadChildren: "@pages/portals/core/desktops/list/list.module#PortalsDesktopsListPageModule"
 			},
 			{
 				path: "list/:data",
-				loadChildren: "@pages/portals/core/desktops/list/list.module#DesktopsListPageModule"
+				loadChildren: "@pages/portals/core/desktops/list/list.module#PortalsDesktopsListPageModule"
 			},
 			{
 				path: "create",
-				loadChildren: "@pages/portals/core/desktops/update/update.module#DesktopsUpdatePageModule"
+				loadChildren: "@pages/portals/core/desktops/update/update.module#PortalsDesktopsUpdatePageModule"
 			},
 			{
 				path: "update/:data",
-				loadChildren: "@pages/portals/core/desktops/update/update.module#DesktopsUpdatePageModule"
+				loadChildren: "@pages/portals/core/desktops/update/update.module#PortalsDesktopsUpdatePageModule"
 			}
 		])
 	],
@@ -31,4 +31,4 @@ import { IonicModule } from "@ionic/angular";
 	declarations: []
 })
 
-export class DesktopsModule {}
+export class PortalsDesktopsModule {}

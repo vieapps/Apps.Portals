@@ -21,7 +21,7 @@ import { Site } from "@models/portals.core.site";
 	styleUrls: ["./list.page.scss"]
 })
 
-export class SitesListPage implements OnInit, OnDestroy {
+export class PortalsSitesListPage implements OnInit, OnDestroy {
 
 	constructor(
 		public configSvc: ConfigurationService,

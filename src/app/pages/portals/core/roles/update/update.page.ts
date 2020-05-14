@@ -20,7 +20,7 @@ import { UsersSelectorModalPage } from "@controls/common/user.selector.modal.pag
 	styleUrls: ["./update.page.scss"]
 })
 
-export class RolesUpdatePage implements OnInit {
+export class PortalsRolesUpdatePage implements OnInit {
 	constructor(
 		public configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,

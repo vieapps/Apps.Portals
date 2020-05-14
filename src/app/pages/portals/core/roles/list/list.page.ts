@@ -20,7 +20,7 @@ import { Role } from "@models/portals.core.role";
 	styleUrls: ["./list.page.scss"]
 })
 
-export class RolesListPage implements OnInit, OnDestroy {
+export class PortalsRolesListPage implements OnInit, OnDestroy {
 
 	constructor(
 		public configSvc: ConfigurationService,

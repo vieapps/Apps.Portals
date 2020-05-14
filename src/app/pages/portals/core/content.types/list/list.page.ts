@@ -23,7 +23,7 @@ import { ContentType } from "@models/portals.core.content.type";
 	styleUrls: ["./list.page.scss"]
 })
 
-export class ContentTypesListPage implements OnInit, OnDestroy {
+export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 
 	constructor(
 		public configSvc: ConfigurationService,

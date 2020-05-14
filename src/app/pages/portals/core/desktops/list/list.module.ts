@@ -3,7 +3,7 @@ import { CommonModule } from "@angular/common";
 import { RouterModule } from "@angular/router";
 import { IonicModule } from "@ionic/angular";
 import { TimePipeModule } from "@components/time.pipe";
-import { DesktopsListPage } from "./list.page";
+import { PortalsDesktopsListPage } from "./list.page";
 
 @NgModule({
 	providers: [],
@@ -11,10 +11,10 @@ import { DesktopsListPage } from "./list.page";
 		CommonModule,
 		IonicModule,
 		TimePipeModule,
-		RouterModule.forChild([{ path: "", component: DesktopsListPage }])
+		RouterModule.forChild([{ path: "", component: PortalsDesktopsListPage }])
 	],
 	exports: [],
-	declarations: [DesktopsListPage]
+	declarations: [PortalsDesktopsListPage]
 })
 
-export class DesktopsListPageModule {}
+export class PortalsDesktopsListPageModule {}

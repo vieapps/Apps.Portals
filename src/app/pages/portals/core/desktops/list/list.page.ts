@@ -20,7 +20,7 @@ import { Desktop } from "@models/portals.core.desktop";
 	styleUrls: ["./list.page.scss"]
 })
 
-export class DesktopsListPage implements OnInit, OnDestroy {
+export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 	constructor(
 		public configSvc: ConfigurationService,

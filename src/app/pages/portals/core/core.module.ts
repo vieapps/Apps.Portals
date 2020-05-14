@@ -11,27 +11,27 @@ import { IonicModule } from "@ionic/angular";
 		RouterModule.forChild([
 			{
 				path: "organizations",
-				loadChildren: "@pages/portals/core/organizations/organizations.module#OrganizationsModule"
-			},
-			{
-				path: "roles",
-				loadChildren: "@pages/portals/core/roles/roles.module#RolesModule"
-			},
-			{
-				path: "desktops",
-				loadChildren: "@pages/portals/core/desktops/desktops.module#DesktopsModule"
+				loadChildren: "@pages/portals/core/organizations/organizations.module#PortalsOrganizationsModule"
 			},
 			{
 				path: "sites",
-				loadChildren: "@pages/portals/core/sites/sites.module#SitesModule"
+				loadChildren: "@pages/portals/core/sites/sites.module#PortalsSitesModule"
+			},
+			{
+				path: "roles",
+				loadChildren: "@pages/portals/core/roles/roles.module#PortalsRolesModule"
+			},
+			{
+				path: "desktops",
+				loadChildren: "@pages/portals/core/desktops/desktops.module#PortalsDesktopsModule"
 			},
 			{
 				path: "modules",
-				loadChildren: "@pages/portals/core/modules/modules.module#ModulesModule"
+				loadChildren: "@pages/portals/core/modules/modules.module#PortalsModulesModule"
 			},
 			{
 				path: "content.types",
-				loadChildren: "@pages/portals/core/content.types/content.types.module#ContentTypesModule"
+				loadChildren: "@pages/portals/core/content.types/content.types.module#PortalsContentTypesModule"
 			}
 		])
 	],

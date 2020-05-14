@@ -22,7 +22,7 @@ import { Module } from "@models/portals.core.module";
 	styleUrls: ["./list.page.scss"]
 })
 
-export class ModulesListPage implements OnInit, OnDestroy {
+export class PortalsModulesListPage implements OnInit, OnDestroy {
 
 	constructor(
 		public configSvc: ConfigurationService,
