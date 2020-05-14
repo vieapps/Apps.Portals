@@ -36,12 +36,13 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
-	private organization: Organization;
 	private subscription: Subscription;
 	private isSystemAdministrator = false;
 	private canModerateOrganization = false;
 	private systemID: string;
+	private organization: Organization;
 	private definitionID: string;
+	private definition: ModuleDefinition;
 	private definitions: Array<ModuleDefinition>;
 
 	title = "Modules";
@@ -80,7 +81,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 
 	ngOnDestroy() {
 		if (!this.searching) {
-			AppEvents.off(this.portalsCoreSvc.name, AppUtility.isNotEmpty(this.definitionID) ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
+			AppEvents.off(this.portalsCoreSvc.name, this.definition !== undefined ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
 		}
 		else if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
@@ -90,6 +91,9 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 	private async initializeAsync() {
 		this.systemID = this.configSvc.requestParams["SystemID"];
 		this.definitionID = this.configSvc.requestParams["DefinitionID"];
+
+		this.definitions = this.portalsCoreSvc.ModuleDefinitions;
+		this.definition = AppUtility.isNotEmpty(this.definitionID) ? this.definitions.find(definition => definition.ID === this.definitionID) : undefined;
 
 		this.organization = this.portalsCoreSvc.getOrganization(this.systemID);
 		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
@@ -119,14 +123,13 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(this.systemID)) {
 			this.filterBy.And.push({ SystemID: { Equals: this.systemID } });
 		}
-		if (AppUtility.isNotEmpty(this.definitionID)) {
+		if (this.definition !== undefined) {
 			this.filterBy.And.push({ ModuleDefinitionID: { Equals: this.definitionID } });
 		}
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.modules.title.${(this.searching ? "search" : "list")}`);
 		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
-		this.definitions = await this.portalsCoreSvc.getDefinitionsAsync();
 
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.modules.list.searchbar");
@@ -137,12 +140,17 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 				if (info.args.Object === "Module" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
 					this.prepareResults();
 				}
-			}, AppUtility.isNotEmpty(this.definitionID) ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
+			}, this.definition !== undefined ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.create"), "create", () => this.openCreateAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.search"), "search", () => this.openSearchAsync())
 			];
 			await this.startSearchAsync();
+		}
+
+		if (this.configSvc.isDebug) {
+			console.log("<Modules>: show the collection of modules", this.configSvc.requestParams, this.filterBy);
+			console.log("<Modules>: organization & definition", this.organization, this.definition);
 		}
 	}
 

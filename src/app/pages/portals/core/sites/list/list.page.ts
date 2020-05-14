@@ -129,6 +129,11 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 			];
 			await this.startSearchAsync();
 		}
+
+		if (this.configSvc.isDebug) {
+			console.log("<Sites>: show the collection of sites", this.configSvc.requestParams, this.filterBy);
+			console.log("<Sites>: organization", this.organization);
+		}
 	}
 
 	track(index: number, site: Site) {

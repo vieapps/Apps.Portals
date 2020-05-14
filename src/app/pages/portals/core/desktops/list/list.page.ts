@@ -158,6 +158,11 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 				await this.startSearchAsync();
 			}
 		}
+
+		if (this.configSvc.isDebug) {
+			console.log("<Desktops>: show the collection of dekstops", this.configSvc.requestParams, this.filterBy);
+			console.log("<Desktops>: organization & parent", this.organization, this.parentDesktop);
+		}
 	}
 
 	track(index: number, desktop: Desktop) {

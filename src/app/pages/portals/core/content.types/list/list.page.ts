@@ -16,6 +16,7 @@ import { PortalsCmsService } from "@services/portals.cms.service";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
+import { ContentTypeDefinition } from "@models/portals.base";
 
 @Component({
 	selector: "page-portals-core-content-types-list",
@@ -39,13 +40,16 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
 
-	private organization: Organization;
 	private subscription: Subscription;
 	private isSystemAdministrator = false;
 	private canModerateOrganization = false;
 	private systemID: string;
+	private organization: Organization;
 	private repositoryID: string;
+	private module: Module;
 	private definitionID: string;
+	private definition: ContentTypeDefinition;
+	private definitions: Array<ContentTypeDefinition>;
 
 	title = "ContentTypes";
 	contentTypes = new Array<ContentType>();
@@ -88,7 +92,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 	ngOnDestroy() {
 		if (!this.searching) {
 			let identity = "ContentTypes:Refresh";
-			if (AppUtility.isNotEmpty(this.definitionID)) {
+			if (this.definition !== undefined) {
 				identity = `ContentTypes:${this.definitionID}:Refresh`;
 			}
 			else if (AppUtility.isNotEmpty(this.repositoryID)) {
@@ -107,6 +111,10 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		this.definitionID = this.configSvc.requestParams["DefinitionID"];
 
 		this.organization = this.portalsCoreSvc.getOrganization(this.systemID);
+		this.module = Module.get(this.repositoryID);
+		this.definitions = this.portalsCoreSvc.ContentTypeDefinitions;
+		this.definition = AppUtility.isNotEmpty(this.definitionID) ? this.definitions.find(definition => definition.ID === this.definitionID) : undefined;
+
 		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 
@@ -137,7 +145,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(this.repositoryID)) {
 			this.filterBy.And.push({ RepositoryID: { Equals: this.repositoryID } });
 		}
-		if (AppUtility.isNotEmpty(this.definitionID)) {
+		if (this.definition !== undefined) {
 			this.filterBy.And.push({ ContentTypeDefinitionID: { Equals: this.definitionID } });
 		}
 
@@ -163,7 +171,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		}
 		else {
 			let identity = "ContentTypes:Refresh";
-			if (AppUtility.isNotEmpty(this.definitionID)) {
+			if (this.definition !== undefined) {
 				identity = `ContentTypes:${this.definitionID}:Refresh`;
 			}
 			else if (AppUtility.isNotEmpty(this.repositoryID)) {
@@ -179,6 +187,11 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.contenttypes.title.search"), "search", () => this.openSearchAsync())
 			];
 			await this.startSearchAsync();
+		}
+
+		if (this.configSvc.isDebug) {
+			console.log("<ContentTypes>: show the collection of content-types", this.configSvc.requestParams, this.filterBy);
+			console.log("<ContentTypes>: organization, module & definition", this.organization, this.module, this.definition);
 		}
 	}
 

@@ -29,6 +29,14 @@ export class PortalsCoreService extends BaseService {
 		this.initialize();
 	}
 
+	public get ModuleDefinitions() {
+		return BaseModel.ModuleDefinitions;
+	}
+
+	public get ContentTypeDefinitions() {
+		return BaseModel.ContentTypeDefinitions;
+	}
+
 	public get activeOrganization() {
 		if (Organization.active === undefined) {
 			Organization.active = Organization.instances.size() > 0 ? Organization.all[0] : undefined;

@@ -156,6 +156,11 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 				await this.startSearchAsync();
 			}
 		}
+
+		if (this.configSvc.isDebug) {
+			console.log("<Roles>: show the collection of roles", this.configSvc.requestParams, this.filterBy);
+			console.log("<Roles>: organization & parent", this.organization, this.parentRole);
+		}
 	}
 
 	track(index: number, role: Role) {
