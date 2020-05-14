@@ -143,11 +143,11 @@ export class Organization extends CoreBaseModel {
 	}
 
 	public get Modules() {
-		return new List(Module.all).Where(mod => mod.SystemID === this.ID).OrderBy(mod => mod.Title).ToArray();
+		return new List(Module.all).Where(module => module.SystemID === this.ID).OrderBy(module => module.Title).ToArray();
 	}
 
 	public get ContentTypes() {
-		return new List(Module.all).Where(mod => mod.SystemID === this.ID).Select(mod => mod.ContentTypes).SelectMany(contentTypes => new List(contentTypes)).OrderBy(contentType => contentType.Title).ToArray();
+		return new List(Module.all).Where(module => module.SystemID === this.ID).Select(module => module.ContentTypes).SelectMany(contentTypes => new List(contentTypes)).OrderBy(contentType => contentType.Title).ToArray();
 	}
 
 }
