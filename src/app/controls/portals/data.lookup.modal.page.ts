@@ -288,5 +288,4 @@ interface DataItem {
 	OrderIndex?: number;
 	Parent?: DataItem;
 	Children?: DataItem[];
-	LastModified: Date;
 }
