@@ -180,9 +180,21 @@
 						"label": "Thông tin liên quan từ bên ngoài hệ thống",
 						"placeholder": "",
 						"description": "",
-						"title": "Tiêu đề",
-						"summary": "Tóm tắt",
-						"url": "URL gốc"
+						"Title": {
+							"label": "Tiêu đề",
+							"placeholder": "",
+							"description": ""
+							},
+						"Summary": {
+							"label": "Tóm tắt",
+							"placeholder": "",
+							"description": ""
+						},
+						"URL": {
+							"label": "URL gốc",
+							"placeholder": "",
+							"description": ""
+						}
 					}
 				},
 				"list": {
