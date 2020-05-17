@@ -127,6 +127,10 @@ export class Desktop extends CoreBaseModel implements INestedObject {
 		return 0;
 	}
 
+	public get routerLink() {
+		return `/portals/core/desktops/update/${AppUtility.toURI(this.ansiTitle)}`;
+	}
+
 	public get listURI() {
 		return `${this.routerLink.replace("/update/", "/list/")}?x-request=${AppUtility.toBase64Url({ ParentID: this.ID })}`;
 	}

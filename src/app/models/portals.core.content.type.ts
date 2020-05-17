@@ -124,4 +124,13 @@ export class ContentType extends CoreBaseModel {
 		return AppUtility.isNotEmpty(this.ContentTypeDefinitionID) ? (BaseModel.ContentTypeDefinitions || []).find(definition => definition.ID === this.ContentTypeDefinitionID) : undefined;
 	}
 
+	public getObjectName(includePrefixAndSuffix: boolean = false) {
+		const definition = this.ContentTypeDefinition;
+		return definition !== undefined
+			? includePrefixAndSuffix
+				? (AppUtility.isNotEmpty(definition.ObjectNamePrefix) ? definition.ObjectNamePrefix : "") + definition.ObjectName + (AppUtility.isNotEmpty(definition.ObjectNameSuffix) ? definition.ObjectNameSuffix : "")
+				: definition.ObjectName
+			: undefined;
+	}
+
 }

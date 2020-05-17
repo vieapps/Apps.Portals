@@ -150,4 +150,8 @@ export class Organization extends CoreBaseModel {
 		return new List(Module.all).Where(module => module.SystemID === this.ID).Select(module => module.ContentTypes).SelectMany(contentTypes => new List(contentTypes)).OrderBy(contentType => contentType.Title).ToArray();
 	}
 
+	public get routerLink() {
+		return `/portals/core/organizations/update/${AppUtility.toURI(this.ansiTitle)}`;
+	}
+
 }

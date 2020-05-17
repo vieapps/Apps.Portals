@@ -12,13 +12,17 @@ export abstract class PortalCmsBase extends BaseModel {
 		super();
 	}
 
+	public static get ModuleDefinitions() {
+		return BaseModel.ModuleDefinitions;
+	}
+
+	public static get ContentTypeDefinitions() {
+		return BaseModel.ContentTypeDefinitions;
+	}
+
 	public abstract SystemID: string;
 	public abstract RepositoryID: string;
 	public abstract RepositoryEntityID: string;
-
-	public get routerLink() {
-		return `/portals/cms/${this.constructor.name.toLowerCase()}s/view/${AppUtility.toURI(this.ansiTitle)}`;
-	}
 
 	public get Organization() {
 		const organization = AppUtility.isNotEmpty(this.SystemID) ? Organization.get(this.SystemID) : undefined;

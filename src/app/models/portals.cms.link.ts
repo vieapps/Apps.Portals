@@ -100,4 +100,8 @@ export class Link extends CmsBaseModel implements INestedObject {
 		return (parent !== undefined ? `${parent.FullTitle} > ` : "") + this.Title;
 	}
 
+	public get routerLink() {
+		return `/portals/cms/links/view/${AppUtility.toURI(this.ansiTitle)}`;
+	}
+
 }

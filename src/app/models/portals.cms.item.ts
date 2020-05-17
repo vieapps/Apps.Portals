@@ -75,4 +75,8 @@ export class Item extends CmsBaseModel {
 		return id !== undefined && this.instances.containsKey(id);
 	}
 
+	public get routerLink() {
+		return `/portals/cms/items/view/${AppUtility.toURI(this.ansiTitle)}`;
+	}
+
 }

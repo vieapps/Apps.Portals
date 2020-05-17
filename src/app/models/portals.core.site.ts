@@ -102,4 +102,8 @@ export class Site extends CoreBaseModel {
 		return id !== undefined && this.instances.containsKey(id);
 	}
 
+	public get routerLink() {
+		return `/portals/core/sites/update/${AppUtility.toURI(this.ansiTitle)}`;
+	}
+
 }

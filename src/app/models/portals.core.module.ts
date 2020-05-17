@@ -120,4 +120,8 @@ export class Module extends CoreBaseModel {
 		return ContentType.all.filter(contentType => contentType.RepositoryID === this.ID).sort(AppUtility.getCompareFunction("Title"));
 	}
 
+	public get routerLink() {
+		return `/portals/core/modules/update/${AppUtility.toURI(this.ansiTitle)}`;
+	}
+
 }

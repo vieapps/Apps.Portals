@@ -1,6 +1,7 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
+import { Category } from "@models/portals.cms.category";
 
 export class Content extends CmsBaseModel {
 
@@ -62,6 +63,7 @@ export class Content extends CmsBaseModel {
 		content.copy(json, data => {
 			content.StartDate = AppUtility.isNotEmpty(data.StartDate) ? new Date(data.StartDate) : undefined;
 			content.EndDate = AppUtility.isNotEmpty(data.EndDate) && data.EndDate !== "-" ? new Date(data.EndDate) : undefined;
+			content.PublishedTime = AppUtility.isNotEmpty(data.PublishedTime) ? new Date(data.PublishedTime) : undefined;
 		});
 		content.ansiTitle = AppUtility.toANSI(content.Title).toLowerCase();
 		return content;
@@ -92,6 +94,14 @@ export class Content extends CmsBaseModel {
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
 		return id !== undefined && this.instances.containsKey(id);
+	}
+
+	public get routerLink() {
+		return `/portals/cms/contents/view/${AppUtility.toURI(this.ansiTitle)}`;
+	}
+
+	public get category() {
+		return Category.get(this.CategoryID);
 	}
 
 }
