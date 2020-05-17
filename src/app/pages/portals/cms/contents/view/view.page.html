@@ -1,13 +1,14 @@
 <ion-header>
 	<ion-toolbar [color]="configSvc.color">
 		<ion-buttons slot="start">
-			<ion-button fill="clear" color="secondary" [disabled]="processing" (click)="cancelAsync()">
-				{{ button.cancel }}
-			</ion-button>
+			<ion-back-button text=""></ion-back-button>
 		</ion-buttons>
-		<ion-buttons slot="end">
-			<ion-button fill="clear" color="primary" [disabled]="processing" (click)="updateAsync()">
-				{{ button.update }}
+		<ion-buttons *ngIf="button" slot="end">
+			<ion-button *ngIf="!canModerate" fill="clear" color="primary" (click)="moderateAsync()">
+				{{ button }}
+			</ion-button>
+			<ion-button *ngIf="canEdit && !canModerate" fill="clear" color="primary" (click)="updateAsync()">
+				{{ button }}
 			</ion-button>
 		</ion-buttons>
 		<ion-title>
@@ -21,7 +22,6 @@
 		[color]="configSvc.color"
 		[form]="form"
 		[config]="formConfig"
-		[segments]="formSegments"
 		[controls]="formControls"
 		(init)="onFormInitialized()"></app-form>
 </ion-content>
