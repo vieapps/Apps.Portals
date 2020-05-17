@@ -228,3 +228,18 @@ app-form ion-item > ion-chip > ion-label > span {
 	display: inline-block;
 	padding-top: 3px;
 }
+
+/* text editor */
+.text-editor div.ck-toolbar {
+	margin-top: 15px;
+}
+.text-editor .ck-editor__editable_inline {
+	min-height: 400px;
+	max-height: 700px;
+	border-left: solid 1px var(--ck-color-toolbar-border) !important;
+	border-right: solid 1px var(--ck-color-toolbar-border) !important;
+	border-bottom: solid 1px var(--ck-color-toolbar-border) !important;
+}
+form.ck-link-form_layout-vertical > button.ck-button {
+	border-right: none !important;
+}
