@@ -1,6 +1,6 @@
 import { Subscription } from "rxjs";
 import { List } from "linqts";
-import { Set } from "typescript-collections";
+import { Dictionary } from "typescript-collections";
 import { Component, OnInit, OnDestroy, Input, ViewChild } from "@angular/core";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
 import { AppUtility } from "@components/app.utility";
@@ -83,7 +83,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		cancel: "Cancel",
 		search: "Search"
 	};
-	selected = new Set<string>();
+	selected = new Dictionary<string, DataItem>();
 
 	ngOnInit() {
 		this.nested = this.nested === undefined ? false : AppUtility.isTrue(this.nested);
@@ -250,21 +250,21 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		}
 	}
 
-	select(event: any, id: string) {
+	select(event: any, item: DataItem) {
 		if (event.detail.checked) {
 			if (!this.multiple) {
 				this.selected.clear();
 			}
-			this.selected.add(id);
+			this.selected.setValue(item.ID, item);
 		}
 		else {
-			this.selected.remove(id);
+			this.selected.remove(item.ID);
 		}
 	}
 
-	closeAsync(ids?: Array<string>) {
-		return ids === undefined || ids.length > 0
-			? this.appFormsSvc.hideModalAsync(ids)
+	closeAsync(items?: Array<DataItem>) {
+		return items === undefined || items.length > 0
+			? this.appFormsSvc.hideModalAsync(items)
 			: new Promise<void>(() => {});
 	}
 
