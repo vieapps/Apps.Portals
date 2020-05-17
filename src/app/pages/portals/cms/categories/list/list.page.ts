@@ -183,7 +183,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 						this.prepareResults();
 					}
 				}, "CMS.Categories:Refresh");
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.module === undefined ? this.organization.Title : this.organization.Title + " - " + this.module.Title)}]` });
+				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.module === undefined ? this.organization.Title : this.organization.Title + " :: " + this.module.Title)}]` });
 				this.prepareFilterBy();
 				await this.startSearchAsync();
 			}
@@ -350,20 +350,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	async viewAsync(event: Event, category: Category) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		const definitionOfCategory = category.ContentTypeDefinition;
-		const definitionOfContent = ContentType.ContentTypeDefinitions.find(definition => definition.ParentObjectName === definitionOfCategory.ObjectName);
-		const objectName = `${definitionOfContent.ObjectName}s`;
-		const params: { [key: string]: string } = {
-			SystemID: category.SystemID,
-			RepositoryID: category.RepositoryID
-		};
-		const contentTypes = this.portalsCmsSvc.getContentTypesOfContent(category.Module);
-		if (contentTypes.length === 1) {
-			params["RepositoryEntityID"] = contentTypes[0].ID;
-		}
-		params["CategoryID"] = category.ID;
-		const url = `/portals/cms/${objectName.toLowerCase()}/list/${AppUtility.toURI(category.ansiTitle)}?x-request=${AppUtility.toBase64Url(params)}`;
-		await this.configSvc.navigateForwardAsync(url);
+		await this.configSvc.navigateForwardAsync(this.portalsCmsSvc.getAppUrl(this.portalsCmsSvc.getDefaultContentTypeOfContent(category.Module), "list", category.Title, { CategoryID: category.ID }));
 	}
 
 	private async backAsync(message: string, url?: string) {
