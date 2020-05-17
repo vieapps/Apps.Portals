@@ -6,10 +6,15 @@ import { AppCustomCompleter } from "@components/app.completer";
 import { AppPagination } from "@components/app.pagination";
 import { Base as BaseService } from "@services/base.service";
 import { ConfigurationService } from "@services/configuration.service";
+import { AuthenticationService } from "@services/authentication.service";
+import { FilesService, UploadFileHeader } from "@services/files.service";
 import { PortalsCoreService } from "@services/portals.core.service";
+import { AppFormsService, AppFormsControlLookupOptionsConfig } from "@components/forms.service";
+import { Account } from "@models/account";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
+import { Desktop } from "@models/portals.core.desktop";
 import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
 import { Category } from "@models/portals.cms.category";
 import { Content } from "@models/portals.cms.content";
@@ -21,6 +26,9 @@ export class PortalsCmsService extends BaseService {
 
 	constructor(
 		private configSvc: ConfigurationService,
+		private authSvc: AuthenticationService,
+		private appFormsSvc: AppFormsService,
+		private filesSvc: FilesService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
 		super("Portals");
@@ -42,32 +50,48 @@ export class PortalsCmsService extends BaseService {
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Cms.Link", message => this.processLinkUpdateMessage(message));
 	}
 
-	public getUrl(object: CmsBaseModel, action?: string, contentType?: ContentType) {
-		action = action || "list";
-		contentType = contentType || (object !== undefined ? object.ContentType : undefined);
-		if (contentType === undefined) {
-			return undefined;
+	public canManage(object: CmsBaseModel, account?: Account) {
+		return this.authSvc.isAdministrator(this.name, object.ContentType.getObjectName(), object.Privileges, account);
+	}
+
+	public canModerate(object: CmsBaseModel, account?: Account) {
+		return this.authSvc.isModerator(this.name, object.ContentType.getObjectName(), object.Privileges, account);
+	}
+
+	public canEdit(object: CmsBaseModel, account?: Account) {
+		return this.authSvc.isEditor(this.name, object.ContentType.getObjectName(), object.Privileges, account);
+	}
+
+	public canContribute(object: CmsBaseModel, account?: Account) {
+		return this.authSvc.isContributor(this.name, object.ContentType.getObjectName(), object.Privileges, account);
+	}
+
+	public canView(object: CmsBaseModel, account?: Account) {
+		return this.authSvc.isViewer(this.name, object.ContentType.getObjectName(), object.Privileges, account);
+	}
+
+	public getAppUrl(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }) {
+		const objectName = contentType.getObjectName();
+		return "/portals/cms/"
+			+ (AppUtility.isEquals(objectName, "Category") ? "categories" : `${objectName}s`).toLowerCase() + "/"
+			+ (action || "list").toLowerCase() + "/"
+			+ AppUtility.toANSI(title || contentType.ansiTitle, true)
+			+ `?x-request=${AppUtility.toBase64Url(params || { RepositoryEntityID: contentType.ID })}`;
+	}
+
+	public getPortalUrl(object: CmsBaseModel, parent?: CmsBaseModel): string {
+		const identity = object["Alias"] || object.ID;
+		let uri = parent !== undefined
+			? this.getPortalUrl(parent)
+			: undefined;
+		if (uri === undefined) {
+			const organization = Organization.get(object.SystemID);
+			const module = Module.get(object.RepositoryID);
+			const contentType = ContentType.get(object.RepositoryEntityID);
+			const desktop = Desktop.get(object["DesktopID"]) || Desktop.get(contentType === undefined ? undefined : contentType.DesktopID) || Desktop.get(module === undefined ? undefined : module.DesktopID) || Desktop.get(organization === undefined ? undefined : organization.HomeDesktopID);
+			uri = `${this.configSvc.appConfig.URIs.portals}${(desktop !== undefined ? desktop.Alias : "-default")}`;
 		}
-		const definition = Organization.ContentTypeDefinitions.find(def => def.ID === contentType.ContentTypeDefinitionID);
-		const objectName = AppUtility.isEquals(definition.ObjectName, "Category") ? "categories" : `${definition.ObjectName}s`;
-		const title = AppUtility.toURI(object !== undefined ? object.ansiTitle : contentType.ansiTitle);
-		const params: { [key: string]: string } = { RepositoryEntityID: contentType.ID };
-		if (object !== undefined ) {
-			params["ID"] = object.ID;
-		}
-		return `/portals/cms/${objectName.toLowerCase()}/${action}/${title}?x-request=${AppUtility.toBase64Url(params)}`;
-	}
-
-	public getListUrl(contentType: ContentType) {
-		return this.getUrl(undefined, "list", contentType);
-	}
-
-	public getViewUrl(object: CmsBaseModel) {
-		return this.getUrl(object, "view");
-	}
-
-	public getUpdateUrl(object: CmsBaseModel) {
-		return this.getUrl(object, "update");
+		return uri + `/${identity}`;
 	}
 
 	public async getActiveModuleAsync(useXHR: boolean = true) {
@@ -120,6 +144,72 @@ export class PortalsCmsService extends BaseService {
 
 	public async getAsync(objectName: string, id: string, onNext: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await super.readAsync(super.getURI(objectName, id), onNext, onError, headers, true);
+	}
+
+	public setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onPreCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {
+		lookupOptions.ModalOptions = lookupOptions.ModalOptions || {};
+		if (lookupModalPage !== undefined) {
+			lookupOptions.ModalOptions.Component = lookupModalPage;
+		}
+		lookupOptions.ModalOptions.ComponentProps = lookupOptions.ModalOptions.ComponentProps || {};
+		lookupOptions.ModalOptions.ComponentProps.organizationID = contentType.SystemID;
+		lookupOptions.ModalOptions.ComponentProps.moduleID = contentType.RepositoryID;
+		lookupOptions.ModalOptions.ComponentProps.contentTypeID = contentType.ID;
+		if (multiple !== undefined) {
+			lookupOptions.ModalOptions.ComponentProps.multiple = AppUtility.isTrue(multiple);
+		}
+		if (nested !== undefined) {
+			lookupOptions.ModalOptions.ComponentProps.nested = AppUtility.isTrue(nested);
+		}
+		if (onPreCompleted !== undefined) {
+			onPreCompleted(lookupOptions);
+		}
+	}
+
+	public getLinkSelector(object: CmsBaseModel, contentLookupModalPage: any, fileLookupModalPage: any, options?: { [key: string]: any }) {
+		options = options || {};
+		options.content = options.content || {};
+		options.file = options.file || {};
+		const linkSelector: { [key: string]: any } = {
+			content: {
+				label: options.content.label,
+				selectLink: (onSelected: (link: string) => void) => this.appFormsSvc.showModalAsync(
+					contentLookupModalPage,
+					{
+						organizationID: object.SystemID,
+						moduleID: object.RepositoryID,
+						contentTypeID: object.RepositoryEntityID,
+						objectName: object.ContentType.getObjectName(true),
+						multiple: false,
+						nested: !!options.content.nested,
+						sortBy: options.content.sortBy,
+						preProcess: options.content.preProcess
+					},
+					data => {
+						const obj = AppUtility.isArray(data, true) ? data[0] : undefined;
+						const parent = obj !== undefined ? Category.get(obj["CategoryID"]) : undefined;
+						onSelected(obj !== undefined ? this.getPortalUrl(obj, parent) + ".html" : undefined);
+					}
+				)
+			}
+		};
+		return linkSelector;
+	}
+
+	public getFileHeader(object: CmsBaseModel) {
+		if (object !== undefined) {
+			return {
+				ServiceName: this.name,
+				ObjectName: object.ContentType.getObjectName(false),
+				SystemID: object.SystemID,
+				RepositoryID: object.RepositoryID,
+				RepositoryEntityID: object.RepositoryEntityID,
+				ObjectID: object.ID,
+				ObjectTitle: object.Title,
+				IsTemporary: AppUtility.isNotEmpty(object.ID)
+			} as UploadFileHeader;
+		}
+		return undefined;
 	}
 
 	public getContentTypesOfCategory(module: Module) {
@@ -306,14 +396,18 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	public processCategories(categories: Array<any>) {
+	public processCategories(categories: Array<any>, fetchDesktops: boolean = false) {
 		categories.forEach(data => {
-			const category = Category.get(data.ID);
+			let category = Category.get(data.ID);
 			if (category === undefined) {
-				this.fetchCategory(Category.update(data));
+				category = Category.update(data);
+				this.fetchCategory(category);
 			}
 			else if (category.childrenIDs === undefined) {
 				this.fetchCategory(category);
+			}
+			if (fetchDesktops) {
+				this.fetchDesktops(category);
 			}
 		});
 	}
@@ -360,6 +454,24 @@ export class PortalsCmsService extends BaseService {
 			}
 			Category.all.filter(category => category.ParentID === id).forEach(category => this.deleteCategory(category.ID));
 			Category.instances.remove(id);
+		}
+	}
+
+	public fetchDesktops(category: Category) {
+		if (AppUtility.isNotEmpty(category.DesktopID) && Desktop.get(category.DesktopID) === undefined) {
+			this.portalsCoreSvc.getDesktopAsync(category.DesktopID);
+		}
+		const contentType = category.ContentType;
+		if (contentType !== undefined && AppUtility.isNotEmpty(contentType.DesktopID) && Desktop.get(contentType.DesktopID) === undefined) {
+			this.portalsCoreSvc.getDesktopAsync(contentType.DesktopID);
+		}
+		const module = category.Module;
+		if (module !== undefined && AppUtility.isNotEmpty(module.DesktopID) && Desktop.get(module.DesktopID) === undefined) {
+			this.portalsCoreSvc.getDesktopAsync(module.DesktopID);
+		}
+		const organization = category.Organization;
+		if (AppUtility.isNotEmpty(organization.HomeDesktopID) && Desktop.get(organization.HomeDesktopID) === undefined) {
+			this.portalsCoreSvc.getDesktopAsync(organization.HomeDesktopID);
 		}
 	}
 

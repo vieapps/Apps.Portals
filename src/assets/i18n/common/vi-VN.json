@@ -15,9 +15,10 @@
 		"buttons": {
 			"yes": "Có",
 			"no": "Không",
-			"done": "Hoàn thành",
 			"ok": "Đồng ý",
+			"done": "Hoàn thành",
 			"add": "Thêm",
+			"moderate": "Kiểm duyệt",
 			"create": "Tạo mới",
 			"update": "Cập nhật",
 			"delete": "Xoá",

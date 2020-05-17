@@ -15,9 +15,10 @@
 		"buttons": {
 			"yes": "Yes",
 			"no": "No",
-			"done": "Done",
 			"ok": "OK",
+			"done": "Done",
 			"add": "Add",
+			"moderate": "Moderate",
 			"create": "Create new",
 			"update": "Update",
 			"delete": "Delete",
