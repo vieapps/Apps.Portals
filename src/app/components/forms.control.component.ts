@@ -1,8 +1,13 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, Output, EventEmitter, ViewChild, ChangeDetectorRef } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { CompleterService } from "ng2-completer";
-import { AppUtility } from "@components/app.utility";
+import * as CKEditor from "@components/ckeditor";
+import "@components/ckeditor.vi";
 import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
+import { AppUtility } from "@components/app.utility";
+import { PlatformUtility } from "@components/app.utility.platform";
+import { ConfigurationService } from "@services/configuration.service";
+import { FilesService } from "@services/files.service";
 
 @Component({
 	selector: "app-form-control",
@@ -12,8 +17,10 @@ import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "@componen
 export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewInit {
 
 	constructor(
-		private changeDetector: ChangeDetectorRef,
+		private configSvc: ConfigurationService,
+		private filesSvc: FilesService,
 		private appFormsSvc: AppFormsService,
+		private changeDetector: ChangeDetectorRef,
 		private completerSvc: CompleterService
 	) {
 	}
@@ -23,6 +30,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	private _selectOptions: Array<string>;
 	private _lookupDisplayValues: Array<AppFormsLookupValue>;
 	private _text: string;
+	private _ckEditorConfig: { [key: string]: any };
 
 	public showPassword = false;
 
@@ -117,6 +125,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	get isTextAreaControl() {
 		return this.isFormControl && this.isControl("TextArea");
+	}
+
+	get isTextEditorControl() {
+		return this.isFormControl && this.isControl("TextEditor");
 	}
 
 	get isTextDisplayControl() {
@@ -925,6 +937,14 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			this.setValue(this._selectOptions);
 		}
 
+		// special control: text editor
+		else if (this.isTextEditorControl) {
+			const data = AppUtility.isObject(event.editor, true) ? event.editor.getData() : undefined;
+			if (data !== undefined) {
+				this.setValue(data);
+			}
+		}
+
 		// normal control
 		else if (!this.isFilePickerControl) {
 			// set value
@@ -939,6 +959,92 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		// call on-changed event handler
 		if (this.control.Options.OnChanged !== undefined) {
 			this.control.Options.OnChanged(event, this);
+		}
+	}
+
+	get ckEditor() {
+		return CKEditor;
+	}
+
+	get ckEditorConfig() {
+		if (this._ckEditorConfig === undefined) {
+			this._ckEditorConfig = {
+				language: this.configSvc.appConfig.language.substr(0, 2),
+				fontSize: this.control.Extras["ckEditorFontSize"] || {
+					options: [10, 11, 12, "default", 14, 16, 18, 20, 24, 28, 34, 38, 40, 46, 50],
+					supportAllValues: true
+				},
+				fontFamily: this.control.Extras["ckEditorFontFamily"] || { options: [
+					"default",
+					"Arial, Helvetica, sans-serif",
+					"Courier New, Courier, monospace",
+					"Georgia, serif",
+					"Lucida Sans Unicode, Lucida Grande, sans-serif",
+					"Roboto, sans-serif",
+					"Tahoma, Geneva, sans-serif",
+					"Times New Roman, Times, serif",
+					"Trebuchet MS, Helvetica, sans-serif",
+					"Verdana, Geneva, sans-serif"
+				]},
+				link: {
+					decorators: {
+						openInNewTab: {
+							mode: "manual",
+							label: "Open in a new tab",
+							attributes: {
+								target: "_blank"
+							}
+						}
+					}
+				},
+				mediaEmbed: {
+					extraProviders: [{
+						name: this.configSvc.appConfig.app.name,
+						url: new RegExp(AppUtility.regexEscape(PlatformUtility.parseURI(this.configSvc.appConfig.URIs.files).Host))
+					}]
+				}
+			};
+			const linkSelector = this.control.Extras["ckEditorLinkSelector"];
+			if (AppUtility.isObject(linkSelector, true) && (AppUtility.isObject(linkSelector.content, true) || AppUtility.isObject(linkSelector.file, true))) {
+				this._ckEditorConfig.link.selector = linkSelector;
+			}
+			const mediaSelector = this.control.Extras["ckEditorMediaSelector"];
+			if (AppUtility.isObject(mediaSelector, true) && typeof mediaSelector.selectMedia === "function") {
+				this._ckEditorConfig.media = this._ckEditorConfig.media || {};
+				this._ckEditorConfig.media.selector = mediaSelector;
+			}
+			const removePlugins: Array<string> = this.control.Extras["ckEditorRemovePlugins"] || [];
+			const simpleUploadOptions = this.control.Extras["ckEditorSimpleUpload"];
+			if (AppUtility.isObject(simpleUploadOptions, true)) {
+				this._ckEditorConfig.simpleUpload = {
+					uploadUrl: this.configSvc.appConfig.URIs.files,
+					headers: this.filesSvc.getUploadHeader(simpleUploadOptions)
+				};
+			}
+			else {
+				removePlugins.push("ImageUpload", "MediaSelector");
+			}
+			if (removePlugins.length > 0) {
+				this._ckEditorConfig.removePlugins = removePlugins.filter((id, index, array) => array.indexOf(id) === index);
+			}
+			const toolbar = this.control.Extras["ckEditorToolbar"];
+			if (AppUtility.isObject(toolbar, true) || AppUtility.isArray(toolbar, true)) {
+				this._ckEditorConfig.toolbar = toolbar;
+			}
+			if (this.configSvc.isDebug) {
+				console.log("CKEditor run-time configuration:", this._ckEditorConfig);
+			}
+		}
+		return this._ckEditorConfig;
+	}
+
+	ckEditorOnReady(editor: any) {
+		editor.ui.getEditableElement().parentElement.insertBefore(
+			editor.ui.view.toolbar.element,
+			editor.ui.getEditableElement()
+		);
+		if (this.configSvc.isDebug) {
+			console.log("CKEditor plugins:", this.ckEditor.builtinPlugins.map(plugin => plugin.pluginName));
 		}
 	}
 

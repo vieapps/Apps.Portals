@@ -47,6 +47,41 @@ export class AppFormsSegment {
 
 //  ---------------------------------------------------------------
 
+/** Presents the options of a lookup control in the dynamic forms */
+export interface AppFormsControlLookupOptionsConfig {
+	Multiple?: boolean;
+	OnDelete?: (values: Array<string>, control: AppFormsControlComponent) => void;
+	WarningOnDelete?: string;
+	AsModal?: boolean;
+	ModalOptions?: {
+		Component?: any;
+		ComponentProps?: { [key: string]: any };
+		BackdropDismiss?: boolean;
+		SwipeToClose?: boolean
+		OnDismiss?: (data?: any, control?: AppFormsControlComponent) => void;
+	};
+	AsCompleter?: boolean;
+	CompleterOptions?: {
+		SearchingText?: string;
+		NoResultsText?: string;
+		PauseMiliseconds?: number;
+		ClearSelected?: boolean;
+		DataSource?: CompleterData;
+		InitialValue?: any;
+		GetInitialValue?: (control: AppFormsControlComponent) => any;
+		OnInitialized?: (control: AppFormsControlComponent) => void;
+		OnSelected?: (item: any, control: AppFormsControlComponent) => void;
+		AllowLookupByModal?: boolean;
+	};
+	AsSelector?: boolean;
+	SelectorOptions?: {
+		HeaderText?: string;
+		OkText?: string;
+		CancelText?: string;
+		OnAdd?: (control?: AppFormsControlComponent) => void;
+	};
+}
+
 /** Presents the configuration of a control in the dynamic forms */
 export interface AppFormsControlConfig {
 	Name?: string;
@@ -110,39 +145,7 @@ export interface AppFormsControlConfig {
 			OkText?: string;
 			CancelText?: string;
 		};
-		LookupOptions?: {
-			Multiple?: boolean;
-			OnDelete?: (values: Array<string>, control: AppFormsControlComponent) => void;
-			WarningOnDelete?: string;
-			AsModal?: boolean;
-			ModalOptions?: {
-				Component?: any;
-				ComponentProps?: { [key: string]: any };
-				BackdropDismiss?: boolean;
-				SwipeToClose?: boolean
-				OnDismiss?: (data?: any, control?: AppFormsControlComponent) => void;
-			};
-			AsCompleter?: boolean;
-			CompleterOptions?: {
-				SearchingText?: string;
-				NoResultsText?: string;
-				PauseMiliseconds?: number;
-				ClearSelected?: boolean;
-				DataSource?: CompleterData;
-				InitialValue?: any;
-				GetInitialValue?: (control: AppFormsControlComponent) => any;
-				OnInitialized?: (control: AppFormsControlComponent) => void;
-				OnSelected?: (item: any, control: AppFormsControlComponent) => void;
-				AllowLookupByModal?: boolean;
-			};
-			AsSelector?: boolean;
-			SelectorOptions?: {
-				HeaderText?: string;
-				OkText?: string;
-				CancelText?: string;
-				OnAdd?: (control?: AppFormsControlComponent) => void;
-			};
-		};
+		LookupOptions?: AppFormsControlLookupOptionsConfig;
 		DatePickerOptions?: {
 			AllowTimes?: boolean;
 			DisplayFormat?: string;

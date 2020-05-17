@@ -1,4 +1,4 @@
-<ion-item *ngIf="visible && isFormControl && !isCaptchaControl && !selectAsRadioBoxes && !selectAsCheckBoxes && !isSelector && !isCustomControl()"
+<ion-item *ngIf="visible && isFormControl && !isTextEditorControl && !isCaptchaControl && !selectAsRadioBoxes && !selectAsCheckBoxes && !isSelector && !isCustomControl()"
 	[color]="theme"
 	[formGroup]="formGroup"
 	[class.invalid]="invalid"
@@ -201,11 +201,13 @@
 		(ionFocus)="onFocus($event)"
 		(ionBlur)="onBlur($event)"></ion-textarea>
 	
-	<span *ngIf="isTextDisplayAsLabelControl" class="text" [innerHTML]="text" #elementRef></span>
+	<span *ngIf="isTextDisplayAsLabelControl" class="text" #elementRef
+		[innerHTML]="text"></span>
 	
-	<div *ngIf="isTextDisplayAsParagraphControl" class="text" [innerHTML]="text" #elementRef></div>
+	<div *ngIf="isTextDisplayAsParagraphControl" class="text" #elementRef
+		[innerHTML]="text"></div>
 
-	<label *ngIf="description && !isYesNoControl && !isRangeControl"
+	<label *ngIf="description && !isYesNoControl && !isRangeControl && !isTextDisplayControl"
 		[class]="css.description"
 		[style]="style.description"
 		[innerHTML]="description"></label>
@@ -359,6 +361,21 @@
 		{{ button.Options.Label }}
 	</ion-button>
 </ion-buttons>
+
+<div *ngIf="visible && isTextEditorControl" class="text-editor">
+	<ion-item *ngIf="label" [color]="theme" lines="none">
+		<ion-label
+			[color]="color.label"
+			[position]="position"
+			[class]="css.label">{{ label }}</ion-label>
+	</ion-item>
+	<ckeditor #elementRef
+		[editor]="ckEditor"
+		[config]="ckEditorConfig"
+		[data]="value"
+		(ready)="ckEditorOnReady($event)"
+		(change)="onChanged($event)"></ckeditor>
+</div>
 
 <control-data-selector *ngIf="visible && (isSelector || isCustomControl('data-selector'))" #elementRef
 	[formGroup]="formGroup"
