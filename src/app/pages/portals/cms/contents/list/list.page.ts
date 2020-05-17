@@ -159,7 +159,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 				}
 			}, `CMS.Contents:${(this.category !== undefined ? ":" + this.category.ID : "")}:Refresh`);
 
-			this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.category === undefined ? this.organization.Title : this.organization.Title + " - " + this.category.FullTitle)}]` });
+			this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.category === undefined ? this.organization.Title : this.organization.Title + " :: " + this.category.FullTitle)}]` });
 			await this.startSearchAsync();
 		}
 	}
