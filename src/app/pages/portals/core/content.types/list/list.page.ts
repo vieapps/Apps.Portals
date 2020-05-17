@@ -340,7 +340,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 	async viewAsync(event: Event, contentType: ContentType) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(this.portalsCmsSvc.getListUrl(contentType));
+		await this.configSvc.navigateForwardAsync(this.portalsCmsSvc.getAppUrl(contentType));
 	}
 
 }
