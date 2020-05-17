@@ -158,36 +158,26 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		}
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID"));
-		control.Type = "Lookup";
 		control.Required = false;
 		control.Extras = { LookupDisplayValues: parentCategory !== undefined ? [{ Value: parentCategory.ID, Label: parentCategory.FullTitle }] : undefined };
-		control.Options.LookupOptions = {
-			Multiple: false,
-			OnDelete: (_, formControl) => {
+		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, this.contentType, false, true, options => {
+			options.ModalOptions.ComponentProps.excludedIDs = AppUtility.isNotEmpty(this.category.ID) ? [this.category.ID] : undefined;
+			options.ModalOptions.ComponentProps.preProcess = (categories: Array<any>) => this.portalsCmsSvc.processCategories(categories);
+			options.Multiple = false;
+			options.OnDelete = (_, formControl) => {
 				formControl.setValue(undefined);
 				formControl.lookupDisplayValues = undefined;
-			},
-			ModalOptions: {
-				Component: DataLookupModalPage,
-				ComponentProps: {
-					organizationID: this.organization.ID,
-					moduleID: this.module.ID,
-					contentTypeID: this.contentType.ID,
-					objectName: "CMS.Category",
-					nested: true,
-					multiple: false,
-					excludedIDs: AppUtility.isNotEmpty(this.category.ID) ? [this.category.ID] : undefined,
-					preProcess: (categories: Array<any>) => this.portalsCmsSvc.processCategories(categories)
-				},
-				OnDismiss: async (data, formControl) => {
-					if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
-						const category = Category.get(data[0]);
+			};
+			options.ModalOptions.OnDismiss = (values, formControl) => {
+				if (AppUtility.isArray(values, true) && values[0].ID !== formControl.value) {
+					const category = Category.get(values[0].ID);
+					if (category !== undefined) {
 						formControl.setValue(category.ID);
 						formControl.lookupDisplayValues = [{ Value: category.ID, Label: category.FullTitle }];
 					}
 				}
-			}
-		};
+			};
+		});
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
 		control.Options.Rows = 2;
