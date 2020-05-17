@@ -35,6 +35,8 @@ import { FilesService } from "@services/files.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
 
+import { DataLookupModule } from "@controls/portals/data.lookup.module";
+
 // ngx-translate factories
 export function HttpLoaderFactory(http: HttpClient) {
 	return new MultiTranslateHttpLoader(http, [
@@ -90,6 +92,7 @@ export class HammerConfig extends HammerGestureConfig {
 			useFactory: HttpLoaderFactory,
 			deps: [HttpClient]
 		}}),
+		DataLookupModule,
 		TimePipeModule,
 		AppFormsModule,
 		AppRoutingModule
