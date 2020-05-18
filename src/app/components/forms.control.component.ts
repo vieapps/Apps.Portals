@@ -614,7 +614,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 					return {
 						Value: value["Value"],
 						Label: value["Label"],
-						Description: value["Description"],
+						Description: value["Description"] || value["Summary"],
 						Image: value["Image"],
 						Extras: value["Extras"],
 						Children: value["Children"]
@@ -624,7 +624,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				? [{
 						Value: values["Value"],
 						Label: values["Label"],
-						Description: values["Description"],
+						Description: values["Description"] || values["Summary"],
 						Image: values["Image"],
 						Extras: values["Extras"],
 						Children: values["Children"]
@@ -986,17 +986,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 					"Trebuchet MS, Helvetica, sans-serif",
 					"Verdana, Geneva, sans-serif"
 				]},
-				link: {
-					decorators: {
-						openInNewTab: {
-							mode: "manual",
-							label: "Open in a new tab",
-							attributes: {
-								target: "_blank"
-							}
-						}
-					}
-				},
 				mediaEmbed: {
 					extraProviders: [{
 						name: this.configSvc.appConfig.app.name,
@@ -1006,6 +995,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			};
 			const linkSelector = this.control.Extras["ckEditorLinkSelector"];
 			if (AppUtility.isObject(linkSelector, true) && (AppUtility.isObject(linkSelector.content, true) || AppUtility.isObject(linkSelector.file, true))) {
+				this._ckEditorConfig.link = this._ckEditorConfig.link || {};
 				this._ckEditorConfig.link.selector = linkSelector;
 			}
 			const mediaSelector = this.control.Extras["ckEditorMediaSelector"];
@@ -1017,12 +1007,21 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			const simpleUploadOptions = this.control.Extras["ckEditorSimpleUpload"];
 			if (AppUtility.isObject(simpleUploadOptions, true)) {
 				this._ckEditorConfig.simpleUpload = {
-					uploadUrl: this.configSvc.appConfig.URIs.files,
+					uploadUrl: this.configSvc.appConfig.URIs.files + "files",
 					headers: this.filesSvc.getUploadHeader(simpleUploadOptions)
 				};
 			}
 			else {
 				removePlugins.push("ImageUpload", "MediaSelector");
+			}
+			if (this.control.Extras["ckEditorPageBreakIsAvailable"] === undefined) {
+				removePlugins.push("PageBreak");
+			}
+			if (this.control.Extras["ckEditorHighlightIsAvailable"] === undefined) {
+				removePlugins.push("Highlight");
+			}
+			if (this.control.Extras["ckEditorCodeIsAvailable"] === undefined) {
+				removePlugins.push("Code", "CodeBlock");
 			}
 			if (removePlugins.length > 0) {
 				this._ckEditorConfig.removePlugins = removePlugins.filter((id, index, array) => array.indexOf(id) === index);
@@ -1032,7 +1031,11 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				this._ckEditorConfig.toolbar = toolbar;
 			}
 			if (this.configSvc.isDebug) {
-				console.log("CKEditor run-time configuration:", this._ckEditorConfig);
+				console.log("CKEditor --------------------------------");
+				console.log("+ Plugins:", this.ckEditor.builtinPlugins.map(plugin => plugin.pluginName));
+				console.log("+ Default configuration:", this.ckEditor.defaultConfig);
+				console.log("+ Runtime configuration:", this._ckEditorConfig);
+				console.log("-----------------------------------------");
 			}
 		}
 		return this._ckEditorConfig;
@@ -1043,9 +1046,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			editor.ui.view.toolbar.element,
 			editor.ui.getEditableElement()
 		);
-		if (this.configSvc.isDebug) {
-			console.log("CKEditor plugins:", this.ckEditor.builtinPlugins.map(plugin => plugin.pluginName));
-		}
 	}
 
 }
