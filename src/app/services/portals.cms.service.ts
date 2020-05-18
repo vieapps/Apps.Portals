@@ -80,18 +80,15 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public getPortalUrl(object: CmsBaseModel, parent?: CmsBaseModel): string {
-		const identity = object["Alias"] || object.ID;
-		let uri = parent !== undefined
-			? this.getPortalUrl(parent)
-			: undefined;
+		let uri = parent !== undefined ? this.getPortalUrl(parent) : undefined;
 		if (uri === undefined) {
 			const organization = Organization.get(object.SystemID);
 			const module = Module.get(object.RepositoryID);
 			const contentType = ContentType.get(object.RepositoryEntityID);
 			const desktop = Desktop.get(object["DesktopID"]) || Desktop.get(contentType === undefined ? undefined : contentType.DesktopID) || Desktop.get(module === undefined ? undefined : module.DesktopID) || Desktop.get(organization === undefined ? undefined : organization.HomeDesktopID);
-			uri = `${this.configSvc.appConfig.URIs.portals}${(desktop !== undefined ? desktop.Alias : "-default")}`;
+			uri = `${this.configSvc.appConfig.URIs.portals}~${(organization !== undefined ? organization.Alias : "")}/${(desktop !== undefined ? desktop.Alias : "-default")}`;
 		}
-		return uri + `/${identity}`;
+		return uri + `/${object["Alias"] || object.ID}`;
 	}
 
 	public async getActiveModuleAsync(useXHR: boolean = true) {
