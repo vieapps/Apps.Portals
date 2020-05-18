@@ -145,6 +145,7 @@ export class CmsContentsUpdatePage implements OnInit {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
+		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.module);
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content", "form-controls");
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
@@ -155,7 +156,6 @@ export class CmsContentsUpdatePage implements OnInit {
 			});
 		}
 
-		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.module);
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CategoryID"));
 		control.Extras = { LookupDisplayValues: this.category !== undefined ? [{ Value: this.category.ID, Label: this.category.FullTitle }] : undefined };
 		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, contentType, false, true, options => {
@@ -213,26 +213,19 @@ export class CmsContentsUpdatePage implements OnInit {
 		});
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "StartDate"));
-		control.Type = "DatePicker";
 		control.Required = true;
-		control.Options.DatePickerOptions = { AllowTimes: false };
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "EndDate"));
-		control.Type = "DatePicker";
 		control.Required = false;
-		control.Options.DatePickerOptions = { AllowTimes: false };
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "PublishedTime"));
-		control.Type = "DatePicker";
 		control.Required = false;
-		control.Options.DatePickerOptions = { AllowTimes: true };
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "AllowComments"));
 		control.Options.Type = "toggle";
 		control.Hidden = !this.contentType.AllowComments;
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SourceURL"));
-		control.Options.Type = "url";
 		control.Options.Icon = {
 			Name: "globe",
 			Fill: "clear",
@@ -261,10 +254,14 @@ export class CmsContentsUpdatePage implements OnInit {
 				label: await this.appFormsSvc.getResourceAsync("portals.cms.common.links.label")
 			}
 		};
+
 		formConfig.filter(ctrl => AppUtility.isEquals(ctrl.Type, "TextEditor")).forEach(ctrl => {
 			ctrl.Extras["ckEditorLinkSelector"] = this.portalsCmsSvc.getLinkSelector(this.content, DataLookupModalPage, undefined, linkSelectorOptions);
 			ctrl.Extras["ckEditorSimpleUpload"] = AppUtility.isNotEmpty(this.content.ID) ? this.portalsCmsSvc.getFileHeader(this.content) : undefined;
 		});
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Details"));
+		control.Extras["ckEditorPageBreakIsAvailable"] = true;
 
 		const relateds = new Array<AppFormsLookupValue>();
 		if (this.content !== undefined && AppUtility.isArray(this.content.Relateds, true)) {
@@ -307,7 +304,12 @@ export class CmsContentsUpdatePage implements OnInit {
 			options.ModalOptions.ComponentProps.preProcess = (contents: Array<any>) => contents.forEach(data => {
 				const content = Content.update(data);
 				if (content.category === undefined) {
-					this.portalsCmsSvc.getCategoryAsync(content.CategoryID);
+					this.portalsCmsSvc.getCategoryAsync(content.CategoryID, _ => {
+						const category = Category.get(content.CategoryID);
+						if (category !== undefined) {
+							this.portalsCmsSvc.fetchDesktops(category);
+						}
+					});
 				}
 			});
 		});
