@@ -47,7 +47,46 @@ export class AppFormsSegment {
 
 //  ---------------------------------------------------------------
 
-/** Presents the options of a lookup control in the dynamic forms */
+/** Presents a value for working with lookup in the dynamic forms */
+export interface AppFormsLookupValue {
+	Value: string;
+	Label: string;
+	Description?: string;
+	Image?: string;
+	Extras?: { [key: string]: any };
+	Children?: Array<AppFormsLookupValue>;
+}
+
+//  ---------------------------------------------------------------
+
+/** Presents the icon options of a control in the dynamic forms */
+export interface AppFormsControlIconOptionsConfig {
+	Name?: string;
+	Fill?: string;
+	Color?: string;
+	Slot?: string;
+	OnClick?: (event: Event, control: AppFormsControlComponent) => void;
+}
+
+//  ---------------------------------------------------------------
+
+/** Presents the select options of a control in the dynamic forms */
+export interface AppFormsControlSelectOptionsConfig {
+	Values?: string | Array<string> | Array<AppFormsLookupValue>;
+	RemoteURI?: string;
+	RemoteURIConverter?: (data: any) => AppFormsLookupValue;
+	RemoteURIProcessor?: (uri: string, converter?: (data: any) => AppFormsLookupValue) => Promise<Array<AppFormsLookupValue>>;
+	Multiple?: boolean;
+	AsBoxes?: boolean;
+	Interface?: string;
+	InterfaceOptions?: any;
+	OkText?: string;
+	CancelText?: string;
+}
+
+//  ---------------------------------------------------------------
+
+/** Presents the lookup options of a control in the dynamic forms */
 export interface AppFormsControlLookupOptionsConfig {
 	Multiple?: boolean;
 	OnDelete?: (values: Array<string>, control: AppFormsControlComponent) => void;
@@ -82,6 +121,109 @@ export interface AppFormsControlLookupOptionsConfig {
 	};
 }
 
+//  ---------------------------------------------------------------
+
+/** Presents the date-picker options of a control in the dynamic forms */
+export interface AppFormsControlDatePickerOptionsConfig {
+	AllowTimes?: boolean;
+	DisplayFormat?: string;
+	PickerFormat?: string;
+	DayNames?: string;
+	DayShortNames?: string;
+	MonthNames?: string;
+	MonthShortNames?: string;
+	DoneText?: string;
+	CancelText?: string;
+	AllowDelete?: boolean;
+}
+
+//  ---------------------------------------------------------------
+
+/** Presents the file-picker options of a control in the dynamic forms */
+export interface AppFormsControlFilePickerOptionsConfig {
+	Accept?: string;
+	Multiple?: boolean;
+	AllowPreview?: boolean;
+	AllowDelete?: boolean;
+	OnDelete?: (name: string, control: AppFormsControlComponent) => void;
+	WarningOnDelete?: string;
+}
+
+//  ---------------------------------------------------------------
+
+/** Presents the range options of a control in the dynamic forms */
+export interface AppFormsControlRangeOptionsConfig {
+	AllowPin?: boolean;
+	AllowSnaps?: boolean;
+	AllowDualKnobs?: boolean;
+	AllowTicks?: boolean;
+	Step?: number;
+	Icons?: {
+		Start?: string;
+		End?: string;
+	};
+}
+
+//  ---------------------------------------------------------------
+
+/** Presents the button options of a control in the dynamic forms */
+export interface AppFormsControlButtonOptionsConfig {
+	OnClick?: (event: Event, control: AppFormsControl) => void;
+	Fill?: string;
+	Color?: string;
+	Icon?: {
+		Name?: string;
+		Slot?: string;
+	};
+}
+
+//  ---------------------------------------------------------------
+
+/** Presents the options of a control in the dynamic forms */
+export interface AppFormsControlOptionsConfig {
+	Label?: string;
+	LabelOptions?: {
+		Position?: string;
+		Color?: string;
+		Css?: string;
+	};
+	Description?: string;
+	DescriptionOptions?: {
+		Css?: string;
+		Style?: string;
+	};
+	Type?: string;
+	Name?: string;
+	Css?: string;
+	Color?: string;
+	PlaceHolder?: string;
+	ValidatePattern?: string;
+	Disabled?: boolean;
+	ReadOnly?: boolean;
+	AutoFocus?: boolean;
+	MinValue?: any;
+	MaxValue?: any;
+	MinLength?: number;
+	MaxLength?: number;
+	Width?: string;
+	Height?: string;
+	Rows?: number;
+	Icon?: AppFormsControlIconOptionsConfig;
+	SelectOptions?: AppFormsControlSelectOptionsConfig;
+	LookupOptions?: AppFormsControlLookupOptionsConfig;
+	DatePickerOptions?: AppFormsControlDatePickerOptionsConfig;
+	FilePickerOptions?: AppFormsControlFilePickerOptionsConfig;
+	RangeOptions?: AppFormsControlRangeOptionsConfig;
+	ButtonOptions?: AppFormsControlButtonOptionsConfig;
+	OnAfterViewInit?: (control: AppFormsControlComponent) => void;
+	OnFocus?: (event: Event, control: AppFormsControlComponent) => void;
+	OnKeyUp?: (event: KeyboardEvent, control: AppFormsControlComponent) => void;
+	OnBlur?: (event: Event, control: AppFormsControlComponent) => void;
+	OnChanged?: (event: any, control: AppFormsControlComponent) => void;
+}
+
+//  ---------------------------------------------------------------
+
 /** Presents the configuration of a control in the dynamic forms */
 export interface AppFormsControlConfig {
 	Name?: string;
@@ -93,116 +235,11 @@ export interface AppFormsControlConfig {
 	Validators?: Array<ValidatorFn> | Array<string>;
 	AsyncValidators?: Array<AsyncValidatorFn> | Array<string>;
 	Extras?: { [key: string]: any };
-	Options?: {
-		Label?: string;
-		LabelOptions?: {
-			Position?: string;
-			Color?: string;
-			Css?: string;
-		};
-		Description?: string;
-		DescriptionOptions?: {
-			Css?: string;
-			Style?: string;
-		};
-		Type?: string;
-		Name?: string;
-		Css?: string;
-		Color?: string;
-		PlaceHolder?: string;
-		ValidatePattern?: string;
-		Disabled?: boolean;
-		ReadOnly?: boolean;
-		AutoFocus?: boolean;
-		MinValue?: any;
-		MaxValue?: any;
-		MinLength?: number;
-		MaxLength?: number;
-		Width?: string;
-		Height?: string;
-		Rows?: number;
-		OnAfterViewInit?: (control: AppFormsControlComponent) => void;
-		OnFocus?: (event: Event, control: AppFormsControlComponent) => void;
-		OnKeyUp?: (event: KeyboardEvent, control: AppFormsControlComponent) => void;
-		OnBlur?: (event: Event, control: AppFormsControlComponent) => void;
-		OnChanged?: (event: any, control: AppFormsControlComponent) => void;
-		Icon?: {
-			Name?: string;
-			Fill?: string;
-			Color?: string;
-			Slot?: string;
-			OnClick?: (event: Event, control: AppFormsControlComponent) => void;
-		};
-		SelectOptions?: {
-			Values?: string | Array<string> | Array<AppFormsLookupValue>;
-			RemoteURI?: string;
-			RemoteURIConverter?: (data: any) => AppFormsLookupValue;
-			RemoteURIProcessor?: (uri: string, converter?: (data: any) => AppFormsLookupValue) => Promise<Array<AppFormsLookupValue>>;
-			Multiple?: boolean;
-			AsBoxes?: boolean;
-			Interface?: string;
-			InterfaceOptions?: any;
-			OkText?: string;
-			CancelText?: string;
-		};
-		LookupOptions?: AppFormsControlLookupOptionsConfig;
-		DatePickerOptions?: {
-			AllowTimes?: boolean;
-			DisplayFormat?: string;
-			PickerFormat?: string;
-			DayNames?: string;
-			DayShortNames?: string;
-			MonthNames?: string;
-			MonthShortNames?: string;
-			DoneText?: string;
-			CancelText?: string;
-			AllowDelete?: boolean;
-		};
-		FilePickerOptions?: {
-			Accept?: string;
-			Multiple?: boolean;
-			AllowPreview?: boolean;
-			AllowDelete?: boolean;
-			OnDelete?: (name: string, control: AppFormsControlComponent) => void;
-			WarningOnDelete?: string;
-		};
-		RangeOptions?: {
-			AllowPin?: boolean;
-			AllowSnaps?: boolean;
-			AllowDualKnobs?: boolean;
-			AllowTicks?: boolean;
-			Step?: number;
-			Icons?: {
-				Start?: string;
-				End?: string;
-			};
-		};
-		ButtonOptions?: {
-			OnClick?: (event: Event, control: AppFormsControl) => void;
-			Fill?: string;
-			Color?: string;
-			Icon?: {
-				Name?: string;
-				Slot?: string;
-			};
-		};
-	};
+	Options?: AppFormsControlOptionsConfig;
 	SubControls?: {
 		AsArray?: boolean;
 		Controls?: Array<AppFormsControlConfig>
 	};
-}
-
-//  ---------------------------------------------------------------
-
-/** Presents a value for working with lookup in the dynamic forms */
-export interface AppFormsLookupValue {
-	Value: string;
-	Label: string;
-	Description?: string;
-	Image?: string;
-	Extras?: { [key: string]: any };
-	Children?: Array<AppFormsLookupValue>;
 }
 
 //  ---------------------------------------------------------------
