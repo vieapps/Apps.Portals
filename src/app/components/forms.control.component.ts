@@ -801,7 +801,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	addControlOfFormArray() {
-		const control = this.control.SubControls.Controls[0].copy(ctrl => {
+		const control = this.appFormsSvc.copyControl(this.control.SubControls.Controls[0], ctrl => {
 			ctrl.Name = `${this.control.Name}_${this.control.SubControls.Controls.length}`;
 			ctrl.Order = this.control.SubControls.Controls.length;
 			ctrl.Options.Label = `#${this.control.SubControls.Controls.length + 1}`;

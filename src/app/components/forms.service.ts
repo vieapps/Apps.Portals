@@ -689,17 +689,6 @@ export class AppFormsControl {
 		return control;
 	}
 
-	/** Copies a control from this control (create new instance) */
-	public copy(onPreCompleted?: (control: AppFormsControl) => void) {
-		const control = new AppFormsControl(this);
-		control.parent = this.parent;
-		control.segmentIndex = this.segmentIndex;
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(control);
-		}
-		return control;
-	}
-
 	/** Sets focus into this control */
 	public focus(defer?: number) {
 		PlatformUtility.focus(this.elementRef, defer);
@@ -896,6 +885,22 @@ export class AppFormsService {
 				this.updateControls(formControl.SubControls.Controls, value[formControl.Name]);
 			}
 		});
+	}
+
+	/** Copies the form control (creates new instance) */
+	public copyControl(formControl: AppFormsControl, onCompleted?: (control: AppFormsControl) => void) {
+		const control = new AppFormsControl(formControl);
+		control.parent = formControl.parent;
+		control.segmentIndex = formControl.segmentIndex;
+		if (onCompleted !== undefined) {
+			onCompleted(control);
+		}
+		return control;
+	}
+
+	/** Copies the form control config (clones a new instance) */
+	public cloneControl(config: AppFormsControlConfig, onCompleted?: (config: AppFormsControlConfig) => void) {
+		return AppUtility.clone(config, false, undefined, onCompleted);
 	}
 
 	/** Builds an Angular form */
