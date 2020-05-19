@@ -146,7 +146,7 @@ export class CmsContentsUpdatePage implements OnInit {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.module);
-		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content", "form-controls");
+		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content");
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
 		control.Options.SelectOptions.Interface = "popover";
@@ -174,7 +174,7 @@ export class CmsContentsUpdatePage implements OnInit {
 		});
 
 		const otherCategories = new Array<AppFormsLookupValue>();
-		if (this.content !== undefined && AppUtility.isArray(this.content.OtherCategories, true)) {
+		if (AppUtility.isArray(this.content.OtherCategories, true)) {
 			await Promise.all(this.content.OtherCategories.map(async id => {
 				let category = Category.get(id);
 				if (category === undefined) {
@@ -264,7 +264,7 @@ export class CmsContentsUpdatePage implements OnInit {
 		control.Extras["ckEditorPageBreakIsAvailable"] = true;
 
 		const relateds = new Array<AppFormsLookupValue>();
-		if (this.content !== undefined && AppUtility.isArray(this.content.Relateds, true)) {
+		if (AppUtility.isArray(this.content.Relateds, true)) {
 			await Promise.all(this.content.Relateds.map(async id => {
 				let content = Content.get(id);
 				if (content === undefined) {
@@ -316,9 +316,17 @@ export class CmsContentsUpdatePage implements OnInit {
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExternalRelateds"));
 		control.SubControls.Controls[0].SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Summary")).Options.Rows = 2;
+		control.SubControls.Controls[0].SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "URL")).Options.Icon = {
+			Name: "globe",
+			Fill: "clear",
+			Color: "medium",
+			Slot: "end",
+			OnClick: (_, formControl) => PlatformUtility.openURI(formControl.value)
+		};
+
 		if (this.content.ExternalRelateds !== undefined && this.content.ExternalRelateds.length > 1) {
 			while (control.SubControls.Controls.length <= this.content.ExternalRelateds.length) {
-				control.SubControls.Controls.push(AppUtility.clone(control.SubControls.Controls[0], false, undefined, ctrl => {
+				control.SubControls.Controls.push(this.appFormsSvc.cloneControl(control.SubControls.Controls[0], ctrl => {
 					ctrl.Name = `${control.Name}_${control.SubControls.Controls.length}`;
 					ctrl.Order = control.SubControls.Controls.length;
 				}));
@@ -331,7 +339,7 @@ export class CmsContentsUpdatePage implements OnInit {
 
 		if (AppUtility.isNotEmpty(this.content.ID)) {
 			formConfig.push(
-				await this.usersSvc.getAuditFormControlAsync(this.content.Created, this.content.CreatedID, this.content.LastModified, this.content.LastModifiedID, "basic"),
+				this.portalsCoreSvc.getAuditFormControl(this.content, "basic"),
 				this.appFormsSvc.getButtonControls(
 					"basic",
 					{

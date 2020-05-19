@@ -407,7 +407,7 @@ export class UsersService extends BaseService {
 		}
 	}
 
-	public async getAuditFormControlAsync(created: Date, createdID: string, lastModified: Date, lastModifiedID: string, segment?: string, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
+	public getAuditFormControl(created: Date, createdID: string, lastModified: Date, lastModifiedID: string, segment?: string, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
 		const formConfig: AppFormsControlConfig = {
 			Name: "Audits",
 			Type: "Text",

@@ -8,6 +8,7 @@ import { AppFormsControlConfig, AppFormsLookupValue, AppFormsService } from "@co
 import { Base as BaseService } from "@services/base.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
+import { UsersService } from "@services/users.service";
 import { Account } from "@models/account";
 import { PortalBase as BaseModel } from "@models/portals.base";
 import { Organization } from "@models/portals.core.organization";
@@ -23,6 +24,7 @@ export class PortalsCoreService extends BaseService {
 	constructor(
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
+		private usersSvc: UsersService,
 		private appFormsSvc: AppFormsService
 	) {
 		super("Portals");
@@ -555,6 +557,10 @@ export class PortalsCoreService extends BaseService {
 			onCompleted(formConfig);
 		}
 		return formConfig;
+	}
+
+	public getAuditFormControl(ojbect: BaseModel, segment?: string, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
+		return this.usersSvc.getAuditFormControl(ojbect.Created, ojbect.CreatedID, ojbect.LastModified, ojbect.LastModifiedID, segment, onCompleted);
 	}
 
 	public getRolesSelector(modalComponent: any, modalComponentProperties?: { [key: string]: any }) {

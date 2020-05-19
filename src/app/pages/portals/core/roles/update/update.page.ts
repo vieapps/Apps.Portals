@@ -205,7 +205,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 
 		if (AppUtility.isNotEmpty(this.role.ID)) {
 			formConfig.push(
-				await this.usersSvc.getAuditFormControlAsync(this.role.Created, this.role.CreatedID, this.role.LastModified, this.role.LastModifiedID),
+				this.portalsCoreSvc.getAuditFormControl(this.role),
 				this.appFormsSvc.getButtonControls(
 					undefined,
 					{

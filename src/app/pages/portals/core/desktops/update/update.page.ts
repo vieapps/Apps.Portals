@@ -222,7 +222,7 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 
 		if (AppUtility.isNotEmpty(this.desktop.ID)) {
 			formConfig.push(
-				await this.usersSvc.getAuditFormControlAsync(this.desktop.Created, this.desktop.CreatedID, this.desktop.LastModified, this.desktop.LastModifiedID, "basic"),
+				this.portalsCoreSvc.getAuditFormControl(this.desktop, "basic"),
 				this.appFormsSvc.getButtonControls(
 					"basic",
 					{

@@ -114,7 +114,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "organization", "form-controls");
 		formConfig.forEach(ctrl => ctrl.Segment = "basic");
 		if (!AppUtility.isNotEmpty(this.organization.ID)) {
-			formConfig.push(await this.usersSvc.getAuditFormControlAsync(this.organization.Created, this.organization.CreatedID, this.organization.LastModified, this.organization.LastModifiedID, "basic"));
+			formConfig.push(this.portalsCoreSvc.getAuditFormControl(this.organization, "basic"));
 		}
 
 		formConfig.push(

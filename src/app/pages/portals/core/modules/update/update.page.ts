@@ -240,7 +240,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 
 		if (AppUtility.isNotEmpty(this.module.ID)) {
 			formConfig.push(
-				await this.usersSvc.getAuditFormControlAsync(this.module.Created, this.module.CreatedID, this.module.LastModified, this.module.LastModifiedID, "basic"),
+				this.portalsCoreSvc.getAuditFormControl(this.module, "basic"),
 				this.appFormsSvc.getButtonControls(
 					"basic",
 					{

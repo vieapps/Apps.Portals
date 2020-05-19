@@ -243,7 +243,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 
 		if (AppUtility.isNotEmpty(this.category.ID)) {
 			formConfig.push(
-				await this.usersSvc.getAuditFormControlAsync(this.category.Created, this.category.CreatedID, this.category.LastModified, this.category.LastModifiedID, "basic"),
+				this.portalsCoreSvc.getAuditFormControl(this.category, "basic"),
 				this.appFormsSvc.getButtonControls(
 					"basic",
 					{

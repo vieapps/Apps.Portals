@@ -335,7 +335,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 
 		if (AppUtility.isNotEmpty(this.contentType.ID)) {
 			formConfig.push(
-				await this.usersSvc.getAuditFormControlAsync(this.contentType.Created, this.contentType.CreatedID, this.contentType.LastModified, this.contentType.LastModifiedID, "basic"),
+				this.portalsCoreSvc.getAuditFormControl(this.contentType, "basic"),
 				this.appFormsSvc.getButtonControls(
 					"basic",
 					{
