@@ -125,6 +125,22 @@ app-form > form > div > ion-list > app-form-control > ion-list app-form-control 
 	font-weight: bold;
 	padding-top: 15px;
 }
+app-form > form > ion-list > app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > div > ion-list > app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > ion-list > app-form-control > ion-list app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > div > ion-list > app-form-control > ion-list app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > ion-list > app-form-control > ion-list app-form-control > ion-radio-group > ion-list-header > ion-label > span,
+app-form > form > div > ion-list > app-form-control > ion-list app-form-control > ion-radio-group > ion-list-header > ion-label > span {
+	line-height: 32px;
+}
+app-form > form > ion-list.md > app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > div > ion-list.md > app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > ion-list.md > app-form-control > ion-list app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > div > ion-list.md > app-form-control > ion-list app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > ion-list.md > app-form-control > ion-list app-form-control > ion-radio-group > ion-list-header > ion-label > span,
+app-form > form > div > ion-list.md > app-form-control > ion-list app-form-control > ion-radio-group > ion-list-header > ion-label > span {
+	line-height: 48px;
+}
 app-form > form > ion-list > app-form-control:first-of-type > ion-list > ion-list-header,
 app-form > form > div > ion-list > app-form-control:first-of-type > ion-list > ion-list-header,
 app-form > form > ion-list > app-form-control > ion-list app-form-control:first-of-type > ion-list > ion-list-header,
