@@ -188,7 +188,7 @@
 						"Title": {
 							"label": "Tiêu đề",
 							"placeholder": "",
-							"description": ""
+							"description": "Tiêu đề được kết hợp với URL gốc để tạo thành danh sách"
 							},
 						"Summary": {
 							"label": "Tóm tắt",
@@ -198,7 +198,7 @@
 						"URL": {
 							"label": "URL gốc",
 							"placeholder": "",
-							"description": ""
+							"description": "URL của nội dung gốc ở website bên ngoài.<br/>Tips: Để trống tiêu đề hoặc URL gốc để loại bỏ cụm nội dung này."
 						}
 					}
 				},
