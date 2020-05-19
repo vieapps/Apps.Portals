@@ -8,7 +8,6 @@ import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
-import { UsersService } from "@services/users.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
 import { Organization } from "@models/portals.core.organization";
@@ -29,7 +28,6 @@ export class CmsContentsUpdatePage implements OnInit {
 	constructor(
 		public configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
-		private usersSvc: UsersService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService
@@ -163,9 +161,9 @@ export class CmsContentsUpdatePage implements OnInit {
 				formControl.setValue(undefined);
 				formControl.lookupDisplayValues = undefined;
 			};
-			options.ModalOptions.OnDismiss = async (values, formControl) => {
-				if (AppUtility.isArray(values, true) && values[0].ID !== formControl.value) {
-					const category = Category.get(values[0].ID);
+			options.ModalOptions.OnDismiss = async (data, formControl) => {
+				if (AppUtility.isArray(data, true) && data[0].ID !== formControl.value) {
+					const category = Category.get(data[0].ID);
 					formControl.setValue(category.ID);
 					formControl.lookupDisplayValues = [{ Value: category.ID, Label: category.FullTitle }];
 				}
@@ -190,17 +188,17 @@ export class CmsContentsUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OtherCategories"));
 		control.Extras = { LookupDisplayValues: otherCategories.length > 0 ? otherCategories : undefined };
 		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, contentType, true, true, options => {
-			options.OnDelete = (values, formControl) => {
+			options.OnDelete = (data, formControl) => {
 				const lookupDisplayValues = formControl.lookupDisplayValues;
-				values.forEach(id => AppUtility.removeAt(lookupDisplayValues, lookupDisplayValues.findIndex(item => item.Value === id)));
+				data.forEach(id => AppUtility.removeAt(lookupDisplayValues, lookupDisplayValues.findIndex(item => item.Value === id)));
 				formControl.setValue(lookupDisplayValues.map(item => item.Value));
 				formControl.lookupDisplayValues = lookupDisplayValues;
 			};
-			options.ModalOptions.OnDismiss = (values, formControl) => {
-				if (AppUtility.isArray(values, true)) {
+			options.ModalOptions.OnDismiss = (data, formControl) => {
+				if (AppUtility.isArray(data, true)) {
 					const lookupDisplayValues = formControl.lookupDisplayValues;
-					(values as Array<any>).forEach(value => {
-						const category = Category.get(value.ID);
+					(data as Array<any>).forEach(info => {
+						const category = Category.get(info.ID);
 						if (category !== undefined && lookupDisplayValues.findIndex(item => item.Value === category.ID) < 0) {
 							lookupDisplayValues.push({ Value: category.ID, Label: category.FullTitle });
 						}
@@ -280,17 +278,17 @@ export class CmsContentsUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Relateds"));
 		control.Extras = { LookupDisplayValues: relateds.length > 0 ? relateds : undefined };
 		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, this.contentType, true, false, options => {
-			options.OnDelete = (values, formControl) => {
+			options.OnDelete = (data, formControl) => {
 				const lookupDisplayValues = formControl.lookupDisplayValues;
-				values.forEach(id => AppUtility.removeAt(lookupDisplayValues, lookupDisplayValues.findIndex(item => item.Value === id)));
+				data.forEach(id => AppUtility.removeAt(lookupDisplayValues, lookupDisplayValues.findIndex(item => item.Value === id)));
 				formControl.setValue(lookupDisplayValues.map(item => item.Value));
 				formControl.lookupDisplayValues = lookupDisplayValues;
 			};
-			options.ModalOptions.OnDismiss = async (values, formControl) => {
-				if (AppUtility.isArray(values, true)) {
+			options.ModalOptions.OnDismiss = (data, formControl) => {
+				if (AppUtility.isArray(data, true)) {
 					const lookupDisplayValues = formControl.lookupDisplayValues;
-					(values as Array<any>).forEach(value => {
-						const content = Content.get(value.ID);
+					(data as Array<any>).forEach(info => {
+						const content = Content.get(info.ID);
 						if (content !== undefined && lookupDisplayValues.findIndex(item => item.Value === content.ID) < 0) {
 							lookupDisplayValues.push({ Value: content.ID, Label: content.Title });
 						}
@@ -324,7 +322,7 @@ export class CmsContentsUpdatePage implements OnInit {
 			OnClick: (_, formControl) => PlatformUtility.openURI(formControl.value)
 		};
 
-		if (this.content.ExternalRelateds !== undefined && this.content.ExternalRelateds.length > 1) {
+		if (AppUtility.isArray(this.content.ExternalRelateds, true) && this.content.ExternalRelateds.length > 1) {
 			while (control.SubControls.Controls.length <= this.content.ExternalRelateds.length) {
 				control.SubControls.Controls.push(this.appFormsSvc.cloneControl(control.SubControls.Controls[0], ctrl => {
 					ctrl.Name = `${control.Name}_${control.SubControls.Controls.length}`;

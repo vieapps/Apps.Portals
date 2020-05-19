@@ -1,15 +1,12 @@
 import { Component, OnInit } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { FormGroup } from "@angular/forms";
-import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
-import { AppFormsControl, AppFormsControlConfig, AppFormsService } from "@components/forms.service";
+import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { UsersService } from "@services/users.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
+import { Category } from "@models/portals.cms.category";
 import { Content } from "@models/portals.cms.content";
 
 @Component({
@@ -22,7 +19,6 @@ export class CmsContentsViewPage implements OnInit {
 
 	constructor(
 		public configSvc: ConfigurationService,
-		private authSvc: AuthenticationService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService
@@ -34,8 +30,12 @@ export class CmsContentsViewPage implements OnInit {
 	canModerate = false;
 	canEdit = false;
 	title = "";
-	form = new FormGroup({});
 	formConfig: Array<AppFormsControlConfig>;
+	formSegments = {
+		items: undefined as Array<AppFormsSegment>,
+		default: "basic",
+		current: "basic"
+	};
 	formControls = new Array<AppFormsControl>();
 	button = "Update";
 
@@ -100,11 +100,25 @@ export class CmsContentsViewPage implements OnInit {
 			? await this.configSvc.getResourceAsync(`common.buttons.${(this.canModerate ? "moderate" : "update")}`)
 			: undefined;
 
+		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 	}
 
+	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
+		const formSegments = [
+			new AppFormsSegment("management", await this.configSvc.getResourceAsync("portals.cms.contents.view.segments.management")),
+			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.cms.contents.view.segments.basic"))
+		];
+		if (onCompleted !== undefined) {
+			onCompleted(formSegments);
+		}
+		return formSegments;
+	}
+
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
-		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content", "view-controls");
+		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content");
+		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Relateds")).Segment =
+			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExternalRelateds")).Segment = "basic";
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
 			onCompleted(formConfig);
@@ -113,13 +127,74 @@ export class CmsContentsViewPage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const content = AppUtility.clone(this.content, false, ["StartDate", "EndDate", "PublishedTime"]);
-		content.StartDate = AppUtility.toIsoDate(this.content.StartDate);
-		content.EndDate = AppUtility.toIsoDate(this.content.EndDate);
-		content.PublishedTime = AppUtility.toIsoDate(this.content.PublishedTime);
-		this.form.patchValue(content);
+		this.formControls.filter(control => !control.Hidden).forEach(async control => {
+			control.value = this.content[control.Name];
+			control.Hidden = control.value === undefined;
+			if (control.Hidden) {
+				return;
+			}
+			let category: Category;
+			let relateds: string;
+			switch (control.Name) {
+				case "Status":
+					control.value = await this.appFormsSvc.getResourceAsync(`status.approval.${control.value}`);
+					break;
+
+				case "CategoryID":
+					category = Category.get(this.content.CategoryID);
+					if (category === undefined) {
+						await this.portalsCmsSvc.getCategoryAsync(this.content.CategoryID, _ => category = Category.get(this.content.CategoryID), undefined, true);
+					}
+					if (category !== undefined) {
+						control.value = category.FullTitle;
+					}
+					break;
+
+				case "OtherCategories":
+					let categories = "";
+					await Promise.all(this.content.OtherCategories.map(async categoryID => {
+						category = Category.get(categoryID);
+						if (category === undefined) {
+							await this.portalsCmsSvc.getCategoryAsync(categoryID, _ => category = Category.get(categoryID), undefined, true);
+						}
+						if (category !== undefined) {
+							categories += `<li>${category.FullTitle}</li>`;
+						}
+					}));
+					control.value = `<ul>${categories}</ul>`;
+					control.Type = "TextArea";
+					break;
+
+				case "AllowComments":
+					control.Hidden = !this.content.ContentType.AllowComments;
+					break;
+
+				case "Relateds":
+					relateds = "";
+					await Promise.all(this.content.Relateds.map(async contentID => {
+						let content = Content.get(contentID);
+						if (content === undefined) {
+							await this.portalsCmsSvc.getContentAsync(contentID, _ => content = Content.get(contentID), undefined, true);
+						}
+						if (content !== undefined) {
+							relateds += `<li>${content.Title}</li>`;
+						}
+						control.value = `<ul>${relateds}</ul>`;
+						control.Type = "TextArea";
+					}));
+					break;
+
+				case "ExternalRelateds":
+					relateds = "";
+					this.content.ExternalRelateds.forEach(related => {
+						relateds += `<li><a target=_blank href="${related.URL}">${related.Title}</a></li>`;
+						control.value = `<ul>${relateds}</ul>`;
+						control.Type = "TextArea";
+					});
+					break;
+			}
+		});
 		this.appFormsSvc.hideLoadingAsync();
-		console.log("Forms", this.content, content, this.form, this.formControls);
 	}
 
 	async moderateAsync() {

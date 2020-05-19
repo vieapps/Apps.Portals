@@ -18,10 +18,11 @@
 </ion-header>
 
 <ion-content [color]="configSvc.color" class="ion-padding">
-	<app-form *ngIf="formConfig"
+	<app-form *ngIf="formConfig"		
 		[color]="configSvc.color"
-		[form]="form"
 		[config]="formConfig"
+		[segments]="formSegments"
 		[controls]="formControls"
+		[asViewControls]="true"
 		(init)="onFormInitialized()"></app-form>
 </ion-content>

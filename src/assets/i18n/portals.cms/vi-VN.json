@@ -228,6 +228,12 @@
 						"delete": "Xoá nội dung",
 						"remove": "Đồng ý xoá"
 					}
+				},
+				"view": {
+					"segments": {
+						"management": "Thông tin quản trị",
+						"basic": "Nội dung"
+					}
 				}
 			}
 		}
