@@ -689,32 +689,15 @@ export class AppFormsControl {
 		return control;
 	}
 
-	/** Copies this control */
-	public copy(onPreCompleted?: (formControl: AppFormsControl) => void) {
-		const formControl = AppUtility.clone(this, ["Order", "Validators", "AsyncValidators"]) as AppFormsControl;
-		formControl.Validators = this.Validators;
-		formControl.AsyncValidators = this.AsyncValidators;
-		formControl.Options.OnAfterViewInit = this.Options.OnAfterViewInit;
-		formControl.Options.OnFocus = this.Options.OnFocus;
-		formControl.Options.OnKeyUp = this.Options.OnKeyUp;
-		formControl.Options.OnBlur = this.Options.OnBlur;
-		formControl.Options.OnChanged = this.Options.OnChanged;
-		formControl.Options.Icon.OnClick = this.Options.Icon.OnClick;
-		formControl.Options.SelectOptions.InterfaceOptions = this.Options.SelectOptions.InterfaceOptions;
-		formControl.Options.LookupOptions.OnDelete = this.Options.LookupOptions.OnDelete;
-		formControl.Options.LookupOptions.ModalOptions.Component = this.Options.LookupOptions.ModalOptions.Component;
-		formControl.Options.LookupOptions.ModalOptions.OnDismiss = this.Options.LookupOptions.ModalOptions.OnDismiss;
-		formControl.Options.LookupOptions.CompleterOptions.DataSource = this.Options.LookupOptions.CompleterOptions.DataSource;
-		formControl.Options.LookupOptions.CompleterOptions.GetInitialValue = this.Options.LookupOptions.CompleterOptions.GetInitialValue;
-		formControl.Options.LookupOptions.CompleterOptions.OnInitialized = this.Options.LookupOptions.CompleterOptions.OnInitialized;
-		formControl.Options.LookupOptions.CompleterOptions.OnSelected = this.Options.LookupOptions.CompleterOptions.OnSelected;
-		formControl.Options.LookupOptions.SelectorOptions.OnAdd = this.Options.LookupOptions.SelectorOptions.OnAdd;
-		formControl.Options.FilePickerOptions.OnDelete = this.Options.FilePickerOptions.OnDelete;
-		formControl.Options.ButtonOptions.OnClick = this.Options.ButtonOptions.OnClick;
+	/** Copies a control from this control (create new instance) */
+	public copy(onPreCompleted?: (control: AppFormsControl) => void) {
+		const control = new AppFormsControl(this);
+		control.parent = this.parent;
+		control.segmentIndex = this.segmentIndex;
 		if (onPreCompleted !== undefined) {
-			onPreCompleted(formControl);
+			onPreCompleted(control);
 		}
-		return formControl;
+		return control;
 	}
 
 	/** Sets focus into this control */
@@ -900,9 +883,8 @@ export class AppFormsService {
 		formControls.filter(formControl => formControl.SubControls !== undefined).forEach(formControl => {
 			if (formControl.SubControls.AsArray) {
 				const values = value[formControl.Name] as Array<any>;
-				const options = formControl.SubControls.Controls[0].copy();
 				while (formControl.SubControls.Controls.length < values.length) {
-					formControl.SubControls.Controls.push(new AppFormsControl(options, formControl.SubControls.Controls.length));
+					formControl.SubControls.Controls.push(new AppFormsControl(formControl.SubControls.Controls[0], formControl.SubControls.Controls.length));
 				}
 				formControl.SubControls.Controls.forEach((subcontrol, subindex) => {
 					if (subcontrol.SubControls !== undefined) {
@@ -916,7 +898,7 @@ export class AppFormsService {
 		});
 	}
 
-	/** Builds the form */
+	/** Builds an Angular form */
 	public buildForm(form: FormGroup, formControls: Array<AppFormsControl> = [], value?: any, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
 		this.getFormGroup(formControls, form, validators, asyncValidators);
 		if (value !== undefined) {
@@ -929,7 +911,8 @@ export class AppFormsService {
 		}
 	}
 
-	private getFormGroup(formControls: Array<AppFormsControl>, formGroup?: FormGroup, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
+	/** Gets an Angular form group */
+	public getFormGroup(formControls: Array<AppFormsControl>, formGroup?: FormGroup, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
 		formGroup = formGroup || new FormGroup({}, validators, asyncValidators);
 		formControls.forEach(formControl => {
 			if (formControl.SubControls === undefined && AppUtility.isEquals(formControl.Type, "Lookup") && formControl.Options.LookupOptions.AsCompleter && AppUtility.isEquals(formControl.Options.Type, "Address")) {
@@ -953,7 +936,8 @@ export class AppFormsService {
 		return formGroup;
 	}
 
-	private getFormArray(formControl: AppFormsControl, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
+	/** Gets an Angular form array */
+	public getFormArray(formControl: AppFormsControl, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
 		const formArray = new FormArray([], validators, asyncValidators);
 		formControl.SubControls.Controls.forEach(subFormControl => {
 			if (subFormControl.SubControls === undefined && AppUtility.isEquals(subFormControl.Type, "Lookup") && formControl.Options.LookupOptions.AsCompleter && AppUtility.isEquals(subFormControl.Options.Type, "Address")) {
@@ -973,11 +957,13 @@ export class AppFormsService {
 		return formArray;
 	}
 
-	private getFormControl(formControl: AppFormsControl) {
+	/** Gets an Angular form control */
+	public getFormControl(formControl: AppFormsControl) {
 		return new FormControl(undefined, this.getValidators(formControl), this.getAsyncValidators(formControl));
 	}
 
-	private getValidators(formControl: AppFormsControl) {
+	/** Gets the validators of an Angular form control */
+	public getValidators(formControl: AppFormsControl) {
 		let validators = new Array<ValidatorFn>();
 
 		if (formControl.Validators !== undefined && formControl.Validators.length > 0) {
@@ -1028,7 +1014,8 @@ export class AppFormsService {
 		return validators;
 	}
 
-	private getAsyncValidators(formControl: AppFormsControl) {
+	/** Gets the async validators of an Angular form control */
+	public getAsyncValidators(formControl: AppFormsControl) {
 		const asyncValidators = new Array<AsyncValidatorFn>();
 		return asyncValidators;
 	}

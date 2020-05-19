@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, Output, EventEmitter, ViewChild, ChangeDetectorRef } from "@angular/core";
-import { FormGroup } from "@angular/forms";
+import { FormGroup, FormArray } from "@angular/forms";
 import { CompleterService } from "ng2-completer";
 import * as CKEditor from "@components/ckeditor";
 import "@components/ckeditor.vi";
@@ -207,6 +207,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	get formControlAsFormGroup() {
 		return this.formControl as FormGroup;
+	}
+
+	get formControlAsFormArray() {
+		return this.formControl as FormArray;
 	}
 
 	get formControlName() {
@@ -796,11 +800,27 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		}
 	}
 
+	addControlOfFormArray() {
+		const control = this.control.SubControls.Controls[0].copy(ctrl => {
+			ctrl.Name = `${this.control.Name}_${this.control.SubControls.Controls.length}`;
+			ctrl.Order = this.control.SubControls.Controls.length;
+			ctrl.Options.Label = `#${this.control.SubControls.Controls.length + 1}`;
+		});
+		this.formControlAsFormArray.push(
+			control.SubControls === undefined || control.SubControls.Controls === undefined || control.SubControls.Controls.length < 1
+				? this.appFormsSvc.getFormControl(control)
+				: control.SubControls.AsArray
+					? this.appFormsSvc.getFormArray(control)
+					: this.appFormsSvc.getFormGroup(control.SubControls.Controls)
+		);
+		this.control.SubControls.Controls.push(control);
+	}
+
 	get icon() {
 		return this.isImagePickerControl && this.isAllowDelete
 			? "trash"
 			: this.isCompleterAllowLookupByModal || this.isModal
-				? (this.control.Options.Icon.Name || "duplicate").trim().toLowerCase()
+				? (this.control.Options.Icon.Name || "add").trim().toLowerCase()
 				: AppUtility.isNotEmpty(this.control.Options.Icon.Name)
 					? this.control.Options.Icon.Name.trim().toLowerCase()
 					: undefined;
