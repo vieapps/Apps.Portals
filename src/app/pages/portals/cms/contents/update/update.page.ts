@@ -315,6 +315,16 @@ export class CmsContentsUpdatePage implements OnInit {
 		});
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExternalRelateds"));
+		control.SubControls.Controls[0].SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Summary")).Options.Rows = 2;
+		if (this.content.ExternalRelateds !== undefined && this.content.ExternalRelateds.length > 1) {
+			while (control.SubControls.Controls.length <= this.content.ExternalRelateds.length) {
+				control.SubControls.Controls.push(AppUtility.clone(control.SubControls.Controls[0], false, undefined, ctrl => {
+					ctrl.Name = `${control.Name}_${control.SubControls.Controls.length}`;
+					ctrl.Order = control.SubControls.Controls.length;
+				}));
+			}
+		}
+		control.SubControls.Controls.forEach((ctrl, index) => ctrl.Options.Label = `#${index + 1}`);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		control.Options.AutoFocus = true;
