@@ -37,6 +37,9 @@ export class AppFormsComponent implements OnInit, OnDestroy, AfterViewInit {
 	/** The value of the form controls */
 	@Input() value: any;
 
+	/** Set to true to use the form controls as view control */
+	@Input() asViewControls: boolean;
+
 	/** The event handler to run when the form was initialized */
 	@Output() init = new EventEmitter<AppFormsComponent>();
 
@@ -68,10 +71,12 @@ export class AppFormsComponent implements OnInit, OnDestroy, AfterViewInit {
 			throw new Error("[Forms]: Controls or config of the form need to be initialized first (controls/config attributes)");
 		}
 
+		this.asViewControls = this.asViewControls !== undefined ? AppUtility.isTrue(this.asViewControls) : false;
+
 		if (this.controls.length < 1) {
 			console.warn("[Forms]: No control");
 		}
-		else {
+		else if (!this.asViewControls) {
 			this.appFormsSvc.buildForm(this.form, this.controls, this.value);
 			this.form["_controls"] = this.controls;
 			this.form["_segments"] = this.segments;

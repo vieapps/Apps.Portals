@@ -89,7 +89,7 @@ export interface AppFormsControlSelectOptionsConfig {
 /** Presents the lookup options of a control in the dynamic forms */
 export interface AppFormsControlLookupOptionsConfig {
 	Multiple?: boolean;
-	OnDelete?: (values: Array<string>, control: AppFormsControlComponent) => void;
+	OnDelete?: (data: Array<string>, control: AppFormsControlComponent) => void;
 	WarningOnDelete?: string;
 	AsModal?: boolean;
 	ModalOptions?: {
@@ -109,7 +109,7 @@ export interface AppFormsControlLookupOptionsConfig {
 		InitialValue?: any;
 		GetInitialValue?: (control: AppFormsControlComponent) => any;
 		OnInitialized?: (control: AppFormsControlComponent) => void;
-		OnSelected?: (item: any, control: AppFormsControlComponent) => void;
+		OnSelected?: (data: any, control: AppFormsControlComponent) => void;
 		AllowLookupByModal?: boolean;
 	};
 	AsSelector?: boolean;
@@ -319,7 +319,7 @@ export class AppFormsControl {
 		},
 		LookupOptions: {
 			Multiple: false,
-			OnDelete: undefined as (values: Array<string>, control: AppFormsControlComponent) => void,
+			OnDelete: undefined as (data: Array<string>, control: AppFormsControlComponent) => void,
 			WarningOnDelete: undefined as string,
 			AsModal: true,
 			ModalOptions: {
@@ -339,7 +339,7 @@ export class AppFormsControl {
 				InitialValue: undefined as any,
 				GetInitialValue: undefined as (control: AppFormsControlComponent) => any,
 				OnInitialized: undefined as (control: AppFormsControlComponent) => void,
-				OnSelected: undefined as (item: any, control: AppFormsControlComponent) => void,
+				OnSelected: undefined as (data: any, control: AppFormsControlComponent) => void,
 				AllowLookupByModal: false
 			},
 			AsSelector: false,
@@ -465,6 +465,21 @@ export class AppFormsControl {
 	/** Sets the index of segment (if has) */
 	public set segmentIndex(value: number) {
 		this.Extras["_segmentIndex"] = value;
+	}
+
+	/** Gets the value of the control */
+	public get value() {
+		return this.formControlRef !== undefined ? this.formControlRef.value : this.Extras["_value"];
+	}
+
+	/** Sets the value of the control */
+	public set value(value: any) {
+		if (this.formControlRef !== undefined) {
+			this.formControlRef.setValue(value, { onlySelf: true });
+		}
+		else {
+			this.Extras["_value"] = value;
+		}
 	}
 
 	private assign(options: any, control?: AppFormsControl, order?: number, alternativeName?: string) {

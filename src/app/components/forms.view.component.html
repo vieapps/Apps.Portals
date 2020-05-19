@@ -1,0 +1,25 @@
+<ion-item *ngIf="visible" [color]="theme">
+
+	<ion-label *ngIf="label" [position]="position">
+		{{ label }}
+	</ion-label>
+
+	<span *ngIf="isNumber" class="text number" #elementRef>
+		{{ value | number:'':locale }}
+	</span>
+
+	<span *ngIf="isDateTime" class="text date-time" #elementRef>
+		{{ value | date:datetimeFormat }}
+	</span>
+
+	<ion-checkbox *ngIf="isBoolean" [checked]="value" [disabled]="true" class="yesno" slot="end" #elementRef></ion-checkbox>
+
+	<span *ngIf="isMediumText" [innerHTML]="value" class="text medium" #elementRef></span>
+	
+	<div *ngIf="isLargeText" [innerHTML]="value" class="text large" #elementRef></div>
+
+	<span *ngIf="!isNumber && !isDateTime && !isBoolean && !isMediumText && !isLargeText" class="text" #elementRef>
+		{{ value }}
+	</span>
+	
+</ion-item>

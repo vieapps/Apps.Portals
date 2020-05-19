@@ -7,6 +7,7 @@ import { CKEditorModule } from "@ckeditor/ckeditor5-angular";
 import { AppFormsService } from "@components/forms.service";
 import { AppFormsComponent } from "@components/forms.component";
 import { AppFormsControlComponent } from "@components/forms.control.component";
+import { AppFormsViewComponent } from "@components/forms.view.component";
 import { CommonControlsModule } from "@controls/common.controls.module";
 
 @NgModule({
@@ -21,11 +22,13 @@ import { CommonControlsModule } from "@controls/common.controls.module";
 	],
 	exports: [
 		AppFormsComponent,
-		AppFormsControlComponent
+		AppFormsControlComponent,
+		AppFormsViewComponent
 	],
 	declarations: [
 		AppFormsComponent,
-		AppFormsControlComponent
+		AppFormsControlComponent,
+		AppFormsViewComponent
 	]
 })
 
