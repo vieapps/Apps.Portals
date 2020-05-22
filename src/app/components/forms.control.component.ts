@@ -1013,6 +1013,15 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 					}]
 				}
 			};
+			const hosts = this.control.Extras["ckEditorTrustedHosts"];
+			if (AppUtility.isArray(hosts, true)) {
+				(hosts as Array<string>).filter(host => AppUtility.isNotEmpty(host)).forEach(host => {
+					this._ckEditorConfig.mediaEmbed.extraProviders.push({
+						name: host,
+						url: new RegExp(AppUtility.regexEscape(host))
+					});
+				});
+			}
 			const linkSelector = this.control.Extras["ckEditorLinkSelector"];
 			if (AppUtility.isObject(linkSelector, true) && (AppUtility.isObject(linkSelector.content, true) || AppUtility.isObject(linkSelector.file, true))) {
 				this._ckEditorConfig.link = this._ckEditorConfig.link || {};
@@ -1027,8 +1036,8 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			const simpleUploadOptions = this.control.Extras["ckEditorSimpleUpload"];
 			if (AppUtility.isObject(simpleUploadOptions, true)) {
 				this._ckEditorConfig.simpleUpload = {
-					uploadUrl: this.configSvc.appConfig.URIs.files + "files",
-					headers: this.filesSvc.getUploadHeader(simpleUploadOptions)
+					uploadUrl: this.configSvc.appConfig.URIs.files + "one.image",
+					headers: this.filesSvc.getUploadHeaders(simpleUploadOptions)
 				};
 			}
 			else {

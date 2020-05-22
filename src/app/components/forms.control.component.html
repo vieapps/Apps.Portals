@@ -415,3 +415,7 @@
 	[control]="control"
 	[privileges]="value"
 	(change)="onChanged($event)"></control-service-privileges>
+
+<control-file-selector *ngIf="visible && isCustomControl('files-selector')" #elementRef
+	[control]="control"></control-file-selector>
+	
