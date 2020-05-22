@@ -1,7 +1,7 @@
 import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { IonicModule } from "@ionic/angular";
-import { DesktopsSelectorModalPage } from "./desktop.selector.modal.page";
+import { RolesSelectorModalPage } from "./role.selector.modal.page";
 
 @NgModule({
 	providers: [],
@@ -10,8 +10,8 @@ import { DesktopsSelectorModalPage } from "./desktop.selector.modal.page";
 		IonicModule
 	],
 	exports: [],
-	declarations: [DesktopsSelectorModalPage],
-	entryComponents: [DesktopsSelectorModalPage]
+	declarations: [RolesSelectorModalPage],
+	entryComponents: [RolesSelectorModalPage]
 })
 
-export class DesktopsSelectorModule {}
+export class RolesSelectorModalPageModule {}

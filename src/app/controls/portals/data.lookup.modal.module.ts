@@ -1,7 +1,7 @@
 import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { IonicModule } from "@ionic/angular";
-import { RolesSelectorModalPage } from "./role.selector.modal.page";
+import { DataLookupModalPage } from "./data.lookup.modal.page";
 
 @NgModule({
 	providers: [],
@@ -10,8 +10,8 @@ import { RolesSelectorModalPage } from "./role.selector.modal.page";
 		IonicModule
 	],
 	exports: [],
-	declarations: [RolesSelectorModalPage],
-	entryComponents: [RolesSelectorModalPage]
+	declarations: [DataLookupModalPage],
+	entryComponents: [DataLookupModalPage]
 })
 
-export class RolesSelectorModule {}
+export class DataLookupModalPageModule {}

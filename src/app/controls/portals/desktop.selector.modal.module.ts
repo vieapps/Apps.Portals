@@ -1,7 +1,7 @@
 import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { IonicModule } from "@ionic/angular";
-import { DataLookupModalPage } from "./data.lookup.modal.page";
+import { DesktopsSelectorModalPage } from "./desktop.selector.modal.page";
 
 @NgModule({
 	providers: [],
@@ -10,8 +10,8 @@ import { DataLookupModalPage } from "./data.lookup.modal.page";
 		IonicModule
 	],
 	exports: [],
-	declarations: [DataLookupModalPage],
-	entryComponents: [DataLookupModalPage]
+	declarations: [DesktopsSelectorModalPage],
+	entryComponents: [DesktopsSelectorModalPage]
 })
 
-export class DataLookupModule {}
+export class DesktopsSelectorModalPageModule {}
