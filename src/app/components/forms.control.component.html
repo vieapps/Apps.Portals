@@ -397,6 +397,9 @@
 		[style]="style.description"
 		[innerHTML]="description"></label>
 </ion-item>
+
+<control-file-selector *ngIf="visible && isCustomControl('files-selector')" #elementRef
+	[control]="control"></control-file-selector>
 	
 <control-image-cropper *ngIf="visible && isCustomControl('image-cropper')" #elementRef
 	[formGroup]="formGroup"
@@ -415,7 +418,4 @@
 	[control]="control"
 	[privileges]="value"
 	(change)="onChanged($event)"></control-service-privileges>
-
-<control-file-selector *ngIf="visible && isCustomControl('files-selector')" #elementRef
-	[control]="control"></control-file-selector>
 	

@@ -1,0 +1,38 @@
+<ion-list>
+	<ion-list-header *ngIf="label">
+		<ion-label>
+			{{ label }}
+		</ion-label>
+	</ion-list-header>
+	<ion-item *ngFor="let attachment of attachments; trackBy: track" [color]="configSvc.color">
+		<ion-checkbox *ngIf="allowSelect" slot="end" [checked]="checked(attachment)" (ionChange)="onSelect($event, attachment)"></ion-checkbox>
+		<ion-label>
+			<ion-buttons *ngIf="allowEdit || allowDelete" class="ion-float-end">
+				<ion-button fill="clear" color="medium" (click)="onDelete(attachment)">
+					<ion-icon name="trash" slot="icon-only"></ion-icon>
+				</ion-button>
+				<ion-button fill="clear" color="medium" (click)="onEdit(attachment)">
+					<ion-icon name="create" slot="icon-only"></ion-icon>
+				</ion-button>
+			</ion-buttons>
+			<span>
+				<ion-icon [name]="getIcon(attachment)" class="ion-float-start"></ion-icon>
+				{{ attachment.Title }}
+			</span>
+			<div>
+				<span>
+					{{ getFilename(attachment) }} - {{ attachment.Size | number:'':locale }} bytes
+				</span>
+				<a [href]="attachment.URIs.Direct" target="_blank" class="ion-padding-start">
+					<ion-icon name="link" color="medium" slot="icon-only"></ion-icon>
+				</a>
+				<a [href]="attachment.URIs.Download" target="_blank" class="ion-padding-start">
+					<ion-icon name="download" color="medium" slot="icon-only"></ion-icon>
+				</a>
+				<a class="ion-padding-start">
+					<ion-icon *ngIf="attachment.IsShared" name="share-social" slot="icon-only"></ion-icon>
+				</a>
+			</div>
+		</ion-label>
+	</ion-item>
+</ion-list>
