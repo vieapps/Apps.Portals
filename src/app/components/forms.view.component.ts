@@ -80,4 +80,22 @@ export class AppFormsViewComponent implements OnInit, AfterViewInit {
 		return AppUtility.isEquals(this.control.Type, "TextEditor");
 	}
 
+	get isFilePickerControl() {
+		return AppUtility.isEquals(this.control.Type, "FilePicker");
+	}
+
+	onFilePickerChanged(event: any) {
+		if (this.control !== undefined && this.control.Options !== undefined && typeof this.control.Options.OnChanged === "function") {
+			this.control.Options.OnChanged(event, undefined);
+		}
+	}
+
+	get isCustomControl() {
+		return AppUtility.isEquals(this.control.Type, "Custom");
+	}
+
+	isCustomControlOf(type?: string) {
+		return this.isCustomControl && (type === undefined || AppUtility.isEquals(this.control.Options.Type, type));
+	}
+
 }

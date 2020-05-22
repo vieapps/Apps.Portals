@@ -1,4 +1,6 @@
-<ion-item *ngIf="visible" [color]="theme">
+<ion-item *ngIf="visible && !isCustomControl"
+	[color]="theme"
+	[class.file-picker]="isFilePickerControl">
 
 	<ion-label *ngIf="label" [position]="position">
 		{{ label }}
@@ -18,8 +20,29 @@
 	
 	<div *ngIf="isLargeText" [innerHTML]="value" class="text large" #elementRef></div>
 
-	<span *ngIf="!isNumber && !isDateTime && !isBoolean && !isMediumText && !isLargeText" class="text" #elementRef>
+	<span *ngIf="!isNumber && !isDateTime && !isBoolean && !isMediumText && !isLargeText && !isFilePickerControl && !isCustomControl" class="text" #elementRef>
 		{{ value }}
 	</span>
 	
+	<div *ngIf="isFilePickerControl">
+		<div *ngIf="control.Options.FilePickerOptions.AllowSelect" class="file-picker-input">
+			<input type="file" #elementRef
+				[accept]="control.Options.FilePickerOptions.Accept"
+				[multiple]="control.Options.FilePickerOptions.Multiple"
+				[placeholder]="control.Options.PlaceHolder"
+				(change)="onFilePickerChanged($event)" />
+		</div>
+		<div *ngIf="control.Options.FilePickerOptions.AllowPreview && control.value !== undefined" class="image-picker-preview ion-padding">
+			<div *ngIf="value.current" class="current">
+				<img [src]="value.current" />
+			</div>
+			<div *ngIf="value.new" class="new">
+				<img [src]="value.new" />
+			</div>
+		</div>
+	</div>
+	
 </ion-item>
+	
+<control-file-selector *ngIf="visible && isCustomControlOf('files-selector')" #elementRef
+[control]="control"></control-file-selector>
