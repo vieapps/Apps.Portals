@@ -3,12 +3,9 @@
 		<ion-buttons slot="start">
 			<ion-back-button text=""></ion-back-button>
 		</ion-buttons>
-		<ion-buttons *ngIf="button" slot="end">
-			<ion-button *ngIf="!canModerate" fill="clear" color="primary" (click)="moderateAsync()">
-				{{ button }}
-			</ion-button>
-			<ion-button *ngIf="canEdit && !canModerate" fill="clear" color="primary" (click)="updateAsync()">
-				{{ button }}
+		<ion-buttons *ngIf="canEdit" slot="end">
+			<ion-button fill="clear" color="primary" (click)="updateAsync()">
+				{{ resources.update }}
 			</ion-button>
 		</ion-buttons>
 		<ion-title>
@@ -16,6 +13,22 @@
 		</ion-title>
 	</ion-toolbar>
 </ion-header>
+
+<ion-footer>
+	<ion-toolbar [color]="configSvc.color">
+		<span slot="start">
+			<ion-icon name="color-filter" color="primary" slot="start"></ion-icon>
+			<span>
+				{{ resources.status }}: {{ status }}
+			</span>
+		</span>
+		<ion-buttons *ngIf="actions" slot="end">
+			<ion-button color="primary" (click)="showActionsAsync()">
+				<ion-icon name="ellipsis-horizontal" slot="icon-only"></ion-icon>
+			</ion-button>
+		</ion-buttons>
+	</ion-toolbar>
+</ion-footer>
 
 <ion-content [color]="configSvc.color" class="ion-padding">
 	<app-form *ngIf="formConfig"		

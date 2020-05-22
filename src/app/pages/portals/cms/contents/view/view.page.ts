@@ -1,11 +1,14 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
+import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
+import { FilesService } from "@services/files.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
+import { AttachmentInfo } from "@models/base";
 import { Category } from "@models/portals.cms.category";
 import { Content } from "@models/portals.cms.content";
 
@@ -15,10 +18,11 @@ import { Content } from "@models/portals.cms.content";
 	styleUrls: ["./view.page.scss"]
 })
 
-export class CmsContentsViewPage implements OnInit {
+export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	constructor(
 		public configSvc: ConfigurationService,
+		private filesSvc: FilesService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService
@@ -37,18 +41,42 @@ export class CmsContentsViewPage implements OnInit {
 		current: "basic"
 	};
 	formControls = new Array<AppFormsControl>();
-	button = "Update";
+	resources = {
+		status: "Status",
+		update: "Update",
+		moderate: "Moderate"
+	};
+	actions: Array<{
+		text: string,
+		role?: string,
+		icon?: string,
+		handler: () => void
+	}>;
 
 	get locale() {
 		return this.configSvc.locale;
 	}
 
 	get status() {
-		return this.content !== undefined ? this.content.Status : "Draft";
+		const control = this.formControls !== undefined
+			? this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"))
+			: undefined;
+		return control !== undefined
+			? control.value
+			: this.content !== undefined
+				? this.content.Status
+				: "Draft";
 	}
 
 	ngOnInit() {
 		this.initializeAsync();
+	}
+
+	ngOnDestroy() {
+		if (this.content !== undefined) {
+			AppEvents.off(this.portalsCoreSvc.name, "CMS.Contents:Refresh:Details");
+			AppEvents.off(this.filesSvc.name, "CMS.Contents:Refresh:Details");
+		}
 	}
 
 	private async initializeAsync() {
@@ -83,31 +111,55 @@ export class CmsContentsViewPage implements OnInit {
 			this.canEdit = canView = this.canModerate;
 		}
 
-		if (canView) {
-			await this.initializeFormAsync();
-		}
-		else {
+		if (!canView) {
 			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
 			await this.configSvc.navigateBackAsync();
+			return;
 		}
-	}
 
-	private async initializeFormAsync() {
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("portals.cms.contents.title.view");
+		this.title = await this.configSvc.getResourceAsync("portals.cms.contents.title.view");
 		await this.appFormsSvc.showLoadingAsync(this.title);
+		this.configSvc.appTitle = this.title = this.title + ` [${this.content.Title}]`;
 
-		this.button = this.canEdit
-			? await this.configSvc.getResourceAsync(`common.buttons.${(this.canModerate ? "moderate" : "update")}`)
-			: undefined;
+		this.resources = {
+			status: await this.configSvc.getResourceAsync("portals.cms.contents.controls.Status.label"),
+			update: await this.configSvc.getResourceAsync("common.buttons.update"),
+			moderate: await this.configSvc.getResourceAsync("common.buttons.moderate")
+		};
+
+		if (this.canEdit) {
+			this.actions = [
+				this.appFormsSvc.getActionSheetButton(this.resources.update, "create", () => this.updateAsync()),
+				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderateAsync())
+			];
+		}
+
+		AppEvents.on(this.portalsCoreSvc.name, info => {
+			if (info.args.Object === "CMS.Content") {
+				if (info.args.Type === "Updated" && this.content.ID === info.args.ID) {
+					this.prepareValues();
+				}
+				else if (info.args.Type === "Deleted" && this.content.ID === info.args.ID) {
+					this.cancelAsync();
+				}
+			}
+		}, "CMS.Contents:Refresh:Details");
+
+		AppEvents.on(this.filesSvc.name, info => {
+			if ((info.args.Object === "Attachment" || info.args.Object === "Thumbnail") && this.content.ID === info.args.ObjectID) {
+				this.prepareAttachments(`${info.args.Object}s`, undefined, info.args.Event === "Delete" ? undefined : info.args.Data, info.args.Event === "Delete" ? info.args.Data : undefined);
+			}
+		}, "CMS.Contents:Refresh:Details");
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 	}
 
-	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
+	private async getFormSegmentsAsync(onCompleted?: (formSegments: Array<AppFormsSegment>) => void) {
 		const formSegments = [
 			new AppFormsSegment("management", await this.configSvc.getResourceAsync("portals.cms.contents.view.segments.management")),
-			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.cms.contents.view.segments.basic"))
+			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.cms.contents.view.segments.basic")),
+			new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.cms.contents.update.segments.attachments"))
 		];
 		if (onCompleted !== undefined) {
 			onCompleted(formSegments);
@@ -115,10 +167,14 @@ export class CmsContentsViewPage implements OnInit {
 		return formSegments;
 	}
 
-	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
-		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content");
-		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Relateds")).Segment =
-			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExternalRelateds")).Segment = "basic";
+	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
+		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content");
+		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Relateds")).Segment = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExternalRelateds")).Segment = "basic";
+		formConfig.push(
+			this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments", false, false),
+			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label"), false, false, false),
+			this.portalsCoreSvc.getAuditFormControl(this.content, "management")
+		);
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
 			onCompleted(formConfig);
@@ -127,82 +183,102 @@ export class CmsContentsViewPage implements OnInit {
 	}
 
 	onFormInitialized() {
-		this.formControls.filter(control => !control.Hidden).forEach(async control => {
-			control.value = this.content[control.Name];
-			control.Hidden = control.value === undefined;
-			if (control.Hidden) {
-				return;
-			}
-			let category: Category;
-			let relateds: string;
-			switch (control.Name) {
-				case "Status":
-					control.value = await this.appFormsSvc.getResourceAsync(`status.approval.${control.value}`);
-					break;
-
-				case "CategoryID":
-					category = Category.get(this.content.CategoryID);
-					if (category === undefined) {
-						await this.portalsCmsSvc.getCategoryAsync(this.content.CategoryID, _ => category = Category.get(this.content.CategoryID), undefined, true);
-					}
-					if (category !== undefined) {
-						control.value = category.FullTitle;
-					}
-					break;
-
-				case "OtherCategories":
-					let categories = "";
-					await Promise.all(this.content.OtherCategories.map(async categoryID => {
-						category = Category.get(categoryID);
-						if (category === undefined) {
-							await this.portalsCmsSvc.getCategoryAsync(categoryID, _ => category = Category.get(categoryID), undefined, true);
-						}
-						if (category !== undefined) {
-							categories += `<li>${category.FullTitle}</li>`;
-						}
-					}));
-					control.value = `<ul>${categories}</ul>`;
-					control.Type = "TextArea";
-					break;
-
-				case "AllowComments":
-					control.Hidden = !this.content.ContentType.AllowComments;
-					break;
-
-				case "Relateds":
-					relateds = "";
-					await Promise.all(this.content.Relateds.map(async contentID => {
-						let content = Content.get(contentID);
-						if (content === undefined) {
-							await this.portalsCmsSvc.getContentAsync(contentID, _ => content = Content.get(contentID), undefined, true);
-						}
-						if (content !== undefined) {
-							relateds += `<li>${content.Title}</li>`;
-						}
-						control.value = `<ul>${relateds}</ul>`;
-						control.Type = "TextArea";
-					}));
-					break;
-
-				case "ExternalRelateds":
-					relateds = "";
-					this.content.ExternalRelateds.forEach(related => {
-						relateds += `<li><a target=_blank href="${related.URL}">${related.Title}</a></li>`;
-						control.value = `<ul>${relateds}</ul>`;
-						control.Type = "TextArea";
-					});
-					break;
-			}
-		});
+		this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.content), data => this.prepareAttachments("Thumbnails", data));
+		this.filesSvc.searchAttachmentsAsync(this.portalsCmsSvc.getFileOptions(this.content), data => this.prepareAttachments("Attachments", data));
+		this.prepareValues();
 		this.appFormsSvc.hideLoadingAsync();
 	}
 
-	async moderateAsync() {
-		await this.configSvc.navigateForwardAsync(this.content.routerURI.replace("/view/", "/update"));
+	private prepareAttachments(name: string, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo) {
+		this.filesSvc.prepareAttachmentsFormControl(this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, name)), AppUtility.isEquals(name, "Thumbnails"), attachments, addedOrUpdated, deleted, control => control.Hidden = control.value === undefined);
+	}
+
+	private prepareValues() {
+		this.formControls.filter(control => !control.Hidden && !AppUtility.isEquals(control.Name, "Thumbnails") && !AppUtility.isEquals(control.Name, "Attachments")).forEach(async control => {
+			control.value = AppUtility.isEquals(control.Name, "Audits")
+				? await this.portalsCoreSvc.getAuditInfoAsync(this.content)
+				: this.content[control.Name];
+			control.Hidden = control.value === undefined;
+			if (!control.Hidden) {
+				if (AppUtility.isEquals(control.Type, "TextEditor")) {
+					control.value = this.portalsCmsSvc.normalizeRichHtml(control.value);
+				}
+				else {
+					let category: Category;
+					let categories: string;
+					let relateds: string;
+					let content: Content;
+					switch (control.Name) {
+						case "Status":
+							control.value = await this.appFormsSvc.getResourceAsync(`status.approval.${control.value}`);
+							break;
+
+						case "CategoryID":
+							category = Category.get(this.content.CategoryID);
+							if (category === undefined) {
+								await this.portalsCmsSvc.getCategoryAsync(this.content.CategoryID, _ => category = Category.get(this.content.CategoryID), undefined, true);
+							}
+							if (category !== undefined) {
+								control.value = category.FullTitle;
+							}
+							break;
+
+						case "OtherCategories":
+							categories = "";
+							await Promise.all(this.content.OtherCategories.map(async categoryID => {
+								category = Category.get(categoryID);
+								if (category === undefined) {
+									await this.portalsCmsSvc.getCategoryAsync(categoryID, _ => category = Category.get(categoryID), undefined, true);
+								}
+								if (category !== undefined) {
+									categories += `<li>${category.FullTitle}</li>`;
+								}
+							}));
+							control.value = `<ul>${categories}</ul>`;
+							control.Type = "TextArea";
+							break;
+
+						case "AllowComments":
+							control.Hidden = !this.content.ContentType.AllowComments;
+							break;
+
+						case "Relateds":
+							relateds = "";
+							await Promise.all(this.content.Relateds.map(async contentID => {
+								content = Content.get(contentID);
+								if (content === undefined) {
+									await this.portalsCmsSvc.getContentAsync(contentID, _ => content = Content.get(contentID), undefined, true);
+								}
+								if (content !== undefined) {
+									relateds += `<li>${content.Title}</li>`;
+								}
+							}));
+							control.value = `<ul>${relateds}</ul>`;
+							control.Type = "TextArea";
+							break;
+
+						case "ExternalRelateds":
+							relateds = "";
+							this.content.ExternalRelateds.forEach(related => relateds += `<li><a href="${related.URL}" target=\"_blank\">${related.Title}</a></li>`);
+							control.value = `<ul>${relateds}</ul>`;
+							control.Type = "TextArea";
+							break;
+					}
+				}
+			}
+		});
+	}
+
+	async showActionsAsync() {
+		await this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
 	async updateAsync() {
-		await this.configSvc.navigateForwardAsync(this.content.routerURI.replace("/view/", "/update"));
+		await this.configSvc.navigateForwardAsync(this.content.routerURI.replace("/view/", "/update/"));
+	}
+
+	async moderateAsync() {
+		await this.configSvc.navigateForwardAsync(this.content.routerURI.replace("/view/", "/update/"));
 	}
 
 	async cancelAsync() {
