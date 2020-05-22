@@ -1,5 +1,6 @@
 import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
+import { CounterInfo } from "@models/counters";
 
 /** Base of all model/entity classes */
 export abstract class Base {
@@ -52,4 +53,30 @@ export abstract class Base {
 		});
 	}
 
+}
+
+export interface AttachmentInfo {
+	ID?: string;
+	ServiceName?: string;
+	ObjectName?: string;
+	SystemID?: string;
+	EntityInfo?: string;
+	ObjectID: string;
+	Filename: string;
+	Size?: number;
+	ContentType?: string;
+	Downloads?: CounterInfo;
+	IsShared?: boolean;
+	IsTracked: boolean;
+	IsTemporary: boolean;
+	Title?: string;
+	Description?: string;
+	Created: Date;
+	CreatedID: string;
+	LastModified: Date;
+	LastModifiedID: string;
+	URIs?: {
+		Direct?: string;
+		Download?: string;
+	};
 }
