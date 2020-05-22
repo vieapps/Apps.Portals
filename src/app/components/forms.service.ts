@@ -143,6 +143,7 @@ export interface AppFormsControlDatePickerOptionsConfig {
 export interface AppFormsControlFilePickerOptionsConfig {
 	Accept?: string;
 	Multiple?: boolean;
+	AllowSelect?: boolean;
 	AllowPreview?: boolean;
 	AllowDelete?: boolean;
 	OnDelete?: (name: string, control: AppFormsControlComponent) => void;
@@ -365,6 +366,7 @@ export class AppFormsControl {
 		FilePickerOptions: {
 			Accept: "*",
 			Multiple: true,
+			AllowSelect: true,
 			AllowPreview: false,
 			AllowDelete: true,
 			OnDelete: undefined as (name: string, control: AppFormsControlComponent) => void,
@@ -645,9 +647,10 @@ export class AppFormsControl {
 			if (filepickerOptions !== undefined) {
 				control.Options.FilePickerOptions = {
 					Accept: filepickerOptions.Accept || filepickerOptions.accept || "*",
-					Multiple: !!(filepickerOptions.Multiple || filepickerOptions.multiple),
-					AllowPreview: !!(filepickerOptions.AllowPreview || filepickerOptions.allowPreview || filepickerOptions.allowpreview),
-					AllowDelete: !!(filepickerOptions.AllowDelete || filepickerOptions.allowDelete || filepickerOptions.allowdelete),
+					Multiple: filepickerOptions.Multiple !== undefined || filepickerOptions.multiple !== undefined ? !!(filepickerOptions.Multiple || filepickerOptions.multiple) : true,
+					AllowSelect: filepickerOptions.AllowSelect !== undefined || filepickerOptions.allowSelect !== undefined || filepickerOptions.allowselect !== undefined ? !!(filepickerOptions.AllowSelect || filepickerOptions.allowSelect || filepickerOptions.allowselect) : true,
+					AllowPreview: filepickerOptions.AllowPreview !== undefined || filepickerOptions.allowPreview !== undefined || filepickerOptions.allowpreview !== undefined ? !!(filepickerOptions.AllowPreview || filepickerOptions.allowPreview || filepickerOptions.allowpreview) : false,
+					AllowDelete: filepickerOptions.AllowDelete !== undefined || filepickerOptions.allowDelete !== undefined || filepickerOptions.allowdelete !== undefined ? !!(filepickerOptions.AllowDelete || filepickerOptions.allowDelete || filepickerOptions.allowdelete) : true,
 					OnDelete: filepickerOptions.OnDelete || filepickerOptions.onDelete || filepickerOptions.ondelete,
 					WarningOnDelete: filepickerOptions.WarningOnDelete || filepickerOptions.warningOnDelete || filepickerOptions.warningondelete
 				};
