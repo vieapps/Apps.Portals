@@ -56,27 +56,34 @@ export abstract class Base {
 }
 
 export interface AttachmentInfo {
-	ID?: string;
-	ServiceName?: string;
-	ObjectName?: string;
-	SystemID?: string;
-	EntityInfo?: string;
+	ID: string;
+	ServiceName: string;
+	ObjectName: string;
+	SystemID: string;
+	EntityInfo: string;
 	ObjectID: string;
 	Filename: string;
-	Size?: number;
-	ContentType?: string;
-	Downloads?: CounterInfo;
-	IsShared?: boolean;
+	Size: number;
+	ContentType: string;
+	Downloads: CounterInfo;
+	IsShared: boolean;
 	IsTracked: boolean;
 	IsTemporary: boolean;
-	Title?: string;
-	Description?: string;
+	Title: string;
+	Description: string;
 	Created: Date;
 	CreatedID: string;
 	LastModified: Date;
 	LastModifiedID: string;
-	URIs?: {
-		Direct?: string;
-		Download?: string;
+	URI: string;
+	URIs: {
+		Direct: string;
+		Download: string;
 	};
+	isImage: boolean;
+	isVideo: boolean;
+	isAudio: boolean;
+	isText: boolean;
+	icon: string;
+	friendlyFilename: string;
 }

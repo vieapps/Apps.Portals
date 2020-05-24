@@ -43,7 +43,14 @@ export class Item extends CmsBaseModel {
 	/** Deserializes data to object */
 	public static deserialize(json: any, item?: Item) {
 		item = item || new Item();
-		item.copy(json);
+		item.copy(json, data => {
+			if (AppUtility.isArray(data.Thumbnails, true)) {
+				item.updateThumbnails(data.Thumbnails);
+			}
+			if (AppUtility.isArray(data.Attachments, true)) {
+				item.updateAttachments(data.Attachments);
+			}
+		});
 		item.ansiTitle = AppUtility.toANSI(item.Title).toLowerCase();
 		return item;
 	}

@@ -1,5 +1,7 @@
+import { AppConfig } from "../app.config";
 import { AppUtility } from "@components/app.utility";
 import { AppEvents } from "@components/app.events";
+import { AttachmentInfo } from "@models/base";
 import { PortalBase as BaseModel } from "@models/portals.base";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
@@ -23,6 +25,8 @@ export abstract class PortalCmsBase extends BaseModel {
 	public abstract SystemID: string;
 	public abstract RepositoryID: string;
 	public abstract RepositoryEntityID: string;
+	protected _thumbnails: AttachmentInfo[];
+	protected _attachments: AttachmentInfo[];
 
 	public get Organization() {
 		const organization = AppUtility.isNotEmpty(this.SystemID) ? Organization.get(this.SystemID) : undefined;
@@ -54,6 +58,32 @@ export abstract class PortalCmsBase extends BaseModel {
 
 	public get ContentTypeDefinition() {
 		return (this.ContentType || new ContentType()).ContentTypeDefinition;
+	}
+
+	public get thumbnailURI() {
+		return this.thumbnails !== undefined && this.thumbnails.length > 0
+			? AppUtility.isObject(this.thumbnails[0].URIs, true)
+				? this.thumbnails[0].URIs.Direct
+				: AppUtility.isNotEmpty(this.thumbnails[0].URI)
+					? this.thumbnails[0].URI
+					: AppConfig.URIs.files + "thumbnails/no-image.png"
+			: AppConfig.URIs.files + "thumbnails/no-image.png";
+	}
+
+	public get thumbnails() {
+		return this._thumbnails;
+	}
+
+	public get attachments() {
+		return this._attachments;
+	}
+
+	public updateThumbnails(thumbnails: AttachmentInfo[]) {
+		this._thumbnails = thumbnails;
+	}
+
+	public updateAttachments(attachments: AttachmentInfo[]) {
+		this._attachments = attachments;
 	}
 
 }

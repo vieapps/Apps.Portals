@@ -64,6 +64,12 @@ export class Content extends CmsBaseModel {
 			content.StartDate = AppUtility.isNotEmpty(data.StartDate) ? new Date(data.StartDate) : undefined;
 			content.EndDate = AppUtility.isNotEmpty(data.EndDate) && data.EndDate !== "-" ? new Date(data.EndDate) : undefined;
 			content.PublishedTime = AppUtility.isNotEmpty(data.PublishedTime) ? new Date(data.PublishedTime) : undefined;
+			if (AppUtility.isArray(data.Thumbnails, true)) {
+				content.updateThumbnails(data.Thumbnails);
+			}
+			if (AppUtility.isArray(data.Attachments, true)) {
+				content.updateAttachments(data.Attachments);
+			}
 		});
 		content.ansiTitle = AppUtility.toANSI(content.Title).toLowerCase();
 		return content;
