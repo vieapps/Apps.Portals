@@ -7,7 +7,8 @@
 				},
 				"links": {
 					"content": "Tạo liên kết từ nội dung đã có",
-					"file": "Tạo liên kết từ file đã tải lên"
+					"file": "Tạo liên kết từ file đã tải lên",
+					"media": "Chèn nội dung media từ file đã tải lên"
 				}
 			},
 			"categories": {

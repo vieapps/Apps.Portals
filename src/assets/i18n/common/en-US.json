@@ -26,7 +26,9 @@
 			"cancel": "Cancel",
 			"close": "Close",
 			"select": "Select",
-			"search": "Search"
+			"search": "Search",
+			"upload": "Upload",
+			"download": "Download"
 		},
 		"messages": {
 			"loading": "Loading...",
@@ -47,6 +49,7 @@
 			}
 		},
 		"audits": {
+			"identity": "Identity",
 			"label": "Management information",
 			"info": "Created by {{creator}} at {{created}} - {{modifier}} was modified at {{modified}}"
 		}
@@ -120,6 +123,32 @@
 			"Approved": "Approved",
 			"Published": "Published",
 			"Archieved": "Archieved"
+		}
+	},
+	"events": {
+		"Create": "Create",
+		"Update": "Update",
+		"Delete": "Delete",
+		"Register": "Register",
+		"Request": "Request"
+	},
+	"files": {
+		"thumbnails": {
+			"label": "Thumbnail image",
+			"current": "Current",
+			"new": "Newly selected"
+		},
+		"attachments": {
+			"label": "Attached files",
+			"confirm": "Are you sure to delete '{{name}}' file?",
+			"upload": "Upload files",
+			"controls": {
+				"title": "Title",
+				"description": "Description",
+				"shared": "Shared to use in the whole system",
+				"tracked": "Track all activities",
+				"filename": "Filename"
+			}
 		}
 	}
 }

@@ -22,7 +22,10 @@ export class AppConfig {
 		portals: "https://portals.vieapps.com/",
 
 		/** URI to perform activation (on the web) */
-		activations: "https://vieapps.net/"
+		activations: "https://vieapps.net/",
+
+		/** Hosts of all allowed embed medias */
+		medias: []
 	};
 
 	/** Information of the app */
@@ -33,7 +36,7 @@ export class AppConfig {
 		version: "1.0.0-beta",
 		copyright: "© 2020 VIEApps.net",
 		license: "Apache-2.0",
-		frameworks: "ionic 5.0 - angular 8.2 - cordova 9.0",
+		frameworks: "ionic 5.1 - angular 8.2 - cordova 9.0",
 		homepage: "https://vieapps.net",
 		mode: "",
 		platform: "",
@@ -75,7 +78,7 @@ export class AppConfig {
 		all: [
 			{
 				name: "Portals",
-				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Link", "Contact", "Item"]
+				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Item", "Link", "Contact"]
 			}
 		] as Array<{ name: string, objects: Array<string> }>
 	};

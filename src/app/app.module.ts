@@ -35,7 +35,8 @@ import { FilesService } from "@services/files.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
 
-import { DataLookupModule } from "@controls/portals/data.lookup.module";
+import { FilesProcessorModalPageModule } from "@controls/common/file.processor.modal.module";
+import { DataLookupModalPageModule } from "@controls/portals/data.lookup.modal.module";
 
 // ngx-translate factories
 export function HttpLoaderFactory(http: HttpClient) {
@@ -92,7 +93,8 @@ export class HammerConfig extends HammerGestureConfig {
 			useFactory: HttpLoaderFactory,
 			deps: [HttpClient]
 		}}),
-		DataLookupModule,
+		FilesProcessorModalPageModule,
+		DataLookupModalPageModule,
 		TimePipeModule,
 		AppFormsModule,
 		AppRoutingModule

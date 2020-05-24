@@ -96,6 +96,62 @@ app-form div.text {
 	padding: 12px 0;
 }
 
+/* images & medias */
+app-form span.text > figure.image,
+app-form div.text > figure.image,
+app-form span.text > figure.media,
+app-form div.text > figure.media {
+	display: table;
+	clear: both;
+	text-align: center;
+	margin: 1em auto;
+}
+app-form span.text > figure.image.image-style-align-left,
+app-form div.text > figure.image.image-style-align-left {
+	clear: none;
+	float: left;
+	margin-right: 16px;
+	margin-top: 0;
+}
+app-form span.text > figure.image.image-style-align-right,
+app-form div.text > figure.image.image-style-align-right {
+	clear: none;
+	float: right;
+	margin-left: 16px;
+	margin-top: 0;
+}
+app-form span.text > figure.image > img,
+app-form div.text > figure.image > img {
+	display: block;
+	margin: 0 auto;
+	max-width: 100%;
+	min-width: 50px;	
+}
+app-form span.text > figure.image > figcaption,
+app-form div.text > figure.image > figcaption {
+	display: table-caption;
+	caption-side: bottom;
+	word-break: break-word;
+	color: #333;
+	background-color: #f7f7f7;
+	padding: .6em;
+	font-size: .75em;
+	outline-offset: -1px;
+}
+app-form span.text > figure.image > img,
+app-form div.text > figure.image > img,
+app-form span.text > figure.media > iframe,
+app-form div.text > figure.media > iframe,
+app-form span.text > figure.media > video,
+app-form div.text > figure.media > video,
+app-form span.text > figure.media > audio,
+app-form div.text > figure.media > audio {
+	max-width: 100%;
+}
+app-form app-form-control figure.media.ck-widget > div.ck-media__wrapper {
+	max-width: 75%;
+}
+
 /* buttons */
 app-form ion-buttons.sc-ion-buttons-md-h,
 app-form ion-buttons.sc-ion-buttons-ios-h {
@@ -157,16 +213,20 @@ app-form .completer-dropdown-holder,
 app-form .completer-dropdown,
 app-form .select-dropdown > select,
 app-form .file-picker > div,
-app-form .file-picker > div > div.file-picker-input {
+app-form .file-picker > div > div.file-picker-input,
+div.upload .file-picker,
+div.upload .file-picker > div.file-picker-input {
 	width: 100% !important;
 }
 app-form ion-item.completer-container > ion-label,
 app-form ion-item.select-dropdown > ion-label,
-app-form ion-item.file-picker > ion-label {
+app-form ion-item.file-picker > ion-label,
+div.upload ion-item.file-picker > ion-label {
 	padding-bottom: 8px;
 }
 app-form .completer-holder > input.completer-input,
-app-form .file-picker > div > div.file-picker-input > input {
+app-form .file-picker > div > div.file-picker-input > input,
+div.upload .file-picker > div.file-picker-input > input {
 	padding-top: 8px;
 	padding-bottom: 8px;
 	font-family: inherit;

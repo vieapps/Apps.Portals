@@ -26,7 +26,9 @@
 			"cancel": "Huỷ",
 			"close": "Đóng",
 			"select": "Chọn",
-			"search": "Tìm"
+			"search": "Tìm",
+			"upload": "Tải lên",
+			"download": "Tải xuống"
 		},
 		"messages": {
 			"loading": "Tải dữ liệu...",
@@ -47,6 +49,7 @@
 			}
 		},
 		"audits": {
+			"identity": "Mã định danh",
 			"label": "Thông tin quản trị",
 			"info": "{{creator}} khởi tạo lúc {{created}} - {{modifier}} cập nhật lần cuối lúc {{modified}}"
 		}
@@ -128,5 +131,24 @@
 		"Delete": "Xoá",
 		"Register": "Đăng ký",
 		"Request": "Yêu cầu"
+	},
+	"files": {
+		"thumbnails": {
+			"label": "Ảnh đại diện",
+			"current": "Ảnh hiện tại",
+			"new": "Ảnh mới"
+		},
+		"attachments": {
+			"label": "Files đính kèm nội dung",
+			"confirm": "Chắc chắn muốn xoá file '{{name}}'?",
+			"upload": "Tải file lên",
+			"controls": {
+				"title": "Tiêu đề",
+				"description": "Diễn giải",
+				"shared": "Chia sẻ dùng chung trong toàn bộ hệ thống",
+				"tracked": "Lưu toàn bộ log truy cập (bao gồm cả xem)",
+				"filename": "Tên file"
+			}
+		}
 	}
 }
