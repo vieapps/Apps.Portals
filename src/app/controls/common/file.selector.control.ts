@@ -1,3 +1,4 @@
+import { Set } from "typescript-collections";
 import { Component, OnInit, Input } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { AppUtility } from "@components/app.utility";
@@ -6,7 +7,7 @@ import { ConfigurationService } from "@services/configuration.service";
 import { AttachmentInfo } from "@models/base";
 
 @Component({
-	selector: "control-file-selector",
+	selector: "control-files-selector",
 	templateUrl: "./file.selector.control.html",
 	styleUrls: ["./file.selector.control.scss"]
 })
@@ -22,16 +23,28 @@ export class FilesSelectorControl implements OnInit {
 	/** The form control that contains this control */
 	@Input() private control: AppFormsControl;
 
-	/** The handlers to process the request on add/delete */
-	@Input() private handlers: { onSelect: (item: AttachmentInfo) => void; onEdit: (item: AttachmentInfo) => void; onDelete: (item: AttachmentInfo) => void; };
-
 	/** The settings (allow add/delete, show show item's image/description, position of desscription) */
 	@Input() private settings: { [key: string]: any };
 
-	private _allowSelect: boolean;
-	private _allowDelete: boolean;
-	private _allowEdit: boolean;
-	private current: AttachmentInfo;
+	/** The handlers to process */
+	@Input() private handlers: { onSelect?: (attachments: AttachmentInfo[]) => void; onEdit?: (attachment: AttachmentInfo) => void; onDelete?: (attachment: AttachmentInfo) => void; predicate?: (attachment: AttachmentInfo) => boolean };
+
+	/** Set to 'true' to show allow select multiple */
+	@Input() private multiple: boolean;
+
+	/** Set to 'true' to allow select */
+	@Input() allowSelect: boolean;
+
+	/** Set to 'true' to allow delete */
+	@Input() allowDelete: boolean;
+
+	/** Set to 'true' to allow edit */
+	@Input() allowEdit: boolean;
+
+	/** Set to 'true' to show icon of links */
+	@Input() showIcons: boolean;
+
+	selected = new Set<string>();
 
 	get locale() {
 		return this.configSvc.locale;
@@ -45,82 +58,81 @@ export class FilesSelectorControl implements OnInit {
 		return this.settings !== undefined ? this.settings.Label || this.settings.label : undefined;
 	}
 
-	get allowSelect() {
-		return this._allowSelect;
-	}
-
-	get allowDelete() {
-		return this._allowDelete;
-	}
-
-	get allowEdit() {
-		return this._allowEdit;
-	}
-
 	ngOnInit() {
 		this.settings = AppUtility.isObject(this.settings, true)
 			? this.settings
 			: this.control !== undefined && this.control.Extras !== undefined
-				? this.control.Extras["Settings"] || this.control.Extras["settings"] || {}
+				? this.control.Extras["settings"] || this.control.Extras["Settings"] || {}
 				: {};
 
-		this._allowSelect = this.settings.AllowSelect !== undefined || this.settings.allowSelect !== undefined
-			? !!(this.settings.AllowSelect || this.settings.allowSelect)
-			: true;
+		this.handlers = AppUtility.isObject(this.handlers, true)
+			? this.handlers
+			: this.settings.handlers !== undefined || this.settings.Handlers !== undefined
+				? this.settings.handlers || this.settings.Handlers || {}
+				: {};
 
-		this._allowDelete = this.settings.AllowDelete !== undefined || this.settings.allowDelete !== undefined
-			? !!(this.settings.AllowDelete || this.settings.allowDelete)
-			: true;
+		this.multiple = this.multiple !== undefined
+			? AppUtility.isTrue(this.multiple)
+			: this.settings.multiple !== undefined || this.settings.Multiple !== undefined
+				? !!(this.settings.multiple || this.settings.Multiple)
+				: false;
 
-		this._allowEdit = this.settings.AllowEdit !== undefined || this.settings.allowEdit !== undefined
-			? !!(this.settings.allowEdit || this.settings.allowEdit)
+		this.allowSelect = this.handlers.onSelect !== undefined && typeof this.handlers.onSelect === "function"
+			? this.allowSelect !== undefined
+				? AppUtility.isTrue(this.allowSelect)
+				: this.settings.allowSelect !== undefined || this.settings.AllowSelect !== undefined
+					? !!(this.settings.allowSelect || this.settings.AllowSelect)
+					: false
 			: false;
+
+		this.allowDelete = this.handlers.onDelete !== undefined && typeof this.handlers.onDelete === "function"
+			? this.allowDelete !== undefined
+				? AppUtility.isTrue(this.allowDelete)
+				: this.settings.allowDelete !== undefined || this.settings.AllowDelete !== undefined
+					? !!(this.settings.allowDelete || this.settings.AllowDelete)
+					: false
+			: false;
+
+		this.allowEdit = this.handlers.onEdit !== undefined && typeof this.handlers.onEdit === "function"
+			? this.allowEdit !== undefined
+				? AppUtility.isTrue(this.allowEdit)
+				: this.settings.allowEdit !== undefined || this.settings.AllowEdit !== undefined
+					? !!(this.settings.allowEdit || this.settings.AllowEdit)
+					: false
+			: false;
+
+		this.showIcons = this.showIcons !== undefined
+				? AppUtility.isTrue(this.showIcons)
+				: this.settings.showIcons !== undefined || this.settings.ShowIcons !== undefined
+					? !!(this.settings.showIcons || this.settings.ShowIcons)
+					: true;
 	}
 
-	track(index: number, item: AttachmentInfo) {
-		return `${item.ID}@${index}`;
-	}
-
-	getIcon(item: AttachmentInfo) {
-		return item.ContentType.indexOf("image/") > -1
-			? "image"
-			: item.ContentType.indexOf("video/") > -1
-				? "videocam"
-				: item.ContentType.indexOf("audio/") > -1
-					? "volume-medium"
-					: item.ContentType.indexOf("text/") > -1
-						? "document-text"
-						: "document-attach";
-	}
-
-	getFilename(attachment: AttachmentInfo) {
-		const filename = attachment.Filename;
-		return filename.length < 43 ? filename : "..." + filename.substr(filename.length - 40);
-	}
-
-	checked(attachment: AttachmentInfo) {
-		return this.current !== undefined && this.current.ID === attachment.ID;
+	track(index: number, attachment: AttachmentInfo) {
+		return `${attachment.ID}@${index}`;
 	}
 
 	onSelect(event: any, attachment: AttachmentInfo) {
-		this.current = event.detail.checked ? attachment : undefined;
-		if (this.handlers !== undefined && this.handlers.onSelect !== undefined && typeof this.handlers.onSelect === "function") {
-			this.handlers.onSelect(this.current);
+		if (event.detail.checked) {
+			if (!this.multiple) {
+				this.selected.clear();
+			}
+			this.selected.add(attachment.ID);
 		}
+		else {
+			this.selected.remove(attachment.ID);
+		}
+		this.handlers.onSelect(this.attachments.filter(a => this.selected.contains(a.ID)));
 	}
 
 	onEdit(event: Event, attachment: AttachmentInfo) {
 		event.stopPropagation();
-		if (this.handlers !== undefined && this.handlers.onEdit !== undefined && typeof this.handlers.onEdit === "function") {
-			this.handlers.onEdit(attachment);
-		}
+		this.handlers.onEdit(attachment);
 	}
 
 	onDelete(event: Event, attachment: AttachmentInfo) {
 		event.stopPropagation();
-		if (this.handlers !== undefined && this.handlers.onDelete !== undefined && typeof this.handlers.onDelete === "function") {
-			this.handlers.onDelete(attachment);
-		}
+		this.handlers.onDelete(attachment);
 	}
 
 }

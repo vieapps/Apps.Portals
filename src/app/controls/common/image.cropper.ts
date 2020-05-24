@@ -130,7 +130,7 @@ export class ImageCropperControl implements OnInit, OnDestroy {
 				this.htmlImageCropper.setImage(image);
 				this.emitChanges();
 			},
-			this.settings.limitSize || 1024000,
+			this.settings.limitSize || this.configSvc.fileLimits.avatar,
 			async () => await this.appFormsSvc.showToastAsync(this.settings.limitExceedMessage || "Too big...")
 		);
 	}
