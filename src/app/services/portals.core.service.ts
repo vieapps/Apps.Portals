@@ -31,11 +31,11 @@ export class PortalsCoreService extends BaseService {
 		this.initialize();
 	}
 
-	public get ModuleDefinitions() {
+	public get moduleDefinitions() {
 		return BaseModel.ModuleDefinitions;
 	}
 
-	public get ContentTypeDefinitions() {
+	public get contentTypeDefinitions() {
 		return BaseModel.ContentTypeDefinitions;
 	}
 
@@ -90,12 +90,22 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async initializeAysnc() {
-		await this.getDefinitionsAsync();
+		await this.getDefinitionsAsync(() => {
+			if (this.configSvc.isDebug) {
+				console.log("[Portal]: The definitions were initialized", BaseModel.ModuleDefinitions);
+			}
+		});
 		if (Organization.active === undefined) {
 			await this.getActiveOrganizationAsync(false);
+			if (this.configSvc.isDebug) {
+				console.log("[Portal]: The active organization was initialized", Organization.active);
+			}
 		}
 		else if (Organization.active.Modules.length < 1) {
 			await this.getActiveOrganizationAsync(false);
+			if (this.configSvc.isDebug) {
+				console.log("[Portal]: Modules of the active organization were initialized", Organization.active.Modules);
+			}
 		}
 	}
 
@@ -113,13 +123,16 @@ export class PortalsCoreService extends BaseService {
 			: this.authSvc.isModerator(this.name, "Organization", undefined, account);
 	}
 
-	public async getDefinitionsAsync() {
+	public async getDefinitionsAsync(onNext?: () => void) {
 		if (BaseModel.ModuleDefinitions === undefined) {
 			const path = this.configSvc.getDefinitionPath(this.name, "module.definitions");
 			BaseModel.ModuleDefinitions = this.configSvc.getDefinition(path);
 			if (BaseModel.ModuleDefinitions === undefined) {
 				BaseModel.ModuleDefinitions = await this.configSvc.fetchDefinitionAsync(path, false);
 				BaseModel.ModuleDefinitions.forEach(definition => definition.ContentTypeDefinitions.forEach(contentTypeDefinition => contentTypeDefinition.ModuleDefinition = definition));
+			}
+			if (onNext !== undefined) {
+				onNext();
 			}
 		}
 		return BaseModel.ModuleDefinitions;
@@ -166,9 +179,9 @@ export class PortalsCoreService extends BaseService {
 		return `${objectName}@${this.name}`.toLowerCase();
 	}
 
-	public getEmailNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
+	public getEmailNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const placeholder = "{{portals.common.controls.notifications.emails.toAddresses.placeholder}}";
-		const formConfig: AppFormsControlConfig = {
+		const controlConfig: AppFormsControlConfig = {
 			Name: "Emails",
 			Options: {
 				Label: "{{portals.common.controls.notifications.emails.label}}",
@@ -225,7 +238,7 @@ export class PortalsCoreService extends BaseService {
 
 		if (allowInheritFromParent) {
 			AppUtility.insertAt(
-				formConfig.SubControls.Controls,
+				controlConfig.SubControls.Controls,
 				{
 					Name: "InheritFromParent",
 					Type: "YesNo",
@@ -239,15 +252,15 @@ export class PortalsCoreService extends BaseService {
 			);
 		}
 
-		formConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
+		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
-			onCompleted(formConfig);
+			onCompleted(controlConfig);
 		}
-		return formConfig;
+		return controlConfig;
 	}
 
-	public getWebHookNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
-		const formConfig: AppFormsControlConfig = {
+	public getWebHookNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+		const controlConfig: AppFormsControlConfig = {
 			Name: "WebHooks",
 			Options: {
 				Label: "{{portals.common.controls.notifications.webhooks.label}}",
@@ -337,7 +350,7 @@ export class PortalsCoreService extends BaseService {
 
 		if (allowInheritFromParent) {
 			AppUtility.insertAt(
-				formConfig.SubControls.Controls,
+				controlConfig.SubControls.Controls,
 				{
 					Name: "InheritFromParent",
 					Type: "YesNo",
@@ -351,15 +364,15 @@ export class PortalsCoreService extends BaseService {
 			);
 		}
 
-		formConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
+		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
-			onCompleted(formConfig);
+			onCompleted(controlConfig);
 		}
-		return formConfig;
+		return controlConfig;
 	}
 
-	public getNotificationsFormControl(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true, inheritEventsAndMethodsFromParent: boolean = false, inheritEmailFromParent: boolean = false, inheritWebHookFromParent: boolean = false, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
-		const formConfig: AppFormsControlConfig = {
+	public getNotificationsFormControl(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true, inheritEventsAndMethodsFromParent: boolean = false, inheritEmailFromParent: boolean = false, inheritWebHookFromParent: boolean = false, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+		const controlConfig: AppFormsControlConfig = {
 			Name: name,
 			Segment: segment,
 			SubControls: {
@@ -401,7 +414,7 @@ export class PortalsCoreService extends BaseService {
 
 		if (allowInheritFromParent) {
 			AppUtility.insertAt(
-				formConfig.SubControls.Controls,
+				controlConfig.SubControls.Controls,
 				{
 					Name: "InheritFromParent",
 					Type: "YesNo",
@@ -416,22 +429,22 @@ export class PortalsCoreService extends BaseService {
 		}
 
 		if (methods === undefined || methods.indexOf("Email") > -1) {
-			formConfig.SubControls.Controls.push(this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmailFromParent));
+			controlConfig.SubControls.Controls.push(this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmailFromParent));
 		}
 
 		if (methods === undefined || methods.indexOf("WebHook") > -1) {
-			formConfig.SubControls.Controls.push(this.getWebHookNotificationFormControl(allowInheritFromParent, inheritWebHookFromParent));
+			controlConfig.SubControls.Controls.push(this.getWebHookNotificationFormControl(allowInheritFromParent, inheritWebHookFromParent));
 		}
 
-		formConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
+		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
-			onCompleted(formConfig);
+			onCompleted(controlConfig);
 		}
-		return formConfig;
+		return controlConfig;
 	}
 
-	public getEmailSettingsFormControl(name: string, segment?: string, allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
-		const formButtons = this.appFormsSvc.getButtonControls(
+	public getEmailSettingsFormControl(name: string, segment?: string, allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+		const buttonsConfig = this.appFormsSvc.getButtonControls(
 			undefined,
 			{
 				Name: "TestEmailSettings",
@@ -450,8 +463,8 @@ export class PortalsCoreService extends BaseService {
 				}
 			}
 		);
-		formButtons.Hidden = inheritFromParent;
-		const formConfig: AppFormsControlConfig = {
+		buttonsConfig.Hidden = inheritFromParent;
+		const controlConfig: AppFormsControlConfig = {
 		Name: name,
 			Segment: segment,
 			Options: {
@@ -531,14 +544,14 @@ export class PortalsCoreService extends BaseService {
 							]
 						}
 					},
-					formButtons
+					buttonsConfig
 				]
 			}
 		};
 
 		if (allowInheritFromParent) {
 			AppUtility.insertAt(
-				formConfig.SubControls.Controls,
+				controlConfig.SubControls.Controls,
 				{
 					Name: "InheritFromParent",
 					Type: "YesNo",
@@ -552,15 +565,19 @@ export class PortalsCoreService extends BaseService {
 			);
 		}
 
-		formConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
+		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
-			onCompleted(formConfig);
+			onCompleted(controlConfig);
 		}
-		return formConfig;
+		return controlConfig;
 	}
 
-	public getAuditFormControl(ojbect: BaseModel, segment?: string, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
+	public getAuditFormControl(ojbect: BaseModel, segment?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		return this.usersSvc.getAuditFormControl(ojbect.Created, ojbect.CreatedID, ojbect.LastModified, ojbect.LastModifiedID, segment, onCompleted);
+	}
+
+	public async getAuditInfoAsync(ojbect: BaseModel) {
+		return this.usersSvc.getAuditInfoAsync(ojbect.Created, ojbect.CreatedID, ojbect.LastModified, ojbect.LastModifiedID);
 	}
 
 	public getRolesSelector(modalComponent: any, modalComponentProperties?: { [key: string]: any }) {

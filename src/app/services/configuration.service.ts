@@ -195,13 +195,28 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Gets the width (pixels) of the screen */
-	public get screenWidth() {
+	public get screenWidth(): number {
 		return this.platform.width();
 	}
 
 	/** Gets the width (pixels) of the screen */
-	public get screenHeight() {
+	public get screenHeight(): number {
 		return this.platform.height();
+	}
+
+	/** Gets the file-size limits */
+	public get fileLimits() {
+		let limits = this.appConfig.options.extras.fileLimits as { avatar: number; thumbnail: number; file: number };
+		if (!AppUtility.isObject(limits, true)) {
+			limits = {
+				avatar: 1024000,
+				thumbnail: 524288,
+				file: 819200000
+			};
+			this.appConfig.options.extras.fileLimits = limits;
+			this.storeOptionsAsync(() => console.log("[Configuration]: file limits were updated"));
+		}
+		return limits;
 	}
 
 	/** Prepare the configuration of the app */

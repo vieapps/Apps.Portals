@@ -407,39 +407,41 @@ export class UsersService extends BaseService {
 		}
 	}
 
-	public getAuditFormControl(created: Date, createdID: string, lastModified: Date, lastModifiedID: string, segment?: string, onCompleted?: (formConfig: AppFormsControlConfig) => void) {
-		const formConfig: AppFormsControlConfig = {
+	public getAuditFormControl(created: Date, createdID: string, lastModified: Date, lastModifiedID: string, segment?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+		const controlConfig: AppFormsControlConfig = {
 			Name: "Audits",
 			Type: "Text",
 			Segment: segment,
 			Options: {
 				Label: "{{common.audits.label}}",
 				Type: "label",
-				OnAfterViewInit: async formControl => {
-					let creator = UserProfile.get(createdID);
-					if (creator === undefined) {
-						await this.getProfileAsync(createdID, _ => creator = UserProfile.get(createdID) || new UserProfile("Unknown"), undefined, true);
-					}
-					let modifier = UserProfile.get(lastModifiedID);
-					if (modifier === undefined) {
-						await this.getProfileAsync(lastModifiedID, _ => modifier = UserProfile.get(lastModifiedID) || new UserProfile("Unknown"), undefined, true);
-					}
-					const params = {
-						creator: creator.Name,
-						creatorProfileURI: creator.routerURI,
-						created: this.datePipe.transform(created, "h:mm a @ d/M/y"),
-						modifier: modifier.Name,
-						modifierProfileURI: modifier.routerURI,
-						modified: this.datePipe.transform(lastModified, "h:mm a @ d/M/y")
-					};
-					formControl.text = AppUtility.format(await this.configSvc.getResourceAsync("common.audits.info"), params);
-				}
+				OnAfterViewInit: async formControl => formControl.text = await this.getAuditInfoAsync(created, createdID, lastModified, lastModifiedID)
 			}
 		};
 		if (onCompleted !== undefined) {
-			onCompleted(formConfig);
+			onCompleted(controlConfig);
 		}
-		return formConfig;
+		return controlConfig;
+	}
+
+	public async getAuditInfoAsync(created: Date, createdID: string, lastModified: Date, lastModifiedID: string) {
+		let creator = UserProfile.get(createdID);
+		if (creator === undefined) {
+			await this.getProfileAsync(createdID, _ => creator = UserProfile.get(createdID) || new UserProfile("Unknown"), undefined, true);
+		}
+		let modifier = UserProfile.get(lastModifiedID);
+		if (modifier === undefined) {
+			await this.getProfileAsync(lastModifiedID, _ => modifier = UserProfile.get(lastModifiedID) || new UserProfile("Unknown"), undefined, true);
+		}
+		const params = {
+			creator: creator.Name,
+			creatorProfileURI: creator.routerURI,
+			created: this.datePipe.transform(created, "h:mm a @ d/M/y"),
+			modifier: modifier.Name,
+			modifierProfileURI: modifier.routerURI,
+			modified: this.datePipe.transform(lastModified, "h:mm a @ d/M/y")
+		};
+		return AppUtility.format(await this.configSvc.getResourceAsync("common.audits.info"), params);
 	}
 
 }

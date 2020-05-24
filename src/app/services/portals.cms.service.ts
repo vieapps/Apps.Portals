@@ -1,5 +1,6 @@
 import { Injectable } from "@angular/core";
-import { AppRTU, AppMessage } from "@components/app.apis";
+import { DomSanitizer } from "@angular/platform-browser";
+import { AppRTU, AppXHR, AppMessage } from "@components/app.apis";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { AppCustomCompleter } from "@components/app.completer";
@@ -7,14 +8,16 @@ import { AppPagination } from "@components/app.pagination";
 import { Base as BaseService } from "@services/base.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
-import { FilesService, UploadFileHeader } from "@services/files.service";
+import { FilesService, FileOptions } from "@services/files.service";
 import { PortalsCoreService } from "@services/portals.core.service";
-import { AppFormsService, AppFormsControlLookupOptionsConfig } from "@components/forms.service";
+import { AppFormsService, AppFormsControlConfig, AppFormsControlLookupOptionsConfig } from "@components/forms.service";
+import { FilesProcessorModalPage } from "@controls/common/file.processor.modal.page";
 import { Account } from "@models/account";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
 import { Desktop } from "@models/portals.core.desktop";
+import { AttachmentInfo } from "@models/base";
 import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
 import { Category } from "@models/portals.cms.category";
 import { Content } from "@models/portals.cms.content";
@@ -25,6 +28,7 @@ import { Link } from "@models/portals.cms.link";
 export class PortalsCmsService extends BaseService {
 
 	constructor(
+		private domSanitizer: DomSanitizer,
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private appFormsSvc: AppFormsService,
@@ -33,7 +37,10 @@ export class PortalsCmsService extends BaseService {
 	) {
 		super("Portals");
 		this.initialize();
+		this.initializeAsync();
 	}
+
+	private oembedProviders: Array<{ name: string; urlPatterns: RegExp[], html: string; }>;
 
 	private initialize() {
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Category", message => this.processCategoryUpdateMessage(message));
@@ -48,6 +55,23 @@ export class PortalsCmsService extends BaseService {
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Link", message => this.processLinkUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "CMS.Link", message => this.processLinkUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Cms.Link", message => this.processLinkUpdateMessage(message));
+		AppRTU.registerAsServiceScopeProcessor(this.filesSvc.name, message => this.processAttachmentUpdateMessage(message));
+	}
+
+	public async initializeAsync() {
+		if (this.oembedProviders === undefined) {
+			const oembedProviders = await AppXHR.makeRequest("GET", "/assets/js/oembed.providers.json").toPromise() as Array<{ name: string; schemes: string[], html: string; }>;
+			this.oembedProviders = oembedProviders.map(provider => {
+				return {
+					name: provider.name,
+					urlPatterns: provider.schemes.map(scheme => new RegExp(scheme.replace(/\*/g, "(.*)"), "i")),
+					html: provider.html
+				};
+			});
+			if (this.configSvc.isDebug) {
+				console.log("[Portal CMS]: The providers of OEmbed medias were initialized", this.oembedProviders);
+			}
+		}
 	}
 
 	public canManage(object: CmsBaseModel, account?: Account) {
@@ -89,6 +113,51 @@ export class PortalsCmsService extends BaseService {
 			uri = `${this.configSvc.appConfig.URIs.portals}~${(organization !== undefined ? organization.Alias : "")}/${(desktop !== undefined ? desktop.Alias : "-default")}`;
 		}
 		return uri + `/${object["Alias"] || object.ID}`;
+	}
+
+	public normalizeRichHtml(html: string) {
+		if (AppUtility.isNotEmpty(html)) {
+			// normalize all 'oembed' tags
+			let start = AppUtility.indexOf(html, "<oembed");
+			while (start > -1) {
+				const end = start < 0 ? -1 : AppUtility.indexOf(html, "</oembed>", start + 1);
+				if (end > -1) {
+					let media = (html as string).substr(start, 9 + end - start);
+					const urlStart = AppUtility.indexOf(media, "url=") + 5;
+					const urlEnd = AppUtility.indexOf(media, "\"", urlStart + 1);
+					const url = media.substr(urlStart, urlEnd - urlStart);
+					const oembedProvider = this.oembedProviders.find(provider => provider.urlPatterns.some(pattern => url.match(pattern)));
+					if (oembedProvider !== undefined) {
+						let mediaID: string;
+						if (AppUtility.isEquals(oembedProvider.name, "YouTube")) {
+							const match = url.match(/^.*(youtu.be\/|youtube(-nocookie)?.com\/(v\/|.*u\/\w\/|embed\/|.*v=))([\w-]{11}).*/);
+							mediaID = match !== undefined && match.length > 4 ? match[4] : undefined;
+							media = AppUtility.format(oembedProvider.html, { id: mediaID });
+						}
+					}
+					else {
+						media = url.endsWith(".mp3")
+							? AppUtility.format("<audio controls=\"true\" width=\"560\" height=\"32\" src=\"{{url}}\"></audio>", { url: url })
+							: AppUtility.format("<video controls=\"true\" width=\"560\" height=\"315\" src=\"{{url}}\"></video>", { url: url });
+					}
+					html = html.substr(0, start) + media + html.substr(end);
+				}
+				start = AppUtility.indexOf(html, "<oembed", start + 1);
+			}
+
+			// add 'target' into all archors (a tags)
+			start = AppUtility.indexOf(html, "<a");
+			while (start > -1) {
+				const end = AppUtility.indexOf(html, ">", start + 1) + 1;
+				let archor = html.substr(start, end - start);
+				if (AppUtility.indexOf(archor, "target=") < 0) {
+					archor = archor.substr(0, archor.length - 1) + " target=\"_blank\">";
+					html = html.substr(0, start) + archor + html.substr(end);
+				}
+				start = AppUtility.indexOf(html, "<a", start + 1);
+			}
+		}
+		return this.domSanitizer.bypassSecurityTrustHtml(html || "");
 	}
 
 	public async getActiveModuleAsync(useXHR: boolean = true) {
@@ -143,6 +212,129 @@ export class PortalsCmsService extends BaseService {
 		await super.readAsync(super.getURI(objectName, id), onNext, onError, headers, true);
 	}
 
+	public getFileOptions(object: CmsBaseModel, onCompleted?: (fileOptions: FileOptions) => void) {
+		if (object !== undefined) {
+			const fileOptions = {
+				ServiceName: this.name,
+				ObjectName: object.ContentType.getObjectName(false),
+				SystemID: object.SystemID,
+				RepositoryID: object.RepositoryID,
+				RepositoryEntityID: object.RepositoryEntityID,
+				ObjectID: object.ID,
+				ObjectTitle: object.Title,
+				IsShared: false,
+				IsTracked: object.Organization !== undefined && object.Organization.TrackDownloadFiles,
+				IsTemporary: AppUtility.isNotEmpty(object.ID) ? false : true,
+				Extras: {}
+			} as FileOptions;
+			if (onCompleted !== undefined) {
+				onCompleted(fileOptions);
+			}
+			return fileOptions;
+		}
+		return undefined;
+	}
+
+	public getFileHeaders(object: CmsBaseModel, additional?: { [header: string]: string }) {
+		return this.filesSvc.getFileHeaders(this.getFileOptions(object), additional);
+	}
+
+	public getLinkSelector(object: CmsBaseModel, lookupModalPage: any, options?: { [key: string]: any }) {
+		options = options || {};
+		options.content = options.content || {};
+		options.file = options.file || {};
+		const linkSelector: { [key: string]: { [key: string]: any } } = {};
+		if (lookupModalPage !== undefined) {
+			linkSelector.content = {
+				label: options.content.label,
+				selectLink: async (onSelected: (link: string) => void) => await this.appFormsSvc.showModalAsync(
+					lookupModalPage,
+					{
+						organizationID: object.SystemID,
+						moduleID: object.RepositoryID,
+						contentTypeID: object.RepositoryEntityID,
+						objectName: object.ContentType.getObjectName(true),
+						multiple: false,
+						nested: !!options.content.nested,
+						sortBy: options.content.sortBy,
+						preProcess: options.content.preProcess
+					},
+					(objects: CmsBaseModel[]) => {
+						const obj = objects !== undefined && objects.length > 0 ? objects[0] : undefined;
+						const parent = obj !== undefined ? Category.get(obj["CategoryID"]) : undefined;
+						onSelected(obj !== undefined ? this.getPortalUrl(obj, parent) + ".html" : undefined);
+					}
+				)
+			};
+		}
+		if (AppUtility.isNotEmpty(object.ID)) {
+			linkSelector.file = {
+				label: options.file.label,
+				selectLink: async (onSelected: (link: string) => void) => await this.appFormsSvc.showModalAsync(
+					FilesProcessorModalPage,
+					{
+						mode: "select",
+						fileOptions: this.getFileOptions(object),
+						allowSelect: true,
+						multiple: false,
+						handlers: { onSelect: () => {} }
+					},
+					(attachments: AttachmentInfo[]) => onSelected(attachments !== undefined && attachments.length > 0 ? attachments[0].URIs.Direct : undefined)
+				)
+			};
+		}
+		return linkSelector;
+	}
+
+	public getMediaSelector(object: CmsBaseModel, label?: string) {
+		return AppUtility.isNotEmpty(object.ID)
+			? {
+				label: label,
+				selectMedia: async (onSelected: (link: string, type?: string) => void) => await this.appFormsSvc.showModalAsync(
+					FilesProcessorModalPage,
+					{
+						mode: "select",
+						fileOptions: this.getFileOptions(object),
+						allowSelect: true,
+						multiple: false,
+						handlers: { predicate: (attachment: AttachmentInfo) => attachment.isImage || attachment.isVideo || attachment.isAudio, onSelect: () => {} }
+					},
+					(attachments: AttachmentInfo[]) => onSelected(attachments !== undefined && attachments.length > 0 ? attachments[0].URIs.Direct : undefined, attachments !== undefined && attachments.length > 0 ? attachments[0].ContentType.substr(0, attachments[0].ContentType.indexOf("/")) : undefined)
+				)
+			}
+			: undefined;
+	}
+
+	public getUploadFormControl(ojbect: CmsBaseModel, segment?: string, label?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+		const controlConfig: AppFormsControlConfig = this.appFormsSvc.getButtonControls(
+			"attachments",
+			{
+				Name: "Upload",
+				Label: label || "{{files.attachments.upload}}",
+				OnClick: async () => await this.appFormsSvc.showModalAsync(
+					FilesProcessorModalPage,
+					{
+						mode: "upload",
+						fileOptions: this.getFileOptions(ojbect)
+					}
+				),
+				Options: {
+					Fill: "clear",
+					Color: "primary",
+					Css: "ion-float-end",
+					Icon: {
+						Name: "cloud-upload",
+						Slot: "start"
+					}
+				}
+			}
+		);
+		if (onCompleted !== undefined) {
+			onCompleted(controlConfig);
+		}
+		return controlConfig;
+	}
+
 	public setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onPreCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {
 		lookupOptions.ModalOptions = lookupOptions.ModalOptions || {};
 		if (lookupModalPage !== undefined) {
@@ -161,52 +353,6 @@ export class PortalsCmsService extends BaseService {
 		if (onPreCompleted !== undefined) {
 			onPreCompleted(lookupOptions);
 		}
-	}
-
-	public getLinkSelector(object: CmsBaseModel, contentLookupModalPage: any, fileLookupModalPage: any, options?: { [key: string]: any }) {
-		options = options || {};
-		options.content = options.content || {};
-		options.file = options.file || {};
-		const linkSelector: { [key: string]: any } = {
-			content: {
-				label: options.content.label,
-				selectLink: (onSelected: (link: string) => void) => this.appFormsSvc.showModalAsync(
-					contentLookupModalPage,
-					{
-						organizationID: object.SystemID,
-						moduleID: object.RepositoryID,
-						contentTypeID: object.RepositoryEntityID,
-						objectName: object.ContentType.getObjectName(true),
-						multiple: false,
-						nested: !!options.content.nested,
-						sortBy: options.content.sortBy,
-						preProcess: options.content.preProcess
-					},
-					data => {
-						const obj = AppUtility.isArray(data, true) ? data[0] : undefined;
-						const parent = obj !== undefined ? Category.get(obj["CategoryID"]) : undefined;
-						onSelected(obj !== undefined ? this.getPortalUrl(obj, parent) + ".html" : undefined);
-					}
-				)
-			}
-		};
-		return linkSelector;
-	}
-
-	public getFileHeader(object: CmsBaseModel) {
-		if (object !== undefined) {
-			return {
-				ServiceName: this.name,
-				ObjectName: object.ContentType.getObjectName(false),
-				SystemID: object.SystemID,
-				RepositoryID: object.RepositoryID,
-				RepositoryEntityID: object.RepositoryEntityID,
-				ObjectID: object.ID,
-				ObjectTitle: object.Title,
-				IsTemporary: AppUtility.isNotEmpty(object.ID)
-			} as UploadFileHeader;
-		}
-		return undefined;
 	}
 
 	public getContentTypesOfCategory(module: Module) {
@@ -1075,6 +1221,59 @@ export class PortalsCmsService extends BaseService {
 			}
 			Link.all.filter(link => link.ParentID === id).forEach(link => this.deleteLink(link.ID));
 			Link.instances.remove(id);
+		}
+	}
+
+	private processAttachmentUpdateMessage(message: AppMessage) {
+		const object: CmsBaseModel = Content.contains(message.Data.ObjectID)
+			? Content.get(message.Data.ObjectID)
+			: Item.contains(message.Data.ObjectID)
+				? Item.get(message.Data.ObjectID)
+				: undefined;
+		if (object !== undefined) {
+			const attachments = message.Type.Object === "Thumbnail" ? object.thumbnails : object.attachments;
+			if (message.Type.Event === "Delete") {
+				if (attachments !== undefined) {
+					if (AppUtility.isArray(message.Data, true)) {
+						(message.Data as Array<AttachmentInfo>).forEach(attachment => AppUtility.removeAt(attachments, attachments.findIndex(a => a.ID === attachment.ID)));
+					}
+					else {
+						AppUtility.removeAt(attachments, attachments.findIndex(a => a.ID === message.Data.ID));
+					}
+				}
+			}
+			else {
+				if (attachments === undefined) {
+					if (message.Type.Object === "Thumbnail") {
+						object.updateThumbnails(AppUtility.isArray(message.Data, true) ? (message.Data as Array<AttachmentInfo>).map(attachment => this.filesSvc.prepareAttachment(attachment)) : [this.filesSvc.prepareAttachment(message.Data)]);
+					}
+					else {
+						object.updateAttachments(AppUtility.isArray(message.Data, true) ? (message.Data as Array<AttachmentInfo>).map(attachment => this.filesSvc.prepareAttachment(attachment)) : [this.filesSvc.prepareAttachment(message.Data)]);
+					}
+				}
+				else {
+					if (AppUtility.isArray(message.Data, true)) {
+						(message.Data as Array<AttachmentInfo>).forEach(attachment => {
+							const index = attachments.findIndex(a => a.ID === attachment.ID);
+							if (index < 0) {
+								attachments.push(this.filesSvc.prepareAttachment(attachment));
+							}
+							else {
+								attachments[index] = this.filesSvc.prepareAttachment(attachment);
+							}
+						});
+					}
+					else {
+						const index = attachments.findIndex(a => a.ID === message.Data.ID);
+						if (index < 0) {
+							attachments.push(this.filesSvc.prepareAttachment(message.Data));
+						}
+						else {
+							attachments[index] = this.filesSvc.prepareAttachment(message.Data);
+						}
+					}
+				}
+			}
 		}
 	}
 
