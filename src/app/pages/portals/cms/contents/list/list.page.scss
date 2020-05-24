@@ -1,8 +1,27 @@
 ion-list > ion-item {
 	cursor: pointer;
 }
-ion-list > ion-item > ion-label > span.time,
-ion-list > ion-item > ion-label > div {
+ion-list > ion-item > ion-label > span.time {
 	font-size: 0.85em;
 	padding-top: 5px;
+}
+ion-list > ion-item > ion-label > div {
+	font-size: 0.95em;
+	padding-top: 12px;
+}
+ion-list > ion-item > ion-label > div > span {
+	margin-right: 16px;
+}
+ion-list > ion-item > ion-label > span.title > ion-icon.Draft {
+	color: darkgray;
+}
+ion-list > ion-item > ion-label > span.title > ion-icon.Pending,
+ion-list > ion-item > ion-label > span.title > ion-icon.Rejected {
+	color: red;
+}
+ion-list > ion-item > ion-label > span.title > ion-icon.Approved {
+	color: blue;
+}
+ion-list > ion-item > ion-label > span.title > ion-icon.Published {
+	color: green;
 }

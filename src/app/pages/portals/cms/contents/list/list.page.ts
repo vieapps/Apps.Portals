@@ -28,7 +28,7 @@ import { Content } from "@models/portals.cms.content";
 export class CmsContentListPage implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService,
@@ -69,8 +69,16 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		handler: () => void
 	}>;
 
+	get color() {
+		return this.configSvc.color;
+	}
+
 	get locale() {
 		return this.configSvc.locale;
+	}
+
+	get screenWidth() {
+		return this.configSvc.screenWidth;
 	}
 
 	get totalDisplays() {
@@ -95,6 +103,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
+		await this.appFormsSvc.showLoadingAsync();
 		this.contentType = ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 
 		this.organization = this.contentType !== undefined
@@ -123,8 +132,10 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		this.canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Content", this.module === undefined ? undefined : this.module.Privileges);
 		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Content", this.module === undefined ? undefined : this.module.Privileges);
 		if (!this.canContribute) {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateHomeAsync();
+			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+				this.configSvc.navigateHomeAsync()
+			]));
 			return;
 		}
 
@@ -160,7 +171,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 			}, `CMS.Contents:${(this.category !== undefined ? ":" + this.category.ID : "")}:Refresh`);
 
 			this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.category === undefined ? this.organization.Title : this.organization.Title + " :: " + this.category.FullTitle)}]` });
-			await this.startSearchAsync();
+			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 		}
 	}
 
@@ -292,6 +303,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		if (onNext !== undefined) {
 			onNext();
 		}
+		console.warn("Contents", this.contents);
 	}
 
 	private async backAsync(message: string, url?: string) {

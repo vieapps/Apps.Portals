@@ -21,7 +21,7 @@ import { Content } from "@models/portals.cms.content";
 export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private filesSvc: FilesService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService,
@@ -44,7 +44,8 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	resources = {
 		status: "Status",
 		update: "Update",
-		moderate: "Moderate"
+		moderate: "Moderate",
+		delete: "Delete"
 	};
 	actions: Array<{
 		text: string,
@@ -55,6 +56,10 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	get locale() {
 		return this.configSvc.locale;
+	}
+
+	get color() {
+		return this.configSvc.color;
 	}
 
 	get status() {
@@ -74,8 +79,8 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	ngOnDestroy() {
 		if (this.content !== undefined) {
-			AppEvents.off(this.portalsCoreSvc.name, "CMS.Contents:Refresh:Details");
-			AppEvents.off(this.filesSvc.name, "CMS.Contents:Refresh:Details");
+			AppEvents.off(this.portalsCoreSvc.name, "CMS.Contents:View:Refresh");
+			AppEvents.off(this.filesSvc.name, "CMS.Contents:View:Refresh");
 		}
 	}
 
@@ -92,8 +97,8 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			return;
 		}
 
-		const account = this.configSvc.getAccount();
 		let canView = false;
+		const account = this.configSvc.getAccount();
 		this.canModerate = this.portalsCoreSvc.canModerateOrganization(this.content.Organization, account) || this.portalsCmsSvc.canModerate(this.content, account);
 
 		if (AppUtility.isEquals(this.content.Status, "Draft") || AppUtility.isEquals(this.content.Status, "Pending") || AppUtility.isEquals(this.content.Status, "Rejected")) {
@@ -124,35 +129,38 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		this.resources = {
 			status: await this.configSvc.getResourceAsync("portals.cms.contents.controls.Status.label"),
 			update: await this.configSvc.getResourceAsync("common.buttons.update"),
-			moderate: await this.configSvc.getResourceAsync("common.buttons.moderate")
+			moderate: await this.configSvc.getResourceAsync("common.buttons.moderate"),
+			delete: await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete")
 		};
 
 		if (this.canEdit) {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(this.resources.update, "create", () => this.updateAsync()),
-				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderateAsync())
+				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderateAsync()),
+				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.deleteAsync())
 			];
 		}
 
+		this.formSegments.items = await this.getFormSegmentsAsync();
+		this.formConfig = await this.getFormControlsAsync();
+
 		AppEvents.on(this.portalsCoreSvc.name, info => {
-			if (info.args.Object === "CMS.Content") {
-				if (info.args.Type === "Updated" && this.content.ID === info.args.ID) {
+			if (info.args.Object === "CMS.Content" && this.content.ID === info.args.ID) {
+				if (info.args.Type === "Updated") {
+					this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => AppUtility.isEquals(cfg.Name, control.Name)).Hidden ? true : false);
 					this.prepareValues();
 				}
-				else if (info.args.Type === "Deleted" && this.content.ID === info.args.ID) {
+				else if (info.args.Type === "Deleted") {
 					this.cancelAsync();
 				}
 			}
-		}, "CMS.Contents:Refresh:Details");
+		}, "CMS.Contents:View:Refresh");
 
 		AppEvents.on(this.filesSvc.name, info => {
-			if ((info.args.Object === "Attachment" || info.args.Object === "Thumbnail") && this.content.ID === info.args.ObjectID) {
-				this.prepareAttachments(`${info.args.Object}s`, undefined, info.args.Event === "Delete" ? undefined : info.args.Data, info.args.Event === "Delete" ? info.args.Data : undefined);
+			if (this.content.ID === info.args.ObjectID && (info.args.Object === "Attachment" || info.args.Object === "Thumbnail")) {
+				this.prepareAttachments(`${info.args.Object}s`, undefined, info.args.Event === "Delete" ? undefined : this.filesSvc.prepareAttachment(info.args.Data), info.args.Event === "Delete" ? this.filesSvc.prepareAttachment(info.args.Data) : undefined);
 			}
-		}, "CMS.Contents:Refresh:Details");
-
-		this.formSegments.items = await this.getFormSegmentsAsync();
-		this.formConfig = await this.getFormControlsAsync();
+		}, "CMS.Contents:View:Refresh");
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: Array<AppFormsSegment>) => void) {
@@ -170,12 +178,41 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content");
 		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Relateds")).Segment = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExternalRelateds")).Segment = "basic";
+
 		formConfig.push(
-			this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments", false, false),
-			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label"), false, false, false),
+			this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments"),
+			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label")),
 			this.portalsCoreSvc.getAuditFormControl(this.content, "management")
 		);
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
+
+		const control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
+		control.Order = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Audits")).Order + 1;
+		control.Segment = "management";
+		control.Hidden = false;
+		control.Options.Label = "{{common.audits.identity}}";
+		control.Options.ReadOnly = true;
+
+		if (this.canEdit) {
+			formConfig.push(this.appFormsSvc.getButtonControls(
+				"management",
+				{
+					Name: "Delete",
+					Label: this.resources.delete,
+					OnClick: async () => await this.deleteAsync(),
+					Options: {
+						Fill: "clear",
+						Color: "danger",
+						Css: "ion-float-end",
+						Icon: {
+							Name: "trash",
+							Slot: "start"
+						}
+					}
+				}
+			));
+		}
+
 		if (onCompleted !== undefined) {
 			onCompleted(formConfig);
 		}
@@ -183,18 +220,37 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	onFormInitialized() {
-		this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.content), data => this.prepareAttachments("Thumbnails", data));
-		this.filesSvc.searchAttachmentsAsync(this.portalsCmsSvc.getFileOptions(this.content), data => this.prepareAttachments("Attachments", data));
 		this.prepareValues();
-		this.appFormsSvc.hideLoadingAsync();
+		this.appFormsSvc.hideLoadingAsync(() => {
+			if (this.content.thumbnails !== undefined) {
+				this.prepareAttachments("Thumbnails", this.content.thumbnails);
+			}
+			else {
+				this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.content), thumbnails => {
+					this.content.updateThumbnails(thumbnails);
+					this.prepareAttachments("Thumbnails", thumbnails);
+				});
+			}
+			if (this.content.attachments !== undefined) {
+				this.prepareAttachments("Attachments", this.content.attachments);
+			}
+			else {
+				this.filesSvc.searchAttachmentsAsync(this.portalsCmsSvc.getFileOptions(this.content), attachments => {
+					this.content.updateAttachments(attachments);
+					this.prepareAttachments("Attachments", attachments);
+				});
+			}
+		});
 	}
 
 	private prepareAttachments(name: string, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo) {
-		this.filesSvc.prepareAttachmentsFormControl(this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, name)), AppUtility.isEquals(name, "Thumbnails"), attachments, addedOrUpdated, deleted, control => control.Hidden = control.value === undefined);
+		const formControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, name));
+		const isThumbnails = AppUtility.isEquals(name, "Thumbnails");
+		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, control => control.Hidden = control.value === undefined);
 	}
 
 	private prepareValues() {
-		this.formControls.filter(control => !control.Hidden && !AppUtility.isEquals(control.Name, "Thumbnails") && !AppUtility.isEquals(control.Name, "Attachments")).forEach(async control => {
+		this.formControls.filter(control => !control.Hidden && !AppUtility.isEquals(control.Name, "Thumbnails") && !AppUtility.isEquals(control.Name, "Attachments") && !AppUtility.isEquals(control.Name, "Buttons")).forEach(async control => {
 			control.value = AppUtility.isEquals(control.Name, "Audits")
 				? await this.portalsCoreSvc.getAuditInfoAsync(this.content)
 				: this.content[control.Name];
@@ -242,6 +298,10 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 							control.Hidden = !this.content.ContentType.AllowComments;
 							break;
 
+						case "Summary":
+							control.value = AppUtility.normalizeHtml(control.value, true);
+							break;
+
 						case "Relateds":
 							relateds = "";
 							await Promise.all(this.content.Relateds.map(async contentID => {
@@ -279,6 +339,34 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	async moderateAsync() {
 		await this.configSvc.navigateForwardAsync(this.content.routerURI.replace("/view/", "/update/"));
+	}
+
+	async deleteAsync() {
+		await this.appFormsSvc.showAlertAsync(
+			undefined,
+			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete"),
+			undefined,
+			async () => {
+				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"));
+				await this.portalsCmsSvc.deleteContentAsync(
+					this.content.ID,
+					async data => {
+						AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: data.CategoryID });
+						if (AppUtility.isArray(data.OtherCategories)) {
+							(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
+						}
+						await Promise.all([
+							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"), this.configSvc.currentUrl),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]);
+					},
+					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error))
+				);
+			},
+			await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove"),
+			await this.configSvc.getResourceAsync("common.buttons.cancel")
+		);
 	}
 
 	async cancelAsync() {

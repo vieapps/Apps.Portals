@@ -112,7 +112,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 
 		this.organization = this.portalsCoreSvc.getOrganization(this.systemID);
 		this.module = Module.get(this.repositoryID);
-		this.definitions = this.portalsCoreSvc.ContentTypeDefinitions;
+		this.definitions = this.portalsCoreSvc.contentTypeDefinitions;
 		this.definition = AppUtility.isNotEmpty(this.definitionID) ? this.definitions.find(definition => definition.ID === this.definitionID) : undefined;
 
 		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);

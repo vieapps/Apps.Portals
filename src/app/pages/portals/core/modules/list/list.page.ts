@@ -92,7 +92,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		this.systemID = this.configSvc.requestParams["SystemID"];
 		this.definitionID = this.configSvc.requestParams["DefinitionID"];
 
-		this.definitions = this.portalsCoreSvc.ModuleDefinitions;
+		this.definitions = this.portalsCoreSvc.moduleDefinitions;
 		this.definition = AppUtility.isNotEmpty(this.definitionID) ? this.definitions.find(definition => definition.ID === this.definitionID) : undefined;
 
 		this.organization = this.portalsCoreSvc.getOrganization(this.systemID);

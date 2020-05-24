@@ -1,5 +1,5 @@
 <ion-header>
-	<ion-toolbar [color]="configSvc.color">
+	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
 			<ion-back-button text=""></ion-back-button>
 		</ion-buttons>
@@ -19,7 +19,7 @@
 </ion-header>
 
 <ion-footer *ngIf="pagination || actions">
-	<ion-toolbar [color]="configSvc.color">
+	<ion-toolbar [color]="color">
 		<span *ngIf="pagination" slot="start">
 			<ion-icon name="color-filter" color="primary" slot="start"></ion-icon>
 			<span>
@@ -34,23 +34,38 @@
 	</ion-toolbar>
 </ion-footer>
 
-<ion-content [color]="configSvc.color">
+<ion-content [color]="color">
 	<ion-fab *ngIf="canUpdate" vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button (click)="openCreateAsync()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 	<ion-list class="ion-padding-end">
-		<ion-item *ngFor="let content of contents; trackBy: track" [color]="configSvc.color" [routerLink]="content.routerLink" [queryParams]="content.routerParams" routerDirection="forward" detail="false">
+		<ion-item *ngFor="let content of contents; trackBy: track" [color]="color" [routerLink]="content.routerLink" [queryParams]="content.routerParams" routerDirection="forward" detail="false">
 			<ion-label>
-				<span class="time ion-float-end" [hidden]="configSvc.screenWidth < 768">
-					{{ content.Created | date:'h:mm a @ d/M/y' }} <br/> {{ content.LastModified | date:'h:mm a @ d/M/y' }}
+				<ion-thumbnail class="ion-float-start ion-padding-end">
+					<img [src]="content.thumbnailURI" />
+				</ion-thumbnail>
+				<span class="time ion-float-end" [hidden]="screenWidth < 768">
+					{{ content.Created | date:'h:mm a @ d/M/y' }} <br/> {{ content.LastModified | time:locale:'h:mm a @ d/M/y' }}
 				</span>
-				<span>
+				<span class="title">
 					{{ content.Title }}
+					<ion-icon name="radio" slot="icon-only" [class]="content.Status"></ion-icon>
 				</span>
 				<div>
-					{{ content.Summary }}
+					<span *ngIf="content.Status === 'Published'">
+						<ion-icon name="alarm" slot="icon-only" color="medium"></ion-icon>
+						{{ content.PublishedTime | date:'h:mm a @ d/M/y' }}
+					</span>
+					<span>
+						<ion-icon name="time" slot="icon-only" color="medium"></ion-icon>
+						{{ content.StartDate | date:'d/M/y' }}
+					</span>
+					<span *ngIf="content.category">
+						<ion-icon name="color-filter" slot="icon-only" color="medium"></ion-icon>
+						{{ content.category.FullTitle }}
+					</span>
 				</div>
 			</ion-label>
 		</ion-item>
