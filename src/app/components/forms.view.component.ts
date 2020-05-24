@@ -3,7 +3,6 @@ import { registerLocaleData } from "@angular/common";
 import { AppFormsControl } from "@components/forms.service";
 import { AppUtility } from "@components/app.utility";
 import { ConfigurationService } from "@services/configuration.service";
-import { FilesService } from "@services/files.service";
 
 @Component({
 	selector: "app-form-view",
@@ -13,8 +12,7 @@ import { FilesService } from "@services/files.service";
 export class AppFormsViewComponent implements OnInit, AfterViewInit {
 
 	constructor(
-		private configSvc: ConfigurationService,
-		private filesSvc: FilesService
+		private configSvc: ConfigurationService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
@@ -65,7 +63,7 @@ export class AppFormsViewComponent implements OnInit, AfterViewInit {
 	}
 
 	get isDateTime() {
-		return AppUtility.isEquals(this.control.Options.Type, "date") || AppUtility.isEquals(this.control.Type, "DatePicker");
+		return AppUtility.isEquals(this.control.Options.Type, "date") || AppUtility.isEquals(this.control.Options.Type, "datetime-local") || AppUtility.isEquals(this.control.Type, "DatePicker");
 	}
 
 	get isBoolean() {
@@ -96,6 +94,10 @@ export class AppFormsViewComponent implements OnInit, AfterViewInit {
 
 	isCustomControlOf(type?: string) {
 		return this.isCustomControl && (type === undefined || AppUtility.isEquals(this.control.Options.Type, type));
+	}
+
+	get isButtonsControl() {
+		return AppUtility.isEquals(this.control.Type, "Buttons");
 	}
 
 }

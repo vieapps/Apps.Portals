@@ -190,7 +190,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				? this.control.Options.DatePickerOptions.AllowDelete
 				: this.isFilePickerControl
 					? this.isImagePickerControl
-						? this.control.Options.FilePickerOptions.AllowDelete && this.value !== undefined && this.value.new !== undefined
+						? this.control.Options.FilePickerOptions.AllowDelete && AppUtility.isObject(this.value, true) && this.value.new !== undefined
 						: this.control.Options.FilePickerOptions.AllowDelete
 					: false;
 	}

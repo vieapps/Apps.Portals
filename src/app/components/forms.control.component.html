@@ -174,7 +174,7 @@
 				[placeholder]="placeholder"
 				(change)="onChanged($event)" />
 		</div>
-		<div *ngIf="isAllowImagePreview" class="image-picker-preview ion-padding">
+		<div *ngIf="isAllowImagePreview && value" class="image-picker-preview ion-padding-vertical">
 			<div *ngIf="value.current">
 				<img [src]="value.current" />
 			</div>
@@ -398,8 +398,8 @@
 		[innerHTML]="description"></label>
 </ion-item>
 
-<control-file-selector *ngIf="visible && isCustomControl('files-selector')" #elementRef
-	[control]="control"></control-file-selector>
+<control-files-selector *ngIf="visible && isCustomControl('files-selector')" #elementRef
+	[control]="control"></control-files-selector>
 	
 <control-image-cropper *ngIf="visible && isCustomControl('image-cropper')" #elementRef
 	[formGroup]="formGroup"

@@ -1,4 +1,4 @@
-<ion-item *ngIf="visible && !isCustomControl"
+<ion-item *ngIf="visible && !isCustomControl && !isButtonsControl"
 	[color]="theme"
 	[class.file-picker]="isFilePickerControl">
 
@@ -20,7 +20,7 @@
 	
 	<div *ngIf="isLargeText" [innerHTML]="value" class="text large" #elementRef></div>
 
-	<span *ngIf="!isNumber && !isDateTime && !isBoolean && !isMediumText && !isLargeText && !isFilePickerControl && !isCustomControl" class="text" #elementRef>
+	<span *ngIf="!isNumber && !isDateTime && !isBoolean && !isMediumText && !isLargeText && !isFilePickerControl" class="text" #elementRef>
 		{{ value }}
 	</span>
 	
@@ -32,7 +32,7 @@
 				[placeholder]="control.Options.PlaceHolder"
 				(change)="onFilePickerChanged($event)" />
 		</div>
-		<div *ngIf="control.Options.FilePickerOptions.AllowPreview && control.value !== undefined" class="image-picker-preview ion-padding">
+		<div *ngIf="control.Options.FilePickerOptions.AllowPreview && control.value" class="image-picker-preview ion-padding-vertical">
 			<div *ngIf="value.current" class="current">
 				<img [src]="value.current" />
 			</div>
@@ -43,6 +43,19 @@
 	</div>
 	
 </ion-item>
+
+<ion-buttons *ngIf="visible && isButtonsControl" style="background-color:var(--ion-color-base)" class="ion-padding" #elementRef>
+	<ion-button *ngFor="let button of control.SubControls.Controls;"
+		[fill]="button.Options.ButtonOptions.Fill"
+		[color]="button.Options.ButtonOptions.Color"
+		[disabled]="button.Options.Disabled"
+		[class]="button.Options.Css"
+		(click)="button.Options.ButtonOptions.OnClick($event, button)">
+		<ion-icon *ngIf="button.Options.ButtonOptions.Icon.Name" [icon]="button.Options.ButtonOptions.Icon.Name" [slot]="button.Options.ButtonOptions.Icon.Slot"></ion-icon>
+		{{ button.Options.Label }}
+	</ion-button>
+</ion-buttons>
 	
-<control-file-selector *ngIf="visible && isCustomControlOf('files-selector')" #elementRef
-	[control]="control"></control-file-selector>
+<control-files-selector *ngIf="visible && isCustomControlOf('files-selector')" #elementRef
+	[control]="control"></control-files-selector>
+	
