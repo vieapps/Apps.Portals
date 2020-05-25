@@ -22,6 +22,8 @@
 			"create": "Create new",
 			"update": "Update",
 			"delete": "Delete",
+			"edit": "Edit",
+			"view": "View",
 			"save": "Save",
 			"cancel": "Cancel",
 			"close": "Close",
@@ -139,9 +141,11 @@
 			"new": "Newly selected"
 		},
 		"attachments": {
+			"segment": "Attachments",
 			"label": "Attached files",
-			"confirm": "Are you sure to delete '{{name}}' file?",
-			"upload": "Upload files",
+			"confirm": "Are you sure you want to delete '{{name}}' file?",
+			"upload": "Upload",
+			"download": "Download",
 			"controls": {
 				"title": "Title",
 				"description": "Description",

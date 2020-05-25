@@ -16,6 +16,10 @@ import { IonicModule } from "@ionic/angular";
 			{
 				path: "contents",
 				loadChildren: "@pages/portals/cms/contents/contents.module#CmsContentsModule"
+			},
+			{
+				path: "items",
+				loadChildren: "@pages/portals/cms/items/items.module#CmsItemsModule"
 			}
 		])
 	],

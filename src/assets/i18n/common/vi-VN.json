@@ -22,6 +22,8 @@
 			"create": "Tạo mới",
 			"update": "Cập nhật",
 			"delete": "Xoá",
+			"edit": "Cập nhật",
+			"view": "Xem",
 			"save": "Lưu",
 			"cancel": "Huỷ",
 			"close": "Đóng",
@@ -139,15 +141,17 @@
 			"new": "Ảnh mới"
 		},
 		"attachments": {
-			"label": "Files đính kèm nội dung",
-			"confirm": "Chắc chắn muốn xoá file '{{name}}'?",
-			"upload": "Tải file lên",
+			"segment": "Tệp đính kèm",
+			"label": "Các tệp đính kèm nội dung",
+			"confirm": "Chắc chắn muốn xoá tệp tin '{{name}}'?",
+			"upload": "Tải lên",
+			"download": "Tải xuống",
 			"controls": {
 				"title": "Tiêu đề",
 				"description": "Diễn giải",
 				"shared": "Chia sẻ dùng chung trong toàn bộ hệ thống",
 				"tracked": "Lưu toàn bộ log truy cập (bao gồm cả xem)",
-				"filename": "Tên file"
+				"filename": "Tên tệp tin"
 			}
 		}
 	}

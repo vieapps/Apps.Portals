@@ -61,7 +61,17 @@
 				},
 				"list": {
 					"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác chuyên mục",
-					"children": "{{number}} chuyên mục cấp dưới: {{children}}"
+					"children": "{{number}} chuyên mục cấp dưới: {{children}}",
+					"labels": {
+						"edit": "Cập nhật chuyên mục",
+						"children": "Xem danh sách chuyên mục cấp dưới",
+						"view": "Xem danh sách nội dung"
+					},
+					"buttons": {
+						"edit": "Cập nhật",
+						"children": "Xem cấp dưới",
+						"view": "Xem nội dung"
+					}
 				},
 				"update": {
 					"segments": {
@@ -209,9 +219,8 @@
 				"update": {
 					"segments": {
 						"management": "Quản trị",
-						"basic": "Cơ bản",
-						"related": "Liên quan",
-						"attachments": "File đính kèm"
+						"basic": "Nội dung",
+						"related": "Liên quan"
 					},
 					"messages": {
 						"confirm": {
