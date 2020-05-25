@@ -27,7 +27,7 @@ import { ContentTypeDefinition } from "@models/portals.base";
 export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
 		private portalsCoreSvc: PortalsCoreService,
@@ -69,12 +69,20 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		handler: () => void
 	}>;
 	labels = {
-		update: "Update this content-type",
-		list: "View the list of contents"
+		edit: "Update this content-type",
+		view: "View the list of contents"
 	};
 
 	get locale() {
 		return this.configSvc.locale;
+	}
+
+	get color() {
+		return this.configSvc.color;
+	}
+
+	get screenWidth() {
+		return this.configSvc.screenWidth;
 	}
 
 	get totalDisplays() {
@@ -150,8 +158,8 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		}
 
 		this.labels = {
-			update: await this.configSvc.getResourceAsync("common.buttons.update"),
-			list: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list")
+			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
+			view: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list")
 		};
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
@@ -183,15 +191,14 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 				}
 			}, identity);
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.contenttypes.title.create"), "create", () => this.openCreateAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.contenttypes.title.create"), "create", () => this.createAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.contenttypes.title.search"), "search", () => this.openSearchAsync())
 			];
 			await this.startSearchAsync();
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<ContentTypes>: show the collection of content-types", this.configSvc.requestParams, this.filterBy);
-			console.log("<ContentTypes>: organization, module & definition", this.organization, this.module, this.definition);
+			console.log("<ContentTypes>: show the list", this.organization, this.module, this.definition, this.filterBy, this.sortBy, this.configSvc.requestParams);
 		}
 	}
 
@@ -200,21 +207,9 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 	}
 
 	getInfo(contentType: ContentType) {
-		const modul = Module.get(contentType.RepositoryID);
+		const module = Module.get(contentType.RepositoryID);
 		const contentTypeDefinition = Organization.ContentTypeDefinitions.find(definition => definition.ID === contentType.ContentTypeDefinitionID);
-		return `${(modul !== undefined ? `Module: ${modul.Title} - ` : "")}Definition: ${contentTypeDefinition.Title}${(AppUtility.isNotEmpty(contentType.Description) ? " - " + contentType.Description : "")}`;
-	}
-
-	showActionsAsync() {
-		return this.appFormsSvc.showActionSheetAsync(this.actions);
-	}
-
-	openCreateAsync() {
-		return this.configSvc.navigateForwardAsync("/portals/core/content.types/create");
-	}
-
-	openSearchAsync() {
-		return this.configSvc.navigateForwardAsync("/portals/core/content.types/search");
+		return `${(module !== undefined ? `Module: ${module.Title} - ` : "")}Definition: ${contentTypeDefinition.Title}${(AppUtility.isNotEmpty(contentType.Description) ? " - " + contentType.Description : "")}`;
 	}
 
 	onStartSearch(event: any) {
@@ -278,10 +273,10 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchContentType(this.request, onNextAsync);
+			this.subscription = this.portalsCoreSvc.searchContentType(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
 		}
 		else {
-			await this.portalsCoreSvc.searchContentTypeAsync(this.request, onNextAsync);
+			await this.portalsCoreSvc.searchContentTypeAsync(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
 		}
 	}
 
@@ -331,7 +326,22 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	async openAsync(event: Event, contentType: ContentType) {
+	async showActionsAsync() {
+		await this.listCtrl.closeSlidingItems();
+		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	}
+
+	async openSearchAsync() {
+		await this.listCtrl.closeSlidingItems();
+		await this.configSvc.navigateForwardAsync("/portals/core/content.types/search");
+	}
+
+	async createAsync() {
+		await this.listCtrl.closeSlidingItems();
+		await this.configSvc.navigateForwardAsync("/portals/core/content.types/create");
+	}
+
+	async editAsync(event: Event, contentType: ContentType) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(contentType.routerURI);

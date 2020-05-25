@@ -217,10 +217,10 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchSite(this.request, onNextAsync);
+			this.subscription = this.portalsCoreSvc.searchSite(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
 		}
 		else {
-			await this.portalsCoreSvc.searchSiteAsync(this.request, onNextAsync);
+			await this.portalsCoreSvc.searchSiteAsync(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
 		}
 	}
 

@@ -248,10 +248,10 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchDesktop(this.request, onNextAsync);
+			this.subscription = this.portalsCoreSvc.searchDesktop(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
 		}
 		else {
-			await this.portalsCoreSvc.searchDesktopAsync(this.request, onNextAsync);
+			await this.portalsCoreSvc.searchDesktopAsync(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
 		}
 	}
 
