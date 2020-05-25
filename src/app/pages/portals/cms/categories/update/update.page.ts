@@ -29,9 +29,8 @@ import { DataLookupModalPage } from "@controls/portals/data.lookup.modal.page";
 
 export class CmsCategoriesUpdatePage implements OnInit {
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
-		private usersSvc: UsersService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService
@@ -57,6 +56,10 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		update: "Update",
 		cancel: "Cancel"
 	};
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	ngOnInit() {
 		this.initializeAsync();
