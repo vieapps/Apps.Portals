@@ -184,14 +184,22 @@ export class FilesService extends BaseService {
 		return attachment;
 	}
 
+	public getThumbnailURI(attachment: AttachmentInfo) {
+		return AppUtility.isObject(attachment.URIs, true)
+			? attachment.URIs.Direct
+			: AppUtility.isNotEmpty(attachment.URI)
+				? attachment.URI
+				: this.configSvc.appConfig.URIs.files + "thumbnails/no-image.png";
+	}
+
 	public prepareAttachmentsFormControl(formControl: AppFormsControl, isThumbnails: boolean, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo, onCompleted?: (control: AppFormsControl) => void) {
 		if (formControl !== undefined) {
 			if (isThumbnails) {
 				if (AppUtility.isArray(attachments, true) && attachments.length > 0) {
-					formControl.value = { current: attachments[0].URIs.Direct, new: undefined, identity: attachments[0].ID };
+					formControl.value = { current: this.getThumbnailURI(attachments[0]), new: undefined, identity: attachments[0].ID };
 				}
 				else if (AppUtility.isObject(addedOrUpdated, true)) {
-					formControl.value = { current: addedOrUpdated.URIs.Direct, new: undefined, identity: addedOrUpdated.ID };
+					formControl.value = { current: this.getThumbnailURI(addedOrUpdated), new: undefined, identity: addedOrUpdated.ID };
 				}
 				else if (AppUtility.isObject(deleted, true)) {
 					formControl.value = { current: undefined, new: undefined, identity: deleted.ID };

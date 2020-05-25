@@ -305,9 +305,9 @@ export class PortalsCmsService extends BaseService {
 			: undefined;
 	}
 
-	public getUploadFormControl(ojbect: CmsBaseModel, segment?: string, label?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	public getUploadFormControl(object: CmsBaseModel, segment?: string, label?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const controlConfig: AppFormsControlConfig = this.appFormsSvc.getButtonControls(
-			"attachments",
+			segment || "attachments",
 			{
 				Name: "Upload",
 				Label: label || "{{files.attachments.upload}}",
@@ -315,7 +315,7 @@ export class PortalsCmsService extends BaseService {
 					FilesProcessorModalPage,
 					{
 						mode: "upload",
-						fileOptions: this.getFileOptions(ojbect)
+						fileOptions: this.getFileOptions(object)
 					}
 				),
 				Options: {
