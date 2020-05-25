@@ -57,6 +57,7 @@ export interface ContentTypeDefinition {
 	ObjectName: string;
 	ObjectNamePrefix?: string;
 	ObjectNameSuffix?: string;
+	NestedObject?: boolean;
 	ParentObjectName?: string;
 	ModuleDefinition: ModuleDefinition;
 }
