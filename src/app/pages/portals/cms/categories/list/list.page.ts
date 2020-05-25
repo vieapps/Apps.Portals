@@ -335,14 +335,17 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	async showActionsAsync() {
+		await this.listCtrl.closeSlidingItems();
 		await this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
 	async openSearchAsync() {
+		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync("/portals/cms/categories/search");
 	}
 
 	async createAsync() {
+		await this.listCtrl.closeSlidingItems();
 		const params: { [key: string]: string } = {};
 		if (AppUtility.isNotEmpty(this.parentID)) {
 			params["ParentID"] = this.parentID;
