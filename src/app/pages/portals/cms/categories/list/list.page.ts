@@ -182,7 +182,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		}
 		else {
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.create"), "create", () => this.openCreateAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.create"), "create", () => this.createAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.search"), "search", () => this.openSearchAsync())
 			];
 
@@ -234,25 +234,6 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		return category.childrenIDs === undefined || category.childrenIDs.length < 1
 			? `${this.alias}: ${category.Alias}`
 			: AppUtility.format(this.children, { number: category.childrenIDs.length, children: `${category.Children[0].Title}${(category.childrenIDs.length > 1 ? `, ${category.Children[1].Title}` : "")}, ...` });
-	}
-
-	showActionsAsync() {
-		return this.appFormsSvc.showActionSheetAsync(this.actions);
-	}
-
-	openCreateAsync() {
-		const params: { [key: string]: string } = {};
-		if (AppUtility.isNotEmpty(this.parentID)) {
-			params["ParentID"] = this.parentID;
-		}
-		if (this.contentType !== undefined) {
-			params["RepositoryEntityID"] = this.contentType.ID;
-			return this.configSvc.navigateForwardAsync(`/portals/cms/categories/create?x-request=${AppUtility.toBase64Url(params)}`);
-		}
-	}
-
-	openSearchAsync() {
-		return this.configSvc.navigateForwardAsync("/portals/cms/categories/search");
 	}
 
 	onStartSearch(event: any) {
@@ -350,6 +331,25 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		}
 		if (onNext !== undefined) {
 			onNext();
+		}
+	}
+
+	async showActionsAsync() {
+		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	}
+
+	async openSearchAsync() {
+		await this.configSvc.navigateForwardAsync("/portals/cms/categories/search");
+	}
+
+	async createAsync() {
+		const params: { [key: string]: string } = {};
+		if (AppUtility.isNotEmpty(this.parentID)) {
+			params["ParentID"] = this.parentID;
+		}
+		if (this.contentType !== undefined) {
+			params["RepositoryEntityID"] = this.contentType.ID;
+			await this.configSvc.navigateForwardAsync(`/portals/cms/categories/create?x-request=${AppUtility.toBase64Url(params)}`);
 		}
 	}
 
