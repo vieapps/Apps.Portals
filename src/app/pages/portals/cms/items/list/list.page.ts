@@ -112,7 +112,7 @@ export class CmsItemListPage implements OnInit, OnDestroy {
 			: await this.portalsCoreSvc.getActiveOrganizationAsync();
 
 		if (this.organization === undefined) {
-			await this.backAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all");
+			await this.appFormsSvc.hideLoadingAsync(async () => await this.backAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all"));
 			return;
 		}
 
@@ -157,6 +157,7 @@ export class CmsItemListPage implements OnInit, OnDestroy {
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.searchbar");
 			PlatformUtility.focus(this.searchCtrl);
+			await this.appFormsSvc.hideLoadingAsync();
 		}
 		else {
 			this.actions = [

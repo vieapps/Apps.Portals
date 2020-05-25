@@ -127,6 +127,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
+		await this.appFormsSvc.showLoadingAsync();
 		this.contentType = ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 
 		this.organization = this.contentType !== undefined
@@ -134,7 +135,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			: await this.portalsCoreSvc.getActiveOrganizationAsync();
 
 		if (this.organization === undefined) {
-			await this.backAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all");
+			await this.appFormsSvc.hideLoadingAsync(async () => await this.backAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all"));
 			return;
 		}
 
@@ -152,8 +153,10 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		this.canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
 		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
 		if (!this.canContribute) {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateHomeAsync();
+			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+				this.configSvc.navigateHomeAsync()
+			]));
 			return;
 		}
 
@@ -179,6 +182,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.categories.list.searchbar");
 			PlatformUtility.focus(this.searchCtrl);
+			await this.appFormsSvc.hideLoadingAsync();
 		}
 		else {
 			this.actions = [
@@ -197,6 +201,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 				}, `CMS.Categoriess:${this.parentCategory.ID}:Refresh`);
 				this.categories = this.parentCategory.Children;
 				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentCategory.FullTitle}]` });
+				await this.appFormsSvc.hideLoadingAsync();
 			}
 			else {
 				AppEvents.on(this.portalsCoreSvc.name, info => {
@@ -206,7 +211,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 				}, "CMS.Categories:Refresh");
 				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.module === undefined ? this.organization.Title : this.organization.Title + " :: " + this.module.Title)}]` });
 				this.prepareFilterBy();
-				await this.startSearchAsync();
+				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 			}
 		}
 

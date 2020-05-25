@@ -166,6 +166,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.searchbar");
 			PlatformUtility.focus(this.searchCtrl);
+			await this.appFormsSvc.hideLoadingAsync();
 		}
 		else {
 			this.actions = [
