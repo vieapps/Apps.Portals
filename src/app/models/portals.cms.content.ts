@@ -6,14 +6,14 @@ import { Category } from "@models/portals.cms.category";
 export class Content extends CmsBaseModel {
 
 	constructor(
-		organizationID?: string,
+		systemID?: string,
 		repositoryID?: string,
 		repositoryEntityID?: string,
 		categoryID?: string,
 		startDate?: Date
 	) {
 		super();
-		this.SystemID = AppUtility.isNotEmpty(organizationID) ? organizationID : "";
+		this.SystemID = AppUtility.isNotEmpty(systemID) ? systemID : "";
 		this.RepositoryID = AppUtility.isNotEmpty(repositoryID) ? repositoryID : "";
 		this.RepositoryEntityID = AppUtility.isNotEmpty(repositoryEntityID) ? repositoryEntityID : "";
 		this.CategoryID = AppUtility.isNotEmpty(categoryID) ? categoryID : "";

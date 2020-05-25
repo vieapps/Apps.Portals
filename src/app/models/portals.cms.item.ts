@@ -5,14 +5,16 @@ import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
 export class Item extends CmsBaseModel {
 
 	constructor(
-		organizationID?: string,
+		systemID?: string,
 		repositoryID?: string,
-		repositoryEntityID?: string
+		repositoryEntityID?: string,
+		status?: string
 	) {
 		super();
-		this.SystemID = AppUtility.isNotEmpty(organizationID) ? organizationID : "";
+		this.SystemID = AppUtility.isNotEmpty(systemID) ? systemID : "";
 		this.RepositoryID = AppUtility.isNotEmpty(repositoryID) ? repositoryID : "";
 		this.RepositoryEntityID = AppUtility.isNotEmpty(repositoryEntityID) ? repositoryEntityID : "";
+		this.Status = AppUtility.isNotEmpty(status) ? status : "Published";
 	}
 
 	/** All instances of first 60 items */
