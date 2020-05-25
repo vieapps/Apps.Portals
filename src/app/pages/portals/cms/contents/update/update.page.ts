@@ -280,7 +280,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		const linkSelector = this.portalsCmsSvc.getLinkSelector(this.content, DataLookupModalPage, linkSelectorOptions);
 		const mediaSelector = this.portalsCmsSvc.getMediaSelector(this.content, await this.appFormsSvc.getResourceAsync("portals.cms.common.links.media"));
 
-		formConfig.filter(ctrl => AppUtility.isEquals(ctrl.Type, "TextEditor")).forEach(async ctrl => {
+		formConfig.filter(ctrl => AppUtility.isEquals(ctrl.Type, "TextEditor")).forEach(ctrl => {
 			ctrl.Extras["ckEditorLinkSelector"] = linkSelector;
 			ctrl.Extras["ckEditorMediaSelector"] = mediaSelector;
 			ctrl.Extras["ckEditorSimpleUpload"] = AppUtility.isNotEmpty(this.content.ID) ? this.portalsCmsSvc.getFileHeaders(this.content) : undefined;
