@@ -41,34 +41,46 @@
     </ion-fab-button>
   </ion-fab>
 	<ion-list class="ion-padding-end">
-		<ion-item *ngFor="let content of contents; trackBy: track" [color]="color" [routerLink]="content.routerLink" [queryParams]="content.routerParams" routerDirection="forward" detail="false">
-			<ion-label>
-				<ion-thumbnail class="ion-float-start ion-padding-end">
-					<img [src]="content.thumbnailURI" />
-				</ion-thumbnail>
-				<span class="time ion-float-end" [hidden]="screenWidth < 768">
-					{{ content.Created | date:'h:mm a @ d/M/y' }} <br/> {{ content.LastModified | time:locale:'h:mm a @ d/M/y' }}
-				</span>
-				<span class="title">
-					{{ content.Title }}
-					<ion-icon name="radio" slot="icon-only" [class]="content.Status"></ion-icon>
-				</span>
-				<div>
-					<span *ngIf="content.Status === 'Published'">
-						<ion-icon name="alarm" slot="icon-only" color="medium"></ion-icon>
-						{{ content.PublishedTime | date:'h:mm a @ d/M/y' }}
+		<ion-item-sliding *ngFor="let content of contents; trackBy: track">
+			<ion-item [color]="color" (click)="openAsync($event, content)" class="ion-activatable" detail="false">
+				<ion-label>
+					<ion-thumbnail class="ion-float-start ion-padding-end">
+						<img [src]="content.thumbnailURI" />
+					</ion-thumbnail>
+					<span class="time ion-float-end" [hidden]="screenWidth < 768">
+						{{ content.Created | date:'h:mm a @ d/M/y' }} <br/> {{ content.LastModified | time:locale:'h:mm a @ d/M/y' }}
 					</span>
-					<span>
-						<ion-icon name="time" slot="icon-only" color="medium"></ion-icon>
-						{{ content.StartDate | date:'d/M/y' }}
+					<span class="title">
+						{{ content.Title }}
+						<ion-icon name="radio" slot="icon-only" [class]="content.Status"></ion-icon>
 					</span>
-					<span *ngIf="content.category">
-						<ion-icon name="color-filter" slot="icon-only" color="medium"></ion-icon>
-						{{ content.category.FullTitle }}
-					</span>
-				</div>
-			</ion-label>
-		</ion-item>
+					<div>
+						<span *ngIf="content.Status === 'Published'">
+							<ion-icon name="alarm" slot="icon-only" color="medium"></ion-icon>
+							{{ content.PublishedTime | date:'h:mm a @ d/M/y' }}
+						</span>
+						<span>
+							<ion-icon name="time" slot="icon-only" color="medium"></ion-icon>
+							{{ content.StartDate | date:'d/M/y' }}
+						</span>
+						<span *ngIf="content.category">
+							<ion-icon name="color-filter" slot="icon-only" color="medium"></ion-icon>
+							{{ content.category.FullTitle }}
+						</span>
+					</div>
+				</ion-label>
+			</ion-item>
+			<ion-item-options>
+				<ion-item-option color="primary" (click)="openAsync($event, content)">
+					<ion-icon name="eye" slot="top"></ion-icon>
+					{{ buttons.view }}
+				</ion-item-option>
+				<ion-item-option *ngIf="canUpdate" color="secondary" (click)="editAsync($event, content)">
+					<ion-icon name="create" slot="top"></ion-icon>
+					{{ buttons.edit }}
+				</ion-item-option>
+			</ion-item-options>
+		</ion-item-sliding>
 	</ion-list>
 	<ion-infinite-scroll threshold="288px" position="bottom" (ionInfinite)="onInfiniteScrollAsync()">
 		<ion-infinite-scroll-content></ion-infinite-scroll-content>

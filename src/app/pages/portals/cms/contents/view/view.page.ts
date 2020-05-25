@@ -13,7 +13,7 @@ import { Category } from "@models/portals.cms.category";
 import { Content } from "@models/portals.cms.content";
 
 @Component({
-	selector: "page-portals-cms-contens-view",
+	selector: "page-portals-cms-contents-view",
 	templateUrl: "./view.page.html",
 	styleUrls: ["./view.page.scss"]
 })
@@ -167,7 +167,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		const formSegments = [
 			new AppFormsSegment("management", await this.configSvc.getResourceAsync("portals.cms.contents.view.segments.management")),
 			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.cms.contents.view.segments.basic")),
-			new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.cms.contents.update.segments.attachments"))
+			new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("files.attachments.segment"))
 		];
 		if (onCompleted !== undefined) {
 			onCompleted(formSegments);
@@ -361,7 +361,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error))
+					async error => await this.appFormsSvc.showErrorAsync(error)
 				);
 			},
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove"),

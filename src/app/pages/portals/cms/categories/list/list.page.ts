@@ -27,7 +27,7 @@ import { Category } from "@models/portals.cms.category";
 export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService,
@@ -70,12 +70,26 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		handler: () => void
 	}>;
 	labels = {
-		update: "Update this category",
-		list: "View the list of contents"
+		edit: "Update this category",
+		children: "View the children",
+		view: "View the list of contents"
+	};
+	buttons = {
+		edit: "Update",
+		children: "Children",
+		view: "Contents"
 	};
 
 	get locale() {
 		return this.configSvc.locale;
+	}
+
+	get color() {
+		return this.configSvc.color;
+	}
+
+	get screenWidth() {
+		return this.configSvc.screenWidth;
 	}
 
 	get gotPagination() {
@@ -144,8 +158,15 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		}
 
 		this.labels = {
-			update: await this.configSvc.getResourceAsync("common.buttons.update"),
-			list: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list")
+			edit: await this.configSvc.getResourceAsync("portals.cms.categories.list.labels.edit"),
+			children: await this.configSvc.getResourceAsync("portals.cms.categories.list.labels.children"),
+			view: await this.configSvc.getResourceAsync("portals.cms.categories.list.labels.view")
+		};
+
+		this.buttons = {
+			edit: await this.configSvc.getResourceAsync("portals.cms.categories.list.buttons.edit"),
+			children: await this.configSvc.getResourceAsync("portals.cms.categories.list.buttons.children"),
+			view: await this.configSvc.getResourceAsync("portals.cms.categories.list.buttons.view")
 		};
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
@@ -190,8 +211,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<Categories>: show the collection of Categories", this.configSvc.requestParams, this.filterBy);
-			console.log("<Categories>: organization, module & content-type", this.organization, this.module, this.contentType);
+			console.log("<Categories>: show the list", this.organization, this.module, this.contentType, this.filterBy, this.sortBy, this.configSvc.requestParams);
 		}
 	}
 
@@ -296,10 +316,10 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchCategory(this.request, onNextAsync);
+			this.subscription = this.portalsCmsSvc.searchCategory(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
 		}
 		else {
-			await this.portalsCmsSvc.searchCategoryAsync(this.request, onNextAsync);
+			await this.portalsCmsSvc.searchCategoryAsync(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
 		}
 	}
 

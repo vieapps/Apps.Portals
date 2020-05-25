@@ -68,6 +68,10 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		icon?: string,
 		handler: () => void
 	}>;
+	buttons = {
+		edit: "Update",
+		view: "View"
+	};
 
 	get color() {
 		return this.configSvc.color;
@@ -139,6 +143,11 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 			return;
 		}
 
+		this.buttons = {
+			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
+			view: await this.configSvc.getResourceAsync("common.buttons.view")
+		};
+
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.cms.contents.title.${(this.searching ? "search" : "list")}`);
 		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: "" });
@@ -172,6 +181,10 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 
 			this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.category === undefined ? this.organization.Title : this.organization.Title + " :: " + this.category.FullTitle)}]` });
 			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+		}
+
+		if (this.configSvc.isDebug) {
+			console.log("<Contents>: show the list", this.organization, this.module, this.contentType, this.category, this.filterBy, this.sortBy, this.configSvc.requestParams);
 		}
 	}
 
@@ -259,10 +272,10 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchContent(this.request, onNextAsync);
+			this.subscription = this.portalsCmsSvc.searchContent(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
 		}
 		else {
-			await this.portalsCmsSvc.searchContentAsync(this.request, onNextAsync);
+			await this.portalsCmsSvc.searchContentAsync(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
 		}
 	}
 
@@ -303,10 +316,26 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		if (onNext !== undefined) {
 			onNext();
 		}
-		console.warn("Contents", this.contents);
+	}
+
+	async openAsync(event: Event, content: Content) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		if (this.canUpdate) {
+			await this.configSvc.navigateForwardAsync(content.routerURI);
+		}
+	}
+
+	async editAsync(event: Event, content: Content) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		if (this.canUpdate) {
+			await this.configSvc.navigateForwardAsync(content.routerURI.replace("/view/", "/update/"));
+		}
 	}
 
 	private async backAsync(message: string, url?: string) {
+		await this.listCtrl.closeSlidingItems();
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			message,

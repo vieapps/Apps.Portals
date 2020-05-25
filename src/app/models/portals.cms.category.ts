@@ -6,13 +6,13 @@ import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
 export class Category extends CmsBaseModel implements INestedObject {
 
 	constructor(
-		organizationID?: string,
+		systemID?: string,
 		repositoryID?: string,
 		repositoryEntityID?: string,
 		parentID?: string
 	) {
 		super();
-		this.SystemID = AppUtility.isNotEmpty(organizationID) ? organizationID : "";
+		this.SystemID = AppUtility.isNotEmpty(systemID) ? systemID : "";
 		this.RepositoryID = AppUtility.isNotEmpty(repositoryID) ? repositoryID : "";
 		this.RepositoryEntityID = AppUtility.isNotEmpty(repositoryEntityID) ? repositoryEntityID : "";
 		this.ParentID = AppUtility.isNotEmpty(parentID) ? parentID : "";

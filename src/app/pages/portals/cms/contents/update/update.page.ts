@@ -43,6 +43,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	private contentType: ContentType;
 	private category: Category;
 	private content: Content;
+	private canModerate = false;
 	private hash = {
 		content: "",
 		full: ""
@@ -115,7 +116,8 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		this.module = Module.get(this.contentType.RepositoryID);
 		this.category = this.content !== undefined ? this.content.category : Category.get(this.configSvc.requestParams["CategoryID"]);
 
-		let canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Content", this.category !== undefined ? this.category.Privileges : this.module.Privileges);
+		this.canModerate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Content", this.category !== undefined ? this.category.Privileges : this.module.Privileges);
+		let canUpdate = this.canModerate || this.authSvc.isEditor(this.portalsCoreSvc.name, "Content", this.category !== undefined ? this.category.Privileges : this.module.Privileges);
 		if (!canUpdate && this.content !== undefined && (AppUtility.isEquals(this.content.Status, "Draft") || AppUtility.isEquals(this.content.Status, "Pending"))) {
 			canUpdate = AppUtility.isEquals(this.content.CreatedID, this.configSvc.getAccount().id);
 		}
@@ -155,7 +157,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 			new AppFormsSegment("related", await this.configSvc.getResourceAsync("portals.cms.contents.update.segments.related"))
 		];
 		if (AppUtility.isNotEmpty(this.content.ID)) {
-			formSegments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.cms.contents.update.segments.attachments")));
+			formSegments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("files.attachments.segment")));
 		}
 		if (onCompleted !== undefined) {
 			onCompleted(formSegments);
@@ -173,6 +175,9 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values) as Array<string>).map(value => {
 				return { Value: value, Label: `{{status.approval.${value}}}` };
 			});
+		}
+		if (!this.canModerate) {
+			control.Options.Disabled = true;
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CategoryID"));
@@ -506,7 +511,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 							},
 							async error => {
 								this.processing = false;
-								await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+								await this.appFormsSvc.showErrorAsync(error);
 							}
 						);
 					}
@@ -531,7 +536,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -559,7 +564,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error))
+					async error => await this.appFormsSvc.showErrorAsync(error)
 				);
 			},
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove"),
