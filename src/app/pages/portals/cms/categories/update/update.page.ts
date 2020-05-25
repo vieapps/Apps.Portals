@@ -8,7 +8,6 @@ import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
-import { UsersService } from "@services/users.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
 import { Privileges } from "@models/privileges";
@@ -97,16 +96,12 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		this.module = Module.get(this.contentType.RepositoryID);
 
 		const canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.category !== undefined ? this.category.Privileges : this.module.Privileges);
-		if (canUpdate) {
-			await this.initializeFormAsync();
-		}
-		else {
+		if (!canUpdate) {
 			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
 			await this.configSvc.navigateBackAsync();
+			return;
 		}
-	}
 
-	private async initializeFormAsync() {
 		this.category = this.category || new Category(this.organization.ID, this.module.ID, this.contentType.ID, this.configSvc.requestParams["ParentID"]);
 
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.cms.categories.title.${(AppUtility.isNotEmpty(this.category.ID) ? "update" : "create")}`);
@@ -116,10 +111,6 @@ export class CmsCategoriesUpdatePage implements OnInit {
 			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.category.ID) ? "update" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
-
-		if (!AppUtility.isNotEmpty(this.category.ID)) {
-
-		}
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
