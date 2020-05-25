@@ -211,15 +211,11 @@ export class CmsLinksUpdatePage implements OnInit {
 			const objectFormControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryObjectID"));
 			objectFormControl.Options.LookupOptions.ModalOptions.ComponentProps.contentTypeID = contentType.ID;
 			objectFormControl.Options.LookupOptions.ModalOptions.ComponentProps.objectName = contentType.getObjectName(true);
-			if (objectFormControl.Options.LookupOptions.ModalOptions.ComponentProps.objectName === "CMS.Link" ) {
-				objectFormControl.Options.LookupOptions.ModalOptions.ComponentProps.preProcess = (links: Array<any>) => this.portalsCmsSvc.processLinks(links);
-			}
-			else if (objectFormControl.Options.LookupOptions.ModalOptions.ComponentProps.objectName === "CMS.Category" ) {
-				objectFormControl.Options.LookupOptions.ModalOptions.ComponentProps.preProcess = (categories: Array<any>) => this.portalsCmsSvc.processCategories(categories);
-			}
-			else {
-				objectFormControl.Options.LookupOptions.ModalOptions.ComponentProps.preProcess = (categories: Array<any>) => this.portalsCmsSvc.processCategories(categories);
-			}
+			objectFormControl.Options.LookupOptions.ModalOptions.ComponentProps.preProcess = objectFormControl.Options.LookupOptions.ModalOptions.ComponentProps.objectName === "CMS.Link"
+				? (links: Array<any>) => this.portalsCmsSvc.processLinks(links)
+				: objectFormControl.Options.LookupOptions.ModalOptions.ComponentProps.objectName === "CMS.Category"
+					? (categories: Array<any>) => this.portalsCmsSvc.processCategories(categories)
+					: undefined;
 			objectFormControl.controlRef.setValue(undefined);
 			objectFormControl.controlRef.lookupDisplayValues = undefined;
 		};
@@ -253,7 +249,7 @@ export class CmsLinksUpdatePage implements OnInit {
 		}
 
 		const mediaSelector = this.portalsCmsSvc.getMediaSelector(this.link, await this.appFormsSvc.getResourceAsync("portals.cms.common.links.media"));
-		formConfig.filter(ctrl => AppUtility.isEquals(ctrl.Type, "TextEditor")).forEach(async ctrl => {
+		formConfig.filter(ctrl => AppUtility.isEquals(ctrl.Type, "TextEditor")).forEach(ctrl => {
 			ctrl.Extras["ckEditorMediaSelector"] = mediaSelector;
 			ctrl.Extras["ckEditorSimpleUpload"] = AppUtility.isNotEmpty(this.link.ID) ? this.portalsCmsSvc.getFileHeaders(this.link) : undefined;
 			ctrl.Extras["ckEditorTrustedHosts"] = this.configSvc.appConfig.URIs.medias;
