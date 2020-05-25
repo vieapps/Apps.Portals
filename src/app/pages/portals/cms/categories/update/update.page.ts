@@ -129,7 +129,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
-		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.category", "form-controls");
+		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.category");
 
 		AppUtility.insertAt(
 			formConfig,
