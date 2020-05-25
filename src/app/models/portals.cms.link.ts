@@ -9,13 +9,15 @@ export class Link extends CmsBaseModel implements INestedObject {
 		systemID?: string,
 		repositoryID?: string,
 		repositoryEntityID?: string,
-		parentID?: string
+		parentID?: string,
+		status?: string
 	) {
 		super();
 		this.SystemID = AppUtility.isNotEmpty(systemID) ? systemID : "";
 		this.RepositoryID = AppUtility.isNotEmpty(repositoryID) ? repositoryID : "";
 		this.RepositoryEntityID = AppUtility.isNotEmpty(repositoryEntityID) ? repositoryEntityID : "";
 		this.ParentID = AppUtility.isNotEmpty(parentID) ? parentID : "";
+		this.Status = AppUtility.isNotEmpty(status) ? status : "Published";
 	}
 
 	/** All instances of first 60 links */
@@ -102,6 +104,10 @@ export class Link extends CmsBaseModel implements INestedObject {
 
 	public get routerLink() {
 		return `/portals/cms/links/view/${AppUtility.toURI(this.ansiTitle)}`;
+	}
+
+	public get listURI() {
+		return `${this.routerLink.replace("/view/", "/list/")}?x-request=${AppUtility.toBase64Url({ ParentID: this.ID })}`;
 	}
 
 }

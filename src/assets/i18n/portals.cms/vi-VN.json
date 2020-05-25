@@ -245,6 +245,102 @@
 						"basic": "Nội dung"
 					}
 				}
+			},
+			"links": {
+				"title": {
+					"search": "Tìm kiếm liên kết",
+					"list": "Danh sách liên kết {{info}}",
+					"create": "Tạo mới liên kết",
+					"update": "Cập nhật liên kết",
+					"view": "Chi tiết liên kết"
+				},
+				"controls": {
+					"ParentID": {
+						"label": "Liên kết cấp trên",
+						"placeholder": "",
+						"description": ""
+					},
+					"Title": {
+						"label": "Tên liên kết",
+						"placeholder": "",
+						"description": "Tên của liên kết sẽ được sử dụng như nhãn hiển thị"
+					},
+					"Summary": {
+						"label": "Diễn giải",
+						"placeholder": "",
+						"description": "Diễn giải được sử dụng cho thẻ <b>Description</b> khi làm việc với SEO hoặc sử dụng để tạo ra các tình huống đặc biệt"
+					},
+					"URL": {
+						"label": "Địa chỉ liên kết",
+						"placeholder": "",
+						"description": "Chỉ định địa chỉ của liên kết.<br/>Tips: có thể sử dụng ký hiệu '<b>~/</b>' để chỉ định liên kết từ gốc (root), hoặc sử dụng '<b>javascript:</b>' để chỉ định chạy hàm Javascript."
+					},
+					"Target": {
+						"label": "Đích mở liên kết",
+						"placeholder": "",
+						"description": "Chỉ định đích đến khi mở liên kết.<br/>Tips: chỉ định giá trị '<b>_blank</b>' để mở liên kết ra cửa sổ mới/tab mới."
+					},
+					"ChildrenMode": {
+						"label": "Cách lấy các liên kết cấp dưới",
+						"placeholder": "",
+						"description": "Chỉ định cách thức lấy các liên kết cấp dưới",
+						"Normal": "Bình thường",
+						"Lookup": "Từ dữ liệu khác"
+					},
+					"LookupRepositoryID": {
+						"label": "Module nghiệp vụ",
+						"placeholder": "",
+						"description": "Chỉ định module nghiệp vụ để lấy dữ liệu tạo các liên kết cấp dưới"
+					},
+					"LookupRepositoryEntityID": {
+						"label": "Kiểu dữ liệu nghiệp vụ",
+						"placeholder": "",
+						"description": "Chỉ định kiểu dữ liệu nghiệp vụ để lấy dữ liệu tạo các liên kết cấp dưới"
+					},
+					"LookupRepositoryObjectID": {
+						"label": "Dữ liệu nghiệp vụ",
+						"placeholder": "",
+						"description": "Hệ thống sẽ lấy các nội dung cấp dưới của dữ liệu đã chỉ định ở trên để tạo các liên kết cấp dưới của mục liên kết này"
+					},
+					"Status": {
+						"label": "Trạng thái",
+						"placeholder": "",
+						"description": "Liên kết sẽ chỉ xuất hiện công khai và có thể sử dụng được khi trạng thái là 'Xuất bản'"
+					}
+				},
+				"list": {
+					"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác liên kết",
+					"children": "{{number}} liên kết cấp dưới: {{children}}",
+					"labels": {
+						"edit": "Cập nhật liên kết",
+						"children": "Xem danh sách liên kết cấp dưới",
+						"view": "Xem chi tiết liên kết"
+					},
+					"buttons": {
+						"edit": "Cập nhật",
+						"children": "Xem cấp dưới",
+						"view": "Xem chi tiết"
+					}
+				},
+				"update": {
+					"messages": {
+						"confirm": {
+							"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo liên kết?",
+							"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của liên kết?",
+							"delete": "Chắc chắn muốn xoá bỏ liên kết và các thông tin liên quan?",
+							"remove": "Liên kết và toàn bộ nội dung tin/bài của liên kết này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
+						},
+						"success": {
+							"new": "Đã khởi tạo liên kết thành công",
+							"update": "Đã cập nhật các thay đổi của liên kết thành công",
+							"delete": "Đã đưa liên kết và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
+						}
+					},
+					"buttons": {
+						"delete": "Xoá liên kết",
+						"remove": "Đồng ý xoá"
+					}
+				}
 			}
 		}
 	}
