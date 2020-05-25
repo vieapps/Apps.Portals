@@ -36,13 +36,13 @@
 
 <ion-content [color]="color">
 	<ion-fab *ngIf="canUpdate" vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="openCreateAsync()">
+    <ion-fab-button (click)="createAsync()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 	<ion-list class="ion-padding-end">
 		<ion-item-sliding *ngFor="let content of contents; trackBy: track">
-			<ion-item [color]="color" (click)="openAsync($event, content)" class="ion-activatable" detail="false">
+			<ion-item [color]="color" (click)="viewAsync($event, content)" class="ion-activatable" detail="false">
 				<ion-label>
 					<ion-thumbnail class="ion-float-start ion-padding-end">
 						<img [src]="content.thumbnailURI" />
@@ -71,7 +71,7 @@
 				</ion-label>
 			</ion-item>
 			<ion-item-options>
-				<ion-item-option color="primary" (click)="openAsync($event, content)">
+				<ion-item-option color="primary" (click)="viewAsync($event, content)">
 					<ion-icon name="eye" slot="top"></ion-icon>
 					{{ buttons.view }}
 				</ion-item-option>

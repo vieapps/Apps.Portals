@@ -169,7 +169,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		}
 		else {
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.create"), "create", () => this.openCreateAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.create"), "create", () => this.createAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.search"), "search", () => this.openSearchAsync())
 			];
 
@@ -190,25 +190,6 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 
 	track(index: number, content: Content) {
 		return `${content.ID}@${index}`;
-	}
-
-	showActionsAsync() {
-		return this.appFormsSvc.showActionSheetAsync(this.actions);
-	}
-
-	openCreateAsync() {
-		const params: { [key: string]: string } = {};
-		if (AppUtility.isNotEmpty(this.categoryID)) {
-			params["CategoryID"] = this.categoryID;
-		}
-		if (this.contentType !== undefined) {
-			params["RepositoryEntityID"] = this.contentType.ID;
-			return this.configSvc.navigateForwardAsync(`/portals/cms/contents/create?x-request=${AppUtility.toBase64Url(params)}`);
-		}
-	}
-
-	openSearchAsync() {
-		return this.configSvc.navigateForwardAsync("/portals/cms/contents/search");
 	}
 
 	onStartSearch(event: any) {
@@ -318,12 +299,32 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	async openAsync(event: Event, content: Content) {
+	async showActionsAsync() {
+		await this.listCtrl.closeSlidingItems();
+		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	}
+
+	async openSearchAsync() {
+		await this.listCtrl.closeSlidingItems();
+		await this.configSvc.navigateForwardAsync("/portals/cms/contents/search");
+	}
+
+	async createAsync() {
+		await this.listCtrl.closeSlidingItems();
+		const params: { [key: string]: string } = {};
+		if (AppUtility.isNotEmpty(this.categoryID)) {
+			params["CategoryID"] = this.categoryID;
+		}
+		if (this.contentType !== undefined) {
+			params["RepositoryEntityID"] = this.contentType.ID;
+			await this.configSvc.navigateForwardAsync(`/portals/cms/contents/create?x-request=${AppUtility.toBase64Url(params)}`);
+		}
+	}
+
+	async viewAsync(event: Event, content: Content) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		if (this.canUpdate) {
-			await this.configSvc.navigateForwardAsync(content.routerURI);
-		}
+		await this.configSvc.navigateForwardAsync(content.routerURI);
 	}
 
 	async editAsync(event: Event, content: Content) {
