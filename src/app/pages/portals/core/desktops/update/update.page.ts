@@ -161,9 +161,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 
 		const parentDesktop = this.desktop.Parent;
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID"));
-		control.Type = "Lookup";
-		control.Required = false;
-		control.Extras = { LookupDisplayValues: parentDesktop !== undefined ? [{ Value: parentDesktop.ID, Label: parentDesktop.FullTitle }] : undefined };
+		control.Extras.LookupDisplayValues = parentDesktop !== undefined ? [{ Value: parentDesktop.ID, Label: parentDesktop.FullTitle }] : undefined ;
 		control.Options.LookupOptions = {
 			Multiple: false,
 			OnDelete: (_, formControl) => {
@@ -226,10 +224,14 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 			ctrl.Options.PlaceHolder = ctrl.Options.PlaceHolder === undefined ? undefined : ctrl.Options.PlaceHolder.replace("portals.desktops", "portals.common");
 		});
 
+		const backgoundImageControl = control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
+		const iconControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI"));
+		const coverControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CoverURI"));
+
 		if (AppUtility.isNotEmpty(this.desktop.ID)) {
-			const backgoundImageControl = control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
-			const iconControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI"));
-			const coverControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CoverURI"));
+			backgoundImageControl.Extras.LookupDisplayValues = AppUtility.isObject(this.desktop.UISettings, true) && AppUtility.isNotEmpty(this.desktop.UISettings.BackgroundImageURI) ? [{ Value: this.desktop.UISettings.BackgroundImageURI, Label: this.desktop.UISettings.BackgroundImageURI }] : undefined;
+			iconControl.Extras.LookupDisplayValues = AppUtility.isNotEmpty(this.desktop.IconURI) ? [{ Value: this.desktop.IconURI, Label: this.desktop.IconURI }] : undefined;
+			coverControl.Extras.LookupDisplayValues = AppUtility.isNotEmpty(this.desktop.CoverURI) ? [{ Value: this.desktop.CoverURI, Label: this.desktop.CoverURI }] : undefined;
 			backgoundImageControl.Options.LookupOptions = iconControl.Options.LookupOptions = coverControl.Options.LookupOptions = {
 				AsModal: true,
 				Multiple: false,
@@ -259,14 +261,9 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 					}
 				}
 			};
-			backgoundImageControl.Extras.LookupDisplayValues = AppUtility.isObject(this.desktop.UISettings, true) && AppUtility.isNotEmpty(this.desktop.UISettings.BackgroundImageURI) ? [{ Value: this.desktop.UISettings.BackgroundImageURI, Label: this.desktop.UISettings.BackgroundImageURI }] : undefined;
-			iconControl.Extras.LookupDisplayValues = AppUtility.isNotEmpty(this.desktop.IconURI) ? [{ Value: this.desktop.IconURI, Label: this.desktop.IconURI }] : undefined;
-			coverControl.Extras.LookupDisplayValues = AppUtility.isNotEmpty(this.desktop.CoverURI) ? [{ Value: this.desktop.CoverURI, Label: this.desktop.CoverURI }] : undefined;
 		}
 		else {
-			control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI")).Options.Disabled =
-				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI")).Options.Disabled =
-				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CoverURI")).Options.Disabled = true;
+			backgoundImageControl.Options.Disabled = iconControl.Options.Disabled = coverControl.Options.Disabled = true;
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "MetaTags"));
@@ -382,6 +379,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 					const value = desktop.SEOSettings[ctrl.Name];
 					desktop.SEOSettings[ctrl.Name] = AppUtility.isEquals(value, "-") ? undefined : value;
 				});
+				delete desktop["Attachments"];
 
 				if (AppUtility.isNotEmpty(desktop.ID)) {
 					const oldParentID = this.desktop.ParentID;

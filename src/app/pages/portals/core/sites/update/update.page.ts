@@ -231,10 +231,14 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		});
 		control.Options.Label = "{{portals.sites.controls.UISettings}}";
 
+		const backgoundImageControl = control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
+		const iconControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI"));
+		const coverControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CoverURI"));
+
 		if (AppUtility.isNotEmpty(this.site.ID)) {
-			const backgoundImageControl = control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
-			const iconControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI"));
-			const coverControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CoverURI"));
+			backgoundImageControl.Extras.LookupDisplayValues = AppUtility.isObject(this.site.UISettings, true) && AppUtility.isNotEmpty(this.site.UISettings.BackgroundImageURI) ? [{ Value: this.site.UISettings.BackgroundImageURI, Label: this.site.UISettings.BackgroundImageURI }] : undefined;
+			iconControl.Extras.LookupDisplayValues = AppUtility.isNotEmpty(this.site.IconURI) ? [{ Value: this.site.IconURI, Label: this.site.IconURI }] : undefined;
+			coverControl.Extras.LookupDisplayValues = AppUtility.isNotEmpty(this.site.CoverURI) ? [{ Value: this.site.CoverURI, Label: this.site.CoverURI }] : undefined;
 			backgoundImageControl.Options.LookupOptions = iconControl.Options.LookupOptions = coverControl.Options.LookupOptions = {
 				AsModal: true,
 				Multiple: false,
@@ -264,14 +268,9 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 					}
 				}
 			};
-			backgoundImageControl.Extras.LookupDisplayValues = AppUtility.isObject(this.site.UISettings, true) && AppUtility.isNotEmpty(this.site.UISettings.BackgroundImageURI) ? [{ Value: this.site.UISettings.BackgroundImageURI, Label: this.site.UISettings.BackgroundImageURI }] : undefined;
-			iconControl.Extras.LookupDisplayValues = AppUtility.isNotEmpty(this.site.IconURI) ? [{ Value: this.site.IconURI, Label: this.site.IconURI }] : undefined;
-			coverControl.Extras.LookupDisplayValues = AppUtility.isNotEmpty(this.site.CoverURI) ? [{ Value: this.site.CoverURI, Label: this.site.CoverURI }] : undefined;
 		}
 		else {
-			control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI")).Options.Disabled =
-				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI")).Options.Disabled =
-				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CoverURI")).Options.Disabled = true;
+			backgoundImageControl.Options.Disabled = iconControl.Options.Disabled = coverControl.Options.Disabled = true;
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "MetaTags"));
@@ -366,6 +365,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 
 				const site = this.form.value;
 				site.Theme = AppUtility.isEquals(site.Theme, "-") ? undefined : site.Theme;
+				delete site["Attachments"];
 
 				if (AppUtility.isNotEmpty(site.ID)) {
 					await this.portalsCoreSvc.updateSiteAsync(
