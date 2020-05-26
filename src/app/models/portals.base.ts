@@ -77,6 +77,22 @@ export interface INestedObject {
 	Children: INestedObject[];
 }
 
+/** Interface of UI settings of all elements */
+export interface ElementUISettings {
+	Padding?: string;
+	Margin?: string;
+	Width?: string;
+	Height?: string;
+	Color?: string;
+	BackgroundColor?: string;
+	BackgroundImageURI?: string;
+	BackgroundImageRepeat?: string;
+	BackgroundImagePosition?: string;
+	BackgroundImageSize?: string;
+	Css?: string;
+	Style?: string;
+}
+
 /** Definition of an extended property */
 export interface ExtendedPropertyDefinition {
 	Name: string;

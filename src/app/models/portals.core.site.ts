@@ -1,5 +1,6 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
+import { ElementUISettings } from "@models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
 
 export class Site extends CoreBaseModel {
@@ -39,20 +40,7 @@ export class Site extends CoreBaseModel {
 	Theme = undefined as string;
 	HomeDesktopID = undefined as string;
 	SearchDesktopID = undefined as string;
-	UISettings = undefined as {
-		Padding?: string;
-		Margin?: string;
-		Width?: string;
-		Height?: string;
-		Color?: string;
-		BackgroundColor?: string;
-		BackgroundImageURI?: string;
-		BackgroundImageRepeat?: string;
-		BackgroundImagePosition?: string;
-		BackgroundImageSize?: string;
-		Css?: string;
-		Style?: string;
-	};
+	UISettings = undefined as ElementUISettings;
 	IconURI = undefined as string;
 	CoverURI = undefined as string;
 	MetaTags = undefined as string;
