@@ -10,7 +10,11 @@ import { FilesService } from "@services/files.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
 import { AttachmentInfo } from "@models/base";
+import { INestedObject } from "@models/portals.base";
+import { Module } from "@models/portals.core.module";
+import { ContentType } from "@models/portals.core.content.type";
 import { Link } from "@models/portals.cms.link";
+import { Category } from "@models/portals.cms.category";
 
 @Component({
 	selector: "page-portals-cms-links-view",
@@ -258,6 +262,9 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 					control.value = this.portalsCmsSvc.normalizeRichHtml(control.value);
 				}
 				else {
+					let link: Link;
+					let module: Module;
+					let contentType: ContentType;
 					switch (control.Name) {
 						case "Status":
 							control.value = await this.appFormsSvc.getResourceAsync(`status.approval.${control.value}`);
@@ -265,6 +272,58 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 
 						case "Summary":
 							control.value = AppUtility.normalizeHtml(control.value, true);
+							break;
+
+						case "ChildrenMode":
+							control.value = await this.appFormsSvc.getResourceAsync(`portals.cms.links.controls.ChildrenMode.${control.value}`);
+							break;
+
+						case "ParentID":
+							link = this.link.Parent;
+							if (link === undefined) {
+								await this.portalsCmsSvc.getLinkAsync(this.link.ParentID, _ => link = Link.get(this.link.ParentID), undefined, true);
+							}
+							if (link !== undefined) {
+								control.value = link.FullTitle;
+							}
+							break;
+
+						case "LookupRepositoryID":
+							module = Module.get(this.link.RepositoryID);
+							if (module === undefined) {
+								await this.portalsCoreSvc.getModuleAsync(this.link.RepositoryID, _ => module = Module.get(this.link.RepositoryID), undefined, true);
+							}
+							if (module !== undefined) {
+								control.value = module.Title;
+							}
+							break;
+
+						case "LookupRepositoryEntityID":
+							contentType = ContentType.get(this.link.LookupRepositoryEntityID);
+							if (contentType === undefined) {
+								await this.portalsCoreSvc.getContentTypeAsync(this.link.LookupRepositoryEntityID, _ => contentType = ContentType.get(this.link.LookupRepositoryEntityID), undefined, true);
+							}
+							if (contentType !== undefined) {
+								control.value = contentType.Title;
+							}
+							break;
+
+						case "LookupRepositoryObjectID":
+							let nestedObject: INestedObject = Link.get(control.value) || Category.get(control.value);
+							if (nestedObject === undefined) {
+								if (contentType === undefined || contentType.ID !== this.link.LookupRepositoryEntityID) {
+									contentType = ContentType.get(this.link.LookupRepositoryEntityID);
+								}
+								if (contentType === undefined) {
+									await this.portalsCoreSvc.getContentTypeAsync(this.link.LookupRepositoryEntityID, _ => contentType = ContentType.get(this.link.LookupRepositoryEntityID), undefined, true);
+								}
+								if (contentType !== undefined) {
+									await this.portalsCmsSvc.getAsync(contentType.getObjectName(true), this.link.LookupRepositoryObjectID, data => nestedObject = data);
+								}
+							}
+							if (nestedObject !== undefined) {
+								control.value = nestedObject.FullTitle || nestedObject.Title;
+							}
 							break;
 					}
 				}

@@ -12,6 +12,7 @@ import { FilesService } from "@services/files.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
 import { AttachmentInfo } from "@models/base";
+import { INestedObject } from "@models/portals.base";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
@@ -206,7 +207,7 @@ export class CmsLinksUpdatePage implements OnInit {
 		control.Options.SelectOptions.Values = this.module.ContentTypes.filter(contentType => contentType.ContentTypeDefinition.NestedObject).map(contentType => {
 			return { Value: contentType.ID, Label: contentType.Title };
 		});
-		control.Options.OnChanged = (_, formControl) => {
+		control.Options.OnChanged = async (_, formControl) => {
 			const contentType = ContentType.get(formControl.value);
 			const objectFormControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryObjectID"));
 			objectFormControl.Options.LookupOptions.ModalOptions.ComponentProps.contentTypeID = contentType.ID;
@@ -216,13 +217,27 @@ export class CmsLinksUpdatePage implements OnInit {
 				: objectFormControl.Options.LookupOptions.ModalOptions.ComponentProps.objectName === "CMS.Category"
 					? (categories: Array<any>) => this.portalsCmsSvc.processCategories(categories)
 					: undefined;
-			objectFormControl.controlRef.setValue(undefined);
-			objectFormControl.controlRef.lookupDisplayValues = undefined;
+			if (AppUtility.isNotEmpty(objectFormControl.value)) {
+				let nestedObject: INestedObject = Link.get(objectFormControl.value) || Category.get(objectFormControl.value);
+				if (nestedObject === undefined) {
+					await this.portalsCmsSvc.getAsync(contentType.getObjectName(true), objectFormControl.value, data => nestedObject = Link.get(data.ID) || Category.get(data.ID) || data);
+				}
+				if (nestedObject === undefined || contentType.ID !== nestedObject["RepositoryEntityID"]) {
+					objectFormControl.controlRef.setValue(undefined);
+					objectFormControl.controlRef.lookupDisplayValues = undefined;
+				}
+				else {
+					objectFormControl.controlRef.setValue(nestedObject.ID);
+					objectFormControl.controlRef.lookupDisplayValues = [{ Value: nestedObject.ID, Label: nestedObject.FullTitle || nestedObject.Title }];
+				}
+			}
 		};
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryObjectID"));
 		control.Options.LookupOptions.ModalOptions.Component = DataLookupModalPage;
 		control.Options.LookupOptions.ModalOptions.ComponentProps.organizationID = this.organization.ID;
+		control.Options.LookupOptions.ModalOptions.ComponentProps.moduleID = this.link.LookupRepositoryID;
+		control.Options.LookupOptions.ModalOptions.ComponentProps.contentTypeID = this.link.LookupRepositoryEntityID;
 		control.Options.LookupOptions.ModalOptions.ComponentProps.nested = true;
 		control.Options.LookupOptions.ModalOptions.ComponentProps.excludedIDs = AppUtility.isNotEmpty(this.link.ID) ? [this.link.ID] : undefined;
 		control.Options.LookupOptions.OnDelete = (_, formControl) => {
@@ -232,10 +247,26 @@ export class CmsLinksUpdatePage implements OnInit {
 		control.Options.LookupOptions.ModalOptions.OnDismiss = (values, formControl) => {
 			if (AppUtility.isArray(values, true) && values[0].ID !== formControl.value) {
 				formControl.setValue(values[0].ID);
-				const nestedObject = Link.get(values[0].ID) || Category.get(values[0].ID);
-				formControl.lookupDisplayValues = [{ Value: values[0].ID, Label: nestedObject !== undefined ? nestedObject.FullTitle : values[0].Title }];
+				const nestedObject: INestedObject = Link.get(values[0].ID) || Category.get(values[0].ID || values[0]);
+				formControl.lookupDisplayValues = [{ Value: nestedObject.ID, Label: nestedObject.FullTitle || nestedObject.Title }];
 			}
 		};
+		if (AppUtility.isNotEmpty(this.link.ID) && AppUtility.isNotEmpty(this.link.LookupRepositoryObjectID)) {
+			let nestedObject: INestedObject = Link.get(this.link.LookupRepositoryObjectID) || Category.get(this.link.LookupRepositoryObjectID);
+			if (nestedObject === undefined) {
+				let contentType = ContentType.get(this.link.LookupRepositoryEntityID);
+				if (contentType === undefined) {
+					await this.portalsCoreSvc.getContentTypeAsync(this.link.LookupRepositoryEntityID, _ => contentType = ContentType.get(this.link.LookupRepositoryEntityID), undefined, true);
+				}
+				if (contentType !== undefined) {
+					control.Options.LookupOptions.ModalOptions.ComponentProps.objectName = contentType.getObjectName(true);
+					await this.portalsCmsSvc.getAsync(contentType.getObjectName(true), this.link.LookupRepositoryObjectID, data => nestedObject = Link.get(data.ID) || Category.get(data.ID) || data);
+				}
+			}
+			if (nestedObject !== undefined) {
+				control.Extras.LookupDisplayValues = [{ Value: nestedObject.ID, Label: nestedObject.FullTitle || nestedObject.Title }];
+			}
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
 		control.Options.SelectOptions.Interface = "popover";
@@ -359,6 +390,10 @@ export class CmsLinksUpdatePage implements OnInit {
 				delete link["Thumbnails"];
 				delete link["Attachments"];
 				delete link["Upload"];
+				if (link.ChildrenMode !== "Normal" && !AppUtility.isNotEmpty(link.LookupRepositoryObjectID)) {
+					link.ChildrenMode = "Normal";
+					link.LookupRepositoryID = link.LookupRepositoryEntityID = link.LookupRepositoryObjectID = undefined;
+				}
 
 				if (AppUtility.isNotEmpty(link.ID)) {
 					if (this.hash.content === AppCrypto.hash(link)) {

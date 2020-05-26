@@ -284,8 +284,8 @@
 						"label": "Cách lấy các liên kết cấp dưới",
 						"placeholder": "",
 						"description": "Chỉ định cách thức lấy các liên kết cấp dưới",
-						"Normal": "Bình thường",
-						"Lookup": "Từ dữ liệu khác"
+						"Normal": "Thông thường",
+						"Lookup": "Từ dữ liệu nghiệp vụ khác"
 					},
 					"LookupRepositoryID": {
 						"label": "Module nghiệp vụ",
@@ -327,8 +327,8 @@
 						"confirm": {
 							"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo liên kết?",
 							"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của liên kết?",
-							"delete": "Chắc chắn muốn xoá bỏ liên kết và các thông tin liên quan?",
-							"remove": "Liên kết và toàn bộ nội dung tin/bài của liên kết này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
+							"delete": "Chắc chắn muốn xoá bỏ liên kết (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)?",
+							"remove": "Đối với liên kết cấp dưới:"
 						},
 						"success": {
 							"new": "Đã khởi tạo liên kết thành công",

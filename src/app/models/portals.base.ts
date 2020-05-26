@@ -64,6 +64,7 @@ export interface ContentTypeDefinition {
 
 /** Interface of all nested objects */
 export interface INestedObject {
+	ID: string;
 	Title: string;
 	FullTitle: string;
 	ParentID: string;
