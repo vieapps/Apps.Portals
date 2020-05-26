@@ -8,7 +8,6 @@ import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppPagination } from "@components/app.pagination";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
-import { UsersService } from "@services/users.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { Privileges } from "@models/privileges";
@@ -28,9 +27,8 @@ import { RolesSelectorModalPage } from "@controls/portals/role.selector.modal.pa
 
 export class PortalsContentTypesUpdatePage implements OnInit {
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
-		private usersSvc: UsersService,
 		private authSvc: AuthenticationService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
@@ -56,6 +54,10 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 		update: "Update",
 		cancel: "Cancel"
 	};
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	ngOnInit() {
 		this.initializeAsync();
@@ -175,7 +177,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
-		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "content.type", "form-controls");
+		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "content.type");
 
 		AppUtility.insertAt(
 			formConfig,
@@ -433,7 +435,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -450,7 +452,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -486,7 +488,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error))
+					async error => await this.appFormsSvc.showErrorAsync(error)
 				);
 			},
 			await this.configSvc.getResourceAsync("portals.contenttypes.update.buttons.remove"),

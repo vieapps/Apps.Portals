@@ -1,5 +1,5 @@
 <ion-header>
-	<ion-toolbar [color]="configSvc.color">
+	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
 			<ion-back-button text=""></ion-back-button>
 		</ion-buttons>
@@ -19,7 +19,7 @@
 </ion-header>
 
 <ion-footer *ngIf="pagination || actions">
-	<ion-toolbar [color]="configSvc.color">
+	<ion-toolbar [color]="color">
 		<span *ngIf="pagination" slot="start">
 			<ion-icon name="globe" color="primary" slot="start"></ion-icon>
 			<span>
@@ -34,16 +34,16 @@
 	</ion-toolbar>
 </ion-footer>
 
-<ion-content [color]="configSvc.color">
+<ion-content [color]="color">
 	<ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="openCreateAsync()">
+    <ion-fab-button (click)="createAsync()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 	<ion-list class="ion-padding-end">
-		<ion-item *ngFor="let site of sites; trackBy: track" [color]="configSvc.color" [routerLink]="site.routerLink" [queryParams]="site.routerParams" routerDirection="forward" detail="false">
+		<ion-item *ngFor="let site of sites; trackBy: track" [color]="color" [routerLink]="site.routerLink" [queryParams]="site.routerParams" routerDirection="forward" detail="false">
 			<ion-label>
-				<span class="time ion-float-end" [hidden]="configSvc.screenWidth < 768">
+				<span class="time ion-float-end" [hidden]="screenWidth < 768">
 					{{ site.Created | date:'h:mm a @ d/M/y' }} <br/> {{ site.LastModified | date:'h:mm a @ d/M/y' }}
 				</span>
 				<span>

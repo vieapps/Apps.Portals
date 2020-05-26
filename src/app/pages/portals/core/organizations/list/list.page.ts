@@ -24,7 +24,7 @@ import { UserProfile } from "@models/user";
 export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private usersSvc: UsersService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService
@@ -58,6 +58,14 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	get locale() {
 		return this.configSvc.locale;
+	}
+
+	get color() {
+		return this.configSvc.color;
+	}
+
+	get screenWidth() {
+		return this.configSvc.screenWidth;
 	}
 
 	get totalRecords() {
@@ -99,7 +107,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 				}
 			}, "Organizations:Refresh");
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.create"), "create", () => this.openCreateAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.create"), "create", () => this.createAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.search"), "search", () => this.openSearchAsync())
 			];
 			await this.startSearchAsync();
@@ -113,18 +121,6 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 	getInfo(organization: Organization) {
 		return AppUtility.format(this.owner, { owner: organization.owner })
 			+ (this.configSvc.screenWidth < 1024 ? "" : (AppUtility.isNotEmpty(organization.Description) ? ` - ${(organization.Description.length > 30 ? organization.Description.substr(0, 30) + " ..." : organization.Description)}` : ""));
-	}
-
-	showActionsAsync() {
-		return this.appFormsSvc.showActionSheetAsync(this.actions);
-	}
-
-	openCreateAsync() {
-		return this.configSvc.navigateForwardAsync("/portals/core/organizations/create");
-	}
-
-	openSearchAsync() {
-		return this.configSvc.navigateForwardAsync("/portals/core/organizations/search");
 	}
 
 	onStartSearch(event: any) {
@@ -233,6 +229,18 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			}
 			organization.owner = owner.Name;
 		}
+	}
+
+	async showActionsAsync() {
+		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	}
+
+	async createAsync() {
+		await this.configSvc.navigateForwardAsync("/portals/core/organizations/create");
+	}
+
+	async openSearchAsync() {
+		await this.configSvc.navigateForwardAsync("/portals/core/organizations/search");
 	}
 
 	async openAsync(event: Event, organization: Organization) {

@@ -6,13 +6,13 @@ import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
 export class Role extends CoreBaseModel implements INestedObject {
 
 	constructor(
-		organizationID?: string,
+		systemID?: string,
 		title?: string
 	) {
 		super();
 		delete this["Privileges"];
 		delete this["OriginalPrivileges"];
-		this.SystemID = AppUtility.isNotEmpty(organizationID) ? organizationID : "";
+		this.SystemID = AppUtility.isNotEmpty(systemID) ? systemID : "";
 		this.Title = AppUtility.isNotEmpty(title) ? title : "";
 	}
 
@@ -22,6 +22,11 @@ export class Role extends CoreBaseModel implements INestedObject {
 	/** All instances of role */
 	public static get all() {
 		return this.instances.values();
+	}
+
+	/** The entity information for working with portals */
+	public static get EntityInfo() {
+		return "net.vieapps.Services.Portals.Role,VIEApps.Services.Portals";
 	}
 
 	ParentID = undefined as string;

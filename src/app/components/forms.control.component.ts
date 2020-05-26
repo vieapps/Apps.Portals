@@ -135,6 +135,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.isFormControl && this.isControl("Text");
 	}
 
+	get isTextDatePickerControl() {
+		return this.isTextBoxControl && (AppUtility.isEquals(this.control.Options.Type, "date") || AppUtility.isEquals(this.control.Options.Type, "datetime-local"));
+	}
+
 	get isSelectControl() {
 		return this.isFormControl && this.isControl("Select");
 	}
@@ -186,13 +190,15 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	private get isAllowDelete() {
 		return this.isLookupControl
 			? (this.isCompleter || this.isModal) && this.lookupDisplayValues.length > 0
-			: this.isDatePickerControl
-				? this.control.Options.DatePickerOptions.AllowDelete
-				: this.isFilePickerControl
-					? this.isImagePickerControl
-						? this.control.Options.FilePickerOptions.AllowDelete && AppUtility.isObject(this.value, true) && this.value.new !== undefined
-						: this.control.Options.FilePickerOptions.AllowDelete
-					: false;
+			: this.isFilePickerControl
+				? this.isImagePickerControl
+					? this.control.Options.FilePickerOptions.AllowDelete && AppUtility.isObject(this.value, true) && this.value.new !== undefined
+					: this.control.Options.FilePickerOptions.AllowDelete
+				: this.isDatePickerControl
+					? this.control.Options.DatePickerOptions.AllowDelete
+					: this.isTextDatePickerControl
+						? true
+						: false;
 	}
 
 	/** Gets the reference to the object that contains settings and data of the parent control */
@@ -341,7 +347,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/** Gets the value of this control */
 	get value() {
-		return this.isDatePickerControl
+		return this.isDatePickerControl || this.isTextDatePickerControl
 			? AppUtility.toIsoDateTime(new Date(this.formControl.value), true)
 			: this.formControl.value;
 	}
@@ -817,7 +823,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get icon() {
-		return this.isImagePickerControl && this.isAllowDelete
+		return (this.isImagePickerControl || this.isDatePickerControl || this.isTextDatePickerControl) && this.isAllowDelete
 			? "trash"
 			: this.isCompleterAllowLookupByModal || this.isModal
 				? (this.control.Options.Icon.Name || "add").trim().toLowerCase()
@@ -845,7 +851,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				this.focus();
 			}
 		}
-		else if (this.isImagePickerControl && this.isAllowDelete) {
+		else if ((this.isImagePickerControl || this.isDatePickerControl || this.isTextDatePickerControl) && this.isAllowDelete) {
 			await this.deleteValue();
 		}
 		else if (this.isCompleterAllowLookupByModal || this.isModal) {

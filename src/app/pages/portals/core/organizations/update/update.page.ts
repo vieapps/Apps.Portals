@@ -25,7 +25,7 @@ import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.mo
 
 export class PortalsOrganizationsUpdatePage implements OnInit {
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private usersSvc: UsersService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService
@@ -58,32 +58,34 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		}
 	};
 
+	get color() {
+		return this.configSvc.color;
+	}
+
 	ngOnInit() {
 		this.initializeAsync();
 	}
 
 	private async initializeAsync() {
 		this.organization = Organization.get(this.configSvc.requestParams["ID"]);
-		this.canModerateOrganization = this.portalsCoreSvc.canModerateOrganization(this.organization);
-		if (this.canModerateOrganization) {
-			await this.initializeFormAsync();
-		}
-		else {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateBackAsync();
-		}
-	}
-
-	private async initializeFormAsync() {
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.organizations.title.${(this.organization === undefined ? "create" : "update")}`);
 		await this.appFormsSvc.showLoadingAsync(this.title);
+
+		this.canModerateOrganization = this.portalsCoreSvc.canModerateOrganization(this.organization);
+		if (!this.canModerateOrganization) {
+			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+				this.configSvc.navigateBackAsync()
+			]));
+			return;
+		}
 
 		this.button = {
 			update: await this.configSvc.getResourceAsync(`common.buttons.${(this.organization === undefined ? "create" : "update")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
-		this.organization = this.organization || new Organization("", "Pending", new Privileges(true));
+		this.organization = this.organization || new Organization("Pending", new Privileges(true));
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 	}
@@ -98,9 +100,6 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			new AppFormsSegment("urls", await this.configSvc.getResourceAsync("portals.organizations.update.segments.urls")),
 			new AppFormsSegment("emails", await this.configSvc.getResourceAsync("portals.organizations.update.segments.emails"))
 		];
-		if (AppUtility.isNotEmpty(this.organization.ID)) {
-			formSegments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.organizations.update.segments.attachments")));
-		}
 		if (onCompleted !== undefined) {
 			onCompleted(formSegments);
 		}
@@ -111,9 +110,9 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		const socials: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "socials");
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
 
-		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "organization", "form-controls");
+		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "organization");
 		formConfig.forEach(ctrl => ctrl.Segment = "basic");
-		if (!AppUtility.isNotEmpty(this.organization.ID)) {
+		if (AppUtility.isNotEmpty(this.organization.ID)) {
 			formConfig.push(this.portalsCoreSvc.getAuditFormControl(this.organization, "basic"));
 		}
 
@@ -403,20 +402,14 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "TrackDownloadFiles"));
 		control.Options.Type = "toggle";
 
-		/*
-		control = formConfig.find(c => AppUtility.isEquals(c.Name, "Theme"));
-		control.Type = "Select";
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Theme"));
 		control.Options.Type = "dropdown";
-		control.Options.SelectOptions = { Values: ["default", "blueocean"].map(value => {
-			return { Value: value, Label: value };
-		})};
-		control.Options.OnChanged = (event, formControl) => console.log("SELECT", event, formControl.formControl, formControl.control);
-		*/
+		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => {
+			return { Value: theme.name, Label: theme.name };
+		});
 
 		const homeDesktopCtrl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "HomeDesktopID"));
 		const searchDesktopCtrl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SearchDesktopID"));
-
-		homeDesktopCtrl.Type = searchDesktopCtrl.Type = "Lookup";
 		homeDesktopCtrl.Options.LookupOptions = searchDesktopCtrl.Options.LookupOptions = {
 			Multiple: false,
 			OnDelete: (_, formControl) => {
@@ -521,7 +514,9 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 
 		this.form.patchValue(organization);
 		this.hash = AppCrypto.hash(this.form.value);
-		this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.invoke(() => this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true }), 234)); // hack the Completer component to update correct form value & validity status
+
+		// hack the Completer component to update correct form value & validity status
+		this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.invoke(() => this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true }), 234));
 	}
 
 	async updateAsync() {
@@ -561,7 +556,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -578,7 +573,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}

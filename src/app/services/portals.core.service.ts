@@ -5,6 +5,8 @@ import { AppUtility } from "@components/app.utility";
 import { AppCustomCompleter } from "@components/app.completer";
 import { AppPagination } from "@components/app.pagination";
 import { AppFormsControlConfig, AppFormsLookupValue, AppFormsService } from "@components/forms.service";
+import { FilesProcessorModalPage } from "@controls/common/file.processor.modal.page";
+import { FileOptions } from "@services/files.service";
 import { Base as BaseService } from "@services/base.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
@@ -30,6 +32,8 @@ export class PortalsCoreService extends BaseService {
 		super("Portals");
 		this.initialize();
 	}
+
+	private _themes: Array<{ name: string, description: string; author: string; intro: string; screenshots: Array<string> }>;
 
 	public get moduleDefinitions() {
 		return BaseModel.ModuleDefinitions;
@@ -136,6 +140,17 @@ export class PortalsCoreService extends BaseService {
 			}
 		}
 		return BaseModel.ModuleDefinitions;
+	}
+
+	public async getThemesAsync(onNext?: () => void) {
+		if (this._themes === undefined) {
+			const path = this.configSvc.getDefinitionPath(this.name, "themes");
+			this._themes = this.configSvc.getDefinition(path) || await this.configSvc.fetchDefinitionAsync(path, false);
+			if (onNext !== undefined) {
+				onNext();
+			}
+		}
+		return this._themes;
 	}
 
 	public async getActiveOrganizationAsync(useXHR: boolean = true) {
@@ -566,6 +581,36 @@ export class PortalsCoreService extends BaseService {
 		}
 
 		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
+		if (onCompleted !== undefined) {
+			onCompleted(controlConfig);
+		}
+		return controlConfig;
+	}
+
+	public getUploadFormControl(fileOptions: FileOptions, segment?: string, label?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+		const controlConfig: AppFormsControlConfig = this.appFormsSvc.getButtonControls(
+			segment || "attachments",
+			{
+				Name: "Upload",
+				Label: label || "{{files.attachments.upload}}",
+				OnClick: async () => await this.appFormsSvc.showModalAsync(
+					FilesProcessorModalPage,
+					{
+						mode: "upload",
+						fileOptions: fileOptions
+					}
+				),
+				Options: {
+					Fill: "clear",
+					Color: "primary",
+					Css: "ion-float-end",
+					Icon: {
+						Name: "cloud-upload",
+						Slot: "start"
+					}
+				}
+			}
+		);
 		if (onCompleted !== undefined) {
 			onCompleted(controlConfig);
 		}

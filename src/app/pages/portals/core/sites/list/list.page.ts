@@ -24,9 +24,9 @@ import { Site } from "@models/portals.core.site";
 export class PortalsSitesListPage implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService,
-		private appFormsSvc: AppFormsService,
+		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
+		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
@@ -60,6 +60,14 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 
 	get locale() {
 		return this.configSvc.locale;
+	}
+
+	get color() {
+		return this.configSvc.color;
+	}
+
+	get screenWidth() {
+		return this.configSvc.screenWidth;
 	}
 
 	get totalDisplays() {
@@ -124,15 +132,14 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 				}
 			}, "Sites:Refresh");
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.create"), "create", () => this.openCreateAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.create"), "create", () => this.createAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.search"), "search", () => this.openSearchAsync())
 			];
 			await this.startSearchAsync();
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<Sites>: show the collection of sites", this.configSvc.requestParams, this.filterBy);
-			console.log("<Sites>: organization", this.organization);
+			console.log("<Sites>: show the list", this.organization, this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 
@@ -144,16 +151,16 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		return `${site.SubDomain}.${site.PrimaryDomain}` + (AppUtility.isNotEmpty(site.OtherDomains) ? `;${site.OtherDomains}` : "");
 	}
 
-	showActionsAsync() {
-		return this.appFormsSvc.showActionSheetAsync(this.actions);
+	async showActionsAsync() {
+		await this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
-	openCreateAsync() {
-		return this.configSvc.navigateForwardAsync("/portals/core/sites/create");
+	async createAsync() {
+		await this.configSvc.navigateForwardAsync("/portals/core/sites/create");
 	}
 
-	openSearchAsync() {
-		return this.configSvc.navigateForwardAsync("/portals/core/sites/search");
+	async openSearchAsync() {
+		await this.configSvc.navigateForwardAsync("/portals/core/sites/search");
 	}
 
 	onStartSearch(event: any) {

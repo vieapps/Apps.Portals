@@ -7,7 +7,6 @@ import { PlatformUtility } from "@components/app.utility.platform";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
-import { UsersService } from "@services/users.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { Privileges } from "@models/privileges";
@@ -26,10 +25,9 @@ import { RolesSelectorModalPage } from "@controls/portals/role.selector.modal.pa
 
 export class PortalsModulesUpdatePage implements OnInit {
 	constructor(
-		public configSvc: ConfigurationService,
-		private appFormsSvc: AppFormsService,
-		private usersSvc: UsersService,
+		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
+		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
 	}
@@ -55,6 +53,10 @@ export class PortalsModulesUpdatePage implements OnInit {
 		cancel: "Cancel"
 	};
 
+	get color() {
+		return this.configSvc.color;
+	}
+
 	ngOnInit() {
 		this.initializeAsync();
 	}
@@ -72,16 +74,12 @@ export class PortalsModulesUpdatePage implements OnInit {
 
 		this.isSystemModerator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canModerateOrganization = this.isSystemModerator || this.portalsCoreSvc.canModerateOrganization(this.organization);
-		if (this.canModerateOrganization) {
-			await this.initializeFormAsync();
-		}
-		else {
+		if (!this.canModerateOrganization) {
 			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
 			await this.configSvc.navigateBackAsync();
+			return;
 		}
-	}
 
-	private async initializeFormAsync() {
 		this.module = this.module || new Module(this.organization.ID);
 		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.module.SystemID) {
 			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"));
@@ -116,7 +114,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
-		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "module", "form-controls");
+		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "module");
 
 		AppUtility.insertAt(
 			formConfig,
@@ -334,7 +332,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -351,7 +349,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -387,7 +385,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error))
+					async error => await this.appFormsSvc.showErrorAsync(error)
 				);
 			},
 			await this.configSvc.getResourceAsync("portals.modules.update.buttons.remove"),

@@ -6,14 +6,14 @@ import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
 export class Desktop extends CoreBaseModel implements INestedObject {
 
 	constructor(
-		organizationID?: string,
+		systemID?: string,
 		title?: string,
 		parentID?: string
 	) {
 		super();
 		delete this["Privileges"];
 		delete this["OriginalPrivileges"];
-		this.SystemID = AppUtility.isNotEmpty(organizationID) ? organizationID : "";
+		this.SystemID = AppUtility.isNotEmpty(systemID) ? systemID : "";
 		this.Title = AppUtility.isNotEmpty(title) ? title : "";
 		this.ParentID = AppUtility.isNotEmpty(parentID) ? parentID : "";
 	}
@@ -24,6 +24,11 @@ export class Desktop extends CoreBaseModel implements INestedObject {
 	/** All instances of desktop */
 	public static get all() {
 		return this.instances.values();
+	}
+
+	/** The entity information for working with portals */
+	public static get EntityInfo() {
+		return "net.vieapps.Services.Portals.Desktop,VIEApps.Services.Portals";
 	}
 
 	ParentID = undefined as string;

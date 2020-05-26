@@ -23,7 +23,7 @@ import { Role } from "@models/portals.core.role";
 export class PortalsRolesListPage implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
@@ -59,6 +59,14 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 
 	get locale() {
 		return this.configSvc.locale;
+	}
+
+	get color() {
+		return this.configSvc.color;
+	}
+
+	get screenWidth() {
+		return this.configSvc.screenWidth;
 	}
 
 	get gotPagination() {
@@ -126,7 +134,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		}
 		else {
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.roles.title.create"), "create", () => this.openCreateAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.roles.title.create"), "create", () => this.createAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.roles.title.search"), "search", () => this.openSearchAsync())
 			];
 
@@ -171,18 +179,6 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		return role.childrenIDs === undefined || role.childrenIDs.length < 1
 			? role.Description
 			: AppUtility.format(this.children, { number: role.childrenIDs.length, children: `${role.Children[0].Title}${(role.childrenIDs.length > 1 ? `, ${role.Children[1].Title}` : "")}, ...` });
-	}
-
-	showActionsAsync() {
-		return this.appFormsSvc.showActionSheetAsync(this.actions);
-	}
-
-	openCreateAsync() {
-		return this.configSvc.navigateForwardAsync(`/portals/core/roles/create${(this.parentID === undefined ? "" : "?x-request=" + AppUtility.toBase64Url({ ParentID: this.parentID }))}`);
-	}
-
-	openSearchAsync() {
-		return this.configSvc.navigateForwardAsync("/portals/core/roles/search");
 	}
 
 	onStartSearch(event: any) {
@@ -278,6 +274,18 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		if (onNext !== undefined) {
 			onNext();
 		}
+	}
+
+	async showActionsAsync() {
+		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	}
+
+	async openSearchAsync() {
+		await this.configSvc.navigateForwardAsync("/portals/core/roles/search");
+	}
+
+	async createAsync() {
+		await this.configSvc.navigateForwardAsync(`/portals/core/roles/create${(this.parentID === undefined ? "" : "?x-request=" + AppUtility.toBase64Url({ ParentID: this.parentID }))}`);
 	}
 
 	async openAsync(event: Event, role: Role) {

@@ -8,12 +8,12 @@ import { ContentType } from "@models/portals.core.content.type";
 export class Module extends CoreBaseModel {
 
 	constructor(
-		organizationID?: string,
+		systemID?: string,
 		title?: string,
 		privileges?: Privileges
 	) {
 		super();
-		this.SystemID = AppUtility.isNotEmpty(organizationID) ? organizationID : "";
+		this.SystemID = AppUtility.isNotEmpty(systemID) ? systemID : "";
 		this.Title = AppUtility.isNotEmpty(title) ? title : "";
 		this.OriginalPrivileges = privileges;
 	}
@@ -28,6 +28,11 @@ export class Module extends CoreBaseModel {
 
 	/** Active module */
 	public static active: Module;
+
+	/** The entity information for working with portals */
+	public static get EntityInfo() {
+		return "net.vieapps.Services.Portals.Role,VIEApps.Services.Portals";
+	}
 
 	Title = undefined as string;
 	Description = undefined as string;

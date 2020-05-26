@@ -22,7 +22,7 @@ import { UsersSelectorModalPage } from "@controls/common/user.selector.modal.pag
 
 export class PortalsRolesUpdatePage implements OnInit {
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private usersSvc: UsersService,
 		private portalsCoreSvc: PortalsCoreService
@@ -45,6 +45,10 @@ export class PortalsRolesUpdatePage implements OnInit {
 		cancel: "Cancel"
 	};
 
+	get color() {
+		return this.configSvc.color;
+	}
+
 	ngOnInit() {
 		this.initializeAsync();
 	}
@@ -61,16 +65,11 @@ export class PortalsRolesUpdatePage implements OnInit {
 		}
 
 		this.canModerateOrganization = this.portalsCoreSvc.canModerateOrganization(this.organization);
-		if (this.canModerateOrganization) {
-			await this.initializeFormAsync();
-		}
-		else {
+		if (!this.canModerateOrganization) {
 			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
 			await this.configSvc.navigateBackAsync();
 		}
-	}
 
-	private async initializeFormAsync() {
 		this.role = this.role || new Role(this.organization.ID);
 		if (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.role.SystemID) {
 			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"));
@@ -105,7 +104,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
-		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "role", "form-controls");
+		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "role");
 		AppUtility.insertAt(
 			formConfig,
 			{
@@ -280,7 +279,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -297,7 +296,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -332,7 +331,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error)),
+					async error => await this.appFormsSvc.showErrorAsync(error),
 					{ "x-children": mode }
 				);
 			},

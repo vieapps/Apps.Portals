@@ -331,8 +331,7 @@
 					"instructions": "Thông điệp",
 					"socials": "Mạng XH & Theo dõi",
 					"urls": "URLs",
-					"emails": "Emails",
-					"attachments": "File đính kèm"
+					"emails": "Emails"
 				},
 				"messages": {
 					"confirm": {
@@ -527,8 +526,7 @@
 				"segments": {
 					"basic": "Thông tin cơ bản",
 					"display": "Thiết đặt hiển thị",
-					"seo": "Thiết đặt SEO",
-					"attachments": "File đính kèm"
+					"seo": "Thiết đặt SEO"
 				},
 				"messages": {
 					"confirm": {
@@ -678,8 +676,7 @@
 				"segments": {
 					"basic": "Thông tin cơ bản",
 					"display": "Thiết đặt hiển thị",
-					"seo": "Thiết đặt SEO",
-					"attachments": "File đính kèm"
+					"seo": "Thiết đặt SEO"
 				},
 				"messages": {
 					"confirm": {

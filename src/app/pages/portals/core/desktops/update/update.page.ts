@@ -1,16 +1,19 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@components/app.crypto";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
+import { AppFormsControlComponent } from "@components/forms.control.component";
 import { ConfigurationService } from "@services/configuration.service";
-import { UsersService } from "@services/users.service";
+import { FilesService, FileOptions } from "@services/files.service";
 import { PortalsCoreService } from "@services/portals.core.service";
+import { AttachmentInfo } from "@models/base";
 import { Organization } from "@models/portals.core.organization";
 import { Desktop } from "@models/portals.core.desktop";
 import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.modal.page";
+import { FilesProcessorModalPage } from "@controls/common/file.processor.modal.page";
 
 @Component({
 	selector: "page-portals-core-desktops-update",
@@ -18,11 +21,11 @@ import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.mo
 	styleUrls: ["./update.page.scss"]
 })
 
-export class PortalsDesktopsUpdatePage implements OnInit {
+export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
+		private filesSvc: FilesService,
 		private appFormsSvc: AppFormsService,
-		private usersSvc: UsersService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
 	}
@@ -46,8 +49,18 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 		cancel: "Cancel"
 	};
 
+	get color() {
+		return this.configSvc.color;
+	}
+
 	ngOnInit() {
 		this.initializeAsync();
+	}
+
+	ngOnDestroy() {
+		if (AppUtility.isNotEmpty(this.desktop.ID)) {
+			AppEvents.off(this.filesSvc.name, "Desktop:Refresh");
+		}
 	}
 
 	private async initializeAsync() {
@@ -62,16 +75,11 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 		}
 
 		this.canModerateOrganization = this.portalsCoreSvc.canModerateOrganization(this.organization);
-		if (this.canModerateOrganization) {
-			await this.initializeFormAsync();
-		}
-		else {
+		if (!this.canModerateOrganization) {
 			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
 			await this.configSvc.navigateBackAsync();
 		}
-	}
 
-	private async initializeFormAsync() {
 		this.desktop = this.desktop || new Desktop(this.organization.ID, "", this.configSvc.requestParams["ParentID"]);
 		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.desktop.SystemID) {
 			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"));
@@ -92,6 +100,14 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
+
+		if (AppUtility.isNotEmpty(this.desktop.ID)) {
+			AppEvents.on(this.filesSvc.name, info => {
+				if (info.args.Object === "Attachment" && this.desktop.ID === info.args.ObjectID) {
+					this.prepareAttachments(undefined, info.args.Event === "Delete" ? undefined : this.filesSvc.prepareAttachment(info.args.Data), info.args.Event === "Delete" ? this.filesSvc.prepareAttachment(info.args.Data) : undefined);
+				}
+			}, "Desktop:Refresh");
+		}
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
@@ -101,7 +117,7 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 			new AppFormsSegment("seo", await this.configSvc.getResourceAsync("portals.desktops.update.segments.seo"))
 		];
 		if (AppUtility.isNotEmpty(this.desktop.ID)) {
-			formSegments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.desktops.update.segments.attachments")));
+			formSegments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("files.attachments.segment")));
 		}
 		if (onCompleted !== undefined) {
 			onCompleted(formSegments);
@@ -110,7 +126,7 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
-		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "desktop", "form-controls");
+		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "desktop");
 
 		AppUtility.insertAt(
 			formConfig,
@@ -186,6 +202,13 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 		});
 		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: unspecified }, 0);
 
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Theme"));
+		control.Options.Type = "dropdown";
+		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => {
+			return { Value: theme.name, Label: theme.name };
+		});
+		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: unspecified }, 0);
+
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"));
 		control.Options.Rows = 18;
 		control.Options.Icon = {
@@ -202,6 +225,49 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 			ctrl.Options.Description = ctrl.Options.Description === undefined ? undefined : ctrl.Options.Description.replace("portals.desktops", "portals.common");
 			ctrl.Options.PlaceHolder = ctrl.Options.PlaceHolder === undefined ? undefined : ctrl.Options.PlaceHolder.replace("portals.desktops", "portals.common");
 		});
+
+		if (AppUtility.isNotEmpty(this.desktop.ID)) {
+			const backgoundImageControl = control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
+			const iconControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI"));
+			const coverControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CoverURI"));
+			backgoundImageControl.Options.LookupOptions = iconControl.Options.LookupOptions = coverControl.Options.LookupOptions = {
+				AsModal: true,
+				Multiple: false,
+				OnDelete: (_, formControl) => {
+					formControl.setValue(undefined);
+					formControl.lookupDisplayValues = undefined;
+				},
+				ModalOptions: {
+					Component: FilesProcessorModalPage,
+					ComponentProps: {
+						mode: "select",
+						fileOptions: this.fileOptions,
+						allowSelect: true,
+						multiple: false,
+						handlers: { predicate: (attachment: AttachmentInfo) => attachment.isImage, onSelect: () => {} }
+					},
+					OnDismiss: (attachments: AttachmentInfo[], formControl: AppFormsControlComponent) => {
+						const uri = attachments !== undefined && attachments.length > 0 ? attachments[0].URIs.Direct : undefined;
+						if (uri !== undefined) {
+							formControl.setValue(uri);
+							formControl.lookupDisplayValues = [{ Value: uri, Label: uri }];
+						}
+						else {
+							formControl.setValue(undefined);
+							formControl.lookupDisplayValues = undefined;
+						}
+					}
+				}
+			};
+			backgoundImageControl.Extras.LookupDisplayValues = AppUtility.isObject(this.desktop.UISettings, true) && AppUtility.isNotEmpty(this.desktop.UISettings.BackgroundImageURI) ? [{ Value: this.desktop.UISettings.BackgroundImageURI, Label: this.desktop.UISettings.BackgroundImageURI }] : undefined;
+			iconControl.Extras.LookupDisplayValues = AppUtility.isNotEmpty(this.desktop.IconURI) ? [{ Value: this.desktop.IconURI, Label: this.desktop.IconURI }] : undefined;
+			coverControl.Extras.LookupDisplayValues = AppUtility.isNotEmpty(this.desktop.CoverURI) ? [{ Value: this.desktop.CoverURI, Label: this.desktop.CoverURI }] : undefined;
+		}
+		else {
+			control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI")).Options.Disabled =
+				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI")).Options.Disabled =
+				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CoverURI")).Options.Disabled = true;
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "MetaTags"));
 		control.Options.Rows = 10;
@@ -222,6 +288,8 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 
 		if (AppUtility.isNotEmpty(this.desktop.ID)) {
 			formConfig.push(
+				this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label"), false, true, true, FilesProcessorModalPage),
+				this.portalsCoreSvc.getUploadFormControl(this.fileOptions, "attachments"),
 				this.portalsCoreSvc.getAuditFormControl(this.desktop, "basic"),
 				this.appFormsSvc.getButtonControls(
 					"basic",
@@ -265,6 +333,26 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 		return formConfig;
 	}
 
+	private get fileOptions() {
+		return {
+			ServiceName: this.portalsCoreSvc.name,
+			ObjectName: "Organization",
+			SystemID: this.organization.ID,
+			RepositoryEntityID: Desktop.EntityInfo,
+			ObjectID: this.desktop.ID,
+			ObjectTitle: this.desktop.Title,
+			IsShared: false,
+			IsTracked: this.organization.TrackDownloadFiles,
+			IsTemporary: false,
+			Extras: {}
+		} as FileOptions;
+	}
+
+	private prepareAttachments(attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo, onCompleted?: (control: AppFormsControl) => void) {
+		const formControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Attachments"));
+		this.filesSvc.prepareAttachmentsFormControl(formControl, false, attachments, addedOrUpdated, deleted, onCompleted);
+	}
+
 	onFormInitialized() {
 		const desktop = AppUtility.clone(this.desktop, false);
 		desktop.Language = AppUtility.isNotEmpty(desktop.Language) ? desktop.Language : "-";
@@ -275,7 +363,7 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 		});
 		this.form.patchValue(desktop);
 		this.hash = AppCrypto.hash(this.form.value);
-		this.appFormsSvc.hideLoadingAsync();
+		this.appFormsSvc.hideLoadingAsync(async () => await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments)));
 	}
 
 	async updateAsync() {
@@ -289,6 +377,7 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 
 				const desktop = this.form.value;
 				desktop.Language = AppUtility.isEquals(desktop.Language, "-") ? undefined : desktop.Language;
+				desktop.Theme = AppUtility.isEquals(desktop.Theme, "-") ? undefined : desktop.Theme;
 				this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "SEOSettings")).SubControls.Controls.filter(ctrl => ctrl.Type === "Select").forEach(ctrl => {
 					const value = desktop.SEOSettings[ctrl.Name];
 					desktop.SEOSettings[ctrl.Name] = AppUtility.isEquals(value, "-") ? undefined : value;
@@ -311,7 +400,7 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -328,7 +417,7 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -363,7 +452,7 @@ export class PortalsDesktopsUpdatePage implements OnInit {
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error)),
+					async error => await this.appFormsSvc.showErrorAsync(error),
 					{ "x-children": mode }
 				);
 			},

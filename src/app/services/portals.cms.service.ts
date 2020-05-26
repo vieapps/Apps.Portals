@@ -306,33 +306,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public getUploadFormControl(object: CmsBaseModel, segment?: string, label?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
-		const controlConfig: AppFormsControlConfig = this.appFormsSvc.getButtonControls(
-			segment || "attachments",
-			{
-				Name: "Upload",
-				Label: label || "{{files.attachments.upload}}",
-				OnClick: async () => await this.appFormsSvc.showModalAsync(
-					FilesProcessorModalPage,
-					{
-						mode: "upload",
-						fileOptions: this.getFileOptions(object)
-					}
-				),
-				Options: {
-					Fill: "clear",
-					Color: "primary",
-					Css: "ion-float-end",
-					Icon: {
-						Name: "cloud-upload",
-						Slot: "start"
-					}
-				}
-			}
-		);
-		if (onCompleted !== undefined) {
-			onCompleted(controlConfig);
-		}
-		return controlConfig;
+		return this.portalsCoreSvc.getUploadFormControl(this.getFileOptions(object), segment, label, onCompleted);
 	}
 
 	public setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onPreCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {

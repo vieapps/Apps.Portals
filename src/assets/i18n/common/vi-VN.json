@@ -142,7 +142,7 @@
 		},
 		"attachments": {
 			"segment": "Tệp đính kèm",
-			"label": "Các tệp đính kèm nội dung",
+			"label": "Các tệp đính kèm",
 			"confirm": "Chắc chắn muốn xoá tệp tin '{{name}}'?",
 			"upload": "Tải lên",
 			"download": "Tải xuống",

@@ -23,7 +23,7 @@ import { Desktop } from "@models/portals.core.desktop";
 export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
@@ -60,6 +60,14 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 	get locale() {
 		return this.configSvc.locale;
+	}
+
+	get color() {
+		return this.configSvc.color;
+	}
+
+	get screenWidth() {
+		return this.configSvc.screenWidth;
 	}
 
 	get gotPagination() {
@@ -128,7 +136,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		}
 		else {
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.desktops.title.create"), "create", () => this.openCreateAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.desktops.title.create"), "create", () => this.createAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.desktops.title.search"), "search", () => this.openSearchAsync())
 			];
 
@@ -173,18 +181,6 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		return desktop.childrenIDs === undefined || desktop.childrenIDs.length < 1
 			? `${this.alias}: ${desktop.Alias}`
 			: AppUtility.format(this.children, { number: desktop.childrenIDs.length, children: `${desktop.Children[0].Title}${(desktop.childrenIDs.length > 1 ? `, ${desktop.Children[1].Title}` : "")}, ...` });
-	}
-
-	showActionsAsync() {
-		return this.appFormsSvc.showActionSheetAsync(this.actions);
-	}
-
-	openCreateAsync() {
-		return this.configSvc.navigateForwardAsync(`/portals/core/desktops/create${(this.parentID === undefined ? "" : "?x-request=" + AppUtility.toBase64Url({ ParentID: this.parentID }))}`);
-	}
-
-	openSearchAsync() {
-		return this.configSvc.navigateForwardAsync("/portals/core/desktops/search");
 	}
 
 	onStartSearch(event: any) {
@@ -285,8 +281,20 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	async openAsync(event: Event, desktop: Desktop) {
+	async showActionsAsync() {
+		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	}
+
+	async openSearchAsync() {
+		await this.configSvc.navigateForwardAsync("/portals/core/desktops/search");
+	}
+
+	async createAsync() {
 		event.stopPropagation();
+		await this.configSvc.navigateForwardAsync(`/portals/core/desktops/create${(this.parentID === undefined ? "" : "?x-request=" + AppUtility.toBase64Url({ ParentID: this.parentID }))}`);
+	}
+
+	async openAsync(event: Event, desktop: Desktop) {
 		await this.configSvc.navigateForwardAsync(desktop.routerURI);
 	}
 

@@ -92,7 +92,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 			: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 
 		this.organization = this.content !== undefined
-			? Organization.get(this.content.SystemID)
+			? this.content.Organization
 			: this.contentType !== undefined
 				? Organization.get(this.contentType.SystemID)
 				: await this.portalsCoreSvc.getActiveOrganizationAsync();
@@ -418,7 +418,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		const content = AppUtility.clone(this.content, false, ["StartDate", "EndDate", "PublishedTime"]);
 		content.StartDate = AppUtility.toIsoDate(this.content.StartDate);
 		content.EndDate = AppUtility.toIsoDate(this.content.EndDate);
-		content.PublishedTime = AppUtility.toIsoDate(this.content.PublishedTime);
+		content.PublishedTime = AppUtility.toIsoDateTime(this.content.PublishedTime, true);
 
 		this.form.patchValue(content);
 		this.hash.content = AppCrypto.hash(this.form.value);
@@ -473,7 +473,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 
 				content.StartDate = AppUtility.toIsoDate(content.StartDate !== undefined ? content.StartDate : new Date()).replace(/\-/g, "/");
 				content.EndDate = content.EndDate !== undefined ? AppUtility.toIsoDate(content.EndDate).replace(/\-/g, "/") : undefined;
-				content.PublishedTime = content.PublishedTime !== undefined ? AppUtility.toIsoDate(content.PublishedTime).replace(/\-/g, "/") : undefined;
+				content.PublishedTime = content.PublishedTime !== undefined ? AppUtility.toIsoDateTime(content.PublishedTime, true).replace(/\-/g, "/") : undefined;
 
 				if (AppUtility.isNotEmpty(content.ID)) {
 					if (this.hash.content === AppCrypto.hash(content)) {

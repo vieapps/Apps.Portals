@@ -1,18 +1,21 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@components/app.crypto";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
+import { AppFormsControlComponent } from "@components/forms.control.component";
 import { ConfigurationService } from "@services/configuration.service";
-import { UsersService } from "@services/users.service";
 import { AuthenticationService } from "@services/authentication.service";
+import { FilesService, FileOptions } from "@services/files.service";
 import { PortalsCoreService } from "@services/portals.core.service";
+import { AttachmentInfo } from "@models/base";
 import { Organization } from "@models/portals.core.organization";
 import { Site } from "@models/portals.core.site";
 import { Desktop } from "@models/portals.core.desktop";
 import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.modal.page";
+import { FilesProcessorModalPage } from "@controls/common/file.processor.modal.page";
 
 @Component({
 	selector: "page-portals-core-sites-update",
@@ -20,12 +23,12 @@ import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.mo
 	styleUrls: ["./update.page.scss"]
 })
 
-export class PortalsSitesUpdatePage implements OnInit {
+export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 	constructor(
-		public configSvc: ConfigurationService,
-		private appFormsSvc: AppFormsService,
-		private usersSvc: UsersService,
+		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
+		private filesSvc: FilesService,
+		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
 	}
@@ -50,8 +53,18 @@ export class PortalsSitesUpdatePage implements OnInit {
 		cancel: "Cancel"
 	};
 
+	get color() {
+		return this.configSvc.color;
+	}
+
 	ngOnInit() {
 		this.initializeAsync();
+	}
+
+	ngOnDestroy() {
+		if (AppUtility.isNotEmpty(this.site.ID)) {
+			AppEvents.off(this.filesSvc.name, "Site:Refresh");
+		}
 	}
 
 	private async initializeAsync() {
@@ -67,24 +80,20 @@ export class PortalsSitesUpdatePage implements OnInit {
 
 		this.isSystemModerator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canModerateOrganization = this.isSystemModerator || this.portalsCoreSvc.canModerateOrganization(this.organization);
-		if (this.canModerateOrganization) {
-			await this.initializeFormAsync();
-		}
-		else {
+		if (!this.canModerateOrganization) {
 			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
 			await this.configSvc.navigateBackAsync();
-		}
-	}
-
-	private async initializeFormAsync() {
-		this.site = this.site || new Site(this.organization.ID, "");
-		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.site.SystemID) {
-			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"));
 			return;
 		}
 
+		this.site = this.site || new Site(this.organization.ID, "");
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.sites.title.${(AppUtility.isNotEmpty(this.site.ID) ? "update" : "create")}`);
 		await this.appFormsSvc.showLoadingAsync(this.title);
+
+		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.site.SystemID) {
+			await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid")));
+			return;
+		}
 
 		this.button = {
 			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.site.ID) ? "update" : "create")}`),
@@ -99,6 +108,14 @@ export class PortalsSitesUpdatePage implements OnInit {
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
+
+		if (AppUtility.isNotEmpty(this.site.ID)) {
+			AppEvents.on(this.filesSvc.name, info => {
+				if (info.args.Object === "Attachment" && this.site.ID === info.args.ObjectID) {
+					this.prepareAttachments(undefined, info.args.Event === "Delete" ? undefined : this.filesSvc.prepareAttachment(info.args.Data), info.args.Event === "Delete" ? this.filesSvc.prepareAttachment(info.args.Data) : undefined);
+				}
+			}, "Site:Refresh");
+		}
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
@@ -108,7 +125,7 @@ export class PortalsSitesUpdatePage implements OnInit {
 			new AppFormsSegment("seo", await this.configSvc.getResourceAsync("portals.sites.update.segments.seo"))
 		];
 		if (AppUtility.isNotEmpty(this.site.ID)) {
-			formSegments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("portals.sites.update.segments.attachments")));
+			formSegments.push(new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("files.attachments.segment")));
 		}
 		if (onCompleted !== undefined) {
 			onCompleted(formSegments);
@@ -117,7 +134,7 @@ export class PortalsSitesUpdatePage implements OnInit {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
-		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "site", "form-controls");
+		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "site");
 
 		AppUtility.insertAt(
 			formConfig,
@@ -134,13 +151,7 @@ export class PortalsSitesUpdatePage implements OnInit {
 			0
 		);
 
-		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
-		control.Options.AutoFocus = true;
-		if (!AppUtility.isNotEmpty(this.site.ID)) {
-			control.Options.OnBlur = (_, formControl) => (this.form.controls.SEOInfo as FormGroup).controls.Title.setValue(formControl.value, { onlySelf: true });
-		}
-
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
+		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
 		control.Options.Rows = 2;
 		if (!AppUtility.isNotEmpty(this.site.ID)) {
 			control.Options.OnBlur = (_, formControl) => (this.form.controls.SEOInfo as FormGroup).controls.Description.setValue(formControl.value, { onlySelf: true });
@@ -166,10 +177,15 @@ export class PortalsSitesUpdatePage implements OnInit {
 			return { Value: language.Value, Label: language.Label };
 		});
 
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Theme"));
+		control.Options.Type = "dropdown";
+		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => {
+			return { Value: theme.name, Label: theme.name };
+		});
+		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: await this.configSvc.getResourceAsync("portals.common.unspecified") }, 0);
+
 		const homeDesktopCtrl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "HomeDesktopID"));
 		const searchDesktopCtrl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SearchDesktopID"));
-
-		homeDesktopCtrl.Type = searchDesktopCtrl.Type = "Lookup";
 		homeDesktopCtrl.Options.LookupOptions = searchDesktopCtrl.Options.LookupOptions = {
 			Multiple: false,
 			OnDelete: (_, formControl) => {
@@ -215,6 +231,49 @@ export class PortalsSitesUpdatePage implements OnInit {
 		});
 		control.Options.Label = "{{portals.sites.controls.UISettings}}";
 
+		if (AppUtility.isNotEmpty(this.site.ID)) {
+			const backgoundImageControl = control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
+			const iconControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI"));
+			const coverControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CoverURI"));
+			backgoundImageControl.Options.LookupOptions = iconControl.Options.LookupOptions = coverControl.Options.LookupOptions = {
+				AsModal: true,
+				Multiple: false,
+				OnDelete: (_, formControl) => {
+					formControl.setValue(undefined);
+					formControl.lookupDisplayValues = undefined;
+				},
+				ModalOptions: {
+					Component: FilesProcessorModalPage,
+					ComponentProps: {
+						mode: "select",
+						fileOptions: this.fileOptions,
+						allowSelect: true,
+						multiple: false,
+						handlers: { predicate: (attachment: AttachmentInfo) => attachment.isImage, onSelect: () => {} }
+					},
+					OnDismiss: (attachments: AttachmentInfo[], formControl: AppFormsControlComponent) => {
+						const uri = attachments !== undefined && attachments.length > 0 ? attachments[0].URIs.Direct : undefined;
+						if (uri !== undefined) {
+							formControl.setValue(uri);
+							formControl.lookupDisplayValues = [{ Value: uri, Label: uri }];
+						}
+						else {
+							formControl.setValue(undefined);
+							formControl.lookupDisplayValues = undefined;
+						}
+					}
+				}
+			};
+			backgoundImageControl.Extras.LookupDisplayValues = AppUtility.isObject(this.site.UISettings, true) && AppUtility.isNotEmpty(this.site.UISettings.BackgroundImageURI) ? [{ Value: this.site.UISettings.BackgroundImageURI, Label: this.site.UISettings.BackgroundImageURI }] : undefined;
+			iconControl.Extras.LookupDisplayValues = AppUtility.isNotEmpty(this.site.IconURI) ? [{ Value: this.site.IconURI, Label: this.site.IconURI }] : undefined;
+			coverControl.Extras.LookupDisplayValues = AppUtility.isNotEmpty(this.site.CoverURI) ? [{ Value: this.site.CoverURI, Label: this.site.CoverURI }] : undefined;
+		}
+		else {
+			control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI")).Options.Disabled =
+				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI")).Options.Disabled =
+				formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CoverURI")).Options.Disabled = true;
+		}
+
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "MetaTags"));
 		control.Options.Rows = 10;
 
@@ -227,8 +286,13 @@ export class PortalsSitesUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SEOInfo"));
 		control.SubControls.Controls.filter(ctrl => AppUtility.isEquals(ctrl.Type, "TextArea")).forEach(ctrl => ctrl.Options.Rows = 10);
 
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
+		control.Options.AutoFocus = true;
+
 		if (AppUtility.isNotEmpty(this.site.ID)) {
 			formConfig.push(
+				this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label"), false, true, true, FilesProcessorModalPage),
+				this.portalsCoreSvc.getUploadFormControl(this.fileOptions, "attachments"),
 				this.portalsCoreSvc.getAuditFormControl(this.site, "basic"),
 				this.appFormsSvc.getButtonControls(
 					"basic",
@@ -249,6 +313,9 @@ export class PortalsSitesUpdatePage implements OnInit {
 				)
 			);
 		}
+		else {
+			control.Options.OnBlur = (_, formControl) => (this.form.controls.SEOInfo as FormGroup).controls.Title.setValue(formControl.value, { onlySelf: true });
+		}
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
@@ -258,6 +325,26 @@ export class PortalsSitesUpdatePage implements OnInit {
 		return formConfig;
 	}
 
+	private get fileOptions() {
+		return {
+			ServiceName: this.portalsCoreSvc.name,
+			ObjectName: "Organization",
+			SystemID: this.organization.ID,
+			RepositoryEntityID: Site.EntityInfo,
+			ObjectID: this.site.ID,
+			ObjectTitle: this.site.Title,
+			IsShared: false,
+			IsTracked: this.organization.TrackDownloadFiles,
+			IsTemporary: false,
+			Extras: {}
+		} as FileOptions;
+	}
+
+	private prepareAttachments(attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo, onCompleted?: (control: AppFormsControl) => void) {
+		const formControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Attachments"));
+		this.filesSvc.prepareAttachmentsFormControl(formControl, false, attachments, addedOrUpdated, deleted, onCompleted);
+	}
+
 	onFormInitialized() {
 		const site = AppUtility.clone(this.site, false);
 		if (!AppUtility.isNotEmpty(this.site.ID)) {
@@ -265,7 +352,7 @@ export class PortalsSitesUpdatePage implements OnInit {
 		}
 		this.form.patchValue(site);
 		this.hash = AppCrypto.hash(this.form.value);
-		this.appFormsSvc.hideLoadingAsync();
+		this.appFormsSvc.hideLoadingAsync(async () => await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments)));
 	}
 
 	async updateAsync() {
@@ -276,7 +363,10 @@ export class PortalsSitesUpdatePage implements OnInit {
 			else {
 				this.processing = true;
 				await this.appFormsSvc.showLoadingAsync(this.title);
+
 				const site = this.form.value;
+				site.Theme = AppUtility.isEquals(site.Theme, "-") ? undefined : site.Theme;
+
 				if (AppUtility.isNotEmpty(site.ID)) {
 					await this.portalsCoreSvc.updateSiteAsync(
 						site,
@@ -290,7 +380,7 @@ export class PortalsSitesUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -307,7 +397,7 @@ export class PortalsSitesUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -332,7 +422,7 @@ export class PortalsSitesUpdatePage implements OnInit {
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error))
+					async error => await this.appFormsSvc.showErrorAsync(error)
 				);
 			},
 			await this.configSvc.getResourceAsync("common.buttons.delete"),
