@@ -24,11 +24,6 @@ export class Role extends CoreBaseModel implements INestedObject {
 		return this.instances.values();
 	}
 
-	/** The entity information for working with portals */
-	public static get EntityInfo() {
-		return "net.vieapps.Services.Portals.Role,VIEApps.Services.Portals";
-	}
-
 	ParentID = undefined as string;
 	Title = undefined as string;
 	Description = undefined as string;

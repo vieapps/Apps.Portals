@@ -16,4 +16,10 @@ export abstract class PortalCoreBase extends BaseModel {
 		return BaseModel.ContentTypeDefinitions;
 	}
 
+	public getEntityInfo(objectName: string) {
+		const objectDefinition = BaseModel.ModuleDefinitions !== undefined && BaseModel.ModuleDefinitions.length > 0
+			? BaseModel.ModuleDefinitions[0].ObjectDefinitions.find(definition => AppUtility.isEquals(definition.ObjectName, objectName))
+			: undefined;
+		return objectDefinition !== undefined ? objectDefinition.EntityDefinitionTypeName : undefined;
+	}
 }

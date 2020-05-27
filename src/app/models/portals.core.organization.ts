@@ -30,11 +30,6 @@ export class Organization extends CoreBaseModel {
 	/** Active organization */
 	public static active: Organization;
 
-	/** The entity information for working with portals */
-	public static get EntityInfo() {
-		return "net.vieapps.Services.Portals.Organization,VIEApps.Services.Portals";
-	}
-
 	Title = undefined as string;
 	Description = undefined as string;
 	OwnerID = undefined as string;

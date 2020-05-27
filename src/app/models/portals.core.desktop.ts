@@ -26,11 +26,6 @@ export class Desktop extends CoreBaseModel implements INestedObject {
 		return this.instances.values();
 	}
 
-	/** The entity information for working with portals */
-	public static get EntityInfo() {
-		return "net.vieapps.Services.Portals.Desktop,VIEApps.Services.Portals";
-	}
-
 	ParentID = undefined as string;
 	Title = undefined as string;
 	Alias = undefined as string;

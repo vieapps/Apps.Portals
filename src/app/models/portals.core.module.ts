@@ -29,11 +29,6 @@ export class Module extends CoreBaseModel {
 	/** Active module */
 	public static active: Module;
 
-	/** The entity information for working with portals */
-	public static get EntityInfo() {
-		return "net.vieapps.Services.Portals.Role,VIEApps.Services.Portals";
-	}
-
 	Title = undefined as string;
 	Description = undefined as string;
 	DesktopID = undefined as string;

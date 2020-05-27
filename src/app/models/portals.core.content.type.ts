@@ -26,11 +26,6 @@ export class ContentType extends CoreBaseModel {
 		return this.instances.values();
 	}
 
-	/** The entity information for working with portals */
-	public static get EntityInfo() {
-		return "net.vieapps.Services.Portals.ContentType,VIEApps.Services.Portals";
-	}
-
 	Title = undefined as string;
 	Description = undefined as string;
 	DesktopID = undefined as string;

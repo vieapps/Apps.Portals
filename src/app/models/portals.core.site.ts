@@ -24,11 +24,6 @@ export class Site extends CoreBaseModel {
 		return this.instances.values();
 	}
 
-	/** The entity information for working with portals */
-	public static get EntityInfo() {
-		return "net.vieapps.Services.Portals.Site,VIEApps.Services.Portals";
-	}
-
 	Title = undefined as string;
 	Description = undefined as string;
 	Status = undefined as string;
