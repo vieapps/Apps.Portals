@@ -43,6 +43,7 @@ export interface ModuleDefinition {
 	Description: string;
 	Icon?: string;
 	ContentTypeDefinitions: ContentTypeDefinition[];
+	ObjectDefinitions: ContentTypeDefinition[];
 }
 
 /** Interface of a content-type definition */
@@ -57,8 +58,10 @@ export interface ContentTypeDefinition {
 	ObjectName: string;
 	ObjectNamePrefix?: string;
 	ObjectNameSuffix?: string;
-	NestedObject?: boolean;
 	ParentObjectName?: string;
+	NestedObject?: boolean;
+	Portlets?: boolean;
+	EntityDefinitionTypeName?: string;
 	ModuleDefinition: ModuleDefinition;
 }
 
