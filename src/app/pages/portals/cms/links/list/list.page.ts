@@ -133,7 +133,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			: await this.portalsCoreSvc.getActiveOrganizationAsync();
 
 		if (this.organization === undefined) {
-			await this.backAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all");
+			await this.appFormsSvc.hideLoadingAsync(async () => await this.backAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all"));
 			return;
 		}
 
@@ -153,7 +153,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		if (!this.canContribute) {
 			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateHomeAsync()
+				this.configSvc.navigateBackAsync()
 			]));
 			return;
 		}
@@ -190,24 +190,24 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			this.parentLink = Link.get(this.parentID);
 
 			if (this.parentLink !== undefined) {
+				this.links = this.parentLink.Children;
+				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentLink.FullTitle}]` });
+				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					if (info.args.Object === "CMS.Link" && (this.parentLink.ID === info.args.ID || this.parentLink.ID === info.args.ParentID)) {
 						this.links = this.parentLink.Children;
 					}
 				}, `CMS.Links:${this.parentLink.ID}:Refresh`);
-				this.links = this.parentLink.Children;
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentLink.FullTitle}]` });
-				await this.appFormsSvc.hideLoadingAsync();
 			}
 			else {
+				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.contentType === undefined ? this.organization.Title : this.organization.Title + " :: " + this.contentType.Title)}]` });
+				this.prepareFilterBy();
+				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					if (info.args.Object === "CMS.Link") {
 						this.prepareResults();
 					}
 				}, "CMS.Links:Refresh");
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.contentType === undefined ? this.organization.Title : this.organization.Title + " :: " + this.contentType.Title)}]` });
-				this.prepareFilterBy();
-				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 			}
 		}
 

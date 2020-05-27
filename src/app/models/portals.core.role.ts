@@ -7,13 +7,15 @@ export class Role extends CoreBaseModel implements INestedObject {
 
 	constructor(
 		systemID?: string,
-		title?: string
+		title?: string,
+		parentID?: string
 	) {
 		super();
 		delete this["Privileges"];
 		delete this["OriginalPrivileges"];
 		this.SystemID = AppUtility.isNotEmpty(systemID) ? systemID : "";
 		this.Title = AppUtility.isNotEmpty(title) ? title : "";
+		this.ParentID = AppUtility.isNotEmpty(parentID) ? parentID : "";
 	}
 
 	/** All instances of role */

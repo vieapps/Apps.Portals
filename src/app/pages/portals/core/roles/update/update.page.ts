@@ -54,6 +54,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 	}
 
 	private async initializeAsync() {
+		await this.appFormsSvc.showLoadingAsync();
 		this.role = Role.get(this.configSvc.requestParams["ID"]);
 
 		this.organization = this.role !== undefined
@@ -66,19 +67,19 @@ export class PortalsRolesUpdatePage implements OnInit {
 
 		this.canModerateOrganization = this.portalsCoreSvc.canModerateOrganization(this.organization);
 		if (!this.canModerateOrganization) {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateBackAsync();
+			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+				this.configSvc.navigateBackAsync()
+			]));
 		}
 
-		this.role = this.role || new Role(this.organization.ID);
+		this.role = this.role || new Role(this.organization.ID, "", this.configSvc.requestParams["ParentID"]);
 		if (this.organization === undefined || !AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.role.SystemID) {
-			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"));
+			await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid")));
 			return;
 		}
 
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.roles.title.${(AppUtility.isNotEmpty(this.role.ID) ? "update" : "create")}`);
-		await this.appFormsSvc.showLoadingAsync(this.title);
-
 		this.button = {
 			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.role.ID) ? "update" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
@@ -94,10 +95,6 @@ export class PortalsRolesUpdatePage implements OnInit {
 				};
 			});
 			await this.prepareUsersAsync();
-		}
-
-		if (!AppUtility.isNotEmpty(this.role.ID)) {
-			this.role.ParentID = this.configSvc.requestParams["ParentID"];
 		}
 
 		this.formConfig = await this.getFormControlsAsync();
@@ -247,8 +244,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const role = AppUtility.clone(this.role, false);
-		this.form.patchValue(role);
+		this.form.patchValue(this.role);
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync();
 	}

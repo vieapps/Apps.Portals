@@ -104,6 +104,8 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
+		await this.appFormsSvc.showLoadingAsync();
+
 		this.organization = this.portalsCoreSvc.getOrganization(this.configSvc.requestParams["SystemID"]);
 		if (this.organization === undefined) {
 			await this.appFormsSvc.showAlertAsync(
@@ -117,8 +119,10 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		}
 
 		if (!this.portalsCoreSvc.canModerateOrganization(this.organization)) {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateHomeAsync();
+			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+				this.configSvc.navigateHomeAsync()
+			]));
 			return;
 		}
 
@@ -131,6 +135,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 			this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.roles.list.searchbar");
 			PlatformUtility.focus(this.searchCtrl);
+			await this.appFormsSvc.hideLoadingAsync();
 		}
 		else {
 			this.actions = [
@@ -144,6 +149,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 			if (this.parentRole !== undefined) {
 				this.roles = this.parentRole.Children;
 				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentRole.FullTitle}]` });
+				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on("Portals", info => {
 					if (info.args.Object === "Role" && (this.parentRole.ID === info.args.ID || this.parentRole.ID === info.args.ParentID)) {
 						this.roles = this.parentRole.Children;
@@ -151,23 +157,22 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 				}, `Roles:${this.parentRole.ID}:Refresh`);
 			}
 			else {
-				AppEvents.on("Portals", info => {
-					if (info.args.Object === "Role" && info.args.ParentID === undefined) {
-						this.prepareResults();
-					}
-				}, "Roles:Refresh");
 				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
 				this.filterBy.And = [
 					{ SystemID: { Equals: this.organization.ID } },
 					{ ParentID: "IsNull" }
 				];
-				await this.startSearchAsync();
+				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+				AppEvents.on("Portals", info => {
+					if (info.args.Object === "Role" && info.args.ParentID === undefined) {
+						this.prepareResults();
+					}
+				}, "Roles:Refresh");
 			}
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<Roles>: show the collection of roles", this.configSvc.requestParams, this.filterBy);
-			console.log("<Roles>: organization & parent", this.organization, this.parentRole);
+			console.log("<Roles>: show the list", this.organization, this.parentRole, this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 

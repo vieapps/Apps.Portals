@@ -85,6 +85,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
+		await this.appFormsSvc.showLoadingAsync();
 		const contentID = this.configSvc.requestParams["ID"];
 		this.content = Content.get(contentID);
 		if (this.content === undefined) {
@@ -92,8 +93,10 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		}
 
 		if (this.content === undefined) {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateBackAsync();
+			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+				this.configSvc.navigateBackAsync()
+			]));
 			return;
 		}
 
@@ -117,13 +120,14 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		}
 
 		if (!canView) {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateBackAsync();
+			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+				this.configSvc.navigateBackAsync()
+			]));
 			return;
 		}
 
 		this.title = await this.configSvc.getResourceAsync("portals.cms.contents.title.view");
-		await this.appFormsSvc.showLoadingAsync(this.title);
 		this.configSvc.appTitle = this.title = this.title + ` [${this.content.Title}]`;
 
 		this.resources = {

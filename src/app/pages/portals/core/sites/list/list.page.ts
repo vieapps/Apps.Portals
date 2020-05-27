@@ -92,6 +92,8 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
+		await this.appFormsSvc.showLoadingAsync();
+
 		this.organization = this.portalsCoreSvc.getOrganization(this.configSvc.requestParams["SystemID"]);
 		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
@@ -108,8 +110,10 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		}
 
 		if (!this.canModerateOrganization) {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateHomeAsync();
+			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+				this.configSvc.navigateHomeAsync()
+			]));
 			return;
 		}
 
@@ -124,18 +128,19 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.sites.list.searchbar");
 			PlatformUtility.focus(this.searchCtrl);
+			await this.appFormsSvc.hideLoadingAsync();
 		}
 		else {
+			this.actions = [
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.create"), "create", () => this.createAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.search"), "search", () => this.openSearchAsync())
+			];
+			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 			AppEvents.on("Portals", info => {
 				if (info.args.Object === "Site" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
 					this.prepareResults();
 				}
 			}, "Sites:Refresh");
-			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.search"), "search", () => this.openSearchAsync())
-			];
-			await this.startSearchAsync();
 		}
 
 		if (this.configSvc.isDebug) {

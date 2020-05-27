@@ -71,6 +71,7 @@ export class CmsLinksUpdatePage implements OnInit {
 	}
 
 	private async initializeAsync() {
+		await this.appFormsSvc.showLoadingAsync();
 		this.link = Link.get(this.configSvc.requestParams["ID"]);
 
 		this.contentType = this.link !== undefined
@@ -94,7 +95,7 @@ export class CmsLinksUpdatePage implements OnInit {
 				? this.link.ContentType
 				: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 			if (this.contentType === undefined) {
-				await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all");
+				await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all"));
 				return;
 			}
 		}
@@ -107,15 +108,15 @@ export class CmsLinksUpdatePage implements OnInit {
 			canUpdate = AppUtility.isEquals(this.link.CreatedID, this.configSvc.getAccount().id);
 		}
 		if (!canUpdate) {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateBackAsync();
+			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+				this.configSvc.navigateBackAsync()
+			]));
 			return;
 		}
 
 		this.link = this.link || new Link(this.organization.ID, this.module.ID, this.contentType.ID, this.configSvc.requestParams["ParentID"]);
-
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.cms.links.title.${(AppUtility.isNotEmpty(this.link.ID) ? "update" : "create")}`);
-		await this.appFormsSvc.showLoadingAsync(this.title);
 
 		this.button = {
 			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.link.ID) ? "update" : "create")}`),

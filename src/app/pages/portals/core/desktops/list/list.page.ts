@@ -105,6 +105,8 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
+		await this.appFormsSvc.showLoadingAsync();
+
 		this.organization = this.portalsCoreSvc.getOrganization(this.configSvc.requestParams["SystemID"]);
 		if (this.organization === undefined) {
 			await this.appFormsSvc.showAlertAsync(
@@ -118,8 +120,10 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		}
 
 		if (!this.portalsCoreSvc.canModerateOrganization(this.organization)) {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateHomeAsync();
+			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+				this.configSvc.navigateHomeAsync()
+			]));
 			return;
 		}
 
@@ -133,6 +137,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.desktops.list.searchbar");
 			PlatformUtility.focus(this.searchCtrl);
+			await this.appFormsSvc.hideLoadingAsync();
 		}
 		else {
 			this.actions = [
@@ -144,32 +149,32 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			this.parentDesktop = Desktop.get(this.parentID);
 
 			if (this.parentDesktop !== undefined) {
+				this.desktops = this.parentDesktop.Children;
+				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentDesktop.FullTitle}]` });
+				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on("Portals", info => {
 					if (info.args.Object === "Desktop" && (this.parentDesktop.ID === info.args.ID || this.parentDesktop.ID === info.args.ParentID)) {
 						this.desktops = this.parentDesktop.Children;
 					}
 				}, `Desktops:${this.parentDesktop.ID}:Refresh`);
-				this.desktops = this.parentDesktop.Children;
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentDesktop.FullTitle}]` });
 			}
 			else {
-				AppEvents.on("Portals", info => {
-					if (info.args.Object === "Desktop") {
-						this.prepareResults();
-					}
-				}, "Desktops:Refresh");
 				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
 				this.filterBy.And = [
 					{ SystemID: { Equals: this.organization.ID } },
 					{ ParentID: "IsNull" }
 				];
-				await this.startSearchAsync();
+				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+				AppEvents.on("Portals", info => {
+					if (info.args.Object === "Desktop") {
+						this.prepareResults();
+					}
+				}, "Desktops:Refresh");
 			}
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<Desktops>: show the collection of dekstops", this.configSvc.requestParams, this.filterBy);
-			console.log("<Desktops>: organization & parent", this.organization, this.parentDesktop);
+			console.log("<Desktops>: show the list", this.organization, this.parentDesktop, this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 

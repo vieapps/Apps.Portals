@@ -84,6 +84,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
+		await this.appFormsSvc.showLoadingAsync();
 		const itemID = this.configSvc.requestParams["ID"];
 		this.item = Item.get(itemID);
 		if (this.item === undefined) {
@@ -91,8 +92,10 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 		}
 
 		if (this.item === undefined) {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateBackAsync();
+			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+				this.configSvc.navigateBackAsync()
+			]));
 			return;
 		}
 
@@ -116,13 +119,14 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 		}
 
 		if (!canView) {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateBackAsync();
+			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+				this.configSvc.navigateBackAsync()
+			]));
 			return;
 		}
 
 		this.title = await this.configSvc.getResourceAsync("portals.cms.contents.title.view");
-		await this.appFormsSvc.showLoadingAsync(this.title);
 		this.configSvc.appTitle = this.title = this.title + ` [${this.item.Title}]`;
 
 		this.resources = {
@@ -244,7 +248,6 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 					this.prepareAttachments("Attachments", attachments);
 				});
 			}
-			console.warn("ITEM", this.item);
 		});
 	}
 
@@ -312,7 +315,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error))
+					async error => await this.appFormsSvc.showErrorAsync(error)
 				);
 			},
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove"),

@@ -165,14 +165,14 @@ export class CmsItemListPage implements OnInit, OnDestroy {
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.search"), "search", () => this.openSearchAsync())
 			];
 
+			this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.contentType === undefined ? this.organization.Title : this.organization.Title + " :: " + this.contentType.Title)}]` });
+			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+
 			AppEvents.on(this.portalsCoreSvc.name, info => {
 				if (info.args.Object === "CMS.Item") {
 					this.prepareResults();
 				}
 			}, "CMS.Items:Refresh");
-
-			this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.contentType === undefined ? this.organization.Title : this.organization.Title + " :: " + this.contentType.Title)}]` });
-			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 		}
 
 		if (this.configSvc.isDebug) {

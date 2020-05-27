@@ -97,6 +97,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
+		await this.appFormsSvc.showLoadingAsync();
 		this.systemID = this.configSvc.requestParams["SystemID"];
 		this.definitionID = this.configSvc.requestParams["DefinitionID"];
 
@@ -119,8 +120,10 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		}
 
 		if (!this.canModerateOrganization) {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateHomeAsync();
+			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+				this.configSvc.navigateHomeAsync()
+			]));
 			return;
 		}
 
@@ -142,23 +145,23 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.modules.list.searchbar");
 			PlatformUtility.focus(this.searchCtrl);
+			await this.appFormsSvc.hideLoadingAsync();
 		}
 		else {
+			this.actions = [
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.create"), "create", () => this.createAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.search"), "search", () => this.openSearchAsync())
+			];
+			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 			AppEvents.on("Portals", info => {
 				if (info.args.Object === "Module" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
 					this.prepareResults();
 				}
 			}, this.definition !== undefined ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
-			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.search"), "search", () => this.openSearchAsync())
-			];
-			await this.startSearchAsync();
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<Modules>: show the collection of modules", this.configSvc.requestParams, this.filterBy);
-			console.log("<Modules>: organization & definition", this.organization, this.definition);
+			console.log("<Modules>: show the list", this.organization, this.definition, this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 

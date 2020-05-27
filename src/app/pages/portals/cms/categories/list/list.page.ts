@@ -194,24 +194,24 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			this.parentCategory = Category.get(this.parentID);
 
 			if (this.parentCategory !== undefined) {
+				this.categories = this.parentCategory.Children;
+				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentCategory.FullTitle}]` });
+				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					if (info.args.Object === "CMS.Category" && (this.parentCategory.ID === info.args.ID || this.parentCategory.ID === info.args.ParentID)) {
 						this.categories = this.parentCategory.Children;
 					}
 				}, `CMS.Categoriess:${this.parentCategory.ID}:Refresh`);
-				this.categories = this.parentCategory.Children;
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentCategory.FullTitle}]` });
-				await this.appFormsSvc.hideLoadingAsync();
 			}
 			else {
+				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.module === undefined ? this.organization.Title : this.organization.Title + " :: " + this.module.Title)}]` });
+				this.prepareFilterBy();
+				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					if (info.args.Object === "CMS.Category") {
 						this.prepareResults();
 					}
 				}, "CMS.Categories:Refresh");
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.module === undefined ? this.organization.Title : this.organization.Title + " :: " + this.module.Title)}]` });
-				this.prepareFilterBy();
-				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 			}
 		}
 

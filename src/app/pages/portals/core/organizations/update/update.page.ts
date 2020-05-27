@@ -67,9 +67,8 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 	}
 
 	private async initializeAsync() {
+		await this.appFormsSvc.showLoadingAsync();
 		this.organization = Organization.get(this.configSvc.requestParams["ID"]);
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.organizations.title.${(this.organization === undefined ? "create" : "update")}`);
-		await this.appFormsSvc.showLoadingAsync(this.title);
 
 		this.canModerateOrganization = this.portalsCoreSvc.canModerateOrganization(this.organization);
 		if (!this.canModerateOrganization) {
@@ -80,12 +79,13 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			return;
 		}
 
+		this.organization = this.organization || new Organization("Pending", new Privileges(true));
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.organizations.title.${(AppUtility.isNotEmpty(this.organization.ID) ? "update" : "create")}`);
 		this.button = {
-			update: await this.configSvc.getResourceAsync(`common.buttons.${(this.organization === undefined ? "create" : "update")}`),
+			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.organization.ID) ? "update" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
-		this.organization = this.organization || new Organization("Pending", new Privileges(true));
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 	}
@@ -556,7 +556,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await await this.appFormsSvc.showErrorAsync(error);
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -573,7 +573,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await await this.appFormsSvc.showErrorAsync(error);
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
