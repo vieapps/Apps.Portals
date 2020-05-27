@@ -40,7 +40,8 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 	formConfig: Array<AppFormsControlConfig>;
 	formSegments = {
 		items: undefined as Array<AppFormsSegment>,
-		default: "basic"
+		default: "basic",
+		current: "basic"
 	};
 	formControls = new Array<AppFormsControl>();
 	processing = false;
@@ -363,6 +364,47 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		this.appFormsSvc.hideLoadingAsync(async () => await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments)));
 	}
 
+	private async showErrorAsync(error: any) {
+		const aliasIsExisted = "AliasIsExistedException" === error.Type;
+		const templateIsInvalid = "TemplateIsInvalidException" === error.Type;
+		const metaTagsAreInvalid = "MetaTagsAreInvalidException" === error.Type;
+		const scriptsAreInvalid = "ScriptsAreInvalidException" === error.Type;
+		const details = AppUtility.isNotEmpty(error.Message) ? error.Message as string : "";
+		const subHeader = aliasIsExisted
+			? await this.appFormsSvc.getResourceAsync("portals.common.errors.alias.desktop")
+			: templateIsInvalid
+				? details.indexOf("no zone") > 0
+					? await this.appFormsSvc.getResourceAsync("portals.common.errors.template.desktop.noZone")
+					: details.indexOf("but has no value") > 0
+						? await this.appFormsSvc.getResourceAsync("portals.common.errors.template.desktop.zoneNoID")
+						: details.indexOf("by another zone") > 0
+							? await this.appFormsSvc.getResourceAsync("portals.common.errors.template.desktop.zoneExisted")
+							: details.indexOf("required a zone") > 0
+								? await this.appFormsSvc.getResourceAsync("portals.common.errors.template.desktop.required")
+								: await this.appFormsSvc.getResourceAsync("portals.common.errors.template.desktop.invalid")
+				: metaTagsAreInvalid
+					? await this.appFormsSvc.getResourceAsync("portals.common.errors.metaTags")
+					: scriptsAreInvalid
+						? await this.appFormsSvc.getResourceAsync("portals.common.errors.scripts")
+						: undefined;
+		await this.appFormsSvc.showErrorAsync(error, subHeader, () => {
+			if (aliasIsExisted) {
+				const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias"));
+				this.formSegments.current = control.Segment;
+				control.focus();
+			}
+			else if (templateIsInvalid || metaTagsAreInvalid || scriptsAreInvalid) {
+				const control = metaTagsAreInvalid
+					? this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "MetaTags"))
+					: scriptsAreInvalid
+						? this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Scripts"))
+						: this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"));
+				this.formSegments.current = control.Segment;
+				control.focus();
+			}
+		});
+	}
+
 	async updateAsync() {
 		if (this.appFormsSvc.validate(this.form)) {
 			if (this.hash === AppCrypto.hash(this.form.value)) {
@@ -398,7 +440,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.showErrorAsync(error);
+							await this.showErrorAsync(error);
 						}
 					);
 				}
@@ -415,7 +457,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.showErrorAsync(error);
+							await this.showErrorAsync(error);
 						}
 					);
 				}
@@ -450,7 +492,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.showErrorAsync(error),
+					async error => await this.showErrorAsync(error),
 					{ "x-children": mode }
 				);
 			},

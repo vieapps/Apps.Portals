@@ -44,7 +44,8 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 	formConfig: Array<AppFormsControlConfig>;
 	formSegments = {
 		items: undefined as Array<AppFormsSegment>,
-		default: "basic"
+		default: "basic",
+		current: "basic"
 	};
 	formControls = new Array<AppFormsControl>();
 	processing = false;
@@ -354,6 +355,25 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		this.appFormsSvc.hideLoadingAsync(async () => await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments)));
 	}
 
+	private async showErrorAsync(error: any) {
+		const metaTagsAreInvalid = "MetaTagsAreInvalidException" === error.Type;
+		const scriptsAreInvalid = "ScriptsAreInvalidException" === error.Type;
+		const subHeader = metaTagsAreInvalid
+			? await this.appFormsSvc.getResourceAsync("portals.common.errors.metaTags")
+			: scriptsAreInvalid
+				? await this.appFormsSvc.getResourceAsync("portals.common.errors.scripts")
+				: undefined;
+		await this.appFormsSvc.showErrorAsync(error, subHeader, () => {
+			if (metaTagsAreInvalid || scriptsAreInvalid) {
+				const control = metaTagsAreInvalid
+					? this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "MetaTags"))
+					: this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Scripts"));
+				this.formSegments.current = control.Segment;
+				control.focus();
+			}
+		});
+	}
+
 	async updateAsync() {
 		if (this.appFormsSvc.validate(this.form)) {
 			if (this.hash === AppCrypto.hash(this.form.value)) {
@@ -380,7 +400,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.showErrorAsync(error);
+							await this.showErrorAsync(error);
 						}
 					);
 				}
@@ -397,7 +417,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.showErrorAsync(error);
+							await this.showErrorAsync(error);
 						}
 					);
 				}
@@ -422,7 +442,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.showErrorAsync(error)
+					async error => await this.showErrorAsync(error)
 				);
 			},
 			await this.configSvc.getResourceAsync("common.buttons.delete"),

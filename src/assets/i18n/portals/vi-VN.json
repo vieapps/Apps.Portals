@@ -175,7 +175,24 @@
 				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác",
 				"children": "{{number}} nội dung cấp dưới: {{children}}"
 			},
-			"unspecified": "Không xác định"
+			"unspecified": "Không xác định",
+			"errors": {
+				"alias": {
+					"organization": "Tên rút gọn của đơn vị - tổ chức đã được sử dụng bởi đơn vị khác, cần lựa chọn tên khác",
+					"desktop": "Tên rút gọn của desktop đã được sử dụng bởi desktop hiển thị khác"
+				},
+				"template": {
+					"desktop": {
+						"invalid": "Mẫu hiển thị của desktop chưa đúng tiêu chuẩn XHTML",
+						"required": "Mẫu hiển thị của desktop chưa đúng tiêu chuẩn do thiếu các vùng buộc phải có",
+						"noZone": "Mẫu hiển thị của desktop không có bất kỳ một vùng hiển thị nào (nghĩa là phải có thẻ với thuộc tính 'zone-id')",
+						"zoneNoID": "Vùng hiển thị của desktop chưa đúng tiêu chuẩn do không có mã định danh",
+						"zoneExisted": "Vùng hiển thị của desktop chưa đúng tiêu chuẩn do mã định danh đã được dùng cho vùng khác"
+					}
+				},
+				"metaTags": "Các thẻ meta chưa đúng tiêu chuẩn XHTML/XML",
+				"scripts": "Các thẻ script chưa đúng tiêu chuẩn XHTML/XML"
+			}
 		},
 		"organizations": {
 			"title": {

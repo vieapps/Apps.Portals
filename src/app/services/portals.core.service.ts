@@ -133,7 +133,10 @@ export class PortalsCoreService extends BaseService {
 			BaseModel.ModuleDefinitions = this.configSvc.getDefinition(path);
 			if (BaseModel.ModuleDefinitions === undefined) {
 				BaseModel.ModuleDefinitions = await this.configSvc.fetchDefinitionAsync(path, false);
-				BaseModel.ModuleDefinitions.forEach(definition => definition.ContentTypeDefinitions.forEach(contentTypeDefinition => contentTypeDefinition.ModuleDefinition = definition));
+				BaseModel.ModuleDefinitions.forEach(definition => {
+					definition.ContentTypeDefinitions.forEach(contentTypeDefinition => contentTypeDefinition.ModuleDefinition = definition);
+					definition.ObjectDefinitions.forEach(objectDefinition => objectDefinition.ModuleDefinition = definition);
+				});
 			}
 			if (onNext !== undefined) {
 				onNext();
