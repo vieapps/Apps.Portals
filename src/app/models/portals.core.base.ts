@@ -18,7 +18,7 @@ export abstract class PortalCoreBase extends BaseModel {
 
 	public getEntityInfo(objectName: string) {
 		const objectDefinition = BaseModel.ModuleDefinitions !== undefined && BaseModel.ModuleDefinitions.length > 0
-			? BaseModel.ModuleDefinitions[0].ObjectDefinitions.find(definition => AppUtility.isEquals(definition.ObjectName, objectName))
+			? BaseModel.ModuleDefinitions.find(definition => AppUtility.isEquals(definition.ServiceName, "Portals")).ObjectDefinitions.find(definition => AppUtility.isEquals(definition.ObjectName, objectName))
 			: undefined;
 		return objectDefinition !== undefined ? objectDefinition.EntityDefinitionTypeName : undefined;
 	}

@@ -42,6 +42,9 @@ export interface ModuleDefinition {
 	Title: string;
 	Description: string;
 	Icon?: string;
+	Directory?: string;
+	ServiceName?: string;
+	RepositoryDefinitionTypeName?: string;
 	ContentTypeDefinitions: ContentTypeDefinition[];
 	ObjectDefinitions: ContentTypeDefinition[];
 }
