@@ -329,7 +329,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 			ServiceName: this.portalsCoreSvc.name,
 			ObjectName: "Organization",
 			SystemID: this.organization.ID,
-			RepositoryEntityID: Site.EntityInfo,
+			RepositoryEntityID: this.site.getEntityInfo("Site"),
 			ObjectID: this.site.ID,
 			ObjectTitle: this.site.Title,
 			IsShared: false,

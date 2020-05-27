@@ -335,7 +335,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 			ServiceName: this.portalsCoreSvc.name,
 			ObjectName: "Organization",
 			SystemID: this.organization.ID,
-			RepositoryEntityID: Desktop.EntityInfo,
+			RepositoryEntityID: this.desktop.getEntityInfo("Desktop"),
 			ObjectID: this.desktop.ID,
 			ObjectTitle: this.desktop.Title,
 			IsShared: false,
