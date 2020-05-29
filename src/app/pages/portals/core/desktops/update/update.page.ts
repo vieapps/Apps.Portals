@@ -212,7 +212,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		control.Options.Rows = 18;
 		control.Options.Icon = {
 			Name: "color-wand",
-			OnClick: (event, formControl) => console.warn("Click icon to generate the template", event, formControl)
+			OnClick: async (_, formControl) => formControl.setValue(await this.portalsCoreSvc.getTemplateAsync("desktop.xml"))
 		};
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "UISettings"));
@@ -341,7 +341,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 	private get fileOptions() {
 		return {
 			ServiceName: this.portalsCoreSvc.name,
-			ObjectName: "Organization",
+			ObjectName: "Desktop",
 			SystemID: this.organization.ID,
 			RepositoryEntityID: this.desktop.getEntityInfo("Desktop"),
 			ObjectID: this.desktop.ID,
