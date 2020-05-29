@@ -102,7 +102,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 		let canView = false;
 		const account = this.configSvc.getAccount();
-		this.canModerate = this.portalsCoreSvc.canModerateOrganization(this.content.Organization, account) || this.portalsCmsSvc.canModerate(this.content, account);
+		this.canModerate = this.portalsCoreSvc.canModerateOrganization(this.content.organization, account) || this.portalsCmsSvc.canModerate(this.content, account);
 
 		if (AppUtility.isEquals(this.content.Status, "Draft") || AppUtility.isEquals(this.content.Status, "Pending") || AppUtility.isEquals(this.content.Status, "Rejected")) {
 			this.canEdit = canView = this.canModerate || this.portalsCmsSvc.canEdit(this.content, account) || AppUtility.isEquals(this.content.CreatedID, account.id);
@@ -299,7 +299,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 							break;
 
 						case "AllowComments":
-							control.Hidden = !this.content.ContentType.AllowComments;
+							control.Hidden = !this.content.contentType.AllowComments;
 							break;
 
 						case "Summary":

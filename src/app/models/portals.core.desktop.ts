@@ -1,9 +1,9 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
-import { INestedObject, ElementUISettings } from "@models/portals.base";
+import { NestedObject, ElementUISettings } from "@models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
 
-export class Desktop extends CoreBaseModel implements INestedObject {
+export class Desktop extends CoreBaseModel implements NestedObject {
 
 	constructor(
 		systemID?: string,

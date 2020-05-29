@@ -64,6 +64,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 	}
 
 	private async initializeAsync() {
+		await this.appFormsSvc.showLoadingAsync();
 		this.contentType = ContentType.get(this.configSvc.requestParams["ID"]);
 
 		this.organization = this.contentType !== undefined
@@ -76,24 +77,21 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 
 		this.isSystemModerator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canModerateOrganization = this.isSystemModerator || this.portalsCoreSvc.canModerateOrganization(this.organization);
-		if (this.canModerateOrganization) {
-			await this.initializeFormAsync();
+		if (!this.canModerateOrganization) {
+			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+				this.configSvc.navigateBackAsync()
+			]));
+			return;
 		}
-		else {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateBackAsync();
-		}
-	}
 
-	private async initializeFormAsync() {
 		this.contentType = this.contentType || new ContentType(this.organization.ID);
 		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.contentType.SystemID) {
-			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"));
+			await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid")));
 			return;
 		}
 
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.contenttypes.title.${(AppUtility.isNotEmpty(this.contentType.ID) ? "update" : "create")}`);
-		await this.appFormsSvc.showLoadingAsync(this.title);
 
 		if (Module.all.filter(o => o.SystemID === this.organization.ID).length < 1) {
 			const request = AppPagination.buildRequest(
@@ -105,7 +103,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 		}
 
 		if (Module.all.filter(o => o.SystemID === this.organization.ID).length < 1) {
-			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"));
+			await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid")));
 			return;
 		}
 
@@ -359,10 +357,17 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 		}
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
+		if (AppUtility.isNotEmpty(this.contentType.ID)) {
+			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
+			control.Order = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Audits")).Order + 1;
+			control.Hidden = false;
+			control.Options.Label = "{{common.audits.identity}}";
+			control.Options.ReadOnly = true;
+		}
+
 		if (onCompleted !== undefined) {
 			onCompleted(formConfig);
 		}
-
 		return formConfig;
 	}
 

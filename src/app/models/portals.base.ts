@@ -9,11 +9,11 @@ export abstract class PortalBase extends BaseModel {
 	}
 
 	/** Get the collection of all module definitions */
-	public static ModuleDefinitions: ModuleDefinition[];
+	public static moduleDefinitions: ModuleDefinition[];
 
 	/** Get the collection of all content-type definition */
-	public static get ContentTypeDefinitions() {
-		return new List(this.ModuleDefinitions || []).Select(definition => definition.ContentTypeDefinitions).SelectMany(definition => new List(definition)).ToArray();
+	public static get contentTypeDefinitions() {
+		return new List(this.moduleDefinitions || []).Select(definition => definition.ContentTypeDefinitions).SelectMany(definition => new List(definition)).ToArray();
 	}
 
 	/** The title */
@@ -69,7 +69,7 @@ export interface ContentTypeDefinition {
 }
 
 /** Interface of all nested objects */
-export interface INestedObject {
+export interface NestedObject {
 	ID: string;
 	Title: string;
 	FullTitle: string;
@@ -79,8 +79,60 @@ export interface INestedObject {
 	CreatedID: string;
 	LastModified: Date;
 	LastModifiedID: string;
-	Parent: INestedObject;
-	Children: INestedObject[];
+	Parent: NestedObject;
+	Children: NestedObject[];
+}
+
+/** Interface of all filter expression */
+export interface FilterBy {
+	Attribute?: string;
+	Operator?: string;
+	Value?: string;
+	Extra?: { [key: string]: any };
+	Children?: Array<FilterBy>;
+}
+
+/** Interface of all sort expression */
+export interface SortBy {
+	Attribute?: string;
+	Mode?: string;
+	ThenBy?: SortBy;
+}
+
+/** Interface of notification settings */
+export interface NotificationSettings {
+	Events?: Array<string>;
+	Methods?: Array<string>;
+	Emails?: {
+		ToAddresses?: string;
+		CcAddresses?: string;
+		BccAddresses?: string;
+		Subject?: string;
+		Body?: string;
+	};
+	WebHooks?: {
+		EndpointURLs?: Array<string>;
+		SignAlgorithm?: string;
+		SignKey?: string;
+		SignatureName?: string;
+		SignatureAsHex?: boolean;
+		SignatureInQuery?: boolean;
+		AdditionalQuery?: string;
+		AdditionalHeader?: string;
+	};
+}
+
+/** Interface of email settings */
+export interface EmailSettings {
+	Sender?: string;
+	Signature?: string;
+	Smtp?: {
+		Host?: string;
+		Port?: number;
+		EnableSsl?: boolean;
+		User?: string;
+		UserPassword?: string;
+	};
 }
 
 /** Interface of UI settings of all elements */

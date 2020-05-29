@@ -12,7 +12,7 @@ import { FilesService } from "@services/files.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
 import { AttachmentInfo } from "@models/base";
-import { INestedObject } from "@models/portals.base";
+import { NestedObject } from "@models/portals.base";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
@@ -75,7 +75,7 @@ export class CmsLinksUpdatePage implements OnInit {
 		this.link = Link.get(this.configSvc.requestParams["ID"]);
 
 		this.contentType = this.link !== undefined
-			? this.link.ContentType
+			? this.link.contentType
 			: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 
 		this.organization = this.link !== undefined
@@ -92,7 +92,7 @@ export class CmsLinksUpdatePage implements OnInit {
 		if (this.contentType === undefined) {
 			await this.portalsCoreSvc.getOrganizationAsync(this.organization.ID, undefined, undefined, true);
 			this.contentType = this.link !== undefined
-				? this.link.ContentType
+				? this.link.contentType
 				: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 			if (this.contentType === undefined) {
 				await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all"));
@@ -182,7 +182,7 @@ export class CmsLinksUpdatePage implements OnInit {
 			const contentTypeFormControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryEntityID"));
 			moduleFormControl.Options.Disabled = contentTypeFormControl.Options.Disabled = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryObjectID")).Options.Disabled = AppUtility.isEquals(formControl.value, "Normal");
 			if (!moduleFormControl.Options.Disabled) {
-				moduleFormControl.Options.SelectOptions.Values = this.organization.Modules.map(module => {
+				moduleFormControl.Options.SelectOptions.Values = this.organization.modules.map(module => {
 					return { Value: module.ID, Label: module.Title };
 				});
 				moduleFormControl.controlRef.setValue(AppUtility.isNotEmpty(this.form.value.LookupRepositoryID) && moduleFormControl.Options.SelectOptions.Values.findIndex(info => info.Value === this.form.value.LookupRepositoryID) > -1 ? this.form.value.LookupRepositoryID : moduleFormControl.Options.SelectOptions.Values.length > 0 ? moduleFormControl.Options.SelectOptions.Values[0].Value : undefined);
@@ -191,12 +191,12 @@ export class CmsLinksUpdatePage implements OnInit {
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryID"));
 		control.Options.SelectOptions.Interface = "popover";
-		control.Options.SelectOptions.Values = this.organization.Modules.map(module => {
+		control.Options.SelectOptions.Values = this.organization.modules.map(module => {
 			return { Value: module.ID, Label: module.Title };
 		});
 		control.Options.OnChanged = (_, formControl) => {
 			const contentTypeFormControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryEntityID"));
-			contentTypeFormControl.Options.SelectOptions.Values = Module.get(formControl.value).ContentTypes.filter(contentType => contentType.ContentTypeDefinition.NestedObject).map(contentType => {
+			contentTypeFormControl.Options.SelectOptions.Values = Module.get(formControl.value).contentTypes.filter(contentType => contentType.contentTypeDefinition.NestedObject).map(contentType => {
 				return { Value: contentType.ID, Label: contentType.Title };
 			});
 			contentTypeFormControl.controlRef.setValue(AppUtility.isNotEmpty(this.form.value.LookupRepositoryEntityID) && contentTypeFormControl.Options.SelectOptions.Values.findIndex(info => info.Value === this.form.value.LookupRepositoryEntityID) > -1 ? this.form.value.LookupRepositoryEntityID : contentTypeFormControl.Options.SelectOptions.Values.length > 0 ? contentTypeFormControl.Options.SelectOptions.Values[0].Value : undefined);
@@ -205,7 +205,7 @@ export class CmsLinksUpdatePage implements OnInit {
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryEntityID"));
 		control.Options.SelectOptions.Interface = "popover";
-		control.Options.SelectOptions.Values = this.module.ContentTypes.filter(contentType => contentType.ContentTypeDefinition.NestedObject).map(contentType => {
+		control.Options.SelectOptions.Values = this.module.contentTypes.filter(contentType => contentType.contentTypeDefinition.NestedObject).map(contentType => {
 			return { Value: contentType.ID, Label: contentType.Title };
 		});
 		control.Options.OnChanged = async (_, formControl) => {
@@ -219,7 +219,7 @@ export class CmsLinksUpdatePage implements OnInit {
 					? (categories: Array<any>) => this.portalsCmsSvc.processCategories(categories)
 					: undefined;
 			if (AppUtility.isNotEmpty(objectFormControl.value)) {
-				let nestedObject: INestedObject = Link.get(objectFormControl.value) || Category.get(objectFormControl.value);
+				let nestedObject: NestedObject = Link.get(objectFormControl.value) || Category.get(objectFormControl.value);
 				if (nestedObject === undefined) {
 					await this.portalsCmsSvc.getAsync(contentType.getObjectName(true), objectFormControl.value, data => nestedObject = Link.get(data.ID) || Category.get(data.ID) || data);
 				}
@@ -248,12 +248,12 @@ export class CmsLinksUpdatePage implements OnInit {
 		control.Options.LookupOptions.ModalOptions.OnDismiss = (values, formControl) => {
 			if (AppUtility.isArray(values, true) && values[0].ID !== formControl.value) {
 				formControl.setValue(values[0].ID);
-				const nestedObject: INestedObject = Link.get(values[0].ID) || Category.get(values[0].ID || values[0]);
+				const nestedObject: NestedObject = Link.get(values[0].ID) || Category.get(values[0].ID || values[0]);
 				formControl.lookupDisplayValues = [{ Value: nestedObject.ID, Label: nestedObject.FullTitle || nestedObject.Title }];
 			}
 		};
 		if (AppUtility.isNotEmpty(this.link.ID) && AppUtility.isNotEmpty(this.link.LookupRepositoryObjectID)) {
-			let nestedObject: INestedObject = Link.get(this.link.LookupRepositoryObjectID) || Category.get(this.link.LookupRepositoryObjectID);
+			let nestedObject: NestedObject = Link.get(this.link.LookupRepositoryObjectID) || Category.get(this.link.LookupRepositoryObjectID);
 			if (nestedObject === undefined) {
 				let contentType = ContentType.get(this.link.LookupRepositoryEntityID);
 				if (contentType === undefined) {

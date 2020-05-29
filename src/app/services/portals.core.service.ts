@@ -13,12 +13,15 @@ import { AuthenticationService } from "@services/authentication.service";
 import { UsersService } from "@services/users.service";
 import { Account } from "@models/account";
 import { PortalBase as BaseModel } from "@models/portals.base";
+import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
-import { Site } from "@models/portals.core.site";
+import { Expression } from "@models/portals.core.expression";
 import { Role } from "@models/portals.core.role";
+import { Site } from "@models/portals.core.site";
 import { Desktop } from "@models/portals.core.desktop";
+import { Portlet } from "@models/portals.core.portlet";
 
 @Injectable()
 export class PortalsCoreService extends BaseService {
@@ -36,17 +39,17 @@ export class PortalsCoreService extends BaseService {
 	private _themes: Array<{ name: string, description: string; author: string; intro: string; screenshots: Array<string> }>;
 
 	public get moduleDefinitions() {
-		return BaseModel.ModuleDefinitions;
+		return BaseModel.moduleDefinitions;
 	}
 
 	public get contentTypeDefinitions() {
-		return BaseModel.ContentTypeDefinitions;
+		return BaseModel.contentTypeDefinitions;
 	}
 
 	public get activeOrganization() {
 		if (Organization.active === undefined) {
 			Organization.active = Organization.instances.size() > 0 ? Organization.all[0] : undefined;
-			if (Organization.active !== undefined && Organization.active.Modules.length < 1) {
+			if (Organization.active !== undefined && Organization.active.modules.length < 1) {
 				this.getOrganizationAsync(Organization.active.ID);
 			}
 		}
@@ -60,12 +63,16 @@ export class PortalsCoreService extends BaseService {
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Role", message => this.processRoleUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Desktop", message => this.processDesktopUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Desktop", message => this.processDesktopUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Portlet", message => this.processPortletUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Portlet", message => this.processPortletUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Site", message => this.processSiteUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Site", message => this.processSiteUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Module", message => this.processModuleUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Module", message => this.processModuleUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "ContentType", message => this.processContentTypeUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.ContentType", message => this.processContentTypeUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Expression", message => this.processExpressionUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Expression", message => this.processExpressionUpdateMessage(message));
 		AppEvents.on("Portals", info => {
 			if (info.args.Type === "RequestInfo" && AppUtility.isNotEmpty(info.args.ID)) {
 				if (info.args.Object === "Organization") {
@@ -96,7 +103,7 @@ export class PortalsCoreService extends BaseService {
 	public async initializeAysnc() {
 		await this.getDefinitionsAsync(() => {
 			if (this.configSvc.isDebug) {
-				console.log("[Portal]: The definitions were initialized", BaseModel.ModuleDefinitions);
+				console.log("[Portal]: The definitions were initialized", BaseModel.moduleDefinitions);
 			}
 		});
 		if (Organization.active === undefined) {
@@ -105,10 +112,10 @@ export class PortalsCoreService extends BaseService {
 				console.log("[Portal]: The active organization was initialized", Organization.active);
 			}
 		}
-		else if (Organization.active.Modules.length < 1) {
+		else if (Organization.active.modules.length < 1) {
 			await this.getActiveOrganizationAsync(false);
 			if (this.configSvc.isDebug) {
-				console.log("[Portal]: Modules of the active organization were initialized", Organization.active.Modules);
+				console.log("[Portal]: Modules of the active organization were initialized", Organization.active.modules);
 			}
 		}
 	}
@@ -128,12 +135,12 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getDefinitionsAsync(onNext?: () => void) {
-		if (BaseModel.ModuleDefinitions === undefined) {
+		if (BaseModel.moduleDefinitions === undefined) {
 			const path = this.configSvc.getDefinitionPath(this.name, "module.definitions");
-			BaseModel.ModuleDefinitions = this.configSvc.getDefinition(path);
-			if (BaseModel.ModuleDefinitions === undefined) {
-				BaseModel.ModuleDefinitions = await this.configSvc.fetchDefinitionAsync(path, false);
-				BaseModel.ModuleDefinitions.forEach(definition => {
+			BaseModel.moduleDefinitions = this.configSvc.getDefinition(path);
+			if (BaseModel.moduleDefinitions === undefined) {
+				BaseModel.moduleDefinitions = await this.configSvc.fetchDefinitionAsync(path, false);
+				BaseModel.moduleDefinitions.forEach(definition => {
 					definition.ContentTypeDefinitions.forEach(contentTypeDefinition => contentTypeDefinition.ModuleDefinition = definition);
 					definition.ObjectDefinitions.forEach(objectDefinition => objectDefinition.ModuleDefinition = definition);
 				});
@@ -142,7 +149,7 @@ export class PortalsCoreService extends BaseService {
 				onNext();
 			}
 		}
-		return BaseModel.ModuleDefinitions;
+		return BaseModel.moduleDefinitions;
 	}
 
 	public async getThemesAsync(onNext?: () => void) {
@@ -191,6 +198,27 @@ export class PortalsCoreService extends BaseService {
 			onNext();
 		}
 		return Organization.active;
+	}
+
+	public getAppUrl(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }, objectName?: string, path?: string) {
+		objectName = objectName || (contentType !== undefined ? contentType.getObjectName() : "unknown");
+		return `/portals/${path || "cms"}/`
+			+ (AppUtility.isEquals(objectName, "Category") ? "categories" : `${objectName}s`).toLowerCase() + "/"
+			+ (action || "list").toLowerCase() + "/"
+			+ AppUtility.toANSI(title || (contentType !== undefined ? contentType.ansiTitle : "untitled"), true)
+			+ `?x-request=${AppUtility.toBase64Url(params || { RepositoryEntityID: contentType !== undefined ? contentType.ID : undefined })}`;
+	}
+
+	public getPortalUrl(object: CmsBaseModel, parent?: CmsBaseModel): string {
+		let uri = parent !== undefined ? this.getPortalUrl(parent) : undefined;
+		if (uri === undefined) {
+			const organization = Organization.get(object.SystemID);
+			const module = Module.get(object.RepositoryID);
+			const contentType = ContentType.get(object.RepositoryEntityID);
+			const desktop = Desktop.get(object["DesktopID"]) || Desktop.get(contentType === undefined ? undefined : contentType.DesktopID) || Desktop.get(module === undefined ? undefined : module.DesktopID) || Desktop.get(organization === undefined ? undefined : organization.HomeDesktopID);
+			uri = `${this.configSvc.appConfig.URIs.portals}~${(organization !== undefined ? organization.Alias : "")}/${(desktop !== undefined ? desktop.Alias : "-default")}`;
+		}
+		return uri + `/${object["Alias"] || object.ID}`;
 	}
 
 	public getPaginationPrefix(objectName: string) {
@@ -729,7 +757,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getOrganizationAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		if (Organization.contains(id) && Organization.get(id).Modules.length > 0) {
+		if (Organization.contains(id) && Organization.get(id).modules.length > 0) {
 			if (onNext !== undefined) {
 				onNext();
 			}
@@ -765,7 +793,7 @@ export class PortalsCoreService extends BaseService {
 
 	public getOrganization(id: string, getActiveOrganizationWhenNotFound: boolean = true) {
 		const organization = Organization.get(id);
-		if (organization !== undefined && organization.Modules.length < 1) {
+		if (organization !== undefined && organization.modules.length < 1) {
 			this.getOrganizationAsync(organization.ID);
 		}
 		return organization || (getActiveOrganizationWhenNotFound ? this.activeOrganization : undefined);
@@ -1301,6 +1329,177 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
+	public get portletCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const portlet = data !== undefined
+				? data instanceof Portlet
+					? data as Portlet
+					: Portlet.deserialize(data)
+				: undefined;
+			return portlet !== undefined
+				? { title: portlet.Title, originalObject: portlet }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(super.getSearchURI("portlet", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => Portlet.contains(obj.ID) ? convertToCompleterItem(Portlet.get(obj.ID)) : convertToCompleterItem(Portlet.update(Portlet.deserialize(obj)))),
+			convertToCompleterItem
+		);
+	}
+
+	public searchPortlet(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.search(
+			super.getSearchURI("portlet", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!Portlet.contains(obj.ID)) {
+							Portlet.update(obj);
+						}
+					});
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching portlet(s)", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public async searchPortletAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
+		await super.searchAsync(
+			super.getSearchURI("portlet", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!Portlet.contains(obj.ID)) {
+							Portlet.update(obj);
+						}
+					});
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching portlet(s)", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			},
+			dontProcessPagination,
+			useXHR
+		);
+	}
+
+	public async createPortletAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.createAsync(
+			super.getURI("portlet"),
+			body,
+			data => {
+				Portlet.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while creating new portlet", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public async getPortletAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		if (Portlet.contains(id)) {
+			if (onNext) {
+				onNext();
+			}
+		}
+		else {
+			await super.readAsync(
+				super.getURI("portlet", id),
+				data => {
+					Portlet.update(data);
+					if (onNext !== undefined) {
+						onNext(data);
+					}
+				},
+				error => {
+					console.error(super.getErrorMessage("Error occurred while getting a portlet", error));
+					if (onError !== undefined) {
+						onError(error);
+					}
+				},
+				undefined,
+				useXHR
+			);
+		}
+	}
+
+	public async updatePortletAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.updateAsync(
+			super.getURI("portlet", body.ID),
+			body,
+			data => {
+				Portlet.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while updating a portlet", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public async deletePortletAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.deleteAsync(
+			super.getURI("portlet", id),
+			data => {
+				Portlet.instances.remove(data.ID);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while deleting a portlet", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	private processPortletUpdateMessage(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				Portlet.update(message.Data);
+				break;
+
+			case "Delete":
+				Portlet.instances.remove(message.Data.ID);
+				break;
+
+			default:
+				console.warn(super.getLogMessage("Got an update message of a portlet"), message);
+				break;
+		}
+		AppEvents.broadcast(this.name, { Object: "Portlet", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+	}
+
 	public get siteCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const site = data !== undefined
@@ -1644,7 +1843,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a modul"), message);
+				console.warn(super.getLogMessage("Got an update message of a module"), message);
 				break;
 		}
 		AppEvents.broadcast(this.name, { Object: "Module", Type: `${message.Type.Event}d`, ID: message.Data.ID });
@@ -1685,7 +1884,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching content-type(s)", error));
+				console.error(super.getErrorMessage("Error occurred while searching expression(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1710,7 +1909,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching content-type(s)", error));
+				console.error(super.getErrorMessage("Error occurred while searching expression(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1729,7 +1928,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new content-type", error));
+				console.error(super.getErrorMessage("Error occurred while creating new expression", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1753,7 +1952,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while getting a content-type", error));
+					console.error(super.getErrorMessage("Error occurred while getting a expression", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -1775,7 +1974,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating a content-type", error));
+				console.error(super.getErrorMessage("Error occurred while updating a expression", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1793,7 +1992,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting a content-type", error));
+				console.error(super.getErrorMessage("Error occurred while deleting a expression", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1815,7 +2014,178 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a content-type"), message);
+				console.warn(super.getLogMessage("Got an update message of a expression"), message);
+				break;
+		}
+		AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+	}
+
+	public get expressionCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const expression = data !== undefined
+				? data instanceof Expression
+					? data as Expression
+					: Expression.deserialize(data)
+				: undefined;
+			return expression !== undefined
+				? { title: expression.Title, description: expression.Description, originalObject: expression }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(super.getSearchURI("expression", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => Expression.contains(obj.ID) ? convertToCompleterItem(Expression.get(obj.ID)) : convertToCompleterItem(Expression.update(Expression.deserialize(obj)))),
+			convertToCompleterItem
+		);
+	}
+
+	public searchExpression(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.search(
+			super.getSearchURI("expression", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!Expression.contains(obj.ID)) {
+							Expression.update(obj);
+						}
+					});
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching expression(s)", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public async searchExpressionAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.searchAsync(
+			super.getSearchURI("expression", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!Expression.contains(obj.ID)) {
+							Expression.update(obj);
+						}
+					});
+				}
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching expression(s)", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public async createExpressionAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.createAsync(
+			super.getURI("expression"),
+			body,
+			data => {
+				Expression.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while creating new expression", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public async getExpressionAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		if (Expression.contains(id)) {
+			if (onNext !== undefined) {
+				onNext();
+			}
+		}
+		else {
+			await super.readAsync(
+				super.getURI("expression", id),
+				data => {
+					Expression.update(data);
+					if (onNext !== undefined) {
+						onNext(data);
+					}
+				},
+				error => {
+					console.error(super.getErrorMessage("Error occurred while getting an expression", error));
+					if (onError !== undefined) {
+						onError(error);
+					}
+				},
+				undefined,
+				useXHR
+			);
+		}
+	}
+
+	public async updateExpressionAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.updateAsync(
+			super.getURI("expression", body.ID),
+			body,
+			data => {
+				Expression.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while updating an expression", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	public async deleteExpressionAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.deleteAsync(
+			super.getURI("expression", id),
+			data => {
+				Expression.instances.remove(data.ID);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while deleting an expression", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			}
+		);
+	}
+
+	private processExpressionUpdateMessage(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				Expression.update(message.Data);
+				break;
+
+			case "Delete":
+				if (Expression.contains(message.Data.ID)) {
+					Expression.instances.remove(message.Data.ID);
+				}
+				break;
+
+			default:
+				console.warn(super.getLogMessage("Got an update message of a expression"), message);
 				break;
 		}
 		AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });

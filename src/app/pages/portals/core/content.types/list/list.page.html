@@ -64,6 +64,10 @@
 				</ion-label>
 			</ion-item>
 			<ion-item-options>
+				<ion-item-option color="medium" (click)="showExpressionsAsync($event, contentType)">
+					<ion-icon name="construct" slot="top"></ion-icon>
+					{{ labels.expressions }}
+				</ion-item-option>
 				<ion-item-option color="primary" (click)="editAsync($event, contentType)">
 					<ion-icon name="create" slot="top"></ion-icon>
 					{{ labels.edit }}

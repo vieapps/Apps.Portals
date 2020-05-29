@@ -2,6 +2,7 @@ import { List } from "linqts";
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
+import { NotificationSettings, EmailSettings } from "@models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
 import { Module } from "@models/portals.core.module";
 
@@ -42,27 +43,7 @@ export class Organization extends CoreBaseModel {
 	Theme = "default";
 	HomeDesktopID = undefined as string;
 	SearchDesktopID = undefined as string;
-	Notifications = undefined as {
-		Events?: Array<string>;
-		Methods?: Array<string>;
-		Emails?: {
-			ToAddresses?: string;
-			CcAddresses?: string;
-			BccAddresses?: string;
-			Subject?: string;
-			Body?: string;
-		};
-		WebHooks?: {
-			EndpointURLs?: Array<string>;
-			SignAlgorithm?: string;
-			SignKey?: string;
-			SignatureName?: string;
-			SignatureAsHex?: boolean;
-			SignatureInQuery?: boolean;
-			AdditionalQuery?: string;
-			AdditionalHeader?: string;
-		};
-	};
+	Notifications = undefined as NotificationSettings;
 	Instructions = undefined as {
 		[type: string]: {
 			[language: string]: {
@@ -85,17 +66,7 @@ export class Organization extends CoreBaseModel {
 		Addresses?: Array<string>;
 		AllHttp404?: boolean;
 	};
-	EmailSettings = undefined as {
-		Sender?: string;
-		Signature?: string;
-		Smtp?: {
-			Host?: string;
-			Port?: number;
-			EnableSsl?: boolean;
-			User?: string;
-			UserPassword?: string;
-		}
-	};
+	EmailSettings = undefined as EmailSettings;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;
@@ -140,12 +111,12 @@ export class Organization extends CoreBaseModel {
 		return id !== undefined && this.instances.containsKey(id);
 	}
 
-	public get Modules() {
+	public get modules() {
 		return new List(Module.all).Where(module => module.SystemID === this.ID).OrderBy(module => module.Title).ToArray();
 	}
 
-	public get ContentTypes() {
-		return new List(Module.all).Where(module => module.SystemID === this.ID).Select(module => module.ContentTypes).SelectMany(contentTypes => new List(contentTypes)).OrderBy(contentType => contentType.Title).ToArray();
+	public get contentTypes() {
+		return new List(Module.all).Where(module => module.SystemID === this.ID).Select(module => module.contentTypes).SelectMany(contentTypes => new List(contentTypes)).OrderBy(contentType => contentType.Title).ToArray();
 	}
 
 	public get routerLink() {

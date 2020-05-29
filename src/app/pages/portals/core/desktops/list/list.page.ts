@@ -2,7 +2,7 @@ import { Subscription } from "rxjs";
 import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
+import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
@@ -32,13 +32,12 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
+	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
 
 	private organization: Organization;
 	private parentID: string;
 	private parentDesktop: Desktop;
 	private subscription: Subscription;
-	private children = "{{number}} children: {{children}}";
-	private alias = "Alias";
 
 	title = "Desktops";
 	desktops = new Array<Desktop>();
@@ -57,6 +56,13 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		icon?: string,
 		handler: () => void
 	}>;
+	labels = {
+		children: "{{number}} children: {{children}}",
+		alias: "Alias",
+		edit: "Update this desktop",
+		view: "View the list of child desktops",
+		portlets: "Portlets",
+	};
 
 	get locale() {
 		return this.configSvc.locale;
@@ -130,8 +136,14 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.desktops.title.${(this.searching ? "search" : "list")}`);
 		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: "" });
-		this.children = await this.configSvc.getResourceAsync("portals.desktops.list.children");
-		this.alias = await this.configSvc.getResourceAsync("portals.desktops.controls.Alias.label");
+
+		this.labels = {
+			children: await this.configSvc.getResourceAsync("portals.desktops.list.children"),
+			alias: await this.configSvc.getResourceAsync("portals.desktops.controls.Alias.label"),
+			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
+			view: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list"),
+			portlets: await this.configSvc.getResourceAsync("portals.portlets.title.list", { info: "" })
+		};
 
 		if (this.searching) {
 			this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
@@ -184,8 +196,8 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 	getInfo(desktop: Desktop) {
 		return desktop.childrenIDs === undefined || desktop.childrenIDs.length < 1
-			? `${this.alias}: ${desktop.Alias}`
-			: AppUtility.format(this.children, { number: desktop.childrenIDs.length, children: `${desktop.Children[0].Title}${(desktop.childrenIDs.length > 1 ? `, ${desktop.Children[1].Title}` : "")}, ...` });
+			? `${this.labels.alias}: ${desktop.Alias}`
+			: AppUtility.format(this.labels.children, { number: desktop.childrenIDs.length, children: `${desktop.Children[0].Title}${(desktop.childrenIDs.length > 1 ? `, ${desktop.Children[1].Title}` : "")}, ...` });
 	}
 
 	onStartSearch(event: any) {
@@ -287,25 +299,36 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 	}
 
 	async showActionsAsync() {
+		await this.listCtrl.closeSlidingItems();
 		await this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
 	async openSearchAsync() {
+		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync("/portals/core/desktops/search");
 	}
 
 	async createAsync() {
-		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(`/portals/core/desktops/create${(this.parentID === undefined ? "" : "?x-request=" + AppUtility.toBase64Url({ ParentID: this.parentID }))}`);
 	}
 
 	async openAsync(event: Event, desktop: Desktop) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(desktop.routerURI);
 	}
 
 	async showChildrenAsync(event: Event, desktop: Desktop) {
 		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(desktop.listURI);
+	}
+
+	async showPortletsAsync(event: Event, desktop: Desktop) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppUrl(undefined, "list", desktop.ansiTitle, { SystemID: desktop.SystemID, DesktopID: desktop.ID }, "portlet", "core"));
 	}
 
 }

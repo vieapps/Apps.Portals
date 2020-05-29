@@ -1,9 +1,9 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
-import { INestedObject } from "@models/portals.base";
+import { NestedObject } from "@models/portals.base";
 import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
 
-export class Link extends CmsBaseModel implements INestedObject {
+export class Link extends CmsBaseModel implements NestedObject {
 
 	constructor(
 		systemID?: string,

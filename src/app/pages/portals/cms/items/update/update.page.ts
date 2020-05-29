@@ -86,7 +86,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		this.contentType = this.item !== undefined
-			? this.item.ContentType
+			? this.item.contentType
 			: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 
 		this.organization = this.item !== undefined
@@ -103,7 +103,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		if (this.contentType === undefined) {
 			await this.portalsCoreSvc.getOrganizationAsync(this.organization.ID, undefined, undefined, true);
 			this.contentType = this.item !== undefined
-				? this.item.ContentType
+				? this.item.contentType
 				: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 			if (this.contentType === undefined) {
 				await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all"));

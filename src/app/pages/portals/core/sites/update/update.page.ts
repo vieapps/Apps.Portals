@@ -320,10 +320,17 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		}
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
+		if (AppUtility.isNotEmpty(this.site.ID)) {
+			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
+			control.Order = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Audits")).Order + 1;
+			control.Hidden = false;
+			control.Options.Label = "{{common.audits.identity}}";
+			control.Options.ReadOnly = true;
+		}
+
 		if (onCompleted !== undefined) {
 			onCompleted(formConfig);
 		}
-
 		return formConfig;
 	}
 

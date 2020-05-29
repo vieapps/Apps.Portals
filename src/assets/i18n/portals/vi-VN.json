@@ -879,6 +879,82 @@
 					"remove": "Đồng ý xoá"
 				}
 			}
+		},
+		"expressions": {
+			"title": {
+				"search": "Tìm kiếm biểu thức truy vấn",
+				"list": "Danh sách biểu thức truy vấn {{info}}",
+				"create": "Tạo mới biểu thức truy vấn",
+				"update": "Cập nhật biểu thức truy vấn"
+			},
+			"controls": {
+				"Organization": "Biểu thức truy vấn của đơn vị - tổ chức",
+				"Title": {
+					"label": "Tên biểu thức truy vấn",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Diễn giải",
+					"placeholder": "",
+					"description": ""
+				},
+				"RepositoryID": {
+					"label": "Module nghiệp vụ",
+					"placeholder": "",
+					"description": "Biểu thức truy vấn này sẽ được sử dụng để truy vấn dữ liệu của module nghiệp vụ được chỉ định"
+				},
+				"ContentTypeDefinitionID": {
+					"label": "Kiểu dữ liệu mẫu",
+					"placeholder": "",
+					"description": "Chỉ định biểu thức truy vấn sẽ được sử dụng cho kiểu dữ liệu mẫu cụ thể"
+				},
+				"RepositoryEntityID": {
+					"label": "Kiểu dữ liệu nghiệp vụ",
+					"placeholder": "",
+					"description": "Chỉ định biểu thức truy vấn sẽ được sử dụng cho kiểu dữ liệu nghiệp vụ cụ thể. Nếu không chỉ định, biểu thức truy vấn có thể được sử dụng cho tất cả các kiểu dữ liệu nghiệp vụ cùng có chung kiểu dữ liệu mẫu đã chỉ định."
+				},
+				"Filter": {
+					"label": "Biểu thức truy vấn (JSON)",
+					"placeholder": "",
+					"description": ""
+				},
+				"Sorts": {
+					"label": "Các biểu thức sắp xếp (JSON)",
+					"placeholder": "",
+					"description": ""
+				}
+			},
+			"list": {
+				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác biểu thức truy vấn",
+				"invalid": "Chưa chỉ định biểu thức truy vấn"
+			},
+			"update": {
+				"segments": {
+					"basic": "Cơ bản",
+					"filter": "Chi tiết truy vấn",
+					"sorts": "Chi tiết sắp xếp"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo biểu thức truy vấn?",
+						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của biểu thức truy vấn?",
+						"delete": "Chắc chắn muốn xoá bỏ biểu thức truy vấn?",
+						"remove": "Biểu thức truy vấn này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
+					},
+					"success": {
+						"new": "Đã khởi tạo biểu thức truy vấn thành công",
+						"update": "Đã cập nhật các thay đổi của biểu thức truy vấn thành công",
+						"delete": "Đã đưa biểu thức truy vấn và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
+					},
+					"json": "Lỗi trong cú pháp JSON của biểu thức"
+				},
+				"buttons": {
+					"delete": "Xoá biểu thức truy vấn",
+					"remove": "Đồng ý xoá",
+					"edit": "Cập nhật cấp cao"
+				}
+			}
 		}
 	}
 }

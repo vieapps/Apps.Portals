@@ -1,7 +1,7 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
-import { PortalBase as BaseModel } from "@models/portals.base";
+import { PortalBase as BaseModel, NotificationSettings, EmailSettings } from "@models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
 import { ContentType } from "@models/portals.core.content.type";
 
@@ -32,41 +32,11 @@ export class Module extends CoreBaseModel {
 	Title = undefined as string;
 	Description = undefined as string;
 	DesktopID = undefined as string;
-	Notifications = undefined as {
-		Events?: Array<string>;
-		Methods?: Array<string>;
-		Emails?: {
-			ToAddresses?: string;
-			CcAddresses?: string;
-			BccAddresses?: string;
-			Subject?: string;
-			Body?: string;
-		};
-		WebHooks?: {
-			EndpointURLs?: Array<string>;
-			SignAlgorithm?: string;
-			SignKey?: string;
-			SignatureName?: string;
-			SignatureAsHex?: boolean;
-			SignatureInQuery?: boolean;
-			AdditionalQuery?: string;
-			AdditionalHeader?: string;
-		};
-	};
+	Notifications = undefined as NotificationSettings;
 	Trackings = undefined as {
 		[key: string]: string
 	};
-	EmailSettings = undefined as {
-		Sender?: string;
-		Signature?: string;
-		Smtp?: {
-			Host?: string;
-			Port?: number;
-			EnableSsl?: boolean;
-			User?: string;
-			UserPassword?: string;
-		}
-	};
+	EmailSettings = undefined as EmailSettings;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;
@@ -112,11 +82,13 @@ export class Module extends CoreBaseModel {
 		return id !== undefined && this.instances.containsKey(id);
 	}
 
-	public get ModuleDefinition() {
-		return AppUtility.isNotEmpty(this.ModuleDefinitionID) ? (BaseModel.ModuleDefinitions || []).find(definition => definition.ID === this.ModuleDefinitionID) : undefined;
+	public get moduleDefinition() {
+		return AppUtility.isNotEmpty(this.ModuleDefinitionID)
+			? (BaseModel.moduleDefinitions || []).find(definition => definition.ID === this.ModuleDefinitionID)
+			: undefined;
 	}
 
-	public get ContentTypes() {
+	public get contentTypes() {
 		return ContentType.all.filter(contentType => contentType.RepositoryID === this.ID).sort(AppUtility.getCompareFunction("Title"));
 	}
 

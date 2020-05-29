@@ -1,9 +1,9 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
-import { INestedObject } from "@models/portals.base";
+import { NestedObject } from "@models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
 
-export class Role extends CoreBaseModel implements INestedObject {
+export class Role extends CoreBaseModel implements NestedObject {
 
 	constructor(
 		systemID?: string,

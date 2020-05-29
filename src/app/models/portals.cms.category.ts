@@ -1,9 +1,9 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
-import { INestedObject } from "@models/portals.base";
+import { NestedObject, NotificationSettings, EmailSettings } from "@models/portals.base";
 import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
 
-export class Category extends CmsBaseModel implements INestedObject {
+export class Category extends CmsBaseModel implements NestedObject {
 
 	constructor(
 		systemID?: string,
@@ -34,38 +34,8 @@ export class Category extends CmsBaseModel implements INestedObject {
 	DesktopID = undefined as string;
 	OpenBy = "DesktopWithAlias";
 	SpecifiedURI = undefined as string;
-	Notifications = undefined as {
-		Events?: Array<string>;
-		Methods?: Array<string>;
-		Emails?: {
-			ToAddresses?: string;
-			CcAddresses?: string;
-			BccAddresses?: string;
-			Subject?: string;
-			Body?: string;
-		};
-		WebHooks?: {
-			EndpointURLs?: Array<string>;
-			SignAlgorithm?: string;
-			SignKey?: string;
-			SignatureName?: string;
-			SignatureAsHex?: boolean;
-			SignatureInQuery?: boolean;
-			AdditionalQuery?: string;
-			AdditionalHeader?: string;
-		};
-	};
-	EmailSettings = undefined as {
-		Sender?: string;
-		Signature?: string;
-		Smtp?: {
-			Host?: string;
-			Port?: number;
-			EnableSsl?: boolean;
-			User?: string;
-			UserPassword?: string;
-		}
-	};
+	Notifications = undefined as NotificationSettings;
+	EmailSettings = undefined as EmailSettings;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;

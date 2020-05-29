@@ -299,6 +299,13 @@ export class AppComponent implements OnInit {
 				detail: false
 			});
 			this.updateSidebarItem(index, -1, {
+				title: "Expressions",
+				url: "/portals/core/expressions/list/all",
+				direction: "root",
+				icon: "construct",
+				detail: false
+			});
+			this.updateSidebarItem(index, -1, {
 				title: "CMS Categories",
 				url: "/portals/cms/categories/list/all",
 				direction: "root",

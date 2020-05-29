@@ -32,6 +32,10 @@ import { IonicModule } from "@ionic/angular";
 			{
 				path: "content.types",
 				loadChildren: "@pages/portals/core/content.types/content.types.module#PortalsContentTypesModule"
+			},
+			{
+				path: "expressions",
+				loadChildren: "@pages/portals/core/expressions/expressions.module#PortalsExpressionsModule"
 			}
 		])
 	],

@@ -8,17 +8,17 @@ export abstract class PortalCoreBase extends BaseModel {
 		super();
 	}
 
-	public static get ModuleDefinitions() {
-		return BaseModel.ModuleDefinitions;
+	public static get moduleDefinitions() {
+		return BaseModel.moduleDefinitions;
 	}
 
-	public static get ContentTypeDefinitions() {
-		return BaseModel.ContentTypeDefinitions;
+	public static get contentTypeDefinitions() {
+		return BaseModel.contentTypeDefinitions;
 	}
 
 	public getEntityInfo(objectName: string) {
-		const objectDefinition = BaseModel.ModuleDefinitions !== undefined && BaseModel.ModuleDefinitions.length > 0
-			? BaseModel.ModuleDefinitions.find(definition => AppUtility.isEquals(definition.ServiceName, "Portals")).ObjectDefinitions.find(definition => AppUtility.isEquals(definition.ObjectName, objectName))
+		const objectDefinition = BaseModel.moduleDefinitions !== undefined && BaseModel.moduleDefinitions.length > 0
+			? BaseModel.moduleDefinitions.find(definition => AppUtility.isEquals(definition.ServiceName, "Portals")).ObjectDefinitions.find(definition => AppUtility.isEquals(definition.ObjectName, objectName))
 			: undefined;
 		return objectDefinition !== undefined ? objectDefinition.EntityDefinitionTypeName : undefined;
 	}

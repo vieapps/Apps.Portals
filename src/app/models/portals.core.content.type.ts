@@ -1,8 +1,8 @@
 import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
+import { PortalBase as BaseModel, NotificationSettings, EmailSettings } from "@models/portals.base";
 import { ExtendedPropertyDefinition, ExtendedUIDefinition } from "@models/portals.base";
-import { PortalBase as BaseModel } from "@models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
 
 export class ContentType extends CoreBaseModel {
@@ -33,41 +33,11 @@ export class ContentType extends CoreBaseModel {
 	AllowComments = false;
 	UseSocialNetworkComments = false;
 	DefaultCommentStatus = "Pending";
-	Notifications = undefined as {
-		Events?: Array<string>;
-		Methods?: Array<string>;
-		Emails?: {
-			ToAddresses?: string;
-			CcAddresses?: string;
-			BccAddresses?: string;
-			Subject?: string;
-			Body?: string;
-		};
-		WebHooks?: {
-			EndpointURLs?: Array<string>;
-			SignAlgorithm?: string;
-			SignKey?: string;
-			SignatureName?: string;
-			SignatureAsHex?: boolean;
-			SignatureInQuery?: boolean;
-			AdditionalQuery?: string;
-			AdditionalHeader?: string;
-		};
-	};
+	Notifications = undefined as NotificationSettings;
 	Trackings = undefined as {
 		[key: string]: string
 	};
-	EmailSettings = undefined as {
-		Sender?: string;
-		Signature?: string;
-		Smtp?: {
-			Host?: string;
-			Port?: number;
-			EnableSsl?: boolean;
-			User?: string;
-			UserPassword?: string;
-		}
-	};
+	EmailSettings = undefined as EmailSettings;
 	ExtendedPropertyDefinitions = undefined as Array<ExtendedPropertyDefinition>;
 	ExtendedUIDefinition = undefined as ExtendedUIDefinition;
 	Created = undefined as Date;
@@ -120,12 +90,14 @@ export class ContentType extends CoreBaseModel {
 		return `/portals/core/content.types/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
-	public get ContentTypeDefinition() {
-		return AppUtility.isNotEmpty(this.ContentTypeDefinitionID) ? (BaseModel.ContentTypeDefinitions || []).find(definition => definition.ID === this.ContentTypeDefinitionID) : undefined;
+	public get contentTypeDefinition() {
+		return AppUtility.isNotEmpty(this.ContentTypeDefinitionID)
+			? (BaseModel.contentTypeDefinitions || []).find(definition => definition.ID === this.ContentTypeDefinitionID)
+			: undefined;
 	}
 
 	public getObjectName(includePrefixAndSuffix: boolean = false) {
-		const definition = this.ContentTypeDefinition;
+		const definition = this.contentTypeDefinition;
 		return definition !== undefined
 			? includePrefixAndSuffix
 				? (AppUtility.isNotEmpty(definition.ObjectNamePrefix) ? definition.ObjectNamePrefix : "") + definition.ObjectName + (AppUtility.isNotEmpty(definition.ObjectNameSuffix) ? definition.ObjectNameSuffix : "")

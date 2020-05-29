@@ -13,7 +13,6 @@ import { PortalsCoreService } from "@services/portals.core.service";
 import { AppFormsService, AppFormsControlConfig, AppFormsControlLookupOptionsConfig } from "@components/forms.service";
 import { FilesProcessorModalPage } from "@controls/common/file.processor.modal.page";
 import { Account } from "@models/account";
-import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
 import { Desktop } from "@models/portals.core.desktop";
@@ -75,44 +74,23 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public canManage(object: CmsBaseModel, account?: Account) {
-		return this.authSvc.isAdministrator(this.name, object.ContentType.getObjectName(), object.Privileges, account);
+		return this.authSvc.isAdministrator(this.name, object.contentType.getObjectName(), object.Privileges, account);
 	}
 
 	public canModerate(object: CmsBaseModel, account?: Account) {
-		return this.authSvc.isModerator(this.name, object.ContentType.getObjectName(), object.Privileges, account);
+		return this.authSvc.isModerator(this.name, object.contentType.getObjectName(), object.Privileges, account);
 	}
 
 	public canEdit(object: CmsBaseModel, account?: Account) {
-		return this.authSvc.isEditor(this.name, object.ContentType.getObjectName(), object.Privileges, account);
+		return this.authSvc.isEditor(this.name, object.contentType.getObjectName(), object.Privileges, account);
 	}
 
 	public canContribute(object: CmsBaseModel, account?: Account) {
-		return this.authSvc.isContributor(this.name, object.ContentType.getObjectName(), object.Privileges, account);
+		return this.authSvc.isContributor(this.name, object.contentType.getObjectName(), object.Privileges, account);
 	}
 
 	public canView(object: CmsBaseModel, account?: Account) {
-		return this.authSvc.isViewer(this.name, object.ContentType.getObjectName(), object.Privileges, account);
-	}
-
-	public getAppUrl(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }) {
-		const objectName = contentType.getObjectName();
-		return "/portals/cms/"
-			+ (AppUtility.isEquals(objectName, "Category") ? "categories" : `${objectName}s`).toLowerCase() + "/"
-			+ (action || "list").toLowerCase() + "/"
-			+ AppUtility.toANSI(title || contentType.ansiTitle, true)
-			+ `?x-request=${AppUtility.toBase64Url(params || { RepositoryEntityID: contentType.ID })}`;
-	}
-
-	public getPortalUrl(object: CmsBaseModel, parent?: CmsBaseModel): string {
-		let uri = parent !== undefined ? this.getPortalUrl(parent) : undefined;
-		if (uri === undefined) {
-			const organization = Organization.get(object.SystemID);
-			const module = Module.get(object.RepositoryID);
-			const contentType = ContentType.get(object.RepositoryEntityID);
-			const desktop = Desktop.get(object["DesktopID"]) || Desktop.get(contentType === undefined ? undefined : contentType.DesktopID) || Desktop.get(module === undefined ? undefined : module.DesktopID) || Desktop.get(organization === undefined ? undefined : organization.HomeDesktopID);
-			uri = `${this.configSvc.appConfig.URIs.portals}~${(organization !== undefined ? organization.Alias : "")}/${(desktop !== undefined ? desktop.Alias : "-default")}`;
-		}
-		return uri + `/${object["Alias"] || object.ID}`;
+		return this.authSvc.isViewer(this.name, object.contentType.getObjectName(), object.Privileges, account);
 	}
 
 	public normalizeRichHtml(html: string) {
@@ -175,7 +153,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			}
 			else if (Module.instances.size() > 0) {
-				Module.active = this.portalsCoreSvc.activeOrganization.Modules.find(module => module.ModuleDefinitionID === "A0000000000000000000000000000001");
+				Module.active = this.portalsCoreSvc.activeOrganization.modules.find(module => module.ModuleDefinitionID === "A0000000000000000000000000000001");
 				if (Module.active === undefined) {
 					Module.active = Module.all[0];
 				}
@@ -216,14 +194,14 @@ export class PortalsCmsService extends BaseService {
 		if (object !== undefined) {
 			const fileOptions = {
 				ServiceName: this.name,
-				ObjectName: object.ContentType.getObjectName(false),
+				ObjectName: object.contentType.getObjectName(false),
 				SystemID: object.SystemID,
 				RepositoryID: object.RepositoryID,
 				RepositoryEntityID: object.RepositoryEntityID,
 				ObjectID: object.ID,
 				ObjectTitle: object.Title,
 				IsShared: false,
-				IsTracked: object.Organization !== undefined && object.Organization.TrackDownloadFiles,
+				IsTracked: object.organization !== undefined && object.organization.TrackDownloadFiles,
 				IsTemporary: AppUtility.isNotEmpty(object.ID) ? false : true,
 				Extras: {}
 			} as FileOptions;
@@ -253,7 +231,7 @@ export class PortalsCmsService extends BaseService {
 						organizationID: object.SystemID,
 						moduleID: object.RepositoryID,
 						contentTypeID: object.RepositoryEntityID,
-						objectName: object.ContentType.getObjectName(true),
+						objectName: object.contentType.getObjectName(true),
 						multiple: false,
 						nested: !!options.content.nested,
 						sortBy: options.content.sortBy,
@@ -262,7 +240,7 @@ export class PortalsCmsService extends BaseService {
 					(objects: CmsBaseModel[]) => {
 						const obj = objects !== undefined && objects.length > 0 ? objects[0] : undefined;
 						const parent = obj !== undefined ? Category.get(obj["CategoryID"]) : undefined;
-						onSelected(obj !== undefined ? this.getPortalUrl(obj, parent) + ".html" : undefined);
+						onSelected(obj !== undefined ? this.portalsCoreSvc.getPortalUrl(obj, parent) + ".html" : undefined);
 					}
 				)
 			};
@@ -330,7 +308,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public getContentTypesOfCategory(module: Module) {
-		return (module || new Module()).ContentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000001");
+		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000001");
 	}
 
 	public getDefaultContentTypeOfCategory(module: Module) {
@@ -578,22 +556,22 @@ export class PortalsCmsService extends BaseService {
 		if (AppUtility.isNotEmpty(category.DesktopID) && Desktop.get(category.DesktopID) === undefined) {
 			this.portalsCoreSvc.getDesktopAsync(category.DesktopID);
 		}
-		const contentType = category.ContentType;
+		const contentType = category.contentType;
 		if (contentType !== undefined && AppUtility.isNotEmpty(contentType.DesktopID) && Desktop.get(contentType.DesktopID) === undefined) {
 			this.portalsCoreSvc.getDesktopAsync(contentType.DesktopID);
 		}
-		const module = category.Module;
+		const module = category.module;
 		if (module !== undefined && AppUtility.isNotEmpty(module.DesktopID) && Desktop.get(module.DesktopID) === undefined) {
 			this.portalsCoreSvc.getDesktopAsync(module.DesktopID);
 		}
-		const organization = category.Organization;
+		const organization = category.organization;
 		if (AppUtility.isNotEmpty(organization.HomeDesktopID) && Desktop.get(organization.HomeDesktopID) === undefined) {
 			this.portalsCoreSvc.getDesktopAsync(organization.HomeDesktopID);
 		}
 	}
 
 	public getContentTypesOfContent(module: Module) {
-		return (module || new Module()).ContentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000002");
+		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000002");
 	}
 
 	public getDefaultContentTypeOfContent(module: Module) {
@@ -777,7 +755,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public getContentTypesOfItem(module: Module) {
-		return (module || new Module()).ContentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000003");
+		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000003");
 	}
 
 	public getDefaultContentTypeOfItem(module: Module) {
@@ -958,7 +936,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public getContentTypesOfLink(module: Module) {
-		return (module || new Module()).ContentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000004");
+		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000004");
 	}
 
 	public getDefaultContentTypeOfLink(module: Module) {

@@ -10,7 +10,7 @@ import { FilesService } from "@services/files.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
 import { AttachmentInfo } from "@models/base";
-import { INestedObject } from "@models/portals.base";
+import { NestedObject } from "@models/portals.base";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
 import { Link } from "@models/portals.cms.link";
@@ -108,7 +108,7 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 
 		let canView = false;
 		const account = this.configSvc.getAccount();
-		this.canModerate = this.portalsCoreSvc.canModerateOrganization(this.link.Organization, account) || this.portalsCmsSvc.canModerate(this.link, account);
+		this.canModerate = this.portalsCoreSvc.canModerateOrganization(this.link.organization, account) || this.portalsCmsSvc.canModerate(this.link, account);
 
 		if (AppUtility.isEquals(this.link.Status, "Draft") || AppUtility.isEquals(this.link.Status, "Pending") || AppUtility.isEquals(this.link.Status, "Rejected")) {
 			this.canEdit = canView = this.canModerate || this.portalsCmsSvc.canEdit(this.link, account) || AppUtility.isEquals(this.link.CreatedID, account.id);
@@ -313,7 +313,7 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 							break;
 
 						case "LookupRepositoryObjectID":
-							let nestedObject: INestedObject = Link.get(control.value) || Category.get(control.value);
+							let nestedObject: NestedObject = Link.get(control.value) || Category.get(control.value);
 							if (nestedObject === undefined) {
 								if (contentType === undefined || contentType.ID !== this.link.LookupRepositoryEntityID) {
 									contentType = ContentType.get(this.link.LookupRepositoryEntityID);

@@ -69,7 +69,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		this.category = Category.get(this.configSvc.requestParams["ID"]);
 
 		this.contentType = this.category !== undefined
-			? this.category.ContentType
+			? this.category.contentType
 			: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 
 		this.organization = this.category !== undefined
@@ -86,7 +86,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		if (this.contentType === undefined) {
 			await this.portalsCoreSvc.getOrganizationAsync(this.organization.ID, undefined, undefined, true);
 			this.contentType = this.category !== undefined
-				? this.category.ContentType
+				? this.category.contentType
 				: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 			if (this.contentType === undefined) {
 				await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all"));
