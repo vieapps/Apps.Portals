@@ -227,7 +227,7 @@
 					{{ lookup.Label }}
 				</span>
 			</ion-label>
-			<ion-icon *ngIf="!!disabled" name="close-circle" (click)="deleteValue(lookup.Value)"></ion-icon>
+			<ion-icon *ngIf="!disabled" name="close-circle" (click)="deleteValue(lookup.Value)"></ion-icon>
 		</ion-chip>
 	</ion-label>
 </ion-item>
