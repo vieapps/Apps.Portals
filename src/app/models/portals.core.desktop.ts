@@ -2,6 +2,7 @@ import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { NestedObject, ElementUISettings } from "@models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
+import { Portlet } from "@models/portals.core.portlet";
 
 export class Desktop extends CoreBaseModel implements NestedObject {
 
@@ -58,6 +59,7 @@ export class Desktop extends CoreBaseModel implements NestedObject {
 
 	ansiTitle: string;
 	childrenIDs: Array<string>;
+	portlets: Array<Portlet>;
 
 	/** Deserializes data to object */
 	public static deserialize(json: any, desktop?: Desktop) {
