@@ -54,6 +54,9 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	/** The sorting expression */
 	@Input() private sortBy: { [key: string]: string };
 
+	/** The additional filtering expression */
+	@Input() private filters: Array<{ [key: string]: any }> | { [key: string]: any };
+
 	/** The function to pre-process items */
 	@Input() private preProcess: (items: Array<any>) => void;
 
@@ -165,13 +168,23 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	}
 
 	private prepareFilterBy(allowParent: boolean) {
-		this.filterBy.And = [
-			{ SystemID: { Equals: this.organization.ID } },
-			{ RepositoryID: { Equals: this.module.ID } },
-			{ RepositoryEntityID: { Equals: this.contentType.ID } }
-		];
+		this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
+		if (this.module !== undefined) {
+			this.filterBy.And.push({ RepositoryID: { Equals: this.module.ID } });
+		}
+		if (this.contentType !== undefined) {
+			this.filterBy.And.push({ RepositoryEntityID: { Equals: this.contentType.ID } });
+		}
 		if (this.nested && allowParent) {
 			this.filterBy.And.push({ ParentID: "IsNull" });
+		}
+		if (this.filters !== undefined) {
+			if (AppUtility.isArray(this.filters)) {
+				(this.filters as Array<{ [key: string]: any }>).forEach(filter => this.filterBy.And.push(filter));
+			}
+			else {
+				this.filterBy.And.push(this.filters);
+			}
 		}
 	}
 
