@@ -9,12 +9,14 @@ export class Portlet extends CoreBaseModel {
 	constructor(
 		systemID?: string,
 		desktopID?: string,
-		repositoryEntityID?: string
+		repositoryEntityID?: string,
+		zone?: string
 	) {
 		super();
 		this.SystemID = AppUtility.isNotEmpty(systemID) ? systemID : "";
 		this.DesktopID = AppUtility.isNotEmpty(desktopID) ? desktopID : "";
 		this.RepositoryEntityID = AppUtility.isNotEmpty(repositoryEntityID) ? repositoryEntityID : undefined;
+		this.Zone = AppUtility.isNotEmpty(zone) ? zone : "Content";
 	}
 
 	/** All instances of portlet */

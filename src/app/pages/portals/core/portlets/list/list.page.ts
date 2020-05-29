@@ -260,9 +260,9 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 				objects = objects.Where(o => o.DesktopID === this.desktop.ID);
 			}
 			else {
-				objects = objects.Where(o => o.SystemID === this.organization.ID);
+				objects = objects.Where(o => o.SystemID === this.organization.ID).OrderBy(o => o.DesktopID);
 			}
-			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			objects = objects.OrderBy(o => o.Zone).ThenBy(o => o.OrderIndex);
 			if (results === undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
