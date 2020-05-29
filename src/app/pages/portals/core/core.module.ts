@@ -26,6 +26,10 @@ import { IonicModule } from "@ionic/angular";
 				loadChildren: "@pages/portals/core/desktops/desktops.module#PortalsDesktopsModule"
 			},
 			{
+				path: "portlets",
+				loadChildren: "@pages/portals/core/portlets/portlets.module#PortalsPortletsModule"
+			},
+			{
 				path: "modules",
 				loadChildren: "@pages/portals/core/modules/modules.module#PortalsModulesModule"
 			},

@@ -122,12 +122,12 @@
 					"Width": {
 						"label": "Chiều rộng (cố định)",
 						"placeholder": "",
-						"description": "Chỉ định chiều rộng (width) có định theo tiêu chuẩn của HTML (trên dưới trái phải), giá trị có thể là px, %, rem, em"
+						"description": "Chỉ định chiều rộng (width) có định theo tiêu chuẩn của HTML, giá trị có thể là px, %, rem, em"
 					},
 					"Height": {
 						"label": "Chiều cao (cố định)",
 						"placeholder": "",
-						"description": "Chỉ định chiều cao (height) có định theo tiêu chuẩn của HTML (trên dưới trái phải), giá trị có thể là px, %, rem, em"
+						"description": "Chỉ định chiều cao (height) có định theo tiêu chuẩn của HTML, giá trị có thể là px, %, rem, em"
 					},
 					"Color": {
 						"label": "Mầu chữ",
@@ -951,6 +951,269 @@
 				},
 				"buttons": {
 					"delete": "Xoá biểu thức truy vấn",
+					"remove": "Đồng ý xoá",
+					"edit": "Cập nhật cấp cao"
+				}
+			}
+		},
+		"portlets": {
+			"title": {
+				"search": "Tìm kiếm portlet hiển thị",
+				"list": "Danh sách portlet hiển thị {{info}}",
+				"create": "Tạo mới portlet hiển thị",
+				"update": "Cập nhật portlet hiển thị"
+			},
+			"actions": {
+				"List": "Hiển thị danh sách",
+				"View": "Xem chi tiết nội dung"
+			},
+			"controls": {
+				"Title": {
+					"label": "Tên portlet hiển thị",
+					"placeholder": "",
+					"description": ""
+				},
+				"MainAction": {
+					"label": "Hành động chính",
+					"placeholder": "",
+					"description": "Được sử dụng khi portlet hiển thị trong desktop không có đủ thông số"
+				},
+				"SubAction": {
+					"label": "Hành động thay thế",
+					"placeholder": "",
+					"description": "Được sử dụng khi portlet hiển thị trong desktop có đủ thông số, bao gồm <b>parent-identity</b> và <b>content-identity</b>"
+				},
+				"DesktopID": {
+					"label": "Hiển thị trong desktop",
+					"placeholder": "",
+					"description": ""
+				},
+				"OtherDesktops": {
+					"label": "Đồng thời hiển thị trong các desktop",
+					"placeholder": "",
+					"description": ""
+				},
+				"Zone": {
+					"label": "Hiển thị tại vùng",
+					"placeholder": "",
+					"description": ""
+				},
+				"RepositoryEntityID": {
+					"label": "Kiểu dữ liệu nghiệp vụ",
+					"placeholder": "",
+					"description": "Portlet sẽ hiển thị dữ liệu của kiểu dữ liệu nghiệp vụ đã chỉ định"
+				},
+				"OriginalPortletID": {
+					"label": "Mã định danh của portlet gốc",
+					"placeholder": "",
+					"description": ""
+				},
+				"CommonSettings": {
+					"label": "Thiết đặt hiển thị của portlet",
+					"Template": {
+						"label": "Mẫu hiển thị",
+						"placeholder": "",
+						"description": "Mã XHTML cho mẫu hiển thị của portlet, sẽ sử dụng mẫu hiển thị mặc định nếu không có nội dung được nhập.<br/>Thông thường mẫu hiển thị của portlet có 3 vùng (zone) hiển thị, với mã định danh (được chỉ định qua tham số <b>zone-id</b> [vd: zone-id=\"Content\"]) tương ứng là '<b>ContextMenu</b>' sử dụng để đặt menu ngữ cảnh của portlet, '<b>Title</b>' sử dụng để đặt tiêu đề của portlet và '<b>Content</b>' để hiển thị nội dung của portlet.<br/>Tips: có thể bỏ vùng (zone) <b>Content</b> và đưa vào đó các nội dung tĩnh.<br/>Bấm vào biểu tượng ở bên cạnh để hệ thống lấy mã XHTML mặc định của mẫu hiển thị rồi sửa từ đó."
+					},
+					"HideTitle": {
+						"label": "Ẩn tiêu đề của portlet khi hiển thị"
+					},
+					"TitleURL": {
+						"label": "Liên kết tại tiêu đề",
+						"placeholder": "",
+						"description": "Chỉ định liên kết sẽ được mở khi người dùng bấm chuột vào tiêu đề của portlet"
+					},
+					"IconURI": {
+						"label": "Ảnh biểu tượng tại tiêu đề",
+						"placeholder": "",
+						"description": "Chỉ định ảnh biểu tượng sẽ được đặt vào tiêu đề của portlet, nếu có ảnh biểu tượng thì menu ngữ cảnh sẽ xuất hiện khi người dùng di chuột qua đó"
+					},
+					"ContentUISettings": {
+						"label": "Thiết đặt hiển thị của tiêu đề"
+					}
+				},
+				"ListSettings": {
+					"Template": {
+						"label": "Mẫu hiển thị",
+						"placeholder": "",
+						"description": "Mã XSLT để hiển thị danh sách nội dung của portlet, sẽ sử dụng mẫu hiển thị mặc định nếu không có nội dung được nhập.<br/>Tips: Bấm vào biểu tượng ở bên cạnh để hệ thống lấy mã XSLT mặc định của mẫu hiển thị rồi sửa từ đó."
+					},
+					"ExpressionID": {
+						"label": "Biểu thức truy vấn và sắp xếp",
+						"placeholder": "",
+						"description": "Chỉ định biểu thức truy vấn và sắp xếp nội dung của danh sách dữ liệu"
+					},
+					"PageSize": {
+						"label": "Số lượng nội dung trên 1 trang",
+						"placeholder": "",
+						"description": "Chỉ định số lượng nội dung dữ liệu sẽ hiển thị trên 1 trang"
+					},
+					"AutoPageNumber": {
+						"label": "Chỉ định lấy số trang tự động (từ tham số page-number, không chỉ định để luôn lấy trang đầu tiên)"
+					},
+					"Options": {
+						"label": "Tuỳ chọn hiển thị",
+						"placeholder": "",
+						"description": "Mã JSON để chỉ định các thông tin sẽ hiển thị trên danh sách, các nội dung này sẽ được đặt vào thẻ &lgOptions%gt; của mã XML chứa dữ liệu danh sách"
+					},
+					"ShowBreadcrumbs": {
+						"label": "Hiển thị thanh chỉ thị"
+					},
+					"ShowPagination": {
+						"label": "Hiển thi thanh phân trang"
+					}
+				},
+				"ViewSettings": {
+					"Template": {
+						"label": "Mẫu hiển thị",
+						"placeholder": "",
+						"description": "Mã XSLT để hiển thị nội dung (chi tiết) của portlet, sẽ sử dụng mẫu hiển thị mặc định nếu không có nội dung được nhập.<br/>Tips: Bấm vào biểu tượng ở bên cạnh để hệ thống lấy mã XSLT mặc định của mẫu hiển thị rồi sửa từ đó."
+					},
+					"Options": {
+						"label": "Tuỳ chọn hiển thị",
+						"placeholder": "",
+						"description": "Mã JSON để chỉ định các thông tin sẽ hiển thị, các nội dung này sẽ được đặt vào thẻ &lgOptions%gt; của mã XML chứa dữ liệu nội dung hiển thị chi tiết"
+					},
+					"ShowBreadcrumbs": {
+						"label": "Hiển thị thanh chỉ thị"
+					},
+					"ShowPagination": {
+						"label": "Hiển thi thanh phân trang"
+					}
+				},
+				"PaginationSettings": {
+					"label": "Thiết đặt hiển thị thanh nhảy trang",
+					"Template": {
+						"label": "Mẫu hiển thị",
+						"placeholder": "",
+						"description": "Mã XSLT cho mẫu hiển thị của thanh nhảy trang, sẽ sử dụng mẫu hiển thị mặc định nếu không có nội dung được nhập.<br/>Tips: Bấm vào biểu tượng ở bên cạnh để hệ thống lấy mã XHTML mặc định của mẫu hiển thị rồi sửa từ đó."
+					},
+					"PreviousPageLabel": {
+						"label": "Nhãn 'Trang trước'",
+						"placeholder": "",
+						"description": "Nội dung ở trên sẽ được sử dụng để hiển thị cho nhãn '<b>Trang trước</b>' trên thanh nhảy trang"
+					},
+					"NextPageLabel": {
+						"label": "Nhãn 'Trang sau'",
+						"placeholder": "",
+						"description": "Nội dung ở trên sẽ được sử dụng để hiển thị cho nhãn '<b>Trang sau</b>' trên thanh nhảy trang"
+					},
+					"CurrentPageLabel": {
+						"label": "Nhãn 'Trang hiện tại'",
+						"placeholder": "",
+						"description": "Nội dung ở trên sẽ được sử dụng để hiển thị cho nhãn '<b>Trang hiện tại</b>' trên thanh nhảy trang"
+					},
+					"ShowPageLinks": {
+						"label": "Hiển thị liên kết trang (không chọn nếu muốn hiển thị hộp chọn)"
+					}
+				},
+				"BreadcrumbSettings": {
+					"label": "Thiết đặt hiển thị thanh chỉ thị",
+					"Template": {
+						"label": "Mẫu hiển thị",
+						"placeholder": "",
+						"description": "Mã XSLT cho mẫu hiển thị của thanh chỉ thị, sẽ sử dụng mẫu hiển thị mặc định nếu không có nội dung được nhập.<br/>Tips: Bấm vào biểu tượng ở bên cạnh để hệ thống lấy mã XHTML mặc định của mẫu hiển thị rồi sửa từ đó."
+					},
+					"SeperatedLabel": {
+						"label": "Nhãn phân cách",
+						"placeholder": "",
+						"description": "Nội dung ở trên sẽ được sử dụng để phân cách các nội dung trên thanh chỉ thị"
+					},
+					"HomeLabel": {
+						"label": "Nhãn 'Trang chủ'",
+						"placeholder": "",
+						"description": "Nội dung ở trên sẽ được sử dụng để hiển thị nhãn '<b>Trang chủ</b>' trên thanh chỉ thị"
+					},
+					"HomeURL": {
+						"label": "Liên kết về trang chủ",
+						"placeholder": "",
+						"description": "Chỉ định liên kết về trang chủ, sử dụng ký hiệu <b>~/</b> để chỉ định liên kết gốc, không nhập nội dung để sử dụng liên kết mặc định"
+					},
+					"HomeAdditionalLabel": {
+						"label": "Nhãn bổ sung cho 'Trang chủ' (phía sau)",
+						"placeholder": "",
+						"description": "Nội dung ở trên sẽ được sử dụng để hiển thị nhãn bổ sung ở phía sau nhãn trang chủ trên thanh chỉ thị"
+					},
+					"HomeAdditionalURL": {
+						"label": "Liên kết nhãn bổ sung",
+						"placeholder": "",
+						"description": "Chỉ định liên kết cho nhãn bổ sung, sử dụng ký hiệu <b>~/</b> để chỉ định liên kết gốc"
+					},
+					"ShowModuleLink": {
+						"label": "Hiển thị liên kết tới module nghiệp vụ"
+					},
+					"ModuleLabel": {
+						"label": "Nhãn 'Module nghiệp vụ'",
+						"placeholder": "",
+						"description": "Nội dung ở trên sẽ được sử dụng để hiển thị nhãn '<b>Module nghiệp vụ</b>' trên thanh chỉ thị, không nhập để lấy giá trị mặc định (tiêu đề)"
+					},
+					"ModuleURL": {
+						"label": "Liên kết về module nghiệp vụ",
+						"placeholder": "",
+						"description": "Chỉ định liên kết về module nghiệp vụ, sử dụng ký hiệu <b>~/</b> để chỉ định liên kết gốc, không nhập nội dung để sử dụng liên kết mặc định"
+					},
+					"ModuleAdditionalLabel": {
+						"label": "Nhãn bổ sung cho 'Module nghiệp vụ' (phía sau)",
+						"placeholder": "",
+						"description": "Nội dung ở trên sẽ được sử dụng để hiển thị nhãn bổ sung ở phía sau nhãn module nghiệp vụ trên thanh chỉ thị"
+					},
+					"ModuleAdditionalURL": {
+						"label": "Liên kết nhãn bổ sung",
+						"placeholder": "",
+						"description": "Chỉ định liên kết cho nhãn bổ sung, sử dụng ký hiệu <b>~/</b> để chỉ định liên kết gốc"
+					},
+					"ShowContentTypeLink": {
+						"label": "Hiển thị liên kết tới kiểu dữ liệu nghiệp vụ"
+					},
+					"ContentTypeLabel": {
+						"label": "Nhãn 'Kiểu dữ liệu nghiệp vụ'",
+						"placeholder": "",
+						"description": "Nội dung ở trên sẽ được sử dụng để hiển thị nhãn '<b>Kiểu dữ liệu nghiệp vụ</b>' trên thanh chỉ thị, không nhập để lấy giá trị mặc định (tiêu đề)"
+					},
+					"ContentTypeURL": {
+						"label": "Liên kết về kiểu dữ liệu nghiệp vụ",
+						"placeholder": "",
+						"description": "Chỉ định liên kết về kiểu dữ liệu nghiệp vụ, sử dụng ký hiệu <b>~/</b> để chỉ định liên kết gốc, không nhập nội dung để sử dụng liên kết mặc định"
+					},
+					"ContentTypeAdditionalLabel": {
+						"label": "Nhãn bổ sung cho 'Kiểu dữ liệu nghiệp vụ' (phía sau)",
+						"placeholder": "",
+						"description": "Nội dung ở trên sẽ được sử dụng để hiển thị nhãn bổ sung ở phía sau nhãn kiểu dữ liệu nghiệp vụ trên thanh chỉ thị"
+					},
+					"ContentTypeAdditionalURL": {
+						"label": "Liên kết nhãn bổ sung",
+						"placeholder": "",
+						"description": "Chỉ định liên kết cho nhãn bổ sung, sử dụng ký hiệu <b>~/</b> để chỉ định liên kết gốc"
+					}
+				}
+			},
+			"list": {
+				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác portlet hiển thị",
+				"invalid": "Chưa chỉ định portlet hiển thị"
+			},
+			"update": {
+				"segments": {
+					"common": "Thiết đặt chung",
+					"list": "Hiển thị danh sách",
+					"view": "Xem chi tiết",
+					"other": "Phân trang & Thanh chỉ thị"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo portlet hiển thị?",
+						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của portlet hiển thị?",
+						"delete": "Chắc chắn muốn xoá bỏ portlet hiển thị?",
+						"remove": "Portlet hiển thị này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
+					},
+					"success": {
+						"new": "Đã khởi tạo portlet hiển thị thành công",
+						"update": "Đã cập nhật các thay đổi của portlet hiển thị thành công",
+						"delete": "Đã đưa portlet hiển thị và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
+					},
+					"json": "Lỗi trong cú pháp JSON của biểu thức"
+				},
+				"buttons": {
+					"delete": "Xoá portlet hiển thị",
 					"remove": "Đồng ý xoá",
 					"edit": "Cập nhật cấp cao"
 				}

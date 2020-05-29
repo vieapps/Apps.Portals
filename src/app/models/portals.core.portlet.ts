@@ -2,15 +2,18 @@ import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { ElementUISettings } from "@models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
+import { ContentType } from "@models/portals.core.content.type";
 
 export class Portlet extends CoreBaseModel {
 
 	constructor(
 		systemID?: string,
+		desktopID?: string,
 		repositoryEntityID?: string
 	) {
 		super();
 		this.SystemID = AppUtility.isNotEmpty(systemID) ? systemID : "";
+		this.DesktopID = AppUtility.isNotEmpty(desktopID) ? desktopID : "";
 		this.RepositoryEntityID = AppUtility.isNotEmpty(repositoryEntityID) ? repositoryEntityID : undefined;
 	}
 
@@ -92,6 +95,7 @@ export class Portlet extends CoreBaseModel {
 		portlet = portlet || new Portlet();
 		portlet.copy(json);
 		portlet.ansiTitle = AppUtility.toANSI(portlet.Title).toLowerCase();
+		portlet.routerParams["x-request"] = AppUtility.toBase64Url({ ID: portlet.ID, DesktopID: portlet.DesktopID });
 		return portlet;
 	}
 
@@ -124,6 +128,12 @@ export class Portlet extends CoreBaseModel {
 
 	public get routerLink() {
 		return `/portals/core/portlets/update/${AppUtility.toURI(this.ansiTitle)}`;
+	}
+
+	public get contentType() {
+		return AppUtility.isNotEmpty(this.RepositoryEntityID)
+			? ContentType.get(this.RepositoryEntityID)
+			: undefined;
 	}
 
 }

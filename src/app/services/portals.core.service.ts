@@ -4,7 +4,7 @@ import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { AppCustomCompleter } from "@components/app.completer";
 import { AppPagination } from "@components/app.pagination";
-import { AppFormsControlConfig, AppFormsLookupValue, AppFormsService } from "@components/forms.service";
+import { AppFormsControlConfig, AppFormsLookupValue, AppFormsService, AppFormsControlLookupOptionsConfig } from "@components/forms.service";
 import { FilesProcessorModalPage } from "@controls/common/file.processor.modal.page";
 import { FileOptions } from "@services/files.service";
 import { Base as BaseService } from "@services/base.service";
@@ -200,6 +200,26 @@ export class PortalsCoreService extends BaseService {
 		return Organization.active;
 	}
 
+	public setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onPreCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {
+		lookupOptions.ModalOptions = lookupOptions.ModalOptions || {};
+		if (lookupModalPage !== undefined) {
+			lookupOptions.ModalOptions.Component = lookupModalPage;
+		}
+		lookupOptions.ModalOptions.ComponentProps = lookupOptions.ModalOptions.ComponentProps || {};
+		lookupOptions.ModalOptions.ComponentProps.organizationID = contentType === undefined ? this.activeOrganization.ID : contentType.SystemID;
+		lookupOptions.ModalOptions.ComponentProps.moduleID = contentType === undefined ? undefined : contentType.RepositoryID;
+		lookupOptions.ModalOptions.ComponentProps.contentTypeID = contentType === undefined ? undefined : contentType.ID;
+		if (multiple !== undefined) {
+			lookupOptions.ModalOptions.ComponentProps.multiple = AppUtility.isTrue(multiple);
+		}
+		if (nested !== undefined) {
+			lookupOptions.ModalOptions.ComponentProps.nested = AppUtility.isTrue(nested);
+		}
+		if (onPreCompleted !== undefined) {
+			onPreCompleted(lookupOptions);
+		}
+	}
+
 	public getAppUrl(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }, objectName?: string, path?: string) {
 		objectName = objectName || (contentType !== undefined ? contentType.getObjectName() : "unknown");
 		return `/portals/${path || "cms"}/`
@@ -219,6 +239,11 @@ export class PortalsCoreService extends BaseService {
 			uri = `${this.configSvc.appConfig.URIs.portals}~${(organization !== undefined ? organization.Alias : "")}/${(desktop !== undefined ? desktop.Alias : "-default")}`;
 		}
 		return uri + `/${object["Alias"] || object.ID}`;
+	}
+
+	public async getTemplateAsync(name: string, mainDirectory?: string, subDirectory?: string) {
+		console.warn("Get the pre-defined template", name, mainDirectory, subDirectory);
+		return "";
 	}
 
 	public getPaginationPrefix(objectName: string) {
@@ -667,6 +692,18 @@ export class PortalsCoreService extends BaseService {
 			modalComponent: modalComponent,
 			modalComponentProperties: modalComponentProperties
 		};
+	}
+
+	public lookup(objectName: string, request: any, onNext: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		return super.search(super.getSearchURI(objectName, this.configSvc.relatedQuery), request, onNext, onError, true, headers);
+	}
+
+	public async lookupAsync(objectName: string, request: any, onNext: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		await super.searchAsync(super.getSearchURI(objectName, this.configSvc.relatedQuery), request, onNext, onError, true, false, headers);
+	}
+
+	public async getAsync(objectName: string, id: string, onNext: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		await super.readAsync(super.getURI(objectName, id), onNext, onError, headers, true);
 	}
 
 	public get organizationCompleterDataSource() {
@@ -2044,11 +2081,7 @@ export class PortalsCoreService extends BaseService {
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!Expression.contains(obj.ID)) {
-							Expression.update(obj);
-						}
-					});
+					(data.Objects as Array<any>).forEach(obj => Expression.update(obj));
 				}
 				if (onNext !== undefined) {
 					onNext(data);
@@ -2069,11 +2102,7 @@ export class PortalsCoreService extends BaseService {
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!Expression.contains(obj.ID)) {
-							Expression.update(obj);
-						}
-					});
+					(data.Objects as Array<any>).forEach(obj => Expression.update(obj));
 				}
 				if (onNext !== undefined) {
 					onNext(data);

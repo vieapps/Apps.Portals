@@ -179,15 +179,15 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public lookup(objectName: string, request: any, onNext: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		return super.search(super.getSearchURI(objectName, this.configSvc.relatedQuery), request, onNext, onError, true, headers);
+		return this.portalsCoreSvc.lookup(objectName, request, onNext, onError, headers);
 	}
 
 	public async lookupAsync(objectName: string, request: any, onNext: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await super.searchAsync(super.getSearchURI(objectName, this.configSvc.relatedQuery), request, onNext, onError, true, false, headers);
+		await this.portalsCoreSvc.lookupAsync(objectName, request, onNext, onError, headers);
 	}
 
 	public async getAsync(objectName: string, id: string, onNext: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await super.readAsync(super.getURI(objectName, id), onNext, onError, headers, true);
+		await this.portalsCoreSvc.getAsync(objectName, id, onNext, onError, headers);
 	}
 
 	public getFileOptions(object: CmsBaseModel, onCompleted?: (fileOptions: FileOptions) => void) {
@@ -288,23 +288,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onPreCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {
-		lookupOptions.ModalOptions = lookupOptions.ModalOptions || {};
-		if (lookupModalPage !== undefined) {
-			lookupOptions.ModalOptions.Component = lookupModalPage;
-		}
-		lookupOptions.ModalOptions.ComponentProps = lookupOptions.ModalOptions.ComponentProps || {};
-		lookupOptions.ModalOptions.ComponentProps.organizationID = contentType.SystemID;
-		lookupOptions.ModalOptions.ComponentProps.moduleID = contentType.RepositoryID;
-		lookupOptions.ModalOptions.ComponentProps.contentTypeID = contentType.ID;
-		if (multiple !== undefined) {
-			lookupOptions.ModalOptions.ComponentProps.multiple = AppUtility.isTrue(multiple);
-		}
-		if (nested !== undefined) {
-			lookupOptions.ModalOptions.ComponentProps.nested = AppUtility.isTrue(nested);
-		}
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(lookupOptions);
-		}
+		this.portalsCoreSvc.setLookupOptions(lookupOptions, lookupModalPage, contentType, multiple, nested, onPreCompleted);
 	}
 
 	public getContentTypesOfCategory(module: Module) {
