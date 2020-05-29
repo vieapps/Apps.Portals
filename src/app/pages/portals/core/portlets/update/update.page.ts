@@ -145,6 +145,10 @@ export class PortalsPortletsUpdatePage implements OnInit {
 		}
 
 		this.contentType = ContentType.get(this.portlet.RepositoryEntityID);
+		if (this.contentType === undefined && AppUtility.isNotEmpty(this.portlet.RepositoryEntityID)) {
+			await this.portalsCoreSvc.getContentTypeAsync(this.portlet.RepositoryEntityID, _ => this.contentType = ContentType.get(this.portlet.RepositoryEntityID), undefined, true);
+		}
+
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.portlets.title.${(AppUtility.isNotEmpty(this.portlet.ID) ? "update" : "create")}`);
 		this.button = {
 			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.portlet.ID) ? "update" : "create")}`),
