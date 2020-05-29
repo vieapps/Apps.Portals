@@ -726,6 +726,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	/** Sets the value of this control */
 	setValue(value: any, options?: Object, updateValueAndValidity: boolean = false) {
 		this.formControl.setValue(value, options);
+		if (this.selectAsDropdown) {
+			this._selectOptions = undefined;
+		}
 		if (updateValueAndValidity) {
 			this.formControl.updateValueAndValidity(options !== undefined ? { onlySelf: AppUtility.isTrue(options["onlySelf"]), emitEvent: AppUtility.isTrue(options["emitEvent"]) } : undefined);
 		}
