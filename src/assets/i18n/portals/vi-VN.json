@@ -188,10 +188,19 @@
 						"noZone": "Mẫu hiển thị của desktop không có bất kỳ một vùng hiển thị nào (nghĩa là phải có thẻ với thuộc tính 'zone-id')",
 						"zoneNoID": "Vùng hiển thị của desktop chưa đúng tiêu chuẩn do không có mã định danh",
 						"zoneExisted": "Vùng hiển thị của desktop chưa đúng tiêu chuẩn do mã định danh đã được dùng cho vùng khác"
+					},
+					"portlet": {
+						"invalid": "Mẫu hiển thị của portlet chưa đúng tiêu chuẩn XHTML",
+						"listXslt": "Mẫu hiển thị danh sách chưa đúng tiêu chuẩn XSLT",
+						"viewXslt": "Mẫu hiển thị chi tiết chưa đúng tiêu chuẩn XSLT",
+						"paginationXslt": "Mẫu hiển thị thanh nhảy trang chưa đúng tiêu chuẩn XSLT",
+						"breadcrumbXslt": "Mẫu hiển thị chỉ thị chưa đúng tiêu chuẩn XSLT"
 					}
 				},
 				"metaTags": "Các thẻ meta chưa đúng tiêu chuẩn XHTML/XML",
-				"scripts": "Các thẻ script chưa đúng tiêu chuẩn XHTML/XML"
+				"scripts": "Các thẻ script chưa đúng tiêu chuẩn XHTML/XML",
+				"listOptions": "Tuỳ chọn hiển thị danh sách chưa đúng tiêu chuẩn JSON",
+				"viewOptions": "Tuỳ chọn hiển thị chi tiết chưa đúng tiêu chuẩn JSON"
 			}
 		},
 		"organizations": {
@@ -851,7 +860,8 @@
 			},
 			"list": {
 				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác kiểu dữ liệu nghiệp vụ",
-				"invalid": "Chưa chỉ định kiểu dữ liệu nghiệp vụ"
+				"invalid": "Chưa chỉ định kiểu dữ liệu nghiệp vụ",
+				"no": "Chưa có kiểu dữ liệu nghiệp vụ nào"
 			},
 			"update": {
 				"segments": {
@@ -973,12 +983,12 @@
 					"placeholder": "",
 					"description": ""
 				},
-				"MainAction": {
-					"label": "Hành động chính",
+				"Action": {
+					"label": "Hành động",
 					"placeholder": "",
 					"description": "Được sử dụng khi portlet hiển thị trong desktop không có đủ thông số"
 				},
-				"SubAction": {
+				"AlternativeAction": {
 					"label": "Hành động thay thế",
 					"placeholder": "",
 					"description": "Được sử dụng khi portlet hiển thị trong desktop có đủ thông số, bao gồm <b>parent-identity</b> và <b>content-identity</b>"
@@ -1013,7 +1023,7 @@
 					"Template": {
 						"label": "Mẫu hiển thị",
 						"placeholder": "",
-						"description": "Mã XHTML cho mẫu hiển thị của portlet, sẽ sử dụng mẫu hiển thị mặc định nếu không có nội dung được nhập.<br/>Thông thường mẫu hiển thị của portlet có 3 vùng (zone) hiển thị, với mã định danh (được chỉ định qua tham số <b>zone-id</b> [vd: zone-id=\"Content\"]) tương ứng là '<b>ContextMenu</b>' sử dụng để đặt menu ngữ cảnh của portlet, '<b>Title</b>' sử dụng để đặt tiêu đề của portlet và '<b>Content</b>' để hiển thị nội dung của portlet.<br/>Tips: có thể bỏ vùng (zone) <b>Content</b> và đưa vào đó các nội dung tĩnh.<br/>Bấm vào biểu tượng ở bên cạnh để hệ thống lấy mã XHTML mặc định của mẫu hiển thị rồi sửa từ đó."
+						"description": "Mã XHTML cho mẫu hiển thị của portlet, sẽ sử dụng mẫu hiển thị mặc định nếu không có nội dung được nhập.<br/>Thông thường mẫu hiển thị của portlet có 3 vùng (zone) hiển thị, với mã định danh (được chỉ định qua tham số <b>zone-id</b>) tương ứng là:<ul><li>'<b>ContextMenu</b>' sử dụng để đặt menu ngữ cảnh của portlet,</li><li>'<b>Title</b>' sử dụng để đặt tiêu đề của portlet,</li><li>'<b>Content</b>' để hiển thị nội dung của portlet</ul>Tips:<ul><li>Có thể bỏ vùng <b>Content</b> và <b>Kiểu dữ liệu nghiệp vụ</b> rồi đưa vào đó các nội dung tĩnh</li><li>Bấm vào biểu tượng ở bên cạnh để hệ thống lấy mã XHTML mặc định của mẫu hiển thị rồi sửa từ đó</li></ul>"
 					},
 					"HideTitle": {
 						"label": "Ẩn tiêu đề của portlet khi hiển thị"
@@ -1028,9 +1038,8 @@
 						"placeholder": "",
 						"description": "Chỉ định ảnh biểu tượng sẽ được đặt vào tiêu đề của portlet, nếu có ảnh biểu tượng thì menu ngữ cảnh sẽ xuất hiện khi người dùng di chuột qua đó"
 					},
-					"ContentUISettings": {
-						"label": "Thiết đặt hiển thị của tiêu đề"
-					}
+					"TitleUISettings": "Tuỳ chỉnh hiển thị vùng tiêu đề",
+					"ContentUISettings": "Tuỳ chỉnh hiển thị vùng nội dung"
 				},
 				"ListSettings": {
 					"Template": {
@@ -1054,7 +1063,7 @@
 					"Options": {
 						"label": "Tuỳ chọn hiển thị",
 						"placeholder": "",
-						"description": "Mã JSON để chỉ định các thông tin sẽ hiển thị trên danh sách, các nội dung này sẽ được đặt vào thẻ &lgOptions%gt; của mã XML chứa dữ liệu danh sách"
+						"description": "Mã JSON để chỉ định các thông tin sẽ hiển thị trên danh sách, các nội dung này sẽ được đặt vào thẻ &lt;Options&gt; của mã XML chứa dữ liệu danh sách"
 					},
 					"ShowBreadcrumbs": {
 						"label": "Hiển thị thanh chỉ thị"
@@ -1072,7 +1081,7 @@
 					"Options": {
 						"label": "Tuỳ chọn hiển thị",
 						"placeholder": "",
-						"description": "Mã JSON để chỉ định các thông tin sẽ hiển thị, các nội dung này sẽ được đặt vào thẻ &lgOptions%gt; của mã XML chứa dữ liệu nội dung hiển thị chi tiết"
+						"description": "Mã JSON để chỉ định các thông tin sẽ hiển thị, các nội dung này sẽ được đặt vào thẻ &lt;Options&gt; của mã XML chứa dữ liệu nội dung hiển thị chi tiết"
 					},
 					"ShowBreadcrumbs": {
 						"label": "Hiển thị thanh chỉ thị"
@@ -1210,7 +1219,7 @@
 						"update": "Đã cập nhật các thay đổi của portlet hiển thị thành công",
 						"delete": "Đã đưa portlet hiển thị và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
 					},
-					"json": "Lỗi trong cú pháp JSON của biểu thức"
+					"json": "Lỗi trong cú pháp JSON của tuỳ chọn hiển thị"
 				},
 				"buttons": {
 					"delete": "Xoá portlet hiển thị",

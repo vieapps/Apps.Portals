@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@components/app.crypto";
 import { AppEvents } from "@components/app.events";
@@ -6,7 +6,6 @@ import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppPagination } from "@components/app.pagination";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
-import { AppFormsControlComponent } from "@components/forms.control.component";
 import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { FilesService, FileOptions } from "@services/files.service";
@@ -27,7 +26,7 @@ import { DataLookupModalPage } from "@controls/portals/data.lookup.modal.page";
 	styleUrls: ["./update.page.scss"]
 })
 
-export class PortalsPortletsUpdatePage implements OnInit {
+export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 	constructor(
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
@@ -44,6 +43,7 @@ export class PortalsPortletsUpdatePage implements OnInit {
 	private isSystemModerator = false;
 	private canModerateOrganization = false;
 	private isAdvancedMode = false;
+	private unspecified = "Unspecified";
 	private hash = "";
 
 	title = "";
@@ -51,7 +51,8 @@ export class PortalsPortletsUpdatePage implements OnInit {
 	formConfig: Array<AppFormsControlConfig>;
 	formSegments = {
 		items: undefined as Array<AppFormsSegment>,
-		default: "basic"
+		default: "common",
+		current: "common"
 	};
 	formControls = new Array<AppFormsControl>();
 	processing = false;
@@ -68,9 +69,17 @@ export class PortalsPortletsUpdatePage implements OnInit {
 		this.initializeAsync();
 	}
 
+	ngOnDestroy() {
+		AppEvents.off(this.filesSvc.name, "Portlet:Refresh");
+	}
+
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
-		this.desktop = Desktop.get(this.configSvc.requestParams["DesktopID"]);
+		const desktopID = this.configSvc.requestParams["DesktopID"];
+		this.desktop = Desktop.get(desktopID);
+		if (this.desktop === undefined && AppUtility.isNotEmpty(desktopID)) {
+			await this.portalsCoreSvc.getDesktopAsync(desktopID, _ => this.desktop = Desktop.get(desktopID), undefined, true);
+		}
 		if (this.desktop === undefined) {
 			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
@@ -92,8 +101,8 @@ export class PortalsPortletsUpdatePage implements OnInit {
 			}
 			this.portlet = this.desktop.portlets.find(portlet => portlet.ID === portletID);
 		}
-		this.organization = Organization.get(this.desktop.SystemID) || this.portalsCoreSvc.activeOrganization || new Organization();
 
+		this.organization = Organization.get(this.desktop.SystemID) || this.portalsCoreSvc.activeOrganization || new Organization();
 		this.isSystemModerator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canModerateOrganization = this.isSystemModerator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 		if (!this.canModerateOrganization) {
@@ -104,8 +113,17 @@ export class PortalsPortletsUpdatePage implements OnInit {
 			return;
 		}
 
+		if (this.organization.contentTypes === undefined || this.organization.contentTypes.length < 1) {
+			await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.no")));
+			return;
+		}
+
 		if (this.portlet === undefined) {
-			this.portlet = new Portlet(this.desktop.SystemID, this.desktop.ID, this.configSvc.requestParams["RepositoryEntityID"]);
+			this.isAdvancedMode = this.isSystemModerator;
+			this.contentType = ContentType.get(this.configSvc.requestParams["RepositoryEntityID"]) || this.organization.contentTypes.filter(contentType => contentType.contentTypeDefinition.Portlets)[0];
+			this.portlet = new Portlet(this.desktop.SystemID, this.desktop.ID, this.contentType.ID);
+			this.portlet.Action = "List";
+			this.portlet.AlternativeAction = "View";
 			this.portlet.CommonSettings = {
 				HideTitle: true,
 				TitleUISettings: {},
@@ -133,10 +151,15 @@ export class PortalsPortletsUpdatePage implements OnInit {
 				ShowModuleLink: false,
 				ShowContentTypeLink: false
 			};
-			this.isAdvancedMode = this.isSystemModerator;
 		}
 		else {
-			this.isAdvancedMode = AppUtility.isTrue(this.configSvc.requestParams["Advanced"]);
+			this.isAdvancedMode = this.isSystemModerator && AppUtility.isTrue(this.configSvc.requestParams["Advanced"]);
+			this.portlet.CommonSettings.TitleUISettings = this.portlet.CommonSettings.TitleUISettings || {};
+			this.portlet.CommonSettings.ContentUISettings = this.portlet.CommonSettings.ContentUISettings || {};
+			this.contentType = ContentType.get(this.portlet.RepositoryEntityID);
+			if (this.contentType === undefined && AppUtility.isNotEmpty(this.portlet.RepositoryEntityID)) {
+				await this.portalsCoreSvc.getContentTypeAsync(this.portlet.RepositoryEntityID, _ => this.contentType = ContentType.get(this.portlet.RepositoryEntityID), undefined, true);
+			}
 		}
 
 		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.portlet.SystemID) {
@@ -144,19 +167,21 @@ export class PortalsPortletsUpdatePage implements OnInit {
 			return;
 		}
 
-		this.contentType = ContentType.get(this.portlet.RepositoryEntityID);
-		if (this.contentType === undefined && AppUtility.isNotEmpty(this.portlet.RepositoryEntityID)) {
-			await this.portalsCoreSvc.getContentTypeAsync(this.portlet.RepositoryEntityID, _ => this.contentType = ContentType.get(this.portlet.RepositoryEntityID), undefined, true);
-		}
-
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.portlets.title.${(AppUtility.isNotEmpty(this.portlet.ID) ? "update" : "create")}`);
 		this.button = {
 			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.portlet.ID) ? "update" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
+		this.unspecified = await this.configSvc.getResourceAsync("portals.common.unspecified");
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
+
+		AppEvents.on(this.filesSvc.name, info => {
+			if (info.args.Object === "Attachment" && this.desktop.ID === info.args.ObjectID) {
+				this.prepareAttachments(undefined, info.args.Event === "Delete" ? undefined : this.filesSvc.prepareAttachment(info.args.Data), info.args.Event === "Delete" ? this.filesSvc.prepareAttachment(info.args.Data) : undefined);
+			}
+		}, "Portlet:Refresh");
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
@@ -179,8 +204,19 @@ export class PortalsPortletsUpdatePage implements OnInit {
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		control.Options.AutoFocus = true;
 
-		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "MainAction")).Options.SelectOptions.Values =
-			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SubAction")).Options.SelectOptions.Values = ["List", "View"].map(id => `{{portals.portlets.actions.${id}}}`);
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Action"));
+		control.Options.SelectOptions.Interface = "popover";
+		control.Options.SelectOptions.Values = ["List", "View"].map(action => {
+			return { Value: action, Label: `{{portals.portlets.actions.${action}}}` };
+		});
+		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: this.unspecified }, 0);
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "AlternativeAction"));
+		control.Options.SelectOptions.Interface = "popover";
+		control.Options.SelectOptions.Values = ["List", "View"].map(action => {
+			return { Value: action, Label: `{{portals.portlets.actions.${action}}}` };
+		});
+		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: this.unspecified }, 0);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "DesktopID"));
 		if (this.isAdvancedMode) {
@@ -198,11 +234,15 @@ export class PortalsPortletsUpdatePage implements OnInit {
 						multiple: false,
 						organizationID: this.organization.ID
 					},
-					OnDismiss: (data, formControl) => {
+					OnDismiss: async (data, formControl) => {
 						if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
 							const selectedDesktop = Desktop.get(data[0]);
 							formControl.setValue(selectedDesktop.ID);
 							formControl.lookupDisplayValues = [{ Value: selectedDesktop.ID, Label: selectedDesktop.FullTitle }];
+							const zonesControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Zone"));
+							zonesControl.Options.SelectOptions.Values = (await this.portalsCoreSvc.getTemplateZonesAsync(selectedDesktop.ID)).map(zone => {
+								return { Value: zone, Label: zone };
+							});
 						}
 					}
 				}
@@ -226,31 +266,40 @@ export class PortalsPortletsUpdatePage implements OnInit {
 			);
 		}
 
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Zone"));
+		control.Options.SelectOptions.Interface = "popover";
+		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getTemplateZonesAsync(this.desktop.ID)).map(zone => {
+			return { Value: zone, Label: zone };
+		});
+
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryEntityID"));
 		if (this.isAdvancedMode) {
-			control.Options.Type = "dropdown";
-			control.Options.SelectOptions.Values = this.organization.contentTypes.filter(contType => contType.contentTypeDefinition.Portlets).map(contType => {
-				return { Value: contType.ID, Label: contType.Title };
+			control.Options.SelectOptions.Values = this.organization.contentTypes.filter(contentType => contentType.contentTypeDefinition.Portlets).map(contentType => {
+				return { Value: contentType.ID, Label: contentType.Title };
 			});
+			AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: this.unspecified }, 0);
 			control.Options.OnChanged = (_, formControl) => {
-				this.contentType = ContentType.get(formControl.value);
-				const expressionControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ListSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExpressionID"));
-				expressionControl.Options.LookupOptions.ModalOptions.ComponentProps.filters = { Or: [
-					{ ContentTypeDefinitionID: { Equals: this.contentType.ContentTypeDefinitionID } },
-					{ RepositoryEntityID: { Equals: this.contentType.ID } }
-				]};
+				if (!AppUtility.isEquals(formControl.value, "-")) {
+					this.contentType = ContentType.get(formControl.value);
+					const expressionControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ListSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExpressionID"));
+					expressionControl.Options.LookupOptions.ModalOptions.ComponentProps.filters = { Or: [
+						{ ContentTypeDefinitionID: { Equals: this.contentType.ContentTypeDefinitionID } },
+						{ RepositoryEntityID: { Equals: this.contentType.ID } }
+					]};
+					this.portalsCoreSvc.setTemplateControlOptions(this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ListSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "list.xsl", this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType.getObjectName(false));
+					this.portalsCoreSvc.setTemplateControlOptions(this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ViewSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "view.xsl", this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType.getObjectName(false));
+				}
 			};
 		}
 		else if (AppUtility.isNotEmpty(this.portlet.ID)) {
 			control.Hidden = true;
-			this.contentType = ContentType.get(this.portlet.RepositoryEntityID);
 			AppUtility.insertAt(
 				formConfig,
 				{
 					Name: "RepositoryEntity",
 					Type: "Text",
 					Segment: "basic",
-					Extras: { Text: this.contentType.Title },
+					Extras: { Text: this.contentType !== undefined ? this.contentType.Title : this.unspecified },
 					Options: {
 						Label: control.Options.Label,
 						ReadOnly: true
@@ -261,97 +310,71 @@ export class PortalsPortletsUpdatePage implements OnInit {
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OriginalPortletID"));
-		if (!this.isAdvancedMode) {
-			control.Hidden = true;
+		if (AppUtility.isNotEmpty(this.portlet.ID)) {
+			if (AppUtility.isNotEmpty(this.portlet.OriginalPortletID)) {
+				let originalPortlet = Portlet.get(this.portlet.OriginalPortletID);
+				if (originalPortlet === undefined) {
+					await this.portalsCoreSvc.getPortletAsync(this.portlet.OriginalPortletID, _ => originalPortlet = Portlet.get(this.portlet.OriginalPortletID), undefined, true);
+				}
+				AppUtility.insertAt(
+					formConfig,
+					{
+						Name: "OriginalPortlet",
+						Type: "Text",
+						Segment: "basic",
+						Extras: { Text: originalPortlet !== undefined ? (originalPortlet.desktop !== undefined ? `${originalPortlet.desktop.FullTitle} :: ` : "") + originalPortlet.Title : this.unspecified },
+						Options: {
+							Label: control.Options.Label,
+							ReadOnly: true
+						}
+					},
+					formConfig.findIndex(ctrl => ctrl.Name === control.Name)
+				);
+			}
+			else {
+				control.Hidden = true;
+			}
+		}
+		else {
+			control.Hidden = !this.isAdvancedMode;
 		}
 
 		const commonSettingsConfig = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CommonSettings")).SubControls.Controls;
-		control = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"));
-		control.Options.Rows = 18;
-		control.Options.Icon = {
-			Name: "color-wand",
-			OnClick: async (_, formControl) => formControl.setValue(await this.portalsCoreSvc.getTemplateAsync("portlet.xml"))
-		};
+		this.portalsCoreSvc.setTemplateControlOptions(commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "portlet.xml");
 
 		control = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "TitleUISettings"));
-		control.Options.Label = control.Options.Label === undefined ? undefined : control.Options.Label.replace("portals.portlets.controls.CommonSettings.TitleUISettings", "portals.common.controls.UISettings");
-		control.Options.Description = control.Options.Description === undefined ? undefined : control.Options.Description.replace("portals.portlets.controls.CommonSettings.TitleUISettings", "portals.common.controls.UISettings");
-		control.Options.PlaceHolder = control.Options.PlaceHolder === undefined ? undefined : control.Options.PlaceHolder.replace("portals.portlets.controls.CommonSettings.TitleUISettings", "portals.common.controls.UISettings");
-		control.SubControls.Controls.forEach(ctrl => {
-			ctrl.Options.Label = ctrl.Options.Label === undefined ? undefined : ctrl.Options.Label.replace("portals.portlets.controls.CommonSettings.TitleUISettings", "portals.common.controls.UISettings");
-			ctrl.Options.Description = ctrl.Options.Description === undefined ? undefined : ctrl.Options.Description.replace("portals.portlets.controls.CommonSettings.TitleUISettings", "portals.common.controls.UISettings");
-			ctrl.Options.PlaceHolder = ctrl.Options.PlaceHolder === undefined ? undefined : ctrl.Options.PlaceHolder.replace("portals.portlets.controls.CommonSettings.TitleUISettings", "portals.common.controls.UISettings");
-		});
+		this.portalsCoreSvc.setUISettingsControlOptions(control, "portals.portlets.controls.CommonSettings.TitleUISettings", this.fileOptions);
+		control.Options.Label = "{{portals.portlets.controls.CommonSettings.TitleUISettings}}";
 
-		control = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ContentUISettings"));
-		control.Options.Label = control.Options.Label === undefined ? undefined : control.Options.Label.replace("portals.portlets.controls.CommonSettings.ContentUISettings", "portals.common.controls.UISettings");
-		control.Options.Description = control.Options.Description === undefined ? undefined : control.Options.Description.replace("portals.portlets.controls.CommonSettings.ContentUISettings", "portals.common.controls.UISettings");
-		control.Options.PlaceHolder = control.Options.PlaceHolder === undefined ? undefined : control.Options.PlaceHolder.replace("portals.portlets.controls.CommonSettings.ContentUISettings", "portals.common.controls.UISettings");
-		control.SubControls.Controls.forEach(ctrl => {
-			ctrl.Options.Label = ctrl.Options.Label === undefined ? undefined : ctrl.Options.Label.replace("portals.portlets.controls.CommonSettings.ContentUISettings", "portals.common.controls.UISettings");
-			ctrl.Options.Description = ctrl.Options.Description === undefined ? undefined : ctrl.Options.Description.replace("portals.portlets.controls.CommonSettings.ContentUISettings", "portals.common.controls.UISettings");
-			ctrl.Options.PlaceHolder = ctrl.Options.PlaceHolder === undefined ? undefined : ctrl.Options.PlaceHolder.replace("portals.portlets.controls.CommonSettings.ContentUISettings", "portals.common.controls.UISettings");
-		});
-
-		const iconControl = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI"));
-		iconControl.Extras.LookupDisplayValues = AppUtility.isObject(this.portlet.CommonSettings, true) && AppUtility.isNotEmpty(this.portlet.CommonSettings.IconURI)
-			? [{ Value: this.portlet.CommonSettings.IconURI, Label: this.portlet.CommonSettings.IconURI }]
-			: undefined;
-
-		const titleBackgoundImageControl = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "TitleUISettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
+		const titleBackgoundImageControl = control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
 		titleBackgoundImageControl.Extras.LookupDisplayValues = AppUtility.isObject(this.portlet.CommonSettings, true) && AppUtility.isObject(this.portlet.CommonSettings.TitleUISettings, true) && AppUtility.isNotEmpty(this.portlet.CommonSettings.TitleUISettings.BackgroundImageURI)
 			? [{ Value: this.portlet.CommonSettings.TitleUISettings.BackgroundImageURI, Label: this.portlet.CommonSettings.TitleUISettings.BackgroundImageURI }]
 			: undefined;
 
-		const contentBackgoundImageControl = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ContentUISettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
+		control = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ContentUISettings"));
+		this.portalsCoreSvc.setUISettingsControlOptions(control, "portals.portlets.controls.CommonSettings.ContentUISettings", this.fileOptions);
+		control.Options.Label = "{{portals.portlets.controls.CommonSettings.ContentUISettings}}";
+
+		const contentBackgoundImageControl = control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
 		contentBackgoundImageControl.Extras.LookupDisplayValues = AppUtility.isObject(this.portlet.CommonSettings, true) && AppUtility.isObject(this.portlet.CommonSettings.ContentUISettings, true) && AppUtility.isNotEmpty(this.portlet.CommonSettings.ContentUISettings.BackgroundImageURI)
 			? [{ Value: this.portlet.CommonSettings.ContentUISettings.BackgroundImageURI, Label: this.portlet.CommonSettings.ContentUISettings.BackgroundImageURI }]
 			: undefined;
 
-		iconControl.Options.LookupOptions = titleBackgoundImageControl.Options.LookupOptions = contentBackgoundImageControl.Options.LookupOptions = {
-			AsModal: true,
-			Multiple: false,
-			OnDelete: (_, formControl) => {
-				formControl.setValue(undefined);
-				formControl.lookupDisplayValues = undefined;
-			},
-			ModalOptions: {
-				Component: FilesProcessorModalPage,
-				ComponentProps: {
-					mode: "select",
-					fileOptions: this.fileOptions,
-					allowSelect: true,
-					multiple: false,
-					handlers: { predicate: (attachment: AttachmentInfo) => attachment.isImage, onSelect: () => {} }
-				},
-				OnDismiss: (attachments: AttachmentInfo[], formControl: AppFormsControlComponent) => {
-					const uri = attachments !== undefined && attachments.length > 0 ? attachments[0].URIs.Direct : undefined;
-					if (uri !== undefined) {
-						formControl.setValue(uri);
-						formControl.lookupDisplayValues = [{ Value: uri, Label: uri }];
-					}
-					else {
-						formControl.setValue(undefined);
-						formControl.lookupDisplayValues = undefined;
-					}
-				}
-			}
-		};
+		const iconControl = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI"));
+		iconControl.Options.LookupOptions = titleBackgoundImageControl.Options.LookupOptions;
+		iconControl.Extras.LookupDisplayValues = AppUtility.isObject(this.portlet.CommonSettings, true) && AppUtility.isNotEmpty(this.portlet.CommonSettings.IconURI)
+			? [{ Value: this.portlet.CommonSettings.IconURI, Label: this.portlet.CommonSettings.IconURI }]
+			: undefined;
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ListSettings"));
 		control.Options.Label = control.Options.Description = undefined;
+
 		const listSettingsConfig = control.SubControls.Controls;
+		this.portalsCoreSvc.setTemplateControlOptions(listSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "list.xsl", this.contentType === undefined ? undefined : this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType === undefined ? undefined : this.contentType.getObjectName(false));
 
 		control = listSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Options"));
 		control.Options.Rows = 18;
 		control.Hidden = !this.isAdvancedMode;
-
-		control = listSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"));
-		control.Options.Rows = 18;
-		control.Options.Icon = {
-			Name: "color-wand",
-			OnClick: async (_, formControl) => formControl.setValue(await this.portalsCoreSvc.getTemplateAsync("list.xsl", this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType.getObjectName(false)))
-		};
 
 		let expression = AppUtility.isObject(this.portlet.ListSettings, true) && AppUtility.isNotEmpty(this.portlet.ListSettings.ExpressionID)
 			? Expression.get(this.portlet.ListSettings.ExpressionID)
@@ -388,34 +411,16 @@ export class PortalsPortletsUpdatePage implements OnInit {
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ViewSettings"));
 		control.Options.Label = control.Options.Description = undefined;
+
 		const viewSettingsConfig = control.SubControls.Controls;
+		this.portalsCoreSvc.setTemplateControlOptions(viewSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "view.xsl", this.contentType === undefined ? undefined : this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType === undefined ? undefined : this.contentType.getObjectName(false));
 
 		control = viewSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Options"));
 		control.Options.Rows = 18;
 		control.Hidden = !this.isAdvancedMode;
 
-		control = viewSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"));
-		control.Options.Rows = 18;
-		control.Options.Icon = {
-			Name: "color-wand",
-			OnClick: async (_, formControl) => formControl.setValue(await this.portalsCoreSvc.getTemplateAsync("view.xsl", this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType.getObjectName(false)))
-		};
-
-		const paginationSettingsConfig = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "PaginationSettings")).SubControls.Controls;
-		control = paginationSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"));
-		control.Options.Rows = 18;
-		control.Options.Icon = {
-			Name: "color-wand",
-			OnClick: async (_, formControl) => formControl.setValue(await this.portalsCoreSvc.getTemplateAsync("pagination.xsl"))
-		};
-
-		const breadcrumbSettingsConfig = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "BreadcrumbSettings")).SubControls.Controls;
-		control = breadcrumbSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"));
-		control.Options.Rows = 18;
-		control.Options.Icon = {
-			Name: "color-wand",
-			OnClick: async (_, formControl) => formControl.setValue(await this.portalsCoreSvc.getTemplateAsync("breadcrumb.xsl"))
-		};
+		this.portalsCoreSvc.setTemplateControlOptions(formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "PaginationSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "pagination.xsl");
+		this.portalsCoreSvc.setTemplateControlOptions(formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "BreadcrumbSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "breadcrumb.xsl");
 
 		formConfig.push(
 			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label"), false, true, true, FilesProcessorModalPage),
@@ -475,14 +480,60 @@ export class PortalsPortletsUpdatePage implements OnInit {
 		} as FileOptions;
 	}
 
+	private prepareAttachments(attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo, onCompleted?: (control: AppFormsControl) => void) {
+		const formControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Attachments"));
+		this.filesSvc.prepareAttachmentsFormControl(formControl, false, attachments, addedOrUpdated, deleted, onCompleted);
+	}
+
 	onFormInitialized() {
 		this.form.patchValue(this.portlet);
-		if (AppUtility.isNotEmpty(this.portlet.ID)) {
-		}
-		else {
-		}
+		this.form.controls.Action.setValue(this.portlet.Action === undefined ? "-" : this.portlet.Action);
+		this.form.controls.AlternativeAction.setValue(this.portlet.AlternativeAction === undefined ? "-" : this.portlet.AlternativeAction);
+		this.form.controls.RepositoryEntityID.setValue(this.portlet.RepositoryEntityID === undefined ? "-" : this.portlet.RepositoryEntityID);
 		this.hash = AppCrypto.hash(this.form.value);
-		this.appFormsSvc.hideLoadingAsync();
+		this.appFormsSvc.hideLoadingAsync(async () => await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments)));
+	}
+
+	private async showErrorAsync(error: any) {
+		const templateIsInvalid = "TemplateIsInvalidException" === error.Type;
+		const optionsAreInvalid = "OptionsAreInvalidException" === error.Type;
+		const details = AppUtility.isNotEmpty(error.Message) ? error.Message as string : "";
+		const subHeader = templateIsInvalid
+			? details.indexOf("List XSLT") > -1
+				? await this.appFormsSvc.getResourceAsync("portals.common.errors.template.portlet.listXslt")
+				: details.indexOf("View XSLT") > -1
+						? await this.appFormsSvc.getResourceAsync("portals.common.errors.template.portlet.viewXslt")
+						: details.indexOf("Pagination XSLT") > -1
+							? await this.appFormsSvc.getResourceAsync("portals.common.errors.template.portlet.paginationXslt")
+							: details.indexOf("Breadcrumb XSLT") > -1
+								? await this.appFormsSvc.getResourceAsync("portals.common.errors.template.portlet.breadcrumbXslt")
+								: await this.appFormsSvc.getResourceAsync("portals.common.errors.template.portlet.invalid")
+			: optionsAreInvalid
+				? details.indexOf("List options") > -1
+					? await this.appFormsSvc.getResourceAsync("portals.common.errors.listOptions")
+					: await this.appFormsSvc.getResourceAsync("portals.common.errors.viewOptions")
+				: undefined;
+		await this.appFormsSvc.showErrorAsync(error, subHeader, () => {
+			const control = templateIsInvalid
+				? details.indexOf("List XSLT") > -1
+					? this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ListSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"))
+					: details.indexOf("View XSLT") > -1
+							? this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ViewSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"))
+							: details.indexOf("Pagination XSLT") > -1
+								? this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "PaginationSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"))
+								: details.indexOf("Breadcrumb XSLT") > -1
+									? this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BreadcrumbSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"))
+									: this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "CommonSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"))
+				: optionsAreInvalid
+					? details.indexOf("List options") > -1
+						? this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ListSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Options"))
+						: this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ViewSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Options"))
+					: undefined;
+			if (control !== undefined) {
+				this.formSegments.current = control.Segment || control.parent.Segment;
+				control.focus();
+			}
+		});
 	}
 
 	async updateAsync() {
@@ -494,43 +545,43 @@ export class PortalsPortletsUpdatePage implements OnInit {
 				this.processing = true;
 				await this.appFormsSvc.showLoadingAsync(this.title);
 
+				const listSettings = this.form.value.ListSettings;
+				if (AppUtility.isObject(listSettings, true) && AppUtility.isNotEmpty(listSettings.Options)) {
+					try {
+						JSON.parse(listSettings.Options);
+					}
+					catch (error) {
+						this.processing = false;
+						console.error("Error occurred while parsing JSON of list settings", error);
+						await this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.portlets.update.messages.json")});
+						return;
+					}
+				}
+
+				const viewSettings = this.form.value.ViewSettings;
+				if (AppUtility.isObject(viewSettings, true) && AppUtility.isNotEmpty(viewSettings.Options)) {
+					try {
+						JSON.parse(viewSettings.Options);
+					}
+					catch (error) {
+						this.processing = false;
+						console.error("Error occurred while parsing JSON of view settings", error);
+						await this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.portlets.update.messages.json")});
+						return;
+					}
+				}
+
 				const portlet = this.form.value;
-				portlet.RepositoryEntityID = AppUtility.isNotEmpty(portlet.RepositoryEntityID) && portlet.RepositoryEntityID !== "-" ? portlet.RepositoryEntityID : undefined;
-				/*
-				try {
-					portlet.Filter = AppUtility.isNotEmpty(portlet.Filter)
-						? JSON.parse(portlet.Filter)
-						:
-						{
-							Operator: "And",
-							Children: [{
-								Attribute: "SystemID",
-								Operator: "Equals",
-								Value: this.organization.ID
-							}]
-						};
-					portlet.Sorts = AppUtility.isNotEmpty(portlet.Sorts)
-						? JSON.parse(portlet.Sorts)
-						:
-						[{
-							Attribute: "Created",
-							Mode: "Descending",
-							ThenBy: undefined
-						}];
-				}
-				catch (error) {
-					this.processing = false;
-					console.error("Error occurred while parsing JSON of portlets", error);
-					await this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.portlets.update.messages.json")});
-					return;
-				}
-				*/
+				portlet.Action = AppUtility.isEquals(portlet.Action, "-") ? undefined : portlet.Action;
+				portlet.AlternativeAction = AppUtility.isEquals(portlet.AlternativeAction, "-") ? undefined : portlet.AlternativeAction;
+				portlet.RepositoryEntityID = AppUtility.isEquals(portlet.RepositoryEntityID, "-") ? undefined : portlet.RepositoryEntityID;
 
 				if (AppUtility.isNotEmpty(portlet.ID)) {
 					await this.portalsCoreSvc.updatePortletAsync(
 						portlet,
 						async data => {
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Portlet", Type: "Updated", ID: data.ID });
+							this.desktop.portlets[this.desktop.portlets.findIndex(p => p.ID === data.ID)] = Portlet.get(data.ID);
+							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Portlet", Type: "Updated", ID: data.ID, DekstopID: data.DekstopID });
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.portlets.update.messages.success.update")),
@@ -539,7 +590,7 @@ export class PortalsPortletsUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.showErrorAsync(error);
+							await this.showErrorAsync(error);
 						}
 					);
 				}
@@ -547,7 +598,9 @@ export class PortalsPortletsUpdatePage implements OnInit {
 					await this.portalsCoreSvc.createPortletAsync(
 						portlet,
 						async data => {
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Portlet", Type: "Created", ID: data.ID });
+							this.desktop.portlets = this.desktop.portlets || [];
+							this.desktop.portlets.push(Portlet.get(data.ID));
+							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Portlet", Type: "Created", ID: data.ID, DekstopID: data.DekstopID });
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.portlets.update.messages.success.new")),
@@ -556,7 +609,7 @@ export class PortalsPortletsUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.showErrorAsync(error);
+							await this.showErrorAsync(error);
 						}
 					);
 				}
@@ -574,14 +627,15 @@ export class PortalsPortletsUpdatePage implements OnInit {
 				await this.portalsCoreSvc.deletePortletAsync(
 					this.portlet.ID,
 					async data => {
-						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Portlet", Type: "Deleted", ID: data.ID });
+						AppUtility.removeAt(this.desktop.portlets, this.desktop.portlets.findIndex(p => p.ID === data.ID));
+						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Portlet", Type: "Deleted", ID: data.ID, DekstopID: data.DekstopID });
 						await Promise.all([
 							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.portlets.update.buttons.delete"), this.configSvc.currentUrl),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.portlets.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.showErrorAsync(error)
+					async error => await this.showErrorAsync(error)
 				);
 			},
 			await this.configSvc.getResourceAsync("common.buttons.delete"),

@@ -729,9 +729,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		if (updateValueAndValidity) {
 			this.formControl.updateValueAndValidity(options !== undefined ? { onlySelf: AppUtility.isTrue(options["onlySelf"]), emitEvent: AppUtility.isTrue(options["emitEvent"]) } : undefined);
 		}
-		if (this.selectAsDropdown) {
-			this._selectOptions = undefined;
-		}
 	}
 
 	/** Patchs the value of this control */
@@ -740,9 +737,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		if (updateValueAndValidity) {
 			this.formControl.updateValueAndValidity(options !== undefined ? { onlySelf: AppUtility.isTrue(options["onlySelf"]), emitEvent: AppUtility.isTrue(options["emitEvent"]) } : undefined);
 		}
-		if (this.selectAsDropdown) {
-			this._selectOptions = undefined;
-		}
 	}
 
 	/** Resets the value of this control */
@@ -750,9 +744,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		this.formControl.reset(value, options);
 		if (updateValueAndValidity) {
 			this.formControl.updateValueAndValidity(options !== undefined ? { onlySelf: AppUtility.isTrue(options["onlySelf"]), emitEvent: AppUtility.isTrue(options["emitEvent"]) } : undefined);
-		}
-		if (this.selectAsDropdown) {
-			this._selectOptions = undefined;
 		}
 	}
 

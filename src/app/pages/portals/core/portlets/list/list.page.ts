@@ -53,7 +53,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		Query: undefined as string,
 		And: new Array<{ [key: string]: any }>()
 	};
-	sortBy = { Title: "Ascending" };
+	sortBy = { Zone: "Ascending", OrderIndex: "Ascending" };
 	actions: Array<{
 		text: string,
 		role?: string,
@@ -150,10 +150,21 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.create"), "create", () => this.createAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.search"), "search", () => this.openSearchAsync())
 			];
-			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+			if (this.desktop !== undefined && this.desktop.portlets !== undefined && this.desktop.portlets.length > 0) {
+				this.portlets = this.desktop.portlets.sort(AppUtility.getCompareFunction("Zone", "OrderIndex"));
+				await this.appFormsSvc.hideLoadingAsync();
+			}
+			else {
+				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+			}
 			AppEvents.on(this.portalsCoreSvc.name, info => {
-				if (info.args.Object === "Portlet" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
-					this.prepareResults();
+				if (info.args.Object === "Portlet") {
+					if (this.desktop !== undefined && this.desktop.ID === info.args.DesktopID) {
+						this.portlets = this.desktop.portlets.sort(AppUtility.getCompareFunction("Zone", "OrderIndex"));
+					}
+					else {
+						this.prepareResults();
+					}
 				}
 			}, "Portlets:Refresh");
 		}
@@ -169,7 +180,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 
 	getInfo(portlet: Portlet) {
 		const contentType = portlet.contentType;
-		return `Zone: ${portlet.Zone} - Order: ${portlet.OrderIndex}` + (contentType !== undefined ? `Type: ${contentType.Title}` : "");
+		return `Zone: ${portlet.Zone} - Order: ${portlet.OrderIndex}` + (contentType !== undefined ? ` - ${contentType.Title}` : " - Static");
 	}
 
 	onStartSearch(event: any) {
@@ -295,7 +306,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	async editAsync(event: Event, portlet: Portlet) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(portlet.routerURI);
+		await this.configSvc.navigateForwardAsync(portlet.getRouterURI({ ID: portlet.ID, DesktopID: portlet.DesktopID, Advanced: true }));
 	}
 
 	async editInAdvancedModeAsync(event: Event, portlet: Portlet) {

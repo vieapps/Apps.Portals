@@ -23,8 +23,8 @@ import { Expression } from "@models/portals.core.expression";
 export class PortalsExpressionsUpdatePage implements OnInit {
 	constructor(
 		private configSvc: ConfigurationService,
-		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
+		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
 	}
@@ -94,7 +94,16 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			return;
 		}
 
-		this.expression = this.expression || new Expression(this.organization.ID, this.configSvc.requestParams["RepositoryID"] || this.organization.modules[0].ID, this.configSvc.requestParams["RepositoryEntityID"]);
+		if (this.expression === undefined) {
+			const moduleID = this.configSvc.requestParams["RepositoryID"];
+			const module = AppUtility.isNotEmpty(moduleID)
+				? this.organization.modules.find(m => m.ID === moduleID)
+				: this.organization.modules[0];
+			const contentTypeDefinitionID = this.configSvc.requestParams["ContentTypeDefinitionID"] || this.getContentTypeDefinitions(module.ID)[0].ID;
+			const contentTypes = module.contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === contentTypeDefinitionID);
+			this.expression = new Expression(this.organization.ID, module.ID, contentTypeDefinitionID, contentTypes.length > 0 ? contentTypes[0].ID : undefined);
+		}
+
 		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.expression.SystemID) {
 			await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid")));
 			return;
@@ -171,7 +180,6 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			);
 		}
 		else {
-			control.Options.Type = "dropdown";
 			control.Options.SelectOptions.Values = this.organization.modules.map(module => {
 				return { Value: module.ID, Label: module.Title };
 			});
@@ -206,20 +214,18 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			}
 		}
 		else {
-			control.Options.Type = "dropdown";
 			control.Options.SelectOptions.Values = this.getContentTypeDefinitions(this.organization.modules[0].ID).map(definition => {
 				return { Value: definition.ID, Label: definition.Title };
 			});
 			control.Options.OnChanged = (_, formControl) => {
 				const module = Module.get(this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryID")).value);
 				const contentTypes = module.contentTypes.filter(contType => contType.ContentTypeDefinitionID === formControl.value);
-				const contentType = contentTypes.length > 0 ? contentTypes[0] : undefined;
 				const contentTypeControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryEntityID"));
-				contentTypeControl.Options.SelectOptions.Values = contentTypes.map(contType => {
-					return { Value: contType.ID, Label: contType.Title };
+				contentTypeControl.Options.SelectOptions.Values = contentTypes.map(contentType => {
+					return { Value: contentType.ID, Label: contentType.Title };
 				});
 				AppUtility.insertAt(contentTypeControl.Options.SelectOptions.Values, { Value: "-", Label: this.unspecified }, 0);
-				contentTypeControl.controlRef.setValue(contentType !== undefined ? contentType.ID : "-", { onlySelf: true });
+				contentTypeControl.controlRef.setValue(contentTypes.length > 0 ? contentTypes[0].ID : "-", { onlySelf: true });
 			};
 		}
 
@@ -244,12 +250,15 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			}
 		}
 		else {
-			const module = this.organization.modules[0];
-			const contentTypeDefinitionID = this.getContentTypeDefinitions(module.ID)[0].ID;
+			const module = AppUtility.isNotEmpty(this.expression.RepositoryID)
+				? this.organization.modules.find(m => m.ID === this.expression.RepositoryID)
+				: this.organization.modules[0];
+			const contentTypeDefinitionID = AppUtility.isNotEmpty(this.expression.ContentTypeDefinitionID)
+				? this.expression.ContentTypeDefinitionID
+				: this.getContentTypeDefinitions(module.ID)[0].ID;
 			const contentTypes = module.contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === contentTypeDefinitionID);
-			control.Options.Type = "dropdown";
-			control.Options.SelectOptions.Values = contentTypes.map(contType => {
-				return { Value: contType.ID, Label: contType.Title };
+			control.Options.SelectOptions.Values = contentTypes.map(contentType => {
+				return { Value: contentType.ID, Label: contentType.Title };
 			});
 			AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: this.unspecified }, 0);
 		}
@@ -323,8 +332,6 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		}
 		else {
 			this.form.controls.ContentTypeDefinitionID.setValue(this.getContentTypeDefinitions(this.expression.RepositoryID)[0].ID);
-			this.form.controls.Filter.setValue(undefined);
-			this.form.controls.Sorts.setValue(undefined);
 		}
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync();
@@ -358,8 +365,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 						:
 						[{
 							Attribute: "Created",
-							Mode: "Descending",
-							ThenBy: undefined
+							Mode: "Descending"
 						}];
 				}
 				catch (error) {

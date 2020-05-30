@@ -3,6 +3,7 @@ import { AppUtility } from "@components/app.utility";
 import { ElementUISettings } from "@models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
 import { ContentType } from "@models/portals.core.content.type";
+import { Desktop } from "@models/portals.core.desktop";
 
 export class Portlet extends CoreBaseModel {
 
@@ -28,8 +29,8 @@ export class Portlet extends CoreBaseModel {
 	}
 
 	Title = undefined as string;
-	MainAction = undefined as string;
-	SubAction = undefined as string;
+	Action = undefined as string;
+	AlternativeAction = undefined as string;
 	DesktopID = undefined as string;
 	Zone = undefined as string;
 	OrderIndex = 0;
@@ -136,6 +137,10 @@ export class Portlet extends CoreBaseModel {
 		return AppUtility.isNotEmpty(this.RepositoryEntityID)
 			? ContentType.get(this.RepositoryEntityID)
 			: undefined;
+	}
+
+	public get desktop() {
+		return Desktop.get(this.DesktopID);
 	}
 
 }

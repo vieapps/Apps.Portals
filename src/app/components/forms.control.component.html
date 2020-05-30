@@ -212,6 +212,7 @@
 	<label *ngIf="description && !isYesNoControl && !isRangeControl"
 		[class]="css.description"
 		[style]="style.description"
+		[ngClass]="{'text-area':isTextAreaControl}"
 		[innerHTML]="description"></label>
 	
 </ion-item>

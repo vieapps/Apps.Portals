@@ -44,7 +44,7 @@
 		<ion-item-sliding *ngFor="let portlet of portlets; trackBy: track">
 			<ion-item [color]="color" (click)="editAsync($event, portlet)" class="ion-activatable" detail="false">
 				<ion-label>
-					<span class="time ion-float-end" [hidden]="screenWidth < 768">
+					<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
 						{{ portlet.Created | date:'h:mm a @ d/M/y' }} <br/> {{ portlet.LastModified | date:'h:mm a @ d/M/y' }}
 					</span>
 					<span>

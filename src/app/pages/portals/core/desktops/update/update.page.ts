@@ -5,7 +5,6 @@ import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
-import { AppFormsControlComponent } from "@components/forms.control.component";
 import { ConfigurationService } from "@services/configuration.service";
 import { FilesService, FileOptions } from "@services/files.service";
 import { PortalsCoreService } from "@services/portals.core.service";
@@ -216,14 +215,9 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		};
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "UISettings"));
-		control.Options.Label = control.Options.Label === undefined ? undefined : control.Options.Label.replace("portals.desktops", "portals.common");
-		control.Options.Description = control.Options.Description === undefined ? undefined : control.Options.Description.replace("portals.desktops", "portals.common");
-		control.Options.PlaceHolder = control.Options.PlaceHolder === undefined ? undefined : control.Options.PlaceHolder.replace("portals.desktops", "portals.common");
-		control.SubControls.Controls.forEach(ctrl => {
-			ctrl.Options.Label = ctrl.Options.Label === undefined ? undefined : ctrl.Options.Label.replace("portals.desktops", "portals.common");
-			ctrl.Options.Description = ctrl.Options.Description === undefined ? undefined : ctrl.Options.Description.replace("portals.desktops", "portals.common");
-			ctrl.Options.PlaceHolder = ctrl.Options.PlaceHolder === undefined ? undefined : ctrl.Options.PlaceHolder.replace("portals.desktops", "portals.common");
-		});
+		this.portalsCoreSvc.setUISettingsControlOptions(control, "portals.desktops.controls.UISettings", this.fileOptions);
+		control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Width")).Hidden =
+			control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Height")).Hidden = true;
 
 		const backgoundImageControl = control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
 		const iconControl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI"));
@@ -233,35 +227,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 			backgoundImageControl.Extras.LookupDisplayValues = AppUtility.isObject(this.desktop.UISettings, true) && AppUtility.isNotEmpty(this.desktop.UISettings.BackgroundImageURI) ? [{ Value: this.desktop.UISettings.BackgroundImageURI, Label: this.desktop.UISettings.BackgroundImageURI }] : undefined;
 			iconControl.Extras.LookupDisplayValues = AppUtility.isNotEmpty(this.desktop.IconURI) ? [{ Value: this.desktop.IconURI, Label: this.desktop.IconURI }] : undefined;
 			coverControl.Extras.LookupDisplayValues = AppUtility.isNotEmpty(this.desktop.CoverURI) ? [{ Value: this.desktop.CoverURI, Label: this.desktop.CoverURI }] : undefined;
-			backgoundImageControl.Options.LookupOptions = iconControl.Options.LookupOptions = coverControl.Options.LookupOptions = {
-				AsModal: true,
-				Multiple: false,
-				OnDelete: (_, formControl) => {
-					formControl.setValue(undefined);
-					formControl.lookupDisplayValues = undefined;
-				},
-				ModalOptions: {
-					Component: FilesProcessorModalPage,
-					ComponentProps: {
-						mode: "select",
-						fileOptions: this.fileOptions,
-						allowSelect: true,
-						multiple: false,
-						handlers: { predicate: (attachment: AttachmentInfo) => attachment.isImage, onSelect: () => {} }
-					},
-					OnDismiss: (attachments: AttachmentInfo[], formControl: AppFormsControlComponent) => {
-						const uri = attachments !== undefined && attachments.length > 0 ? attachments[0].URIs.Direct : undefined;
-						if (uri !== undefined) {
-							formControl.setValue(uri);
-							formControl.lookupDisplayValues = [{ Value: uri, Label: uri }];
-						}
-						else {
-							formControl.setValue(undefined);
-							formControl.lookupDisplayValues = undefined;
-						}
-					}
-				}
-			};
+			iconControl.Options.LookupOptions = coverControl.Options.LookupOptions = backgoundImageControl.Options.LookupOptions;
 		}
 		else {
 			backgoundImageControl.Options.Disabled = iconControl.Options.Disabled = coverControl.Options.Disabled = true;
@@ -272,6 +238,16 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Scripts"));
 		control.Options.Rows = 15;
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "MainPortletID"));
+		if (AppUtility.isNotEmpty(this.desktop.ID) && this.desktop.portlets !== undefined) {
+			control.Options.SelectOptions.Values = this.desktop.portlets.map(portlet => {
+				return { Value: portlet.ID, Label: portlet.Title };
+			});
+		}
+		else {
+			control.Hidden = true;
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SEOSettings"));
 		const seo = (AppUtility.toArray(control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "TitleMode")).Options.SelectOptions.Values) as Array<string>).map(value => {
@@ -368,7 +344,11 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		});
 		this.form.patchValue(desktop);
 		this.hash = AppCrypto.hash(this.form.value);
-		this.appFormsSvc.hideLoadingAsync(async () => await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments)));
+		this.appFormsSvc.hideLoadingAsync(async () => {
+			if (AppUtility.isNotEmpty(this.desktop.ID)) {
+				await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments));
+			}
+		});
 	}
 
 	private async showErrorAsync(error: any) {

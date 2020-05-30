@@ -4,13 +4,15 @@ import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { AppCustomCompleter } from "@components/app.completer";
 import { AppPagination } from "@components/app.pagination";
-import { AppFormsControlConfig, AppFormsLookupValue, AppFormsService, AppFormsControlLookupOptionsConfig } from "@components/forms.service";
+import { AppFormsControlConfig, AppFormsControlLookupOptionsConfig, AppFormsLookupValue, AppFormsControl, AppFormsService } from "@components/forms.service";
+import { AppFormsControlComponent } from "@components/forms.control.component";
 import { FilesProcessorModalPage } from "@controls/common/file.processor.modal.page";
 import { FileOptions } from "@services/files.service";
 import { Base as BaseService } from "@services/base.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { UsersService } from "@services/users.service";
+import { AttachmentInfo } from "@models/base";
 import { Account } from "@models/account";
 import { PortalBase as BaseModel } from "@models/portals.base";
 import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
@@ -220,6 +222,66 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
+	public setUISettingsControlOptions(controlConfig: AppFormsControlConfig, replacePattern: string, fileOptions: FileOptions) {
+		controlConfig.Options.Label = controlConfig.Options.Label === undefined ? undefined : controlConfig.Options.Label.replace(replacePattern, "portals.common.controls.UISettings");
+		controlConfig.Options.Description = controlConfig.Options.Description === undefined ? undefined : controlConfig.Options.Description.replace(replacePattern, "portals.common.controls.UISettings");
+		controlConfig.Options.PlaceHolder = controlConfig.Options.PlaceHolder === undefined ? undefined : controlConfig.Options.PlaceHolder.replace(replacePattern, "portals.common.controls.UISettings");
+		controlConfig.SubControls.Controls.forEach(ctrl => {
+			ctrl.Options.Label = ctrl.Options.Label === undefined ? undefined : ctrl.Options.Label.replace(replacePattern, "portals.common.controls.UISettings");
+			ctrl.Options.Description = ctrl.Options.Description === undefined ? undefined : ctrl.Options.Description.replace(replacePattern, "portals.common.controls.UISettings");
+			ctrl.Options.PlaceHolder = ctrl.Options.PlaceHolder === undefined ? undefined : ctrl.Options.PlaceHolder.replace(replacePattern, "portals.common.controls.UISettings");
+		});
+		controlConfig.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI")).Options.LookupOptions = {
+			AsModal: true,
+			Multiple: false,
+			OnDelete: (_, formControl) => {
+				formControl.setValue(undefined);
+				formControl.lookupDisplayValues = undefined;
+			},
+			ModalOptions: {
+				Component: FilesProcessorModalPage,
+				ComponentProps: {
+					mode: "select",
+					fileOptions: fileOptions,
+					allowSelect: true,
+					multiple: false,
+					handlers: { predicate: (attachment: AttachmentInfo) => attachment.isImage, onSelect: () => {} }
+				},
+				OnDismiss: (attachments: AttachmentInfo[], formControl: AppFormsControlComponent) => {
+					const uri = attachments !== undefined && attachments.length > 0 ? attachments[0].URIs.Direct : undefined;
+					if (uri !== undefined) {
+						formControl.setValue(uri);
+						formControl.lookupDisplayValues = [{ Value: uri, Label: uri }];
+					}
+					else {
+						formControl.setValue(undefined);
+						formControl.lookupDisplayValues = undefined;
+					}
+				}
+			}
+		};
+	}
+
+	public setTemplateControlOptions(control: AppFormsControlConfig | AppFormsControl, name: string, mainDirectory?: string, subDirectory?: string) {
+		control.Options.Rows = 18;
+		control.Options.Icon = {
+			Name: "color-wand",
+			OnClick: async (_, formControl) => formControl.setValue(await this.getTemplateAsync(name, mainDirectory, subDirectory))
+		};
+	}
+
+	public async getTemplateAsync(name: string, mainDirectory?: string, subDirectory?: string) {
+		let template: string;
+		await super.fetchAsync(super.getURI("definitions", "template", "x-request=" + AppUtility.toBase64Url({ Name: name, MainDirectory: mainDirectory, SubDirectory: subDirectory })), data => template = data.Template);
+		return template || "";
+	}
+
+	public async getTemplateZonesAsync(dekstopID: string) {
+		let zones: Array<string>;
+		await super.fetchAsync(super.getURI("definitions", "template", "x-request=" + AppUtility.toBase64Url({ Mode: "Zones", DesktopID: dekstopID })), data => zones = data);
+		return zones || [];
+	}
+
 	public getAppUrl(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }, objectName?: string, path?: string) {
 		objectName = objectName || (contentType !== undefined ? contentType.getObjectName() : "unknown");
 		return `/portals/${path || "cms"}/`
@@ -239,11 +301,6 @@ export class PortalsCoreService extends BaseService {
 			uri = `${this.configSvc.appConfig.URIs.portals}~${(organization !== undefined ? organization.Alias : "")}/${(desktop !== undefined ? desktop.Alias : "-default")}`;
 		}
 		return uri + `/${object["Alias"] || object.ID}`;
-	}
-
-	public async getTemplateAsync(name: string, mainDirectory?: string, subDirectory?: string) {
-		console.warn("Get the pre-defined template", name, mainDirectory, subDirectory);
-		return "";
 	}
 
 	public getPaginationPrefix(objectName: string) {
@@ -1322,7 +1379,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	private fetchDesktop(desktop: Desktop) {
-		if (desktop !== undefined && desktop.childrenIDs === undefined) {
+		if (desktop !== undefined && (desktop.childrenIDs === undefined || desktop.portlets === undefined)) {
 			this.getDesktopAsync(desktop.ID, _ => {
 				const o = Desktop.get(desktop.ID);
 				if (o.childrenIDs !== undefined && o.childrenIDs.length > 0) {
@@ -1340,6 +1397,9 @@ export class PortalsCoreService extends BaseService {
 				desktop.childrenIDs = [];
 				(json.Children as Array<any>).map(c => this.updateDesktop(c)).filter(o => o !== undefined).forEach(o => desktop.childrenIDs.push(o.ID));
 				desktop.childrenIDs = desktop.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+			}
+			if (AppUtility.isArray(json.Portlets, true)) {
+				desktop.portlets = (json.Portlets as Array<any>).map(p => Portlet.update(p));
 			}
 			let parentDesktop = Desktop.get(oldParentID);
 			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined && parentDesktop.ID !== desktop.ParentID) {
@@ -1520,21 +1580,36 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	private processPortletUpdateMessage(message: AppMessage) {
+		let desktop: Desktop;
 		switch (message.Type.Event) {
 			case "Create":
 			case "Update":
-				Portlet.update(message.Data);
+				const portlet = Portlet.update(message.Data);
+				desktop = Desktop.get(message.Data.DesktopID);
+				if (desktop !== undefined && desktop.portlets !== undefined) {
+					const index = desktop.portlets.findIndex(p => p.ID === message.Data.ID);
+					if (index < 0) {
+						desktop.portlets.push(portlet);
+					}
+					else {
+						desktop.portlets[index] = portlet;
+					}
+				}
 				break;
 
 			case "Delete":
 				Portlet.instances.remove(message.Data.ID);
+				desktop = Desktop.get(message.Data.DesktopID);
+				if (desktop !== undefined && desktop.portlets !== undefined) {
+					AppUtility.removeAt(desktop.portlets, desktop.portlets.findIndex(p => p.ID === message.Data.ID));
+				}
 				break;
 
 			default:
 				console.warn(super.getLogMessage("Got an update message of a portlet"), message);
 				break;
 		}
-		AppEvents.broadcast(this.name, { Object: "Portlet", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		AppEvents.broadcast(this.name, { Object: "Portlet", Type: `${message.Type.Event}d`, ID: message.Data.ID, DesktopID: message.Data.DesktopID });
 	}
 
 	public get siteCompleterDataSource() {
