@@ -47,7 +47,7 @@
 					<ion-thumbnail class="ion-float-start ion-padding-end">
 						<img [src]="content.thumbnailURI" />
 					</ion-thumbnail>
-					<span class="time ion-float-end" [hidden]="screenWidth < 768">
+					<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
 						{{ content.Created | date:'h:mm a @ d/M/y' }} <br/> {{ content.LastModified | time:locale }}
 					</span>
 					<span class="title">

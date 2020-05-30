@@ -43,7 +43,7 @@
 	<ion-list class="ion-padding-end">
 		<ion-item *ngFor="let module of modules; trackBy: track" [color]="color" [routerLink]="module.routerLink" [queryParams]="module.routerParams" routerDirection="forward" detail="false">
 			<ion-label>
-				<span class="time ion-float-end" [hidden]="screenWidth < 768">
+				<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
 					{{ module.Created | date:'h:mm a @ d/M/y' }} <br/> {{ module.LastModified | date:'h:mm a @ d/M/y' }}
 				</span>
 				<span>
