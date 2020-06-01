@@ -419,8 +419,8 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		control.Options.Rows = 18;
 		control.Hidden = !this.isAdvancedMode;
 
-		this.portalsCoreSvc.setTemplateControlOptions(formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "PaginationSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "pagination.xsl");
-		this.portalsCoreSvc.setTemplateControlOptions(formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "BreadcrumbSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "breadcrumb.xsl");
+		this.portalsCoreSvc.setTemplateControlOptions(formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "PaginationSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "pagination.xml");
+		this.portalsCoreSvc.setTemplateControlOptions(formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "BreadcrumbSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "breadcrumb.xml");
 
 		formConfig.push(
 			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label"), false, true, true, FilesProcessorModalPage),
