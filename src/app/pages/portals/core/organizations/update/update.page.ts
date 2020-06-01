@@ -236,6 +236,15 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				}
 			},
 			{
+				Name: "AlwaysUseHtmlSuffix",
+				Type: "YesNo",
+				Segment: "urls",
+				Options: {
+					Label: "{{portals.organizations.controls.AlwaysUseHtmlSuffix}}",
+					Type: "toggle"
+				}
+			},
+			{
 				Name: "RefreshUrls",
 				Segment: "urls",
 				Options: {
