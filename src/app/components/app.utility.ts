@@ -539,6 +539,9 @@ export class AppUtility {
 	 * @param useLocalTimezone true to use local time zone
 	*/
 	public static toIsoDateTime(date: string | number | Date, seconds: boolean = false, miliseconds: boolean = false, useLocalTimezone: boolean = true) {
+		if (date === undefined || date === null) {
+			return undefined;
+		}
 		const datetime = new Date(date);
 		if (useLocalTimezone) {
 			const timeOffsetInHours = (datetime.getTimezoneOffset() / 60) * (-1);
