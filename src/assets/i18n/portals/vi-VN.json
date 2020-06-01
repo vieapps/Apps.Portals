@@ -324,6 +324,7 @@
 						"description": "Các mã script (Javascript) bổ sung sẽ được thêm vào phần cuối (trước khi đóng thẻ BODY) của toàn bộ các desktop hiển thị.<br/>Các đoạn mã này phải nằm trong &lt;script&gt; và &lt;/script&gt; và có thể sử dụng jQuery ($), đồng thời cho phép trỏ ra các thư viện script ở bên ngoài.<br/>Tips: cũng có thể các thẻ HTML bổ sung vào đây cũng được."
 					}
 				},
+				"AlwaysUseHtmlSuffix": "Luôn dùng hậu tố .html đối với toàn bộ liên kết",
 				"RefreshUrls": {
 					"label": "Các URLs sẽ làm tươi",
 					"Addresses": {
