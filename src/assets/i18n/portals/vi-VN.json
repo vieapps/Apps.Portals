@@ -987,12 +987,12 @@
 				"Action": {
 					"label": "Hành động",
 					"placeholder": "",
-					"description": "Được sử dụng khi portlet hiển thị trong desktop không có đủ thông số"
+					"description": "Được sử dụng mặc định desktop hiển thị không có đủ thông số"
 				},
 				"AlternativeAction": {
 					"label": "Hành động thay thế",
 					"placeholder": "",
-					"description": "Được sử dụng khi portlet hiển thị trong desktop có đủ thông số, bao gồm <b>parent-identity</b> và <b>content-identity</b>"
+					"description": "Được sử dụng khi desktop hiển thị có đầy đủ đủ thông số về nội dung sẽ hiển thị, bao gồm <b>ParentIdentity</b> và <b>ContentIdentity</b>"
 				},
 				"DesktopID": {
 					"label": "Hiển thị trong desktop",
@@ -1056,10 +1056,10 @@
 					"PageSize": {
 						"label": "Số lượng nội dung trên 1 trang",
 						"placeholder": "",
-						"description": "Chỉ định số lượng nội dung dữ liệu sẽ hiển thị trên 1 trang"
+						"description": "Chỉ định số lượng nội dung dữ liệu sẽ hiển thị trên 1 trang, sẽ được desktop hiển thị truyền dữ liệu qua tham số <b>PageSize</b>.<br/><b>Tips</b>: đặt giá trị là <b>0</b> để chỉ định lấy toàn bộ dữ liệu."
 					},
 					"AutoPageNumber": {
-						"label": "Chỉ định lấy số trang tự động (từ tham số page-number, không chỉ định để luôn lấy trang đầu tiên)"
+						"label": "Chỉ định lấy số trang tự động (qua tham số PageNumber, không chỉ định để luôn lấy trang đầu tiên)"
 					},
 					"Options": {
 						"label": "Tuỳ chọn hiển thị",

@@ -192,6 +192,16 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			new AppFormsSegment("other", await this.configSvc.getResourceAsync("portals.portlets.update.segments.other")),
 			new AppFormsSegment("attachments", await this.configSvc.getResourceAsync("files.attachments.segment"))
 		];
+
+		if (AppUtility.isNotEmpty(this.portlet.ID) && !this.isAdvancedMode) {
+			const segments = this.contentType === undefined
+				? ["list", "view", "other"]
+				: this.contentType.contentTypeDefinition.NestedObject
+					? ["view", "other"]
+					: [];
+			segments.forEach(segment => AppUtility.removeAt(formSegments, formSegments.findIndex(formSegment => formSegment.Name === segment)));
+		}
+
 		if (onCompleted !== undefined) {
 			onCompleted(formSegments);
 		}
@@ -258,7 +268,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 					Segment: "common",
 					Extras: { Text: `${this.organization.Title} :: ${this.desktop.FullTitle}` },
 					Options: {
-						Label: "{{portals.portlets.controls.Desktop}}",
+						Label: control.Options.Label,
 						ReadOnly: true
 					}
 				},
@@ -267,10 +277,29 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Zone"));
-		control.Options.SelectOptions.Interface = "popover";
-		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getTemplateZonesAsync(this.desktop.ID)).map(zone => {
-			return { Value: zone, Label: zone };
-		});
+		if (AppUtility.isNotEmpty(this.portlet.ID) && !this.isAdvancedMode) {
+			control.Hidden = true;
+			AppUtility.insertAt(
+				formConfig,
+				{
+					Name: "ZoneName",
+					Type: "Text",
+					Segment: "basic",
+					Extras: { Text: this.portlet.Zone },
+					Options: {
+						Label: control.Options.Label,
+						ReadOnly: true
+					}
+				},
+				formConfig.findIndex(ctrl => ctrl.Name === control.Name)
+			);
+		}
+		else {
+			control.Options.SelectOptions.Interface = "popover";
+			control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getTemplateZonesAsync(this.desktop.ID)).map(zone => {
+				return { Value: zone, Label: zone };
+			});
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryEntityID"));
 		if (this.isAdvancedMode) {
@@ -286,8 +315,10 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 						{ ContentTypeDefinitionID: { Equals: this.contentType.ContentTypeDefinitionID } },
 						{ RepositoryEntityID: { Equals: this.contentType.ID } }
 					]};
+					expressionControl.controlRef.setValue(undefined);
 					this.portalsCoreSvc.setTemplateControlOptions(this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ListSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "list.xsl", this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType.getObjectName(false));
 					this.portalsCoreSvc.setTemplateControlOptions(this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ViewSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "view.xsl", this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType.getObjectName(false));
+					this.formControls.find(ctrl => ctrl.Name === "ListSettings").SubControls.Controls.find(ctrl => ctrl.Name === "PageSize").controlRef.setValue(this.contentType.contentTypeDefinition.NestedObject ? 0 : this.portlet.ListSettings.PageSize);
 				}
 			};
 		}
@@ -457,6 +488,14 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			control.Hidden = false;
 			control.Options.Label = "{{common.audits.identity}}";
 			control.Options.ReadOnly = true;
+			if (!this.isAdvancedMode) {
+				const segments = this.contentType === undefined
+					? ["list", "view", "other"]
+					: this.contentType.contentTypeDefinition.NestedObject
+						? ["view", "other"]
+						: [];
+				segments.forEach(segment => formConfig.filter(ctrl => ctrl.Segment === segment).forEach(ctrl => ctrl.Hidden = true));
+			}
 		}
 
 		if (onCompleted !== undefined) {
@@ -486,6 +525,24 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	onFormInitialized() {
+		if (AppUtility.isNotEmpty(this.portlet.ID) && !this.isAdvancedMode) {
+			if (this.contentType === undefined) {
+				this.portlet.Action = this.portlet.AlternativeAction = undefined;
+				this.formControls.find(ctrl => ctrl.Name === "Action").Options.Disabled = this.formControls.find(ctrl => ctrl.Name === "AlternativeAction").Options.Disabled = true;
+			}
+			else if (this.contentType.contentTypeDefinition.NestedObject) {
+				this.portlet.Action = "List";
+				this.portlet.AlternativeAction = undefined;
+				this.formControls.find(ctrl => ctrl.Name === "Action").Options.Disabled = this.formControls.find(ctrl => ctrl.Name === "AlternativeAction").Options.Disabled = true;
+				this.portlet.ListSettings.AutoPageNumber = false;
+				this.portlet.ListSettings.ShowBreadcrumbs = false;
+				this.portlet.ListSettings.ShowPagination = false;
+				const control = this.formControls.find(ctrl => ctrl.Name === "ListSettings");
+				control.SubControls.Controls.find(ctrl => ctrl.Name === "AutoPageNumber").Options.Disabled = true;
+				control.SubControls.Controls.find(ctrl => ctrl.Name === "ShowBreadcrumbs").Options.Disabled = true;
+				control.SubControls.Controls.find(ctrl => ctrl.Name === "ShowPagination").Options.Disabled = true;
+			}
+		}
 		this.form.patchValue(this.portlet);
 		this.form.controls.Action.setValue(this.portlet.Action === undefined ? "-" : this.portlet.Action);
 		this.form.controls.AlternativeAction.setValue(this.portlet.AlternativeAction === undefined ? "-" : this.portlet.AlternativeAction);
@@ -572,9 +629,21 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				}
 
 				const portlet = this.form.value;
-				portlet.Action = AppUtility.isEquals(portlet.Action, "-") ? undefined : portlet.Action;
-				portlet.AlternativeAction = AppUtility.isEquals(portlet.AlternativeAction, "-") ? undefined : portlet.AlternativeAction;
-				portlet.RepositoryEntityID = AppUtility.isEquals(portlet.RepositoryEntityID, "-") ? undefined : portlet.RepositoryEntityID;
+				if (this.contentType === undefined) {
+					portlet.Action = portlet.AlternativeAction = undefined;
+				}
+				else if (this.contentType.contentTypeDefinition.NestedObject) {
+					portlet.Action = "List";
+					portlet.AlternativeAction = undefined;
+					portlet.ListSettings.AutoPageNumber = false;
+					portlet.ListSettings.ShowBreadcrumbs = false;
+					portlet.ListSettings.ShowPagination = false;
+				}
+				else {
+					portlet.Action = AppUtility.isEquals(portlet.Action, "-") ? undefined : portlet.Action;
+					portlet.AlternativeAction = AppUtility.isEquals(portlet.AlternativeAction, "-") ? undefined : portlet.AlternativeAction;
+					portlet.RepositoryEntityID = AppUtility.isEquals(portlet.RepositoryEntityID, "-") ? undefined : portlet.RepositoryEntityID;
+				}
 
 				if (AppUtility.isNotEmpty(portlet.ID)) {
 					await this.portalsCoreSvc.updatePortletAsync(

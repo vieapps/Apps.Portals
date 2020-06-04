@@ -306,7 +306,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	async editAsync(event: Event, portlet: Portlet) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(portlet.getRouterURI({ ID: portlet.ID, DesktopID: portlet.DesktopID, Advanced: true }));
+		await this.configSvc.navigateForwardAsync(portlet.getRouterURI({ ID: portlet.ID, DesktopID: portlet.DesktopID }));
 	}
 
 	async editInAdvancedModeAsync(event: Event, portlet: Portlet) {
