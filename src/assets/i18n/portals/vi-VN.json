@@ -1124,7 +1124,7 @@
 						"placeholder": "",
 						"description": "Mã XSLT cho mẫu hiển thị của thanh chỉ thị, sẽ sử dụng mẫu hiển thị mặc định nếu không có nội dung được nhập.<br/>Tips: Bấm vào biểu tượng ở bên cạnh để hệ thống lấy mã XHTML mặc định của mẫu hiển thị rồi sửa từ đó."
 					},
-					"SeperatedLabel": {
+					"SeparatedLabel": {
 						"label": "Nhãn phân cách",
 						"placeholder": "",
 						"description": "Nội dung ở trên sẽ được sử dụng để phân cách các nội dung trên thanh chỉ thị"

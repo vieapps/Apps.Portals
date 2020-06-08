@@ -274,7 +274,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 				objects = objects.Where(o => o.SystemID === this.organization.ID).OrderBy(o => o.DesktopID);
 			}
 			objects = objects.OrderBy(o => o.Zone).ThenBy(o => o.OrderIndex);
-			if (results === undefined) {
+			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
 			this.portlets = results === undefined
