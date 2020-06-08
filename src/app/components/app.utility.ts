@@ -416,11 +416,6 @@ export class AppUtility {
 			: "";
 	}
 
-	/** Escapes the regular expression string */
-	public static regexEscape(expression: string) {
-		return expression.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-	}
-
 	/** Gets all the available characters (0 and A-Z) */
 	public static getChars() {
 		const chars = new Array<string>("0");
@@ -529,6 +524,13 @@ export class AppUtility {
 		return this.isNotEmpty(value)
 			? parseInt(value, 0)
 			: 0;
+	}
+
+	/** Converts the regular expression string to RegExp object */
+	public static toRegExp(regex: string) {
+		const flags = regex.replace(/.*\/([gimy]*)$/, "$1");
+		const pattern = regex.replace(new RegExp("^/(.*?)/" + flags + "$"), "$1");
+		return new RegExp(pattern, flags);
 	}
 
 	/**
