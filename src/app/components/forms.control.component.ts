@@ -1015,7 +1015,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				mediaEmbed: {
 					extraProviders: [{
 						name: this.configSvc.appConfig.app.name,
-						url: new RegExp(AppUtility.regexEscape(PlatformUtility.parseURI(this.configSvc.appConfig.URIs.files).Host))
+						url: AppUtility.toRegExp(`/^${PlatformUtility.parseURI(this.configSvc.appConfig.URIs.files).Host}/`)
 					}]
 				}
 			};
@@ -1024,7 +1024,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				(hosts as Array<string>).filter(host => AppUtility.isNotEmpty(host)).forEach(host => {
 					this._ckEditorConfig.mediaEmbed.extraProviders.push({
 						name: host,
-						url: new RegExp(AppUtility.regexEscape(host))
+						url: AppUtility.toRegExp(`/^${host}/`)
 					});
 				});
 			}
