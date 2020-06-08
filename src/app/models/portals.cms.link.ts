@@ -107,7 +107,7 @@ export class Link extends CmsBaseModel implements NestedObject {
 	}
 
 	public get listURI() {
-		return `${this.routerLink.replace("/view/", "/list/")}?x-request=${AppUtility.toBase64Url({ ParentID: this.ID })}`;
+		return `${this.routerLink.replace("/view/", "/list/sub-")}?x-request=${AppUtility.toBase64Url({ ParentID: this.ID })}`;
 	}
 
 }

@@ -68,7 +68,7 @@ export class Portlet extends CoreBaseModel {
 	};
 	BreadcrumbSettings = undefined as {
 		Template?: string;
-		SeperatedLabel?: string;
+		SeparatedLabel?: string;
 		HomeLabel?: string;
 		HomeURL?: string;
 		HomeAdditionalLabel?: string;
@@ -96,7 +96,20 @@ export class Portlet extends CoreBaseModel {
 	/** Deserializes data to object */
 	public static deserialize(json: any, portlet?: Portlet) {
 		portlet = portlet || new Portlet();
-		portlet.copy(json);
+		portlet.copy(json, data => {
+			if (data.ListSettings !== undefined && data.ListSettings.Options !== undefined) {
+				portlet.ListSettings = portlet.ListSettings || {};
+				portlet.ListSettings.Options = typeof data.ListSettings.Options === "string"
+					? JSON.parse(data.ListSettings.Options)
+					: data.ListSettings.Options;
+			}
+			if (data.ViewSettings !== undefined && data.ViewSettings.Options !== undefined) {
+				portlet.ViewSettings = portlet.ViewSettings || {};
+				portlet.ViewSettings.Options = typeof data.ViewSettings.Options === "string"
+					? JSON.parse(data.ViewSettings.Options)
+					: data.ViewSettings.Options;
+			}
+		});
 		portlet.ansiTitle = AppUtility.toANSI(portlet.Title).toLowerCase();
 		portlet.routerParams["x-request"] = AppUtility.toBase64Url({ ID: portlet.ID, DesktopID: portlet.DesktopID });
 		return portlet;
