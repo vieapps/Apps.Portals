@@ -351,22 +351,10 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				try {
 					expression.Filter = AppUtility.isNotEmpty(expression.Filter)
 						? JSON.parse(expression.Filter)
-						:
-						{
-							Operator: "And",
-							Children: [{
-								Attribute: "SystemID",
-								Operator: "Equals",
-								Value: this.organization.ID
-							}]
-						};
+						: undefined;
 					expression.Sorts = AppUtility.isNotEmpty(expression.Sorts)
 						? JSON.parse(expression.Sorts)
-						:
-						[{
-							Attribute: "Created",
-							Mode: "Descending"
-						}];
+						: undefined;
 				}
 				catch (error) {
 					this.processing = false;
