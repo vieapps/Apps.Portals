@@ -249,6 +249,9 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		control.Options.Type = "toggle";
 		control.Hidden = !this.contentType.AllowComments;
 
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Summary"));
+		control.Options.Rows = 5;
+
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SourceURL"));
 		control.Options.Icon = {
 			Name: "globe",

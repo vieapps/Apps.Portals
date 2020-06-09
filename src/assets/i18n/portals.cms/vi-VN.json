@@ -167,6 +167,11 @@
 						"placeholder": "",
 						"description": "Tên tác giả của nội dung. Chú ý: không phải tên của tài khoản khởi tạo/cập nhật nội dung"
 					},
+					"AuthorTitle": {
+						"label": "Chức danh của tác giả",
+						"placeholder": "",
+						"description": ""
+					},
 					"Source": {
 						"label": "Nguồn",
 						"placeholder": "",

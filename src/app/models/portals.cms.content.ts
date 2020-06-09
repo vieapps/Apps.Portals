@@ -40,6 +40,7 @@ export class Content extends CmsBaseModel {
 	Title = undefined as string;
 	SubTitle = undefined as string;
 	Author = undefined as string;
+	AuthorTitle = undefined as string;
 	Source = undefined as string;
 	SourceURL = undefined as string;
 	Summary = undefined as string;
