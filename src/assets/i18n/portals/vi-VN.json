@@ -183,14 +183,14 @@
 				},
 				"template": {
 					"desktop": {
-						"invalid": "Mẫu hiển thị của desktop chưa đúng tiêu chuẩn XHTML",
+						"invalid": "Mẫu hiển thị của desktop chưa đúng tiêu chuẩn (không đúng mã XHTML hoặc thiếu các thông tin bắt buộc)",
 						"required": "Mẫu hiển thị của desktop chưa đúng tiêu chuẩn do thiếu các vùng buộc phải có",
 						"noZone": "Mẫu hiển thị của desktop không có bất kỳ một vùng hiển thị nào (nghĩa là phải có thẻ với thuộc tính 'zone-id')",
 						"zoneNoID": "Vùng hiển thị của desktop chưa đúng tiêu chuẩn do không có mã định danh",
 						"zoneExisted": "Vùng hiển thị của desktop chưa đúng tiêu chuẩn do mã định danh đã được dùng cho vùng khác"
 					},
 					"portlet": {
-						"invalid": "Mẫu hiển thị của portlet chưa đúng tiêu chuẩn XHTML",
+						"invalid": "Mẫu hiển thị của portlet chưa đúng tiêu chuẩn (không đúng mã XHTML hoặc thiếu các thông tin bắt buộc)",
 						"listXslt": "Mẫu hiển thị danh sách chưa đúng tiêu chuẩn XSLT",
 						"viewXslt": "Mẫu hiển thị chi tiết chưa đúng tiêu chuẩn XSLT",
 						"paginationXslt": "Mẫu hiển thị thanh nhảy trang chưa đúng tiêu chuẩn XSLT",
@@ -1014,6 +1014,11 @@
 					"placeholder": "",
 					"description": "Portlet sẽ hiển thị dữ liệu của kiểu dữ liệu nghiệp vụ đã chỉ định"
 				},
+				"OriginalPortlet": {
+					"label": "Portlet gốc",
+					"placeholder": "",
+					"description": "Các thiết đặt sẽ được sử dụng từ thiết đặt của portlet gốc này"
+				},
 				"OriginalPortletID": {
 					"label": "Mã định danh của portlet gốc",
 					"placeholder": "",
@@ -1042,16 +1047,16 @@
 					"TitleUISettings": "Tuỳ chỉnh hiển thị vùng tiêu đề",
 					"ContentUISettings": "Tuỳ chỉnh hiển thị vùng nội dung"
 				},
+				"ExpressionID": {
+					"label": "Biểu thức truy vấn và sắp xếp dữ liệu",
+					"placeholder": "",
+					"description": "Chỉ định biểu thức truy vấn và sắp xếp dữ liệu sẽ hiển thị cho danh sách"
+				},
 				"ListSettings": {
 					"Template": {
 						"label": "Mẫu hiển thị",
 						"placeholder": "",
 						"description": "Mã XSLT để hiển thị danh sách nội dung của portlet, sẽ sử dụng mẫu hiển thị mặc định nếu không có nội dung được nhập.<br/>Tips: Bấm vào biểu tượng ở bên cạnh để hệ thống lấy mã XSLT mặc định của mẫu hiển thị rồi sửa từ đó."
-					},
-					"ExpressionID": {
-						"label": "Biểu thức truy vấn và sắp xếp",
-						"placeholder": "",
-						"description": "Chỉ định biểu thức truy vấn và sắp xếp nội dung của danh sách dữ liệu"
 					},
 					"PageSize": {
 						"label": "Số lượng nội dung trên 1 trang",

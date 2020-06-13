@@ -1516,7 +1516,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getPortletAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		if (Portlet.contains(id)) {
+		if (Portlet.contains(id) && Portlet.get(id).otherDesktops !== undefined) {
 			if (onNext) {
 				onNext();
 			}
@@ -1595,6 +1595,7 @@ export class PortalsCoreService extends BaseService {
 						desktop.portlets[index] = portlet;
 					}
 				}
+				console.log("Update portlet into desktop", message.Data.ID, portlet, desktop);
 				break;
 
 			case "Delete":
@@ -1603,6 +1604,7 @@ export class PortalsCoreService extends BaseService {
 				if (desktop !== undefined && desktop.portlets !== undefined) {
 					AppUtility.removeAt(desktop.portlets, desktop.portlets.findIndex(p => p.ID === message.Data.ID));
 				}
+				console.log("Remove portlet from desktop", message.Data.ID, desktop);
 				break;
 
 			default:
@@ -1996,7 +1998,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching expression(s)", error));
+				console.error(super.getErrorMessage("Error occurred while searching content type(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2021,7 +2023,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching expression(s)", error));
+				console.error(super.getErrorMessage("Error occurred while searching content type(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2040,7 +2042,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new expression", error));
+				console.error(super.getErrorMessage("Error occurred while creating new content type", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2064,7 +2066,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while getting a expression", error));
+					console.error(super.getErrorMessage("Error occurred while getting a content type", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -2086,7 +2088,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating a expression", error));
+				console.error(super.getErrorMessage("Error occurred while updating a content type", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2104,7 +2106,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting a expression", error));
+				console.error(super.getErrorMessage("Error occurred while deleting a content type", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2126,7 +2128,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a expression"), message);
+				console.warn(super.getLogMessage("Got an update message of a content type"), message);
 				break;
 		}
 		AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
@@ -2289,7 +2291,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a expression"), message);
+				console.warn(super.getLogMessage("Got an update message of an expression"), message);
 				break;
 		}
 		AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
