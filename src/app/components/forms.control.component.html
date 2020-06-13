@@ -1,6 +1,7 @@
 <ion-item *ngIf="visible && isFormControl && !isTextEditorControl && !isCaptchaControl && !selectAsRadioBoxes && !selectAsCheckBoxes && !isSelector && !isCustomControl()"
 	[color]="theme"
 	[formGroup]="formGroup"
+	[lines]="lookupMultiple ? 'none' : undefined"
 	[class.invalid]="invalid"
 	[class.file-picker]="isFilePickerControl"
 	[class.completer-container]="isCompleter"
