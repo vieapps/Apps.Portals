@@ -44,9 +44,9 @@ export class Portlet extends CoreBaseModel {
 		TitleUISettings?: ElementUISettings;
 		ContentUISettings?: ElementUISettings;
 	};
+	ExpressionID = undefined as string;
 	ListSettings = undefined as {
 		Template?: string;
-		ExpressionID?: string;
 		PageSize?: number;
 		AutoPageNumber?: boolean;
 		Options?: { [key: string]: any };
@@ -92,22 +92,36 @@ export class Portlet extends CoreBaseModel {
 	ID = undefined as string;
 
 	ansiTitle: string;
+	otherDesktops: Array<string>;
 
 	/** Deserializes data to object */
 	public static deserialize(json: any, portlet?: Portlet) {
 		portlet = portlet || new Portlet();
 		portlet.copy(json, data => {
-			if (data.ListSettings !== undefined && data.ListSettings.Options !== undefined) {
-				portlet.ListSettings = portlet.ListSettings || {};
-				portlet.ListSettings.Options = typeof data.ListSettings.Options === "string"
-					? JSON.parse(data.ListSettings.Options)
-					: data.ListSettings.Options;
+			if (AppUtility.isNotEmpty(data.OriginalPortletID)) {
+				portlet.CommonSettings = portlet.ListSettings = portlet.ViewSettings = undefined;
 			}
-			if (data.ViewSettings !== undefined && data.ViewSettings.Options !== undefined) {
-				portlet.ViewSettings = portlet.ViewSettings || {};
-				portlet.ViewSettings.Options = typeof data.ViewSettings.Options === "string"
-					? JSON.parse(data.ViewSettings.Options)
-					: data.ViewSettings.Options;
+			else {
+				if (data.CommonSettings !== undefined) {
+					portlet.CommonSettings = portlet.CommonSettings || { HideTitle: true };
+					portlet.CommonSettings.TitleUISettings = portlet.CommonSettings.TitleUISettings || {};
+					portlet.CommonSettings.ContentUISettings = portlet.CommonSettings.ContentUISettings || {};
+				}
+				if (data.ListSettings !== undefined && data.ListSettings.Options !== undefined) {
+					portlet.ListSettings = portlet.ListSettings || {};
+					portlet.ListSettings.Options = typeof data.ListSettings.Options === "string"
+						? JSON.parse(data.ListSettings.Options)
+						: data.ListSettings.Options;
+				}
+				if (data.ViewSettings !== undefined && data.ViewSettings.Options !== undefined) {
+					portlet.ViewSettings = portlet.ViewSettings || {};
+					portlet.ViewSettings.Options = typeof data.ViewSettings.Options === "string"
+						? JSON.parse(data.ViewSettings.Options)
+						: data.ViewSettings.Options;
+				}
+				if (AppUtility.isArray(data.OtherDesktops, true)) {
+					portlet.otherDesktops = data.OtherDesktops;
+				}
 			}
 		});
 		portlet.ansiTitle = AppUtility.toANSI(portlet.Title).toLowerCase();
