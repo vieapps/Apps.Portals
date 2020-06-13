@@ -285,7 +285,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 				objects = objects.Where(o => o.RepositoryEntityID === this.contentType.ID);
 			}
 			if (this.category !== undefined) {
-				objects = objects.Where(o => o.CategoryID === this.category.ID || o.OtherCategories.indexOf(this.category.ID) > -1);
+				objects = objects.Where(o => o.CategoryID === this.category.ID || (o.OtherCategories !== undefined && o.OtherCategories.indexOf(this.category.ID) > -1));
 			}
 			objects = objects.OrderByDescending(o => o.StartDate).ThenByDescending(o => o.PublishedTime);
 			if (results === undefined) {

@@ -36,11 +36,11 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 	private organization: Organization;
 	private parentID: string;
-	private parentDesktop: Desktop;
 	private subscription: Subscription;
 
 	title = "Desktops";
 	desktops = new Array<Desktop>();
+	parentDesktop: Desktop;
 	searching = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;

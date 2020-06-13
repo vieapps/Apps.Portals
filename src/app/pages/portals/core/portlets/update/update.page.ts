@@ -5,7 +5,7 @@ import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppPagination } from "@components/app.pagination";
-import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
+import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { FilesService, FileOptions } from "@services/files.service";
@@ -36,10 +36,12 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 	) {
 	}
 
-	private portlet: Portlet;
 	private organization: Organization;
 	private contentType: ContentType;
 	private desktop: Desktop;
+	private originalDesktop: Desktop;
+	private portlet: Portlet;
+	private originalPortlet: Portlet;
 	private isSystemModerator = false;
 	private canModerateOrganization = false;
 	private isAdvancedMode = false;
@@ -154,11 +156,42 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		}
 		else {
 			this.isAdvancedMode = this.isSystemModerator && AppUtility.isTrue(this.configSvc.requestParams["Advanced"]);
-			this.portlet.CommonSettings.TitleUISettings = this.portlet.CommonSettings.TitleUISettings || {};
-			this.portlet.CommonSettings.ContentUISettings = this.portlet.CommonSettings.ContentUISettings || {};
-			this.contentType = ContentType.get(this.portlet.RepositoryEntityID);
-			if (this.contentType === undefined && AppUtility.isNotEmpty(this.portlet.RepositoryEntityID)) {
-				await this.portalsCoreSvc.getContentTypeAsync(this.portlet.RepositoryEntityID, _ => this.contentType = ContentType.get(this.portlet.RepositoryEntityID), undefined, true);
+			if (AppUtility.isNotEmpty(this.portlet.OriginalPortletID)) {
+				this.originalPortlet = Portlet.get(this.portlet.OriginalPortletID);
+				if (this.originalPortlet === undefined) {
+					await this.portalsCoreSvc.getPortletAsync(this.portlet.OriginalPortletID, _ => this.originalPortlet = Portlet.get(this.portlet.OriginalPortletID), undefined, true);
+				}
+				if (this.originalPortlet !== undefined) {
+					if (this.originalPortlet.otherDesktops === undefined) {
+						await this.portalsCoreSvc.getPortletAsync(this.originalPortlet.ID, _ => this.originalPortlet = Portlet.get(this.originalPortlet.ID), undefined, true);
+						(this.originalPortlet.otherDesktops || []).forEach(id => {
+							if (!Desktop.contains(id)) {
+								this.portalsCoreSvc.getDesktopAsync(id);
+							}
+						});
+					}
+					this.originalDesktop = Desktop.get(this.originalPortlet.DesktopID);
+					if (this.originalDesktop === undefined) {
+						await this.portalsCoreSvc.getDesktopAsync(this.originalPortlet.DesktopID, _ => this.originalDesktop = Desktop.get(this.originalPortlet.DesktopID), undefined, true);
+					}
+				}
+			}
+			else {
+				this.portlet.CommonSettings.TitleUISettings = this.portlet.CommonSettings.TitleUISettings || {};
+				this.portlet.CommonSettings.ContentUISettings = this.portlet.CommonSettings.ContentUISettings || {};
+				if (this.portlet.otherDesktops === undefined) {
+					await this.portalsCoreSvc.getPortletAsync(this.portlet.ID, _ => this.portlet = Portlet.get(this.portlet.ID), undefined, true);
+					(this.portlet.otherDesktops || []).forEach(id => {
+						if (!Desktop.contains(id)) {
+							this.portalsCoreSvc.getDesktopAsync(id);
+						}
+					});
+				}
+			}
+			const contentTypeID = this.originalPortlet !== undefined ? this.originalPortlet.RepositoryEntityID : this.portlet.RepositoryEntityID;
+			this.contentType = ContentType.get(contentTypeID);
+			if (this.contentType === undefined && AppUtility.isNotEmpty(contentTypeID)) {
+				await this.portalsCoreSvc.getContentTypeAsync(contentTypeID, _ => this.contentType = ContentType.get(contentTypeID), undefined, true);
 			}
 		}
 
@@ -182,6 +215,10 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				this.prepareAttachments(undefined, info.args.Event === "Delete" ? undefined : this.filesSvc.prepareAttachment(info.args.Data), info.args.Event === "Delete" ? this.filesSvc.prepareAttachment(info.args.Data) : undefined);
 			}
 		}, "Portlet:Refresh");
+
+		if (this.configSvc.isDebug) {
+			console.log("<Portlet>: update a portlet", this.portlet, this.originalPortlet);
+		}
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
@@ -229,9 +266,10 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: this.unspecified }, 0);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "DesktopID"));
-		if (this.isAdvancedMode) {
+		if (this.originalPortlet === undefined) {
 			control.Type = "Lookup";
 			control.Extras = { LookupDisplayValues: [{ Value: this.desktop.ID, Label: this.desktop.FullTitle }] };
+			control.Options.Disabled = AppUtility.isNotEmpty(this.portlet.OriginalPortletID);
 			control.Options.LookupOptions = {
 				Multiple: false,
 				OnDelete: (_, formControl) => {
@@ -265,8 +303,8 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				{
 					Name: "Desktop",
 					Type: "Text",
-					Segment: "common",
-					Extras: { Text: `${this.organization.Title} :: ${this.desktop.FullTitle}` },
+					Segment: control.Segment,
+					Extras: { Text: `${this.organization.Title} :: ${this.originalDesktop.FullTitle}` },
 					Options: {
 						Label: control.Options.Label,
 						ReadOnly: true
@@ -276,6 +314,64 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			);
 		}
 
+		const otherDekstops = new Array<AppFormsLookupValue>();
+		if (AppUtility.isNotEmpty(this.portlet.ID)) {
+			((this.originalDesktop !== undefined ? this.originalPortlet.otherDesktops : this.portlet.otherDesktops) || []).forEach(async id => {
+				let otherDesktop = Desktop.get(id);
+				if (otherDesktop === undefined) {
+					await this.portalsCoreSvc.getDesktopAsync(id, _ => otherDesktop = Desktop.get(id), undefined, true);
+				}
+				if (otherDesktop !== undefined) {
+					otherDekstops.push({ Value: otherDesktop.ID, Label: otherDesktop.FullTitle });
+				}
+			});
+		}
+
+		AppUtility.insertAt(
+			formConfig,
+			{
+				Name: "OtherDesktops",
+				Type: "Lookup",
+				Segment: control.Segment,
+				Extras: { LookupDisplayValues: otherDekstops.length > 0 ? otherDekstops : undefined },
+				Options: {
+					Label: control.Options.Label.replace("DesktopID", "OtherDesktops"),
+					Disabled: this.originalPortlet !== undefined,
+					LookupOptions: {
+						Multiple: true,
+						OnDelete: (data, formControl) => {
+							const lookupDisplayValues = formControl.lookupDisplayValues;
+							data.forEach(id => AppUtility.removeAt(lookupDisplayValues, lookupDisplayValues.findIndex(item => item.Value === id)));
+							formControl.setValue(lookupDisplayValues.map(item => item.Value));
+							formControl.lookupDisplayValues = lookupDisplayValues;
+						},
+						ModalOptions: {
+							Component: DesktopsSelectorModalPage,
+							ComponentProps: {
+								multiple: true,
+								organizationID: this.organization.ID
+							},
+							OnDismiss: async (data, formControl) => {
+								if (AppUtility.isArray(data, true)) {
+									const lookupDisplayValues = formControl.lookupDisplayValues;
+									const currentDesktopID = this.formControls.find(ctrl => ctrl.Name === "DesktopID").value;
+									(data as Array<string>).filter(id => id !== currentDesktopID).forEach(id => {
+										const otherDesktop = Desktop.get(id);
+										if (otherDesktop !== undefined && lookupDisplayValues.findIndex(item => item.Value === otherDesktop.ID) < 0) {
+											lookupDisplayValues.push({ Value: otherDesktop.ID, Label: otherDesktop.FullTitle });
+										}
+									});
+									formControl.setValue(lookupDisplayValues.map(item => item.Value));
+									formControl.lookupDisplayValues = lookupDisplayValues;
+								}
+							}
+						}
+					}
+				}
+			},
+			formConfig.findIndex(ctrl => ctrl.Name === control.Name) + 1
+		);
+
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Zone"));
 		if (AppUtility.isNotEmpty(this.portlet.ID) && !this.isAdvancedMode) {
 			control.Hidden = true;
@@ -284,7 +380,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				{
 					Name: "ZoneName",
 					Type: "Text",
-					Segment: "basic",
+					Segment: control.Segment,
 					Extras: { Text: this.portlet.Zone },
 					Options: {
 						Label: control.Options.Label,
@@ -296,9 +392,10 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		}
 		else {
 			control.Options.SelectOptions.Interface = "popover";
-			control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getTemplateZonesAsync(this.desktop.ID)).map(zone => {
+			control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getTemplateZonesAsync(this.originalDesktop !== undefined ? this.originalDesktop.ID : this.desktop.ID)).map(zone => {
 				return { Value: zone, Label: zone };
 			});
+			control.Options.Disabled = AppUtility.isNotEmpty(this.portlet.OriginalPortletID);
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryEntityID"));
@@ -338,6 +435,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 					}
 				}
 			};
+			control.Options.Disabled = AppUtility.isNotEmpty(this.portlet.OriginalPortletID);
 		}
 		else if (AppUtility.isNotEmpty(this.portlet.ID)) {
 			control.Hidden = true;
@@ -346,7 +444,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				{
 					Name: "RepositoryEntity",
 					Type: "Text",
-					Segment: "basic",
+					Segment: control.Segment,
 					Extras: { Text: this.contentType !== undefined ? this.contentType.Title : this.unspecified },
 					Options: {
 						Label: control.Options.Label,
@@ -358,113 +456,37 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OriginalPortletID"));
-		if (AppUtility.isNotEmpty(this.portlet.ID)) {
-			if (AppUtility.isNotEmpty(this.portlet.OriginalPortletID)) {
-				let originalPortlet = Portlet.get(this.portlet.OriginalPortletID);
-				if (originalPortlet === undefined) {
-					await this.portalsCoreSvc.getPortletAsync(this.portlet.OriginalPortletID, _ => originalPortlet = Portlet.get(this.portlet.OriginalPortletID), undefined, true);
-				}
-				AppUtility.insertAt(
-					formConfig,
-					{
-						Name: "OriginalPortlet",
-						Type: "Text",
-						Segment: "basic",
-						Extras: { Text: originalPortlet !== undefined ? (originalPortlet.desktop !== undefined ? `${originalPortlet.desktop.FullTitle} :: ` : "") + originalPortlet.Title : this.unspecified },
-						Options: {
-							Label: control.Options.Label,
-							ReadOnly: true
-						}
-					},
-					formConfig.findIndex(ctrl => ctrl.Name === control.Name)
-				);
-			}
-			else {
-				control.Hidden = true;
-			}
+		if (AppUtility.isNotEmpty(this.portlet.ID) && AppUtility.isNotEmpty(this.portlet.OriginalPortletID)) {
+			control.Options.ReadOnly = true;
+			AppUtility.insertAt(
+				formConfig,
+				{
+					Name: "OriginalPortlet",
+					Type: "Text",
+					Segment: control.Segment,
+					Extras: { Text: this.originalPortlet !== undefined ? (this.originalPortlet.desktop !== undefined ? `${this.originalPortlet.desktop.FullTitle} :: ` : "") + this.originalPortlet.Title : this.unspecified },
+					Options: {
+						Label: control.Options.Label.replace("OriginalPortletID", "OriginalPortlet"),
+						Description: control.Options.Description.replace("OriginalPortletID", "OriginalPortlet"),
+						ReadOnly: true
+					}
+				},
+				formConfig.findIndex(ctrl => ctrl.Name === control.Name)
+			);
 		}
 		else {
-			control.Hidden = !this.isAdvancedMode;
+			control.Hidden = true;
 		}
 
-		const commonSettingsConfig = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CommonSettings")).SubControls.Controls;
-		this.portalsCoreSvc.setTemplateControlOptions(commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "portlet.xml");
-
-		control = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "TitleUISettings"));
-		this.portalsCoreSvc.setUISettingsControlOptions(control, "portals.portlets.controls.CommonSettings.TitleUISettings", this.fileOptions);
-		control.Options.Label = "{{portals.portlets.controls.CommonSettings.TitleUISettings}}";
-
-		const titleBackgoundImageControl = control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
-		titleBackgoundImageControl.Extras.LookupDisplayValues = AppUtility.isObject(this.portlet.CommonSettings, true) && AppUtility.isObject(this.portlet.CommonSettings.TitleUISettings, true) && AppUtility.isNotEmpty(this.portlet.CommonSettings.TitleUISettings.BackgroundImageURI)
-			? [{ Value: this.portlet.CommonSettings.TitleUISettings.BackgroundImageURI, Label: this.portlet.CommonSettings.TitleUISettings.BackgroundImageURI }]
+		const expressionID = this.originalPortlet !== undefined ? this.originalPortlet.ExpressionID : this.portlet.ExpressionID;
+		let expression = AppUtility.isNotEmpty(expressionID)
+			? Expression.get(expressionID)
 			: undefined;
-
-		control = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ContentUISettings"));
-		this.portalsCoreSvc.setUISettingsControlOptions(control, "portals.portlets.controls.CommonSettings.ContentUISettings", this.fileOptions);
-		control.Options.Label = "{{portals.portlets.controls.CommonSettings.ContentUISettings}}";
-
-		const contentBackgoundImageControl = control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
-		contentBackgoundImageControl.Extras.LookupDisplayValues = AppUtility.isObject(this.portlet.CommonSettings, true) && AppUtility.isObject(this.portlet.CommonSettings.ContentUISettings, true) && AppUtility.isNotEmpty(this.portlet.CommonSettings.ContentUISettings.BackgroundImageURI)
-			? [{ Value: this.portlet.CommonSettings.ContentUISettings.BackgroundImageURI, Label: this.portlet.CommonSettings.ContentUISettings.BackgroundImageURI }]
-			: undefined;
-
-		const iconControl = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI"));
-		iconControl.Options.LookupOptions = titleBackgoundImageControl.Options.LookupOptions;
-		iconControl.Extras.LookupDisplayValues = AppUtility.isObject(this.portlet.CommonSettings, true) && AppUtility.isNotEmpty(this.portlet.CommonSettings.IconURI)
-			? [{ Value: this.portlet.CommonSettings.IconURI, Label: this.portlet.CommonSettings.IconURI }]
-			: undefined;
-
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ListSettings"));
-		control.Options.Label = control.Options.Description = undefined;
-
-		let xslName = "list.xsl";
-		if (this.contentType !== undefined && this.contentType.contentTypeDefinition !== undefined && this.contentType.contentTypeDefinition.NestedObject) {
-			const options = this.portlet.ListSettings.Options;
-			if (AppUtility.isEquals("Menu", options.DisplayMode) || AppUtility.isTrue(options.AsMenu) || AppUtility.isTrue(options.ShowAsMenu) || AppUtility.isTrue(options.GenerateAsMenu)) {
-				xslName = "menu.xsl";
-			}
-			else if (AppUtility.isEquals("Banner", options.DisplayMode) || AppUtility.isTrue(options.AsBanner) || AppUtility.isTrue(options.ShowAsBanner) || AppUtility.isTrue(options.GenerateAsBanner)) {
-				xslName = "banner.xsl";
-			}
+		if (expression === undefined && AppUtility.isNotEmpty(expressionID)) {
+			await this.portalsCoreSvc.getExpressionAsync(expressionID, _ => expression = Expression.get(expressionID), undefined, true);
 		}
 
-		const listSettingsConfig = control.SubControls.Controls;
-		this.portalsCoreSvc.setTemplateControlOptions(listSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), xslName, this.contentType === undefined ? undefined : this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType === undefined ? undefined : this.contentType.getObjectName(false));
-
-		control = listSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Options"));
-		control.Options.Rows = 18;
-		if (AppUtility.isNotEmpty(this.portlet.ID)) {
-			if (!this.isAdvancedMode) {
-				control.Hidden = true;
-				AppUtility.insertAt(
-					listSettingsConfig,
-					{
-						Name: "ListOptions",
-						Type: "Text",
-						Extras: { Text: JSON.stringify(this.portlet.ListSettings.Options) },
-						Options: {
-							Label: control.Options.Label,
-							ReadOnly: true,
-							Type: "textarea",
-							Rows: 18
-						}
-					},
-					listSettingsConfig.findIndex(ctrl => ctrl.Name === control.Name)
-				);
-			}
-		}
-		else {
-			control.Hidden = !this.isAdvancedMode;
-		}
-
-		let expression = AppUtility.isObject(this.portlet.ListSettings, true) && AppUtility.isNotEmpty(this.portlet.ListSettings.ExpressionID)
-			? Expression.get(this.portlet.ListSettings.ExpressionID)
-			: undefined;
-		if (expression === undefined && AppUtility.isObject(this.portlet.ListSettings, true) && AppUtility.isNotEmpty(this.portlet.ListSettings.ExpressionID)) {
-			await this.portalsCoreSvc.getExpressionAsync(this.portlet.ListSettings.ExpressionID, _ => expression = Expression.get(this.portlet.ListSettings.ExpressionID), undefined, true);
-		}
-
-		control = listSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExpressionID"));
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExpressionID"));
 		control.Extras = { LookupDisplayValues: expression !== undefined ? [{ Value: expression.ID, Label: expression.Title }] : undefined };
 		this.portalsCoreSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, this.contentType, true, false, options => {
 			options.OnDelete = (_, formControl) => {
@@ -490,6 +512,80 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			options.ModalOptions.ComponentProps.preProcess = (expressions: Array<any>) => (expressions || []).forEach(exp => Expression.update(exp));
 		});
 
+		const commonSettings = this.originalPortlet !== undefined ? this.originalPortlet.CommonSettings : this.portlet.CommonSettings;
+		const listSettings = this.originalPortlet !== undefined ? this.originalPortlet.ListSettings : this.portlet.ListSettings;
+		const viewSettings = this.originalPortlet !== undefined ? this.originalPortlet.ViewSettings : this.portlet.ViewSettings;
+
+		const commonSettingsConfig = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CommonSettings")).SubControls.Controls;
+		this.portalsCoreSvc.setTemplateControlOptions(commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "portlet.xml");
+
+		control = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "TitleUISettings"));
+		this.portalsCoreSvc.setUISettingsControlOptions(control, "portals.portlets.controls.CommonSettings.TitleUISettings", this.fileOptions);
+		control.Options.Label = "{{portals.portlets.controls.CommonSettings.TitleUISettings}}";
+
+		const titleBackgoundImageControl = control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
+		titleBackgoundImageControl.Extras.LookupDisplayValues = AppUtility.isObject(commonSettings, true) && AppUtility.isObject(commonSettings.TitleUISettings, true) && AppUtility.isNotEmpty(commonSettings.TitleUISettings.BackgroundImageURI)
+			? [{ Value: commonSettings.TitleUISettings.BackgroundImageURI, Label: commonSettings.TitleUISettings.BackgroundImageURI }]
+			: undefined;
+
+		control = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ContentUISettings"));
+		this.portalsCoreSvc.setUISettingsControlOptions(control, "portals.portlets.controls.CommonSettings.ContentUISettings", this.fileOptions);
+		control.Options.Label = "{{portals.portlets.controls.CommonSettings.ContentUISettings}}";
+
+		const contentBackgoundImageControl = control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "BackgroundImageURI"));
+		contentBackgoundImageControl.Extras.LookupDisplayValues = AppUtility.isObject(commonSettings, true) && AppUtility.isObject(commonSettings.ContentUISettings, true) && AppUtility.isNotEmpty(commonSettings.ContentUISettings.BackgroundImageURI)
+			? [{ Value: commonSettings.ContentUISettings.BackgroundImageURI, Label: commonSettings.ContentUISettings.BackgroundImageURI }]
+			: undefined;
+
+		const iconControl = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IconURI"));
+		iconControl.Options.LookupOptions = titleBackgoundImageControl.Options.LookupOptions;
+		iconControl.Extras.LookupDisplayValues = AppUtility.isObject(commonSettings, true) && AppUtility.isNotEmpty(commonSettings.IconURI)
+			? [{ Value: commonSettings.IconURI, Label: commonSettings.IconURI }]
+			: undefined;
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ListSettings"));
+		control.Options.Label = control.Options.Description = undefined;
+
+		let xslName = "list.xsl";
+		if (this.contentType !== undefined && this.contentType.contentTypeDefinition !== undefined && this.contentType.contentTypeDefinition.NestedObject) {
+			const options = listSettings.Options;
+			if (AppUtility.isEquals("Menu", options.DisplayMode) || AppUtility.isTrue(options.AsMenu) || AppUtility.isTrue(options.ShowAsMenu) || AppUtility.isTrue(options.GenerateAsMenu)) {
+				xslName = "menu.xsl";
+			}
+			else if (AppUtility.isEquals("Banner", options.DisplayMode) || AppUtility.isTrue(options.AsBanner) || AppUtility.isTrue(options.ShowAsBanner) || AppUtility.isTrue(options.GenerateAsBanner)) {
+				xslName = "banner.xsl";
+			}
+		}
+
+		const listSettingsConfig = control.SubControls.Controls;
+		this.portalsCoreSvc.setTemplateControlOptions(listSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), xslName, this.contentType === undefined ? undefined : this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType === undefined ? undefined : this.contentType.getObjectName(false));
+
+		control = listSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Options"));
+		control.Options.Rows = 18;
+		if (AppUtility.isNotEmpty(this.portlet.ID)) {
+			if (!this.isAdvancedMode) {
+				control.Hidden = true;
+				AppUtility.insertAt(
+					listSettingsConfig,
+					{
+						Name: "ListOptions",
+						Type: "Text",
+						Extras: { Text: AppUtility.isObject(listSettings, true) && AppUtility.isObject(listSettings.Options, true) ? JSON.stringify(listSettings.Options) : undefined },
+						Options: {
+							Label: control.Options.Label,
+							ReadOnly: true,
+							Type: "textarea",
+							Rows: 18
+						}
+					},
+					listSettingsConfig.findIndex(ctrl => ctrl.Name === control.Name)
+				);
+			}
+		}
+		else {
+			control.Hidden = !this.isAdvancedMode;
+		}
+
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ViewSettings"));
 		control.Options.Label = control.Options.Description = undefined;
 
@@ -506,7 +602,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 					{
 						Name: "ViewOptions",
 						Type: "Text",
-						Extras: { Text: JSON.stringify(this.portlet.ViewSettings.Options) },
+						Extras: { Text: AppUtility.isObject(viewSettings, true) && AppUtility.isObject(viewSettings.Options, true) ? JSON.stringify(viewSettings.Options) : undefined },
 						Options: {
 							Label: control.Options.Label,
 							ReadOnly: true,
@@ -582,8 +678,8 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			ObjectName: "Desktop",
 			SystemID: this.organization.ID,
 			RepositoryEntityID: this.desktop.getEntityInfo("Desktop"),
-			ObjectID: this.desktop.ID,
-			ObjectTitle: this.desktop.Title,
+			ObjectID: this.originalDesktop !== undefined ? this.originalDesktop.ID : this.desktop.ID,
+			ObjectTitle: this.originalDesktop !== undefined ? this.originalDesktop.Title : this.desktop.Title,
 			IsShared: false,
 			IsTracked: this.organization.TrackDownloadFiles,
 			IsTemporary: false,
@@ -597,32 +693,36 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	onFormInitialized() {
-		if (AppUtility.isNotEmpty(this.portlet.ID) && !this.isAdvancedMode) {
+		const portlet = AppUtility.clone(this.originalPortlet !== undefined ? this.originalPortlet : this.portlet);
+		portlet.ID = this.portlet.ID;
+		portlet.OriginalPortletID = this.portlet.OriginalPortletID;
+		portlet.OtherDesktops = this.originalDesktop !== undefined ? this.originalPortlet.otherDesktops : this.portlet.otherDesktops;
+
+		if (AppUtility.isNotEmpty(portlet.ID) && !this.isAdvancedMode) {
 			if (this.contentType === undefined) {
-				this.portlet.Action = this.portlet.AlternativeAction = undefined;
+				portlet.Action = portlet.AlternativeAction = undefined;
 				this.formControls.find(ctrl => ctrl.Name === "Action").Options.Disabled = this.formControls.find(ctrl => ctrl.Name === "AlternativeAction").Options.Disabled = true;
 			}
 			else if (this.contentType.contentTypeDefinition.NestedObject) {
-				this.portlet.Action = "List";
-				this.portlet.AlternativeAction = undefined;
+				portlet.Action = "List";
+				portlet.AlternativeAction = undefined;
 				this.formControls.find(ctrl => ctrl.Name === "Action").Options.Disabled = this.formControls.find(ctrl => ctrl.Name === "AlternativeAction").Options.Disabled = true;
-				this.portlet.ListSettings.AutoPageNumber = false;
-				this.portlet.ListSettings.ShowBreadcrumbs = false;
-				this.portlet.ListSettings.ShowPagination = false;
+				portlet.ListSettings.AutoPageNumber = false;
+				portlet.ListSettings.ShowBreadcrumbs = false;
+				portlet.ListSettings.ShowPagination = false;
 				const control = this.formControls.find(ctrl => ctrl.Name === "ListSettings");
 				control.SubControls.Controls.find(ctrl => ctrl.Name === "AutoPageNumber").Options.Disabled = true;
 				control.SubControls.Controls.find(ctrl => ctrl.Name === "ShowBreadcrumbs").Options.Disabled = true;
 				control.SubControls.Controls.find(ctrl => ctrl.Name === "ShowPagination").Options.Disabled = true;
 			}
 		}
-		const portlet = AppUtility.clone(this.portlet);
 		this.form.patchValue(portlet);
 		this.form.controls.Action.setValue(portlet.Action === undefined ? "-" : portlet.Action);
 		this.form.controls.AlternativeAction.setValue(portlet.AlternativeAction === undefined ? "-" : portlet.AlternativeAction);
 		this.form.controls.RepositoryEntityID.setValue(portlet.RepositoryEntityID === undefined ? "-" : portlet.RepositoryEntityID);
 		if (this.isAdvancedMode) {
-			(this.form.controls.ListSettings as FormGroup).controls.Options.setValue(JSON.stringify(this.portlet.ListSettings.Options || {}));
-			(this.form.controls.ViewSettings as FormGroup).controls.Options.setValue(JSON.stringify(this.portlet.ViewSettings.Options || {}));
+			(this.form.controls.ListSettings as FormGroup).controls.Options.setValue(AppUtility.isObject(portlet.ListSettings, true) && AppUtility.isObject(portlet.ListSettings.Options, true) ? JSON.stringify(portlet.ListSettings.Options) : undefined);
+			(this.form.controls.ViewSettings as FormGroup).controls.Options.setValue(AppUtility.isObject(portlet.ViewSettings, true) && AppUtility.isObject(portlet.ViewSettings.Options, true) ? JSON.stringify(portlet.ViewSettings.Options) : undefined);
 		}
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(async () => await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments)));
@@ -720,7 +820,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				}
 
 				if (this.contentType === undefined) {
-					portlet.Action = portlet.AlternativeAction = undefined;
+					portlet.Action = portlet.AlternativeAction = portlet.RepositoryEntityID = undefined;
 				}
 				else if (this.contentType.contentTypeDefinition.NestedObject) {
 					portlet.Action = "List";
@@ -735,11 +835,18 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 					portlet.RepositoryEntityID = AppUtility.isEquals(portlet.RepositoryEntityID, "-") ? undefined : portlet.RepositoryEntityID;
 				}
 
+				console.log("Update portlet", portlet);
+
 				if (AppUtility.isNotEmpty(portlet.ID)) {
 					await this.portalsCoreSvc.updatePortletAsync(
 						portlet,
 						async data => {
-							this.desktop.portlets[this.desktop.portlets.findIndex(p => p.ID === data.ID)] = Portlet.get(data.ID);
+							if (this.originalDesktop !== undefined) {
+								this.originalDesktop.portlets[this.originalDesktop.portlets.findIndex(p => p.ID === data.ID)] = Portlet.get(data.ID);
+							}
+							else {
+								this.desktop.portlets[this.desktop.portlets.findIndex(p => p.ID === data.ID)] = Portlet.get(data.ID);
+							}
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Portlet", Type: "Updated", ID: data.ID, DekstopID: data.DekstopID });
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),

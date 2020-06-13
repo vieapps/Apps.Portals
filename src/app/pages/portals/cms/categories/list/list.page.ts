@@ -45,7 +45,6 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	private module: Module;
 	private contentType: ContentType;
 	private parentID: string;
-	private parentCategory: Category;
 	private children = "{{number}} children: {{children}}";
 	private alias = "Alias";
 
@@ -53,6 +52,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	canContribute = false;
 
 	title = "Categories";
+	parentCategory: Category;
 	categories = new Array<Category>();
 	searching = false;
 	pageNumber = 0;

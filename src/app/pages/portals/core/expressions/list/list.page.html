@@ -1,7 +1,7 @@
 <ion-header>
 	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
-			<ion-back-button text=""></ion-back-button>
+			<ion-menu-button></ion-menu-button>
 		</ion-buttons>
 		<ion-buttons *ngIf="!searching" slot="end">
 			<ion-button [hidden]="searching" (click)="openSearchAsync()">

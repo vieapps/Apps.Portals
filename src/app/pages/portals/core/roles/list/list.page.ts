@@ -35,12 +35,12 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 
 	private organization: Organization;
 	private parentID: string;
-	private parentRole: Role;
 	private subscription: Subscription;
 	private children = "{{number}} children: {{children}}";
 
 	title = "Roles";
 	roles = new Array<Role>();
+	parentRole: Role;
 	searching = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;

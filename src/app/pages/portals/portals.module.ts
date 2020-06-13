@@ -1,9 +1,27 @@
 import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { RouterModule } from "@angular/router";
+import { RouterModule, Routes } from "@angular/router";
 import { IonicModule } from "@ionic/angular";
 import { AuthenticatedGuardService } from "@services/base.service";
 import { PortalsControlsModule } from "@controls/portals.controls.module";
+
+export const routes: Routes = [
+	{
+		path: "core",
+		canActivate: [AuthenticatedGuardService],
+		loadChildren: "@pages/portals/core/core.module#PortalsCoreModule"
+	},
+	{
+		path: "cms",
+		canActivate: [AuthenticatedGuardService],
+		loadChildren: "@pages/portals/cms/cms.module#PortalsCmsModule"
+	},
+	// {
+	// 	path: "search",
+	// 	canActivate: [AuthenticatedGuardService],
+	// 	loadChildren: "@pages/portals/search/search.module#PortalsSearchModule"
+	// }
+];
 
 @NgModule({
 	providers: [],
@@ -11,23 +29,7 @@ import { PortalsControlsModule } from "@controls/portals.controls.module";
 		CommonModule,
 		IonicModule,
 		PortalsControlsModule,
-		RouterModule.forChild([
-			{
-				path: "core",
-				canActivate: [AuthenticatedGuardService],
-				loadChildren: "@pages/portals/core/core.module#PortalsCoreModule"
-			},
-			{
-				path: "cms",
-				canActivate: [AuthenticatedGuardService],
-				loadChildren: "@pages/portals/cms/cms.module#PortalsCmsModule"
-			},
-			// {
-			// 	path: "search",
-			// 	canActivate: [AuthenticatedGuardService],
-			// 	loadChildren: "@pages/portals/search/search.module#PortalsSearchModule"
-			// }
-		])
+		RouterModule.forChild(routes)
 	],
 	exports: [RouterModule],
 	declarations: []
