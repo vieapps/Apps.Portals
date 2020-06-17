@@ -170,4 +170,15 @@ export class Portlet extends CoreBaseModel {
 		return Desktop.get(this.DesktopID);
 	}
 
+	public get originalPortlet() {
+		return AppUtility.isNotEmpty(this.OriginalPortletID)
+			? Portlet.get(this.OriginalPortletID)
+			: this;
+	}
+
+	public get originalDesktop() {
+		const originalPortlet = this.originalPortlet;
+		return originalPortlet !== undefined ? originalPortlet.desktop : undefined;
+	}
+
 }
