@@ -103,12 +103,12 @@ export class Content extends CmsBaseModel {
 		return id !== undefined && this.instances.containsKey(id);
 	}
 
-	public get routerLink() {
-		return `/portals/cms/contents/view/${AppUtility.toURI(this.ansiTitle)}`;
-	}
-
 	public get category() {
 		return Category.get(this.CategoryID);
+	}
+
+	public get routerLink() {
+		return `/portals/cms/contents/view/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
 }

@@ -418,7 +418,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 						let name = "list.xsl";
 						if (this.contentType !== undefined && this.contentType.contentTypeDefinition !== undefined && this.contentType.contentTypeDefinition.NestedObject) {
 							let options = settingsControl.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Options")).value;
-							options = typeof options === "string" ? JSON.parse(options) : options;
+							options = typeof options === "string" ? JSON.parse(options) : options || {};
 							if (AppUtility.isEquals("Menu", options.DisplayMode) || AppUtility.isTrue(options.AsMenu) || AppUtility.isTrue(options.ShowAsMenu) || AppUtility.isTrue(options.GenerateAsMenu)) {
 								name = "menu.xsl";
 							}
@@ -548,7 +548,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 
 		let xslName = "list.xsl";
 		if (this.contentType !== undefined && this.contentType.contentTypeDefinition !== undefined && this.contentType.contentTypeDefinition.NestedObject) {
-			const options = listSettings.Options;
+			const options = listSettings.Options || {};
 			if (AppUtility.isEquals("Menu", options.DisplayMode) || AppUtility.isTrue(options.AsMenu) || AppUtility.isTrue(options.ShowAsMenu) || AppUtility.isTrue(options.GenerateAsMenu)) {
 				xslName = "menu.xsl";
 			}

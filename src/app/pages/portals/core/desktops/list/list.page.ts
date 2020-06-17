@@ -328,7 +328,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 	async showPortletsAsync(event: Event, desktop: Desktop) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppUrl(undefined, "list", desktop.ansiTitle, { SystemID: desktop.SystemID, DesktopID: desktop.ID }, "portlet", "core"));
+		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "list", desktop.ansiTitle, { SystemID: desktop.SystemID, DesktopID: desktop.ID }, "portlet", "core"));
 	}
 
 }

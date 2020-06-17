@@ -180,7 +180,11 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 
 	getInfo(portlet: Portlet) {
 		const contentType = portlet.contentType;
-		return `Zone: ${portlet.Zone} - Order: ${portlet.OrderIndex}` + (contentType !== undefined ? ` - ${contentType.Title}` : " - Static");
+		const originalPortlet = portlet.originalPortlet;
+		const originalDesktop = portlet.originalDesktop;
+		return `Zone: ${portlet.Zone} #${portlet.OrderIndex} - Type: `
+			+ (contentType !== undefined ? `${contentType.Title}` : "Static")
+			+ (AppUtility.isNotEmpty(portlet.OriginalPortletID) ? ` (${(originalPortlet !== undefined ? originalPortlet.Title + (originalDesktop !== undefined ? ` @ ${originalDesktop.FullTitle}` : "") : "unknown")})` : "");
 	}
 
 	onStartSearch(event: any) {

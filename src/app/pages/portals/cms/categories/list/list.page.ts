@@ -378,7 +378,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	async viewAsync(event: Event, category: Category) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppUrl(this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module), "list", category.Title, { CategoryID: category.ID }));
+		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module), "list", category.Title, { CategoryID: category.ID }));
 	}
 
 	private async backAsync(message: string, url?: string) {
