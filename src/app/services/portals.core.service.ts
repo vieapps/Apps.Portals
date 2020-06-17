@@ -282,7 +282,7 @@ export class PortalsCoreService extends BaseService {
 		return zones || [];
 	}
 
-	public getAppUrl(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }, objectName?: string, path?: string) {
+	public getAppURL(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }, objectName?: string, path?: string) {
 		objectName = objectName || (contentType !== undefined ? contentType.getObjectName() : "unknown");
 		return `/portals/${path || "cms"}/`
 			+ (AppUtility.isEquals(objectName, "Category") ? "categories" : `${objectName}s`).toLowerCase() + "/"
@@ -291,16 +291,18 @@ export class PortalsCoreService extends BaseService {
 			+ `?x-request=${AppUtility.toBase64Url(params || { RepositoryEntityID: contentType !== undefined ? contentType.ID : undefined })}`;
 	}
 
-	public getPortalUrl(object: CmsBaseModel, parent?: CmsBaseModel): string {
-		let uri = parent !== undefined ? this.getPortalUrl(parent) : undefined;
+	public getPortalURL(object: CmsBaseModel, parent?: CmsBaseModel): string {
+		let uri = parent !== undefined ? this.getPortalURL(parent) : undefined;
 		if (uri === undefined) {
 			const organization = Organization.get(object.SystemID);
 			const module = Module.get(object.RepositoryID);
 			const contentType = ContentType.get(object.RepositoryEntityID);
 			const desktop = Desktop.get(object["DesktopID"]) || Desktop.get(contentType === undefined ? undefined : contentType.DesktopID) || Desktop.get(module === undefined ? undefined : module.DesktopID) || Desktop.get(organization === undefined ? undefined : organization.HomeDesktopID);
-			uri = `${this.configSvc.appConfig.URIs.portals}~${(organization !== undefined ? organization.Alias : "")}/${(desktop !== undefined ? desktop.Alias : "-default")}`;
+			uri = `${this.configSvc.appConfig.URIs.portals}` + (organization !== undefined && desktop !== undefined ? `~${organization.Alias}/${desktop.Alias}` : "_permanentlink");
 		}
-		return uri + `/${object["Alias"] || object.ID}`;
+		return uri.indexOf("_permanent") > 0
+			? `${this.configSvc.appConfig.URIs.portals}_permanentlink/${object.RepositoryEntityID}/${object.ID}`
+			: uri + "/" + (object["Alias"] || object.ID);
 	}
 
 	public getPaginationPrefix(objectName: string) {

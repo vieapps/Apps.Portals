@@ -660,6 +660,11 @@
 					"placeholder": "",
 					"description": "Chỉ định ảnh bìa (cover) toàn bộ các desktop trong site để hiển thị mặc định đối với mạng xã hội khi nội dung không có ảnh bìa cụ thể, tốt nhất là loại .JPG hoặc .PNG có kích thước 1200x630 hoặc 600x315"
 				},
+				"Stylesheets": {
+					"label": "Các stylesheet (CSS) dùng chung toàn bộ site",
+					"placeholder": "",
+					"description": "Các mã stylesheet (CSS) dùng chung cho toàn bộ các desktop trong site. Lưu ý: nếu truy cập các desktop với thiết đặt của site khác, các mã stylesheet này sẽ không được sử dụng."
+				},
 				"MetaTags": {
 					"label": "Các thẻ meta bổ sung",
 					"placeholder": "",

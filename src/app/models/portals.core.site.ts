@@ -38,6 +38,7 @@ export class Site extends CoreBaseModel {
 	UISettings = undefined as ElementUISettings;
 	IconURI = undefined as string;
 	CoverURI = undefined as string;
+	Stylesheets = undefined as string;
 	MetaTags = undefined as string;
 	Scripts = undefined as string;
 	RedirectToNoneWWW = true;
