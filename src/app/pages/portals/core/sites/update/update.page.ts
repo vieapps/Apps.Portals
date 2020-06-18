@@ -50,7 +50,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 	formControls = new Array<AppFormsControl>();
 	processing = false;
 	button = {
-		update: "Update",
+		save: "Save",
 		cancel: "Cancel"
 	};
 
@@ -99,7 +99,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		}
 
 		this.button = {
-			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.site.ID) ? "update" : "create")}`),
+			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.site.ID) ? "save" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
@@ -277,7 +277,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		}
 
 		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Stylesheets")).Options.Rows =
-			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "MetaTags")).Options.Rows = 
+			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "MetaTags")).Options.Rows =
 			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Scripts")).Options.Rows = 15;
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "RedirectToNoneWWW"));
@@ -381,7 +381,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		});
 	}
 
-	async updateAsync() {
+	async saveAsync() {
 		if (this.appFormsSvc.validate(this.form)) {
 			if (this.hash === AppCrypto.hash(this.form.value)) {
 				await this.configSvc.navigateBackAsync();

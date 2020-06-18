@@ -58,7 +58,7 @@ export class CmsLinksUpdatePage implements OnInit {
 	formControls = new Array<AppFormsControl>();
 	processing = false;
 	button = {
-		update: "Update",
+		save: "Save",
 		cancel: "Cancel"
 	};
 
@@ -119,7 +119,7 @@ export class CmsLinksUpdatePage implements OnInit {
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.cms.links.title.${(AppUtility.isNotEmpty(this.link.ID) ? "update" : "create")}`);
 
 		this.button = {
-			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.link.ID) ? "update" : "create")}`),
+			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.link.ID) ? "save" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
@@ -141,7 +141,7 @@ export class CmsLinksUpdatePage implements OnInit {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
-		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.link");
+		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.link", undefined, { "x-content-type": this.contentType.ID });
 
 		let parentLink = this.link.Parent;
 		if (parentLink === undefined && AppUtility.isNotEmpty(this.link.ParentID)) {
@@ -290,6 +290,15 @@ export class CmsLinksUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Summary"));
 		control.Options.Rows = 2;
 
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "URL"));
+		control.Options.Icon = {
+			Name: "globe",
+			Fill: "clear",
+			Color: "medium",
+			Slot: "end",
+			OnClick: (_, formControl) => PlatformUtility.openURI(AppUtility.isNotEmpty(formControl.value) ? formControl.value.replace("~/", `${this.configSvc.appConfig.URIs.portals}~${this.organization.Alias}/`) : undefined)
+		};
+
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		control.Options.AutoFocus = true;
 
@@ -378,7 +387,7 @@ export class CmsLinksUpdatePage implements OnInit {
 		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, onCompleted);
 	}
 
-	async updateAsync() {
+	async saveAsync() {
 		if (this.appFormsSvc.validate(this.form)) {
 			if (this.hash.full === AppCrypto.hash(this.form.value)) {
 				await this.configSvc.navigateBackAsync();

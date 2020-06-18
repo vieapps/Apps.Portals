@@ -5,6 +5,7 @@ import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
+import { AppFormsControlComponent } from "@components/forms.control.component";
 import { ConfigurationService } from "@services/configuration.service";
 import { FilesService, FileOptions } from "@services/files.service";
 import { PortalsCoreService } from "@services/portals.core.service";
@@ -45,7 +46,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 	formControls = new Array<AppFormsControl>();
 	processing = false;
 	button = {
-		update: "Update",
+		save: "Save",
 		cancel: "Cancel"
 	};
 
@@ -90,7 +91,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		await this.appFormsSvc.showLoadingAsync(this.title);
 
 		this.button = {
-			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.desktop.ID) ? "update" : "create")}`),
+			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.desktop.ID) ? "save" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
@@ -211,7 +212,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		control.Options.Rows = 18;
 		control.Options.Icon = {
 			Name: "color-wand",
-			OnClick: async (_, formControl) => formControl.setValue(await this.portalsCoreSvc.getTemplateAsync("desktop.xml"))
+			OnClick: async (_, formControl) => (formControl as AppFormsControlComponent).setValue(await this.portalsCoreSvc.getTemplateAsync("desktop.xml"))
 		};
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "UISettings"));
@@ -392,7 +393,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		});
 	}
 
-	async updateAsync() {
+	async saveAsync() {
 		if (this.appFormsSvc.validate(this.form)) {
 			if (this.hash === AppCrypto.hash(this.form.value)) {
 				await this.configSvc.navigateBackAsync();

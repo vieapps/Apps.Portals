@@ -59,7 +59,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 	formControls = new Array<AppFormsControl>();
 	processing = false;
 	button = {
-		update: "Update",
+		save: "Save",
 		cancel: "Cancel"
 	};
 
@@ -202,7 +202,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.portlets.title.${(AppUtility.isNotEmpty(this.portlet.ID) ? "update" : "create")}`);
 		this.button = {
-			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.portlet.ID) ? "update" : "create")}`),
+			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.portlet.ID) ? "save" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 		this.unspecified = await this.configSvc.getResourceAsync("portals.common.unspecified");
@@ -770,7 +770,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		});
 	}
 
-	async updateAsync() {
+	async saveAsync() {
 		if (this.appFormsSvc.validate(this.form)) {
 			if (this.hash === AppCrypto.hash(this.form.value)) {
 				await this.configSvc.navigateBackAsync();

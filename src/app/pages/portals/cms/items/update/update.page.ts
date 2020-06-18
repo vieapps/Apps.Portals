@@ -57,7 +57,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 	formControls = new Array<AppFormsControl>();
 	processing = false;
 	button = {
-		update: "Update",
+		save: "Save",
 		cancel: "Cancel"
 	};
 
@@ -131,7 +131,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.cms.contents.title.${(AppUtility.isNotEmpty(this.item.ID) ? "update" : "create")}`);
 
 		this.button = {
-			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.item.ID) ? "update" : "create")}`),
+			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.item.ID) ? "save" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
@@ -161,7 +161,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
-		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.item");
+		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.item", undefined, { "x-content-type": this.contentType.ID });
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
 		control.Options.SelectOptions.Interface = "popover";
@@ -211,6 +211,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 				}),
 				this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label"), false, true, true, FilesProcessorModalPage),
 				this.portalsCmsSvc.getUploadFormControl(this.item, "attachments"),
+				this.portalsCmsSvc.getPermanentLinkFormControl(this.item, "basic"),
 				this.portalsCoreSvc.getAuditFormControl(this.item, "basic"),
 				this.appFormsSvc.getButtonControls(
 					"basic",
@@ -261,8 +262,12 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	onFormInitialized() {
-		this.form.patchValue(this.item);
+		const item = AppUtility.clone(this.item, false);
+		item.Tags = AppUtility.isNotEmpty(this.item.Tags) ? AppUtility.toStr(AppUtility.toArray(this.item.Tags, ","), ", ") : undefined;
+
+		this.form.patchValue(item);
 		this.hash.content = AppCrypto.hash(this.form.value);
+
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (AppUtility.isNotEmpty(this.item.ID)) {
 				if (this.item.thumbnails !== undefined) {
@@ -297,7 +302,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, onCompleted);
 	}
 
-	async updateAsync() {
+	async saveAsync() {
 		if (this.appFormsSvc.validate(this.form)) {
 			if (this.hash.full === AppCrypto.hash(this.form.value)) {
 				await this.configSvc.navigateBackAsync();

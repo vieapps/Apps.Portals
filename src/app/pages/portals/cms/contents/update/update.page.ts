@@ -60,7 +60,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	formControls = new Array<AppFormsControl>();
 	processing = false;
 	button = {
-		update: "Update",
+		save: "Save",
 		cancel: "Cancel"
 	};
 
@@ -135,7 +135,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.cms.contents.title.${(AppUtility.isNotEmpty(this.content.ID) ? "update" : "create")}`);
 
 		this.button = {
-			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.content.ID) ? "update" : "create")}`),
+			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.content.ID) ? "save" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
@@ -168,7 +168,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
 		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.module);
-		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content");
+		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content", undefined, { "x-content-type": this.contentType.ID });
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
 		control.Options.SelectOptions.Interface = "popover";
@@ -375,6 +375,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 				}),
 				this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label"), false, true, true, FilesProcessorModalPage),
 				this.portalsCmsSvc.getUploadFormControl(this.content, "attachments"),
+				this.portalsCmsSvc.getPermanentLinkFormControl(this.content, "management"),
 				this.portalsCoreSvc.getAuditFormControl(this.content, "management"),
 				this.appFormsSvc.getButtonControls(
 					"management",
@@ -423,6 +424,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		content.StartDate = AppUtility.toIsoDate(this.content.StartDate);
 		content.EndDate = AppUtility.toIsoDate(this.content.EndDate);
 		content.PublishedTime = AppUtility.toIsoDateTime(this.content.PublishedTime, true);
+		content.Tags = AppUtility.isNotEmpty(this.content.Tags) ? AppUtility.toStr(AppUtility.toArray(this.content.Tags, ","), ", ") : undefined;
 
 		this.form.patchValue(content);
 		this.hash.content = AppCrypto.hash(this.form.value);
@@ -461,7 +463,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, onCompleted);
 	}
 
-	async updateAsync() {
+	async saveAsync() {
 		if (this.appFormsSvc.validate(this.form)) {
 			if (this.hash.full === AppCrypto.hash(this.form.value)) {
 				await this.configSvc.navigateBackAsync();

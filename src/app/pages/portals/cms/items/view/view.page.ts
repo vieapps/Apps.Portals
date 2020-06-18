@@ -182,6 +182,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 		formConfig.push(
 			this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments"),
 			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label")),
+			this.portalsCmsSvc.getPermanentLinkFormControl(this.item, "basic"),
 			this.portalsCoreSvc.getAuditFormControl(this.item, "basic")
 		);
 

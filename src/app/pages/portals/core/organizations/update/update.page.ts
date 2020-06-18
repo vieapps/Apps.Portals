@@ -42,7 +42,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 	formControls = new Array<AppFormsControl>();
 	processing = false;
 	button = {
-		update: "Update",
+		save: "Save",
 		cancel: "Cancel"
 	};
 
@@ -82,7 +82,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		this.organization = this.organization || new Organization("Pending", new Privileges(true));
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.organizations.title.${(AppUtility.isNotEmpty(this.organization.ID) ? "update" : "create")}`);
 		this.button = {
-			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.organization.ID) ? "update" : "create")}`),
+			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.organization.ID) ? "save" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
@@ -535,7 +535,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.invoke(() => this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true }), 234));
 	}
 
-	async updateAsync() {
+	async saveAsync() {
 		if (this.appFormsSvc.validate(this.form)) {
 			const organization = this.form.value;
 			organization.Instructions = this.instructions;

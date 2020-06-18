@@ -41,7 +41,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 	formControls = new Array<AppFormsControl>();
 	processing = false;
 	button = {
-		update: "Update",
+		save: "Save",
 		cancel: "Cancel"
 	};
 
@@ -81,7 +81,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.roles.title.${(AppUtility.isNotEmpty(this.role.ID) ? "update" : "create")}`);
 		this.button = {
-			update: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.role.ID) ? "update" : "create")}`),
+			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.role.ID) ? "save" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
@@ -256,7 +256,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 		this.appFormsSvc.hideLoadingAsync();
 	}
 
-	async updateAsync() {
+	async saveAsync() {
 		if (this.appFormsSvc.validate(this.form)) {
 			if (this.hash === AppCrypto.hash(this.form.value)) {
 				await this.configSvc.navigateBackAsync();

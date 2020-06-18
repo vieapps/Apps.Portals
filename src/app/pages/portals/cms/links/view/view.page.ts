@@ -190,9 +190,18 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 			this.portalsCoreSvc.getAuditFormControl(this.link, "basic")
 		);
 
+		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "URL"));
+		control.Options.Icon = {
+			Name: "globe",
+			Fill: "clear",
+			Color: "medium",
+			Slot: "end",
+			OnClick: (_, formControl) => PlatformUtility.openURI(AppUtility.isNotEmpty(formControl.value) ? formControl.value.replace("~/", `${this.configSvc.appConfig.URIs.portals}~${this.link.organization.Alias}/`) : undefined)
+		};
+
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 
-		const control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
 		control.Order = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Audits")).Order + 1;
 		control.Segment = "basic";
 		control.Hidden = false;
