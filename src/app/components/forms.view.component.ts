@@ -30,6 +30,9 @@ export class AppFormsViewComponent implements OnInit, AfterViewInit {
 
 	ngAfterViewInit() {
 		this.control.elementRef = this.elementRef;
+		if (this.control.Options.OnAfterViewInit !== undefined) {
+			this.control.Options.OnAfterViewInit(this);
+		}
 	}
 
 	get locale() {
@@ -52,6 +55,30 @@ export class AppFormsViewComponent implements OnInit, AfterViewInit {
 
 	get value() {
 		return this.control.value;
+	}
+
+	get icon() {
+		return AppUtility.isNotEmpty(this.control.Options.Icon.Name)
+			? this.control.Options.Icon.Name.trim().toLowerCase()
+			: undefined;
+	}
+
+	get iconSlot() {
+		return (this.control.Options.Icon.Slot || "end").trim().toLowerCase();
+	}
+
+	get iconFill() {
+		return (this.control.Options.Icon.Fill || "clear").trim().toLowerCase();
+	}
+
+	get iconColor() {
+		return (this.control.Options.Icon.Color || "medium").trim().toLowerCase();
+	}
+
+	clickOnIcon(event: Event) {
+		if (this.control.Options.Icon.OnClick !== undefined) {
+			this.control.Options.Icon.OnClick(event, this);
+		}
 	}
 
 	get datetimeFormat() {

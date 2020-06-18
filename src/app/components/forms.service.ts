@@ -8,6 +8,7 @@ import { AppXHR } from "@components/app.apis";
 import { AppUtility } from "@components/app.utility";
 import { PlatformUtility } from "@components/app.utility.platform";
 import { AppFormsControlComponent } from "@components/forms.control.component";
+import { AppFormsViewComponent } from "@components/forms.view.component";
 import { ConfigurationService } from "@services/configuration.service";
 import { AppConfig } from "../app.config";
 
@@ -65,7 +66,7 @@ export interface AppFormsControlIconOptionsConfig {
 	Fill?: string;
 	Color?: string;
 	Slot?: string;
-	OnClick?: (event: Event, control: AppFormsControlComponent) => void;
+	OnClick?: (event: Event, control: AppFormsControlComponent | AppFormsViewComponent) => void;
 }
 
 //  ---------------------------------------------------------------
@@ -216,7 +217,7 @@ export interface AppFormsControlOptionsConfig {
 	FilePickerOptions?: AppFormsControlFilePickerOptionsConfig;
 	RangeOptions?: AppFormsControlRangeOptionsConfig;
 	ButtonOptions?: AppFormsControlButtonOptionsConfig;
-	OnAfterViewInit?: (control: AppFormsControlComponent) => void;
+	OnAfterViewInit?: (control: AppFormsControlComponent | AppFormsViewComponent) => void;
 	OnFocus?: (event: Event, control: AppFormsControlComponent) => void;
 	OnKeyUp?: (event: KeyboardEvent, control: AppFormsControlComponent) => void;
 	OnBlur?: (event: Event, control: AppFormsControlComponent) => void;
@@ -294,7 +295,7 @@ export class AppFormsControl {
 		Width: undefined as string,
 		Height: undefined as string,
 		Rows: undefined as number,
-		OnAfterViewInit: undefined as (control: AppFormsControlComponent) => void,
+		OnAfterViewInit: undefined as (control: AppFormsControlComponent | AppFormsViewComponent) => void,
 		OnFocus: undefined as (event: Event, control: AppFormsControlComponent) => void,
 		OnKeyUp: undefined as (event: KeyboardEvent, control: AppFormsControlComponent) => void,
 		OnBlur: undefined as (event: Event, control: AppFormsControlComponent) => void,
@@ -304,7 +305,7 @@ export class AppFormsControl {
 			Fill: undefined as string,
 			Color: undefined as string,
 			Slot: undefined as string,
-			OnClick: undefined as (event: Event, control: AppFormsControlComponent) => void
+			OnClick: undefined as (event: Event, control: AppFormsControlComponent | AppFormsViewComponent) => void
 		},
 		SelectOptions: {
 			Values: undefined as Array<AppFormsLookupValue>,
@@ -471,7 +472,9 @@ export class AppFormsControl {
 
 	/** Gets the value of the control */
 	public get value() {
-		return this.formControlRef !== undefined ? this.formControlRef.value : this.Extras["_value"];
+		return AppUtility.isEquals(this.Type, "Text")
+			? this.Extras["Text"] || this.Extras["text"] || this.Extras["_value"]
+			: this.formControlRef !== undefined ? this.formControlRef.value : this.Extras["_value"];
 	}
 
 	/** Sets the value of the control */

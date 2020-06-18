@@ -28,8 +28,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	private _style: string;
 	private _completerInitialValue: any;
 	private _selectOptions: Array<string>;
-	private _lookupDisplayValues: Array<AppFormsLookupValue>;
-	private _text: string;
 	private _ckEditorConfig: { [key: string]: any };
 
 	public showPassword = false;
@@ -57,15 +55,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	ngOnInit() {
 		this.control.controlRef = this;
 		this.control.formControlRef = this.formControl;
-		if (this.isLookupControl) {
-			this.lookupDisplayValues = this.control.Extras["LookupDisplayValues"] || this.control.Extras["lookupDisplayValues"];
-			if (this.isCompleter) {
-				this.completerInit();
-				this.completerGetInitialValue();
-			}
-		}
-		else if (this.isTextDisplayControl) {
-			this.text = this.control.Extras["Text"] || this.control.Extras["text"];
+		if (this.isLookupControl && this.isCompleter) {
+			this.completerInit();
+			this.completerGetInitialValue();
 		}
 	}
 
@@ -614,12 +606,12 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/** Gets the values for displaying of this lookup control */
 	get lookupDisplayValues() {
-		return this._lookupDisplayValues || [];
+		return this.control.Extras["LookupDisplayValues"] || [];
 	}
 
 	/** Sets the values for displaying of this lookup control */
 	set lookupDisplayValues(values: Array<AppFormsLookupValue>) {
-		this._lookupDisplayValues = AppUtility.isArray(values, true)
+		this.control.Extras["LookupDisplayValues"] = AppUtility.isArray(values, true)
 			? values.map(value => {
 					return {
 						Value: value["Value"],
@@ -686,12 +678,12 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/** Sets the text for displaying of this text control */
 	set text(value: string) {
-		this._text = value;
+		this.control.Extras["Text"] = value;
 	}
 
 	/** Gets the text for displaying of this text control */
 	get text() {
-		return this._text;
+		return this.control.Extras["Text"];
 	}
 
 	/** Gets the URI for displaying captcha image of this control */
