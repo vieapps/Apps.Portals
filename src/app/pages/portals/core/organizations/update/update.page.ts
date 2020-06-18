@@ -236,6 +236,43 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				}
 			},
 			{
+				Name: "HttpIndicators",
+				Segment: "socials",
+				Options: {
+					Label: "{{portals.organizations.controls.HttpIndicators.label}}"
+				},
+				SubControls: {
+					AsArray: true,
+					Controls: [{
+						Options: {},
+						SubControls: {
+							Controls: [
+								{
+									Name: "Name",
+									Type: "TextBox",
+									Options: {
+										Type: "text",
+										Label: "{{portals.organizations.controls.HttpIndicators.Name.label}}",
+										Description: "{{portals.organizations.controls.HttpIndicators.Name.description}}",
+										MaxLength: 250
+									}
+								},
+								{
+									Name: "Content",
+									Type: "TextArea",
+									Options: {
+										Type: "text",
+										Label: "{{portals.organizations.controls.HttpIndicators.Content.label}}",
+										Description: "{{portals.organizations.controls.HttpIndicators.Content.description}}",
+										MaxLength: 4000
+									}
+								}
+							]
+						}
+					}]
+				}
+			},
+			{
 				Name: "AlwaysUseHtmlSuffix",
 				Type: "YesNo",
 				Segment: "urls",
@@ -250,7 +287,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				Options: {
 					Label: "{{portals.organizations.controls.RefreshUrls.label}}",
 				},
-					SubControls: {
+				SubControls: {
 					Controls: [
 						{
 							Name: "Addresses",
@@ -466,6 +503,17 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Subject")).Options.OnBlur = (_, formControl) => this.instructions[formControl.parentControl.Name][formControl.formGroup.controls.Language.value] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
 			controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Body")).Options.OnBlur = (_, formControl) => this.instructions[formControl.parentControl.Name][formControl.formGroup.controls.Language.value] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
 		});
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "HttpIndicators"));
+		if (AppUtility.isArray(this.organization.HttpIndicators, true) && this.organization.HttpIndicators.length > 1) {
+			while (control.SubControls.Controls.length <= this.organization.HttpIndicators.length) {
+				control.SubControls.Controls.push(this.appFormsSvc.cloneControl(control.SubControls.Controls[0], ctrl => {
+					ctrl.Name = `${control.Name}_${control.SubControls.Controls.length}`;
+					ctrl.Order = control.SubControls.Controls.length;
+				}));
+			}
+		}
+		control.SubControls.Controls.forEach((ctrl, index) => ctrl.Options.Label = `#${index + 1}`);
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (AppUtility.isNotEmpty(this.organization.ID)) {

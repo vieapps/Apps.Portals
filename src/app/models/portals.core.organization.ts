@@ -68,6 +68,10 @@ export class Organization extends CoreBaseModel {
 		AllHttp404?: boolean;
 	};
 	EmailSettings = undefined as EmailSettings;
+	HttpIndicators = undefined as Array<{
+		Name: string;
+		Content: string;
+	}>;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;
