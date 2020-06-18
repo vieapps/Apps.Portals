@@ -3,6 +3,7 @@ import { DomSanitizer } from "@angular/platform-browser";
 import { AppRTU, AppXHR, AppMessage } from "@components/app.apis";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
+import { PlatformUtility } from "@components/app.utility.platform";
 import { AppCustomCompleter } from "@components/app.completer";
 import { AppPagination } from "@components/app.pagination";
 import { Base as BaseService } from "@services/base.service";
@@ -11,6 +12,7 @@ import { AuthenticationService } from "@services/authentication.service";
 import { FilesService, FileOptions } from "@services/files.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { AppFormsService, AppFormsControlConfig, AppFormsControlLookupOptionsConfig } from "@components/forms.service";
+import { AppFormsControlComponent } from "@components/forms.control.component";
 import { FilesProcessorModalPage } from "@controls/common/file.processor.modal.page";
 import { Account } from "@models/account";
 import { Module } from "@models/portals.core.module";
@@ -287,6 +289,30 @@ export class PortalsCmsService extends BaseService {
 
 	public getUploadFormControl(object: CmsBaseModel, segment?: string, label?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		return this.portalsCoreSvc.getUploadFormControl(this.getFileOptions(object), segment, label, onCompleted);
+	}
+
+	public getPermanentLinkFormControl(object: CmsBaseModel, segment?: string, label?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+		const controlConfig: AppFormsControlConfig = {
+			Name: "PermanentLink",
+			Type: "Text",
+			Segment: segment || "basic",
+			Extras: { Text: this.portalsCoreSvc.getPermanentURL(object) },
+			Options: {
+				Label: "{{portals.cms.common.permanentLink.label}}",
+				Description: "{{portals.cms.common.permanentLink.description}}",
+				Icon: {
+					Name: "globe",
+					Fill: "clear",
+					Color: "medium",
+					Slot: "end",
+					OnClick: (_, formControl) => PlatformUtility.openURI(formControl instanceof AppFormsControlComponent ? (formControl as AppFormsControlComponent).text : formControl.value)
+				}
+			}
+		};
+		if (onCompleted !== undefined) {
+			onCompleted(controlConfig);
+		}
+		return controlConfig;
 	}
 
 	public setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onPreCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {

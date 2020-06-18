@@ -13,18 +13,18 @@ export class AppConfig {
 		apis: "https://apis.vieapps.com/",
 
 		/** Real-time Updater (if not provided, then use the APIs) */
-		updates: "https://rt.vieapps.com/",
+		updates: "https://rtu.vieapps.com/",
 
 		/** Files HTTP service */
-		files: "https://fs.vieapps.com/",
+		files: "https://files.vieapps.com/",
 
 		/** Portals HTTP service */
 		portals: "https://portals.vieapps.com/",
 
 		/** URI to perform activation (on the web) */
-		activations: "https://vieapps.net/",
+		activations: "https://cms.vieapps.com/",
 
-		/** Hosts of all allowed embed medias */
+		/** Collection of all allowed embed medias (hosts/domains) */
 		medias: []
 	};
 
@@ -32,11 +32,11 @@ export class AppConfig {
 	public static app = {
 		id: "vieapps-ngx-portals",
 		name: "VIEApps NGX Portals",
-		description: "Managing core portal and related services of VIEApps.net",
+		description: "Managing core information and related services of CMS Portals",
 		version: "1.0.0-beta",
 		copyright: "© 2020 VIEApps.net",
 		license: "Apache-2.0",
-		frameworks: "ionic 5.1 - angular 8.2 - cordova 9.0",
+		frameworks: "ionic 5.2 - angular 8.2 - cordova 9.0",
 		homepage: "https://vieapps.net",
 		mode: "",
 		platform: "",

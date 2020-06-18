@@ -9,6 +9,10 @@
 					"content": "Tạo liên kết từ nội dung đã có",
 					"file": "Tạo liên kết từ file đã tải lên",
 					"media": "Chèn nội dung media từ file đã tải lên"
+				},
+				"permanentLink": {
+					"label": "Liên kết cố định",
+					"description": "Hệ thống sẽ tự động mở đúng liên kết công khai từ liên kết cố định/không thay đổi này"
 				}
 			},
 			"categories": {

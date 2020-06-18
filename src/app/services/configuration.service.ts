@@ -768,7 +768,7 @@ export class ConfigurationService extends BaseService {
 			path += `x-object-identity=${definitionName.toLowerCase()}&`;
 		}
 		if (AppUtility.isObject(query, true)) {
-			Object.keys(query).forEach(key => path += `${key}=${encodeURIComponent(query[key])}`);
+			Object.keys(query).forEach(key => path += `${key}=${encodeURIComponent(query[key])}&`);
 		}
 		return path + this.appConfig.getRelatedQuery(serviceName, json => {
 			if (AppUtility.isNotEmpty(serviceName) && AppUtility.isEquals(serviceName, json["related-service"])) {

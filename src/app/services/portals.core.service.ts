@@ -266,7 +266,7 @@ export class PortalsCoreService extends BaseService {
 		control.Options.Rows = 18;
 		control.Options.Icon = {
 			Name: "color-wand",
-			OnClick: async (_, formControl) => formControl.setValue(await this.getTemplateAsync(name, mainDirectory, subDirectory))
+			OnClick: async (_, formControl) => (formControl as AppFormsControlComponent).setValue(await this.getTemplateAsync(name, mainDirectory, subDirectory))
 		};
 	}
 
@@ -291,8 +291,8 @@ export class PortalsCoreService extends BaseService {
 			+ `?x-request=${AppUtility.toBase64Url(params || { RepositoryEntityID: contentType !== undefined ? contentType.ID : undefined })}`;
 	}
 
-	public getPortalURL(object: CmsBaseModel, parent?: CmsBaseModel): string {
-		let uri = parent !== undefined ? this.getPortalURL(parent) : undefined;
+	public getPortalURL(object: CmsBaseModel, parent?: CmsBaseModel) {
+		let uri: string = parent !== undefined ? this.getPortalURL(parent) : undefined;
 		if (uri === undefined) {
 			const organization = Organization.get(object.SystemID);
 			const module = Module.get(object.RepositoryID);
@@ -301,8 +301,12 @@ export class PortalsCoreService extends BaseService {
 			uri = `${this.configSvc.appConfig.URIs.portals}` + (organization !== undefined && desktop !== undefined ? `~${organization.Alias}/${desktop.Alias}` : "_permanentlink");
 		}
 		return uri.indexOf("_permanent") > 0
-			? `${this.configSvc.appConfig.URIs.portals}_permanentlink/${object.RepositoryEntityID}/${object.ID}`
+			? this.getPermanentURL(object)
 			: uri + "/" + (object["Alias"] || object.ID);
+	}
+
+	public getPermanentURL(object: CmsBaseModel) {
+		return `${this.configSvc.appConfig.URIs.portals}_permanentlink/${object.RepositoryEntityID}/${object.ID}`;
 	}
 
 	public getPaginationPrefix(objectName: string) {

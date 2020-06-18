@@ -415,7 +415,7 @@ export class UsersService extends BaseService {
 			Options: {
 				Label: "{{common.audits.label}}",
 				Type: "label",
-				OnAfterViewInit: async formControl => formControl.text = await this.getAuditInfoAsync(created, createdID, lastModified, lastModifiedID)
+				OnAfterViewInit: async formControl => formControl.control.Extras["Text"] = await this.getAuditInfoAsync(created, createdID, lastModified, lastModifiedID)
 			}
 		};
 		if (onCompleted !== undefined) {
