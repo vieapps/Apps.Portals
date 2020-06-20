@@ -323,3 +323,29 @@ app-form ion-item > ion-chip > ion-label > span {
 form.ck-link-form_layout-vertical > button.ck-button {
 	border-right: none !important;
 }
+
+/* approval status */
+ion-list > ion-item > ion-label > span.title.Draft > ion-icon,
+ion-list > ion-item-sliding > ion-item > ion-label > span.title.Draft > ion-icon,
+ion-footer > ion-toolbar span.Draft > ion-icon {
+	color: darkgray;
+}
+ion-list > ion-item > ion-label > span.title.Pending > ion-icon,
+ion-list > ion-item-sliding > ion-item > ion-label > span.title.Pending > ion-icon,
+ion-list > ion-item > ion-label > span.title.Rejected > ion-icon,
+ion-list > ion-item-sliding > ion-item > ion-label > span.title.Rejected > ion-icon,
+ion-footer > ion-toolbar span.Pending > ion-icon,
+ion-footer > ion-toolbar span.Rejected > ion-icon {
+	color: red;
+}
+ion-list > ion-item > ion-label > span.title.Approved > ion-icon,
+ion-list > ion-item-sliding > ion-item > ion-label > span.title.Approved > ion-icon,
+ion-footer > ion-toolbar span.Approved > ion-icon {
+	color: blue;
+}
+ion-list > ion-item > ion-label > span.title.Published > ion-icon,
+ion-list > ion-item-sliding > ion-item > ion-label > span.title.Published > ion-icon,
+ion-footer > ion-toolbar span.Published > ion-icon {
+	color: green;
+}
+

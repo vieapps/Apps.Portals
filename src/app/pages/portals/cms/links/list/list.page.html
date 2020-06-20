@@ -55,8 +55,9 @@
 					<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
 						{{ link.Created | date:'h:mm a @ d/M/y' }} <br/> {{ link.LastModified | date:'h:mm a @ d/M/y' }}
 					</span>
-					<span>
+					<span [class]="'title ' + link.Status">
 						{{ link.Title }}
+						<ion-icon name="radio" slot="icon-only"></ion-icon>
 					</span>
 					<div>
 						{{ getInfo(link) }}

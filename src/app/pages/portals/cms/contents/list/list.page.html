@@ -50,9 +50,9 @@
 					<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
 						{{ content.Created | date:'h:mm a @ d/M/y' }} <br/> {{ content.LastModified | time:locale }}
 					</span>
-					<span class="title">
+					<span [class]="'title ' + content.Status">
 						{{ content.Title }}
-						<ion-icon name="radio" slot="icon-only" [class]="content.Status"></ion-icon>
+						<ion-icon name="radio" slot="icon-only"></ion-icon>
 					</span>
 					<div>
 						<span *ngIf="content.Status === 'Published'">

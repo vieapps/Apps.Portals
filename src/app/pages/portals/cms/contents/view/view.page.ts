@@ -66,11 +66,10 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		const control = this.formControls !== undefined
 			? this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"))
 			: undefined;
-		return control !== undefined
-			? control.value
-			: this.content !== undefined
-				? this.content.Status
-				: "Draft";
+		return {
+			raw: this.content !== undefined ? this.content.Status : "Draft",
+			normalized: control !== undefined ? control.value as string : this.content !== undefined ? this.content.Status : "Draft"
+		};
 	}
 
 	ngOnInit() {
@@ -180,7 +179,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
-		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content");
+		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content", undefined, { "x-content-type": this.content.RepositoryEntityID });
 		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Relateds")).Segment = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExternalRelateds")).Segment = "basic";
 
 		formConfig.push(

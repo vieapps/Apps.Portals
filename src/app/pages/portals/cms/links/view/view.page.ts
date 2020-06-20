@@ -70,11 +70,10 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 		const control = this.formControls !== undefined
 			? this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"))
 			: undefined;
-		return control !== undefined
-			? control.value
-			: this.link !== undefined
-				? this.link.Status
-				: "Draft";
+		return {
+			raw: this.link !== undefined ? this.link.Status : "Draft",
+			normalized: control !== undefined ? control.value as string : this.link !== undefined ? this.link.Status : "Draft"
+		};
 	}
 
 	ngOnInit() {
@@ -183,7 +182,7 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
-		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.link");
+		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.link", undefined, { "x-content-type": this.link.RepositoryEntityID });
 		formConfig.push(
 			this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments"),
 			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label")),

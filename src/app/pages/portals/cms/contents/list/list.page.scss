@@ -20,21 +20,3 @@ ion-list > ion-item > ion-label > div > span,
 ion-list > ion-item-sliding > ion-item > ion-label > div > span {
 	margin-right: 16px;
 }
-ion-list > ion-item > ion-label > span.title > ion-icon.Draft,
-ion-list > ion-item-sliding > ion-item > ion-label > span.title > ion-icon.Draft {
-	color: darkgray;
-}
-ion-list > ion-item > ion-label > span.title > ion-icon.Pending,
-ion-list > ion-item-sliding > ion-item > ion-label > span.title > ion-icon.Pending,
-ion-list > ion-item > ion-label > span.title > ion-icon.Rejected,
-ion-list > ion-item-sliding > ion-item > ion-label > span.title > ion-icon.Rejected {
-	color: red;
-}
-ion-list > ion-item > ion-label > span.title > ion-icon.Approved,
-ion-list > ion-item-sliding > ion-item > ion-label > span.title > ion-icon.Approved {
-	color: blue;
-}
-ion-list > ion-item > ion-label > span.title > ion-icon.Published,
-ion-list > ion-item-sliding > ion-item > ion-label > span.title > ion-icon.Published {
-	color: green;
-}

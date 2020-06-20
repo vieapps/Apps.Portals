@@ -17,9 +17,9 @@
 <ion-footer>
 	<ion-toolbar [color]="color">
 		<span slot="start">
-			<ion-icon name="radio" color="primary" slot="start"></ion-icon>
-			<span>
-				{{ status }}
+			<span [class]="status.raw">
+				<ion-icon name="radio" slot="icon-only"></ion-icon>
+				{{ status.normalized }}
 			</span>
 		</span>
 		<ion-buttons *ngIf="actions" slot="end">

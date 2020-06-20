@@ -50,9 +50,9 @@
 					<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
 						{{ item.Created | date:'h:mm a @ d/M/y' }} <br/> {{ item.LastModified | time:locale:'h:mm a @ d/M/y' }}
 					</span>
-					<span class="title">
+					<span [class]="'title ' + item.Status">
 						{{ item.Title }}
-						<ion-icon name="radio" slot="icon-only" [class]="item.Status"></ion-icon>
+						<ion-icon name="radio" slot="icon-only"></ion-icon>
 					</span>
 					<div>
 						{{ item.Summary }}
