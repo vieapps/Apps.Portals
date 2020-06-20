@@ -67,7 +67,8 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		handler: () => void
 	}>;
 	labels = {
-		edit: "Update this content-type",
+		edit: "Update this content type",
+		advancedEdit: "Update this content type in advanced mode",
 		view: "View the list of contents",
 		expressions: "Expressions"
 	};
@@ -162,6 +163,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 
 		this.labels = {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
+			advancedEdit: await this.configSvc.getResourceAsync("portals.common.advancedEdit"),
 			view: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list"),
 			expressions: await this.configSvc.getResourceAsync("portals.expressions.title.list", { info: "" })
 		};
@@ -346,10 +348,10 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		await this.configSvc.navigateForwardAsync("/portals/core/content.types/create");
 	}
 
-	async editAsync(event: Event, contentType: ContentType) {
+	async editAsync(event: Event, contentType: ContentType, isAdvancedMode: boolean = false) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(contentType.routerURI);
+		await this.configSvc.navigateForwardAsync(contentType.getRouterURI({ ID: contentType.ID, Advanced: isAdvancedMode }));
 	}
 
 	async viewAsync(event: Event, contentType: ContentType) {

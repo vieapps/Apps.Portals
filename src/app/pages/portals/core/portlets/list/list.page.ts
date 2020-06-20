@@ -133,7 +133,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 
 		this.labels = {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
-			advancedEdit: await this.configSvc.getResourceAsync("portals.portlets.update.buttons.edit")
+			advancedEdit: await this.configSvc.getResourceAsync("portals.common.advancedEdit")
 		};
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
@@ -307,16 +307,10 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	async editAsync(event: Event, portlet: Portlet) {
+	async editAsync(event: Event, portlet: Portlet, isAdvancedMode: boolean = false) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(portlet.getRouterURI({ ID: portlet.ID, DesktopID: portlet.DesktopID }));
-	}
-
-	async editInAdvancedModeAsync(event: Event, portlet: Portlet) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(portlet.getRouterURI({ ID: portlet.ID, DesktopID: portlet.DesktopID, Advanced: true }));
+		await this.configSvc.navigateForwardAsync(portlet.getRouterURI({ ID: portlet.ID, DesktopID: portlet.DesktopID, Advanced: isAdvancedMode }));
 	}
 
 }

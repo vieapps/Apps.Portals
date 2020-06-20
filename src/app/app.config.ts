@@ -16,7 +16,7 @@ export class AppConfig {
 		updates: "https://rtu.vieapps.com/",
 
 		/** Files HTTP service */
-		files: "https://files.vieapps.com/",
+		files: "https://fs.vieapps.com/",
 
 		/** Portals HTTP service */
 		portals: "https://portals.vieapps.com/",
@@ -33,7 +33,7 @@ export class AppConfig {
 		id: "vieapps-ngx-portals",
 		name: "VIEApps NGX Portals",
 		description: "Managing core information and related services of CMS Portals",
-		version: "1.0.0-beta",
+		version: "1.0.0-beta.1",
 		copyright: "© 2020 VIEApps.net",
 		license: "Apache-2.0",
 		frameworks: "ionic 5.2 - angular 8.2 - cordova 9.0",

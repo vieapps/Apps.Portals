@@ -2,6 +2,8 @@
 	"portals": {
 		"name": "Cổng tích hợp",
 		"common": {
+			"unspecified": "Không xác định",
+			"advancedEdit": "Cập nhật cấp cao",
 			"controls": {
 				"notifications": {
 					"inheritFromParent": "Sử dụng thiết đặt các sự kiện và phương thức gửi thông báo từ cấp trên",
@@ -175,7 +177,6 @@
 				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác",
 				"children": "{{number}} nội dung cấp dưới: {{children}}"
 			},
-			"unspecified": "Không xác định",
 			"errors": {
 				"alias": {
 					"organization": "Tên rút gọn của đơn vị - tổ chức đã được sử dụng bởi đơn vị khác, cần lựa chọn tên khác",
@@ -1245,8 +1246,7 @@
 				},
 				"buttons": {
 					"delete": "Xoá portlet hiển thị",
-					"remove": "Đồng ý xoá",
-					"edit": "Cập nhật cấp cao"
+					"remove": "Đồng ý xoá"
 				}
 			}
 		}

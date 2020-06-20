@@ -68,6 +68,10 @@
 					<ion-icon name="construct" slot="top"></ion-icon>
 					{{ labels.expressions }}
 				</ion-item-option>
+				<ion-item-option color="warning" (click)="editAsync($event, contentType, true)">
+					<ion-icon name="settings" slot="top"></ion-icon>
+					{{ labels.advancedEdit }}
+				</ion-item-option>
 				<ion-item-option color="primary" (click)="editAsync($event, contentType)">
 					<ion-icon name="create" slot="top"></ion-icon>
 					{{ labels.edit }}
