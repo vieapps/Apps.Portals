@@ -407,14 +407,14 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			control.Options.OnChanged = (_, formControl) => {
 				if (!AppUtility.isEquals(formControl.value, "-")) {
 					this.contentType = ContentType.get(formControl.value);
+					const expressionControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExpressionID"));
+					expressionControl.Options.LookupOptions.ModalOptions.ComponentProps.filters = { Or: [
+						{ ContentTypeDefinitionID: { Equals: this.contentType.ContentTypeDefinitionID } },
+						{ RepositoryEntityID: { Equals: this.contentType.ID } }
+					]};
+					expressionControl.controlRef.setValue(undefined);
 					let settingsControl = this.formControls.find(ctrl => ctrl.Name === "ListSettings");
 					if (settingsControl !== undefined) {
-						const expressionControl = settingsControl.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExpressionID"));
-						expressionControl.Options.LookupOptions.ModalOptions.ComponentProps.filters = { Or: [
-							{ ContentTypeDefinitionID: { Equals: this.contentType.ContentTypeDefinitionID } },
-							{ RepositoryEntityID: { Equals: this.contentType.ID } }
-						]};
-						expressionControl.controlRef.setValue(undefined);
 						let name = "list.xsl";
 						if (this.contentType !== undefined && this.contentType.contentTypeDefinition !== undefined && this.contentType.contentTypeDefinition.NestedObject) {
 							let options = settingsControl.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Options")).value;
@@ -790,7 +790,11 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 					catch (error) {
 						this.processing = false;
 						console.error("Error occurred while parsing JSON of list settings", error);
-						await this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.portlets.update.messages.json")});
+						await this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.portlets.update.messages.json") }, undefined, _ => {
+							const control = this.formControls.find(ctrl => ctrl.Name === "ListSettings").SubControls.Controls.find(ctrl => ctrl.Name === "Options");
+							this.formSegments.current = control.Segment;
+							control.focus();
+						});
 						return;
 					}
 				}
@@ -809,7 +813,11 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 					catch (error) {
 						this.processing = false;
 						console.error("Error occurred while parsing JSON of view settings", error);
-						await this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.portlets.update.messages.json")});
+						await this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.portlets.update.messages.json") }, undefined, _ => {
+							const control = this.formControls.find(ctrl => ctrl.Name === "ViewSettings").SubControls.Controls.find(ctrl => ctrl.Name === "Options");
+							this.formSegments.current = control.Segment;
+							control.focus();
+						});
 						return;
 					}
 				}
