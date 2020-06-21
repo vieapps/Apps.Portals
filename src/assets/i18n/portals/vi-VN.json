@@ -874,6 +874,18 @@
 						"label": "Mã Facebook Pixel",
 						"description": "Nhập các mã định danh của FB Pixel, phân cách bằng dấu chấm phẩy (;) để đếm dạng page-view (web) đối với các nội dung của kiểu dữ liệu nghiệp vụ"
 					}
+				},
+				"ExtendedPropertyDefinitions": {
+					"label": "Thuộc tính mở rộng",
+					"description": "Mã JSON định nghĩa các thuộc tính mở rộng"
+				},
+				"ExtendedControlDefinitions": {
+					"label": "Form nhập dữ liệu thuộc tính mở rộng",
+					"description": "Mã JSON định nghĩa các controls trong form nhập dữ liệu đối với các thuộc tính mở rộng"
+				},
+				"StandardControlDefinitions": {
+					"label": "Form nhập dữ liệu thuộc tính tiêu chuẩn",
+					"description": "Mã JSON tái chỉ định các controls đặc biệt trong form nhập dữ liệu của một số thuộc tính tiêu chuẩn"
 				}
 			},
 			"list": {
@@ -900,6 +912,13 @@
 						"new": "Đã khởi tạo kiểu dữ liệu nghiệp vụ thành công",
 						"update": "Đã cập nhật các thay đổi của kiểu dữ liệu nghiệp vụ thành công",
 						"delete": "Đã đưa kiểu dữ liệu nghiệp vụ và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
+					},
+					"json": {
+						"extendedProperty": "Lỗi trong cú pháp JSON định nghĩa thuộc tính mở rộng",
+						"extendedControl": "Lỗi trong cú pháp JSON định nghĩa form nhập liệu cho thuộc tính mở rộng",
+						"extendedNotMatched": "JSON định nghĩa thuộc tính mở rộng không khớp với JSON định nghĩa form nhập liệu cho thuộc tính mở rộng",
+						"standardControl": "Lỗi trong cú pháp JSON định nghĩa form nhập liệu cho thuộc tính tiêu chuẩn",
+						"standardNotMatched": "JSON định nghĩa form nhập liệu cho thuộc tính tiêu chuẩn không khớp với form nhập liệu mặc định"
 					}
 				},
 				"buttons": {

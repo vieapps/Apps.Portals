@@ -2,7 +2,7 @@ import { Dictionary } from "typescript-collections";
 import { AppUtility } from "@components/app.utility";
 import { Privileges } from "@models/privileges";
 import { PortalBase as BaseModel, NotificationSettings, EmailSettings } from "@models/portals.base";
-import { ExtendedPropertyDefinition, ExtendedUIDefinition } from "@models/portals.base";
+import { ExtendedPropertyDefinition, ExtendedControlDefinition, StandardControlDefinition } from "@models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
 
 export class ContentType extends CoreBaseModel {
@@ -39,7 +39,8 @@ export class ContentType extends CoreBaseModel {
 	};
 	EmailSettings = undefined as EmailSettings;
 	ExtendedPropertyDefinitions = undefined as Array<ExtendedPropertyDefinition>;
-	ExtendedUIDefinition = undefined as ExtendedUIDefinition;
+	ExtendedControlDefinitions = undefined as Array<ExtendedControlDefinition>;
+	StandardControlDefinitions = undefined as Array<StandardControlDefinition>;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;

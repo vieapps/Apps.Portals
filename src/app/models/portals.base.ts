@@ -155,23 +155,21 @@ export interface ElementUISettings {
 export interface ExtendedPropertyDefinition {
 	Name: string;
 	Mode: string;
-	Column?: string;
+	Column: string;
 	DefaultValue?: string;
 	DefaultValueFormula?: string;
 }
 
-/** Definition of an UI control of an extended property */
-export interface ExtendedUIControlDefinition {
+/** Definition of a control of an extended property */
+export interface ExtendedControlDefinition {
 	Name: string;
-	Excluded?: boolean;
-	Hidden?: boolean;
-	HiddenInView?: boolean;
-	Required?: boolean;
 	Label: string;
 	PlaceHolder?: string;
 	Description?: string;
-	ValidatePattern?: string;
-	PlaceBefore?: string;
+	Hidden?: boolean;
+	Formula?: string;
+	HiddenInView?: boolean;
+	Required?: boolean;
 	Disabled?: boolean;
 	ReadOnly?: boolean;
 	AutoFocus?: boolean;
@@ -187,27 +185,21 @@ export interface ExtendedUIControlDefinition {
 	SelectValues?: string;
 	SelectAsBoxes?: boolean;
 	SelectInterface?: string;
-	LookupMode?: string;
+	LookupType?: string;
 	LookupRepositoryID?: string;
 	LookupRepositoryEntityID?: string;
-	LookupProperty?: string;
+	ValidatePattern?: string;
+	PlaceBefore?: string;
 }
 
-/** Definition for working with a standard property */
-export interface StandardUIDefinition {
+/** Definition for working with a control of a standard property */
+export interface StandardControlDefinition {
 	Name: string;
 	Label?: string;
 	PlaceHolder?: string;
 	Description?: string;
 	Hidden?: boolean;
-	HiddenInView?: boolean;
 	Formula?: string;
+	HiddenInView?: boolean;
 }
 
-/** Definition of UI controls for working with extended properties of an entity */
-export interface ExtendedUIDefinition {
-	Controls: Array<ExtendedUIControlDefinition>;
-	Specials?: Array<StandardUIDefinition>;
-	ListXslt?: string;
-	ViewXslt?: string;
-}
