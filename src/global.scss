@@ -309,6 +309,12 @@ app-form ion-item > ion-chip > ion-label > span {
 	padding-top: 3px;
 }
 
+/* disabled check-box on views */
+app-form-view > ion-item > ion-label,
+app-form-view > ion-item > ion-checkbox {
+	opacity: 1 !important;
+}
+
 /* text editor */
 .text-editor div.ck-toolbar {
 	margin-top: 15px;
