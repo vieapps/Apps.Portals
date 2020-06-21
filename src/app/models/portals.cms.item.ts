@@ -52,6 +52,10 @@ export class Item extends CmsBaseModel {
 			if (AppUtility.isArray(data.Attachments, true)) {
 				item.updateAttachments(data.Attachments);
 			}
+			const contentType = item.contentType;
+			if (contentType !== undefined && AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
+				contentType.ExtendedPropertyDefinitions.forEach(definition => item[definition.Name] = data[definition.Name]);
+			}
 		});
 		item.ansiTitle = AppUtility.toANSI(item.Title).toLowerCase();
 		return item;

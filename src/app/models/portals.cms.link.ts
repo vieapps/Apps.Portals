@@ -54,7 +54,12 @@ export class Link extends CmsBaseModel implements NestedObject {
 	/** Deserializes data to object */
 	public static deserialize(json: any, link?: Link) {
 		link = link || new Link();
-		link.copy(json);
+		link.copy(json, data => {
+			const contentType = link.contentType;
+			if (contentType !== undefined && AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
+				contentType.ExtendedPropertyDefinitions.forEach(definition => link[definition.Name] = data[definition.Name]);
+			}
+		});
 		link.ansiTitle = AppUtility.toANSI(link.Title).toLowerCase();
 		return link;
 	}
