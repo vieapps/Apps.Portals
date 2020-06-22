@@ -33,7 +33,7 @@ export class AppConfig {
 		id: "vieapps-ngx-portals",
 		name: "VIEApps NGX Portals",
 		description: "Managing core information and related services of CMS Portals",
-		version: "1.0.0-beta.1",
+		version: "1.0.0-beta.3",
 		copyright: "© 2020 VIEApps.net",
 		license: "Apache-2.0",
 		frameworks: "ionic 5.2 - angular 8.2 - cordova 9.0",

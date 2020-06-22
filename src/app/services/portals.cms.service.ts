@@ -143,6 +143,10 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async getActiveModuleAsync(useXHR: boolean = true) {
+		if (Module.active !== undefined && this.portalsCoreSvc.activeOrganization !== undefined && Module.active.SystemID !== this.portalsCoreSvc.activeOrganization.ID) {
+			Module.active = undefined;
+			delete this.configSvc.appConfig.options.extras["module"];
+		}
 		if (Module.active === undefined) {
 			const preferID: string = this.configSvc.appConfig.options.extras["module"];
 			if (AppUtility.isNotEmpty(preferID)) {
@@ -163,7 +167,12 @@ export class PortalsCmsService extends BaseService {
 				}
 			}
 			if (Module.active !== undefined) {
-				AppEvents.broadcast(this.name, { Object: "Module", Type: "Changed", ID: Module.active.ID });
+				if (this.configSvc.appConfig.options.extras["module"] === undefined) {
+					await this.setActiveModuleAsync(Module.active.ID);
+				}
+				else {
+					AppEvents.broadcast(this.name, { Object: "Module", Type: "Changed", ID: Module.active.ID });
+				}
 			}
 		}
 		return Module.active;

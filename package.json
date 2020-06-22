@@ -3,7 +3,7 @@
 	"version": "1.0.0-beta",
 	"author": "VIEApps.net",
 	"homepage": "https://portals.vieapps.net/",
-	"description": "VIEApps NGX Portals",
+	"description": "VIEApps NGX Portals - Managing core information and related services of CMS Portals",
 	"scripts": {
 		"ng": "ng",
 		"start": "ng serve",
