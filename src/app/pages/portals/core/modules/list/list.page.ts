@@ -12,6 +12,7 @@ import { AppFormsService } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { PortalsCoreService } from "@services/portals.core.service";
+import { PortalsCmsService } from "@services/portals.cms.service";
 import { Organization } from "@models/portals.core.organization";
 import { ModuleDefinition } from "@models/portals.base";
 import { Module } from "@models/portals.core.module";
@@ -28,7 +29,8 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
-		private portalsCoreSvc: PortalsCoreService
+		private portalsCoreSvc: PortalsCoreService,
+		private portalsCmsSvc: PortalsCmsService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
@@ -266,10 +268,10 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.modules.push(Module.get(o.ID)));
+			(results || []).forEach(o => this.modules.push(Module.get(o.ID) || Module.deserialize(o, Module.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Module.all : results.map(o => Module.get(o.ID)));
+			let objects = new List(results === undefined ? Module.all : results.map(o => Module.get(o.ID) || Module.deserialize(o, Module.get(o.ID))));
 			if (AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.definitionID)) {
 				objects = objects.Where(o => o.SystemID === this.systemID && o.ModuleDefinitionID === this.definitionID);
 			}
@@ -285,7 +287,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 				objects = objects.Where(o => o.SystemID === this.systemID);
 			}
 			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
-			if (results === undefined) {
+			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
 			this.modules = results === undefined
@@ -295,6 +297,20 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		if (onNext !== undefined) {
 			onNext();
 		}
+	}
+
+	async openAsync(event: Event, module: Module) {
+		event.stopPropagation();
+		await this.configSvc.navigateForwardAsync(module.routerURI);
+	}
+
+	async setActiveAsync(event: Event, module: Module) {
+		event.stopPropagation();
+		await this.portalsCmsSvc.setActiveModuleAsync(module.ID);
+	}
+
+	isActive(module: Module) {
+		return module !== undefined && Module.active !== undefined && AppUtility.isEquals(module.ID, Module.active.ID);
 	}
 
 }

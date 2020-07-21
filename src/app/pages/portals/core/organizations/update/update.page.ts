@@ -366,7 +366,15 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		control.Type = "TextArea";
 		control.Options.Rows = 2;
 
-		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias"));
+		control.Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
+		control.Options.Icon = {
+			Name: "globe",
+			Fill: "clear",
+			Color: "medium",
+			Slot: "end",
+			OnClick: (_, formControl) => PlatformUtility.openURI(`${this.configSvc.appConfig.URIs.portals}~${formControl.value}`)
+		};
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OwnerID"));
 		control.Required = true;

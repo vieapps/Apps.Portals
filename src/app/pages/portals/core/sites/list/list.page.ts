@@ -248,15 +248,15 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.sites.push(Site.get(o.ID)));
+			(results || []).forEach(o => this.sites.push(Site.get(o.ID) || Site.deserialize(o, Site.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Site.all : results.map(o => Site.get(o.ID)));
+			let objects = new List(results === undefined ? Site.all : results.map(o => Site.get(o.ID) || Site.deserialize(o, Site.get(o.ID))));
 			if (!this.isSystemAdministrator) {
 				objects = objects.Where(o => o.SystemID === this.organization.ID);
 			}
 			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
-			if (results === undefined) {
+			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
 			this.sites = results === undefined

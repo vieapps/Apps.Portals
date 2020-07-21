@@ -145,15 +145,15 @@ export class PortalsCmsService extends BaseService {
 	public async getActiveModuleAsync(useXHR: boolean = true) {
 		if (Module.active !== undefined && this.portalsCoreSvc.activeOrganization !== undefined && Module.active.SystemID !== this.portalsCoreSvc.activeOrganization.ID) {
 			Module.active = undefined;
-			delete this.configSvc.appConfig.options.extras["module"];
 		}
 		if (Module.active === undefined) {
-			const preferID: string = this.configSvc.appConfig.options.extras["module"];
-			if (AppUtility.isNotEmpty(preferID)) {
-				Module.active = Module.get(preferID);
+			const modules: { [key: string]: string } = this.configSvc.appConfig.options.extras["modules"];
+			const moduleID: string = (modules || {})[this.portalsCoreSvc.activeOrganization.ID];
+			if (AppUtility.isNotEmpty(moduleID)) {
+				Module.active = Module.get(moduleID);
 				if (Module.active === undefined) {
-					await this.portalsCoreSvc.getModuleAsync(preferID, _ => {
-						Module.active = Module.get(preferID);
+					await this.portalsCoreSvc.getModuleAsync(moduleID, _ => {
+						Module.active = Module.get(moduleID);
 						if (Module.active !== undefined && !useXHR) {
 							AppEvents.broadcast(this.name, { Object: "Module", Type: "Changed", ID: Module.active.ID });
 						}
@@ -167,12 +167,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			}
 			if (Module.active !== undefined) {
-				if (this.configSvc.appConfig.options.extras["module"] === undefined) {
-					await this.setActiveModuleAsync(Module.active.ID);
-				}
-				else {
-					AppEvents.broadcast(this.name, { Object: "Module", Type: "Changed", ID: Module.active.ID });
-				}
+				await this.setActiveModuleAsync(Module.active.ID);
 			}
 		}
 		return Module.active;
@@ -181,7 +176,9 @@ export class PortalsCmsService extends BaseService {
 	public async setActiveModuleAsync(moduleID: string, onNext?: () => void) {
 		if (AppUtility.isNotEmpty(moduleID) && Module.contains(moduleID) && (Module.active === undefined || Module.active.ID !== moduleID)) {
 			Module.active = Module.get(moduleID);
-			this.configSvc.appConfig.options.extras["module"] = Module.active.ID;
+			const modules: { [key: string]: string } = this.configSvc.appConfig.options.extras["modules"] || {};
+			modules[Module.active.SystemID] = Module.active.ID;
+			this.configSvc.appConfig.options.extras["modules"] = modules;
 			await this.configSvc.storeOptionsAsync();
 			AppEvents.broadcast(this.name, { Object: "Module", Type: "Changed", ID: Module.active.ID });
 		}
@@ -619,16 +616,12 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public searchContent(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		const prePagination = AppPagination.get(request, this.portalsCoreSvc.getPaginationPrefix("cms.content"));
 		return super.search(
 			super.getSearchURI("cms.content", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					const postPagination = AppPagination.get(data, this.portalsCoreSvc.getPaginationPrefix("cms.content"));
-					if (postPagination !== undefined && postPagination.PageNumber < 4) {
-						(data.Objects as Array<any>).forEach(obj => Content.update(obj));
-					}
+					(data.Objects as Array<any>).forEach(obj => Content.update(obj));
 				}
 				if (onNext !== undefined) {
 					onNext(data);
@@ -639,22 +632,17 @@ export class PortalsCmsService extends BaseService {
 				if (onError !== undefined) {
 					onError(error);
 				}
-			},
-			prePagination !== undefined && prePagination.PageNumber > 3
+			}
 		);
 	}
 
 	public async searchContentAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		const prePagination = AppPagination.get(request, this.portalsCoreSvc.getPaginationPrefix("cms.content"));
 		await super.searchAsync(
 			super.getSearchURI("cms.content", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					const postPagination = AppPagination.get(data, this.portalsCoreSvc.getPaginationPrefix("cms.content"));
-					if (postPagination !== undefined && postPagination.PageNumber < 4) {
-						(data.Objects as Array<any>).forEach(obj => Content.update(obj));
-					}
+					(data.Objects as Array<any>).forEach(obj => Content.update(obj));
 				}
 				if (onNext !== undefined) {
 					onNext(data);
@@ -665,8 +653,7 @@ export class PortalsCmsService extends BaseService {
 				if (onError !== undefined) {
 					onError(error);
 				}
-			},
-			prePagination !== undefined && prePagination.PageNumber > 3
+			}
 		);
 	}
 
@@ -803,16 +790,12 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public searchItem(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		const prePagination = AppPagination.get(request, this.portalsCoreSvc.getPaginationPrefix("cms.item"));
 		return super.search(
 			super.getSearchURI("cms.item", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					const postPagination = AppPagination.get(data, this.portalsCoreSvc.getPaginationPrefix("cms.item"));
-					if (postPagination !== undefined && postPagination.PageNumber < 4) {
-						(data.Objects as Array<any>).forEach(obj => Item.update(obj));
-					}
+					(data.Objects as Array<any>).forEach(obj => Item.update(obj));
 				}
 				if (onNext !== undefined) {
 					onNext(data);
@@ -823,22 +806,17 @@ export class PortalsCmsService extends BaseService {
 				if (onError !== undefined) {
 					onError(error);
 				}
-			},
-			prePagination !== undefined && prePagination.PageNumber > 3
+			}
 		);
 	}
 
 	public async searchItemAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		const prePagination = AppPagination.get(request, this.portalsCoreSvc.getPaginationPrefix("cms.item"));
 		await super.searchAsync(
 			super.getSearchURI("cms.item", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					const postPagination = AppPagination.get(data, this.portalsCoreSvc.getPaginationPrefix("cms.item"));
-					if (postPagination !== undefined && postPagination.PageNumber < 4) {
-						(data.Objects as Array<any>).forEach(obj => Item.update(obj));
-					}
+					(data.Objects as Array<any>).forEach(obj => Item.update(obj));
 				}
 				if (onNext !== undefined) {
 					onNext(data);
@@ -849,8 +827,7 @@ export class PortalsCmsService extends BaseService {
 				if (onError !== undefined) {
 					onError(error);
 				}
-			},
-			prePagination !== undefined && prePagination.PageNumber > 3
+			}
 		);
 	}
 

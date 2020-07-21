@@ -114,15 +114,15 @@ export class UsersListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	onClearSearch(event: any) {
+	onClearSearch() {
 		this.cancelSearch();
 		this.filterBy.Query = undefined;
 		this.profiles = [];
 		this.ratings = {};
 	}
 
-	onCancelSearch(event: any) {
-		this.onClearSearch(event);
+	onCancelSearch() {
+		this.onClearSearch();
 		this.startSearchAsync();
 	}
 
@@ -172,15 +172,18 @@ export class UsersListPage implements OnInit, OnDestroy {
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
 			(results || []).forEach(o => {
-				const profile = UserProfile.get(o.ID);
+				const profile = UserProfile.deserialize(o, UserProfile.get(o.ID));
 				this.profiles.push(profile);
 				this.ratings[profile.ID] = profile.RatingPoints.getValue("General");
 			});
 		}
 		else {
-			let objects = new List(results === undefined ? UserProfile.all : results.map(o => UserProfile.get(o.ID))).OrderBy(o => o.Name).ThenByDescending(o => o.LastAccess);
+			let objects = new List(results === undefined ? UserProfile.all : results.map(o => UserProfile.deserialize(o, UserProfile.get(o.ID))));
+			objects = objects.OrderBy(o => o.Name).ThenByDescending(o => o.LastAccess);
 			if (results === undefined) {
-				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
+				if (this.pagination !== undefined) {
+					objects = objects.Take(this.pageNumber * this.pagination.PageSize);
+				}
 				objects.ForEach(o => this.ratings[o.ID] = o.RatingPoints.getValue("General"));
 				this.profiles = objects.ToArray();
 			}

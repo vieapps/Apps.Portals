@@ -335,7 +335,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 	private get fileOptions() {
 		return {
 			ServiceName: this.portalsCoreSvc.name,
-			ObjectName: "Organization",
+			ObjectName: "Site",
 			SystemID: this.organization.ID,
 			RepositoryEntityID: this.site.getEntityInfo("Site"),
 			ObjectID: this.site.ID,

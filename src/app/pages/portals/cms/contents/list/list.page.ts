@@ -247,11 +247,16 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 	private async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
-			this.pageNumber++;
-			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
-			this.pagination.PageNumber = this.pageNumber;
-			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
+			try {
+				this.pageNumber++;
+				this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
+				this.pagination.PageNumber = this.pageNumber;
+				this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
+				await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
+			}
+			catch (e) {
+				console.error("Error occurred while searching CMS content", e);
+			}
 		};
 		if (this.searching) {
 			this.subscription = this.portalsCmsSvc.searchContent(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
@@ -273,10 +278,10 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.contents.push(Content.get(o.ID)));
+			(results || []).forEach(o => this.contents.push(Content.get(o.ID) || Content.deserialize(o, Content.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Content.all : results.map(o => Content.get(o.ID)));
+			let objects = new List(results === undefined ? Content.all : results.map(o => Content.get(o.ID) || Content.deserialize(o, Content.get(o.ID))));
 			objects = objects.Where(o => o.SystemID === this.organization.ID);
 			if (this.module !== undefined) {
 				objects = objects.Where(o => o.RepositoryID === this.module.ID);
@@ -288,7 +293,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 				objects = objects.Where(o => o.CategoryID === this.category.ID || (o.OtherCategories !== undefined && o.OtherCategories.indexOf(this.category.ID) > -1));
 			}
 			objects = objects.OrderByDescending(o => o.StartDate).ThenByDescending(o => o.PublishedTime);
-			if (results === undefined) {
+			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
 			this.contents = results === undefined

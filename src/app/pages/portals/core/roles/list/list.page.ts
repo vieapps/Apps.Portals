@@ -266,13 +266,13 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.roles.push(Role.get(o.ID)));
+			(results || []).forEach(o => this.roles.push(Role.get(o.ID) || Role.deserialize(o, Role.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Role.all : results.map(r => Role.get(r.ID)));
+			let objects = new List(results === undefined ? Role.all : results.map(o => Role.get(o.ID) || Role.deserialize(o, Role.get(o.ID))));
 			objects = objects.Where(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID);
 			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
-			this.roles = results === undefined
+			this.roles = results === undefined && this.pagination !== undefined
 				? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
 				: this.roles.concat(objects.ToArray());
 		}

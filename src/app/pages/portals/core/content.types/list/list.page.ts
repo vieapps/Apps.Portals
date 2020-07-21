@@ -299,10 +299,10 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.contentTypes.push(ContentType.get(o.ID)));
+			(results || []).forEach(o => this.contentTypes.push(ContentType.get(o.ID) || ContentType.deserialize(o, ContentType.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? ContentType.all : results.map(o => ContentType.get(o.ID)));
+			let objects = new List(results === undefined ? ContentType.all : results.map(o => ContentType.get(o.ID) || ContentType.deserialize(o, ContentType.get(o.ID))));
 			if (AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.repositoryID) && AppUtility.isNotEmpty(this.definitionID)) {
 				objects = objects.Where(o => o.SystemID === this.systemID && o.RepositoryID === this.repositoryID && o.ContentTypeDefinitionID === this.definitionID);
 			}
@@ -321,7 +321,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 				objects = objects.Where(o => o.SystemID === this.systemID);
 			}
 			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
-			if (results === undefined) {
+			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
 			this.contentTypes = results === undefined

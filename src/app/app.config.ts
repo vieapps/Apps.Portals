@@ -13,10 +13,10 @@ export class AppConfig {
 		apis: "https://apis.vieapps.com/",
 
 		/** Real-time Updater (if not provided, then use the APIs) */
-		updates: "https://rtu.vieapps.com/",
+		updates: "https://apis.vieapps.com/",
 
 		/** Files HTTP service */
-		files: "https://fs.vieapps.com/",
+		files: "https://files.vieapps.com/",
 
 		/** Portals HTTP service */
 		portals: "https://portals.vieapps.com/",
@@ -25,19 +25,19 @@ export class AppConfig {
 		activations: "https://cms.vieapps.com/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
-		medias: []
+		medias: ["fs.vieportal.net"]
 	};
 
 	/** Information of the app */
 	public static app = {
 		id: "vieapps-ngx-portals",
 		name: "VIEApps NGX Portals",
-		description: "Managing core information and related services of CMS Portals",
-		version: "1.0.0-beta.3",
+		description: "Manage information and related services of CMS Portals",
+		version: "1.0.0",
 		copyright: "© 2020 VIEApps.net",
-		license: "Apache-2.0",
-		frameworks: "ionic 5.2 - angular 8.2 - cordova 9.0",
+		license: "Apache-2.0 license",
 		homepage: "https://vieapps.net",
+		frameworks: "ionic 5.2 - angular 8.2 - cordova 9.0",
 		mode: "",
 		platform: "",
 		os: "",
@@ -154,7 +154,7 @@ export class AppConfig {
 	public static tracking = {
 		google: new Array<string>(),
 		facebook: new Array<string>(),
-		domains: ["vieapps.net"],
+		domains: [],
 	};
 
 	/** Facebook integration */

@@ -23,10 +23,10 @@
 				<span>
 					{{ attachment.friendlyFilename }} - {{ attachment.Size | number:'':locale }} bytes
 				</span>
-				<a [href]="attachment.URIs.Direct" target="_blank" class="ion-padding-start">
+				<a (click)="fetchURI(attachment.URIs.Direct)" class="ion-padding-start">
 					<ion-icon name="link" color="medium" slot="icon-only"></ion-icon>
 				</a>
-				<a [href]="attachment.URIs.Download" target="_blank" class="ion-padding-start">
+				<a (click)="fetchURI(attachment.URIs.Download)" class="ion-padding-start">
 					<ion-icon name="download" color="medium" slot="icon-only"></ion-icon>
 				</a>
 				<a class="ion-padding-start">

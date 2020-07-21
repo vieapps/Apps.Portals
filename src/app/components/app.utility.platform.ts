@@ -131,7 +131,7 @@ export class PlatformUtility {
 		return avatar;
 	}
 
-	/** Opens an uri in browser */
+	/** Opens an URI in browser */
 	public static openURI(uri?: string) {
 		if (AppUtility.isNotEmpty(uri)) {
 			if (this._inappBrowser !== undefined) {
@@ -141,7 +141,7 @@ export class PlatformUtility {
 				this._electronService.shell.openExternal(uri);
 			}
 			else {
-				window.open(uri);
+				window.open(uri, "_blank");
 			}
 		}
 	}
@@ -249,6 +249,16 @@ export class PlatformUtility {
 			+ (AppConfig.url.base + (AppUtility.isTrue(addAsRedirectParam) ? `?redirect=${AppCrypto.urlEncode(path)}` : path)).replace(/\/\//g, "/");
 	}
 
+	/** Opens or copies the URI */
+	public static fetchURI(uri?: string) {
+		if (AppConfig.isNativeApp || this._electronService !== undefined) {
+			this.copyToClipboard(uri);
+		}
+		else {
+			this.openURI(uri);
+		}
+	}
+
 	/** Gets the host name from an url */
 	public static getHost(url?: string) {
 		const uri = this.parseURI(url);
@@ -273,16 +283,19 @@ export class PlatformUtility {
 	}
 
 	/** Copies the value into clipboard */
-	public static copyToClipboard(value: string) {
+	public static copyToClipboard(value: string, onNext?: () => void) {
 		if (AppConfig.isNativeApp) {
 			this._clipboard.copy(value).then(
 				() => {
 					if (AppConfig.isDebug) {
-						console.log("Clipboard copied...", value);
+						console.log("Copied...", value);
+					}
+					if (onNext !== undefined) {
+						onNext();
 					}
 				},
 				error => {
-					console.error(`Clipboard copy error => ${AppUtility.getErrorMessage(error)}`, JSON.stringify(error));
+					console.error(`Copy error => ${AppUtility.getErrorMessage(error)}`, JSON.stringify(error));
 				}
 			);
 		}
@@ -297,6 +310,9 @@ export class PlatformUtility {
 			textarea.select();
 			window.document.execCommand("copy");
 			parentNode.removeChild(textarea);
+			if (onNext !== undefined) {
+				onNext();
+			}
 		}
 	}
 

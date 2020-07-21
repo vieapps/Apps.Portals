@@ -165,7 +165,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the URI for activating new account/password */
 	public get activateURI() {
-		return AppCrypto.urlEncode(PlatformUtility.getRedirectURI("prego=activate&mode={mode}&code={code}", false));
+		return AppCrypto.urlEncode(PlatformUtility.getRedirectURI("prego=activate&mode={{mode}}&code={{code}}", false));
 	}
 
 	/** Sets the app title (means title of the browser) */

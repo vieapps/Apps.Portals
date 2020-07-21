@@ -2,6 +2,7 @@ import { Set } from "typescript-collections";
 import { Component, OnInit, Input } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { AppUtility } from "@components/app.utility";
+import { PlatformUtility } from "@components/app.utility.platform";
 import { AppFormsControl } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { AttachmentInfo } from "@models/base";
@@ -110,6 +111,10 @@ export class FilesSelectorControl implements OnInit {
 
 	track(index: number, attachment: AttachmentInfo) {
 		return `${attachment.ID}@${index}`;
+	}
+
+	fetchURI(uri: string) {
+		PlatformUtility.fetchURI(uri);
 	}
 
 	onSelect(event: any, attachment: AttachmentInfo) {

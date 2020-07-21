@@ -151,7 +151,8 @@
 				"description": "Diễn giải",
 				"shared": "Chia sẻ dùng chung trong toàn bộ hệ thống",
 				"tracked": "Lưu toàn bộ log truy cập (bao gồm cả xem)",
-				"filename": "Tên tệp tin"
+				"filename": "Tên tệp tin",
+				"uri": "Liên kết xem/tải tệp tin"
 			}
 		}
 	}

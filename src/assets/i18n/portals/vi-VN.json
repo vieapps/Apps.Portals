@@ -1156,6 +1156,11 @@
 					},
 					"ShowPageLinks": {
 						"label": "Hiển thị liên kết trang (không chọn nếu muốn hiển thị hộp chọn)"
+					},
+					"NumberOfPageLinks": {
+						"label": "Số lượng liên kết trang sẽ hiển thị",
+						"placeholder": "",
+						"description": "Chỉ định số lượng các liên kết trang sẽ hiển thị trên thanh nhẩy trang. Tips: đặt giá trị <b>0</b> (không) để hiển thị toàn bộ các liên kết trang, chỉ nên sử dụng khi có ít nội dung."
 					}
 				},
 				"BreadcrumbSettings": {

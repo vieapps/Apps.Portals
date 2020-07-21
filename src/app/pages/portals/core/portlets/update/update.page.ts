@@ -488,7 +488,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExpressionID"));
 		control.Extras = { LookupDisplayValues: expression !== undefined ? [{ Value: expression.ID, Label: expression.Title }] : undefined };
-		this.portalsCoreSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, this.contentType, true, false, options => {
+		this.portalsCoreSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, this.contentType, false, false, options => {
 			options.OnDelete = (_, formControl) => {
 				formControl.setValue(undefined);
 				formControl.lookupDisplayValues = undefined;

@@ -275,10 +275,10 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.expressions.push(Expression.get(o.ID)));
+			(results || []).forEach(o => this.expressions.push(Expression.get(o.ID) || Expression.deserialize(o, Expression.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Expression.all : results.map(o => Expression.get(o.ID)));
+			let objects = new List(results === undefined ? Expression.all : results.map(o => Expression.get(o.ID) || Expression.deserialize(o, Expression.get(o.ID))));
 			if (this.contentType !== undefined) {
 				objects = objects.Where(o => o.RepositoryEntityID === this.contentType.ID);
 			}
@@ -292,7 +292,7 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 				objects = objects.Where(o => o.SystemID === this.organization.ID);
 			}
 			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
-			if (results === undefined) {
+			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
 			this.expressions = results === undefined

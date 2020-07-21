@@ -280,13 +280,13 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.desktops.push(Desktop.get(o.ID)));
+			(results || []).forEach(o => this.desktops.push(Desktop.get(o.ID) || Desktop.deserialize(o, Desktop.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Desktop.all : results.map(o => Desktop.get(o.ID)));
+			let objects = new List(results === undefined ? Desktop.all : results.map(o => Desktop.get(o.ID) || Desktop.deserialize(o, Desktop.get(o.ID))));
 			objects = objects.Where(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID);
 			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
-			if (results === undefined) {
+			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
 			this.desktops = results === undefined

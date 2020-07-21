@@ -194,12 +194,12 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			this.parentCategory = Category.get(this.parentID);
 
 			if (this.parentCategory !== undefined) {
-				this.categories = this.parentCategory.Children;
+				this.categories = new List(this.parentCategory.Children).OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
 				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentCategory.FullTitle}]` });
 				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					if (info.args.Object === "CMS.Category" && (this.parentCategory.ID === info.args.ID || this.parentCategory.ID === info.args.ParentID)) {
-						this.categories = this.parentCategory.Children;
+						this.categories = new List(this.parentCategory.Children).OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
 					}
 				}, `CMS.Categoriess:${this.parentCategory.ID}:Refresh`);
 			}
@@ -321,13 +321,13 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.categories.push(Category.get(o.ID)));
+			(results || []).forEach(o => this.categories.push(Category.get(o.ID) || Category.deserialize(o, Category.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Category.all : results.map(o => Category.get(o.ID)));
+			let objects = new List(results === undefined ? Category.all : results.map(o => Category.get(o.ID) || Category.deserialize(o, Category.get(o.ID))));
 			objects = objects.Where(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID);
 			objects = objects.OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title);
-			if (results === undefined) {
+			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
 			this.categories = results === undefined

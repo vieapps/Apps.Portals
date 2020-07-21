@@ -65,6 +65,7 @@ export class Portlet extends CoreBaseModel {
 		NextPageLabel?: string;
 		CurrentPageLabel?: string;
 		ShowPageLinks?: boolean;
+		NumberOfPageLinks?: number;
 	};
 	BreadcrumbSettings = undefined as {
 		Template?: string;

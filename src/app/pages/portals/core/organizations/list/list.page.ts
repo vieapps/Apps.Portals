@@ -208,12 +208,12 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.organizations.push(Organization.get(o.ID)));
+			(results || []).forEach(o => this.organizations.push(Organization.get(o.ID) || Organization.deserialize(o, Organization.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Organization.all : results.map(o => Organization.get(o.ID)));
+			let objects = new List(results === undefined ? Organization.all : results.map(o => Organization.get(o.ID) || Organization.deserialize(o, Organization.get(o.ID))));
 			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
-			if (results === undefined) {
+			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
 			this.organizations = results === undefined

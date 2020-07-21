@@ -264,10 +264,10 @@ export class CmsItemListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.items.push(Item.get(o.ID)));
+			(results || []).forEach(o => this.items.push(Item.get(o.ID) || Item.deserialize(o, Item.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Item.all : results.map(o => Item.get(o.ID)));
+			let objects = new List(results === undefined ? Item.all : results.map(o => Item.get(o.ID) || Item.deserialize(o, Item.get(o.ID))));
 			objects = objects.Where(o => o.SystemID === this.organization.ID);
 			if (this.module !== undefined) {
 				objects = objects.Where(o => o.RepositoryID === this.module.ID);
@@ -276,7 +276,7 @@ export class CmsItemListPage implements OnInit, OnDestroy {
 				objects = objects.Where(o => o.RepositoryEntityID === this.contentType.ID);
 			}
 			objects = objects.OrderByDescending(o => o.Created);
-			if (results === undefined) {
+			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
 			this.items = results === undefined

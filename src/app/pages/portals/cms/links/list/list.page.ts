@@ -190,12 +190,12 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			this.parentLink = Link.get(this.parentID);
 
 			if (this.parentLink !== undefined) {
-				this.links = this.parentLink.Children;
+				this.links = new List(this.parentLink.Children).OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
 				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentLink.FullTitle}]` });
 				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					if (info.args.Object === "CMS.Link" && (this.parentLink.ID === info.args.ID || this.parentLink.ID === info.args.ParentID)) {
-						this.links = this.parentLink.Children;
+						this.links = new List(this.parentLink.Children).OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
 					}
 				}, `CMS.Links:${this.parentLink.ID}:Refresh`);
 			}
@@ -317,13 +317,13 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.links.push(Link.get(o.ID)));
+			(results || []).forEach(o => this.links.push(Link.get(o.ID) || Link.deserialize(o, Link.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Link.all : results.map(o => Link.get(o.ID)));
+			let objects = new List(results === undefined ? Link.all : results.map(o => Link.get(o.ID) || Link.deserialize(o, Link.get(o.ID))));
 			objects = objects.Where(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID);
 			objects = objects.OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title);
-			if (results === undefined) {
+			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
 			this.links = results === undefined

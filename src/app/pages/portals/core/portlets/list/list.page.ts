@@ -267,10 +267,10 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.portlets.push(Portlet.get(o.ID)));
+			(results || []).forEach(o => this.portlets.push(Portlet.get(o.ID) || Portlet.deserialize(o, Portlet.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Portlet.all : results.map(o => Portlet.get(o.ID)));
+			let objects = new List(results === undefined ? Portlet.all : results.map(o => Portlet.get(o.ID) || Portlet.deserialize(o, Portlet.get(o.ID))));
 			if (this.desktop !== undefined) {
 				objects = objects.Where(o => o.DesktopID === this.desktop.ID);
 			}

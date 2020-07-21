@@ -54,7 +54,8 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 		description: "",
 		shared: "",
 		tracked: "",
-		filename: ""
+		filename: "",
+		uri: ""
 	};
 	files = new Array<{ data: File; percentage: string }>();
 
@@ -153,14 +154,16 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 			description: await this.appFormsSvc.getResourceAsync("files.attachments.controls.description"),
 			shared: await this.appFormsSvc.getResourceAsync("files.attachments.controls.shared"),
 			tracked: await this.appFormsSvc.getResourceAsync("files.attachments.controls.tracked"),
-			filename: await this.appFormsSvc.getResourceAsync("files.attachments.controls.filename")
+			filename: await this.appFormsSvc.getResourceAsync("files.attachments.controls.filename"),
+			uri: await this.appFormsSvc.getResourceAsync("files.attachments.controls.uri")
 		};
 		this.form = new FormGroup({
 			Title: new FormControl(this.attachment.Title, [Validators.required, Validators.maxLength(250)]),
 			Description: new FormControl(this.attachment.Description, [Validators.maxLength(1000)]),
 			IsShared: new FormControl(this.attachment.IsShared),
 			IsTracked: new FormControl(this.attachment.IsTracked),
-			Filename: new FormControl(this.attachment.Filename)
+			Filename: new FormControl(this.attachment.Filename),
+			URI: new FormControl(this.attachment.URIs.Direct)
 		});
 		this.hash = AppCrypto.hash(this.form.value);
 	}

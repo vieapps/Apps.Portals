@@ -72,6 +72,10 @@
 					{{ profile.LastAccess | time:locale:'h:mm a @ d/M/y' }}
 				</span>
 			</ion-item>
+			<ion-item *ngIf="authSvc.isSystemAdministrator()" [color]="configSvc.color">
+				<ion-icon icon="card" slot="start"></ion-icon>
+				{{ profile.ID }}
+			</ion-item>
 		</ion-list>
 	</div>
 
