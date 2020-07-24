@@ -1008,7 +1008,8 @@
 				"search": "Tìm kiếm portlet hiển thị",
 				"list": "Danh sách portlet hiển thị {{info}}",
 				"create": "Tạo mới portlet hiển thị",
-				"update": "Cập nhật portlet hiển thị"
+				"update": "Cập nhật portlet hiển thị",
+				"reorder": "Thay đổi vị trí các portlets"
 			},
 			"actions": {
 				"List": "Hiển thị danh sách",
@@ -1271,7 +1272,8 @@
 				"buttons": {
 					"delete": "Xoá portlet hiển thị",
 					"remove": "Đồng ý xoá"
-				}
+				},
+				"reorder": "Các portlets trong vùng {{zone}}"
 			}
 		}
 	}

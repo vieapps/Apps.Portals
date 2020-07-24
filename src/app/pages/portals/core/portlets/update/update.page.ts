@@ -217,7 +217,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		}, "Portlet:Refresh");
 
 		if (this.configSvc.isDebug) {
-			console.log("<Portlet>: update a portlet", this.portlet, this.originalPortlet);
+			console.log(`Update a portlet (${this.portlet.Title} - Mapping: ${this.originalPortlet !== undefined})`, this.portlet, this.originalPortlet);
 		}
 	}
 
@@ -842,8 +842,6 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 					portlet.AlternativeAction = AppUtility.isEquals(portlet.AlternativeAction, "-") ? undefined : portlet.AlternativeAction;
 					portlet.RepositoryEntityID = AppUtility.isEquals(portlet.RepositoryEntityID, "-") ? undefined : portlet.RepositoryEntityID;
 				}
-
-				console.log("Update portlet", portlet);
 
 				if (AppUtility.isNotEmpty(portlet.ID)) {
 					await this.portalsCoreSvc.updatePortletAsync(

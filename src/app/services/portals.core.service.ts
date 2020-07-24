@@ -72,7 +72,9 @@ export class PortalsCoreService extends BaseService {
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Module", message => this.processModuleUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Module", message => this.processModuleUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "ContentType", message => this.processContentTypeUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Content.Type", message => this.processContentTypeUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.ContentType", message => this.processContentTypeUpdateMessage(message));
+		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Content.Type", message => this.processContentTypeUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Expression", message => this.processExpressionUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Expression", message => this.processExpressionUpdateMessage(message));
 		AppEvents.on("Portals", info => {
@@ -1323,7 +1325,7 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	public async updateDesktopAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async updateDesktopAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Desktop.contains(body.ID) ? Desktop.get(body.ID).ParentID : undefined;
 		await super.updateAsync(
 			super.getURI("desktop", body.ID),
@@ -1339,7 +1341,8 @@ export class PortalsCoreService extends BaseService {
 				if (onError !== undefined) {
 					onError(error);
 				}
-			}
+			},
+			headers
 		);
 	}
 
@@ -1601,7 +1604,9 @@ export class PortalsCoreService extends BaseService {
 						desktop.portlets[index] = portlet;
 					}
 				}
-				console.log("Update portlet into desktop", message.Data.ID, portlet, desktop);
+				if  (this.configSvc.appConfig.isDebug) {
+					console.log(`Update a portlet into a desktop [Portlet: ${message.Data.ID} (${portlet.Title}) - Desktop: ${(desktop !== undefined ? desktop.FullTitle : "None")}]`, portlet, desktop);
+				}
 				break;
 
 			case "Delete":
@@ -1610,11 +1615,13 @@ export class PortalsCoreService extends BaseService {
 				if (desktop !== undefined && desktop.portlets !== undefined) {
 					AppUtility.removeAt(desktop.portlets, desktop.portlets.findIndex(p => p.ID === message.Data.ID));
 				}
-				console.log("Remove portlet from desktop", message.Data.ID, desktop);
+				if  (this.configSvc.appConfig.isDebug) {
+					console.log(`Delete a portlet from a desktop [Portlet ID: ${message.Data.ID} - Desktop: ${(desktop !== undefined ? desktop.FullTitle : "None")}]`, desktop);
+				}
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a portlet"), message);
+				console.warn(super.getLogMessage(`Got an update message of a portlet - Portlet ID: ${message.Data.ID} - Desktop ID: ${message.Data.DesktopID}`), message);
 				break;
 		}
 		AppEvents.broadcast(this.name, { Object: "Portlet", Type: `${message.Type.Event}d`, ID: message.Data.ID, DesktopID: message.Data.DesktopID });
