@@ -95,11 +95,11 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		if (this.portlet === undefined && AppUtility.isNotEmpty(portletID)) {
 			if (this.desktop.portlets === undefined) {
 				const request = AppPagination.buildRequest(
-					{ And: [{ SystemID: { Equals: this.desktop.SystemID } }, { DesktopID: { Equals: this.desktop.ID } }] },
+					{ And: [{ DesktopID: { Equals: this.desktop.ID } }] },
 					{ Zone: "Ascending", OrderIndex: "Ascending" },
 					{ TotalRecords: -1, TotalPages: 0, PageSize: 0, PageNumber: 1 }
 				);
-				await this.portalsCoreSvc.searchPortletAsync(request, data => this.desktop.portlets = (data as Array<any>).map(portlet => Portlet.deserialize(portlet)), undefined, true, true);
+				await this.portalsCoreSvc.searchPortletAsync(request, data => this.desktop.portlets = (data as Array<any>).map(portlet => Portlet.get(portlet.ID) || Portlet.deserialize(portlet, Portlet.get(portlet.ID))), undefined, true, true);
 			}
 			this.portlet = this.desktop.portlets.find(portlet => portlet.ID === portletID);
 		}
@@ -696,7 +696,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		const portlet = AppUtility.clone(this.originalPortlet !== undefined ? this.originalPortlet : this.portlet);
 		portlet.ID = this.portlet.ID;
 		portlet.OriginalPortletID = this.portlet.OriginalPortletID;
-		portlet.OtherDesktops = this.originalDesktop !== undefined ? this.originalPortlet.otherDesktops : this.portlet.otherDesktops;
+		portlet.OtherDesktops = (this.originalDesktop !== undefined ? this.originalPortlet.otherDesktops : this.portlet.otherDesktops).map(id => id);
 
 		if (AppUtility.isNotEmpty(portlet.ID) && !this.isAdvancedMode) {
 			if (this.contentType === undefined) {
