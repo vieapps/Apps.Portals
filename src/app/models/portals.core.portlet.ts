@@ -121,7 +121,7 @@ export class Portlet extends CoreBaseModel {
 						: data.ViewSettings.Options;
 				}
 				if (AppUtility.isArray(data.OtherDesktops, true)) {
-					portlet.otherDesktops = data.OtherDesktops;
+					portlet.otherDesktops = (data.OtherDesktops as Array<string>).filter((id, index, array) => array.indexOf(id) === index);
 				}
 			}
 		});
