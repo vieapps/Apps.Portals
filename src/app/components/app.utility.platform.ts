@@ -132,16 +132,19 @@ export class PlatformUtility {
 	}
 
 	/** Opens an URI in browser */
-	public static openURI(uri?: string) {
+	public static openURI(uri?: string, target?: string) {
 		if (AppUtility.isNotEmpty(uri)) {
-			if (this._inappBrowser !== undefined) {
-				this._inappBrowser.create(uri, "_blank");
-			}
-			else if (this._electronService !== undefined) {
+			if (this._electronService !== undefined) {
 				this._electronService.shell.openExternal(uri);
 			}
+			else if (AppConfig.isNativeApp && this._inappBrowser !== undefined) {
+				this._inappBrowser.create(uri, target || "_blank", {
+					allowInlineMediaPlayback: "yes",
+					location: "yes"
+				});
+			}
 			else {
-				window.open(uri, "_blank");
+				window.open(uri, target || "_blank");
 			}
 		}
 	}
