@@ -3,6 +3,7 @@ import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@components/app.crypto";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
+import { PlatformUtility } from "@components/app.utility.platform";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
 import { AppFormsControlComponent } from "@components/forms.control.component";
@@ -292,7 +293,16 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 			};
 		}
 
-		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias")).Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.toANSI(formControl.value, true), { onlySelf: true });
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias"));
+		control.Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.toANSI(formControl.value, true), { onlySelf: true });
+		control.Options.Icon = {
+			Name: "globe",
+			Fill: "clear",
+			Color: "medium",
+			Slot: "end",
+			OnClick: (_, formControl) => PlatformUtility.openURI(`${this.configSvc.appConfig.URIs.portals}~${this.organization.Alias}/${formControl.value}`)
+		};
+
 		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Aliases")).Options.OnBlur = (_, formControl) => {
 			const aliases = AppUtility.isNotEmpty(formControl.value)
 				? AppUtility.toStr((AppUtility.toArray(formControl.value, ";") as string[]).map(alias => AppUtility.toANSI(alias, true)), ";")
