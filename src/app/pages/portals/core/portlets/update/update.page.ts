@@ -695,8 +695,9 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 	onFormInitialized() {
 		const portlet = AppUtility.clone(this.originalPortlet !== undefined ? this.originalPortlet : this.portlet);
 		portlet.ID = this.portlet.ID;
-		portlet.OriginalPortletID = this.portlet.OriginalPortletID;
-		portlet.OtherDesktops = (this.originalDesktop !== undefined ? this.originalPortlet.otherDesktops : this.portlet.otherDesktops).map(id => id);
+		portlet.OriginalPortletID = this.originalPortlet !== undefined ? this.originalPortlet.ID : undefined;
+		portlet.DesktopID = this.originalPortlet !== undefined ? this.originalPortlet.DesktopID : this.portlet.DesktopID;
+		portlet.OtherDesktops = (this.originalPortlet !== undefined ? this.originalPortlet.otherDesktops : this.portlet.otherDesktops).map(id => id);
 
 		if (AppUtility.isNotEmpty(portlet.ID) && !this.isAdvancedMode) {
 			if (this.contentType === undefined) {
