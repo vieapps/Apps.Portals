@@ -673,6 +673,26 @@ export class AppXHR {
 	}
 
 	/**
+		* Performs a request to APIs with "PATCH" verb
+		* @param path Path of the end-point API's uri to perform the request
+		* @param body The JSON object that contains the body to perform the request
+		* @param headers Additional headers to perform the request
+	*/
+	public static patch(path: string, body: any, headers?: any) {
+		return this.sendRequest("PATCH", this.getURI(path), headers, body);
+	}
+
+	/**
+		* Performs a request to APIs with "PATCH" verb
+		* @param path Path of the end-point API's uri to perform the request
+		* @param body The JSON object that contains the body to perform the request
+		* @param headers Additional headers to perform the request
+	*/
+	public static patchAsync(path: string, body: any, headers?: any) {
+		return this.patch(path, body, headers).toPromise();
+	}
+
+	/**
 		* Performs a request to APIs with "DELETE" verb
 		* @param path Path of the end-point API's uri to perform the request
 		* @param headers Additional headers to perform the request
