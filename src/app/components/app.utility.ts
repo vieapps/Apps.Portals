@@ -332,9 +332,10 @@ export class AppUtility {
 		if (oldIndex !== newIndex && oldIndex > -1 && oldIndex < sequence.length && newIndex > -1 && newIndex < sequence.length) {
 			const items = sequence.splice(oldIndex, 1);
 			if (items !== undefined && items.length > 0) {
-				sequence.splice(newIndex < oldIndex ? newIndex : newIndex - 1, 0, items[0]);
+				this.insertAt(sequence, items[0], newIndex);
 			}
 		}
+		return sequence;
 	}
 
 	/**
