@@ -1039,7 +1039,7 @@
 				"OtherDesktops": {
 					"label": "Đồng thời hiển thị trong các desktop",
 					"placeholder": "",
-					"description": ""
+					"description": "Chỉ định các desktop mà portlet sẽ đồng thời hiển thị tại đó"
 				},
 				"Zone": {
 					"label": "Hiển thị tại vùng",
@@ -1066,7 +1066,7 @@
 					"Template": {
 						"label": "Mẫu hiển thị",
 						"placeholder": "",
-						"description": "Mã XHTML cho mẫu hiển thị của portlet, sẽ sử dụng mẫu hiển thị mặc định nếu không có nội dung được nhập.<br/>Thông thường mẫu hiển thị của portlet có 3 vùng (zone) hiển thị, với mã định danh (được chỉ định qua tham số <b>zone-id</b>) tương ứng là:<ul><li>'<b>ContextMenu</b>' sử dụng để đặt menu ngữ cảnh của portlet,</li><li>'<b>Title</b>' sử dụng để đặt tiêu đề của portlet,</li><li>'<b>Content</b>' để hiển thị nội dung của portlet</ul>Tips:<ul><li>Có thể bỏ vùng <b>Content</b> và <b>Kiểu dữ liệu nghiệp vụ</b> rồi đưa vào đó các nội dung tĩnh</li><li>Bấm vào biểu tượng ở bên cạnh để hệ thống lấy mã XHTML mặc định của mẫu hiển thị rồi sửa từ đó</li></ul>"
+						"description": "Mã XHTML cho mẫu hiển thị của portlet, sẽ sử dụng mẫu hiển thị mặc định nếu không có nội dung được nhập.<br/>Thông thường mẫu hiển thị của portlet có 3 vùng (zone) hiển thị, với mã định danh (được chỉ định qua tham số <b>zone-id</b>) tương ứng là:<ul><li>'<b>ContextMenu</b>' sử dụng để đặt menu ngữ cảnh của portlet,</li><li>'<b>Title</b>' sử dụng để đặt tiêu đề của portlet,</li><li>'<b>Content</b>' để hiển thị nội dung của portlet (đây là vùng bắt buộc phải có)</ul>Tips:<ul><li>Có thể bỏ <b>Kiểu dữ liệu nghiệp vụ</b> rồi đưa vào đó các nội dung tĩnh (mã XHTML) tại vùng <b>Content</b></li><li>Bấm vào biểu tượng ở bên cạnh để hệ thống lấy mã XHTML mặc định của mẫu hiển thị rồi sửa từ đó</li></ul>"
 					},
 					"HideTitle": {
 						"label": "Ẩn tiêu đề của portlet khi hiển thị"

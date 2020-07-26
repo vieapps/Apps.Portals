@@ -40,6 +40,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 	private contentType: ContentType;
 	private desktop: Desktop;
 	private originalDesktop: Desktop;
+	private otherDesktops: Array<string>;
 	private portlet: Portlet;
 	private originalPortlet: Portlet;
 	private isSystemModerator = false;
@@ -193,6 +194,12 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			if (this.contentType === undefined && AppUtility.isNotEmpty(contentTypeID)) {
 				await this.portalsCoreSvc.getContentTypeAsync(contentTypeID, _ => this.contentType = ContentType.get(contentTypeID), undefined, true);
 			}
+			this.otherDesktops = this.originalPortlet !== undefined ? this.originalPortlet.otherDesktops : this.portlet.otherDesktops;
+			this.otherDesktops = (this.otherDesktops || []).map(id => id);
+			if (this.originalPortlet !== undefined) {
+				this.otherDesktops = this.otherDesktops.concat([this.portlet.DesktopID]);
+			}
+			this.otherDesktops = this.otherDesktops.filter((id, index, array) => array.indexOf(id) === index);
 		}
 
 		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.portlet.SystemID) {
@@ -316,7 +323,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 
 		const otherDekstops = new Array<AppFormsLookupValue>();
 		if (AppUtility.isNotEmpty(this.portlet.ID)) {
-			((this.originalDesktop !== undefined ? this.originalPortlet.otherDesktops : this.portlet.otherDesktops) || []).forEach(async id => {
+			await Promise.all(this.otherDesktops.map(async id => {
 				let otherDesktop = Desktop.get(id);
 				if (otherDesktop === undefined) {
 					await this.portalsCoreSvc.getDesktopAsync(id, _ => otherDesktop = Desktop.get(id), undefined, true);
@@ -324,7 +331,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				if (otherDesktop !== undefined) {
 					otherDekstops.push({ Value: otherDesktop.ID, Label: otherDesktop.FullTitle });
 				}
-			});
+			}));
 		}
 
 		AppUtility.insertAt(
@@ -336,6 +343,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				Extras: { LookupDisplayValues: otherDekstops.length > 0 ? otherDekstops : undefined },
 				Options: {
 					Label: control.Options.Label.replace("DesktopID", "OtherDesktops"),
+					Description: control.Options.Description.replace("DesktopID", "OtherDesktops"),
 					Disabled: this.originalPortlet !== undefined,
 					LookupOptions: {
 						Multiple: true,
@@ -697,7 +705,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		portlet.ID = this.portlet.ID;
 		portlet.OriginalPortletID = this.originalPortlet !== undefined ? this.originalPortlet.ID : undefined;
 		portlet.DesktopID = this.originalPortlet !== undefined ? this.originalPortlet.DesktopID : this.portlet.DesktopID;
-		portlet.OtherDesktops = (this.originalPortlet !== undefined ? this.originalPortlet.otherDesktops : this.portlet.otherDesktops).map(id => id);
+		portlet.OtherDesktops = this.otherDesktops;
 
 		if (AppUtility.isNotEmpty(portlet.ID) && !this.isAdvancedMode) {
 			if (this.contentType === undefined) {
