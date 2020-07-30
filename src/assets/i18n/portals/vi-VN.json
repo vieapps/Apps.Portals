@@ -559,7 +559,8 @@
 			},
 			"list": {
 				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác desktop hiển thị",
-				"children": "{{number}} desktop cấp dưới: {{children}}"
+				"children": "{{number}} desktop cấp dưới: {{children}}",
+				"view": "Danh sách desktop cấp dưới"
 			},
 			"update": {
 				"segments": {

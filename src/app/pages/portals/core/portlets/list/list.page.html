@@ -7,7 +7,7 @@
 			</ion-button>
 		</ion-buttons>
 		<ion-buttons *ngIf="redordering || !searching" slot="end">
-			<ion-button *ngIf="!redordering && searching" (click)="openSearchAsync()">
+			<ion-button *ngIf="!redordering && !searching" (click)="openSearchAsync()">
 				<ion-icon name="search" slot="icon-only"></ion-icon>
 			</ion-button>
 			<ion-button *ngIf="redordering" fill="clear" color="primary" [disabled]="processing" (click)="doReorderAsync()">
@@ -41,12 +41,12 @@
 </ion-footer>
 
 <ion-content [color]="color">
-	<ion-fab *ngIf="!redordering" vertical="bottom" horizontal="end" slot="fixed">
+	<ion-fab *ngIf="!redordering && !searching" vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button (click)="createAsync()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
-	<ion-list *ngIf="!redordering" class="ion-padding-end" #listOfPortlets>
+	<ion-list *ngIf="!redordering" class="ion-padding-end" #originalItems>
 		<ion-item-sliding *ngFor="let portlet of portlets; trackBy: track">
 			<ion-item [color]="color" (click)="editAsync($event, portlet)" class="ion-activatable" detail="false">
 				<ion-label>
@@ -57,7 +57,7 @@
 						{{ portlet.Title }}
 					</span>
 					<div>
-						{{ getInfo(portlet) }}
+						{{ portlet.listingInfo }}
 					</div>
 				</ion-label>
 			</ion-item>
@@ -77,7 +77,7 @@
 		<ion-infinite-scroll-content></ion-infinite-scroll-content>
 	</ion-infinite-scroll>
 	<div *ngIf="redordering">
-		<ion-list *ngFor="let zone of zones; trackBy: trackReorderItem">
+		<ion-list *ngFor="let zone of zones; trackBy: trackReorderItem" #reorderingIems>
 			<ion-list-header [color]="color">
 				<ion-label>
 					{{ zone.Title }}

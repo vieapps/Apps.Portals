@@ -1,7 +1,7 @@
 <ion-header>
 	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
-			<ion-back-button *ngIf="parentDesktop" text=""></ion-back-button>
+			<ion-back-button *ngIf="parentDesktop || searching" text=""></ion-back-button>
 			<ion-menu-button *ngIf="!parentDesktop"></ion-menu-button>
 		</ion-buttons>
 		<ion-buttons *ngIf="!searching" slot="end">
@@ -36,12 +36,12 @@
 </ion-footer>
 
 <ion-content [color]="color">
-	<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+	<ion-fab *ngIf="!searching" vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button (click)="createAsync()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
-	<ion-list class="ion-padding-end">
+	<ion-list class="ion-padding-end" #originalItems>
 		<ion-item-sliding *ngFor="let desktop of desktops; trackBy: track">
 			<ion-item [color]="color" (click)="openAsync($event, desktop)" class="ion-activatable" detail="false">
 				<ion-buttons slot="end">

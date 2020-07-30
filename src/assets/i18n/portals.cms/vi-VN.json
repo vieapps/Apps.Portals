@@ -17,8 +17,9 @@
 			},
 			"categories": {
 				"title": {
-					"search": "Tìm kiếm chuyên mục",
 					"list": "Danh sách chuyên mục {{info}}",
+					"search": "Tìm kiếm chuyên mục",
+					"reorder": "Thay đổi thứ tự chuyên mục",
 					"create": "Tạo mới chuyên mục",
 					"update": "Cập nhật chuyên mục"
 				},
@@ -257,8 +258,9 @@
 			},
 			"links": {
 				"title": {
-					"search": "Tìm kiếm liên kết",
 					"list": "Danh sách liên kết {{info}}",
+					"search": "Tìm kiếm liên kết",
+					"reorder": "Thay đổi thứ tự hiển thị của liên kết",
 					"create": "Tạo mới liên kết",
 					"update": "Cập nhật liên kết",
 					"view": "Chi tiết liên kết"

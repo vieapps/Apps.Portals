@@ -3,6 +3,7 @@ import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
+import { AppCrypto } from "@components/app.crypto";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
@@ -13,6 +14,7 @@ import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
+import { NestedObject } from "@models/portals.base";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
@@ -36,22 +38,22 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
 
-	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
-	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
-	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
+	@ViewChild(IonSearchbar, { static: false }) private searchCtrl: IonSearchbar;
+	@ViewChild(IonInfiniteScroll, { static: false }) private infiniteScrollCtrl: IonInfiniteScroll;
+	@ViewChild("originalItems", { static: false }) private listCtrl: IonList;
 
 	private subscription: Subscription;
 	private organization: Organization;
 	private module: Module;
 	private contentType: ContentType;
 	private parentID: string;
-	private parentLink: Link;
 	private children = "{{number}} children: {{children}}";
 
 	canUpdate = false;
 	canContribute = false;
 
 	title = "Categories";
+	parentLink: Link;
 	links = new Array<Link>();
 	searching = false;
 	pageNumber = 0;
@@ -75,8 +77,15 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	buttons = {
 		edit: "Edit",
 		view: "View",
-		children: "Children"
+		children: "Children",
+		save: "Save",
+		cancel: "Cancel"
 	};
+	processing = false;
+	redordering = false;
+	reorderItems: Array<NestedObject>;
+	private hash = "";
+	private ordered: Array<NestedObject>;
 
 	get locale() {
 		return this.configSvc.locale;
@@ -166,12 +175,13 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		this.buttons = {
 			children: await this.configSvc.getResourceAsync("portals.cms.links.list.buttons.children"),
 			view: await this.configSvc.getResourceAsync("portals.cms.links.list.buttons.view"),
-			edit: await this.configSvc.getResourceAsync("portals.cms.links.list.buttons.edit")
+			edit: await this.configSvc.getResourceAsync("portals.cms.links.list.buttons.edit"),
+			save: await this.configSvc.getResourceAsync("common.buttons.save"),
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
-		const title = await this.configSvc.getResourceAsync(`portals.cms.links.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: "" });
+		await this.prepareTitleAsync();
 		this.children = await this.configSvc.getResourceAsync("portals.cms.links.list.children");
 
 		if (this.searching) {
@@ -183,6 +193,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		else {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.links.title.create"), "create", () => this.createAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.links.title.reorder"), "swap-vertical", () => this.openReorderAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.links.title.search"), "search", () => this.openSearchAsync())
 			];
 
@@ -190,17 +201,17 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			this.parentLink = Link.get(this.parentID);
 
 			if (this.parentLink !== undefined) {
-				this.links = new List(this.parentLink.Children).OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentLink.FullTitle}]` });
+				this.prepareLinks();
+				await this.prepareTitleAsync();
 				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					if (info.args.Object === "CMS.Link" && (this.parentLink.ID === info.args.ID || this.parentLink.ID === info.args.ParentID)) {
-						this.links = new List(this.parentLink.Children).OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
+						this.prepareLinks();
 					}
 				}, `CMS.Links:${this.parentLink.ID}:Refresh`);
 			}
 			else {
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.contentType === undefined ? this.organization.Title : this.organization.Title + " :: " + this.contentType.Title)}]` });
+				await this.prepareTitleAsync();
 				this.prepareFilterBy();
 				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on(this.portalsCoreSvc.name, info => {
@@ -216,6 +227,16 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		}
 	}
 
+	private async prepareTitleAsync() {
+		if (this.redordering) {
+			this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("portals.cms.links.title.reorder");
+		}
+		else {
+			const title = await this.configSvc.getResourceAsync(`portals.cms.links.title.${(this.searching ? "search" : "list")}`);
+			this.configSvc.appTitle = this.title = AppUtility.format(title, { info: this.parentLink !== undefined ? `[${this.parentLink.FullTitle}]` : this.contentType === undefined && this.organization === undefined ? "" : `[${(this.contentType === undefined ? this.organization.Title : this.organization.Title + " :: " + this.contentType.Title)}]` });
+		}
+	}
+
 	private prepareFilterBy() {
 		this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
 		if (this.module !== undefined) {
@@ -225,6 +246,10 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			this.filterBy.And.push({ RepositoryEntityID: { Equals: this.contentType.ID } });
 		}
 		this.filterBy.And.push({ ParentID: "IsNull" });
+	}
+
+	private prepareLinks() {
+		this.links = new List(this.parentLink.Children).OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
 	}
 
 	track(index: number, link: Link) {
@@ -385,6 +410,85 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			async () => await this.configSvc.navigateHomeAsync(url),
 			await this.configSvc.getResourceAsync("common.buttons.ok")
 		);
+	}
+
+	private async openReorderAsync() {
+		this.reorderItems = this.links.sort(AppUtility.getCompareFunction("OrderIndex", "Title")).map(c => {
+			return {
+				ID: c.ID,
+				Title: c.Title,
+				OrderIndex: c.OrderIndex
+			} as NestedObject;
+		});
+		this.ordered = this.reorderItems.map(c => {
+			return {
+				ID: c.ID,
+				Title: c.Title,
+				OrderIndex: c.OrderIndex
+			} as NestedObject;
+		});
+		this.hash = AppCrypto.hash(this.ordered);
+		this.redordering = true;
+		await this.prepareTitleAsync();
+	}
+
+	trackReorderItem(index: number, item: NestedObject) {
+		return `${item.ID}@${index}`;
+	}
+
+	onReordered(event: any) {
+		try {
+			AppUtility.moveTo(this.ordered, event.detail.from as number, event.detail.to as number).forEach((category, orderIndex) => category.OrderIndex = orderIndex);
+		}
+		catch (error) {
+			console.error("Error occurred while reordering", error);
+		}
+		event.detail.complete();
+	}
+
+	async doReorderAsync() {
+		if (this.hash !== AppCrypto.hash(this.ordered)) {
+			this.processing = true;
+			await this.appFormsSvc.showLoadingAsync(this.title);
+			const reordered = new List(this.ordered).Select(category => {
+				return {
+					ID: category.ID,
+					OrderIndex: category.OrderIndex
+				};
+			}).ToArray();
+			await this.portalsCmsSvc.updateLinkAsync(
+				{
+					LinkID: this.parentLink === undefined ? undefined : this.parentLink.ID,
+					SystemID: this.organization === undefined ? undefined : this.organization.ID,
+					RepositoryID: this.module === undefined ? undefined : this.module.ID,
+					RepositoryEntityID: this.contentType === undefined ? undefined : this.contentType.ID,
+					Links: reordered
+				},
+				async _ => {
+					this.links.forEach(link => link.OrderIndex = reordered.find(i => i.ID === link.ID).OrderIndex);
+					if (this.parentLink !== undefined) {
+						this.prepareLinks();
+					}
+					await this.cancelReorderAsync(() => this.processing = false);
+				},
+				async error => {
+					this.processing = false;
+					await this.appFormsSvc.showErrorAsync(error);
+				},
+				{
+					"x-update": "order-index"
+				}
+			);
+		}
+		else {
+			await this.cancelReorderAsync();
+		}
+	}
+
+	async cancelReorderAsync(onNext?: () => void) {
+		this.redordering = false;
+		await this.prepareTitleAsync();
+		await this.appFormsSvc.hideLoadingAsync(onNext);
 	}
 
 }

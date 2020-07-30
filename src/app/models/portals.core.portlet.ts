@@ -179,7 +179,16 @@ export class Portlet extends CoreBaseModel {
 
 	public get originalDesktop() {
 		const originalPortlet = this.originalPortlet;
-		return originalPortlet !== undefined ? originalPortlet.desktop : undefined;
+		return originalPortlet !== undefined ? originalPortlet.desktop : this.desktop;
+	}
+
+	public get listingInfo() {
+		const originalPortlet = this.originalPortlet;
+		const originalDesktop = this.originalDesktop;
+		const contentType = originalPortlet !== undefined ? originalPortlet.contentType : this.contentType;
+		return (contentType !== undefined ? contentType.Title : "Static")
+			+ ` @ ${this.Zone} #${this.OrderIndex}`
+			+ (AppUtility.isNotEmpty(this.OriginalPortletID) ? ` [${(originalDesktop !== undefined ? originalDesktop.FullTitle : "unknown")}]` : "");
 	}
 
 }

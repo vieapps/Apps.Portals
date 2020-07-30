@@ -3,8 +3,8 @@ import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
-import { AppEvents } from "@components/app.events";
 import { AppCrypto } from "@components/app.crypto";
+import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { PlatformUtility } from "@components/app.utility.platform";
@@ -35,9 +35,9 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
 
-	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
-	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
-	@ViewChild("listOfPortlets", { static: false }) private listCtrl: IonList;
+	@ViewChild(IonSearchbar, { static: false }) private searchCtrl: IonSearchbar;
+	@ViewChild(IonInfiniteScroll, { static: false }) private infiniteScrollCtrl: IonInfiniteScroll;
+	@ViewChild("originalItems", { static: false }) private listCtrl: IonList;
 
 	private subscription: Subscription;
 	private isSystemAdministrator = false;
@@ -168,9 +168,10 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		else {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.reorder"), "reorder-four", () => this.openReorderAsync())
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.search"), "search", () => this.openSearchAsync())
 			];
 			if (this.desktop !== undefined && this.desktop.portlets !== undefined && this.desktop.portlets.length > 0) {
+				AppUtility.insertAt(this.actions, this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.reorder"), "swap-vertical", () => this.openReorderAsync()), 1);
 				this.preparePortlets();
 				await this.appFormsSvc.hideLoadingAsync();
 			}
@@ -211,15 +212,6 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 
 	track(index: number, portlet: Portlet) {
 		return `${portlet.ID}@${index}`;
-	}
-
-	getInfo(portlet: Portlet) {
-		const contentType = portlet.contentType;
-		const originalPortlet = portlet.originalPortlet;
-		const originalDesktop = portlet.originalDesktop;
-		return `Zone: ${portlet.Zone} - Position: #${portlet.OrderIndex} - Type: `
-			+ (contentType !== undefined ? `${contentType.Title}` : "Static")
-			+ (AppUtility.isNotEmpty(portlet.OriginalPortletID) ? ` (${(originalPortlet !== undefined ? originalPortlet.Title + (originalDesktop !== undefined ? ` @ ${originalDesktop.FullTitle}` : "") : "unknown")})` : "");
 	}
 
 	onStartSearch(event: any) {
@@ -374,13 +366,13 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 				zoneIndex++;
 				itemIndex = -1;
 			}
-			const contentType = portlet.contentType;
 			const originalPortlet = portlet.originalPortlet;
 			const originalDesktop = portlet.originalDesktop;
+			const contentType = originalPortlet !== undefined ? originalPortlet.contentType : portlet.contentType;
 			itemIndex++;
 			zoneItems.push({
 				ID: portlet.ID,
-				Title: portlet.Title + " ["  + (contentType !== undefined ? `${contentType.Title}` : "Static") + (AppUtility.isNotEmpty(portlet.OriginalPortletID) ? ` (${(originalPortlet !== undefined ? originalPortlet.Title + (originalDesktop !== undefined ? ` @ ${originalDesktop.FullTitle}` : "") : "unknown")})` : "") + "]",
+				Title: portlet.Title + " [" + (contentType !== undefined ? contentType.Title : "Static") + (AppUtility.isNotEmpty(portlet.OriginalPortletID) ? ` @ ${(originalDesktop !== undefined ? originalDesktop.FullTitle : "unknown")}` : "") + "]",
 				OrderIndex: itemIndex
 			} as NestedObject);
 		});
@@ -422,7 +414,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		if (this.hash !== AppCrypto.hash(this.ordered)) {
 			this.processing = true;
 			await this.appFormsSvc.showLoadingAsync(this.title);
-			const reorderedPortlets = new List(this.ordered).Select(zone => zone.Children).SelectMany(portlets => new List(portlets)).Select(portlet => {
+			const reordered = new List(this.ordered).Select(zone => zone.Children).SelectMany(portlets => new List(portlets)).Select(portlet => {
 				return {
 					ID: portlet.ID,
 					OrderIndex: portlet.OrderIndex
@@ -431,10 +423,10 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 			await this.portalsCoreSvc.updateDesktopAsync(
 				{
 					ID: this.desktop.ID,
-					Portlets: reorderedPortlets
+					Portlets: reordered
 				},
 				async data => {
-					this.desktop.portlets.forEach(portlet => portlet.OrderIndex = reorderedPortlets.find(p => p.ID === portlet.ID).OrderIndex);
+					this.desktop.portlets.forEach(portlet => portlet.OrderIndex = reordered.find(p => p.ID === portlet.ID).OrderIndex);
 					this.preparePortlets();
 					await this.cancelReorderAsync(() => {
 						this.processing = false;
@@ -446,7 +438,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 					await this.appFormsSvc.showErrorAsync(error);
 				},
 				{
-					"x-update-portlets": "order-index"
+					"x-update": "order-index"
 				}
 			);
 		}

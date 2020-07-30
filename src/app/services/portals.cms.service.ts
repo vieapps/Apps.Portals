@@ -448,7 +448,7 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	public async updateCategoryAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async updateCategoryAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Category.contains(body.ID) ? Category.get(body.ID).ParentID : undefined;
 		await super.updateAsync(
 			super.getURI("cms.category", body.ID),
@@ -464,7 +464,8 @@ export class PortalsCmsService extends BaseService {
 				if (onError !== undefined) {
 					onError(error);
 				}
-			}
+			},
+			headers
 		);
 	}
 
@@ -1056,7 +1057,7 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	public async updateLinkAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async updateLinkAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Link.contains(body.ID) ? Link.get(body.ID).ParentID : undefined;
 		await super.updateAsync(
 			super.getURI("cms.link", body.ID),
@@ -1072,7 +1073,8 @@ export class PortalsCmsService extends BaseService {
 				if (onError !== undefined) {
 					onError(error);
 				}
-			}
+			},
+			headers
 		);
 	}
 

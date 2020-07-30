@@ -141,7 +141,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			children: await this.configSvc.getResourceAsync("portals.desktops.list.children"),
 			alias: await this.configSvc.getResourceAsync("portals.desktops.controls.Alias.label"),
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
-			view: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list"),
+			view: await this.configSvc.getResourceAsync("portals.desktops.list.view"),
 			portlets: await this.configSvc.getResourceAsync("portals.portlets.title.list", { info: "" })
 		};
 

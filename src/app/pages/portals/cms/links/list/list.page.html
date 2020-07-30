@@ -1,11 +1,18 @@
 <ion-header>
 	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
-			<ion-back-button text=""></ion-back-button>
+			<ion-back-button *ngIf="searching || (parentLink && !redordering)" text=""></ion-back-button>
+			<ion-menu-button *ngIf="!parentLink && !redordering"></ion-menu-button>
+			<ion-button *ngIf="redordering" fill="clear" color="secondary" [disabled]="processing" (click)="cancelReorderAsync()">
+				{{ buttons.cancel }}
+			</ion-button>
 		</ion-buttons>
-		<ion-buttons *ngIf="!searching" slot="end">
-			<ion-button [hidden]="searching" (click)="openSearchAsync()">
+		<ion-buttons *ngIf="!searching || redordering" slot="end">
+			<ion-button *ngIf="!searching && !redordering" (click)="openSearchAsync()">
 				<ion-icon name="search" slot="icon-only"></ion-icon>
+			</ion-button>
+			<ion-button *ngIf="redordering" fill="clear" color="primary" [disabled]="processing" (click)="doReorderAsync()">
+				{{ buttons.save }}
 			</ion-button>
 		</ion-buttons>
 		<ion-title [hidden]="searching">
@@ -18,7 +25,7 @@
 	</ion-toolbar>
 </ion-header>
 
-<ion-footer *ngIf="gotPagination || actions">
+<ion-footer *ngIf="!redordering && (gotPagination || actions)">
 	<ion-toolbar [color]="color">
 		<span *ngIf="gotPagination" slot="start">
 			<ion-icon name="link" color="primary" slot="start"></ion-icon>
@@ -35,12 +42,12 @@
 </ion-footer>
 
 <ion-content [color]="color">
-	<ion-fab *ngIf="canContribute" vertical="bottom" horizontal="end" slot="fixed">
+	<ion-fab *ngIf="!redordering && !searching && canContribute" vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button (click)="createAsync()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
-	<ion-list class="ion-padding-end">
+	<ion-list *ngIf="!redordering" class="ion-padding-end" #originalItems>
 		<ion-item-sliding *ngFor="let link of links; trackBy: track">
 			<ion-item [color]="color" (click)="viewAsync($event, link)" class="ion-activatable" detail="false">
 				<ion-buttons slot="end">
@@ -80,7 +87,17 @@
 			</ion-item-options>
 		</ion-item-sliding>
 	</ion-list>
-	<ion-infinite-scroll threshold="288px" position="bottom" (ionInfinite)="onInfiniteScrollAsync()">
+	<ion-infinite-scroll *ngIf="!redordering" threshold="288px" position="bottom" (ionInfinite)="onInfiniteScrollAsync()">
 		<ion-infinite-scroll-content></ion-infinite-scroll-content>
 	</ion-infinite-scroll>
+	<ion-list *ngIf="redordering" #reorderingIems>
+		<ion-reorder-group (ionItemReorder)="onReordered($event)" disabled="false">
+			<ion-item *ngFor="let item of reorderItems; trackBy: trackReorderItem" [color]="color">
+				<ion-label>
+					{{ item.Title }}
+				</ion-label>
+				<ion-reorder slot="end"></ion-reorder>
+			</ion-item>
+		</ion-reorder-group>
+	</ion-list>
 </ion-content>

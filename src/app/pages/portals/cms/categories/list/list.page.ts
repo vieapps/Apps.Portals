@@ -3,6 +3,7 @@ import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
+import { AppCrypto } from "@components/app.crypto";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
@@ -13,6 +14,7 @@ import { ConfigurationService } from "@services/configuration.service";
 import { AuthenticationService } from "@services/authentication.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
+import { NestedObject } from "@models/portals.base";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
@@ -36,9 +38,9 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
 
-	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
-	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
-	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
+	@ViewChild(IonSearchbar, { static: false }) private searchCtrl: IonSearchbar;
+	@ViewChild(IonInfiniteScroll, { static: false }) private infiniteScrollCtrl: IonInfiniteScroll;
+	@ViewChild("originalItems", { static: false }) private listCtrl: IonList;
 
 	private subscription: Subscription;
 	private organization: Organization;
@@ -77,8 +79,15 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	buttons = {
 		edit: "Update",
 		children: "Children",
-		view: "Contents"
+		view: "Contents",
+		save: "Save",
+		cancel: "Cancel"
 	};
+	processing = false;
+	redordering = false;
+	reorderItems: Array<NestedObject>;
+	private hash = "";
+	private ordered: Array<NestedObject>;
 
 	get locale() {
 		return this.configSvc.locale;
@@ -169,12 +178,13 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		this.buttons = {
 			edit: await this.configSvc.getResourceAsync("portals.cms.categories.list.buttons.edit"),
 			children: await this.configSvc.getResourceAsync("portals.cms.categories.list.buttons.children"),
-			view: await this.configSvc.getResourceAsync("portals.cms.categories.list.buttons.view")
+			view: await this.configSvc.getResourceAsync("portals.cms.categories.list.buttons.view"),
+			save: await this.configSvc.getResourceAsync("common.buttons.save"),
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
-		const title = await this.configSvc.getResourceAsync(`portals.cms.categories.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: "" });
+		await this.prepareTitleAsync();
 		this.children = await this.configSvc.getResourceAsync("portals.cms.categories.list.children");
 		this.alias = await this.configSvc.getResourceAsync("portals.cms.categories.controls.Alias.label");
 
@@ -187,6 +197,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		else {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.create"), "create", () => this.createAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.reorder"), "swap-vertical", () => this.openReorderAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.search"), "search", () => this.openSearchAsync())
 			];
 
@@ -194,17 +205,17 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			this.parentCategory = Category.get(this.parentID);
 
 			if (this.parentCategory !== undefined) {
-				this.categories = new List(this.parentCategory.Children).OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentCategory.FullTitle}]` });
+				this.prepareCategories();
+				await this.prepareTitleAsync();
 				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					if (info.args.Object === "CMS.Category" && (this.parentCategory.ID === info.args.ID || this.parentCategory.ID === info.args.ParentID)) {
-						this.categories = new List(this.parentCategory.Children).OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
+						this.prepareCategories();
 					}
 				}, `CMS.Categoriess:${this.parentCategory.ID}:Refresh`);
 			}
 			else {
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.module === undefined ? this.organization.Title : this.organization.Title + " :: " + this.module.Title)}]` });
+				await this.prepareTitleAsync();
 				this.prepareFilterBy();
 				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on(this.portalsCoreSvc.name, info => {
@@ -213,10 +224,19 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 					}
 				}, "CMS.Categories:Refresh");
 			}
+			if (this.configSvc.isDebug) {
+				console.log("Show the list of categories", this.filterBy);
+			}
 		}
+	}
 
-		if (this.configSvc.isDebug) {
-			console.log("<Categories>: show the list", this.organization, this.module, this.contentType, this.filterBy, this.sortBy, this.configSvc.requestParams);
+	private async prepareTitleAsync() {
+		if (this.redordering) {
+			this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("portals.cms.categories.title.reorder");
+		}
+		else {
+			const title = await this.configSvc.getResourceAsync(`portals.cms.categories.title.${(this.searching ? "search" : "list")}`);
+			this.configSvc.appTitle = this.title = AppUtility.format(title, { info: this.parentCategory !== undefined ? `[${this.parentCategory.FullTitle}]` : this.module === undefined && this.organization === undefined ? "" : `[${(this.module === undefined ? this.organization.Title : this.organization.Title + " :: " + this.module.Title)}]` });
 		}
 	}
 
@@ -229,6 +249,10 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			this.filterBy.And.push({ RepositoryEntityID: { Equals: this.contentType.ID } });
 		}
 		this.filterBy.And.push({ ParentID: "IsNull" });
+	}
+
+	private prepareCategories() {
+		this.categories = new List(this.parentCategory.Children).OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
 	}
 
 	track(index: number, category: Category) {
@@ -389,6 +413,85 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			async () => await this.configSvc.navigateHomeAsync(url),
 			await this.configSvc.getResourceAsync("common.buttons.ok")
 		);
+	}
+
+	private async openReorderAsync() {
+		this.reorderItems = this.categories.sort(AppUtility.getCompareFunction("OrderIndex", "Title")).map(c => {
+			return {
+				ID: c.ID,
+				Title: c.Title,
+				OrderIndex: c.OrderIndex
+			} as NestedObject;
+		});
+		this.ordered = this.reorderItems.map(c => {
+			return {
+				ID: c.ID,
+				Title: c.Title,
+				OrderIndex: c.OrderIndex
+			} as NestedObject;
+		});
+		this.hash = AppCrypto.hash(this.ordered);
+		this.redordering = true;
+		await this.prepareTitleAsync();
+	}
+
+	trackReorderItem(index: number, item: NestedObject) {
+		return `${item.ID}@${index}`;
+	}
+
+	onReordered(event: any) {
+		try {
+			AppUtility.moveTo(this.ordered, event.detail.from as number, event.detail.to as number).forEach((category, orderIndex) => category.OrderIndex = orderIndex);
+		}
+		catch (error) {
+			console.error("Error occurred while reordering", error);
+		}
+		event.detail.complete();
+	}
+
+	async doReorderAsync() {
+		if (this.hash !== AppCrypto.hash(this.ordered)) {
+			this.processing = true;
+			await this.appFormsSvc.showLoadingAsync(this.title);
+			const reordered = new List(this.ordered).Select(category => {
+				return {
+					ID: category.ID,
+					OrderIndex: category.OrderIndex
+				};
+			}).ToArray();
+			await this.portalsCmsSvc.updateCategoryAsync(
+				{
+					CategoryID: this.parentCategory === undefined ? undefined : this.parentCategory.ID,
+					SystemID: this.organization === undefined ? undefined : this.organization.ID,
+					RepositoryID: this.module === undefined ? undefined : this.module.ID,
+					RepositoryEntityID: this.contentType === undefined ? undefined : this.contentType.ID,
+					Categories: reordered
+				},
+				async _ => {
+					this.categories.forEach(category => category.OrderIndex = reordered.find(i => i.ID === category.ID).OrderIndex);
+					if (this.parentCategory !== undefined) {
+						this.prepareCategories();
+					}
+					await this.cancelReorderAsync(() => this.processing = false);
+				},
+				async error => {
+					this.processing = false;
+					await this.appFormsSvc.showErrorAsync(error);
+				},
+				{
+					"x-update": "order-index"
+				}
+			);
+		}
+		else {
+			await this.cancelReorderAsync();
+		}
+	}
+
+	async cancelReorderAsync(onNext?: () => void) {
+		this.redordering = false;
+		await this.prepareTitleAsync();
+		await this.appFormsSvc.hideLoadingAsync(onNext);
 	}
 
 }
