@@ -100,7 +100,7 @@ export class Portlet extends CoreBaseModel {
 		portlet = portlet || new Portlet();
 		portlet.copy(json, data => {
 			if (AppUtility.isNotEmpty(data.OriginalPortletID)) {
-				portlet.CommonSettings = portlet.ListSettings = portlet.ViewSettings = undefined;
+				portlet.CommonSettings = portlet.ListSettings = portlet.ViewSettings = portlet.PaginationSettings = portlet.BreadcrumbSettings = undefined;
 			}
 			else {
 				if (data.CommonSettings !== undefined) {
@@ -120,6 +120,9 @@ export class Portlet extends CoreBaseModel {
 						? JSON.parse(data.ViewSettings.Options)
 						: data.ViewSettings.Options;
 				}
+				if (data.PaginationSettings !== undefined) {
+					portlet.PaginationSettings = portlet.PaginationSettings || { ShowPageLinks: true, NumberOfPageLinks: 5 };
+				}
 				if (AppUtility.isArray(data.OtherDesktops, true)) {
 					portlet.otherDesktops = (data.OtherDesktops as Array<string>).filter((id, index, array) => array.indexOf(id) === index);
 				}
@@ -132,7 +135,7 @@ export class Portlet extends CoreBaseModel {
 
 	/** Gets by identity */
 	public static get(id: string) {
-		return id !== undefined
+		return AppUtility.isNotEmpty(id)
 			? this.instances.getValue(id)
 			: undefined;
 	}
@@ -154,7 +157,7 @@ export class Portlet extends CoreBaseModel {
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return id !== undefined && this.instances.containsKey(id);
+		return AppUtility.isNotEmpty(id) && this.instances.containsKey(id);
 	}
 
 	public get routerLink() {

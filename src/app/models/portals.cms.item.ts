@@ -63,7 +63,7 @@ export class Item extends CmsBaseModel {
 
 	/** Gets by identity */
 	public static get(id: string) {
-		return id !== undefined
+		return AppUtility.isNotEmpty(id)
 			? this.instances.getValue(id)
 			: undefined;
 	}
@@ -85,7 +85,7 @@ export class Item extends CmsBaseModel {
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return id !== undefined && this.instances.containsKey(id);
+		return AppUtility.isNotEmpty(id) && this.instances.containsKey(id);
 	}
 
 	public get routerLink() {
