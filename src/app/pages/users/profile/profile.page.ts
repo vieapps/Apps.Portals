@@ -20,8 +20,8 @@ import { UsersAvatarPage } from "../avatar/avatar.page";
 export class UsersProfilePage implements OnInit {
 
 	constructor(
-		public configSvc: ConfigurationService,
-		public authSvc: AuthenticationService,
+		private configSvc: ConfigurationService,
+		private authSvc: AuthenticationService,
 		private appFormsSvc: AppFormsService,
 		private usersSvc: UsersService
 	) {
@@ -70,8 +70,28 @@ export class UsersProfilePage implements OnInit {
 		return this.configSvc.locale;
 	}
 
+	get color() {
+		return this.configSvc.color;
+	}
+
+	get isSystemAdministrator() {
+		return this.authSvc.isSystemAdministrator();
+	}
+
 	get canManageUsers() {
-		return this.authSvc.isSystemAdministrator() && !this.configSvc.previousUrl.startsWith(this.configSvc.appConfig.url.users.list) && !this.configSvc.previousUrl.startsWith(this.configSvc.appConfig.url.users.search);
+		return this.isSystemAdministrator && !this.configSvc.previousUrl.startsWith(this.configSvc.appConfig.url.users.list) && !this.configSvc.previousUrl.startsWith(this.configSvc.appConfig.url.users.search);
+	}
+
+	get canSetServicePrivileges() {
+		return this.authSvc.canSetServicePrivileges;
+	}
+
+	get listURL() {
+		return this.configSvc.appConfig.url.users.list;
+	}
+
+	get activeService() {
+		return this.configSvc.appConfig.services.active;
 	}
 
 	ngOnInit() {
