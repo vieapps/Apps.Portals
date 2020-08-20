@@ -119,6 +119,7 @@
 	},
 	"status": {
 		"approval": {
+			"label": "Trạng thái",
 			"Draft": "Bản nháp",
 			"Pending": "Đợi duyệt",
 			"Rejected": "Bị từ chối",
@@ -128,6 +129,7 @@
 		}
 	},
 	"events": {
+		"label": "Sự kiện",
 		"Create": "Tạo mới",
 		"Update": "Cập nhật",
 		"Delete": "Xoá",

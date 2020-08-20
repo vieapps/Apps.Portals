@@ -13,7 +13,7 @@ import { AuthenticationService } from "@services/authentication.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { Privileges } from "@models/privileges";
 import { Organization } from "@models/portals.core.organization";
-import { ModuleDefinition, ExtendedPropertyDefinition, ExtendedControlDefinition, StandardControlDefinition } from "@models/portals.base";
+import { ModuleDefinition, ExtendedPropertyDefinition, ExtendedControlDefinition, StandardControlDefinition, EmailNotificationSettings } from "@models/portals.base";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
 import { Desktop } from "@models/portals.core.desktop";
@@ -42,6 +42,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 	private canModerateOrganization = false;
 	private isAdvancedMode = false;
 	private extendable = false;
+	private emailsByApprovalStatus = {} as { [status: string]: EmailNotificationSettings };
 	private hash = "";
 
 	title = "";
@@ -304,9 +305,13 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 			});
 		}
 
-		const inheritEventsAndMethods = AppUtility.isNull(this.contentType.Notifications) || (AppUtility.isNull(this.contentType.Notifications.Events) && AppUtility.isNull(this.contentType.Notifications.Methods));
-		const inheritEmailSettings = AppUtility.isNull(this.contentType.Notifications) || AppUtility.isNull(this.contentType.Notifications.Emails);
-		const inheritWebHookSettings = AppUtility.isNull(this.contentType.Notifications) || AppUtility.isNull(this.contentType.Notifications.WebHooks);
+		const inheritStates = {
+			inheritEventsAndMethods: AppUtility.isNull(this.contentType.Notifications) || (AppUtility.isNull(this.contentType.Notifications.Events) && AppUtility.isNull(this.contentType.Notifications.Methods)),
+			inheritEmails: AppUtility.isNull(this.contentType.Notifications) || AppUtility.isNull(this.contentType.Notifications.Emails),
+			inheritEmailsByApprovalStatus: AppUtility.isNull(this.contentType.Notifications) || AppUtility.isNull(this.contentType.Notifications.EmailsByApprovalStatus),
+			inheritEmailsOfSpecialWhenPublish: AppUtility.isNull(this.contentType.Notifications) || AppUtility.isNull(this.contentType.Notifications.EmailsOfSpecialWhenPublish),
+			inheritWebHooks: AppUtility.isNull(this.contentType.Notifications) || AppUtility.isNull(this.contentType.Notifications.WebHooks)
+		};
 
 		formConfig.push(
 			{
@@ -318,7 +323,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 					Type: "object-privileges"
 				}
 			},
-			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, true, inheritEventsAndMethods, inheritEmailSettings, inheritWebHookSettings),
+			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, true, inheritStates),
 			{
 				Name: "Trackings",
 				Segment: "emails",
@@ -420,12 +425,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 		delete contentType["Privileges"];
 
 		contentType.OriginalPrivileges = Privileges.clonePrivileges(this.contentType.OriginalPrivileges);
-		contentType.Notifications = contentType.Notifications || {};
-		contentType.Notifications.InheritFromParent = AppUtility.isNull(this.contentType.Notifications) || (AppUtility.isNull(this.contentType.Notifications.Events) && AppUtility.isNull(this.contentType.Notifications.Methods));
-		contentType.Notifications.Emails = contentType.Notifications.Emails || {};
-		contentType.Notifications.Emails.InheritFromParent = AppUtility.isNull(this.contentType.Notifications) || AppUtility.isNull(this.contentType.Notifications.Emails);
-		contentType.Notifications.WebHooks = contentType.Notifications.WebHooks || {};
-		contentType.Notifications.WebHooks.InheritFromParent = AppUtility.isNull(this.contentType.Notifications) || AppUtility.isNull(this.contentType.Notifications.WebHooks);
+		contentType.Notifications = this.portalsCoreSvc.prepareNotificationSettings(this.contentType.Notifications, true, this.emailsByApprovalStatus);
 		contentType.EmailSettings = contentType.EmailSettings || {};
 		contentType.EmailSettings.InheritFromParent = AppUtility.isNull(this.contentType.EmailSettings);
 		contentType.EmailSettings.Smtp = contentType.EmailSettings.Smtp || { Port: 25, EnableSsl: false };
@@ -465,17 +465,8 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 
 				const contentType = this.form.value;
 				contentType.OriginalPrivileges = Privileges.getPrivileges(contentType.OriginalPrivileges);
+				this.portalsCoreSvc.normalizeNotificationSettings(contentType.Notifications, this.emailsByApprovalStatus);
 
-				if (contentType.Notifications && contentType.Notifications.InheritFromParent) {
-					contentType.Notifications.Events = undefined;
-					contentType.Notifications.Methods = undefined;
-				}
-				if (contentType.Notifications && contentType.Notifications.Emails && contentType.Notifications.Emails.InheritFromParent) {
-					contentType.Notifications.Emails = undefined;
-				}
-				if (contentType.Notifications && contentType.Notifications.WebHooks && contentType.Notifications.WebHooks.InheritFromParent) {
-					contentType.Notifications.WebHooks = undefined;
-				}
 				if (contentType.EmailSettings && contentType.EmailSettings.InheritFromParent) {
 					contentType.EmailSettings = undefined;
 				}

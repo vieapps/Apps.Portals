@@ -1,4 +1,6 @@
 import { List } from "linqts";
+import { AppUtility } from "@components/app.utility";
+import { AppFormsControlConfig } from "@components/forms.service";
 import { Base as BaseModel } from "@models/base";
 
 /** Abstract class for all portals' entity classes */
@@ -15,6 +17,9 @@ export abstract class PortalBase extends BaseModel {
 	public static get contentTypeDefinitions() {
 		return new List(this.moduleDefinitions || []).Select(definition => definition.ContentTypeDefinitions).SelectMany(definition => new List(definition)).ToArray();
 	}
+
+	/** Get the collection of all approval statuses */
+	public static approvalStatus = ["Draft", "Pending", "Rejected", "Approved", "Published", "Archieved"];
 
 	/** The title */
 	public abstract Title: string;
@@ -33,6 +38,19 @@ export abstract class PortalBase extends BaseModel {
 
 	/** The title (only ANSI characters) for working with URIs and filters */
 	public abstract ansiTitle: string;
+
+	/** Prepares the approval status control */
+	public static prepareApprovalStatusControl(controlConfig: AppFormsControlConfig, selectInterface?: string) {
+		controlConfig.Options.SelectOptions.Interface = selectInterface || "popover";
+		controlConfig.Options.SelectOptions.Values = AppUtility.isNotEmpty(controlConfig.Options.SelectOptions.Values)
+			? (AppUtility.toArray(controlConfig.Options.SelectOptions.Values) as Array<string>).map(value => {
+					return { Value: value, Label: `{{status.approval.${value}}}` };
+				})
+			: this.approvalStatus.map(value => {
+					return { Value: value, Label: `{{status.approval.${value}}}` };
+				});
+		return controlConfig;
+	}
 
 }
 
@@ -99,27 +117,34 @@ export interface SortBy {
 	ThenBy?: SortBy;
 }
 
-/** Interface of notification settings */
+/** Interfaces of notification settings */
+export interface EmailNotificationSettings {
+	ToAddresses?: string;
+	CcAddresses?: string;
+	BccAddresses?: string;
+	Subject?: string;
+	Body?: string;
+}
+
+export interface WebHookNotificationSettings {
+	EndpointURLs?: Array<string>;
+	SignAlgorithm?: string;
+	SignKey?: string;
+	SignatureName?: string;
+	SignatureAsHex?: boolean;
+	SignatureInQuery?: boolean;
+	GenerateIdentity?: boolean;
+	AdditionalQuery?: string;
+	AdditionalHeader?: string;
+}
+
 export interface NotificationSettings {
 	Events?: Array<string>;
 	Methods?: Array<string>;
-	Emails?: {
-		ToAddresses?: string;
-		CcAddresses?: string;
-		BccAddresses?: string;
-		Subject?: string;
-		Body?: string;
-	};
-	WebHooks?: {
-		EndpointURLs?: Array<string>;
-		SignAlgorithm?: string;
-		SignKey?: string;
-		SignatureName?: string;
-		SignatureAsHex?: boolean;
-		SignatureInQuery?: boolean;
-		AdditionalQuery?: string;
-		AdditionalHeader?: string;
-	};
+	Emails?: EmailNotificationSettings;
+	EmailsByApprovalStatus?: { [status: string]: EmailNotificationSettings };
+	EmailsOfSpecialWhenPublish?: EmailNotificationSettings;
+	WebHooks?: WebHookNotificationSettings;
 }
 
 /** Interface of email settings */

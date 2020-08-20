@@ -9,6 +9,7 @@ import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsServic
 import { ConfigurationService } from "@services/configuration.service";
 import { UsersService } from "@services/users.service";
 import { PortalsCoreService } from "@services/portals.core.service";
+import { PortalBase as BaseModel, EmailNotificationSettings } from "@models/portals.base";
 import { Organization } from "@models/portals.core.organization";
 import { Privileges } from "@models/privileges";
 import { UserProfile } from "@models/user";
@@ -49,6 +50,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 	private canModerateOrganization = false;
 	private organization: Organization;
 	private hash = "";
+	private emailsByApprovalStatus = {} as { [status: string]: EmailNotificationSettings };
 	private instructions = {} as {
 		[type: string]: {
 			[language: string]: {
@@ -414,12 +416,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
-		control.Options.SelectOptions.Interface = "popover";
-		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
-			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values) as Array<string>).map(value => {
-				return { Value: value, Label: `{{status.approval.${value}}}` };
-			});
-		}
+		BaseModel.prepareApprovalStatusControl(control);
 		if (!this.canModerateOrganization) {
 			control.Options.Disabled = true;
 		}
@@ -498,6 +495,9 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		}
 		searchDesktopCtrl.Extras = { LookupDisplayValues: searchDesktop !== undefined ? [{ Value: searchDesktop.ID, Label: searchDesktop.FullTitle }] : undefined };
 
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Notifications"));
+		this.portalsCoreSvc.prepareNotificationsFormControl(control, this.emailsByApprovalStatus);
+
 		const instructionControls = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Instructions")).SubControls.Controls;
 		Organization.instructionElements.forEach(type => {
 			const controls = instructionControls.find(ctrl => AppUtility.isEquals(ctrl.Name, type)).SubControls.Controls;
@@ -539,27 +539,21 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const organization = AppUtility.clone(this.organization, false);
+		const organization = AppUtility.clone(this.organization, false, ["Notifications"]);
 		organization.Privileges = Privileges.clonePrivileges(this.organization.Privileges);
 		organization.ExpiredDate = AppUtility.toIsoDate(organization.ExpiredDate);
-		organization.Notifications = organization.Notifications || {};
-		organization.Notifications.Events = organization.Notifications.Events || [];
-		organization.Notifications.Methods = organization.Notifications.Methods || [];
-		organization.Notifications.Emails = organization.Notifications.Emails || {};
-		organization.Notifications.WebHooks = organization.Notifications.WebHooks || {
-			EndpointURLs: [],
-			SignAlgorithm: "SHA256",
-			SignatureAsHex: true,
-			SignatureInQuery: false
-		};
-		organization.Notifications.WebHooks.EndpointURLs = AppUtility.toStr(organization.Notifications.WebHooks.EndpointURLs, "\n");
+
+		organization.Notifications = this.portalsCoreSvc.prepareNotificationSettings(this.organization.Notifications, false, this.emailsByApprovalStatus);
 		organization.Others = { MetaTags: organization.MetaTags, Scripts: organization.Scripts };
+
 		organization.RefreshUrls = organization.RefreshUrls || {};
 		organization.RefreshUrls.Addresses = AppUtility.toStr(organization.RefreshUrls.Addresses, "\n");
 		organization.RefreshUrls.Interval = organization.RefreshUrls.Interval || 15;
+
 		organization.RedirectUrls = organization.RedirectUrls || {};
 		organization.RedirectUrls.Addresses = AppUtility.toStr(organization.RedirectUrls.Addresses, "\n");
 		organization.RedirectUrls.AllHttp404 = organization.RedirectUrls.AllHttp404 !== undefined ? !!organization.RedirectUrls.AllHttp404 : false;
+
 		organization.EmailSettings = organization.EmailSettings || {};
 		organization.EmailSettings.Smtp = organization.EmailSettings.Smtp || { Smtp: { Port: 25, EnableSsl: false } };
 
@@ -571,9 +565,6 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			});
 		});
 
-		delete organization["MetaTags"];
-		delete organization["Scripts"];
-
 		organization.Instructions = {};
 		Organization.instructionElements.forEach(type => {
 			const instruction = this.instructions[type][this.configSvc.appConfig.language];
@@ -583,6 +574,9 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				Body: instruction.Body
 			};
 		});
+
+		delete organization["MetaTags"];
+		delete organization["Scripts"];
 
 		this.form.patchValue(organization);
 		this.hash = AppCrypto.hash(this.form.value);
@@ -604,12 +598,12 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				await this.appFormsSvc.showLoadingAsync(this.title);
 
 				organization.ExpiredDate = organization.ExpiredDate !== undefined ? AppUtility.toIsoDate(organization.ExpiredDate).replace(/\-/g, "/") : "-";
-				organization.Notifications.WebHooks.EndpointURLs = AppUtility.toArray(organization.Notifications.WebHooks.EndpointURLs, "\n").filter(value => AppUtility.isNotEmpty(value));
 				organization.MetaTags = organization.Others.MetaTags;
 				organization.Scripts = organization.Others.Scripts;
 				organization.RefreshUrls.Addresses = AppUtility.toArray(organization.RefreshUrls.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));
 				organization.RedirectUrls.Addresses = AppUtility.toArray(organization.RedirectUrls.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));
 				organization.OriginalPrivileges = Privileges.getPrivileges(organization.Privileges);
+				this.portalsCoreSvc.normalizeNotificationSettings(organization.Notifications, this.emailsByApprovalStatus);
 
 				delete organization["Others"];
 				delete organization["Privileges"];

@@ -11,6 +11,7 @@ import { AuthenticationService } from "@services/authentication.service";
 import { PortalsCoreService } from "@services/portals.core.service";
 import { PortalsCmsService } from "@services/portals.cms.service";
 import { Privileges } from "@models/privileges";
+import { EmailNotificationSettings } from "@models/portals.base";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
 import { ContentType } from "@models/portals.core.content.type";
@@ -40,6 +41,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 	private module: Module;
 	private contentType: ContentType;
 	private category: Category;
+	private emailsByApprovalStatus = {} as { [status: string]: EmailNotificationSettings };
 	private hash = "";
 
 	title = "";
@@ -215,9 +217,13 @@ export class CmsCategoriesUpdatePage implements OnInit {
 			});
 		}
 
-		const inheritEventsAndMethods = AppUtility.isNull(this.category.Notifications) || (AppUtility.isNull(this.category.Notifications.Events) && AppUtility.isNull(this.category.Notifications.Methods));
-		const inheritEmailSettings = AppUtility.isNull(this.category.Notifications) || AppUtility.isNull(this.category.Notifications.Emails);
-		const inheritWebHookSettings = AppUtility.isNull(this.category.Notifications) || AppUtility.isNull(this.category.Notifications.WebHooks);
+		const inheritStates = {
+			inheritEventsAndMethods: AppUtility.isNull(this.category.Notifications) || (AppUtility.isNull(this.category.Notifications.Events) && AppUtility.isNull(this.category.Notifications.Methods)),
+			inheritEmails: AppUtility.isNull(this.category.Notifications) || AppUtility.isNull(this.category.Notifications.Emails),
+			inheritEmailsByApprovalStatus: AppUtility.isNull(this.category.Notifications) || AppUtility.isNull(this.category.Notifications.EmailsByApprovalStatus),
+			inheritEmailsOfSpecialWhenPublish: AppUtility.isNull(this.category.Notifications) || AppUtility.isNull(this.category.Notifications.EmailsOfSpecialWhenPublish),
+			inheritWebHooks: AppUtility.isNull(this.category.Notifications) || AppUtility.isNull(this.category.Notifications.WebHooks)
+		};
 
 		formConfig.push(
 			{
@@ -229,7 +235,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 					Type: "object-privileges"
 				}
 			},
-			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, true, inheritEventsAndMethods, inheritEmailSettings, inheritWebHookSettings),
+			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, true, inheritStates),
 			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "notifications", true, AppUtility.isNull(this.category.EmailSettings))
 		);
 
@@ -283,12 +289,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		const category = AppUtility.clone(this.category, false);
 		delete category["Privileges"];
 		category.OriginalPrivileges = Privileges.clonePrivileges(this.category.OriginalPrivileges);
-		category.Notifications = category.Notifications || {};
-		category.Notifications.InheritFromParent = AppUtility.isNull(this.category.Notifications) || (AppUtility.isNull(this.category.Notifications.Events) && AppUtility.isNull(this.category.Notifications.Methods));
-		category.Notifications.Emails = category.Notifications.Emails || {};
-		category.Notifications.Emails.InheritFromParent = AppUtility.isNull(this.category.Notifications) || AppUtility.isNull(this.category.Notifications.Emails);
-		category.Notifications.WebHooks = category.Notifications.WebHooks || {};
-		category.Notifications.WebHooks.InheritFromParent = AppUtility.isNull(this.category.Notifications) || AppUtility.isNull(this.category.Notifications.WebHooks);
+		category.Notifications = this.portalsCoreSvc.prepareNotificationSettings(this.category.Notifications, true, this.emailsByApprovalStatus);
 		category.EmailSettings = category.EmailSettings || {};
 		category.EmailSettings.InheritFromParent = AppUtility.isNull(this.category.EmailSettings);
 		category.EmailSettings.Smtp = category.EmailSettings.Smtp || { Port: 25, EnableSsl: false };
@@ -309,17 +310,8 @@ export class CmsCategoriesUpdatePage implements OnInit {
 
 				const category = this.form.value;
 				category.OriginalPrivileges = Privileges.getPrivileges(category.OriginalPrivileges);
+				this.portalsCoreSvc.normalizeNotificationSettings(category.Notifications, this.emailsByApprovalStatus);
 
-				if (category.Notifications && category.Notifications.InheritFromParent) {
-					category.Notifications.Events = undefined;
-					category.Notifications.Methods = undefined;
-				}
-				if (category.Notifications && category.Notifications.Emails && category.Notifications.Emails.InheritFromParent) {
-					category.Notifications.Emails = undefined;
-				}
-				if (category.Notifications && category.Notifications.WebHooks && category.Notifications.WebHooks.InheritFromParent) {
-					category.Notifications.WebHooks = undefined;
-				}
 				if (category.EmailSettings && category.EmailSettings.InheritFromParent) {
 					category.EmailSettings = undefined;
 				}
