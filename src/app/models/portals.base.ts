@@ -143,7 +143,7 @@ export interface NotificationSettings {
 	Methods?: Array<string>;
 	Emails?: EmailNotificationSettings;
 	EmailsByApprovalStatus?: { [status: string]: EmailNotificationSettings };
-	EmailsOfSpecialWhenPublish?: EmailNotificationSettings;
+	EmailsWhenPublish?: EmailNotificationSettings;
 	WebHooks?: WebHookNotificationSettings;
 }
 

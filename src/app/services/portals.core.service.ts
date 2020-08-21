@@ -14,7 +14,7 @@ import { AuthenticationService } from "@services/authentication.service";
 import { UsersService } from "@services/users.service";
 import { AttachmentInfo } from "@models/base";
 import { Account } from "@models/account";
-import { PortalBase as BaseModel, NotificationSettings, EmailNotificationSettings, WebHookNotificationSettings } from "@models/portals.base";
+import { PortalBase as BaseModel, NotificationSettings, EmailNotificationSettings, WebHookNotificationSettings, EmailSettings } from "@models/portals.base";
 import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
 import { Organization } from "@models/portals.core.organization";
 import { Module } from "@models/portals.core.module";
@@ -537,11 +537,11 @@ export class PortalsCoreService extends BaseService {
 		} as WebHookNotificationSettings;
 	}
 
-	public getNotificationsFormControl(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true, inheritStates?: { inheritEventsAndMethods: boolean, inheritEmails: boolean, inheritEmailsByApprovalStatus: boolean, inheritEmailsOfSpecialWhenPublish: boolean, inheritWebHooks: boolean }, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	public getNotificationsFormControl(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true, inheritStates?: { inheritEventsAndMethods: boolean, inheritEmails: boolean, inheritEmailsByApprovalStatus: boolean, inheritEmailsWhenPublish: boolean, inheritWebHooks: boolean }, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const inheritEventsAndMethods = AppUtility.isNotNull(inheritStates) && AppUtility.isTrue(inheritStates.inheritEventsAndMethods);
 		const inheritEmails = AppUtility.isNotNull(inheritStates) && AppUtility.isTrue(inheritStates.inheritEmails);
 		const inheritEmailsByApprovalStatus = AppUtility.isNotNull(inheritStates) && AppUtility.isTrue(inheritStates.inheritEmailsByApprovalStatus);
-		const inheritEmailsOfSpecialWhenPublish = AppUtility.isNotNull(inheritStates) && AppUtility.isTrue(inheritStates.inheritEmailsOfSpecialWhenPublish);
+		const inheritEmailsWhenPublish = AppUtility.isNotNull(inheritStates) && AppUtility.isTrue(inheritStates.inheritEmailsWhenPublish);
 		const inheritWebHooks = AppUtility.isNotNull(inheritStates) && AppUtility.isTrue(inheritStates.inheritWebHooks);
 		const controlConfig: AppFormsControlConfig = {
 			Name: name,
@@ -621,7 +621,7 @@ export class PortalsCoreService extends BaseService {
 				allowInheritFromParent ? 1 : 0
 			);
 			controlConfig.SubControls.Controls.push(emailsByApprovalStatus);
-			controlConfig.SubControls.Controls.push(this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmailsOfSpecialWhenPublish, "EmailsOfSpecialWhenPublish", "emailsOfSpecialWhenPublish"));
+			controlConfig.SubControls.Controls.push(this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmailsWhenPublish, "EmailsWhenPublish", "emailsWhenPublish"));
 		}
 
 		if (methods === undefined || methods.indexOf("WebHook") > -1) {
@@ -657,28 +657,31 @@ export class PortalsCoreService extends BaseService {
 		return notificationsControl;
 	}
 
-	public prepareNotificationSettings(rawNotifications: NotificationSettings, allowInheritFromParent: boolean = false, emailsByApprovalStatus?: EmailNotificationSettings, onCompleted?: (notifications: any) => void) {
-		const notifications = AppUtility.clone(rawNotifications || {});
+	public getNotificationInheritStates(notificationSettings: NotificationSettings) {
+		return {
+			inheritEventsAndMethods: AppUtility.isNull(notificationSettings) || (AppUtility.isNull(notificationSettings.Events) && AppUtility.isNull(notificationSettings.Methods)),
+			inheritEmails: AppUtility.isNull(notificationSettings) || AppUtility.isNull(notificationSettings.Emails),
+			inheritEmailsByApprovalStatus: AppUtility.isNull(notificationSettings) || AppUtility.isNull(notificationSettings.EmailsByApprovalStatus),
+			inheritEmailsWhenPublish: AppUtility.isNull(notificationSettings) || AppUtility.isNull(notificationSettings.EmailsWhenPublish),
+			inheritWebHooks: AppUtility.isNull(notificationSettings) || AppUtility.isNull(notificationSettings.WebHooks)
+		};
+	}
+
+	public getNotificationSettings(notificationSettings: NotificationSettings, emailsByApprovalStatus?: EmailNotificationSettings, allowInheritFromParent: boolean = true, onCompleted?: (notifications: any) => void) {
+		const notifications = AppUtility.clone(notificationSettings || {});
 		notifications.Events = notifications.Events || [];
 		notifications.Methods = notifications.Methods || [];
 		notifications.Emails = notifications.Emails || {};
 		notifications.EmailsByApprovalStatus = notifications.EmailsByApprovalStatus || {};
-		notifications.EmailsOfSpecialWhenPublish = notifications.EmailsOfSpecialWhenPublish || {};
+		notifications.EmailsWhenPublish = notifications.EmailsWhenPublish || {};
 		notifications.WebHooks = notifications.WebHooks || this.defaultWebHookNotificationSettings;
 		notifications.WebHooks.EndpointURLs = AppUtility.toStr(notifications.WebHooks.EndpointURLs, "\n");
-		if (AppUtility.isTrue(allowInheritFromParent)) {
-			notifications["InheritFromParent"] = AppUtility.isNull(rawNotifications) || (AppUtility.isNull(rawNotifications.Events) && AppUtility.isNull(rawNotifications.Methods));
-			notifications.Emails.InheritFromParent = AppUtility.isNull(rawNotifications) || AppUtility.isNull(rawNotifications.Emails);
-			notifications.EmailsByApprovalStatus.InheritFromParent = AppUtility.isNull(rawNotifications) || AppUtility.isNull(rawNotifications.EmailsByApprovalStatus);
-			notifications.EmailsOfSpecialWhenPublish.InheritFromParent = AppUtility.isNull(rawNotifications) || AppUtility.isNull(rawNotifications.EmailsOfSpecialWhenPublish);
-			notifications.WebHooks.InheritFromParent = AppUtility.isNull(rawNotifications) || AppUtility.isNull(rawNotifications.WebHooks);
-		}
 		if (!AppUtility.isNull(emailsByApprovalStatus)) {
 			Object.keys(notifications.EmailsByApprovalStatus).forEach(s => emailsByApprovalStatus[s] = notifications.EmailsByApprovalStatus[s]);
-			const statuses = Object.keys(emailsByApprovalStatus);
 			let status  = "Published";
 			let emailNotificationSettings = emailsByApprovalStatus[status];
 			if (emailNotificationSettings === undefined) {
+				const statuses = Object.keys(emailsByApprovalStatus);
 				for (let index = 0; index < statuses.length; index++) {
 					status = statuses[index];
 					emailNotificationSettings = emailsByApprovalStatus[status];
@@ -702,6 +705,14 @@ export class PortalsCoreService extends BaseService {
 			notifications.EmailsByApprovalStatus.Body = emailNotificationSettings.Body;
 			BaseModel.approvalStatus.forEach(s => emailsByApprovalStatus[s] = notifications.EmailsByApprovalStatus[s] || this.defaultEmailNotificationSettings);
 		}
+		if (AppUtility.isTrue(allowInheritFromParent)) {
+			const inheritFromParent = AppUtility.isNull(notificationSettings);
+			notifications.InheritFromParent = inheritFromParent || (AppUtility.isNull(notificationSettings.Events) && AppUtility.isNull(notificationSettings.Methods));
+			notifications.Emails.InheritFromParent = inheritFromParent || AppUtility.isNull(notificationSettings.Emails);
+			notifications.EmailsByApprovalStatus.InheritFromParent = inheritFromParent || AppUtility.isNull(notificationSettings.EmailsByApprovalStatus);
+			notifications.EmailsWhenPublish.InheritFromParent = inheritFromParent || AppUtility.isNull(notificationSettings.EmailsWhenPublish);
+			notifications.WebHooks.InheritFromParent = inheritFromParent || AppUtility.isNull(notificationSettings.WebHooks);
+		}
 		if (onCompleted !== undefined) {
 			onCompleted(notifications);
 		}
@@ -715,31 +726,39 @@ export class PortalsCoreService extends BaseService {
 				notifications.Methods = undefined;
 			}
 			delete notifications["InheritFromParent"];
-			if (notifications.Emails && notifications.Emails.InheritFromParent) {
-				notifications.Emails = undefined;
+			if (notifications.Emails) {
+				if (notifications.Emails.InheritFromParent) {
+					notifications.Emails = undefined;
+				}
+				else {
+					delete notifications.Emails["InheritFromParent"];
+				}
 			}
-			else if (notifications.Emails) {
-				delete notifications.Emails["InheritFromParent"];
+			if (notifications.EmailsByApprovalStatus) {
+				if (notifications.EmailsByApprovalStatus.InheritFromParent) {
+					notifications.EmailsByApprovalStatus = undefined;
+				}
+				else {
+					notifications.EmailsByApprovalStatus = AppUtility.clone(emailsByApprovalStatus || {});
+					delete notifications.EmailsByApprovalStatus["InheritFromParent"];
+				}
 			}
-			if (notifications.EmailsByApprovalStatus && notifications.EmailsByApprovalStatus.InheritFromParent) {
-				notifications.EmailsByApprovalStatus = undefined;
+			if (notifications.EmailsWhenPublish) {
+				if (notifications.EmailsWhenPublish.InheritFromParent) {
+					notifications.EmailsWhenPublish = undefined;
+				}
+				else {
+					delete notifications.EmailsWhenPublish["InheritFromParent"];
+				}
 			}
-			else {
-				notifications.EmailsByApprovalStatus = AppUtility.clone(emailsByApprovalStatus || {});
-				delete notifications.EmailsByApprovalStatus["InheritFromParent"];
-			}
-			if (notifications.EmailsOfSpecialWhenPublish && notifications.EmailsOfSpecialWhenPublish.InheritFromParent) {
-				notifications.EmailsOfSpecialWhenPublish = undefined;
-			}
-			else if (notifications.EmailsOfSpecialWhenPublish) {
-				delete notifications.EmailsOfSpecialWhenPublish["InheritFromParent"];
-			}
-			if (notifications.WebHooks && notifications.WebHooks.InheritFromParent) {
-				notifications.WebHooks = undefined;
-			}
-			else if (notifications.WebHooks) {
-				notifications.WebHooks.EndpointURLs = AppUtility.toArray(notifications.WebHooks.EndpointURLs, "\n").filter(value => AppUtility.isNotEmpty(value));
-				delete notifications.WebHooks["InheritFromParent"];
+			if (notifications.WebHooks) {
+				if (notifications.WebHooks.InheritFromParent) {
+					notifications.WebHooks = undefined;
+				}
+				else {
+					notifications.WebHooks.EndpointURLs = AppUtility.toArray(notifications.WebHooks.EndpointURLs, "\n").filter(value => AppUtility.isNotEmpty(value));
+					delete notifications.WebHooks["InheritFromParent"];
+				}
 			}
 		}
 		if (onCompleted !== undefined) {
@@ -875,6 +894,28 @@ export class PortalsCoreService extends BaseService {
 			onCompleted(controlConfig);
 		}
 		return controlConfig;
+	}
+
+	public getEmailSettings(emailSettings: EmailSettings, allowInheritFromParent: boolean = true, onCompleted?: (settings: any) => void) {
+		const settings = AppUtility.clone(emailSettings || {});
+		settings.Smtp = settings.Smtp || { Smtp: { Port: 25, EnableSsl: false } };
+		if (AppUtility.isTrue(allowInheritFromParent)) {
+			settings.InheritFromParent = AppUtility.isNull(emailSettings);
+		}
+		if (onCompleted !== undefined) {
+			onCompleted(settings);
+		}
+		return settings;
+	}
+
+	public normalizeEmailSettings(settings: any, onCompleted?: (settings: any) => void) {
+		if (settings && settings.InheritFromParent) {
+			settings = undefined;
+		}
+		if (onCompleted !== undefined) {
+			onCompleted(settings);
+		}
+		return settings;
 	}
 
 	public getUploadFormControl(fileOptions: FileOptions, segment?: string, label?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {

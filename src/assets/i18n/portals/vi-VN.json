@@ -37,7 +37,7 @@
 						"label": "Thiết đặt gửi thông báo qua emails với trạng thái cụ thể",
 						"description": "Nếu được chỉ định, nội dung thông báo qua emails với trạng thái cụ thể sẽ được sử dụng cho thông báo qua emails mặc định"
 					},
-					"emailsOfSpecialWhenPublish": {
+					"emailsWhenPublish": {
 						"label": "Thiết đặt gửi thông báo qua emails khi xuất bản",
 						"description": "Nếu được chỉ định (có ít nhất 01 địa chỉ email, có đề và nội dung), thông báo qua emails này sẽ được gửi theo cách thức bổ sung thêm (so với thông báo qua emails mặc định) khi trạng thái là 'Xuất bản - Published'"
 					},

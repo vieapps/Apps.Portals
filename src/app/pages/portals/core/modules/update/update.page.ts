@@ -201,14 +201,6 @@ export class PortalsModulesUpdatePage implements OnInit {
 			}
 		};
 
-		const inheritStates = {
-			inheritEventsAndMethods: AppUtility.isNull(this.module.Notifications) || (AppUtility.isNull(this.module.Notifications.Events) && AppUtility.isNull(this.module.Notifications.Methods)),
-			inheritEmails: AppUtility.isNull(this.module.Notifications) || AppUtility.isNull(this.module.Notifications.Emails),
-			inheritEmailsByApprovalStatus: AppUtility.isNull(this.module.Notifications) || AppUtility.isNull(this.module.Notifications.EmailsByApprovalStatus),
-			inheritEmailsOfSpecialWhenPublish: AppUtility.isNull(this.module.Notifications) || AppUtility.isNull(this.module.Notifications.EmailsOfSpecialWhenPublish),
-			inheritWebHooks: AppUtility.isNull(this.module.Notifications) || AppUtility.isNull(this.module.Notifications.WebHooks)
-		};
-
 		formConfig.push(
 			{
 				Name: "OriginalPrivileges",
@@ -219,7 +211,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 					Type: "object-privileges"
 				}
 			},
-			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, true, inheritStates),
+			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, true, this.portalsCoreSvc.getNotificationInheritStates(this.module.Notifications)),
 			{
 				Name: "Trackings",
 				Segment: "emails",
@@ -283,13 +275,11 @@ export class PortalsModulesUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const module = AppUtility.clone(this.module, false);
+		const module = AppUtility.clone(this.module, false, ["Notifications", "EmailSettings"]);
 		delete module["Privileges"];
 		module.OriginalPrivileges = Privileges.clonePrivileges(this.module.OriginalPrivileges);
-		module.Notifications = this.portalsCoreSvc.prepareNotificationSettings(this.module.Notifications, true, this.emailsByApprovalStatus);
-		module.EmailSettings = module.EmailSettings || {};
-		module.EmailSettings.InheritFromParent = AppUtility.isNull(this.module.EmailSettings);
-		module.EmailSettings.Smtp = module.EmailSettings.Smtp || { Port: 25, EnableSsl: false };
+		module.Notifications = this.portalsCoreSvc.getNotificationSettings(this.module.Notifications, this.emailsByApprovalStatus);
+		module.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.module.EmailSettings);
 
 		this.form.patchValue(module);
 		this.hash = AppCrypto.hash(this.form.value);
@@ -315,9 +305,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 				const module = this.form.value;
 				module.OriginalPrivileges = Privileges.getPrivileges(module.OriginalPrivileges);
 				this.portalsCoreSvc.normalizeNotificationSettings(module.Notifications, this.emailsByApprovalStatus);
-				if (module.EmailSettings && module.EmailSettings.InheritFromParent) {
-					module.EmailSettings = undefined;
-				}
+				this.portalsCoreSvc.normalizeEmailSettings(module.EmailSettings);
 
 				if (AppUtility.isNotEmpty(module.ID)) {
 					await this.portalsCoreSvc.updateModuleAsync(

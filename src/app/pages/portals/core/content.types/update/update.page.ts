@@ -305,14 +305,6 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 			});
 		}
 
-		const inheritStates = {
-			inheritEventsAndMethods: AppUtility.isNull(this.contentType.Notifications) || (AppUtility.isNull(this.contentType.Notifications.Events) && AppUtility.isNull(this.contentType.Notifications.Methods)),
-			inheritEmails: AppUtility.isNull(this.contentType.Notifications) || AppUtility.isNull(this.contentType.Notifications.Emails),
-			inheritEmailsByApprovalStatus: AppUtility.isNull(this.contentType.Notifications) || AppUtility.isNull(this.contentType.Notifications.EmailsByApprovalStatus),
-			inheritEmailsOfSpecialWhenPublish: AppUtility.isNull(this.contentType.Notifications) || AppUtility.isNull(this.contentType.Notifications.EmailsOfSpecialWhenPublish),
-			inheritWebHooks: AppUtility.isNull(this.contentType.Notifications) || AppUtility.isNull(this.contentType.Notifications.WebHooks)
-		};
-
 		formConfig.push(
 			{
 				Name: "OriginalPrivileges",
@@ -323,7 +315,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 					Type: "object-privileges"
 				}
 			},
-			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, true, inheritStates),
+			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, true, this.portalsCoreSvc.getNotificationInheritStates(this.contentType.Notifications)),
 			{
 				Name: "Trackings",
 				Segment: "emails",
@@ -421,14 +413,12 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const contentType = AppUtility.clone(this.contentType, false, ["ExtendedPropertyDefinitions", "ExtendedControlDefinitions", "StandardControlDefinitions"]);
+		const contentType = AppUtility.clone(this.contentType, false, ["ExtendedPropertyDefinitions", "ExtendedControlDefinitions", "StandardControlDefinitions", "Notifications", "EmailSettings"]);
 		delete contentType["Privileges"];
 
 		contentType.OriginalPrivileges = Privileges.clonePrivileges(this.contentType.OriginalPrivileges);
-		contentType.Notifications = this.portalsCoreSvc.prepareNotificationSettings(this.contentType.Notifications, true, this.emailsByApprovalStatus);
-		contentType.EmailSettings = contentType.EmailSettings || {};
-		contentType.EmailSettings.InheritFromParent = AppUtility.isNull(this.contentType.EmailSettings);
-		contentType.EmailSettings.Smtp = contentType.EmailSettings.Smtp || { Port: 25, EnableSsl: false };
+		contentType.Notifications = this.portalsCoreSvc.getNotificationSettings(this.contentType.Notifications, this.emailsByApprovalStatus);
+		contentType.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.contentType.EmailSettings);
 		if (this.extendable) {
 			contentType.ExtendedPropertyDefinitions = AppUtility.isArray(this.contentType.ExtendedPropertyDefinitions, true) ? JSON.stringify(this.contentType.ExtendedPropertyDefinitions) : undefined;
 			contentType.ExtendedControlDefinitions = AppUtility.isArray(this.contentType.ExtendedControlDefinitions, true) ? JSON.stringify(this.contentType.ExtendedControlDefinitions) : undefined;
@@ -466,10 +456,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 				const contentType = this.form.value;
 				contentType.OriginalPrivileges = Privileges.getPrivileges(contentType.OriginalPrivileges);
 				this.portalsCoreSvc.normalizeNotificationSettings(contentType.Notifications, this.emailsByApprovalStatus);
-
-				if (contentType.EmailSettings && contentType.EmailSettings.InheritFromParent) {
-					contentType.EmailSettings = undefined;
-				}
+				this.portalsCoreSvc.normalizeEmailSettings(contentType.EmailSettings);
 
 				if (this.extendable && this.isAdvancedMode) {
 					if (AppUtility.isNotEmpty(contentType.ExtendedPropertyDefinitions)) {

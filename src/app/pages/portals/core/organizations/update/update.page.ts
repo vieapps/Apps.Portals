@@ -539,11 +539,12 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const organization = AppUtility.clone(this.organization, false, ["Notifications"]);
+		const organization = AppUtility.clone(this.organization, false, ["Notifications", "EmailSettings"]);
 		organization.Privileges = Privileges.clonePrivileges(this.organization.Privileges);
 		organization.ExpiredDate = AppUtility.toIsoDate(organization.ExpiredDate);
 
-		organization.Notifications = this.portalsCoreSvc.prepareNotificationSettings(this.organization.Notifications, false, this.emailsByApprovalStatus);
+		organization.Notifications = this.portalsCoreSvc.getNotificationSettings(this.organization.Notifications, this.emailsByApprovalStatus, false);
+		organization.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.organization.EmailSettings, false);
 		organization.Others = { MetaTags: organization.MetaTags, Scripts: organization.Scripts };
 
 		organization.RefreshUrls = organization.RefreshUrls || {};
@@ -553,9 +554,6 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		organization.RedirectUrls = organization.RedirectUrls || {};
 		organization.RedirectUrls.Addresses = AppUtility.toStr(organization.RedirectUrls.Addresses, "\n");
 		organization.RedirectUrls.AllHttp404 = organization.RedirectUrls.AllHttp404 !== undefined ? !!organization.RedirectUrls.AllHttp404 : false;
-
-		organization.EmailSettings = organization.EmailSettings || {};
-		organization.EmailSettings.Smtp = organization.EmailSettings.Smtp || { Smtp: { Port: 25, EnableSsl: false } };
 
 		this.instructions = organization.Instructions || {};
 		Organization.instructionElements.forEach(type => {
