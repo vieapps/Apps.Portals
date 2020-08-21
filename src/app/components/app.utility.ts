@@ -427,16 +427,23 @@ export class AppUtility {
 	}
 
 	/** Parses the mustache-style (double braces) template to get the collection of params */
-	public static parse(template: string, noBraces?: boolean) {
-		const params = template.match(/{{([^{}]*)}}/g);
-		return this.isTrue(noBraces)
-			? params.map(param => param.match(/[\w\.]+/)[0])
-			: params;
+	public static parse(template: string) {
+		return template.match(/{{([^{}]*)}}/g).map(param => {
+			return {
+				token: param,
+				name: param.match(/[\w\.]+/)[0]
+			};
+		});
 	}
 
 	/** Formats the mustache-style (double braces) template with params */
 	public static format(template: string, params: { [key: string]: any }) {
-		return template.replace(/{{([^{}]*)}}/g, (str, param) => (params[param.trim()] || "").toString());
+		const tokenParams = this.parse(template);
+		Object.keys(params).forEach(key => {
+			const value = (params[key] || "").toString() as string;
+			tokenParams.filter(param => param.name === key).forEach(param => template = template.replace(this.toRegExp(`/${param.token}/g`), value));
+		});
+		return template;
 	}
 
 	/** Gets the values as an array from a set */
