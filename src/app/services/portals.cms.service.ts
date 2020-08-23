@@ -41,7 +41,7 @@ export class PortalsCmsService extends BaseService {
 		this.initializeAsync();
 	}
 
-	private oembedProviders: Array<{ name: string; urlPatterns: RegExp[], idPattern: { regex: RegExp; position: number }, html: string; }>;
+	private oembedProviders: Array<{ name: string; schemes: RegExp[], pattern: { expression: RegExp; position: number; html: string } }>;
 
 	private initialize() {
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Category", message => this.processCategoryUpdateMessage(message));
@@ -61,16 +61,16 @@ export class PortalsCmsService extends BaseService {
 
 	public async initializeAsync() {
 		if (this.oembedProviders === undefined) {
-			const oembedProviders = await AppXHR.makeRequest("GET", this.configSvc.appConfig.URIs.apis + "statics/oembed.providers.json").toPromise() as Array<any>;
-			this.oembedProviders = oembedProviders.map(provider => {
+			const oembedProviders = await AppXHR.makeRequest("GET", this.configSvc.appConfig.URIs.apis + "statics/oembed.providers.json").toPromise() as Array<{ name: string; schemes: string[], pattern: { expression: string; position: number; html: string } }>;
+			this.oembedProviders = oembedProviders.map(oembedProvider => {
 				return {
-					name: provider.name,
-					urlPatterns: (provider.schemes as Array<string>).map(scheme => new RegExp(scheme.replace(/\*/g, "(.*)"), "i")),
-					idPattern: {
-						regex: AppUtility.toRegExp(provider.pattern.app.regex),
-						position: provider.pattern.app.position as number
-					},
-					html: provider.html
+					name: oembedProvider.name,
+					schemes: oembedProvider.schemes.map(scheme => AppUtility.toRegExp(`/${scheme}/i`)),
+					pattern: {
+						expression: AppUtility.toRegExp(`/${oembedProvider.pattern.expression}/i`),
+						position: oembedProvider.pattern.position,
+						html: oembedProvider.pattern.html
+					}
 				};
 			});
 			if (this.configSvc.isDebug) {
@@ -111,16 +111,14 @@ export class PortalsCmsService extends BaseService {
 					const urlStart = AppUtility.indexOf(media, "url=") + 5;
 					const urlEnd = AppUtility.indexOf(media, "\"", urlStart + 1);
 					const url = media.substr(urlStart, urlEnd - urlStart);
-					const oembedProvider = this.oembedProviders.find(provider => provider.urlPatterns.some(pattern => url.match(pattern)));
+					const oembedProvider = this.oembedProviders.find(provider => provider.schemes.some(regex => url.match(regex)));
 					if (oembedProvider !== undefined) {
-						const match = url.match(oembedProvider.idPattern.regex);
-						const mediaID = AppUtility.isArray(match, true) && match.length > oembedProvider.idPattern.position ? match[oembedProvider.idPattern.position] : undefined;
-						media = AppUtility.format(oembedProvider.html, { id: mediaID });
+						const match = url.match(oembedProvider.pattern.expression);
+						const mediaID = AppUtility.isArray(match, true) && match.length > oembedProvider.pattern.position ? match[oembedProvider.pattern.position] : undefined;
+						media = AppUtility.format(oembedProvider.pattern.html, { id: mediaID });
 					}
 					else {
-						media = url.endsWith(".mp3")
-							? AppUtility.format("<audio width=\"560\" height=\"32\" controls autoplay muted><source src=\"{{url}}\"/></audio>", { url: url })
-							: AppUtility.format("<video width=\"560\" height=\"315\" controls autoplay muted><source src=\"{{url}}\"/></video>", { url: url });
+						media = AppUtility.format(url.endsWith(".mp3") ? "<audio width=\"560\" height=\"32\" controls autoplay muted><source src=\"{{url}}\"/></audio>" : "<video width=\"560\" height=\"315\" controls autoplay muted><source src=\"{{url}}\"/></video>", { url: url });
 					}
 					html = html.substr(0, start) + media + html.substr(end);
 				}
