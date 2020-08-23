@@ -114,11 +114,12 @@ export class PortalsCmsService extends BaseService {
 					const oembedProvider = this.oembedProviders.find(provider => provider.schemes.some(regex => url.match(regex)));
 					if (oembedProvider !== undefined) {
 						const match = url.match(oembedProvider.pattern.expression);
-						const mediaID = AppUtility.isArray(match, true) && match.length > oembedProvider.pattern.position ? match[oembedProvider.pattern.position] : undefined;
-						media = AppUtility.format(oembedProvider.pattern.html, { id: mediaID });
+						media = AppUtility.format(oembedProvider.pattern.html, { id: match.length > oembedProvider.pattern.position ? match[oembedProvider.pattern.position] : undefined });
 					}
 					else {
-						media = AppUtility.format(url.endsWith(".mp3") ? "<audio width=\"560\" height=\"32\" controls autoplay muted><source src=\"{{url}}\"/></audio>" : "<video width=\"560\" height=\"315\" controls autoplay muted><source src=\"{{url}}\"/></video>", { url: url });
+						const tag = url.endsWith(".mp3") ? "audio" : "video";
+						const height = url.endsWith(".mp3") ? "32" : "315";
+						media = AppUtility.format(`<${tag} width=\"560\" height=\"${height}\" controls autoplay muted><source src=\"{{url}}\"/></${tag}>`, { url: url });
 					}
 					html = html.substr(0, start) + media + html.substr(end);
 				}
