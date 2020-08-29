@@ -15,7 +15,7 @@ import { UsersService } from "@services/users.service";
 export class UsersOtpPage implements OnInit {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private usersSvc: UsersService
 	) {
@@ -55,6 +55,10 @@ export class UsersOtpPage implements OnInit {
 	};
 
 	@ViewChild(IonInput, { static: false }) private otpCtrl: IonInput;
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	get locale() {
 		return this.configSvc.locale;

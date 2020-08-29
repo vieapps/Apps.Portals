@@ -16,7 +16,7 @@ import { UsersService } from "@services/users.service";
 export class UsersRegisterPage implements OnInit {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
 		private usersSvc: UsersService
@@ -33,6 +33,10 @@ export class UsersRegisterPage implements OnInit {
 			icon: undefined as string
 		}
 	};
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	ngOnInit() {
 		this.prepareAsync();

@@ -17,7 +17,7 @@ import { AuthenticationService } from "@services/authentication.service";
 export class UsersLogInPage implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService
 	) {
@@ -61,6 +61,18 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 			icon: "key"
 		}
 	};
+
+	get color() {
+		return this.configSvc.color;
+	}
+
+	get registrable() {
+		return this.configSvc.appConfig.accountRegistrations.registrable;
+	}
+
+	get screenWidth() {
+		return this.configSvc.screenWidth;
+	}
 
 	ngOnInit() {
 		this.openLoginAsync();

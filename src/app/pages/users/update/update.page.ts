@@ -22,7 +22,7 @@ import { Privilege } from "@models/privileges";
 export class UsersUpdatePage implements OnInit {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
 		private usersSvc: UsersService
@@ -69,6 +69,10 @@ export class UsersUpdatePage implements OnInit {
 		privileges: {} as { [key: string]: Array<Privilege> },
 		hash: ""
 	};
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	ngOnInit() {
 		this.prepareAsync();

@@ -14,7 +14,7 @@ import { ImageCropperControl } from "@controls/common/image.cropper";
 export class UsersAvatarPage implements OnInit {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private filesSvc: FilesService
 	) {
@@ -36,6 +36,10 @@ export class UsersAvatarPage implements OnInit {
 	imageCropperSettings = { currentImage: undefined };
 
 	@ViewChild(ImageCropperControl, { static: true }) private imageCropper: ImageCropperControl;
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	ngOnInit() {
 		this.imageCropperSettings.currentImage = AppUtility.isNotEmpty(this.avatarURI) ? this.avatarURI : undefined;
