@@ -165,7 +165,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the URI for activating new account/password */
 	public get activateURI() {
-		return AppCrypto.urlEncode(PlatformUtility.getRedirectURI("prego=activate&mode={{mode}}&code={{code}}", false));
+		return AppCrypto.urlEncode(PlatformUtility.getRedirectURI("home?prego=activate&mode={{mode}}&code={{code}}", false));
 	}
 
 	/** Sets the app title (means title of the browser) */
@@ -229,12 +229,13 @@ export class ConfigurationService extends BaseService {
 
 		if (isNativeApp) {
 			this.appConfig.app.platform = this.device.platform;
+			this.appConfig.url.host = "global";
+			this.appConfig.url.base = "";
 			this.appConfig.session.device = this.device.uuid + "@" + this.appConfig.app.id;
-			this.appConfig.url.base = "/";
 		}
 
 		else {
-			this.appConfig.app.platform = PlatformUtility.getAppPlatform() + " " + this.appConfig.app.mode;
+			this.appConfig.app.platform = `${PlatformUtility.getAppPlatform()} ${this.appConfig.app.mode}`;
 			this.appConfig.url.host = PlatformUtility.getHost();
 			this.appConfig.url.base = this.platformLocation.getBaseHrefFromDOM();
 		}
@@ -243,7 +244,7 @@ export class ConfigurationService extends BaseService {
 			if (isNativeApp) {
 				this.appVersion.getVersionCode()
 					.then(version => this.appConfig.app.version = isNativeApp && !this.isRunningOnIOS ? (version + "").replace(/0/g, ".") : version + "")
-					.catch(error => console.error(super.getErrorMessage("Error occurred while preparing app version", error)));
+					.catch(error => console.error(super.getErrorMessage("Error occurred while preparing the app version", error)));
 				PlatformUtility.setInAppBrowser(this.inappBrowser);
 				PlatformUtility.setClipboard(this.clipboard);
 				if (!this.isRunningOnIOS) {
@@ -261,6 +262,9 @@ export class ConfigurationService extends BaseService {
 			AppEvents.initializeElectronService(this.electronSvc);
 			PlatformUtility.setElectronService(this.electronSvc);
 			this.appConfig.app.shell = "Electron";
+			this.appConfig.app.platform = `${this.appConfig.app.os} ${this.appConfig.app.platform}`;
+			this.appConfig.url.host = "global";
+			this.appConfig.url.base = "";
 			this.electronSvc.ipcRenderer.on("electron.ipc2app", ($event: any, $info: any) => {
 				$info = $info || {};
 				if (AppUtility.isNotEmpty($info.event)) {
