@@ -1,5 +1,5 @@
 <ion-header>
-	<ion-toolbar [color]="configSvc.color">
+	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
 			<ion-menu-button></ion-menu-button>
 		</ion-buttons>
@@ -9,6 +9,22 @@
 	</ion-toolbar>
 </ion-header>
 
-<ion-content [color]="configSvc.color">
-
+<ion-content [color]="color">
+	<div *ngIf="appShell==='Browser'" class="downloads ion-text-center">
+		<h2>Desktop apps</h2>
+		<div>
+			<a href="{{downloadURLs.Windows}}">
+				<ion-icon name="logo-windows" slot="start"></ion-icon>
+				Windows x64
+			</a>
+			<a href="{{downloadURLs.Linux}}">
+				<ion-icon name="logo-tux" slot="start"></ion-icon>
+				Linux x64
+			</a>
+			<a href="{{downloadURLs.macOS}}">
+				<ion-icon name="logo-apple" slot="start"></ion-icon>
+				macOS x64
+			</a>
+		</div>
+	</div>
 </ion-content>

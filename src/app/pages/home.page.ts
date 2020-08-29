@@ -12,13 +12,25 @@ import { ConfigurationService } from "@services/configuration.service";
 export class HomePage implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService
+		private configSvc: ConfigurationService
 	) {
 	}
 
 	title = "Home";
 	titleResource = "common.sidebar.home";
 	changes: any;
+
+	get color() {
+		return this.configSvc.color;
+	}
+
+	get appShell() {
+		return this.configSvc.appConfig.app.shell;
+	}
+
+	get downloadURLs() {
+		return this.configSvc.appConfig.downloadURLs;
+	}
 
 	ngOnInit() {
 		if (this.configSvc.isReady) {
