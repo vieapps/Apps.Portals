@@ -21,7 +21,7 @@ export class AppConfig {
 		/** Portals HTTP service */
 		portals: "https://portals.vieapps.com/",
 
-		/** URI to perform activation (on the web) */
+		/** CMS Portals app URI to perform activation (on the web) */
 		activations: "https://cms.vieapps.com/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
@@ -30,14 +30,14 @@ export class AppConfig {
 
 	/** Information of the app */
 	public static app = {
-		id: "vieapps-ngx-portals",
 		name: "VIEApps NGX Portals",
 		description: "Manage information and related services of CMS Portals",
-		version: "1.0.0",
 		copyright: "© 2020 VIEApps.net",
 		license: "Apache-2.0 license",
 		homepage: "https://vieapps.net",
-		frameworks: "ionic 5.2 - angular 8.2 - cordova 9.0",
+		id: "vieapps-ngx-portals",
+		version: "1.0.0",
+		frameworks: "ionic 5.3 - angular 8.2 - cordova 10.0",
 		mode: "",
 		platform: "",
 		os: "",
@@ -149,6 +149,16 @@ export class AppConfig {
 			current: undefined as string
 		}
 	};
+
+	/** URLs for downloading desktop apps */
+	public static get downloadURLs() {
+		const baseURL = `${this.URIs.activations}releases/${this.app.name.replace(/\s/g, "%20")}`;
+		return {
+			Windows: `${baseURL}%20Setup%201.0.0.exe`,
+			Linux: `${baseURL}-1.0.0.AppImage`,
+			macOS: `${baseURL}-1.0.0.dmg`
+		};
+	}
 
 	/** Tracking information */
 	public static tracking = {

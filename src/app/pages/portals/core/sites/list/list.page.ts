@@ -144,7 +144,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<Sites>: show the list", this.organization, this.configSvc.requestParams, this.filterBy, this.sortBy);
+			console.log("<Portals>: show the listing of sites", this.filterBy, this.sortBy, this.configSvc.requestParams);
 		}
 	}
 

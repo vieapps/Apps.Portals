@@ -30,6 +30,11 @@
 						"placeholder": "",
 						"description": ""
 					},
+					"OrderIndex": {
+						"label": "Thứ tự hiển thị",
+						"placeholder": "",
+						"description": ""
+					},
 					"Title": {
 						"label": "Tên chuyên mục",
 						"placeholder": "",
@@ -268,6 +273,11 @@
 				"controls": {
 					"ParentID": {
 						"label": "Liên kết cấp trên",
+						"placeholder": "",
+						"description": ""
+					},
+					"OrderIndex": {
+						"label": "Thứ tự hiển thị",
 						"placeholder": "",
 						"description": ""
 					},

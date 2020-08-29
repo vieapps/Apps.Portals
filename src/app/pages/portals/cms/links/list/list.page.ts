@@ -223,7 +223,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<Links>: show the list", this.organization, this.module, this.contentType, this.filterBy, this.sortBy, this.configSvc.requestParams);
+			console.log("<CMS>: show the links", this.filterBy, this.sortBy, this.configSvc.requestParams);
 		}
 	}
 
@@ -249,7 +249,10 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	}
 
 	private prepareLinks() {
-		this.links = new List(this.parentLink.Children).OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
+		this.links = new List(this.parentLink.Children).OrderBy(o => o.OrderIndex).ThenBy(o => o.Title).ToArray();
+		if (this.configSvc.isDebug) {
+			console.log("<CMS>: the child links", this.links);
+		}
 	}
 
 	track(index: number, link: Link) {
@@ -347,13 +350,16 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		else {
 			let objects = new List(results === undefined ? Link.all : results.map(o => Link.get(o.ID) || Link.deserialize(o, Link.get(o.ID))));
 			objects = objects.Where(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID);
-			objects = objects.OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title);
+			objects = objects.OrderBy(o => o.OrderIndex).ThenBy(o => o.Title);
 			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
 			this.links = results === undefined
 				? objects.ToArray()
 				: this.links.concat(objects.ToArray());
+		}
+		if (this.configSvc.isDebug) {
+			console.log("<CMS>: the links", this.links);
 		}
 		if (onNext !== undefined) {
 			onNext();

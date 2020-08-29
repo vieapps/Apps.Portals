@@ -4,6 +4,7 @@
 	"author": "VIEApps.net",
 	"homepage": "https://vieapps.net/",
 	"description": "Manage information and related services of CMS Portals",
+	"private": true,
 	"scripts": {
 		"ng": "ng",
 		"start": "ng serve",
@@ -12,7 +13,6 @@
 		"lint": "ng lint",
 		"e2e": "ng e2e"
 	},
-	"private": true,
 	"dependencies": {
 		"@angular/common": "^8.2.14",
 		"@angular/core": "^8.2.14",
