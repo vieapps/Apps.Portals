@@ -182,7 +182,7 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
-		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.link", undefined, { "x-content-type": this.link.RepositoryEntityID });
+		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.link", undefined, { "x-content-type-id": this.link.RepositoryEntityID });
 		formConfig.push(
 			this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments"),
 			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label")),

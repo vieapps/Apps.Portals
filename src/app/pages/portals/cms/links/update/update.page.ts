@@ -141,7 +141,7 @@ export class CmsLinksUpdatePage implements OnInit {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
-		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.link", undefined, { "x-content-type": this.contentType.ID });
+		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.link", undefined, { "x-content-type-id": this.contentType.ID });
 
 		let parentLink = this.link.Parent;
 		if (parentLink === undefined && AppUtility.isNotEmpty(this.link.ParentID)) {
