@@ -119,6 +119,7 @@
 	},
 	"status": {
 		"approval": {
+			"label": "Approval status",
 			"Draft": "Draft",
 			"Pending": "Pending",
 			"Rejected": "Rejected",
@@ -128,11 +129,10 @@
 		}
 	},
 	"events": {
+		"label": "Events",
 		"Create": "Create",
 		"Update": "Update",
-		"Delete": "Delete",
-		"Register": "Register",
-		"Request": "Request"
+		"Delete": "Delete"
 	},
 	"files": {
 		"thumbnails": {

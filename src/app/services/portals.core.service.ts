@@ -557,7 +557,7 @@ export class PortalsCoreService extends BaseService {
 							SelectOptions: {
 								Multiple: true,
 								AsBoxes: true,
-								Values: (events || ["Create", "Update", "Delete", "Register", "Request"]).map(value => {
+								Values: (events || ["Create", "Update", "Delete"]).map(value => {
 									return {
 										Value: value,
 										Label: `{{events.${value}}}`

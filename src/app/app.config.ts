@@ -154,9 +154,9 @@ export class AppConfig {
 	public static get downloadURLs() {
 		const baseURL = `${this.URIs.activations}releases/${this.app.name.replace(/\s/g, "%20")}`;
 		return {
-			Windows: `${baseURL}%20Setup%201.0.0.exe`,
-			Linux: `${baseURL}-1.0.0.AppImage`,
-			macOS: `${baseURL}-1.0.0.dmg`
+			Windows: `${baseURL}%20Setup%20${this.app.version}.exe`,
+			Linux: `${baseURL}-${this.app.version}.AppImage`,
+			macOS: `${baseURL}-${this.app.version}.dmg`
 		};
 	}
 

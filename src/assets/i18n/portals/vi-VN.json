@@ -30,7 +30,7 @@
 						},
 						"body": {
 							"label": "Nội dung email thông báo",
-							"description": "Nội dung email thông báo có thể nhập các mã HTML, hệ thống sẽ tự động thêm các thẻ '<b>&lt;br/&gt;</b>' khi xuống dòng.<br/><u>Chú ý</u>: có thể được sử dụng các tokens 'bộ râu' (brace tokens) trong tiêu đề và nội dung của email để điền các dữ liệu, vd: {global.Host} để lấy ra tên domain.<br/>Có 2 đối tượng dữ liệu chính là '<b>global</b>' là đối tượng thông tin meta, '<b>current</b>' là đối tượng thông tin trong ngữ cảnh thao tác.<br/>Vui lòng tham khảo tài liệu hướng dẫn để tìm hiểu chi tiết các đối tượng dữ liệu."
+							"description": "Nội dung email thông báo có thể nhập các mã HTML, hệ thống sẽ tự động thêm các thẻ '<b>&lt;br/&gt;</b>' khi xuống dòng.<br/><u>Chú ý</u>: có thể được sử dụng các tokens 'bộ râu' (brace tokens) trong tiêu đề và nội dung của email để điền các dữ liệu, vd: <b>{{</b>@current(Title)<b>}}</b> để lấy ra tiêu đề của dữ liệu hiện tại.<br/>Có 3 đối tượng dữ liệu chính là '<b>@request</b>' là đối tượng thông tin yêu cầu, '<b>@current</b>' là đối tượng thông tin trong ngữ cảnh thao tác, '<b>@params</b>' là đối tượng thông tin bổ sung (Organization, Site, ...).<br/>Vui lòng tham khảo tài liệu hướng dẫn để tìm hiểu chi tiết các đối tượng dữ liệu."
 						}
 					},
 					"emailsByApprovalStatus": {
@@ -46,7 +46,7 @@
 						"label": "Thiết đặt gửi thông báo qua webhooks",
 						"endpointURLs": {
 							"label": "Địa chỉ nhận web-hooks",
-							"placeholder": "vd: https://webhooks.vieapps.net/",
+							"placeholder": "vd: https://apis.vieapps.net/webhooks",
 							"description": "Các địa chỉ web nhận thông báo webhooks, mỗi một địa chỉ trên một dòng, phải bắt đầu bằng http:// hoặc https://"
 						},
 						"signAlgorithm": {
@@ -285,7 +285,7 @@
 					"description": ""
 				},
 				"Instructions": {
-					"description": "Nội dung thông điệp có thể nhập các mã HTML, hệ thống sẽ tự động thêm các thẻ '<b>&lt;br/&gt;</b>' khi xuống dòng.<br/><u>Chú ý</u>: có thể được sử dụng các tokens 'bộ râu' (brace tokens) trong tiêu đề và nội dung của email để điền các dữ liệu, vd: {global.Host} để lấy ra tên domain.<br/>Có 2 đối tượng dữ liệu chính là '<b>global</b>' là đối tượng thông tin meta, '<b>current</b>' là đối tượng thông tin trong ngữ cảnh thao tác.<br/>Vui lòng tham khảo tài liệu hướng dẫn để tìm hiểu chi tiết các đối tượng dữ liệu.",
+					"description": "Nội dung thông điệp có thể nhập các mã HTML, hệ thống sẽ tự động thêm các thẻ '<b>&lt;br/&gt;</b>' khi xuống dòng.<br/><u>Chú ý</u>: có thể được sử dụng các tokens 'bộ râu' (brace tokens) trong tiêu đề và nội dung của email để điền các dữ liệu, vd: <b>{{</b>@current(Title)<b>}}</b> để lấy ra tiêu đề của dữ liệu hiện tại.<br/>Có 3 đối tượng dữ liệu chính là '<b>@request</b>' là đối tượng thông tin yêu cầu, '<b>@current</b>' là đối tượng thông tin trong ngữ cảnh thao tác, '<b>@params</b>' là đối tượng thông tin bổ sung (Organization, Site, ...).<br/>Vui lòng tham khảo tài liệu hướng dẫn để tìm hiểu chi tiết các đối tượng dữ liệu.",
 					"language": "Ngôn ngữ",
 					"Activate": {
 						"label": "Thông điệp kích hoạt tài khoản mới",
