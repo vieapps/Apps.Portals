@@ -308,7 +308,14 @@ export class AppRTU {
 			}
 
 			// prepare
-			const json = JSON.parse(event.data || "{}");
+			let json: any;
+			try {
+				json = JSON.parse(event.data || "{}");
+			}
+			catch (error) {
+				console.error("[AppRTU]: Error occurred while parsing JSON data", error, event);
+				json = {};
+			}
 			const successCallback = AppUtility.isNotEmpty(json.ID) ? this._requests.successCallbacks[json.ID] : undefined;
 			const errorCallback = AppUtility.isNotEmpty(json.ID) ? this._requests.errorCallbacks[json.ID] : undefined;
 

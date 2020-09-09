@@ -110,6 +110,10 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 				}
 			}, "Desktop:Refresh");
 		}
+
+		if (AppUtility.isNotEmpty(this.desktop.ID) && this.desktop.childrenIDs === undefined) {
+			this.portalsCoreSvc.getDesktopAsync(this.desktop.ID, data => console.warn("Use XHR to re-fetch data of the desktop successful", data), undefined, true);
+		}
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {

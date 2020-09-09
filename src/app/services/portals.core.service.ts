@@ -175,14 +175,19 @@ export class PortalsCoreService extends BaseService {
 				if (Organization.active === undefined) {
 					await this.getOrganizationAsync(preferID, _ => {
 						Organization.active = Organization.get(preferID);
+						this.configSvc.appConfig.services.activeID = Organization.active.ID;
 						if (Organization.active !== undefined && !useXHR) {
 							AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
 						}
 					}, undefined, useXHR);
 				}
+				else {
+					this.configSvc.appConfig.services.activeID = Organization.active.ID;
+				}
 			}
 			else if (Organization.instances.size() > 0) {
 				Organization.active = Organization.all[0];
+				this.configSvc.appConfig.services.activeID = Organization.active.ID;
 			}
 			if (Organization.active !== undefined) {
 				AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
@@ -195,8 +200,12 @@ export class PortalsCoreService extends BaseService {
 		if (AppUtility.isNotEmpty(organizationID) && Organization.contains(organizationID) && (Organization.active === undefined || Organization.active.ID !== organizationID)) {
 			Organization.active = Organization.get(organizationID);
 			this.configSvc.appConfig.options.extras["organization"] = Organization.active.ID;
+			this.configSvc.appConfig.services.activeID = Organization.active.ID;
 			await this.configSvc.storeOptionsAsync();
 			AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
+		}
+		else if (Organization.active !== undefined) {
+			this.configSvc.appConfig.services.activeID = Organization.active.ID;
 		}
 		if (onNext !== undefined) {
 			onNext();
@@ -366,7 +375,27 @@ export class PortalsCoreService extends BaseService {
 						Options: {
 							Label: "{{portals.common.controls.notifications.emails.body.label}}",
 							Description: "{{portals.common.controls.notifications.emails.body.description}}",
-							Rows: 10
+							Rows: 10,
+							Icon: {
+								Name: "color-wand",
+								OnClick: async (_, formControl) => await this.configSvc.getInstructionsAsync("portals", this.configSvc.appConfig.language, data => {
+									const controls = (formControl as AppFormsControlComponent).formGroup.controls;
+									let subject = controls.Status !== undefined
+										? data.notifications.emailByApprovalStatus[controls.Status.value].subject
+										: data.notifications.email.subject;
+									if (!AppUtility.isNotEmpty(subject)) {
+										subject = data.notifications.email.subject;
+									}
+									let body = controls.Status !== undefined
+										? data.notifications.emailByApprovalStatus[controls.Status.value].body
+										: data.notifications.email.body;
+									if (!AppUtility.isNotEmpty(body)) {
+										body = data.notifications.email.body;
+									}
+									controls.Subject.setValue(subject);
+									controls.Body.setValue(body);
+								})
+							}
 						}
 					}
 				]

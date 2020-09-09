@@ -1,6 +1,6 @@
 {
   "appId": "net.vieapps.portals",
-  "appName": "VIEApps NGX Portals",
+  "appName": "VIEApps NGX CMS Portals",
   "bundledWebRuntime": false,
   "npmClient": "npm",
   "webDir": "www",

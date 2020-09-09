@@ -596,9 +596,6 @@ export class AppFormsControl {
 				const asSelector = !asModal && !asCompleter && (lookupOptions.AsSelector !== undefined || lookupOptions.asSelector !== undefined || lookupOptions.asselector !== undefined ? !!(lookupOptions.AsSelector || lookupOptions.asSelector || lookupOptions.asselector) : false);
 				const selectorOptions = lookupOptions.SelectorOptions || lookupOptions.selectorOptions || lookupOptions.selectoroptions || {};
 				control.Options.LookupOptions = {
-					Multiple: lookupOptions.Multiple !== undefined || lookupOptions.multiple !== undefined ? !!(lookupOptions.Multiple || lookupOptions.multiple) : true,
-					OnDelete: lookupOptions.OnDelete || lookupOptions.onDelete || lookupOptions.ondelete,
-					WarningOnDelete: lookupOptions.WarningOnDelete || lookupOptions.warningOnDelete || lookupOptions.warningondelete,
 					AsModal: asModal,
 					ModalOptions: {
 						Component: modalOptions.Component || modalOptions.component,
@@ -626,7 +623,10 @@ export class AppFormsControl {
 						OkText: selectorOptions.OkText || selectorOptions.okText || selectorOptions.oktext || "{{common.buttons.ok}}",
 						CancelText: selectorOptions.CancelText || selectorOptions.cancelText || selectorOptions.canceltext || "{{common.buttons.cancel}}",
 						OnAdd: selectorOptions.OnAdd || selectorOptions.onAdd || selectorOptions.onadd
-					}
+					},
+					Multiple: lookupOptions.Multiple !== undefined || lookupOptions.multiple !== undefined ? !!(lookupOptions.Multiple || lookupOptions.multiple) : !asCompleter,
+					OnDelete: lookupOptions.OnDelete || lookupOptions.onDelete || lookupOptions.ondelete,
+					WarningOnDelete: lookupOptions.WarningOnDelete || lookupOptions.warningOnDelete || lookupOptions.warningondelete
 				};
 			}
 
@@ -883,7 +883,7 @@ export class AppFormsService {
 			formControl.Order = order;
 			formControls.push(formControl);
 		});
-		this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.startsWith("Desktop") && !PlatformUtility.isSafari());
+		this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.indexOf("Desktop") > -1 && !PlatformUtility.isSafari());
 		return formControls;
 	}
 

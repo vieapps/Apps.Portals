@@ -18,7 +18,7 @@ export class Organization extends CoreBaseModel {
 		this.Privileges = privileges;
 	}
 
-	public static instructionElements = ["Activate", "Invite", "Reset", "Password", "Email"];
+	public static instructionElements = ["Account", "Invite", "Reset", "Password", "Email"];
 
 	/** All instances of organization */
 	public static instances = new Dictionary<string, Organization>();

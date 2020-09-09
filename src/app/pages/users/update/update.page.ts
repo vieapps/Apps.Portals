@@ -213,6 +213,7 @@ export class UsersUpdatePage implements OnInit {
 					PlaceHolder: await this.configSvc.getResourceAsync("users.register.controls.Address.placeholder"),
 					MinLength: 2,
 					LookupOptions: {
+						Multiple: false,
 						AsModal: false,
 						AsCompleter: true
 					}

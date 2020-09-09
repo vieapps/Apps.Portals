@@ -225,7 +225,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 				}, "CMS.Categories:Refresh");
 			}
 			if (this.configSvc.isDebug) {
-				console.log("Show the list of categories", this.filterBy);
+				console.log("<CMS>: Show the list of categories", this.filterBy);
 			}
 		}
 	}
@@ -293,7 +293,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	async onInfiniteScrollAsync() {
-		if (this.pagination.PageNumber < this.pagination.TotalPages) {
+		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
 			await this.searchAsync(async () => {
 				if (this.infiniteScrollCtrl !== undefined) {
 					await this.infiniteScrollCtrl.complete();

@@ -16,7 +16,7 @@ export class AppConfig {
 		updates: "https://apis.vieapps.com/",
 
 		/** Files HTTP service */
-		files: "https://files.vieapps.com/",
+		files: "https://fs.vieapps.com/",
 
 		/** Portals HTTP service */
 		portals: "https://portals.vieapps.com/",
@@ -30,13 +30,13 @@ export class AppConfig {
 
 	/** Information of the app */
 	public static app = {
-		name: "VIEApps NGX Portals",
+		name: "NGX Portals",
 		description: "Manage information and related services of CMS Portals",
-		copyright: "© 2020 VIEApps.net",
-		license: "Apache-2.0 license",
+		copyright: "© VIEApps.net",
+		license: "Apache-2.0",
 		homepage: "https://vieapps.net",
 		id: "vieapps-ngx-portals",
-		version: "1.0.0",
+		version: "1.0.3",
 		frameworks: "ionic 5.3 - angular 8.2 - cordova 10.0",
 		mode: "",
 		platform: "",
@@ -75,6 +75,7 @@ export class AppConfig {
 	/** Services in the app */
 	public static services = {
 		active: "Portals",
+		activeID: "",
 		all: [
 			{
 				name: "Portals",
@@ -201,7 +202,7 @@ export class AppConfig {
 
 	/** Gets the state that determines is web progressive app */
 	public static get isWebApp() {
-		return AppUtility.isEquals("PWA", this.app.mode);
+		return !this.isNativeApp && this.app.shell !== "Electron";
 	}
 
 	/** Gets the state that determines the app is running on iOS (native or web browser) */
@@ -261,11 +262,12 @@ export class AppConfig {
 	}
 
 	/** Gets the related JSON with active/related service, culture language and host */
-	public static getRelatedJson(additional?: { [key: string]: string }, service?: string, onPreCompleted?: (json: any) => void) {
+	public static getRelatedJson(additional?: { [key: string]: string }, service?: string, activeID?: string, onPreCompleted?: (json: any) => void) {
 		const json: { [key: string]: string } = {
 			"language": this.language,
 			"host": this.url.host,
-			"related-service": (AppUtility.isNotEmpty(service) ? service : this.services.active).trim().toLowerCase()
+			"related-service": (AppUtility.isNotEmpty(service) ? service : this.services.active).trim().toLowerCase(),
+			"active-id": (AppUtility.isNotEmpty(activeID) ? activeID : this.services.activeID).trim().toLowerCase()
 		};
 		if (AppUtility.isObject(additional, true)) {
 			Object.keys(additional).forEach(key => json[key] = additional[key]);
@@ -277,12 +279,8 @@ export class AppConfig {
 	}
 
 	/** Gets the related query with active/related service, culture language and host */
-	public static getRelatedQuery(service?: string, onPreCompleted?: (json: any) => void) {
-		const json = this.getRelatedJson(undefined, service);
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(json);
-		}
-		return AppUtility.getQueryOfJson(json);
+	public static getRelatedQuery(service?: string, activeID?: string, onPreCompleted?: (json: any) => void) {
+		return AppUtility.getQueryOfJson(this.getRelatedJson(undefined, service, activeID, onPreCompleted));
 	}
 
 	/** Gets the authenticated headers (JSON) for making requests to APIs */

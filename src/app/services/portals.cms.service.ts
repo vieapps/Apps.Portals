@@ -520,7 +520,7 @@ export class PortalsCmsService extends BaseService {
 				this.fetchCategory(category);
 			}
 			if (fetchDesktops) {
-				this.fetchDesktops(category);
+				this.fetchCategoryDesktops(category);
 			}
 		});
 	}
@@ -570,7 +570,7 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	public fetchDesktops(category: Category) {
+	public fetchCategoryDesktops(category: Category) {
 		if (AppUtility.isNotEmpty(category.DesktopID) && Desktop.get(category.DesktopID) === undefined) {
 			this.portalsCoreSvc.getDesktopAsync(category.DesktopID);
 		}

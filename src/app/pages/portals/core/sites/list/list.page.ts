@@ -196,7 +196,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 	}
 
 	async onInfiniteScrollAsync() {
-		if (this.pagination.PageNumber < this.pagination.TotalPages) {
+		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
 			await this.searchAsync(async () => {
 				if (this.infiniteScrollCtrl !== undefined) {
 					await this.infiniteScrollCtrl.complete();

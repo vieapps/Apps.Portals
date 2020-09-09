@@ -237,10 +237,10 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			}
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.lookup(this.objectName, this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error), this.nested ? { "x-children": "true" } : undefined);
+			this.subscription = this.portalsCmsSvc.lookup(this.objectName, this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error), { "x-children": `${this.nested}`, "x-lookup" : "true" });
 		}
 		else {
-			await this.portalsCmsSvc.lookupAsync(this.objectName, this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error), this.nested ? { "x-children": "true" } : undefined);
+			await this.portalsCmsSvc.lookupAsync(this.objectName, this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error), { "x-children": `${this.nested}`, "x-lookup" : "true" });
 		}
 	}
 

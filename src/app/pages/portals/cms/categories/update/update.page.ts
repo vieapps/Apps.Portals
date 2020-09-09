@@ -117,6 +117,10 @@ export class CmsCategoriesUpdatePage implements OnInit {
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
+
+		if (AppUtility.isNotEmpty(this.category.ID) && this.category.childrenIDs === undefined) {
+			this.portalsCmsSvc.getCategoryAsync(this.category.ID, data => console.warn("Use XHR to re-fetch data of the category successful", data), undefined, true);
+		}
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {

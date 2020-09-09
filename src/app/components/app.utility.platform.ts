@@ -247,9 +247,7 @@ export class PlatformUtility {
 
 	/** Gets the redirect URI for working with external */
 	public static getRedirectURI(path: string, addAsRedirectParam: boolean = true) {
-		const uri = this.parseURI(AppConfig.isWebApp ? window.location.href : AppConfig.URIs.activations);
-		return (uri.Scheme === "file" || uri.Scheme === "ionic" ? AppConfig.URIs.activations : uri.HostURI)
-			+ AppConfig.url.base + (AppUtility.isTrue(addAsRedirectParam) ? `?redirect=${AppCrypto.urlEncode(path)}` : path);
+		return (AppConfig.isWebApp ? this.parseURI(window.location.href).HostURI + AppConfig.url.base : AppConfig.URIs.activations) + (AppUtility.isTrue(addAsRedirectParam) ? `?redirect=${AppCrypto.urlEncode(path)}` : path);
 	}
 
 	/** Opens or copies the URI */

@@ -6,6 +6,7 @@ import { AppUtility } from "@components/app.utility";
 import { PlatformUtility } from "@components/app.utility.platform";
 import { TrackingUtility } from "@components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
+import { AppFormsControlComponent } from "@components/forms.control.component";
 import { ConfigurationService } from "@services/configuration.service";
 import { UsersService } from "@services/users.service";
 import { PortalsCoreService } from "@services/portals.core.service";
@@ -168,7 +169,18 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 										Type: "TextArea",
 										Options: {
 											Label: `{{portals.organizations.controls.Instructions.${type}.Body}}`,
-											Rows: 7
+											Rows: 7,
+											Icon: {
+												Name: "color-wand",
+												OnClick: async (_, formControl) => {
+													const mode = (formControl as AppFormsControlComponent).parentControl.Name.toLowerCase();
+													const controls = (formControl as AppFormsControlComponent).formGroup.controls;
+													await this.configSvc.getInstructionsAsync("users", controls.Language.value, data => {
+														controls.Subject.setValue(data[mode].subject);
+														controls.Body.setValue(data[mode].body);
+													});
+												}
+											}
 										}
 									}
 								]

@@ -262,7 +262,8 @@ export class ConfigurationService extends BaseService {
 			AppEvents.initializeElectronService(this.electronSvc);
 			PlatformUtility.setElectronService(this.electronSvc);
 			this.appConfig.app.shell = "Electron";
-			this.appConfig.app.platform = `${this.appConfig.app.os} ${this.appConfig.app.platform}`;
+			this.appConfig.app.mode = "Desktop";
+			this.appConfig.app.platform = `${this.appConfig.app.os} Desktop`;
 			this.appConfig.url.host = "global";
 			this.appConfig.url.base = "";
 			this.electronSvc.ipcRenderer.on("electron.ipc2app", ($event: any, $info: any) => {
@@ -774,9 +775,10 @@ export class ConfigurationService extends BaseService {
 		if (AppUtility.isObject(query, true)) {
 			Object.keys(query).forEach(key => path += `${key}=${encodeURIComponent(query[key])}&`);
 		}
-		return path + this.appConfig.getRelatedQuery(serviceName, json => {
+		return path + this.appConfig.getRelatedQuery(serviceName, undefined, json => {
 			if (AppUtility.isNotEmpty(serviceName) && AppUtility.isEquals(serviceName, json["related-service"])) {
 				delete json["related-service"];
+				delete json["active-id"];
 			}
 		});
 	}
@@ -787,6 +789,10 @@ export class ConfigurationService extends BaseService {
 
 	public async getDefinitionAsync(serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {
 		return await this.fetchDefinitionAsync(this.getDefinitionPath(serviceName, objectName, definitionName, query));
+	}
+
+	public getInstructionsAsync(service: string, language?: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.fetchAsync(`/statics/instructions/${service}/${language || this.appConfig.language}.json`, onNext, onError);
 	}
 
 }

@@ -271,7 +271,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 						this.portalsCmsSvc.getCategoryAsync(content.CategoryID, _ => {
 							const category = Category.get(content.CategoryID);
 							if (category !== undefined) {
-								this.portalsCmsSvc.fetchDesktops(category);
+								this.portalsCmsSvc.fetchCategoryDesktops(category);
 							}
 						});
 					}
@@ -337,7 +337,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 					this.portalsCmsSvc.getCategoryAsync(content.CategoryID, _ => {
 						const category = Category.get(content.CategoryID);
 						if (category !== undefined) {
-							this.portalsCmsSvc.fetchDesktops(category);
+							this.portalsCmsSvc.fetchCategoryDesktops(category);
 						}
 					});
 				}
