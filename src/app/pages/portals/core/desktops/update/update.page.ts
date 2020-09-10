@@ -207,7 +207,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: unspecified }, 0);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Theme"));
-		control.Options.Type = "dropdown";
+		// control.Options.Type = "dropdown";
 		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => {
 			return { Value: theme.name, Label: theme.name };
 		});
@@ -352,6 +352,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 	onFormInitialized() {
 		const desktop = AppUtility.clone(this.desktop, false);
 		desktop.Language = AppUtility.isNotEmpty(desktop.Language) ? desktop.Language : "-";
+		desktop.Theme = AppUtility.isNotEmpty(desktop.Theme) ? desktop.Theme : "-";
 		desktop.SEOSettings = desktop.SEOSettings || {};
 		this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "SEOSettings")).SubControls.Controls.filter(ctrl => ctrl.Type === "Select").forEach(ctrl => {
 			const value = desktop.SEOSettings[ctrl.Name];

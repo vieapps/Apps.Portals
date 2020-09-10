@@ -466,7 +466,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		control.Options.Type = "toggle";
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Theme"));
-		control.Options.Type = "dropdown";
+		// control.Options.Type = "dropdown";
 		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => {
 			return { Value: theme.name, Label: theme.name };
 		});
@@ -593,6 +593,10 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 
 		// hack the Completer component to update correct form value & validity status
 		this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.invoke(() => this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true }), 234));
+
+		if (this.configSvc.isDebug) {
+			console.log("<Portals>: update an organization", this.organization);
+		}
 	}
 
 	async saveAsync() {

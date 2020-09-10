@@ -181,7 +181,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		});
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Theme"));
-		control.Options.Type = "dropdown";
+		// control.Options.Type = "dropdown";
 		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => {
 			return { Value: theme.name, Label: theme.name };
 		});
@@ -354,9 +354,8 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 
 	onFormInitialized() {
 		const site = AppUtility.clone(this.site, false);
-		if (!AppUtility.isNotEmpty(this.site.ID)) {
-			site.Title = this.organization.Title;
-		}
+		site.Title = AppUtility.isNotEmpty(site.ID) ? site.Title : this.organization.Title;
+		site.Theme = AppUtility.isNotEmpty(site.Theme) ? site.Theme : "-";
 		this.form.patchValue(site);
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(async () => await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments)));

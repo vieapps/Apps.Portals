@@ -7,6 +7,11 @@ import { PortalsControlsModule } from "@controls/portals.controls.module";
 
 export const routes: Routes = [
 	{
+		path: "initializer",
+		data: { preload: true },
+		loadChildren: "@pages/portals/initializer.module#PortalInitializerPageModule"
+	},
+	{
 		path: "core",
 		canActivate: [AuthenticatedGuardService],
 		loadChildren: "@pages/portals/core/core.module#PortalsCoreModule"
