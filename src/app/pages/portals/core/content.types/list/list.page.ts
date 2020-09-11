@@ -2,7 +2,7 @@ import { Subscription } from "rxjs";
 import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
+import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
@@ -35,8 +35,8 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 	}
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
-	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
+	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
 	private subscription: Subscription;
 	private isSystemAdministrator = false;
@@ -205,7 +205,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<ContentTypes>: show the list", this.organization, this.module, this.definition, this.filterBy, this.sortBy, this.configSvc.requestParams);
+			console.log("<Portals>: ContentTypes", this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 

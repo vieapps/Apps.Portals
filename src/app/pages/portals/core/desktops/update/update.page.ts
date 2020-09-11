@@ -112,7 +112,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		if (AppUtility.isNotEmpty(this.desktop.ID) && this.desktop.childrenIDs === undefined) {
-			this.portalsCoreSvc.refreshDesktopAsync(this.desktop.ID, data => console.warn("Refresh the desktop successful", data));
+			this.portalsCoreSvc.refreshDesktopAsync(this.desktop.ID, async _ => await this.appFormsSvc.showToastAsync("The desktop was refreshed"));
 		}
 	}
 
@@ -364,6 +364,9 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 			if (AppUtility.isNotEmpty(this.desktop.ID)) {
 				await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments));
 				this.hash = AppCrypto.hash(this.form.value);
+			}
+			if (this.configSvc.isDebug) {
+				console.log("<Portals>: Desktop", this.desktop);
 			}
 		});
 	}

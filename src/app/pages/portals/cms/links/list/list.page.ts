@@ -216,7 +216,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<CMS Portals>: show the collection of links", this.configSvc.requestParams, this.filterBy, this.sortBy);
+			console.log("<CMS Portals>: Links", this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 

@@ -188,7 +188,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<Desktops>: show the list", this.organization, this.parentDesktop, this.configSvc.requestParams, this.filterBy, this.sortBy);
+			console.log("<Portals>: Desktops", this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 

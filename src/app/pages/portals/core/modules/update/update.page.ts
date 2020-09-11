@@ -284,13 +284,18 @@ export class PortalsModulesUpdatePage implements OnInit {
 		this.form.patchValue(module);
 		this.hash = AppCrypto.hash(this.form.value);
 
-		if (!AppUtility.isNotEmpty(this.module.ID)) {
-			const first = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ModuleDefinitionID")).Options.SelectOptions.Values[0];
-			this.form.controls.ModuleDefinitionID.setValue(first.Value, { onlySelf: true });
-			this.form.controls.Title.setValue(first.Label, { onlySelf: true });
-			this.form.controls.Description.setValue(first.Description, { onlySelf: true });
-		}
-		this.appFormsSvc.hideLoadingAsync();
+		this.appFormsSvc.hideLoadingAsync(() => {
+			if (!AppUtility.isNotEmpty(this.module.ID)) {
+				const first = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ModuleDefinitionID")).Options.SelectOptions.Values[0];
+				this.form.controls.ModuleDefinitionID.setValue(first.Value, { onlySelf: true });
+				this.form.controls.Title.setValue(first.Label, { onlySelf: true });
+				this.form.controls.Description.setValue(first.Description, { onlySelf: true });
+				this.hash = AppCrypto.hash(this.form.value);
+			}
+			if (this.configSvc.isDebug) {
+				console.log("<Portals>: Module", this.module);
+			}
+		});
 	}
 
 	async saveAsync() {
@@ -382,14 +387,19 @@ export class PortalsModulesUpdatePage implements OnInit {
 	}
 
 	async cancelAsync(message?: string) {
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			message || await this.configSvc.getResourceAsync(`portals.modules.update.messages.confirm.${AppUtility.isNotEmpty(this.module.ID) ? "cancel" : "new"}`),
-			undefined,
-			async () => await this.configSvc.navigateBackAsync(),
-			await this.configSvc.getResourceAsync("common.buttons.ok"),
-			message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
+		if (message === undefined && this.hash === AppCrypto.hash(this.form.value)) {
+			await this.configSvc.navigateBackAsync();
+		}
+		else {
+			await this.appFormsSvc.showAlertAsync(
+				undefined,
+				message || await this.configSvc.getResourceAsync(`portals.modules.update.messages.confirm.${AppUtility.isNotEmpty(this.module.ID) ? "cancel" : "new"}`),
+				undefined,
+				async () => await this.configSvc.navigateBackAsync(),
+				await this.configSvc.getResourceAsync("common.buttons.ok"),
+				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
+			);
+		}
 	}
 
 }

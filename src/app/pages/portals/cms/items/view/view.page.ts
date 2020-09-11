@@ -248,6 +248,9 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 					this.prepareAttachments("Attachments", attachments);
 				});
 			}
+			if (this.configSvc.isDebug) {
+				console.log("<CMS Portals>: Item", this.item);
+			}
 		});
 	}
 

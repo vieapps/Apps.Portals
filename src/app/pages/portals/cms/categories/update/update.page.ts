@@ -119,7 +119,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		this.formConfig = await this.getFormControlsAsync();
 
 		if (AppUtility.isNotEmpty(this.category.ID) && this.category.childrenIDs === undefined) {
-			this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, data => console.warn("Refresh the category successful", data));
+			this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, async _ => await this.appFormsSvc.showToastAsync("The category was refreshed"));
 		}
 	}
 
@@ -291,6 +291,10 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		this.form.patchValue(category);
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync();
+
+		if (this.configSvc.isDebug) {
+			console.log("<CMS Portals>: Category", this.category);
+		}
 	}
 
 	async saveAsync() {
@@ -405,14 +409,19 @@ export class CmsCategoriesUpdatePage implements OnInit {
 	}
 
 	async cancelAsync(message?: string, url?: string) {
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			message || await this.configSvc.getResourceAsync(`portals.cms.categories.update.messages.confirm.${AppUtility.isNotEmpty(this.category.ID) ? "cancel" : "new"}`),
-			undefined,
-			async () => await this.configSvc.navigateBackAsync(url),
-			await this.configSvc.getResourceAsync("common.buttons.ok"),
-			message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
+		if (message === undefined && this.hash === AppCrypto.hash(this.form.value)) {
+			await this.configSvc.navigateBackAsync();
+		}
+		else {
+			await this.appFormsSvc.showAlertAsync(
+				undefined,
+				message || await this.configSvc.getResourceAsync(`portals.cms.categories.update.messages.confirm.${AppUtility.isNotEmpty(this.category.ID) ? "cancel" : "new"}`),
+				undefined,
+				async () => await this.configSvc.navigateBackAsync(url),
+				await this.configSvc.getResourceAsync("common.buttons.ok"),
+				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
+			);
+		}
 	}
 
 }

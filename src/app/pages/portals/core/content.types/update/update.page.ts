@@ -441,6 +441,9 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 				}
 				this.hash = AppCrypto.hash(this.form.value);
 			}
+			if (this.configSvc.isDebug) {
+				console.log("<Portals>: ContentType", this.contentType);
+			}
 		});
 	}
 

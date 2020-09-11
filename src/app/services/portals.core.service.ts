@@ -107,19 +107,19 @@ export class PortalsCoreService extends BaseService {
 	public async initializeAysnc() {
 		await this.getDefinitionsAsync(() => {
 			if (this.configSvc.isDebug) {
-				console.log("[Portal]: The definitions were initialized", BaseModel.moduleDefinitions);
+				console.log("[Portals]: The definitions were initialized", BaseModel.moduleDefinitions);
 			}
 		});
 		if (Organization.active === undefined) {
 			await this.getActiveOrganizationAsync(false);
 			if (this.configSvc.isDebug) {
-				console.log("[Portal]: The active organization was initialized", Organization.active);
+				console.log("[Portals]: The active organization was initialized", Organization.active);
 			}
 		}
 		else if (Organization.active.modules.length < 1) {
 			await this.getActiveOrganizationAsync(false);
 			if (this.configSvc.isDebug) {
-				console.log("[Portal]: Modules of the active organization were initialized", Organization.active.modules);
+				console.log("[Portals]: Modules of the active organization were initialized", Organization.active.modules);
 			}
 		}
 	}

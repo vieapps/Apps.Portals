@@ -74,7 +74,7 @@ export class PortalsCmsService extends BaseService {
 				};
 			});
 			if (this.configSvc.isDebug) {
-				console.log("[Portal CMS]: The providers of OEmbed medias were initialized", this.oembedProviders);
+				console.log("[CMS Portals]: The providers of OEmbed medias were initialized", this.oembedProviders);
 			}
 		}
 	}

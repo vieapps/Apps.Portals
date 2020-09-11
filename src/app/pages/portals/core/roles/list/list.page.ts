@@ -173,7 +173,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<Roles>: show the list", this.organization, this.parentRole, this.configSvc.requestParams, this.filterBy, this.sortBy);
+			console.log("<Portals>: Roles", this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 

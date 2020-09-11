@@ -738,6 +738,9 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments));
 			this.hash = AppCrypto.hash(this.form.value);
 		});
+		if (this.configSvc.isDebug) {
+			console.log("<Portals>: Portlet", this.portlet);
+		}
 	}
 
 	private async showErrorAsync(error: any) {

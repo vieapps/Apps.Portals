@@ -254,6 +254,9 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 					this.prepareAttachments("Attachments", attachments);
 				});
 			}
+			if (this.configSvc.isDebug) {
+				console.log("<CMS Portals>: Link", this.link);
+			}
 		});
 	}
 

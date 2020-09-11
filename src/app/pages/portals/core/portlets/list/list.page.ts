@@ -191,8 +191,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log(`Show the list of portlets (${(this.desktop !== undefined ? this.desktop.FullTitle : "None")})`);
-			console.log("Filter & Sort", this.filterBy, this.sortBy);
+			console.log("<Portals>: Portlets", this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 

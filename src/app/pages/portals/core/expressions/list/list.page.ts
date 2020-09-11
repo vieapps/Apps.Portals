@@ -181,7 +181,7 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<Expressions>: show the list", this.organization, this.module, this.contentType, this.contentTypeDefinition, this.filterBy, this.sortBy, this.configSvc.requestParams);
+			console.log("<Portals>: Expressions", this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 

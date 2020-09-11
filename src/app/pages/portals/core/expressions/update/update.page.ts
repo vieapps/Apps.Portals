@@ -335,6 +335,9 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		}
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync();
+		if (this.configSvc.isDebug) {
+			console.log("<Portals>: Expression", this.expression);
+		}
 	}
 
 	async saveAsync() {

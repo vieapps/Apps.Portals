@@ -2,7 +2,7 @@ import { Subscription } from "rxjs";
 import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
+import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
@@ -36,6 +36,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 	}
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
+	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
 	private subscription: Subscription;
@@ -163,7 +164,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<Modules>: show the list", this.organization, this.definition, this.configSvc.requestParams, this.filterBy, this.sortBy);
+			console.log("<Portals>: Modules", this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 
@@ -301,11 +302,19 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 
 	async openAsync(event: Event, module: Module) {
 		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(module.routerURI);
+	}
+
+	async showContentTypesAsync(event: Event, module: Module) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "list", module.ansiTitle, { SystemID: module.SystemID, RepositoryID: module.ID }, "content.type", "core"));
 	}
 
 	async setActiveAsync(event: Event, module: Module) {
 		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
 		await this.portalsCmsSvc.setActiveModuleAsync(module.ID);
 	}
 

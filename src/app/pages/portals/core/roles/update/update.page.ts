@@ -100,7 +100,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 		this.formConfig = await this.getFormControlsAsync();
 
 		if (AppUtility.isNotEmpty(this.role.ID) && this.role.childrenIDs === undefined) {
-			this.portalsCoreSvc.refreshRoleAsync(this.role.ID, data => console.warn("Refresh the role successful", data));
+			this.portalsCoreSvc.refreshRoleAsync(this.role.ID, async _ => await this.appFormsSvc.showToastAsync("The role was refreshed"));
 		}
 	}
 
@@ -258,6 +258,9 @@ export class PortalsRolesUpdatePage implements OnInit {
 		this.form.patchValue(this.role);
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync();
+		if (this.configSvc.isDebug) {
+			console.log("<Portals>: Role", this.role);
+		}
 	}
 
 	async saveAsync() {

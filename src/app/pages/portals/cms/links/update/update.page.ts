@@ -125,6 +125,10 @@ export class CmsLinksUpdatePage implements OnInit {
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
+
+		if (AppUtility.isNotEmpty(this.link.ID) && this.link.childrenIDs === undefined) {
+			this.portalsCmsSvc.refreshLinkAsync(this.link.ID, async _ => await this.appFormsSvc.showToastAsync("The link was refreshed"));
+		}
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
