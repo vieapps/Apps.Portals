@@ -1010,6 +1010,10 @@ export class PortalsCoreService extends BaseService {
 		await super.readAsync(super.getURI(objectName, id), onNext, onError, headers, true);
 	}
 
+	public async refreshAsync(objectName: string, id: string, onNext?: (data: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, headers?: { [header: string]: string }) {
+		await super.readAsync(super.getURI(objectName, "refresh", `object-id=${id}`), onNext, onError, headers, useXHR);
+	}
+
 	public get organizationCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const organization = data !== undefined
@@ -1365,6 +1369,22 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
+	public async refreshRoleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		await this.refreshAsync(
+			"role",
+			id,
+			data => {
+				this.updateRole(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			onError,
+			true,
+			headers
+		);
+	}
+
 	private processRoleUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Create":
@@ -1601,6 +1621,22 @@ export class PortalsCoreService extends BaseService {
 					onError(error);
 				}
 			},
+			headers
+		);
+	}
+
+	public async refreshDesktopAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		await this.refreshAsync(
+			"desktop",
+			id,
+			data => {
+				this.updateDesktop(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			onError,
+			true,
 			headers
 		);
 	}

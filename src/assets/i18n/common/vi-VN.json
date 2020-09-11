@@ -30,7 +30,8 @@
 			"select": "Chọn",
 			"search": "Tìm",
 			"upload": "Tải lên",
-			"download": "Tải xuống"
+			"download": "Tải xuống",
+			"refresh": "Làm tươi"
 		},
 		"messages": {
 			"loading": "Tải dữ liệu...",

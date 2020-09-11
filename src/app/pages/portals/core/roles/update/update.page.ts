@@ -98,6 +98,10 @@ export class PortalsRolesUpdatePage implements OnInit {
 		}
 
 		this.formConfig = await this.getFormControlsAsync();
+
+		if (AppUtility.isNotEmpty(this.role.ID) && this.role.childrenIDs === undefined) {
+			this.portalsCoreSvc.refreshRoleAsync(this.role.ID, data => console.warn("Refresh the role successful", data));
+		}
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
@@ -352,14 +356,19 @@ export class PortalsRolesUpdatePage implements OnInit {
 	}
 
 	async cancelAsync(message?: string) {
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			message || await this.configSvc.getResourceAsync(`portals.roles.update.messages.confirm.${AppUtility.isNotEmpty(this.role.ID) ? "cancel" : "new"}`),
-			undefined,
-			async () => await this.configSvc.navigateBackAsync(),
-			await this.configSvc.getResourceAsync("common.buttons.ok"),
-			message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
+		if (message === undefined && this.hash === AppCrypto.hash(this.form.value)) {
+			await this.configSvc.navigateBackAsync();
+		}
+		else {
+			await this.appFormsSvc.showAlertAsync(
+				undefined,
+				message || await this.configSvc.getResourceAsync(`portals.roles.update.messages.confirm.${AppUtility.isNotEmpty(this.role.ID) ? "cancel" : "new"}`),
+				undefined,
+				async () => await this.configSvc.navigateBackAsync(),
+				await this.configSvc.getResourceAsync("common.buttons.ok"),
+				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
+			);
+		}
 	}
 
 }

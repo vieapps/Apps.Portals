@@ -226,18 +226,17 @@ export class ConfigurationService extends BaseService {
 
 		this.appConfig.app.mode = isNativeApp ? "NTA" : "PWA";
 		this.appConfig.app.os = PlatformUtility.getOSPlatform();
+		this.appConfig.url.host = PlatformUtility.getHost();
 
 		if (isNativeApp) {
-			this.appConfig.app.platform = this.device.platform;
-			this.appConfig.url.host = "global";
 			this.appConfig.url.base = "";
+			this.appConfig.app.platform = this.device.platform;
 			this.appConfig.session.device = this.device.uuid + "@" + this.appConfig.app.id;
 		}
 
 		else {
-			this.appConfig.app.platform = `${PlatformUtility.getAppPlatform()} ${this.appConfig.app.mode}`;
-			this.appConfig.url.host = PlatformUtility.getHost();
 			this.appConfig.url.base = this.platformLocation.getBaseHrefFromDOM();
+			this.appConfig.app.platform = `${PlatformUtility.getAppPlatform()} ${this.appConfig.app.mode}`;
 		}
 
 		if (isCordova) {
@@ -263,9 +262,8 @@ export class ConfigurationService extends BaseService {
 			PlatformUtility.setElectronService(this.electronSvc);
 			this.appConfig.app.shell = "Electron";
 			this.appConfig.app.mode = "Desktop";
-			this.appConfig.app.platform = `${this.appConfig.app.os} Desktop`;
-			this.appConfig.url.host = "global";
 			this.appConfig.url.base = "";
+			this.appConfig.app.platform = `${this.appConfig.app.os} Desktop`;
 			this.electronSvc.ipcRenderer.on("electron.ipc2app", ($event: any, $info: any) => {
 				$info = $info || {};
 				if (AppUtility.isNotEmpty($info.event)) {

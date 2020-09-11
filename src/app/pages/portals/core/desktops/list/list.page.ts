@@ -60,6 +60,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		children: "{{number}} children: {{children}}",
 		alias: "Alias",
 		edit: "Update this desktop",
+		refresh: "Refresh",
 		view: "View the list of child desktops",
 		portlets: "Portlets",
 	};
@@ -141,6 +142,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			children: await this.configSvc.getResourceAsync("portals.desktops.list.children"),
 			alias: await this.configSvc.getResourceAsync("portals.desktops.controls.Alias.label"),
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
+			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			view: await this.configSvc.getResourceAsync("portals.desktops.list.view"),
 			portlets: await this.configSvc.getResourceAsync("portals.portlets.title.list", { info: "" })
 		};
@@ -329,6 +331,12 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "list", desktop.ansiTitle, { SystemID: desktop.SystemID, DesktopID: desktop.ID }, "portlet", "core"));
+	}
+
+	async refreshAsync(event: Event, desktop: Desktop) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.portalsCoreSvc.refreshDesktopAsync(desktop.ID, async _ => await this.appFormsSvc.showToastAsync(`${this.labels.refresh}...`));
 	}
 
 }

@@ -488,6 +488,22 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
+	public async refreshCategoryAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		await this.portalsCoreSvc.refreshAsync(
+			"cms.category",
+			id,
+			data => {
+				this.updateCategory(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			onError,
+			true,
+			headers
+		);
+	}
+
 	private processCategoryUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Create":
@@ -741,6 +757,10 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
+	public async refreshContentAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		await this.portalsCoreSvc.refreshAsync("cms.content", id, onNext, onError, true, headers);
+	}
+
 	private processContentUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Create":
@@ -913,6 +933,10 @@ export class PortalsCmsService extends BaseService {
 			},
 			headers
 		);
+	}
+
+	public async refreshItemAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		await this.portalsCoreSvc.refreshAsync("cms.item", id, onNext, onError, true, headers);
 	}
 
 	private processItemUpdateMessage(message: AppMessage) {
@@ -1093,6 +1117,22 @@ export class PortalsCmsService extends BaseService {
 					onError(error);
 				}
 			},
+			headers
+		);
+	}
+
+	public async refreshLinkAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		await this.portalsCoreSvc.refreshAsync(
+			"cms.link",
+			id,
+			data => {
+				this.updateLink(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			onError,
+			true,
 			headers
 		);
 	}

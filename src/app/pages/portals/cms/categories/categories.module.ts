@@ -13,7 +13,7 @@ export const routes: Routes = [
 		loadChildren: "@pages/portals/cms/categories/list/list.module#CmsCategoriesListPageModule"
 	},
 	{
-		path: "create",
+		path: "create/:data",
 		loadChildren: "@pages/portals/cms/categories/update/update.module#CmsCategoriesUpdatePageModule"
 	},
 	{

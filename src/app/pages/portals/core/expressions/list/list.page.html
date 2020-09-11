@@ -43,6 +43,11 @@
 	<ion-list class="ion-padding-end">
 		<ion-item-sliding *ngFor="let expression of expressions; trackBy: track">
 			<ion-item [color]="color" (click)="editAsync($event, expression)" class="ion-activatable" detail="false">
+				<ion-buttons slot="end">
+					<ion-button fill="clear" color="medium" (click)="editInAdvancedModeAsync($event, expression)">
+						<ion-icon name="settings" slot="icon-only"></ion-icon>
+					</ion-button>
+				</ion-buttons>
 				<ion-label>
 					<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
 						{{ expression.Created | date:'h:mm a @ d/M/y' }} <br/> {{ expression.LastModified | date:'h:mm a @ d/M/y' }}
@@ -56,13 +61,11 @@
 				</ion-label>
 			</ion-item>
 			<ion-item-options>
-				<ion-item-option color="medium" (click)="editInAdvancedModeAsync($event, expression)">
-					<ion-icon name="settings" slot="top"></ion-icon>
-					{{ labels.advancedEdit }}
+				<ion-item-option color="dark" (click)="editInAdvancedModeAsync($event, expression)">
+					<ion-icon name="settings" slot="icon-only" title="{{labels.advancedEdit}}"></ion-icon>
 				</ion-item-option>
 				<ion-item-option color="primary" (click)="editAsync($event, expression)">
-					<ion-icon name="create" slot="top"></ion-icon>
-					{{ labels.edit }}
+					<ion-icon name="create" slot="icon-only" title="{{labels.edit}}"></ion-icon>
 				</ion-item-option>
 			</ion-item-options>
 		</ion-item-sliding>

@@ -59,7 +59,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 	};
 	formControls = new Array<AppFormsControl>();
 	processing = false;
-	button = {
+	buttons = {
 		save: "Save",
 		cancel: "Cancel"
 	};
@@ -208,7 +208,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.portlets.title.${(AppUtility.isNotEmpty(this.portlet.ID) ? "update" : "create")}`);
-		this.button = {
+		this.buttons = {
 			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.portlet.ID) ? "save" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
@@ -734,7 +734,10 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			(this.form.controls.ViewSettings as FormGroup).controls.Options.setValue(AppUtility.isObject(portlet.ViewSettings, true) && AppUtility.isObject(portlet.ViewSettings.Options, true) ? JSON.stringify(portlet.ViewSettings.Options) : undefined);
 		}
 		this.hash = AppCrypto.hash(this.form.value);
-		this.appFormsSvc.hideLoadingAsync(async () => await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments)));
+		this.appFormsSvc.hideLoadingAsync(async () => {
+			await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments));
+			this.hash = AppCrypto.hash(this.form.value);
+		});
 	}
 
 	private async showErrorAsync(error: any) {
@@ -925,14 +928,19 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	async cancelAsync(message?: string) {
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			message || await this.configSvc.getResourceAsync(`portals.portlets.update.messages.confirm.${AppUtility.isNotEmpty(this.portlet.ID) ? "cancel" : "new"}`),
-			undefined,
-			async () => await this.configSvc.navigateBackAsync(),
-			await this.configSvc.getResourceAsync("common.buttons.ok"),
-			message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
+		if (message === undefined && this.hash === AppCrypto.hash(this.form.value)) {
+			await this.configSvc.navigateBackAsync();
+		}
+		else {
+			await this.appFormsSvc.showAlertAsync(
+				undefined,
+				message || await this.configSvc.getResourceAsync(`portals.portlets.update.messages.confirm.${AppUtility.isNotEmpty(this.portlet.ID) ? "cancel" : "new"}`),
+				undefined,
+				async () => await this.configSvc.navigateBackAsync(),
+				await this.configSvc.getResourceAsync("common.buttons.ok"),
+				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
+			);
+		}
 	}
 
 }

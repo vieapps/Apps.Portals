@@ -176,7 +176,7 @@ export class CmsItemListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<Items>: show the list", this.organization, this.module, this.contentType, this.filterBy, this.sortBy, this.configSvc.requestParams);
+			console.log("<CMS Portals>: Items", this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 
@@ -306,7 +306,7 @@ export class CmsItemListPage implements OnInit, OnDestroy {
 		};
 		if (this.contentType !== undefined) {
 			params["RepositoryEntityID"] = this.contentType.ID;
-			await this.configSvc.navigateForwardAsync(`/portals/cms/items/create?x-request=${AppUtility.toBase64Url(params)}`);
+			await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, params));
 		}
 	}
 

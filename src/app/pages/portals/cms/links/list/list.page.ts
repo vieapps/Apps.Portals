@@ -71,13 +71,10 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		handler: () => void
 	}>;
 	labels = {
+		children: "View the children",
+		refresh: "refresh",
 		view: "View this link",
-		children: "View the children"
-	};
-	buttons = {
 		edit: "Edit",
-		view: "View",
-		children: "Children",
 		save: "Save",
 		cancel: "Cancel"
 	};
@@ -169,13 +166,9 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 
 		this.labels = {
 			children: await this.configSvc.getResourceAsync("portals.cms.links.list.labels.children"),
-			view: await this.configSvc.getResourceAsync("portals.cms.links.list.labels.view")
-		};
-
-		this.buttons = {
-			children: await this.configSvc.getResourceAsync("portals.cms.links.list.buttons.children"),
-			view: await this.configSvc.getResourceAsync("portals.cms.links.list.buttons.view"),
-			edit: await this.configSvc.getResourceAsync("portals.cms.links.list.buttons.edit"),
+			view: await this.configSvc.getResourceAsync("portals.cms.links.list.labels.view"),
+			edit: await this.configSvc.getResourceAsync("portals.cms.links.list.labels.edit"),
+			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			save: await this.configSvc.getResourceAsync("common.buttons.save"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
@@ -223,7 +216,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<CMS>: show the links", this.filterBy, this.sortBy, this.configSvc.requestParams);
+			console.log("<CMS Portals>: show the collection of links", this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 
@@ -384,7 +377,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		}
 		if (this.contentType !== undefined) {
 			params["RepositoryEntityID"] = this.contentType.ID;
-			await this.configSvc.navigateForwardAsync(`/portals/cms/links/create?x-request=${AppUtility.toBase64Url(params)}`);
+			await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, params));
 		}
 	}
 
@@ -406,6 +399,12 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(link.listURI);
+	}
+
+	async refreshAsync(event: Event, link: Link) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.portalsCmsSvc.refreshLinkAsync(link.ID, async _ => await this.appFormsSvc.showToastAsync(`${this.labels.refresh}...`));
 	}
 
 	private async backAsync(message: string, url?: string) {

@@ -378,6 +378,9 @@ export class CmsLinksUpdatePage implements OnInit {
 					});
 				}
 			}
+			if (this.configSvc.isDebug) {
+				console.log("<CMS Portals>: Link", this.link);
+			}
 		});
 	}
 
@@ -524,14 +527,19 @@ export class CmsLinksUpdatePage implements OnInit {
 	}
 
 	async cancelAsync(message?: string, url?: string) {
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			message || await this.configSvc.getResourceAsync(`portals.cms.links.update.messages.confirm.${AppUtility.isNotEmpty(this.link.ID) ? "cancel" : "new"}`),
-			undefined,
-			async () => await this.configSvc.navigateBackAsync(url),
-			await this.configSvc.getResourceAsync("common.buttons.ok"),
-			message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
+		if (message === undefined && this.hash.full === AppCrypto.hash(this.form.value)) {
+			await this.configSvc.navigateBackAsync(url);
+		}
+		else {
+			await this.appFormsSvc.showAlertAsync(
+				undefined,
+				message || await this.configSvc.getResourceAsync(`portals.cms.links.update.messages.confirm.${AppUtility.isNotEmpty(this.link.ID) ? "cancel" : "new"}`),
+				undefined,
+				async () => await this.configSvc.navigateBackAsync(url),
+				await this.configSvc.getResourceAsync("common.buttons.ok"),
+				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
+			);
+		}
 	}
 
 }

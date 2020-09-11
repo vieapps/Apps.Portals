@@ -592,10 +592,13 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		this.hash = AppCrypto.hash(this.form.value);
 
 		// hack the Completer component to update correct form value & validity status
-		this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.invoke(() => this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true }), 234));
+		this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.invoke(() => {
+			this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true });
+			this.hash = AppCrypto.hash(this.form.value);
+		}, 234));
 
 		if (this.configSvc.isDebug) {
-			console.log("<Portals>: update an organization", this.organization);
+			console.log("<Portals>: Organization", this.organization);
 		}
 	}
 
@@ -662,14 +665,19 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 	}
 
 	async cancelAsync() {
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			undefined,
-			await this.configSvc.getResourceAsync(`portals.organizations.update.messages.confirm.${AppUtility.isNotEmpty(this.organization.ID) ? "cancel" : "new"}`),
-			async () => await this.configSvc.navigateBackAsync(),
-			await this.configSvc.getResourceAsync("common.buttons.ok"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
+		if (this.hash === AppCrypto.hash(this.form.value)) {
+			await this.configSvc.navigateBackAsync();
+		}
+		else {
+			await this.appFormsSvc.showAlertAsync(
+				undefined,
+				undefined,
+				await this.configSvc.getResourceAsync(`portals.organizations.update.messages.confirm.${AppUtility.isNotEmpty(this.organization.ID) ? "cancel" : "new"}`),
+				async () => await this.configSvc.navigateBackAsync(),
+				await this.configSvc.getResourceAsync("common.buttons.ok"),
+				await this.configSvc.getResourceAsync("common.buttons.cancel")
+			);
+		}
 	}
 
 }

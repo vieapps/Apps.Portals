@@ -56,7 +56,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 	};
 	formControls = new Array<AppFormsControl>();
 	processing = false;
-	button = {
+	buttons = {
 		save: "Save",
 		cancel: "Cancel"
 	};
@@ -130,7 +130,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		this.item = this.item || new Item(this.organization.ID, this.module.ID, this.contentType.ID);
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.cms.contents.title.${(AppUtility.isNotEmpty(this.item.ID) ? "update" : "create")}`);
 
-		this.button = {
+		this.buttons = {
 			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.item.ID) ? "save" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
@@ -292,6 +292,9 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 						this.hash.full = AppCrypto.hash(this.form.value);
 					});
 				}
+			}
+			if (this.configSvc.isDebug) {
+				console.log("<CMS Portals>: Item", this.item);
 			}
 		});
 	}

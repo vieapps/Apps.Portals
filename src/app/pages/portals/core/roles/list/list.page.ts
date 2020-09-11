@@ -2,7 +2,7 @@ import { Subscription } from "rxjs";
 import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
+import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
@@ -31,6 +31,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 	}
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
+	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
 	private organization: Organization;
@@ -282,6 +283,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 	}
 
 	async showActionsAsync() {
+		await this.listCtrl.closeSlidingItems();
 		await this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
@@ -290,17 +292,26 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 	}
 
 	async createAsync() {
+		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(`/portals/core/roles/create${(this.parentID === undefined ? "" : "?x-request=" + AppUtility.toBase64Url({ ParentID: this.parentID }))}`);
 	}
 
 	async openAsync(event: Event, role: Role) {
 		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(role.routerURI);
 	}
 
 	async showChildrenAsync(event: Event, role: Role) {
 		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(role.listURI);
+	}
+
+	async refreshAsync(event: Event, role: Role) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.portalsCoreSvc.refreshRoleAsync(role.ID, async _ => await this.appFormsSvc.showToastAsync("Refreshed..."));
 	}
 
 }

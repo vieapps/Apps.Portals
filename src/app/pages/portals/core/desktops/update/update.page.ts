@@ -112,7 +112,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		if (AppUtility.isNotEmpty(this.desktop.ID) && this.desktop.childrenIDs === undefined) {
-			this.portalsCoreSvc.getDesktopAsync(this.desktop.ID, data => console.warn("Use XHR to re-fetch data of the desktop successful", data), undefined, true);
+			this.portalsCoreSvc.refreshDesktopAsync(this.desktop.ID, data => console.warn("Refresh the desktop successful", data));
 		}
 	}
 
@@ -363,6 +363,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		this.appFormsSvc.hideLoadingAsync(async () => {
 			if (AppUtility.isNotEmpty(this.desktop.ID)) {
 				await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments));
+				this.hash = AppCrypto.hash(this.form.value);
 			}
 		});
 	}
@@ -513,14 +514,19 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	async cancelAsync(message?: string) {
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			message || await this.configSvc.getResourceAsync(`portals.desktops.update.messages.confirm.${AppUtility.isNotEmpty(this.desktop.ID) ? "cancel" : "new"}`),
-			undefined,
-			async () => await this.configSvc.navigateBackAsync(),
-			await this.configSvc.getResourceAsync("common.buttons.ok"),
-			message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
+		if (message === undefined && this.hash === AppCrypto.hash(this.form.value)) {
+			await this.configSvc.navigateBackAsync();
+		}
+		else {
+			await this.appFormsSvc.showAlertAsync(
+				undefined,
+				message || await this.configSvc.getResourceAsync(`portals.desktops.update.messages.confirm.${AppUtility.isNotEmpty(this.desktop.ID) ? "cancel" : "new"}`),
+				undefined,
+				async () => await this.configSvc.navigateBackAsync(),
+				await this.configSvc.getResourceAsync("common.buttons.ok"),
+				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
+			);
+		}
 	}
 
 }

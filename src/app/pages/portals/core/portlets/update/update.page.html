@@ -2,12 +2,12 @@
 	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
 			<ion-button fill="clear" color="secondary" [disabled]="processing" (click)="cancelAsync()">
-				{{ button.cancel }}
+				{{ buttons.cancel }}
 			</ion-button>
 		</ion-buttons>
 		<ion-buttons slot="end">
 			<ion-button fill="clear" color="primary" [disabled]="processing" (click)="saveAsync()">
-				{{ button.save }}
+				{{ buttons.save }}
 			</ion-button>
 		</ion-buttons>
 		<ion-title>

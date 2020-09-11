@@ -121,7 +121,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		const title = await this.configSvc.getResourceAsync(`portals.sites.title.${(this.searching ? "search" : "list")}`);
 		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: this.isSystemAdministrator ? "" : `[${this.organization.Title}]` });
 
-		this.filterBy.And = this.isSystemAdministrator
+		this.filterBy.And = this.isSystemAdministrator && this.configSvc.requestParams["SystemID"] === undefined
 			? []
 			: [{ SystemID: { Equals: this.organization.ID } }];
 
@@ -144,7 +144,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<Portals>: show the listing of sites", this.filterBy, this.sortBy, this.configSvc.requestParams);
+			console.log("<Portals>: Sites", this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 

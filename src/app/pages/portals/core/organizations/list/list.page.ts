@@ -2,7 +2,7 @@ import { Subscription } from "rxjs";
 import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
+import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@components/app.events";
 import { AppUtility } from "@components/app.utility";
 import { TrackingUtility } from "@components/app.utility.trackings";
@@ -33,6 +33,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 	}
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
+	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
 	private subscription: Subscription;
@@ -116,6 +117,9 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 					this.prepareResults();
 				}
 			}, "Organizations:Refresh");
+			if (this.configSvc.isDebug) {
+				console.log("<Portals>: Organizations", this.configSvc.requestParams, this.filterBy, this.sortBy);
+			}
 		}
 	}
 
@@ -237,29 +241,40 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 	}
 
 	async showActionsAsync() {
+		await this.listCtrl.closeSlidingItems();
 		await this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
 	async createAsync() {
+		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync("/portals/core/organizations/create");
 	}
 
 	async openSearchAsync() {
+		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync("/portals/core/organizations/search");
 	}
 
 	async openAsync(event: Event, organization: Organization) {
 		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(organization.routerURI);
 	}
 
 	async setActiveAsync(event: Event, organization: Organization) {
 		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
 		await this.portalsCoreSvc.setActiveOrganizationAsync(organization.ID);
 	}
 
 	isActive(organization: Organization) {
 		return organization !== undefined && Organization.active !== undefined && AppUtility.isEquals(organization.ID, Organization.active.ID);
+	}
+
+	async viewSitesAsync(event: Event, organization: Organization) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.configSvc.navigateHomeAsync(this.portalsCoreSvc.getAppURL(undefined, "list", organization.ansiTitle, { SystemID: organization.ID }, "site", "core"));
 	}
 
 }

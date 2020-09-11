@@ -45,7 +45,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 	};
 	formControls = new Array<AppFormsControl>();
 	processing = false;
-	button = {
+	buttons = {
 		save: "Save",
 		cancel: "Cancel"
 	};
@@ -112,7 +112,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.expressions.title.${(AppUtility.isNotEmpty(this.expression.ID) ? "update" : "create")}`);
 		this.unspecified = await this.configSvc.getResourceAsync("portals.common.unspecified");
 
-		this.button = {
+		this.buttons = {
 			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.expression.ID) ? "save" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
@@ -427,14 +427,19 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 	}
 
 	async cancelAsync(message?: string) {
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			message || await this.configSvc.getResourceAsync(`portals.expressions.update.messages.confirm.${AppUtility.isNotEmpty(this.expression.ID) ? "cancel" : "new"}`),
-			undefined,
-			async () => await this.configSvc.navigateBackAsync(),
-			await this.configSvc.getResourceAsync("common.buttons.ok"),
-			message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
+		if (message === undefined && this.hash === AppCrypto.hash(this.form.value)) {
+			await this.configSvc.navigateBackAsync();
+		}
+		else {
+			await this.appFormsSvc.showAlertAsync(
+				undefined,
+				message || await this.configSvc.getResourceAsync(`portals.expressions.update.messages.confirm.${AppUtility.isNotEmpty(this.expression.ID) ? "cancel" : "new"}`),
+				undefined,
+				async () => await this.configSvc.navigateBackAsync(),
+				await this.configSvc.getResourceAsync("common.buttons.ok"),
+				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
+			);
+		}
 	}
 
 }

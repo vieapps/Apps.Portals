@@ -358,7 +358,13 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		site.Theme = AppUtility.isNotEmpty(site.Theme) ? site.Theme : "-";
 		this.form.patchValue(site);
 		this.hash = AppCrypto.hash(this.form.value);
-		this.appFormsSvc.hideLoadingAsync(async () => await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments)));
+		this.appFormsSvc.hideLoadingAsync(async () => {
+			await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments));
+			this.hash = AppCrypto.hash(this.form.value);
+		});
+		if (this.configSvc.isDebug) {
+			console.log("<Portals>: Site", this.site);
+		}
 	}
 
 	private async showErrorAsync(error: any) {
@@ -457,14 +463,19 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 	}
 
 	async cancelAsync(message?: string) {
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			message || await this.configSvc.getResourceAsync(`portals.sites.update.messages.confirm.${AppUtility.isNotEmpty(this.site.ID) ? "cancel" : "new"}`),
-			undefined,
-			async () => await this.configSvc.navigateBackAsync(),
-			await this.configSvc.getResourceAsync("common.buttons.ok"),
-			message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
+		if (message === undefined && this.hash === AppCrypto.hash(this.form.value)) {
+			await this.configSvc.navigateBackAsync();
+		}
+		else {
+			await this.appFormsSvc.showAlertAsync(
+				undefined,
+				message || await this.configSvc.getResourceAsync(`portals.sites.update.messages.confirm.${AppUtility.isNotEmpty(this.site.ID) ? "cancel" : "new"}`),
+				undefined,
+				async () => await this.configSvc.navigateBackAsync(),
+				await this.configSvc.getResourceAsync("common.buttons.ok"),
+				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
+			);
+		}
 	}
 
 }

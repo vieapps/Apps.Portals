@@ -185,7 +185,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<Contents>: show the list", this.organization, this.module, this.contentType, this.category, this.filterBy, this.sortBy, this.configSvc.requestParams);
+			console.log("<CMS Portals>: Contents", this.configSvc.requestParams, this.filterBy, this.sortBy);
 		}
 	}
 
@@ -323,7 +323,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		}
 		if (this.contentType !== undefined) {
 			params["RepositoryEntityID"] = this.contentType.ID;
-			await this.configSvc.navigateForwardAsync(`/portals/cms/contents/create?x-request=${AppUtility.toBase64Url(params)}`);
+			await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, params));
 		}
 	}
 

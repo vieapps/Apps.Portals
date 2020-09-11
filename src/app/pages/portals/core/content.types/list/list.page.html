@@ -65,20 +65,16 @@
 			</ion-item>
 			<ion-item-options>
 				<ion-item-option color="medium" (click)="showExpressionsAsync($event, contentType)">
-					<ion-icon name="construct" slot="top"></ion-icon>
-					{{ labels.expressions }}
+					<ion-icon name="construct" slot="icon-only" title="{{labels.expressions}}"></ion-icon>
 				</ion-item-option>
-				<ion-item-option color="warning" (click)="editAsync($event, contentType, true)">
-					<ion-icon name="settings" slot="top"></ion-icon>
-					{{ labels.advancedEdit }}
-				</ion-item-option>
-				<ion-item-option color="primary" (click)="editAsync($event, contentType)">
-					<ion-icon name="create" slot="top"></ion-icon>
-					{{ labels.edit }}
+				<ion-item-option color="dark" (click)="editAsync($event, contentType, true)">
+					<ion-icon name="settings" slot="icon-only" title="{{labels.advancedEdit}}"></ion-icon>
 				</ion-item-option>
 				<ion-item-option color="secondary" (click)="viewAsync($event, contentType)">
-					<ion-icon name="file-tray-full" slot="top"></ion-icon>
-					{{ labels.view }}
+					<ion-icon name="file-tray-full" slot="icon-only" title="{{labels.view}}"></ion-icon>
+				</ion-item-option>
+				<ion-item-option color="primary" (click)="editAsync($event, contentType)">
+					<ion-icon name="create" slot="icon-only" title="{{labels.edit}}"></ion-icon>
 				</ion-item-option>
 			</ion-item-options>
 		</ion-item-sliding>

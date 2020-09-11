@@ -4,7 +4,7 @@
 			<ion-back-button *ngIf="searching || (parentCategory && !redordering)" text=""></ion-back-button>
 			<ion-menu-button *ngIf="!parentCategory && !redordering"></ion-menu-button>
 			<ion-button *ngIf="redordering" fill="clear" color="secondary" [disabled]="processing" (click)="cancelReorderAsync()">
-				{{ buttons.cancel }}
+				{{ labels.cancel }}
 			</ion-button>
 		</ion-buttons>
 		<ion-buttons *ngIf="!searching || redordering" slot="end">
@@ -12,7 +12,7 @@
 				<ion-icon name="search" slot="icon-only"></ion-icon>
 			</ion-button>
 			<ion-button *ngIf="redordering" fill="clear" color="primary" [disabled]="processing" (click)="doReorderAsync()">
-				{{ buttons.save }}
+				{{ labels.save }}
 			</ion-button>
 		</ion-buttons>
 		<ion-title [hidden]="searching">
@@ -75,16 +75,16 @@
 			</ion-item>
 			<ion-item-options>
 				<ion-item-option color="medium" (click)="openAsync($event, category)">
-					<ion-icon name="create" slot="top"></ion-icon>
-					{{ buttons.edit }}
+					<ion-icon name="create" slot="icon-only" title="{{labels.edit}}"></ion-icon>
 				</ion-item-option>
-				<ion-item-option *ngIf="category.childrenIDs && category.childrenIDs.length > 0" color="primary" (click)="showChildrenAsync($event, category)">
-					<ion-icon name="file-tray-full" slot="top"></ion-icon>
-					{{ buttons.children }}
+				<ion-item-option color="warning" (click)="refreshAsync($event, category)">
+					<ion-icon name="refresh" slot="icon-only" title="{{labels.refresh}}"></ion-icon>
 				</ion-item-option>
 				<ion-item-option color="secondary" (click)="viewAsync($event, category)">
-					<ion-icon name="newspaper" slot="top"></ion-icon>
-					{{ buttons.view }}
+					<ion-icon name="newspaper" slot="icon-only" title="{{labels.view}}"></ion-icon>
+				</ion-item-option>
+				<ion-item-option *ngIf="category.childrenIDs && category.childrenIDs.length > 0" color="primary" (click)="showChildrenAsync($event, category)">
+					<ion-icon name="file-tray-full" slot="icon-only" title="{{labels.children}}"></ion-icon>
 				</ion-item-option>
 			</ion-item-options>
 		</ion-item-sliding>

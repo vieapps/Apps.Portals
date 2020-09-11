@@ -43,6 +43,11 @@
 	<ion-list class="ion-padding-end">
 		<ion-item-sliding *ngFor="let item of items; trackBy: track">
 			<ion-item [color]="color" (click)="viewAsync($event, item)" class="ion-activatable" detail="false">
+				<ion-buttons slot="end">
+					<ion-button *ngIf="canUpdate" fill="clear" color="medium" [title]="buttons.edit" (click)="editAsync($event, item)">
+						<ion-icon name="create" slot="icon-only"></ion-icon>
+					</ion-button>
+				</ion-buttons>
 				<ion-label>
 					<ion-thumbnail class="ion-float-start ion-padding-end">
 						<img [src]="item.thumbnailURI" />
@@ -60,13 +65,11 @@
 				</ion-label>
 			</ion-item>
 			<ion-item-options>
-				<ion-item-option color="primary" (click)="viewAsync($event, item)">
-					<ion-icon name="eye" slot="top"></ion-icon>
-					{{ buttons.view }}
+				<ion-item-option *ngIf="canUpdate" color="medium" (click)="editAsync($event, item)">
+					<ion-icon name="create" slot="icon-only" title="{{buttons.edit}}"></ion-icon>
 				</ion-item-option>
-				<ion-item-option *ngIf="canUpdate" color="secondary" (click)="editAsync($event, item)">
-					<ion-icon name="create" slot="top"></ion-icon>
-					{{ buttons.edit }}
+				<ion-item-option color="primary" (click)="viewAsync($event, item)">
+					<ion-icon name="eye" slot="icon-only" title="{{buttons.view}}"></ion-icon>
 				</ion-item-option>
 			</ion-item-options>
 		</ion-item-sliding>

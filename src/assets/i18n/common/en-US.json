@@ -30,7 +30,8 @@
 			"select": "Select",
 			"search": "Search",
 			"upload": "Upload",
-			"download": "Download"
+			"download": "Download",
+			"refresh": "Refresh"
 		},
 		"messages": {
 			"loading": "Loading...",
