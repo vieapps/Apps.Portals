@@ -251,9 +251,9 @@ export class PlatformUtility {
 	}
 
 	/** Opens or copies the URI */
-	public static fetchURI(uri?: string) {
+	public static fetchURI(uri?: string, onNext?: () => void) {
 		if (AppConfig.isNativeApp || this._electronService !== undefined) {
-			this.copyToClipboard(uri);
+			this.copyToClipboard(uri, onNext);
 		}
 		else {
 			this.openURI(uri);
@@ -286,34 +286,44 @@ export class PlatformUtility {
 	/** Copies the value into clipboard */
 	public static copyToClipboard(value: string, onNext?: () => void) {
 		if (AppConfig.isNativeApp) {
-			this._clipboard.copy(value).then(
-				() => {
-					if (AppConfig.isDebug) {
-						console.log("Copied...", value);
-					}
-					if (onNext !== undefined) {
-						onNext();
-					}
-				},
-				error => {
-					console.error(`Copy error => ${AppUtility.getErrorMessage(error)}`, JSON.stringify(error));
-				}
-			);
+			this.copyToNativeAppClipboard(value, onNext);
 		}
 		else {
-			const parentNode = window.document.body;
-			const textarea = this.appendElement({ value: value }, "textarea", parentNode) as HTMLTextAreaElement;
-			textarea.style.position = "fixed";
-			textarea.style.left = "0";
-			textarea.style.top = "0";
-			textarea.style.opacity = "0";
-			textarea.focus();
-			textarea.select();
-			window.document.execCommand("copy");
-			parentNode.removeChild(textarea);
-			if (onNext !== undefined) {
-				onNext();
+			this.copyToWebAppClipboard(value, onNext);
+		}
+	}
+
+	/** Copies the value into clipboard of the native app */
+	public static copyToNativeAppClipboard(value: string, onNext?: () => void) {
+		this._clipboard.copy(value).then(
+			() => {
+				if (AppConfig.isDebug) {
+					console.log("Copied...", value);
+				}
+				if (onNext !== undefined) {
+					onNext();
+				}
+			},
+			error => {
+				console.error(`Copy error => ${AppUtility.getErrorMessage(error)}`, JSON.stringify(error));
 			}
+		);
+	}
+
+	/** Copies the value into clipboard of the web app */
+	public static copyToWebAppClipboard(value: string, onNext?: () => void) {
+		const parentNode = window.document.body;
+		const textarea = this.appendElement({ value: value }, "textarea", parentNode) as HTMLTextAreaElement;
+		textarea.style.position = "fixed";
+		textarea.style.left = "0";
+		textarea.style.top = "0";
+		textarea.style.opacity = "0";
+		textarea.focus();
+		textarea.select();
+		window.document.execCommand("copy");
+		parentNode.removeChild(textarea);
+		if (onNext !== undefined) {
+			onNext();
 		}
 	}
 
