@@ -4,7 +4,7 @@
 			{{ label }}
 		</ion-label>
 	</ion-list-header>
-	<ion-item *ngFor="let attachment of attachments; trackBy: track" [color]="configSvc.color">
+	<ion-item *ngFor="let attachment of attachments; trackBy: track" [color]="color">
 		<ion-checkbox *ngIf="allowSelect" slot="end" [checked]="selected.contains(attachment.ID)" (ionChange)="onSelect($event, attachment)"></ion-checkbox>
 		<ion-label>
 			<ion-buttons *ngIf="allowEdit || allowDelete" class="ion-float-end">
@@ -24,10 +24,10 @@
 					{{ attachment.friendlyFilename }} - {{ attachment.Size | number:'':locale }} bytes
 				</span>
 				<a (click)="fetchURI(attachment.URIs.Direct)" class="ion-padding-start">
-					<ion-icon name="link" color="medium" slot="icon-only"></ion-icon>
+					<ion-icon name="link" color="medium" slot="icon-only" title="Direct URL"></ion-icon>
 				</a>
 				<a (click)="fetchURI(attachment.URIs.Download)" class="ion-padding-start">
-					<ion-icon name="download" color="medium" slot="icon-only"></ion-icon>
+					<ion-icon name="download" color="medium" slot="icon-only" title="Download URL"></ion-icon>
 				</a>
 				<a class="ion-padding-start">
 					<ion-icon *ngIf="attachment.IsShared" name="share-social" color="medium" slot="icon-only"></ion-icon>

@@ -42,10 +42,10 @@
 						{{ attachment.Size | number:'':locale }} bytes
 					</span>
 					<a [href]="attachment.URIs.Direct" target="_blank" class="ion-padding-start">
-						<ion-icon name="link" color="medium" slot="icon-only"></ion-icon>
+						<ion-icon name="link" color="medium" slot="icon-only" title="Direct URL"></ion-icon>
 					</a>
 					<a [href]="attachment.URIs.Download" target="_blank" class="ion-padding-start">
-						<ion-icon name="download" color="medium" slot="icon-only"></ion-icon>
+						<ion-icon name="download" color="medium" slot="icon-only" title="Download URL"></ion-icon>
 					</a>
 					<a class="ion-padding-start">
 						<ion-icon *ngIf="attachment.IsShared" name="share-social" color="medium" slot="icon-only"></ion-icon>

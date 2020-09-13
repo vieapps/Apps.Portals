@@ -3,7 +3,7 @@ import { Component, OnInit, Input } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { AppUtility } from "@components/app.utility";
 import { PlatformUtility } from "@components/app.utility.platform";
-import { AppFormsControl } from "@components/forms.service";
+import { AppFormsControl, AppFormsService } from "@components/forms.service";
 import { ConfigurationService } from "@services/configuration.service";
 import { AttachmentInfo } from "@models/base";
 
@@ -16,7 +16,8 @@ import { AttachmentInfo } from "@models/base";
 export class FilesSelectorControl implements OnInit {
 
 	constructor(
-		public configSvc: ConfigurationService
+		private configSvc: ConfigurationService,
+		private appFormsSvc: AppFormsService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
@@ -46,6 +47,10 @@ export class FilesSelectorControl implements OnInit {
 	@Input() showIcons: boolean;
 
 	selected = new Set<string>();
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	get locale() {
 		return this.configSvc.locale;
@@ -114,7 +119,7 @@ export class FilesSelectorControl implements OnInit {
 	}
 
 	fetchURI(uri: string) {
-		PlatformUtility.fetchURI(uri);
+		PlatformUtility.fetchURI(uri, async () => await this.appFormsSvc.showToastAsync("The URL was copied into clipboard..."));
 	}
 
 	onSelect(event: any, attachment: AttachmentInfo) {
