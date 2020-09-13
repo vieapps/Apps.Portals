@@ -100,7 +100,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 		this.formConfig = await this.getFormControlsAsync();
 
 		if (AppUtility.isNotEmpty(this.role.ID) && this.role.childrenIDs === undefined) {
-			this.portalsCoreSvc.refreshRoleAsync(this.role.ID, async _ => await this.appFormsSvc.showToastAsync("The role was refreshed"));
+			this.portalsCoreSvc.refreshRoleAsync(this.role.ID, async _ => await this.appFormsSvc.showToastAsync("The role was freshen-up"));
 		}
 	}
 

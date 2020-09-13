@@ -311,7 +311,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 	async refreshAsync(event: Event, role: Role) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		await this.portalsCoreSvc.refreshRoleAsync(role.ID, async _ => await this.appFormsSvc.showToastAsync("Refreshed..."));
+		await this.portalsCoreSvc.refreshRoleAsync(role.ID, async _ => await this.appFormsSvc.showToastAsync("The role was freshen-up"));
 	}
 
 }

@@ -69,8 +69,8 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 	labels = {
 		edit: "Update this content type",
 		advancedEdit: "Update this content type in advanced mode",
-		view: "View the list of contents",
-		expressions: "Expressions"
+		showContents: "View the list of contents",
+		showExpressions: "Expressions"
 	};
 
 	get locale() {
@@ -164,8 +164,8 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		this.labels = {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
 			advancedEdit: await this.configSvc.getResourceAsync("portals.common.advancedEdit"),
-			view: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list"),
-			expressions: await this.configSvc.getResourceAsync("portals.expressions.title.list", { info: "" })
+			showContents: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list"),
+			showExpressions: await this.configSvc.getResourceAsync("portals.expressions.title.list", { info: "" })
 		};
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
@@ -354,7 +354,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		await this.configSvc.navigateForwardAsync(contentType.getRouterURI({ ID: contentType.ID, Advanced: isAdvancedMode }));
 	}
 
-	async viewAsync(event: Event, contentType: ContentType) {
+	async showContentsAsync(event: Event, contentType: ContentType) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(contentType));

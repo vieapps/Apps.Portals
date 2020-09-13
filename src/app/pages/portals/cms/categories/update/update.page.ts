@@ -119,7 +119,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		this.formConfig = await this.getFormControlsAsync();
 
 		if (AppUtility.isNotEmpty(this.category.ID) && this.category.childrenIDs === undefined) {
-			this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, async _ => await this.appFormsSvc.showToastAsync("The category was refreshed"));
+			this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, async _ => await this.appFormsSvc.showToastAsync("The category was freshen-up"));
 		}
 	}
 

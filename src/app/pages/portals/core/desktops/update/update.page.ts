@@ -112,7 +112,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		if (AppUtility.isNotEmpty(this.desktop.ID) && this.desktop.childrenIDs === undefined) {
-			this.portalsCoreSvc.refreshDesktopAsync(this.desktop.ID, async _ => await this.appFormsSvc.showToastAsync("The desktop was refreshed"));
+			this.portalsCoreSvc.refreshDesktopAsync(this.desktop.ID, async _ => await this.appFormsSvc.showToastAsync("The desktop was freshen-up"));
 		}
 	}
 

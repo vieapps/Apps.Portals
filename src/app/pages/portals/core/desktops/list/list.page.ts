@@ -336,7 +336,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 	async refreshAsync(event: Event, desktop: Desktop) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		await this.portalsCoreSvc.refreshDesktopAsync(desktop.ID, async _ => await this.appFormsSvc.showToastAsync(`${this.labels.refresh}...`));
+		await this.portalsCoreSvc.refreshDesktopAsync(desktop.ID, async _ => await this.appFormsSvc.showToastAsync("The desktop was freshen-up"));
 	}
 
 }

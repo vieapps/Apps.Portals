@@ -127,7 +127,7 @@ export class CmsLinksUpdatePage implements OnInit {
 		this.formConfig = await this.getFormControlsAsync();
 
 		if (AppUtility.isNotEmpty(this.link.ID) && this.link.childrenIDs === undefined) {
-			this.portalsCmsSvc.refreshLinkAsync(this.link.ID, async _ => await this.appFormsSvc.showToastAsync("The link was refreshed"));
+			this.portalsCmsSvc.refreshLinkAsync(this.link.ID, async _ => await this.appFormsSvc.showToastAsync("The link was freshen-up"));
 		}
 	}
 

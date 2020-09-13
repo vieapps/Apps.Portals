@@ -133,7 +133,11 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
-		this.contentType = ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
+		const contentTypeID = this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"];
+		this.contentType = ContentType.get(contentTypeID);
+		if (this.contentType === undefined && AppUtility.isNotEmpty(contentTypeID)) {
+			await this.portalsCoreSvc.getContentTypeAsync(contentTypeID, _ => this.contentType = ContentType.get(contentTypeID), undefined, true);
+		}
 
 		this.organization = this.contentType !== undefined
 			? Organization.get(this.contentType.SystemID)
@@ -146,7 +150,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 		if (this.contentType === undefined) {
 			await this.portalsCoreSvc.getOrganizationAsync(this.organization.ID, undefined, undefined, true);
-			this.contentType = ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
+			this.contentType = ContentType.get(contentTypeID);
 		}
 
 		this.module = this.contentType !== undefined
@@ -341,6 +345,12 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		else {
 			let objects = new List(results === undefined ? Category.all : results.map(o => Category.get(o.ID) || Category.deserialize(o, Category.get(o.ID))));
 			objects = objects.Where(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID);
+			if (this.module !== undefined) {
+				objects = objects.Where(o => o.RepositoryID === this.module.ID);
+			}
+			if (this.contentType !== undefined) {
+				objects = objects.Where(o => o.RepositoryEntityID === this.contentType.ID);
+			}
 			objects = objects.OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title);
 			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
@@ -399,7 +409,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	async refreshAsync(event: Event, category: Category) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		await this.portalsCmsSvc.refreshCategoryAsync(category.ID, async _ => await this.appFormsSvc.showToastAsync(`${this.labels.refresh}...`));
+		await this.portalsCmsSvc.refreshCategoryAsync(category.ID, async _ => await this.appFormsSvc.showToastAsync("The category was freshen-up"));
 	}
 
 	private async backAsync(message: string, url?: string) {
