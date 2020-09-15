@@ -434,12 +434,12 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 								name = "banner.xsl";
 							}
 						}
-						this.portalsCoreSvc.setTemplateControlOptions(settingsControl.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), name, this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType.getObjectName(false));
+						this.portalsCoreSvc.setTemplateControlOptions(settingsControl.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), name, this.portalsCoreSvc.getTheme(this.portlet), this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType.getObjectName(false));
 						settingsControl.SubControls.Controls.find(ctrl => ctrl.Name === "PageSize").controlRef.setValue(this.contentType.contentTypeDefinition.NestedObject ? 0 : this.portlet.ListSettings.PageSize);
 					}
 					settingsControl = this.formControls.find(ctrl => ctrl.Name === "ViewSettings");
 					if (settingsControl !== undefined) {
-						this.portalsCoreSvc.setTemplateControlOptions(settingsControl.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "view.xsl", this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType.getObjectName(false));
+						this.portalsCoreSvc.setTemplateControlOptions(settingsControl.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "view.xsl", this.portalsCoreSvc.getTheme(this.portlet), this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType.getObjectName(false));
 					}
 				}
 			};
@@ -525,7 +525,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		const viewSettings = this.originalPortlet !== undefined ? this.originalPortlet.ViewSettings : this.portlet.ViewSettings;
 
 		const commonSettingsConfig = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "CommonSettings")).SubControls.Controls;
-		this.portalsCoreSvc.setTemplateControlOptions(commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "portlet.xml");
+		this.portalsCoreSvc.setTemplateControlOptions(commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "portlet.xml", this.portalsCoreSvc.getTheme(this.portlet));
 
 		control = commonSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "TitleUISettings"));
 		this.portalsCoreSvc.setUISettingsControlOptions(control, "portals.portlets.controls.CommonSettings.TitleUISettings", this.fileOptions);
@@ -566,7 +566,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		const listSettingsConfig = control.SubControls.Controls;
-		this.portalsCoreSvc.setTemplateControlOptions(listSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), xslName, this.contentType === undefined ? undefined : this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType === undefined ? undefined : this.contentType.getObjectName(false));
+		this.portalsCoreSvc.setTemplateControlOptions(listSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), xslName, this.portalsCoreSvc.getTheme(this.portlet), this.contentType === undefined ? undefined : this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType === undefined ? undefined : this.contentType.getObjectName(false));
 
 		control = listSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Options"));
 		control.Options.Rows = 18;
@@ -598,7 +598,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		control.Options.Label = control.Options.Description = undefined;
 
 		const viewSettingsConfig = control.SubControls.Controls;
-		this.portalsCoreSvc.setTemplateControlOptions(viewSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "view.xsl", this.contentType === undefined ? undefined : this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType === undefined ? undefined : this.contentType.getObjectName(false));
+		this.portalsCoreSvc.setTemplateControlOptions(viewSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "view.xsl", this.portalsCoreSvc.getTheme(this.portlet), this.contentType === undefined ? undefined : this.contentType.contentTypeDefinition.ModuleDefinition.Directory, this.contentType === undefined ? undefined : this.contentType.getObjectName(false));
 
 		control = viewSettingsConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Options"));
 		control.Options.Rows = 18;
@@ -626,8 +626,8 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			control.Hidden = !this.isAdvancedMode;
 		}
 
-		this.portalsCoreSvc.setTemplateControlOptions(formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "PaginationSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "pagination.xml");
-		this.portalsCoreSvc.setTemplateControlOptions(formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "BreadcrumbSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "breadcrumb.xml");
+		this.portalsCoreSvc.setTemplateControlOptions(formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "PaginationSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "pagination.xml", this.portalsCoreSvc.getTheme(this.portlet));
+		this.portalsCoreSvc.setTemplateControlOptions(formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "BreadcrumbSettings")).SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template")), "breadcrumb.xml", this.portalsCoreSvc.getTheme(this.portlet));
 
 		formConfig.push(
 			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label"), false, true, true, FilesProcessorModalPage),

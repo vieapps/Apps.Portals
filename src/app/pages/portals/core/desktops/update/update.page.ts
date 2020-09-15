@@ -207,7 +207,6 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: unspecified }, 0);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Theme"));
-		// control.Options.Type = "dropdown";
 		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => {
 			return { Value: theme.name, Label: theme.name };
 		});
@@ -217,7 +216,13 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		control.Options.Rows = 18;
 		control.Options.Icon = {
 			Name: "color-wand",
-			OnClick: async (_, formControl) => (formControl as AppFormsControlComponent).setValue(await this.portalsCoreSvc.getTemplateAsync("desktop.xml"))
+			OnClick: async (_, formControl) => {
+				let theme = this.form.value.Theme;
+				if (theme === undefined || theme === "-") {
+					theme = this.portalsCoreSvc.getTheme(this.desktop);
+				}
+				(formControl as AppFormsControlComponent).setValue(await this.portalsCoreSvc.getTemplateAsync("desktop.xml", theme));
+			}
 		};
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "UISettings"));

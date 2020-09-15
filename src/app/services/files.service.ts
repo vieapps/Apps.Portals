@@ -4,6 +4,7 @@ import { AppRTU, AppXHR } from "@components/app.apis";
 import { AppEvents } from "@components/app.events";
 import { AppCrypto } from "@components/app.crypto";
 import { AppUtility } from "@components/app.utility";
+import { PlatformUtility } from "@components/app.utility.platform";
 import { AppFormsService, AppFormsControlConfig, AppFormsControl } from "@components/forms.service";
 import { Base as BaseService } from "@services/base.service";
 import { ConfigurationService } from "@services/configuration.service";
@@ -231,7 +232,7 @@ export class FilesService extends BaseService {
 		return formControl;
 	}
 
-	public getThumbnailFormControl(name: string, segment: string, allowSelectNew: boolean = false, useDefaultHandlers: boolean = true, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	public getThumbnailFormControl(name: string, segment: string, allowSelectNew: boolean = false, useDefaultHandlers: boolean = true, onCompleted?: (controlConfig: AppFormsControlConfig) => void, showCopyToClipboard: boolean = true) {
 		const controlConfig = {
 			Name: name || "Thumbnails",
 			Segment: segment || "attachments",
@@ -254,28 +255,50 @@ export class FilesService extends BaseService {
 				if (file !== undefined) {
 					this.readAsDataURL(
 						file,
-						base64data => formControl.setValue({
-							current: AppUtility.isObject(formControl.value, true) ? formControl.value.current : undefined,
-							new: base64data,
-							identity: AppUtility.isObject(formControl.value, true) ? formControl.value.identity : undefined
-						}, { onlySelf: true }),
+						base64data => {
+							const value = formControl.value;
+							formControl.setValue({
+								current: AppUtility.isObject(value, true) ? value.current : undefined,
+								new: base64data,
+								identity: AppUtility.isObject(value, true) ? value.identity : undefined
+							}, { onlySelf: true });
+						},
 						this.configSvc.fileLimits.thumbnail,
 						async () => await this.appFormsSvc.showToastAsync("Too big...")
 					);
 				}
 				else {
+					const value = formControl.value;
 					formControl.setValue({
-						current: AppUtility.isObject(formControl.value, true) ? formControl.value.current : undefined,
+						current: AppUtility.isObject(value, true) ? value.current : undefined,
 						new: undefined,
-						identity: AppUtility.isObject(formControl.value, true) ? formControl.value.identity : undefined
+						identity: AppUtility.isObject(value, true) ? value.identity : undefined
 					}, { onlySelf: true });
 				}
 			};
-			controlConfig.Options.FilePickerOptions.OnDelete = (_, formControl) => formControl.setValue({
-				current: AppUtility.isObject(formControl.value, true) ? formControl.value.current : undefined,
-				new: undefined,
-				identity: AppUtility.isObject(formControl.value, true) ? formControl.value.identity : undefined
-			}, { onlySelf: true });
+			controlConfig.Options.FilePickerOptions.OnDelete = (_, formControl) => {
+				const value = formControl.value;
+				formControl.setValue({
+					current: AppUtility.isObject(value, true) ? value.current : undefined,
+					new: undefined,
+					identity: AppUtility.isObject(value, true) ? value.identity : undefined
+				}, { onlySelf: true });
+			};
+		}
+
+		if (AppUtility.isTrue(showCopyToClipboard)) {
+			controlConfig.Options.Icon = {
+				Name: "link",
+				Fill: "clear",
+				Color: "medium",
+				Slot: "end",
+				OnClick: (_, formControl) => {
+					const value = formControl.value;
+					if (value !== undefined && AppUtility.isNotEmpty(value.current)) {
+						PlatformUtility.copyToClipboard(value.current, async () => await this.appFormsSvc.showToastAsync("Copied..."));
+					}
+				}
+			};
 		}
 
 		if (onCompleted !== undefined) {

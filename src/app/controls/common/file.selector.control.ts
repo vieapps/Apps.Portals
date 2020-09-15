@@ -118,8 +118,12 @@ export class FilesSelectorControl implements OnInit {
 		return `${attachment.ID}@${index}`;
 	}
 
-	fetchURI(uri: string) {
-		PlatformUtility.fetchURI(uri, async () => await this.appFormsSvc.showToastAsync("The URL was copied into clipboard..."));
+	copy(uri: string) {
+		PlatformUtility.copyToClipboard(uri, async () => await this.appFormsSvc.showToastAsync("Copied..."));
+	}
+
+	open(uri: string) {
+		PlatformUtility.openURI(uri);
 	}
 
 	onSelect(event: any, attachment: AttachmentInfo) {

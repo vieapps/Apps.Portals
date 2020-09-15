@@ -181,6 +181,9 @@ export class PortalsCmsService extends BaseService {
 			await this.configSvc.storeOptionsAsync();
 			AppEvents.broadcast(this.name, { Object: "Module", Type: "Changed", ID: Module.active.ID });
 		}
+		if (this.configSvc.isDebug) {
+			console.log("[CMS Portals]: Active module", Module.active);
+		}
 		if (onNext !== undefined) {
 			onNext();
 		}

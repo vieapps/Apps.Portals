@@ -250,16 +250,6 @@ export class PlatformUtility {
 		return (AppConfig.isWebApp ? this.parseURI(window.location.href).HostURI + AppConfig.url.base : AppConfig.URIs.activations) + (AppUtility.isTrue(addAsRedirectParam) ? `?redirect=${AppCrypto.urlEncode(path)}` : path);
 	}
 
-	/** Opens or copies the URI */
-	public static fetchURI(uri?: string, onNext?: () => void) {
-		if (AppConfig.isNativeApp || this._electronService !== undefined) {
-			this.copyToClipboard(uri, onNext);
-		}
-		else {
-			this.openURI(uri);
-		}
-	}
-
 	/** Gets the host name from an url */
 	public static getHost(url?: string) {
 		const uri = this.parseURI(url);

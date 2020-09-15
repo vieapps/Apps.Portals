@@ -207,6 +207,9 @@ export class PortalsCoreService extends BaseService {
 		else if (Organization.active !== undefined) {
 			this.configSvc.appConfig.services.activeID = Organization.active.ID;
 		}
+		if (this.configSvc.isDebug) {
+			console.log("[Portals]: Active organization", Organization.active);
+		}
 		if (onNext !== undefined) {
 			onNext();
 		}
@@ -273,17 +276,17 @@ export class PortalsCoreService extends BaseService {
 		};
 	}
 
-	public setTemplateControlOptions(control: AppFormsControlConfig | AppFormsControl, name: string, mainDirectory?: string, subDirectory?: string) {
+	public setTemplateControlOptions(control: AppFormsControlConfig | AppFormsControl, name: string, theme?: string, mainDirectory?: string, subDirectory?: string) {
 		control.Options.Rows = 18;
 		control.Options.Icon = {
 			Name: "color-wand",
-			OnClick: async (_, formControl) => (formControl as AppFormsControlComponent).setValue(await this.getTemplateAsync(name, mainDirectory, subDirectory))
+			OnClick: async (_, formControl) => (formControl as AppFormsControlComponent).setValue(await this.getTemplateAsync(name, theme, mainDirectory, subDirectory))
 		};
 	}
 
-	public async getTemplateAsync(name: string, mainDirectory?: string, subDirectory?: string) {
+	public async getTemplateAsync(name: string, theme?: string, mainDirectory?: string, subDirectory?: string) {
 		let template: string;
-		await super.fetchAsync(super.getURI("definitions", "template", "x-request=" + AppUtility.toBase64Url({ Name: name, MainDirectory: mainDirectory, SubDirectory: subDirectory })), data => template = data.Template);
+		await super.fetchAsync(super.getURI("definitions", "template", "x-request=" + AppUtility.toBase64Url({ Name: name, Theme: theme, MainDirectory: mainDirectory, SubDirectory: subDirectory })), data => template = data.Template);
 		return template || "";
 	}
 
@@ -291,6 +294,43 @@ export class PortalsCoreService extends BaseService {
 		let zones: Array<string>;
 		await super.fetchAsync(super.getURI("definitions", "template", "x-request=" + AppUtility.toBase64Url({ Mode: "Zones", DesktopID: dekstopID })), data => zones = data);
 		return zones || [];
+	}
+
+	public getTheme(object: BaseModel) {
+		let organization: Organization;
+		let site: Site;
+		let desktop: Desktop;
+		let theme: string;
+		if (object instanceof Portlet) {
+			organization = Organization.get(object.SystemID);
+			site = Site.all.filter(s => s.SystemID === organization.ID).find(_ => true);
+			desktop = (object as Portlet).originalDesktop;
+		}
+		else if (object instanceof Desktop) {
+			organization = Organization.get(object.SystemID);
+			site = Site.all.filter(s => s.SystemID === organization.ID).find(_ => true);
+			desktop = object as Desktop;
+			theme  = desktop.Theme;
+		}
+		else if (object instanceof Site) {
+			organization = Organization.get(object.SystemID);
+			site = object as Site;
+			theme = site.Theme;
+		}
+		else if (object instanceof Organization) {
+			organization = object as Organization;
+			theme = organization.Theme;
+		}
+		if (theme === undefined && desktop !== undefined) {
+			theme = desktop.Theme;
+		}
+		if (theme === undefined && site !== undefined) {
+			theme = site.Theme;
+		}
+		if (theme === undefined && organization !== undefined) {
+			theme = organization.Theme;
+		}
+		return theme;
 	}
 
 	public getAppURL(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }, objectName?: string, path?: string) {
