@@ -13,7 +13,7 @@ export const routes: Routes = [
 		loadChildren: "@pages/portals/core/expressions/list/list.module#PortalsExpressionsListPageModule"
 	},
 	{
-		path: "create",
+		path: "create/:data",
 		loadChildren: "@pages/portals/core/expressions/update/update.module#PortalsExpressionsUpdatePageModule"
 	},
 	{

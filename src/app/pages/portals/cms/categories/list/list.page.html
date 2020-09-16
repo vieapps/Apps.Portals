@@ -74,6 +74,9 @@
 				</ion-label>
 			</ion-item>
 			<ion-item-options>
+				<ion-item-option color="dark" (click)="createExpressionAsync($event, category)">
+					<ion-icon name="construct" slot="icon-only" title="{{labels.expression}}"></ion-icon>
+				</ion-item-option>
 				<ion-item-option color="medium" (click)="openAsync($event, category)">
 					<ion-icon name="create" slot="icon-only" title="{{labels.edit}}"></ion-icon>
 				</ion-item-option>

@@ -11,13 +11,15 @@ export class Expression extends CoreBaseModel {
 		systemID?: string,
 		repositoryID?: string,
 		contentTypeDefinitionID?: string,
-		repositoryEntityID?: string
+		repositoryEntityID?: string,
+		title?: string
 	) {
 		super();
 		this.SystemID = AppUtility.isNotEmpty(systemID) ? systemID : "";
 		this.RepositoryID = AppUtility.isNotEmpty(repositoryID) ? repositoryID : "";
 		this.ContentTypeDefinitionID = AppUtility.isNotEmpty(contentTypeDefinitionID) ? contentTypeDefinitionID : "";
 		this.RepositoryEntityID = AppUtility.isNotEmpty(repositoryEntityID) ? repositoryEntityID : "";
+		this.Title = title;
 	}
 
 	/** All instances of expression */

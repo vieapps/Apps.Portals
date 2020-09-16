@@ -76,6 +76,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		children: "View the children",
 		view: "View the list of contents",
 		refresh: "Refresh",
+		expression: "Create new expression",
 		save: "Save",
 		cancel: "Cancel"
 	};
@@ -173,6 +174,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			edit: await this.configSvc.getResourceAsync("portals.cms.categories.list.labels.edit"),
 			children: await this.configSvc.getResourceAsync("portals.cms.categories.list.labels.children"),
 			view: await this.configSvc.getResourceAsync("portals.cms.categories.list.labels.view"),
+			expression: await this.configSvc.getResourceAsync("portals.expressions.title.create"),
 			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			save: await this.configSvc.getResourceAsync("common.buttons.save"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
@@ -410,6 +412,29 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
 		await this.portalsCmsSvc.refreshCategoryAsync(category.ID, async _ => await this.appFormsSvc.showToastAsync("The category was freshen-up"));
+	}
+
+	async createExpressionAsync(event: Event, category: Category) {
+		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module);
+		const params = AppUtility.isObject(contentType, true)
+			? {
+				Title: `Contents of ${category.Title}`,
+				RepositoryID: contentType.RepositoryID,
+				RepositoryEntityID: contentType.ID,
+				ContentTypeDefinitionID: contentType.ContentTypeDefinitionID,
+				Filter: {
+					Operator: "And",
+					Children: [{
+						Attribute: "CategoryID",
+						Operator: "Equals",
+						Value: category.ID
+					}]
+				}
+			}
+			: undefined;
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", category.ansiTitle, params, "expression", "core"));
 	}
 
 	private async backAsync(message: string, url?: string) {

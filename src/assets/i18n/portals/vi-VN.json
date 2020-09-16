@@ -453,6 +453,148 @@
 				}
 			}
 		},
+		"sites": {
+			"title": {
+				"search": "Tìm kiếm site",
+				"list": "Danh sách site {{info}}",
+				"create": "Tạo mới site",
+				"update": "Cập nhật site"
+			},
+			"controls": {
+				"Organization": "Site của đơn vị - tổ chức",
+				"Title": {
+					"label": "Tên site",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Chú thích",
+					"placeholder": "",
+					"description": ""
+				},
+				"Status": {
+					"label": "Trạng thái",
+					"placeholder": "",
+					"description": "Site sẽ chỉ hoạt động khi trạng thái là 'Đã duyệt' hoặc 'Xuất bản'"
+				},
+				"PrimaryDomain": {
+					"label": "Tên miền chính",
+					"placeholder": "vd: company.com",
+					"description": "Chỉ định tên miền chính (primary domain) để nhận dạng ra site"
+				},
+				"SubDomain": {
+					"label": "Tên miền phụ",
+					"placeholder": "vd: www hoặc *",
+					"description": "Chỉ định tên miền phụ (sub domain) để kết hợp với tên miền chính nhận dạng ra site, có thể sử dụng giá trị <b>*</b> để chỉ định toàn bộ tên miền phụ"
+				},
+				"OtherDomains": {
+					"label": "Tên miền khác",
+					"placeholder": "",
+					"description": "Chỉ định các tên miền khác sẽ sử dụng để nhận dạng ra site, viết theo đúng nguyên tắc của tên miền.<br/>Các giá trị được phân cách bởi dấu chấm phẩy (;)."
+				},
+				"AlwaysUseHTTPs": {
+					"label": "Luôn sử dụng các kết nối an toàn HTTPS (chú ý: phải có chứng chỉ SSL phù hợp)",
+					"placeholder": "",
+					"description": ""
+				},
+				"Language": {
+					"label": "Ngôn ngữ hiển thị",
+					"placeholder": "",
+					"description": "Các nhãn, số, ngày tháng, ... sẽ được hiển thị theo định dạng của loại ngôn ngữ đã chọn đối với các desktop không chỉ định ngôn ngữ hiển thị cụ thể (có giá trị <b>'Không xác định'</b>)"
+				},
+				"Theme": {
+					"label": "Theme",
+					"placeholder": "",
+					"description": "Nếu không chỉ định sẽ sử dụng bộ theme kế thừa từ đơn vị - tổ chức"
+				},
+				"HomeDesktopID": {
+					"label": "Desktop cho trang chủ",
+					"placeholder": "",
+					"description": "Nếu không chỉ định thì sẽ sử dụng desktop trang chủ đã xác định đối với đơn vi - tổ chức"
+				},
+				"SearchDesktopID": {
+					"label": "Desktop cho tìm kiếm",
+					"placeholder": "",
+					"description": "Nếu không chỉ định thì sẽ sử dụng desktop tìm kiếm đã xác định đối với đơn vi - tổ chức"
+				},
+				"UISettings": "Tuỳ chỉnh hiển thị (sẽ áp dụng cho toàn bộ các desktop trong site)",
+				"IconURI": {
+					"label": "Ảnh biểu tượng",
+					"placeholder": "",
+					"description": "Chỉ định ảnh biểu tượng cho toàn bộ các desktop trong site, tốt nhất là loại .ICO hoặc .PNG có kích thước 64x64"
+				},
+				"CoverURI": {
+					"label": "Ảnh bìa",
+					"placeholder": "",
+					"description": "Chỉ định ảnh bìa (cover) toàn bộ các desktop trong site để hiển thị mặc định đối với mạng xã hội khi nội dung không có ảnh bìa cụ thể, tốt nhất là loại .JPG hoặc .PNG có kích thước 1200x630 hoặc 600x315"
+				},
+				"Stylesheets": {
+					"label": "Các stylesheet (CSS) dùng chung toàn bộ site",
+					"placeholder": "",
+					"description": "Các mã stylesheet (CSS) dùng chung cho toàn bộ các desktop trong site. Lưu ý: nếu truy cập các desktop với thiết đặt của site khác, các mã stylesheet này sẽ không được sử dụng."
+				},
+				"MetaTags": {
+					"label": "Các thẻ meta bổ sung",
+					"placeholder": "",
+					"description": "Các thẻ meta bổ sung sẽ được thêm vào phần HEAD của toàn bộ các desktop trong site, cần phải viết các thẻ meta đúng theo quy chuẩn của XML"
+				},
+				"Scripts": {
+					"label": "Các mã scripts bổ sung",
+					"placeholder": "",
+					"description": "Các mã script (Javascript) bổ sung sẽ được thêm vào phần cuối (trước khi đóng thẻ BODY) của toàn bộ các desktop trong site.<br/>Các đoạn mã này phải nằm trong &lt;script&gt; và &lt;/script&gt; và có thể sử dụng jQuery ($), đồng thời cho phép trỏ ra các thư viện script ở bên ngoài.<br/>Tips: cũng có thể các thẻ HTML bổ sung vào đây cũng được."
+				},
+				"RedirectToNoneWWW": {
+					"label": "Luôn điều hướng các liên kết có 'WWW' về gốc (để tạo URL ngắn hơn)",
+					"placeholder": "",
+					"description": ""
+				},
+				"SEOInfo": {
+					"label": "",
+					"placeholder": "",
+					"description": "",
+					"Title": {
+						"label": "Tiêu đề",
+						"placeholder": "",
+						"description": "Tiêu đề của site, được sử dụng để tổ hợp với tiêu đề của portlet chính và tiêu đề của desktop"
+					},
+					"Description": {
+						"label": "Diễn giải",
+						"placeholder": "",
+						"description": "Diễn giải của site, được sử dụng để tổ hợp với diễn giải của portlet chính và diễn giải của desktop"
+					},
+					"Keywords": {
+						"label": "Từ khoá",
+						"placeholder": "",
+						"description": "Từ khoá của site, được sử dụng để tổ hợp với từ khoá của portlet chính và từ khoá của desktop"
+					}
+				}
+			},
+			"list": {
+				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác site"
+			},
+			"update": {
+				"segments": {
+					"basic": "Thông tin cơ bản",
+					"display": "Thiết đặt hiển thị",
+					"seo": "Thiết đặt SEO"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo site?",
+						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của site?",
+						"delete": "Chắc chắn muốn xoá bỏ site và các thông tin liên quan?"
+					},
+					"success": {
+						"new": "Đã khởi tạo site thành công",
+						"update": "Đã cập nhật các thay đổi của site thành công",
+						"delete": "Đã xoá site thành công"
+					}
+				},
+				"buttons": {
+					"delete": "Xoá site"
+				}
+			}
+		},
 		"desktops": {
 			"title": {
 				"search": "Tìm kiếm desktop hiển thị",
@@ -606,412 +748,6 @@
 					"SiteAndPortlet": "Site + Portlet",
 					"Portlet": "Chỉ của Portlet",
 					"Desktop": "Chỉ của Desktop"
-				}
-			}
-		},
-		"sites": {
-			"title": {
-				"search": "Tìm kiếm site",
-				"list": "Danh sách site {{info}}",
-				"create": "Tạo mới site",
-				"update": "Cập nhật site"
-			},
-			"controls": {
-				"Organization": "Site của đơn vị - tổ chức",
-				"Title": {
-					"label": "Tên site",
-					"placeholder": "",
-					"description": ""
-				},
-				"Description": {
-					"label": "Chú thích",
-					"placeholder": "",
-					"description": ""
-				},
-				"Status": {
-					"label": "Trạng thái",
-					"placeholder": "",
-					"description": "Site sẽ chỉ hoạt động khi trạng thái là 'Đã duyệt' hoặc 'Xuất bản'"
-				},
-				"PrimaryDomain": {
-					"label": "Tên miền chính",
-					"placeholder": "vd: company.com",
-					"description": "Chỉ định tên miền chính (primary domain) để nhận dạng ra site"
-				},
-				"SubDomain": {
-					"label": "Tên miền phụ",
-					"placeholder": "vd: www hoặc *",
-					"description": "Chỉ định tên miền phụ (sub domain) để kết hợp với tên miền chính nhận dạng ra site, có thể sử dụng giá trị <b>*</b> để chỉ định toàn bộ tên miền phụ"
-				},
-				"OtherDomains": {
-					"label": "Tên miền khác",
-					"placeholder": "",
-					"description": "Chỉ định các tên miền khác sẽ sử dụng để nhận dạng ra site, viết theo đúng nguyên tắc của tên miền.<br/>Các giá trị được phân cách bởi dấu chấm phẩy (;)."
-				},
-				"AlwaysUseHTTPs": {
-					"label": "Luôn sử dụng các kết nối an toàn HTTPS (chú ý: phải có chứng chỉ SSL phù hợp)",
-					"placeholder": "",
-					"description": ""
-				},
-				"Language": {
-					"label": "Ngôn ngữ hiển thị",
-					"placeholder": "",
-					"description": "Các nhãn, số, ngày tháng, ... sẽ được hiển thị theo định dạng của loại ngôn ngữ đã chọn đối với các desktop không chỉ định ngôn ngữ hiển thị cụ thể (có giá trị <b>'Không xác định'</b>)"
-				},
-				"Theme": {
-					"label": "Theme",
-					"placeholder": "",
-					"description": "Nếu không chỉ định sẽ sử dụng bộ theme kế thừa từ đơn vị - tổ chức"
-				},
-				"HomeDesktopID": {
-					"label": "Desktop cho trang chủ",
-					"placeholder": "",
-					"description": "Nếu không chỉ định thì sẽ sử dụng desktop trang chủ đã xác định đối với đơn vi - tổ chức"
-				},
-				"SearchDesktopID": {
-					"label": "Desktop cho tìm kiếm",
-					"placeholder": "",
-					"description": "Nếu không chỉ định thì sẽ sử dụng desktop tìm kiếm đã xác định đối với đơn vi - tổ chức"
-				},
-				"UISettings": "Tuỳ chỉnh hiển thị (sẽ áp dụng cho toàn bộ các desktop trong site)",
-				"IconURI": {
-					"label": "Ảnh biểu tượng",
-					"placeholder": "",
-					"description": "Chỉ định ảnh biểu tượng cho toàn bộ các desktop trong site, tốt nhất là loại .ICO hoặc .PNG có kích thước 64x64"
-				},
-				"CoverURI": {
-					"label": "Ảnh bìa",
-					"placeholder": "",
-					"description": "Chỉ định ảnh bìa (cover) toàn bộ các desktop trong site để hiển thị mặc định đối với mạng xã hội khi nội dung không có ảnh bìa cụ thể, tốt nhất là loại .JPG hoặc .PNG có kích thước 1200x630 hoặc 600x315"
-				},
-				"Stylesheets": {
-					"label": "Các stylesheet (CSS) dùng chung toàn bộ site",
-					"placeholder": "",
-					"description": "Các mã stylesheet (CSS) dùng chung cho toàn bộ các desktop trong site. Lưu ý: nếu truy cập các desktop với thiết đặt của site khác, các mã stylesheet này sẽ không được sử dụng."
-				},
-				"MetaTags": {
-					"label": "Các thẻ meta bổ sung",
-					"placeholder": "",
-					"description": "Các thẻ meta bổ sung sẽ được thêm vào phần HEAD của toàn bộ các desktop trong site, cần phải viết các thẻ meta đúng theo quy chuẩn của XML"
-				},
-				"Scripts": {
-					"label": "Các mã scripts bổ sung",
-					"placeholder": "",
-					"description": "Các mã script (Javascript) bổ sung sẽ được thêm vào phần cuối (trước khi đóng thẻ BODY) của toàn bộ các desktop trong site.<br/>Các đoạn mã này phải nằm trong &lt;script&gt; và &lt;/script&gt; và có thể sử dụng jQuery ($), đồng thời cho phép trỏ ra các thư viện script ở bên ngoài.<br/>Tips: cũng có thể các thẻ HTML bổ sung vào đây cũng được."
-				},
-				"RedirectToNoneWWW": {
-					"label": "Luôn điều hướng các liên kết có 'WWW' về gốc (để tạo URL ngắn hơn)",
-					"placeholder": "",
-					"description": ""
-				},
-				"SEOInfo": {
-					"label": "",
-					"placeholder": "",
-					"description": "",
-					"Title": {
-						"label": "Tiêu đề",
-						"placeholder": "",
-						"description": "Tiêu đề của site, được sử dụng để tổ hợp với tiêu đề của portlet chính và tiêu đề của desktop"
-					},
-					"Description": {
-						"label": "Diễn giải",
-						"placeholder": "",
-						"description": "Diễn giải của site, được sử dụng để tổ hợp với diễn giải của portlet chính và diễn giải của desktop"
-					},
-					"Keywords": {
-						"label": "Từ khoá",
-						"placeholder": "",
-						"description": "Từ khoá của site, được sử dụng để tổ hợp với từ khoá của portlet chính và từ khoá của desktop"
-					}
-				}
-			},
-			"list": {
-				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác site"
-			},
-			"update": {
-				"segments": {
-					"basic": "Thông tin cơ bản",
-					"display": "Thiết đặt hiển thị",
-					"seo": "Thiết đặt SEO"
-				},
-				"messages": {
-					"confirm": {
-						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo site?",
-						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của site?",
-						"delete": "Chắc chắn muốn xoá bỏ site và các thông tin liên quan?"
-					},
-					"success": {
-						"new": "Đã khởi tạo site thành công",
-						"update": "Đã cập nhật các thay đổi của site thành công",
-						"delete": "Đã xoá site thành công"
-					}
-				},
-				"buttons": {
-					"delete": "Xoá site"
-				}
-			}
-		},
-		"modules": {
-			"title": {
-				"search": "Tìm kiếm module nghiệp vụ",
-				"list": "Danh sách module nghiệp vụ {{info}}",
-				"create": "Tạo mới module nghiệp vụ",
-				"update": "Cập nhật module nghiệp vụ"
-			},
-			"controls": {
-				"Organization": "Module nghiệp vụ của đơn vị - tổ chức",
-				"ModuleDefinitionID": {
-					"label": "Module mẫu",
-					"placeholder": "",
-					"description": "Các chức năng của module nghiệp vụ này sẽ được cung cấp bởi module mẫu chỉ định ở trên"
-				},
-				"Title": {
-					"label": "Tên module nghiệp vụ",
-					"placeholder": "",
-					"description": ""
-				},
-				"Description": {
-					"label": "Diễn giải",
-					"placeholder": "",
-					"description": ""
-				},
-				"DesktopID": {
-					"label": "Desktop hiển thị",
-					"placeholder": "",
-					"description": "Desktop mặc định sử dụng để hiển thị các nội dung nghiệp vụ của module"
-				},
-				"Trackings": {
-					"label": "Các hệ thống đếm/theo dõi",
-					"GoogleAnalytics": {
-						"label": "Mã Google Analytics",
-						"description": "Nhập các mã định danh của GA, phân cách bằng dấu chấm phẩy (;) để đếm dạng page-view (web) hoặc screen-view (app) đối với các nội dung của module nghiệp vụ"
-					},
-					"FacebookPixel": {
-						"label": "Mã Facebook Pixel",
-						"description": "Nhập các mã định danh của FB Pixel, phân cách bằng dấu chấm phẩy (;) để đếm dạng page-view (web) đối với các nội dung của module nghiệp vụ"
-					}
-				}
-			},
-			"list": {
-				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác module nghiệp vụ",
-				"invalid": "Chưa chỉ định module nghiệp vụ"
-			},
-			"update": {
-				"segments": {
-					"basic": "Thông tin cơ bản",
-					"privileges": "Quyền truy cập",
-					"notifications": "Thông báo",
-					"emails": "Mã theo dõi & Emails"
-				},
-				"messages": {
-					"confirm": {
-						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo module nghiệp vụ?",
-						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của module nghiệp vụ?",
-						"delete": "Chắc chắn muốn xoá bỏ module nghiệp vụ và các thông tin liên quan?",
-						"remove": "Module nghiệp vụ, kiểu dữ liệu và toàn bộ các dữ liệu nghiệp vụ của module này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
-					},
-					"success": {
-						"new": "Đã khởi tạo module nghiệp vụ thành công",
-						"update": "Đã cập nhật các thay đổi của module nghiệp vụ thành công",
-						"delete": "Đã đưa module nghiệp vụ và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
-					}
-				},
-				"buttons": {
-					"delete": "Xoá module nghiệp vụ",
-					"remove": "Đồng ý xoá"
-				}
-			}
-		},
-		"contenttypes": {
-			"title": {
-				"search": "Tìm kiếm kiểu dữ liệu nghiệp vụ",
-				"list": "Danh sách kiểu dữ liệu nghiệp vụ {{info}}",
-				"create": "Tạo mới kiểu dữ liệu nghiệp vụ",
-				"update": "Cập nhật kiểu dữ liệu nghiệp vụ"
-			},
-			"controls": {
-				"Organization": "Kiểu dữ liệu nghiệp vụ của đơn vị - tổ chức",
-				"RepositoryID": {
-					"label": "Module nghiệp vụ",
-					"placeholder": "",
-					"description": "Kiểu dữ liệu nghiệp vụ này sẽ thuộc về module nghiệp vụ được chỉ định"
-				},
-				"ContentTypeDefinitionID": {
-					"label": "Kiểu dữ liệu mẫu",
-					"placeholder": "",
-					"description": "Các chức năng của kiểu dữ liệu nghiệp vụ này sẽ được cung cấp bởi kiểu dữ liệu mẫu đã chỉ định"
-				},
-				"Title": {
-					"label": "Tên kiểu dữ liệu nghiệp vụ",
-					"placeholder": "",
-					"description": ""
-				},
-				"Description": {
-					"label": "Diễn giải",
-					"placeholder": "",
-					"description": ""
-				},
-				"DesktopID": {
-					"label": "Desktop hiển thị",
-					"placeholder": "",
-					"description": "Desktop mặc định sử dụng để hiển thị các nội dung nghiệp vụ của kiểu dữ liệu"
-				},
-				"CreateNewVersionWhenUpdated": {
-					"label": "Tạo phiên bản nội dung khi cập nhật dữ liệu nghiệp vụ",
-					"placeholder": "",
-					"description": ""
-				},
-				"AllowComments": {
-					"label": "Cho phép bình luận đối với các nội dung",
-					"placeholder": "",
-					"description": ""
-				},
-				"UseSocialNetworkComments": {
-					"label": "Sử dụng hệ thống bình luận của mạng xã hội",
-					"placeholder": "",
-					"description": ""
-				},
-				"DefaultCommentStatus": {
-					"label": "Trạng thái phê duyệt mặc định của bình luận mới",
-					"placeholder": "",
-					"description": "Chú ý: nếu trạng thái mặc định là 'Xuất bản', các bình luận mới tự động hiển thị ngay tức thì sau khi người dùng gửi bình luận mà không qua kiểm soát"
-				},
-				"Trackings": {
-					"label": "Các hệ thống đếm/theo dõi",
-					"GoogleAnalytics": {
-						"label": "Mã Google Analytics",
-						"description": "Nhập các mã định danh của GA, phân cách bằng dấu chấm phẩy (;) để đếm dạng page-view (web) hoặc screen-view (app) đối với các nội dung của kiểu dữ liệu nghiệp vụ"
-					},
-					"FacebookPixel": {
-						"label": "Mã Facebook Pixel",
-						"description": "Nhập các mã định danh của FB Pixel, phân cách bằng dấu chấm phẩy (;) để đếm dạng page-view (web) đối với các nội dung của kiểu dữ liệu nghiệp vụ"
-					}
-				},
-				"ExtendedPropertyDefinitions": {
-					"label": "Thuộc tính mở rộng",
-					"description": "Mã JSON định nghĩa các thuộc tính mở rộng"
-				},
-				"ExtendedControlDefinitions": {
-					"label": "Form nhập dữ liệu thuộc tính mở rộng",
-					"description": "Mã JSON định nghĩa các controls trong form nhập dữ liệu đối với các thuộc tính mở rộng"
-				},
-				"StandardControlDefinitions": {
-					"label": "Form nhập dữ liệu thuộc tính tiêu chuẩn",
-					"description": "Mã JSON tái chỉ định các controls đặc biệt trong form nhập dữ liệu của một số thuộc tính tiêu chuẩn"
-				}
-			},
-			"list": {
-				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác kiểu dữ liệu nghiệp vụ",
-				"invalid": "Chưa chỉ định kiểu dữ liệu nghiệp vụ",
-				"no": "Chưa có kiểu dữ liệu nghiệp vụ nào"
-			},
-			"update": {
-				"segments": {
-					"basic": "Thông tin cơ bản",
-					"privileges": "Quyền truy cập",
-					"notifications": "Thông báo",
-					"emails": "Mã theo dõi & Emails",
-					"extend": "Tuỳ chỉnh dữ liệu mở rộng"
-				},
-				"messages": {
-					"confirm": {
-						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo kiểu dữ liệu nghiệp vụ?",
-						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của kiểu dữ liệu nghiệp vụ?",
-						"delete": "Chắc chắn muốn xoá bỏ kiểu dữ liệu nghiệp vụ và các thông tin liên quan?",
-						"remove": "Thông tin và toàn bộ các dữ liệu nghiệp vụ của kiểu dữ liệu này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
-					},
-					"success": {
-						"new": "Đã khởi tạo kiểu dữ liệu nghiệp vụ thành công",
-						"update": "Đã cập nhật các thay đổi của kiểu dữ liệu nghiệp vụ thành công",
-						"delete": "Đã đưa kiểu dữ liệu nghiệp vụ và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
-					},
-					"json": {
-						"extendedProperty": "Lỗi trong cú pháp JSON định nghĩa thuộc tính mở rộng",
-						"extendedControl": "Lỗi trong cú pháp JSON định nghĩa form nhập liệu cho thuộc tính mở rộng",
-						"extendedNotMatched": "JSON định nghĩa thuộc tính mở rộng không khớp với JSON định nghĩa form nhập liệu cho thuộc tính mở rộng",
-						"standardControl": "Lỗi trong cú pháp JSON định nghĩa form nhập liệu cho thuộc tính tiêu chuẩn",
-						"standardNotMatched": "JSON định nghĩa form nhập liệu cho thuộc tính tiêu chuẩn không khớp với form nhập liệu mặc định"
-					}
-				},
-				"buttons": {
-					"delete": "Xoá kiểu dữ liệu nghiệp vụ",
-					"remove": "Đồng ý xoá"
-				}
-			}
-		},
-		"expressions": {
-			"title": {
-				"search": "Tìm kiếm biểu thức truy vấn",
-				"list": "Danh sách biểu thức truy vấn {{info}}",
-				"create": "Tạo mới biểu thức truy vấn",
-				"update": "Cập nhật biểu thức truy vấn"
-			},
-			"controls": {
-				"Organization": "Biểu thức truy vấn của đơn vị - tổ chức",
-				"Title": {
-					"label": "Tên biểu thức truy vấn",
-					"placeholder": "",
-					"description": ""
-				},
-				"Description": {
-					"label": "Diễn giải",
-					"placeholder": "",
-					"description": ""
-				},
-				"RepositoryID": {
-					"label": "Module nghiệp vụ",
-					"placeholder": "",
-					"description": "Biểu thức truy vấn này sẽ được sử dụng để truy vấn dữ liệu của module nghiệp vụ được chỉ định"
-				},
-				"ContentTypeDefinitionID": {
-					"label": "Kiểu dữ liệu mẫu",
-					"placeholder": "",
-					"description": "Chỉ định biểu thức truy vấn sẽ được sử dụng cho kiểu dữ liệu mẫu cụ thể"
-				},
-				"RepositoryEntityID": {
-					"label": "Kiểu dữ liệu nghiệp vụ",
-					"placeholder": "",
-					"description": "Chỉ định biểu thức truy vấn sẽ được sử dụng cho kiểu dữ liệu nghiệp vụ cụ thể. Nếu không chỉ định, biểu thức truy vấn có thể được sử dụng cho tất cả các kiểu dữ liệu nghiệp vụ cùng có chung kiểu dữ liệu mẫu đã chỉ định."
-				},
-				"Filter": {
-					"label": "Biểu thức truy vấn (JSON)",
-					"placeholder": "",
-					"description": ""
-				},
-				"Sorts": {
-					"label": "Các biểu thức sắp xếp (JSON)",
-					"placeholder": "",
-					"description": ""
-				}
-			},
-			"list": {
-				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác biểu thức truy vấn",
-				"invalid": "Chưa chỉ định biểu thức truy vấn"
-			},
-			"update": {
-				"segments": {
-					"basic": "Cơ bản",
-					"filter": "Chi tiết truy vấn",
-					"sorts": "Chi tiết sắp xếp"
-				},
-				"messages": {
-					"confirm": {
-						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo biểu thức truy vấn?",
-						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của biểu thức truy vấn?",
-						"delete": "Chắc chắn muốn xoá bỏ biểu thức truy vấn?",
-						"remove": "Biểu thức truy vấn này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
-					},
-					"success": {
-						"new": "Đã khởi tạo biểu thức truy vấn thành công",
-						"update": "Đã cập nhật các thay đổi của biểu thức truy vấn thành công",
-						"delete": "Đã đưa biểu thức truy vấn và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
-					},
-					"json": "Lỗi trong cú pháp JSON của biểu thức"
-				},
-				"buttons": {
-					"delete": "Xoá biểu thức truy vấn",
-					"remove": "Đồng ý xoá",
-					"edit": "Cập nhật cấp cao"
 				}
 			}
 		},
@@ -1286,6 +1022,270 @@
 					"remove": "Đồng ý xoá"
 				},
 				"reorder": "Các portlets trong vùng {{zone}}"
+			}
+		},
+		"modules": {
+			"title": {
+				"search": "Tìm kiếm module nghiệp vụ",
+				"list": "Danh sách module nghiệp vụ {{info}}",
+				"create": "Tạo mới module nghiệp vụ",
+				"update": "Cập nhật module nghiệp vụ"
+			},
+			"controls": {
+				"Organization": "Module nghiệp vụ của đơn vị - tổ chức",
+				"ModuleDefinitionID": {
+					"label": "Module mẫu",
+					"placeholder": "",
+					"description": "Các chức năng của module nghiệp vụ này sẽ được cung cấp bởi module mẫu chỉ định ở trên"
+				},
+				"Title": {
+					"label": "Tên module nghiệp vụ",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Diễn giải",
+					"placeholder": "",
+					"description": ""
+				},
+				"DesktopID": {
+					"label": "Desktop hiển thị",
+					"placeholder": "",
+					"description": "Desktop mặc định sử dụng để hiển thị các nội dung nghiệp vụ của module"
+				},
+				"Trackings": {
+					"label": "Các hệ thống đếm/theo dõi",
+					"GoogleAnalytics": {
+						"label": "Mã Google Analytics",
+						"description": "Nhập các mã định danh của GA, phân cách bằng dấu chấm phẩy (;) để đếm dạng page-view (web) hoặc screen-view (app) đối với các nội dung của module nghiệp vụ"
+					},
+					"FacebookPixel": {
+						"label": "Mã Facebook Pixel",
+						"description": "Nhập các mã định danh của FB Pixel, phân cách bằng dấu chấm phẩy (;) để đếm dạng page-view (web) đối với các nội dung của module nghiệp vụ"
+					}
+				}
+			},
+			"list": {
+				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác module nghiệp vụ",
+				"invalid": "Chưa chỉ định module nghiệp vụ"
+			},
+			"update": {
+				"segments": {
+					"basic": "Thông tin cơ bản",
+					"privileges": "Quyền truy cập",
+					"notifications": "Thông báo",
+					"emails": "Mã theo dõi & Emails"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo module nghiệp vụ?",
+						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của module nghiệp vụ?",
+						"delete": "Chắc chắn muốn xoá bỏ module nghiệp vụ và các thông tin liên quan?",
+						"remove": "Module nghiệp vụ, kiểu dữ liệu và toàn bộ các dữ liệu nghiệp vụ của module này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
+					},
+					"success": {
+						"new": "Đã khởi tạo module nghiệp vụ thành công",
+						"update": "Đã cập nhật các thay đổi của module nghiệp vụ thành công",
+						"delete": "Đã đưa module nghiệp vụ và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
+					}
+				},
+				"buttons": {
+					"delete": "Xoá module nghiệp vụ",
+					"remove": "Đồng ý xoá"
+				}
+			}
+		},
+		"contenttypes": {
+			"title": {
+				"search": "Tìm kiếm kiểu dữ liệu nghiệp vụ",
+				"list": "Danh sách kiểu dữ liệu nghiệp vụ {{info}}",
+				"create": "Tạo mới kiểu dữ liệu nghiệp vụ",
+				"update": "Cập nhật kiểu dữ liệu nghiệp vụ"
+			},
+			"controls": {
+				"Organization": "Kiểu dữ liệu nghiệp vụ của đơn vị - tổ chức",
+				"RepositoryID": {
+					"label": "Module nghiệp vụ",
+					"placeholder": "",
+					"description": "Kiểu dữ liệu nghiệp vụ này sẽ thuộc về module nghiệp vụ được chỉ định"
+				},
+				"ContentTypeDefinitionID": {
+					"label": "Kiểu dữ liệu mẫu",
+					"placeholder": "",
+					"description": "Các chức năng của kiểu dữ liệu nghiệp vụ này sẽ được cung cấp bởi kiểu dữ liệu mẫu đã chỉ định"
+				},
+				"Title": {
+					"label": "Tên kiểu dữ liệu nghiệp vụ",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Diễn giải",
+					"placeholder": "",
+					"description": ""
+				},
+				"DesktopID": {
+					"label": "Desktop hiển thị",
+					"placeholder": "",
+					"description": "Desktop mặc định sử dụng để hiển thị các nội dung nghiệp vụ của kiểu dữ liệu"
+				},
+				"CreateNewVersionWhenUpdated": {
+					"label": "Tạo phiên bản nội dung khi cập nhật dữ liệu nghiệp vụ",
+					"placeholder": "",
+					"description": ""
+				},
+				"AllowComments": {
+					"label": "Cho phép bình luận đối với các nội dung",
+					"placeholder": "",
+					"description": ""
+				},
+				"UseSocialNetworkComments": {
+					"label": "Sử dụng hệ thống bình luận của mạng xã hội",
+					"placeholder": "",
+					"description": ""
+				},
+				"DefaultCommentStatus": {
+					"label": "Trạng thái phê duyệt mặc định của bình luận mới",
+					"placeholder": "",
+					"description": "Chú ý: nếu trạng thái mặc định là 'Xuất bản', các bình luận mới tự động hiển thị ngay tức thì sau khi người dùng gửi bình luận mà không qua kiểm soát"
+				},
+				"Trackings": {
+					"label": "Các hệ thống đếm/theo dõi",
+					"GoogleAnalytics": {
+						"label": "Mã Google Analytics",
+						"description": "Nhập các mã định danh của GA, phân cách bằng dấu chấm phẩy (;) để đếm dạng page-view (web) hoặc screen-view (app) đối với các nội dung của kiểu dữ liệu nghiệp vụ"
+					},
+					"FacebookPixel": {
+						"label": "Mã Facebook Pixel",
+						"description": "Nhập các mã định danh của FB Pixel, phân cách bằng dấu chấm phẩy (;) để đếm dạng page-view (web) đối với các nội dung của kiểu dữ liệu nghiệp vụ"
+					}
+				},
+				"ExtendedPropertyDefinitions": {
+					"label": "Thuộc tính mở rộng",
+					"description": "Mã JSON định nghĩa các thuộc tính mở rộng"
+				},
+				"ExtendedControlDefinitions": {
+					"label": "Form nhập dữ liệu thuộc tính mở rộng",
+					"description": "Mã JSON định nghĩa các controls trong form nhập dữ liệu đối với các thuộc tính mở rộng"
+				},
+				"StandardControlDefinitions": {
+					"label": "Form nhập dữ liệu thuộc tính tiêu chuẩn",
+					"description": "Mã JSON tái chỉ định các controls đặc biệt trong form nhập dữ liệu của một số thuộc tính tiêu chuẩn"
+				}
+			},
+			"list": {
+				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác kiểu dữ liệu nghiệp vụ",
+				"invalid": "Chưa chỉ định kiểu dữ liệu nghiệp vụ",
+				"no": "Chưa có kiểu dữ liệu nghiệp vụ nào"
+			},
+			"update": {
+				"segments": {
+					"basic": "Thông tin cơ bản",
+					"privileges": "Quyền truy cập",
+					"notifications": "Thông báo",
+					"emails": "Mã theo dõi & Emails",
+					"extend": "Tuỳ chỉnh dữ liệu mở rộng"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo kiểu dữ liệu nghiệp vụ?",
+						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của kiểu dữ liệu nghiệp vụ?",
+						"delete": "Chắc chắn muốn xoá bỏ kiểu dữ liệu nghiệp vụ và các thông tin liên quan?",
+						"remove": "Thông tin và toàn bộ các dữ liệu nghiệp vụ của kiểu dữ liệu này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
+					},
+					"success": {
+						"new": "Đã khởi tạo kiểu dữ liệu nghiệp vụ thành công",
+						"update": "Đã cập nhật các thay đổi của kiểu dữ liệu nghiệp vụ thành công",
+						"delete": "Đã đưa kiểu dữ liệu nghiệp vụ và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
+					},
+					"json": {
+						"extendedProperty": "Lỗi trong cú pháp JSON định nghĩa thuộc tính mở rộng",
+						"extendedControl": "Lỗi trong cú pháp JSON định nghĩa form nhập liệu cho thuộc tính mở rộng",
+						"extendedNotMatched": "JSON định nghĩa thuộc tính mở rộng không khớp với JSON định nghĩa form nhập liệu cho thuộc tính mở rộng",
+						"standardControl": "Lỗi trong cú pháp JSON định nghĩa form nhập liệu cho thuộc tính tiêu chuẩn",
+						"standardNotMatched": "JSON định nghĩa form nhập liệu cho thuộc tính tiêu chuẩn không khớp với form nhập liệu mặc định"
+					}
+				},
+				"buttons": {
+					"delete": "Xoá kiểu dữ liệu nghiệp vụ",
+					"remove": "Đồng ý xoá"
+				}
+			}
+		},
+		"expressions": {
+			"title": {
+				"search": "Tìm kiếm biểu thức truy vấn",
+				"list": "Danh sách biểu thức truy vấn {{info}}",
+				"create": "Tạo mới biểu thức truy vấn",
+				"update": "Cập nhật biểu thức truy vấn"
+			},
+			"controls": {
+				"Organization": "Biểu thức truy vấn của đơn vị - tổ chức",
+				"Title": {
+					"label": "Tên biểu thức truy vấn",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Diễn giải",
+					"placeholder": "",
+					"description": ""
+				},
+				"RepositoryID": {
+					"label": "Module nghiệp vụ",
+					"placeholder": "",
+					"description": "Biểu thức truy vấn này sẽ được sử dụng để truy vấn dữ liệu của module nghiệp vụ được chỉ định"
+				},
+				"ContentTypeDefinitionID": {
+					"label": "Kiểu dữ liệu mẫu",
+					"placeholder": "",
+					"description": "Chỉ định biểu thức truy vấn sẽ được sử dụng cho kiểu dữ liệu mẫu cụ thể"
+				},
+				"RepositoryEntityID": {
+					"label": "Kiểu dữ liệu nghiệp vụ",
+					"placeholder": "",
+					"description": "Chỉ định biểu thức truy vấn sẽ được sử dụng cho kiểu dữ liệu nghiệp vụ cụ thể. Nếu không chỉ định, biểu thức truy vấn có thể được sử dụng cho tất cả các kiểu dữ liệu nghiệp vụ cùng có chung kiểu dữ liệu mẫu đã chỉ định."
+				},
+				"Filter": {
+					"label": "Biểu thức truy vấn (JSON)",
+					"placeholder": "",
+					"description": ""
+				},
+				"Sorts": {
+					"label": "Các biểu thức sắp xếp (JSON)",
+					"placeholder": "",
+					"description": ""
+				}
+			},
+			"list": {
+				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác biểu thức truy vấn",
+				"invalid": "Chưa chỉ định biểu thức truy vấn"
+			},
+			"update": {
+				"segments": {
+					"basic": "Cơ bản",
+					"filter": "Chi tiết truy vấn",
+					"sorts": "Chi tiết sắp xếp"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo biểu thức truy vấn?",
+						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của biểu thức truy vấn?",
+						"delete": "Chắc chắn muốn xoá bỏ biểu thức truy vấn?",
+						"remove": "Biểu thức truy vấn này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
+					},
+					"success": {
+						"new": "Đã khởi tạo biểu thức truy vấn thành công",
+						"update": "Đã cập nhật các thay đổi của biểu thức truy vấn thành công",
+						"delete": "Đã đưa biểu thức truy vấn và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
+					},
+					"json": "Lỗi trong cú pháp JSON của biểu thức"
+				},
+				"buttons": {
+					"delete": "Xoá biểu thức truy vấn",
+					"remove": "Đồng ý xoá",
+					"edit": "Cập nhật cấp cao"
+				}
 			}
 		}
 	}

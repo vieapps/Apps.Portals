@@ -101,7 +101,8 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				: this.organization.modules[0];
 			const contentTypeDefinitionID = this.configSvc.requestParams["ContentTypeDefinitionID"] || this.getContentTypeDefinitions(module.ID)[0].ID;
 			const contentTypes = module.contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === contentTypeDefinitionID);
-			this.expression = new Expression(this.organization.ID, module.ID, contentTypeDefinitionID, contentTypes.length > 0 ? contentTypes[0].ID : undefined);
+			const contentTypeID = this.configSvc.requestParams["RepositoryEntityID"] || contentTypes.length > 0 ? contentTypes[0].ID : undefined;
+			this.expression = new Expression(this.organization.ID, module.ID, contentTypeDefinitionID, contentTypeID, this.configSvc.requestParams["Title"]);
 		}
 
 		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.expression.SystemID) {
@@ -219,7 +220,8 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			});
 			control.Options.OnChanged = (_, formControl) => {
 				const module = Module.get(this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryID")).value);
-				const contentTypes = module.contentTypes.filter(contType => contType.ContentTypeDefinitionID === formControl.value);
+				const contentTypeDefinitionID = formControl.value;
+				const contentTypes = module.contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === contentTypeDefinitionID);
 				const contentTypeControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryEntityID"));
 				contentTypeControl.Options.SelectOptions.Values = contentTypes.map(contentType => {
 					return { Value: contentType.ID, Label: contentType.Title };
@@ -327,17 +329,18 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 	onFormInitialized() {
 		this.form.patchValue(this.expression);
 		if (AppUtility.isNotEmpty(this.expression.ID)) {
-			this.form.controls.Filter.setValue(JSON.stringify(this.expression.Filter));
-			this.form.controls.Sorts.setValue(JSON.stringify(this.expression.Sorts));
+			this.form.controls.Filter.setValue(JSON.stringify(this.expression.Filter), { onlySelf: true });
+			this.form.controls.Sorts.setValue(JSON.stringify(this.expression.Sorts), { onlySelf: true });
 		}
 		else {
-			this.form.controls.ContentTypeDefinitionID.setValue(this.getContentTypeDefinitions(this.expression.RepositoryID)[0].ID);
+			this.form.controls.ContentTypeDefinitionID.setValue(this.expression.ContentTypeDefinitionID || this.getContentTypeDefinitions(this.expression.RepositoryID)[0].ID, { onlySelf: true });
 		}
-		this.hash = AppCrypto.hash(this.form.value);
-		this.appFormsSvc.hideLoadingAsync();
-		if (this.configSvc.isDebug) {
-			console.log("<Portals>: Expression", this.expression);
-		}
+		this.appFormsSvc.hideLoadingAsync(() => {
+			this.hash = AppCrypto.hash(this.form.value);
+			if (this.configSvc.isDebug) {
+				console.log("<Portals>: Expression", this.expression, this.form.value);
+			}
+		});
 	}
 
 	async saveAsync() {
@@ -351,19 +354,26 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 
 				const expression = this.form.value;
 				expression.RepositoryEntityID = AppUtility.isNotEmpty(expression.RepositoryEntityID) && expression.RepositoryEntityID !== "-" ? expression.RepositoryEntityID : undefined;
-				try {
-					expression.Filter = AppUtility.isNotEmpty(expression.Filter)
-						? JSON.parse(expression.Filter)
-						: undefined;
-					expression.Sorts = AppUtility.isNotEmpty(expression.Sorts)
-						? JSON.parse(expression.Sorts)
-						: undefined;
+
+				if (AppUtility.isNotEmpty(this.expression.ID)) {
+					try {
+						expression.Filter = AppUtility.isNotEmpty(expression.Filter)
+							? JSON.parse(expression.Filter)
+							: undefined;
+						expression.Sorts = AppUtility.isNotEmpty(expression.Sorts)
+							? JSON.parse(expression.Sorts)
+							: undefined;
+					}
+					catch (error) {
+						this.processing = false;
+						console.error("Error occurred while parsing JSON of expressions", error);
+						await this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.expressions.update.messages.json")});
+						return;
+					}
 				}
-				catch (error) {
-					this.processing = false;
-					console.error("Error occurred while parsing JSON of expressions", error);
-					await this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.expressions.update.messages.json")});
-					return;
+				else {
+					expression.Filter = this.configSvc.requestParams["Filter"];
+					expression.Sorts = this.configSvc.requestParams["Sorts"];
 				}
 
 				if (AppUtility.isNotEmpty(expression.ID)) {

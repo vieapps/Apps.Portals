@@ -72,9 +72,10 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	}>;
 	labels = {
 		children: "View the children",
-		refresh: "refresh",
 		view: "View this link",
 		edit: "Edit",
+		refresh: "refresh",
+		expression: "Create new expression",
 		save: "Save",
 		cancel: "Cancel"
 	};
@@ -172,6 +173,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			children: await this.configSvc.getResourceAsync("portals.cms.links.list.labels.children"),
 			view: await this.configSvc.getResourceAsync("portals.cms.links.list.labels.view"),
 			edit: await this.configSvc.getResourceAsync("portals.cms.links.list.labels.edit"),
+			expression: await this.configSvc.getResourceAsync("portals.expressions.title.create"),
 			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			save: await this.configSvc.getResourceAsync("common.buttons.save"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
@@ -412,6 +414,29 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
 		await this.portalsCmsSvc.refreshLinkAsync(link.ID, async _ => await this.appFormsSvc.showToastAsync("The link was freshen-up"));
+	}
+
+	async createExpressionAsync(event: Event, link: Link) {
+		const contentType = link.contentType;
+		const params = AppUtility.isObject(contentType, true)
+			? {
+				Title: `Children of ${link.Title}`,
+				RepositoryID: contentType.RepositoryID,
+				RepositoryEntityID: contentType.ID,
+				ContentTypeDefinitionID: contentType.ContentTypeDefinitionID,
+				Filter: {
+					Operator: "And",
+					Children: [{
+						Attribute: "ParentID",
+						Operator: "Equals",
+						Value: link.ID
+					}]
+				}
+			}
+			: undefined;
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", link.ansiTitle, params, "expression", "core"));
 	}
 
 	private async backAsync(message: string, url?: string) {

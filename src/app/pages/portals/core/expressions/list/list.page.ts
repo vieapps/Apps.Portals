@@ -316,7 +316,7 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 
 	async createAsync() {
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync("/portals/core/expressions/create");
+		await this.configSvc.navigateForwardAsync("/portals/core/expressions/create/new");
 	}
 
 	async editAsync(event: Event, expression: Expression) {
