@@ -1,16 +1,15 @@
 import { Subscription } from "rxjs";
 import { List } from "linqts";
-import { Set } from "typescript-collections";
 import { Component, OnInit, OnDestroy, Input, ViewChild } from "@angular/core";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
-import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { Organization } from "@models/portals.core.organization";
-import { Role } from "@models/portals.core.role";
+import { AppUtility, HashSet } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { Organization } from "@app/models/portals.core.organization";
+import { Role } from "@app/models/portals.core.role";
 
 @Component({
 	selector: "page-roles-selector",
@@ -73,7 +72,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		cancel: "Cancel",
 		search: "Search"
 	};
-	selected = new Set<string>();
+	selected = new HashSet<string>();
 	parentRole: Role;
 
 	ngOnInit() {
@@ -209,7 +208,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 				(data !== undefined ? data.Objects as Array<any> : []).filter(o => this.excludedIDs.indexOf(o.ID) < 0).forEach(o => this.results.push(Role.get(o.ID)));
 			}
 			else {
-				const objects = new List(data !== undefined ? (data.Objects as Array<any>).map(o => Role.get(o.ID)) : Role.all.filter(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID))
+				const objects = new List(data !== undefined ? (data.Objects as Array<any>).map(o => Role.get(o.ID)) : Role.instances.toArray(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID))
 					.Where(o => this.excludedIDs.indexOf(o.ID) < 0)
 					.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
 				this.roles = data !== undefined
@@ -259,7 +258,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	back(event: Event) {
 		event.stopPropagation();
 		this.parentRole = this.parentRole.Parent;
-		this.roles = (this.parentRole !== undefined ? this.parentRole.Children : Role.all.filter(o => o.SystemID === this.organization.ID && o.ParentID === undefined)).filter(o => this.excludedIDs.indexOf(o.ID) < 0).sort(AppUtility.getCompareFunction("Title"));
+		this.roles = (this.parentRole !== undefined ? this.parentRole.Children : Role.instances.toArray(o => o.SystemID === this.organization.ID && o.ParentID === undefined)).filter(o => this.excludedIDs.indexOf(o.ID) < 0).sort(AppUtility.getCompareFunction("Title"));
 	}
 
 	show(event: Event, role: Role) {

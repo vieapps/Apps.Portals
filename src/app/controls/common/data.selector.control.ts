@@ -1,19 +1,18 @@
-import { Set } from "typescript-collections";
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from "@angular/core";
-import { AppUtility } from "@components/app.utility";
-import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
+import { AppUtility, HashSet } from "@app/components/app.utility";
+import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
 
 @Component({
 	selector: "control-data-selector",
-	templateUrl: "./data.selector.html",
-	styleUrls: ["./data.selector.scss"]
+	templateUrl: "./data.selector.control.html",
+	styleUrls: ["./data.selector.control.scss"]
 })
 
 export class DataSelectorControl implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService
 	) {
 	}
@@ -44,10 +43,14 @@ export class DataSelectorControl implements OnInit, OnDestroy {
 	private _showImage: boolean;
 	private _showDescription: boolean;
 	private _descriptionAtRight: boolean;
-	private _selected = new Set<string>();
+	private _selected = new HashSet<string>();
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	get disabled() {
-		return this._selected.size() < 1;
+		return this._selected.size < 1;
 	}
 
 	get allowAdd() {

@@ -1,13 +1,13 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, Output, EventEmitter, ViewChild, ChangeDetectorRef } from "@angular/core";
 import { FormGroup, FormArray } from "@angular/forms";
 import { CompleterService } from "ng2-completer";
-import * as CKEditor from "@components/ckeditor";
-import "@components/ckeditor.vi";
-import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
-import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { ConfigurationService } from "@services/configuration.service";
-import { FilesService } from "@services/files.service";
+import * as CKEditor from "@app/components/ckeditor";
+import "@app/components/ckeditor.vi";
+import { AppUtility } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { FilesService } from "@app/services/files.service";
 
 @Component({
 	selector: "app-form-control",

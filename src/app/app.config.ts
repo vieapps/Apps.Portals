@@ -1,6 +1,6 @@
-import { AppCrypto } from "@components/app.crypto";
-import { AppUtility } from "@components/app.utility";
-import { Account } from "@models/account";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppUtility } from "@app/components/app.utility";
+import { Account } from "@app/models/account";
 import vi_VN from "@angular/common/locales/vi";
 import en_US from "@angular/common/locales/en";
 
@@ -10,22 +10,22 @@ export class AppConfig {
 	/** URIs of the remote API and related resources */
 	public static URIs = {
 		/** APIs */
-		apis: "https://apis.vieapps.com/",
+		apis: "https://apis.vieapps.net/",
 
-		/** Real-time Updater (if not provided, then use the APIs) */
-		updates: "https://apis.vieapps.com/",
+		/** Real-time Updater (if not provided, the uri of the APIs will be used) */
+		updates: undefined as string,
 
 		/** Files HTTP service */
-		files: "https://fs.vieapps.com/",
+		files: "https://fs.vieapps.net/",
 
 		/** Portals HTTP service */
-		portals: "https://portals.vieapps.com/",
+		portals: "https://portals.vieapps.net/",
 
-		/** CMS Portals app URI to perform activation (on the web) */
-		activations: "https://cms.vieapps.com/",
+		/** Apps on the web to perform activation or other business process */
+		apps: "https://cms.vieapps.net/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
-		medias: ["fs.vieportal.net"]
+		medias: ["fs.vieportal.net"] as Array<string>
 	};
 
 	/** Information of the app */
@@ -36,7 +36,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://vieapps.net",
 		id: "vieapps-ngx-portals",
-		version: "1.0.3",
+		version: "1.0.6",
 		frameworks: "ionic 5.3 - angular 8.2 - cordova 10.0",
 		mode: "",
 		platform: "",
@@ -153,7 +153,7 @@ export class AppConfig {
 
 	/** URLs for downloading desktop apps */
 	public static get downloadURLs() {
-		const baseURL = `${this.URIs.activations}releases/${this.app.name.replace(/\s/g, "%20")}`;
+		const baseURL = `${this.URIs.apps}releases/${this.app.name.replace(/\s/g, "%20")}`;
 		return {
 			Windows: `${baseURL}%20Setup%20${this.app.version}.exe`,
 			Linux: `${baseURL}-${this.app.version}.AppImage`,
@@ -265,7 +265,6 @@ export class AppConfig {
 	public static getRelatedJson(additional?: { [key: string]: string }, service?: string, activeID?: string, onPreCompleted?: (json: any) => void) {
 		const json: { [key: string]: string } = {
 			"language": this.language,
-			"host": this.url.host,
 			"related-service": (AppUtility.isNotEmpty(service) ? service : this.services.active).trim().toLowerCase(),
 			"active-id": (AppUtility.isNotEmpty(activeID) ? activeID : this.services.activeID).trim().toLowerCase()
 		};

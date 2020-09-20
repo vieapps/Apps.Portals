@@ -6,23 +6,23 @@ import { IonicModule } from "@ionic/angular";
 export const routes: Routes = [
 	{
 		path: "search",
-		loadChildren: "@pages/portals/cms/links/list/list.module#CmsLinksListPageModule"
+		loadChildren: "@app/pages/portals/cms/links/list/list.module#CmsLinksListPageModule"
 	},
 	{
 		path: "list/:data",
-		loadChildren: "@pages/portals/cms/links/list/list.module#CmsLinksListPageModule"
+		loadChildren: "@app/pages/portals/cms/links/list/list.module#CmsLinksListPageModule"
 	},
 	{
 		path: "create/:data",
-		loadChildren: "@pages/portals/cms/links/update/update.module#CmsLinksUpdatePageModule"
+		loadChildren: "@app/pages/portals/cms/links/update/update.module#CmsLinksUpdatePageModule"
 	},
 	{
 		path: "update/:data",
-		loadChildren: "@pages/portals/cms/links/update/update.module#CmsLinksUpdatePageModule"
+		loadChildren: "@app/pages/portals/cms/links/update/update.module#CmsLinksUpdatePageModule"
 	},
 	{
 		path: "view/:data",
-		loadChildren: "@pages/portals/cms/links/view/view.module#CmsLinksViewPageModule"
+		loadChildren: "@app/pages/portals/cms/links/view/view.module#CmsLinksViewPageModule"
 	}
 ];
 

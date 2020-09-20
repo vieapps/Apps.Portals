@@ -1,6 +1,6 @@
-import { Dictionary } from "typescript-collections";
-import { AppUtility } from "@components/app.utility";
-import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
+import { List } from "linqts";
+import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
 export class Item extends CmsBaseModel {
 
@@ -19,11 +19,6 @@ export class Item extends CmsBaseModel {
 
 	/** All instances of first 60 items */
 	public static instances = new Dictionary<string, Item>();
-
-	/** All instances of first 60 items */
-	public static get all() {
-		return this.instances.values();
-	}
 
 	Title = undefined as string;
 	Summary = undefined as string;
@@ -64,16 +59,13 @@ export class Item extends CmsBaseModel {
 	/** Gets by identity */
 	public static get(id: string) {
 		return AppUtility.isNotEmpty(id)
-			? this.instances.getValue(id)
+			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
 	public static set(item: Item) {
-		if (item !== undefined) {
-			this.instances.setValue(item.ID, item);
-		}
-		return item;
+		return item === undefined ? undefined : this.instances.add(item.ID, item);
 	}
 
 	/** Updates into dictionary */
@@ -85,7 +77,12 @@ export class Item extends CmsBaseModel {
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return AppUtility.isNotEmpty(id) && this.instances.containsKey(id);
+		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
+	}
+
+	/** Converts the array of objects to list */
+	public static toList(objects: Array<any>) {
+		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
 	}
 
 	public get routerLink() {

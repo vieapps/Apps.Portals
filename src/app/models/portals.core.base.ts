@@ -1,5 +1,5 @@
-import { AppUtility } from "@components/app.utility";
-import { PortalBase as BaseModel } from "@models/portals.base";
+import { AppUtility } from "@app/components/app.utility";
+import { PortalBase as BaseModel } from "@app/models/portals.base";
 
 /** Abstract class for all portals' core entity classes */
 export abstract class PortalCoreBase extends BaseModel {

@@ -1,16 +1,16 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { FilesService } from "@services/files.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { PortalsCmsService } from "@services/portals.cms.service";
-import { AttachmentInfo } from "@models/base";
-import { Category } from "@models/portals.cms.category";
-import { Content } from "@models/portals.cms.content";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { FilesService } from "@app/services/files.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { PortalsCmsService } from "@app/services/portals.cms.service";
+import { AttachmentInfo } from "@app/models/base";
+import { Category } from "@app/models/portals.cms.category";
+import { Content } from "@app/models/portals.cms.content";
 
 @Component({
 	selector: "page-portals-cms-contents-view",

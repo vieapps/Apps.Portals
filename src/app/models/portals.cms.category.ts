@@ -1,7 +1,7 @@
-import { Dictionary } from "typescript-collections";
-import { AppUtility } from "@components/app.utility";
-import { NestedObject, NotificationSettings, EmailSettings } from "@models/portals.base";
-import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
+import { List } from "linqts";
+import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { NestedObject, NotificationSettings, EmailSettings } from "@app/models/portals.base";
+import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
 export class Category extends CmsBaseModel implements NestedObject {
 
@@ -20,11 +20,6 @@ export class Category extends CmsBaseModel implements NestedObject {
 
 	/** All instances of category */
 	public static instances = new Dictionary<string, Category>();
-
-	/** All instances of category */
-	public static get all() {
-		return this.instances.values();
-	}
 
 	ParentID = undefined as string;
 	OrderIndex = 0;
@@ -59,16 +54,13 @@ export class Category extends CmsBaseModel implements NestedObject {
 	/** Gets by identity */
 	public static get(id: string) {
 		return AppUtility.isNotEmpty(id)
-			? this.instances.getValue(id)
+			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
 	public static set(category: Category) {
-		if (category !== undefined) {
-			this.instances.setValue(category.ID, category);
-		}
-		return category;
+		return category === undefined ? undefined : this.instances.add(category.ID, category);
 	}
 
 	/** Updates into dictionary */
@@ -80,7 +72,12 @@ export class Category extends CmsBaseModel implements NestedObject {
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return AppUtility.isNotEmpty(id) && this.instances.containsKey(id);
+		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
+	}
+
+	/** Converts the array of objects to list */
+	public static toList(objects: Array<any>) {
+		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
 	}
 
 	public get Parent() {
@@ -90,7 +87,7 @@ export class Category extends CmsBaseModel implements NestedObject {
 	public get Children() {
 		const categories = AppUtility.isArray(this.childrenIDs, true)
 			? this.childrenIDs.map(id => Category.get(id))
-			: Category.all.filter(category => category.ParentID === this.ID);
+			: Category.instances.toArray(category => category.ParentID === this.ID);
 		return categories.sort(AppUtility.getCompareFunction("OrderIndex", "Title"));
 	}
 

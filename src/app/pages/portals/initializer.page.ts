@@ -1,23 +1,23 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { ConfigurationService } from "@services/configuration.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { PortalsCmsService } from "@services/portals.cms.service";
-import { Base as BaseModel } from "@models/base";
-import { Organization } from "@models/portals.core.organization";
-import { Role } from "@models/portals.core.role";
-import { Site } from "@models/portals.core.site";
-import { Desktop } from "@models/portals.core.desktop";
-import { Portlet } from "@models/portals.core.portlet";
-import { Module } from "@models/portals.core.module";
-import { ContentType } from "@models/portals.core.content.type";
-import { Expression } from "@models/portals.core.expression";
-import { Category } from "@models/portals.cms.category";
-import { Content } from "@models/portals.cms.content";
-import { Item } from "@models/portals.cms.item";
-import { Link } from "@models/portals.cms.link";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { PortalsCmsService } from "@app/services/portals.cms.service";
+import { Base as BaseModel } from "@app/models/base";
+import { Organization } from "@app/models/portals.core.organization";
+import { Role } from "@app/models/portals.core.role";
+import { Site } from "@app/models/portals.core.site";
+import { Desktop } from "@app/models/portals.core.desktop";
+import { Portlet } from "@app/models/portals.core.portlet";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
+import { Expression } from "@app/models/portals.core.expression";
+import { Category } from "@app/models/portals.cms.category";
+import { Content } from "@app/models/portals.cms.content";
+import { Item } from "@app/models/portals.cms.item";
+import { Link } from "@app/models/portals.cms.link";
 
 @Component({
 	selector: "page-portal-initializer",

@@ -1,7 +1,6 @@
-import { Dictionary, Set } from "typescript-collections";
-import { AppUtility } from "@components/app.utility";
-import { Privilege, Privileges } from "@models/privileges";
-import { UserProfile } from "@models/user";
+import { AppUtility, Dictionary, HashSet } from "@app/components/app.utility";
+import { Privilege, Privileges } from "@app/models/privileges";
+import { UserProfile } from "@app/models/user";
 
 /** Account of the app */
 export class Account {
@@ -49,7 +48,7 @@ export class Account {
 	/** Gets by identity */
 	public static get(id: string) {
 		return id !== undefined
-			? this.instances.getValue(id)
+			? this.instances.get(id)
 			: undefined;
 	}
 
@@ -57,7 +56,7 @@ export class Account {
 	public static set(account: Account) {
 		return account === undefined
 			? undefined
-			: this.instances.setValue(account.id, account) || account;
+			: this.instances.set(account.id, account) || account;
 	}
 
 	/** Updates into dictionary */
@@ -69,7 +68,7 @@ export class Account {
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return id !== undefined && this.instances.containsKey(id);
+		return id !== undefined && this.instances.contains(id);
 	}
 
 	/**
@@ -104,7 +103,7 @@ export class Account {
 	 * @param users The collection of identities that need to check with this account
 	 * @param roles The collection of roles that need to check with this account
 	*/
-	public isInPrivilege(users: Set<string>, roles: Set<string>) {
+	public isInPrivilege(users: HashSet<string>, roles: HashSet<string>) {
 		let isIn = users !== undefined && AppUtility.isNotEmpty(this.id) ? users.contains(this.id) : false;
 		while (!isIn && roles !== undefined) {
 			for (const role in this.roles) {

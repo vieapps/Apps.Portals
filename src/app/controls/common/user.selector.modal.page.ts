@@ -1,16 +1,15 @@
 import { Subscription } from "rxjs";
 import { List } from "linqts";
-import { Set } from "typescript-collections";
 import { Component, OnInit, OnDestroy, Input, ViewChild } from "@angular/core";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
-import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { UsersService } from "@services/users.service";
-import { UserProfile } from "@models/user";
+import { AppUtility, HashSet } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { UsersService } from "@app/services/users.service";
+import { UserProfile } from "@app/models/user";
 
 @Component({
 	selector: "page-users-selector",
@@ -21,7 +20,7 @@ import { UserProfile } from "@models/user";
 export class UsersSelectorModalPage implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
 		private usersSvc: UsersService
@@ -36,6 +35,10 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	private subscription: Subscription;
 
@@ -55,7 +58,7 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 		cancel: "Cancel",
 		search: "Search"
 	};
-	selected = new Set<string>();
+	selected = new HashSet<string>();
 
 	ngOnInit() {
 		this.multiple = this.multiple === undefined ? true : this.multiple;
@@ -138,7 +141,7 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 				(data !== undefined ? data.Objects as Array<any> : []).forEach(o => this.results.push(UserProfile.get(o.ID)));
 			}
 			else {
-				const objects = new List(data !== undefined ? (data.Objects as Array<any>).map(o => UserProfile.get(o.ID)) : UserProfile.all).OrderBy(o => o.Name).ThenByDescending(o => o.LastAccess);
+				const objects = new List(data !== undefined ? (data.Objects as Array<any>).map(o => UserProfile.get(o.ID)) : UserProfile.instances.toArray().map(o => o as UserProfile)).OrderBy(o => o.Name).ThenByDescending(o => o.LastAccess);
 				this.profiles = data === undefined
 					? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
 					: this.profiles.concat(objects.ToArray());

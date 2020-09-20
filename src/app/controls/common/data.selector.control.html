@@ -1,5 +1,5 @@
 <ion-list>
-	<ion-list-header [color]="configSvc.color">
+	<ion-list-header [color]="color">
 		<ion-label>
 			<span *ngIf="resources && resources.header">
 				{{ resources.header }}
@@ -14,7 +14,7 @@
 			</ion-buttons>
 		</ion-label>
 	</ion-list-header>
-	<ion-item *ngFor="let item of items; trackBy: track" [color]="configSvc.color">
+	<ion-item *ngFor="let item of items; trackBy: track" [color]="color">
 		<ion-checkbox slot="end" [checked]="checked(item.Value)" (ionChange)="select($event, item.Value)"></ion-checkbox>
 		<ion-label>
 			<ion-thumbnail *ngIf="showImage && item.Image" class="ion-float-start ion-padding-end">

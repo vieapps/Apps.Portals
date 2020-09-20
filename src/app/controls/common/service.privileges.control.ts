@@ -1,19 +1,19 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from "@angular/core";
-import { AppUtility } from "@components/app.utility";
-import { AppFormsControl } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { Privilege } from "@models/privileges";
+import { AppUtility } from "@app/components/app.utility";
+import { AppFormsControl } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { Privilege } from "@app/models/privileges";
 
 @Component({
 	selector: "control-service-privileges",
-	templateUrl: "./service.privileges.html",
-	styleUrls: ["./service.privileges.scss"]
+	templateUrl: "./service.privileges.control.html",
+	styleUrls: ["./service.privileges.control.scss"]
 })
 
 export class ServicePrivilegesControl implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService
+		private configSvc: ConfigurationService
 	) {
 	}
 
@@ -53,6 +53,10 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 	objectRoles: Array<{ name: string; role: string }>;
 	get serviceRole() {
 		return ((this.privileges || []).find(privilege => AppUtility.isEquals(privilege.ServiceName, this.service) && AppUtility.isEquals(privilege.ObjectName, "")) || new Privilege(this.service)).Role;
+	}
+
+	get color() {
+		return this.configSvc.color;
 	}
 
 	ngOnInit() {

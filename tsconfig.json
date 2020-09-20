@@ -2,7 +2,7 @@
 	"compileOnSave": false,
 	"compilerOptions": {
 		"baseUrl": "./",
-		"outDir": "./dist",
+		"outDir": "./dist/app",
 		"sourceMap": true,
 		"declaration": false,
 		"module": "es2015",
@@ -20,11 +20,7 @@
 			"dom"
 		],
 		"paths": {
-			"@components/*": ["src/app/components/*"],
-			"@controls/*": ["src/app/controls/*"],
-			"@models/*": ["src/app/models/*"],
-			"@pages/*": ["src/app/pages/*"],
-			"@services/*": ["src/app/services/*"],
+			"@app/*": ["src/app/*"],
 			"core-js/es7/reflect": ["node_modules/core-js/proposals/reflect-metadata"],
 			"core-js/es6/*": ["node_modules/core-js/es/*"]
 		}

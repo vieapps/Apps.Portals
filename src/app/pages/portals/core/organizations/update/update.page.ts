@@ -1,23 +1,23 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
-import { AppCrypto } from "@components/app.crypto";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
-import { AppFormsControlComponent } from "@components/forms.control.component";
-import { ConfigurationService } from "@services/configuration.service";
-import { UsersService } from "@services/users.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { PortalBase as BaseModel, EmailNotificationSettings } from "@models/portals.base";
-import { Organization } from "@models/portals.core.organization";
-import { Privileges } from "@models/privileges";
-import { UserProfile } from "@models/user";
-import { Desktop } from "@models/portals.core.desktop";
-import { RolesSelectorModalPage } from "@controls/portals/role.selector.modal.page";
-import { UsersSelectorModalPage } from "@controls/common/user.selector.modal.page";
-import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.modal.page";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@app/components/forms.service";
+import { AppFormsControlComponent } from "@app/components/forms.control.component";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { UsersService } from "@app/services/users.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { PortalBase as BaseModel, EmailNotificationSettings } from "@app/models/portals.base";
+import { Organization } from "@app/models/portals.core.organization";
+import { Privileges } from "@app/models/privileges";
+import { UserProfile } from "@app/models/user";
+import { Desktop } from "@app/models/portals.core.desktop";
+import { RolesSelectorModalPage } from "@app/controls/portals/role.selector.modal.page";
+import { UsersSelectorModalPage } from "@app/controls/common/user.selector.modal.page";
+import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selector.modal.page";
 
 @Component({
 	selector: "page-portals-core-organizations-update",

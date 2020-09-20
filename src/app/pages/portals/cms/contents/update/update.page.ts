@@ -1,24 +1,24 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { FormGroup } from "@angular/forms";
-import { AppCrypto } from "@components/app.crypto";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { FilesService } from "@services/files.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { PortalsCmsService } from "@services/portals.cms.service";
-import { AttachmentInfo } from "@models/base";
-import { Organization } from "@models/portals.core.organization";
-import { Module } from "@models/portals.core.module";
-import { ContentType } from "@models/portals.core.content.type";
-import { Category } from "@models/portals.cms.category";
-import { Content } from "@models/portals.cms.content";
-import { FilesProcessorModalPage } from "@controls/common/file.processor.modal.page";
-import { DataLookupModalPage } from "@controls/portals/data.lookup.modal.page";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { FilesService } from "@app/services/files.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { PortalsCmsService } from "@app/services/portals.cms.service";
+import { AttachmentInfo } from "@app/models/base";
+import { Organization } from "@app/models/portals.core.organization";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
+import { Category } from "@app/models/portals.cms.category";
+import { Content } from "@app/models/portals.cms.content";
+import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
+import { DataLookupModalPage } from "@app/controls/portals/data.lookup.modal.page";
 
 @Component({
 	selector: "page-portals-cms-contents-update",

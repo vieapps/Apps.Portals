@@ -1,9 +1,9 @@
-import { Dictionary } from "typescript-collections";
-import { AppUtility } from "@components/app.utility";
-import { FilterBy, SortBy } from "@models/portals.base";
-import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
-import { Module } from "@models/portals.core.module";
-import { ContentType } from "@models/portals.core.content.type";
+import { List } from "linqts";
+import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { FilterBy, SortBy } from "@app/models/portals.base";
+import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
 
 export class Expression extends CoreBaseModel {
 
@@ -24,11 +24,6 @@ export class Expression extends CoreBaseModel {
 
 	/** All instances of expression */
 	public static instances = new Dictionary<string, Expression>();
-
-	/** All instances of expression */
-	public static get all() {
-		return this.instances.values();
-	}
 
 	Title = undefined as string;
 	Description = undefined as string;
@@ -57,16 +52,13 @@ export class Expression extends CoreBaseModel {
 	/** Gets by identity */
 	public static get(id: string) {
 		return AppUtility.isNotEmpty(id)
-			? this.instances.getValue(id)
+			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
 	public static set(expression: Expression) {
-		if (expression !== undefined) {
-			this.instances.setValue(expression.ID, expression);
-		}
-		return expression;
+		return expression === undefined ? undefined : this.instances.add(expression.ID, expression);
 	}
 
 	/** Updates into dictionary */
@@ -78,7 +70,12 @@ export class Expression extends CoreBaseModel {
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return AppUtility.isNotEmpty(id) && this.instances.containsKey(id);
+		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
+	}
+
+	/** Converts the array of objects to list */
+	public static toList(objects: Array<any>) {
+		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
 	}
 
 	public get routerLink() {

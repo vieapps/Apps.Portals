@@ -3,20 +3,20 @@ import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
-import { AppCrypto } from "@components/app.crypto";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { NestedObject } from "@models/portals.base";
-import { Organization } from "@models/portals.core.organization";
-import { Desktop } from "@models/portals.core.desktop";
-import { Portlet } from "@models/portals.core.portlet";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { NestedObject } from "@app/models/portals.base";
+import { Organization } from "@app/models/portals.core.organization";
+import { Desktop } from "@app/models/portals.core.desktop";
+import { Portlet } from "@app/models/portals.core.portlet";
 
 @Component({
 	selector: "page-portals-core-portlets-list",
@@ -296,14 +296,16 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.portlets.push(Portlet.get(o.ID) || Portlet.deserialize(o, Portlet.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Portlet.all : results.map(o => Portlet.get(o.ID) || Portlet.deserialize(o, Portlet.get(o.ID))));
-			if (this.desktop !== undefined) {
-				objects = objects.Where(o => o.DesktopID === this.desktop.ID);
+			const predicate: (portlet: Portlet) => boolean = this.desktop !== undefined
+				? obj => obj.DesktopID === this.desktop.ID
+				: obj => obj.SystemID === this.organization.ID;
+			let objects = results === undefined
+				? Portlet.instances.toList(predicate)
+				: Portlet.toList(results).Where(predicate);
+			if (this.desktop === undefined) {
+				objects = objects.OrderBy(obj => obj.DesktopID);
 			}
-			else {
-				objects = objects.Where(o => o.SystemID === this.organization.ID).OrderBy(o => o.DesktopID);
-			}
-			objects = objects.OrderBy(o => o.Zone).ThenBy(o => o.OrderIndex);
+			objects = objects.OrderBy(obj => obj.Zone).ThenBy(obj => obj.OrderIndex);
 			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}

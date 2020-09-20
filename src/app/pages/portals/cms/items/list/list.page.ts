@@ -1,22 +1,21 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { PortalsCmsService } from "@services/portals.cms.service";
-import { Organization } from "@models/portals.core.organization";
-import { Module } from "@models/portals.core.module";
-import { ContentType } from "@models/portals.core.content.type";
-import { Item } from "@models/portals.cms.item";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { PortalsCmsService } from "@app/services/portals.cms.service";
+import { Organization } from "@app/models/portals.core.organization";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
+import { Item } from "@app/models/portals.cms.item";
 
 @Component({
 	selector: "page-portals-cms-items-list",
@@ -267,15 +266,11 @@ export class CmsItemListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.items.push(Item.get(o.ID) || Item.deserialize(o, Item.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Item.all : results.map(o => Item.get(o.ID) || Item.deserialize(o, Item.get(o.ID))));
-			objects = objects.Where(o => o.SystemID === this.organization.ID);
-			if (this.module !== undefined) {
-				objects = objects.Where(o => o.RepositoryID === this.module.ID);
-			}
-			if (this.contentType !== undefined) {
-				objects = objects.Where(o => o.RepositoryEntityID === this.contentType.ID);
-			}
-			objects = objects.OrderByDescending(o => o.Created);
+			const predicate: (item: Item) => boolean = obj => obj.SystemID === this.organization.ID && (this.module !== undefined ? obj.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? obj.RepositoryEntityID === this.contentType.ID : true);
+			let objects = results === undefined
+				? Item.instances.toList(predicate)
+				: Item.toList(results).Where(predicate);
+			objects = objects.OrderByDescending(obj => obj.Created);
 			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}

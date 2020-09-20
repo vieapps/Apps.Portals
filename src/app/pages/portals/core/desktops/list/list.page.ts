@@ -1,18 +1,17 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { Organization } from "@models/portals.core.organization";
-import { Desktop } from "@models/portals.core.desktop";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { Organization } from "@app/models/portals.core.organization";
+import { Desktop } from "@app/models/portals.core.desktop";
 
 @Component({
 	selector: "page-portals-core-desktops-list",
@@ -285,9 +284,11 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.desktops.push(Desktop.get(o.ID) || Desktop.deserialize(o, Desktop.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Desktop.all : results.map(o => Desktop.get(o.ID) || Desktop.deserialize(o, Desktop.get(o.ID))));
-			objects = objects.Where(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID);
-			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			const predicate: (dekstop: Desktop) => boolean = obj => obj.SystemID === this.organization.ID && obj.ParentID === this.parentID;
+			let objects = results === undefined
+				? Desktop.instances.toList(predicate)
+				: Desktop.toList(results).Where(predicate);
+			objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
 			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}

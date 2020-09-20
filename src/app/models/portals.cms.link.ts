@@ -1,7 +1,7 @@
-import { Dictionary } from "typescript-collections";
-import { AppUtility } from "@components/app.utility";
-import { NestedObject } from "@models/portals.base";
-import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
+import { List } from "linqts";
+import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { NestedObject } from "@app/models/portals.base";
+import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
 export class Link extends CmsBaseModel implements NestedObject {
 
@@ -22,11 +22,6 @@ export class Link extends CmsBaseModel implements NestedObject {
 
 	/** All instances of first 60 links */
 	public static instances = new Dictionary<string, Link>();
-
-	/** All instances of first 60 links */
-	public static get all() {
-		return this.instances.values();
-	}
 
 	ParentID = undefined as string;
 	OrderIndex = 0;
@@ -67,16 +62,13 @@ export class Link extends CmsBaseModel implements NestedObject {
 	/** Gets by identity */
 	public static get(id: string) {
 		return AppUtility.isNotEmpty(id)
-			? this.instances.getValue(id)
+			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
 	public static set(link: Link) {
-		if (link !== undefined) {
-			this.instances.setValue(link.ID, link);
-		}
-		return link;
+		return link === undefined ? undefined : this.instances.add(link.ID, link);
 	}
 
 	/** Updates into dictionary */
@@ -88,7 +80,12 @@ export class Link extends CmsBaseModel implements NestedObject {
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return AppUtility.isNotEmpty(id) && this.instances.containsKey(id);
+		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
+	}
+
+	/** Converts the array of objects to list */
+	public static toList(objects: Array<any>) {
+		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
 	}
 
 	public get Parent() {
@@ -98,7 +95,7 @@ export class Link extends CmsBaseModel implements NestedObject {
 	public get Children() {
 		const links = AppUtility.isArray(this.childrenIDs, true)
 			? this.childrenIDs.map(id => Link.get(id))
-			: Link.all.filter(link => link.ParentID === this.ID);
+			: Link.instances.toArray(link => link.ParentID === this.ID);
 		return links.sort(AppUtility.getCompareFunction("OrderIndex", "Title"));
 	}
 

@@ -1,7 +1,7 @@
-import { Dictionary } from "typescript-collections";
-import { AppUtility } from "@components/app.utility";
-import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
-import { Category } from "@models/portals.cms.category";
+import { List } from "linqts";
+import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
+import { Category } from "@app/models/portals.cms.category";
 
 export class Content extends CmsBaseModel {
 
@@ -22,11 +22,6 @@ export class Content extends CmsBaseModel {
 
 	/** All instances of first 60 contents */
 	public static instances = new Dictionary<string, Content>();
-
-	/** All instances of first 60 contents */
-	public static get all() {
-		return this.instances.values();
-	}
 
 	Status = "Pending";
 	CategoryID = undefined as string;
@@ -83,16 +78,13 @@ export class Content extends CmsBaseModel {
 	/** Gets by identity */
 	public static get(id: string) {
 		return AppUtility.isNotEmpty(id)
-			? this.instances.getValue(id)
+			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
 	public static set(content: Content) {
-		if (content !== undefined) {
-			this.instances.setValue(content.ID, content);
-		}
-		return content;
+		return content === undefined ? undefined : this.instances.add(content.ID, content);
 	}
 
 	/** Updates into dictionary */
@@ -104,7 +96,12 @@ export class Content extends CmsBaseModel {
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return AppUtility.isNotEmpty(id) && this.instances.containsKey(id);
+		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
+	}
+
+	/** Converts the array of objects to list */
+	public static toList(objects: Array<any>) {
+		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
 	}
 
 	public get category() {

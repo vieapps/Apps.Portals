@@ -1,0 +1,60 @@
+<div class="options">
+	<h2>{{ labels.options.label }}</h2>
+	<ion-list class="ion-margin-vertical">
+		<ion-item [color]="color">
+			<ion-label>{{ labels.options.language }}</ion-label>
+			<ion-select multiple="false" interface="popover"
+				[cancelText]="labels.cancel"
+				[okText]="labels.ok"
+				[value]="options.language"
+				(ionChange)="onLanguageChangedAsync($event)">
+				<ion-select-option *ngFor="let lang of languages" [value]="lang.Value">{{ lang.Label }}</ion-select-option>
+			</ion-select>
+		</ion-item>
+		<ion-item [color]="color">
+			<ion-label>{{ labels.options.theme }}</ion-label>
+			<ion-toggle [checked]="options.darkTheme" (ionChange)="onThemeChangedAsync($event)"></ion-toggle>
+		</ion-item>
+	</ion-list>
+</div>
+
+<div *ngIf="appShell !== 'Electron'" class="desktop apps">
+	<h2>{{ labels.apps.desktop }}</h2>
+	<div>
+		<a href="{{ downloadURLs.Windows }}" target="_blank">
+			<ion-icon name="logo-windows" slot="start"></ion-icon>
+			Windows x64
+		</a>
+		<a href="{{ downloadURLs.Linux }}" target="_blank">
+			<ion-icon name="logo-tux" slot="start"></ion-icon>
+			Linux x64
+		</a>
+		<a href="{{ downloadURLs.macOS }}" target="_blank">
+			<ion-icon name="logo-apple" slot="start"></ion-icon>
+			macOS x64
+		</a>
+	</div>
+</div>
+
+<div *ngIf="false" class="mobile apps">
+	<h2>{{ labels.apps.mobile }}</h2>
+	<div>
+		<a href="https://apps.apple.com/us/app/facebook/id284882215" target="_blank">
+			<ion-icon name="logo-apple-appstore" slot="start"></ion-icon>
+			iPhone & iPad
+		</a>
+		<a href="https://play.google.com/store/apps/details?id=com.facebook.katana&hl=en" target="_blank">
+			<ion-icon name="logo-google-playstore" slot="start"></ion-icon>
+			Android
+		</a>
+	</div>
+</div>
+
+<div *ngIf="appShell !== 'Electron'" class="about">
+	<h2>{{ labels.about }}</h2>
+	<img [src]="logo"/>
+	<h3>{{ title }}</h3>
+	<h4>{{ description }}</h4>
+	<div>{{ copyright }}</div>
+	<section>{{ frameworks }}</section>
+</div>

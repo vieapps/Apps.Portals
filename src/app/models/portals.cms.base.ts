@@ -1,11 +1,11 @@
-import { AppConfig } from "../app.config";
-import { AppUtility } from "@components/app.utility";
-import { AppEvents } from "@components/app.events";
-import { AttachmentInfo } from "@models/base";
-import { PortalBase as BaseModel } from "@models/portals.base";
-import { Organization } from "@models/portals.core.organization";
-import { Module } from "@models/portals.core.module";
-import { ContentType } from "@models/portals.core.content.type";
+import { AppConfig } from "@app/app.config";
+import { AppUtility } from "@app/components/app.utility";
+import { AppEvents } from "@app/components/app.events";
+import { AttachmentInfo } from "@app/models/base";
+import { PortalBase as BaseModel } from "@app/models/portals.base";
+import { Organization } from "@app/models/portals.core.organization";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
 
 /** Abstract class for all portals' core entity classes */
 export abstract class PortalCmsBase extends BaseModel {

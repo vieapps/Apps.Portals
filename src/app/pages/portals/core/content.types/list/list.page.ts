@@ -1,21 +1,20 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { Organization } from "@models/portals.core.organization";
-import { Module } from "@models/portals.core.module";
-import { ContentType } from "@models/portals.core.content.type";
-import { ContentTypeDefinition } from "@models/portals.base";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { Organization } from "@app/models/portals.core.organization";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
+import { ContentTypeDefinition } from "@app/models/portals.base";
 
 @Component({
 	selector: "page-portals-core-content-types-list",
@@ -302,25 +301,19 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.contentTypes.push(ContentType.get(o.ID) || ContentType.deserialize(o, ContentType.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? ContentType.all : results.map(o => ContentType.get(o.ID) || ContentType.deserialize(o, ContentType.get(o.ID))));
-			if (AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.repositoryID) && AppUtility.isNotEmpty(this.definitionID)) {
-				objects = objects.Where(o => o.SystemID === this.systemID && o.RepositoryID === this.repositoryID && o.ContentTypeDefinitionID === this.definitionID);
-			}
-			else if (AppUtility.isNotEmpty(this.definitionID)) {
-				if (this.isSystemAdministrator) {
-					objects = objects.Where(o => o.ContentTypeDefinitionID === this.definitionID);
-				}
-				else {
-					objects = objects.Where(o => o.SystemID === this.systemID && o.ContentTypeDefinitionID === this.definitionID);
-				}
-			}
-			else if (AppUtility.isNotEmpty(this.repositoryID)) {
-				objects = objects.Where(o => o.RepositoryID === this.repositoryID);
-			}
-			else {
-				objects = objects.Where(o => o.SystemID === this.systemID);
-			}
-			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			const predicate: (contentType:  ContentType) => boolean = AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.repositoryID) && AppUtility.isNotEmpty(this.definitionID)
+				? obj => obj.SystemID === this.systemID && obj.RepositoryID === this.repositoryID && obj.ContentTypeDefinitionID === this.definitionID
+				: AppUtility.isNotEmpty(this.definitionID)
+					? this.isSystemAdministrator
+						? obj => obj.ContentTypeDefinitionID === this.definitionID
+						: obj => obj.SystemID === this.systemID && obj.ContentTypeDefinitionID === this.definitionID
+					: AppUtility.isNotEmpty(this.repositoryID)
+						? obj => obj.RepositoryID === this.repositoryID
+						: obj => obj.SystemID === this.systemID;
+			let objects = results === undefined
+				? ContentType.instances.toList(predicate)
+				: ContentType.toList(results).Where(predicate);
+			objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
 			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}

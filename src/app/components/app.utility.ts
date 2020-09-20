@@ -1,7 +1,6 @@
 import { List } from "linqts";
-import { Set } from "typescript-collections";
 import { HttpErrorResponse } from "@angular/common/http";
-import { AppCrypto } from "@components/app.crypto";
+import { AppCrypto } from "@app/components/app.crypto";
 
 /** Decorator of an extension method */
 export function Extension(object: any) {
@@ -10,6 +9,207 @@ export function Extension(object: any) {
 		originalFunction = descriptor.value;
 		object.prototype[propertyKey] = (...args) => originalFunction(this, ...args);
 	};
+}
+
+/** HashSet */
+export class HashSet<T> extends Set<T>  {
+
+	constructor(values?: IterableIterator<T> | Array<T>) {
+		super();
+		this.update(values);
+	}
+
+	contains(value: T) {
+		return this.has(value);
+	}
+
+	update(values: IterableIterator<T> | Array<T>, add: boolean = true, clearBeforeUpdating: boolean = false) {
+		if (clearBeforeUpdating) {
+			this.clear();
+		}
+		if (values !== undefined) {
+			for (const value of values) {
+				if (!add) {
+					this.delete(value);
+				}
+				else if (!this.has(value)) {
+					this.add(value);
+				}
+			}
+		}
+		return this;
+	}
+
+	set(value: T) {
+		super.add(value);
+		return value;
+	}
+
+	remove(value: T) {
+		return this.delete(value);
+	}
+
+	concat(other: Set<T>) {
+		other.forEach(value => {
+			if (!this.has(value)) {
+				this.add(value);
+			}
+		});
+		return this;
+	}
+
+	union(other: Set<T>) {
+		return this.concat(other);
+	}
+
+	first(predicate?: (value: T) => boolean) {
+		if (this.size > 0) {
+			const values = this.values();
+			for (const value of values) {
+				if (predicate === undefined || predicate(value)) {
+					return value;
+				}
+			}
+		}
+		return undefined;
+	}
+
+	toArray(predicate?: (value: T) => boolean) {
+		if (this.size > 0 && predicate !== undefined) {
+			const array = new Array<T>();
+			this.forEach(value => {
+				if (predicate(value)) {
+					array.push(value);
+				}
+			});
+			return array;
+		}
+		return Array.from(this.values());
+	}
+
+	toList(predicate?: (value: T) => boolean) {
+		return new List(this.toArray(predicate));
+	}
+
+	filter(predicate: (value: T) => boolean) {
+		if (predicate !== undefined) {
+			const set = new HashSet<T>();
+			this.forEach(value => {
+				if (predicate(value)) {
+					set.add(value);
+				}
+			});
+			return set;
+		}
+		return this;
+	}
+
+	except(other: Set<T>) {
+		return this.filter(value => !other.has(value));
+	}
+
+	intersect(other: Set<T>) {
+		return this.filter(value => other.has(value));
+	}
+}
+
+/** Dictionary */
+export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
+
+	constructor(values?: IterableIterator<TValue> | Array<TValue>, keySelector?: (value: TValue) => TKey) {
+		super();
+		if (values !== undefined && keySelector !== undefined) {
+			for (const value of values) {
+				this.update(keySelector(value), value);
+			}
+		}
+	}
+
+	contains(key: TKey) {
+		return this.has(key);
+	}
+
+	add(key: TKey, value: TValue) {
+		this.set(key, value);
+		return value;
+	}
+
+	update(key: TKey, value: TValue, updater: (v: TValue, k: TKey) => TValue = (v, k) => v) {
+		if (this.has(key)) {
+			this.set(key, updater(this.get(key), key));
+		}
+		else {
+			this.set(key, value);
+		}
+		return this;
+	}
+
+	remove(key: TKey) {
+		return this.delete(key);
+	}
+
+	concat(other: Map<TKey, TValue>, resolve: (k: TKey, a: TValue, b: TValue) => TValue = (k, a, b) => b) {
+		other.forEach((value, key) => {
+			if (this.has(key)) {
+				this.set(key, resolve(key, this.get(key), value));
+			}
+			else {
+				this.set(key, value);
+			}
+		});
+		return this;
+	}
+
+	union(other: Map<TKey, TValue>, resolve: (k: TKey, a: TValue, b: TValue) => TValue = (k, a, b) => b) {
+		return this.concat(other, resolve);
+	}
+
+	first(predicate?: (value: TValue) => boolean) {
+		if (this.size > 0) {
+			const values = this.values();
+			for (const value of values) {
+				if (predicate === undefined || predicate(value)) {
+					return value;
+				}
+			}
+		}
+		return undefined;
+	}
+
+	toArray(predicate?: (value: TValue) => boolean) {
+		if (this.size > 0 && predicate !== undefined) {
+			const array = new Array<TValue>();
+			this.forEach((value, _) => {
+				if (predicate(value)) {
+					array.push(value);
+				}
+			});
+			return array;
+		}
+		return Array.from(this.values());
+	}
+
+	toList(predicate?: (value: TValue) => boolean) {
+		return new List(this.toArray(predicate));
+	}
+
+	filter(predicate: (value: TValue, key: TKey) => boolean) {
+		const dictionary = new Dictionary<TKey, TValue>();
+		this.forEach((value, key) => {
+			if (predicate(value, key)) {
+				dictionary.set(key, value);
+			}
+		});
+		return dictionary;
+	}
+
+	except(other: Map<TKey, TValue>) {
+		return this.filter((_, key) => !other.has(key));
+	}
+
+	intersect(other: Map<TKey, TValue>) {
+		return this.filter((_, key) => other.has(key));
+	}
 }
 
 /** Servicing component for working with app */
@@ -428,7 +628,7 @@ export class AppUtility {
 
 	/** Parses the mustache-style (double braces) template to get the collection of params */
 	public static parse(template: string) {
-		return template.match(/{{([^{}]*)}}/g).map(param => {
+		return (template.match(/{{([^{}]*)}}/g) || []).map(param => {
 			return {
 				token: param,
 				name: param.match(/[\w\.]+/)[0]
@@ -446,41 +646,6 @@ export class AppUtility {
 		return template;
 	}
 
-	/** Gets the values as an array from a set */
-	public static getArray<T>(set: Set<T>) {
-		return this.isNotNull(set)
-			? set.toArray()
-			: new Array<T>();
-	}
-
-	/** Updates the values of a set from values of an array */
-	public static updateSet<T>(set: Set<T>, array: Array<T>, add: boolean = true, clearBeforeUpdating: boolean = false) {
-		set = set || new Set<T>();
-		if (clearBeforeUpdating) {
-			set.clear();
-		}
-		if (array !== undefined && array.length > 0) {
-			array.forEach(value => {
-				if (add) {
-					set.add(value);
-				}
-				else {
-					set.remove(value);
-				}
-			});
-		}
-		return set;
-	}
-
-	/** Converts the array to a set */
-	public static toSet<T>(array: Array<T>) {
-		const set = new Set<T>();
-		if (array !== undefined && array.length > 0) {
-			array.forEach(value => set.add(value));
-		}
-		return set;
-	}
-
 	/** Stringifys the JSON and encode as base64-url */
 	public static toBase64Url(json: any) {
 		return this.isObject(json, true)
@@ -492,6 +657,12 @@ export class AppUtility {
 	public static toArray(obj: any, separator?: any): Array<string> | Array<any> | Array<{ key: string, value: any }> {
 		if (this.isArray(obj)) {
 			return obj as Array<any>;
+		}
+		else if (obj instanceof Set) {
+			return Array.from((obj as Set<any>).values());
+		}
+		else if (obj instanceof Map) {
+			return Array.from((obj as Map<any, any>).values());
 		}
 		else if (this.isNotEmpty(obj)) {
 			const array = this.indexOf(obj as string, this.isNotEmpty(separator) ? separator : ",") > 0

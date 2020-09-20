@@ -1,23 +1,23 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
-import { AppCrypto } from "@components/app.crypto";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { AppPagination } from "@components/app.pagination";
-import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { Privileges } from "@models/privileges";
-import { Organization } from "@models/portals.core.organization";
-import { ModuleDefinition, ExtendedPropertyDefinition, ExtendedControlDefinition, StandardControlDefinition, EmailNotificationSettings } from "@models/portals.base";
-import { Module } from "@models/portals.core.module";
-import { ContentType } from "@models/portals.core.content.type";
-import { Desktop } from "@models/portals.core.desktop";
-import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.modal.page";
-import { RolesSelectorModalPage } from "@controls/portals/role.selector.modal.page";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility, HashSet } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { AppPagination } from "@app/components/app.pagination";
+import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { Privileges } from "@app/models/privileges";
+import { Organization } from "@app/models/portals.core.organization";
+import { ModuleDefinition, ExtendedPropertyDefinition, ExtendedControlDefinition, StandardControlDefinition, EmailNotificationSettings } from "@app/models/portals.base";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
+import { Desktop } from "@app/models/portals.core.desktop";
+import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selector.modal.page";
+import { RolesSelectorModalPage } from "@app/controls/portals/role.selector.modal.page";
 
 @Component({
 	selector: "page-portals-core-content-types-update",
@@ -97,7 +97,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.contenttypes.title.${(AppUtility.isNotEmpty(this.contentType.ID) ? "update" : "create")}`);
 
-		if (Module.all.filter(o => o.SystemID === this.organization.ID).length < 1) {
+		if (Module.instances.toArray(o => o.SystemID === this.organization.ID).length < 1) {
 			const request = AppPagination.buildRequest(
 				{ And: [{ SystemID: { Equals: this.organization.ID } }] },
 				{ Title: "Ascending" },
@@ -106,7 +106,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 			await this.portalsCoreSvc.searchModuleAsync(request, undefined, undefined, true, true);
 		}
 
-		if (Module.all.filter(o => o.SystemID === this.organization.ID).length < 1) {
+		if (Module.instances.toArray(o => o.SystemID === this.organization.ID).length < 1) {
 			await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid")));
 			return;
 		}
@@ -128,7 +128,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 	}
 
 	private getModuleDefinition(moduleID: string) {
-		const current = Module.all.find(o => o.ID === moduleID);
+		const current = Module.instances.first(o => o.ID === moduleID);
 		return this.definitions.find(definition => definition.ID === current.ModuleDefinitionID);
 	}
 
@@ -138,7 +138,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 	}
 
 	private getRepositories() {
-		return Module.all.filter(o => o.SystemID === this.organization.ID)
+		return Module.instances.toArray(o => o.SystemID === this.organization.ID)
 			.sort(AppUtility.getCompareFunction("Title"))
 			.map(o => {
 				return {
@@ -152,7 +152,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 	private getDefinitions(moduleID: string, onlyMultiple: boolean = false) {
 		let contentTypeDefinitions = this.getContentTypeDefinitions(moduleID).sort(AppUtility.getCompareFunction("Title"));
 		if (onlyMultiple) {
-			const contentTypeIDs = ContentType.all.filter(o => o.RepositoryID === moduleID).map(o => o.ContentTypeDefinitionID);
+			const contentTypeIDs = ContentType.instances.toArray(o => o.RepositoryID === moduleID).map(o => o.ContentTypeDefinitionID);
 			contentTypeDefinitions = contentTypeDefinitions.filter(o => o.MultipleIntances || (!o.MultipleIntances && contentTypeIDs.indexOf(o.ID) < 0));
 		}
 		return contentTypeDefinitions.map(definition => {
@@ -255,7 +255,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 		}
 		else {
 			control.Options.Type = "dropdown";
-			control.Options.SelectOptions.Values = this.getDefinitions(Module.instances.size() > 0 ? Module.all[0].ID : undefined, true);
+			control.Options.SelectOptions.Values = this.getDefinitions(Module.instances.size > 0 ? Module.instances.toArray()[0].ID : undefined, true);
 			control.Options.OnChanged = (_, formControl) => {
 				if (formControl.selectOptions.length > 0) {
 					this.form.controls.Title.setValue(formControl.selectOptions.find(o => o.Value === formControl.value).Label, { onlySelf: true });
@@ -430,8 +430,8 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 		this.form.patchValue(contentType);
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(() => {
-			if (!AppUtility.isNotEmpty(this.contentType.ID) && Module.instances.size() > 0) {
-				this.form.controls.RepositoryID.setValue(Module.all[0].ID, { onlySelf: true });
+			if (!AppUtility.isNotEmpty(this.contentType.ID) && Module.instances.size > 0) {
+				this.form.controls.RepositoryID.setValue(Module.instances.toArray()[0].ID, { onlySelf: true });
 				const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ContentTypeDefinitionID"));
 				if (control.Options.SelectOptions.Values.length > 0) {
 					const first = control.Options.SelectOptions.Values[0];
@@ -516,7 +516,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 						}
 
 						if (!gotError) {
-							const names = AppUtility.toSet(extendedPropertyDefinitions.map(definition => definition.Name));
+							const names = new HashSet<string>(extendedPropertyDefinitions.map(definition => definition.Name));
 							let index = 0;
 							while (!gotError && index < extendedControlDefinitions.length) {
 								gotError = !names.contains(extendedControlDefinitions[index].Name);
@@ -561,7 +561,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 					if (contentType.StandardControlDefinitions !== undefined) {
 						let gotError = false;
 						const standardControlDefinitions: Array<StandardControlDefinition> = contentType.StandardControlDefinitions;
-						const names = AppUtility.toSet(this.formControls.filter(ctrl => !ctrl.Hidden).map(ctrl => ctrl.Name));
+						const names = new HashSet<string>(this.formControls.filter(ctrl => !ctrl.Hidden).map(ctrl => ctrl.Name));
 						let index = 0;
 						while (!gotError && index < standardControlDefinitions.length) {
 							gotError = !names.contains(standardControlDefinitions[index].Name);

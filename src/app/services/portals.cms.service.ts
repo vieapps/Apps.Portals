@@ -1,29 +1,29 @@
 import { Injectable } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
-import { AppRTU, AppXHR, AppMessage } from "@components/app.apis";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppCustomCompleter } from "@components/app.completer";
-import { AppPagination } from "@components/app.pagination";
-import { Base as BaseService } from "@services/base.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { FilesService, FileOptions } from "@services/files.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { AppFormsService, AppFormsControlConfig, AppFormsControlLookupOptionsConfig } from "@components/forms.service";
-import { AppFormsControlComponent } from "@components/forms.control.component";
-import { FilesProcessorModalPage } from "@controls/common/file.processor.modal.page";
-import { Account } from "@models/account";
-import { Module } from "@models/portals.core.module";
-import { ContentType } from "@models/portals.core.content.type";
-import { Desktop } from "@models/portals.core.desktop";
-import { AttachmentInfo } from "@models/base";
-import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
-import { Category } from "@models/portals.cms.category";
-import { Content } from "@models/portals.cms.content";
-import { Item } from "@models/portals.cms.item";
-import { Link } from "@models/portals.cms.link";
+import { AppRTU, AppXHR, AppMessage } from "@app/components/app.apis";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppCustomCompleter } from "@app/components/app.completer";
+import { AppPagination } from "@app/components/app.pagination";
+import { Base as BaseService } from "@app/services/base.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { FilesService, FileOptions } from "@app/services/files.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { AppFormsService, AppFormsControlConfig, AppFormsControlLookupOptionsConfig } from "@app/components/forms.service";
+import { AppFormsControlComponent } from "@app/components/forms.control.component";
+import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
+import { Account } from "@app/models/account";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
+import { Desktop } from "@app/models/portals.core.desktop";
+import { AttachmentInfo } from "@app/models/base";
+import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
+import { Category } from "@app/models/portals.cms.category";
+import { Content } from "@app/models/portals.cms.content";
+import { Item } from "@app/models/portals.cms.item";
+import { Link } from "@app/models/portals.cms.link";
 
 @Injectable()
 export class PortalsCmsService extends BaseService {
@@ -159,10 +159,10 @@ export class PortalsCmsService extends BaseService {
 					}, undefined, useXHR);
 				}
 			}
-			else if (Module.instances.size() > 0) {
+			else if (Module.instances.size > 0) {
 				Module.active = this.portalsCoreSvc.activeOrganization.modules.find(module => module.ModuleDefinitionID === "A0000000000000000000000000000001");
 				if (Module.active === undefined) {
-					Module.active = Module.all[0];
+					Module.active = Module.instances.first();
 				}
 			}
 			if (Module.active !== undefined) {
@@ -584,7 +584,7 @@ export class PortalsCmsService extends BaseService {
 			if (parentCategory !== undefined && parentCategory.childrenIDs !== undefined) {
 				AppUtility.removeAt(parentCategory.childrenIDs, parentCategory.childrenIDs.indexOf(id));
 			}
-			Category.all.filter(category => category.ParentID === id).forEach(category => this.deleteCategory(category.ID));
+			Category.instances.toArray(category => category.ParentID === id).forEach(category => this.deleteCategory(category.ID));
 			Category.instances.remove(id);
 		}
 	}
@@ -1213,7 +1213,7 @@ export class PortalsCmsService extends BaseService {
 			if (parentLink !== undefined && parentLink.childrenIDs !== undefined) {
 				AppUtility.removeAt(parentLink.childrenIDs, parentLink.childrenIDs.indexOf(id));
 			}
-			Link.all.filter(link => link.ParentID === id).forEach(link => this.deleteLink(link.ID));
+			Link.instances.toArray(link => link.ParentID === id).forEach(link => this.deleteLink(link.ID));
 			Link.instances.remove(id);
 		}
 	}

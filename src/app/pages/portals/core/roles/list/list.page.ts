@@ -1,18 +1,17 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { Organization } from "@models/portals.core.organization";
-import { Role } from "@models/portals.core.role";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { Organization } from "@app/models/portals.core.organization";
+import { Role } from "@app/models/portals.core.role";
 
 @Component({
 	selector: "page-portals-core-roles-list",
@@ -270,8 +269,10 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.roles.push(Role.get(o.ID) || Role.deserialize(o, Role.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Role.all : results.map(o => Role.get(o.ID) || Role.deserialize(o, Role.get(o.ID))));
-			objects = objects.Where(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID);
+			const predicate: (role: Role) => boolean = obj => obj.SystemID === this.organization.ID && obj.ParentID === this.parentID;
+			let objects = results === undefined
+				? Role.instances.toList(predicate)
+				: Role.toList(results).Where(predicate);
 			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
 			this.roles = results === undefined && this.pagination !== undefined
 				? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()

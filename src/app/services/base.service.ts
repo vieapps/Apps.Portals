@@ -1,12 +1,12 @@
 import { Injectable } from "@angular/core";
 import { Location } from "@angular/common";
 import { Router, CanActivate } from "@angular/router";
-import { AppConfig } from "../app.config";
-import { AppRTU, AppXHR, AppRequestInfo, AppMessage } from "@components/app.apis";
-import { AppCrypto } from "@components/app.crypto";
-import { AppPagination } from "@components/app.pagination";
-import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
+import { AppConfig } from "@app/app.config";
+import { AppRTU, AppXHR, AppRequestInfo, AppMessage } from "@app/components/app.apis";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppPagination } from "@app/components/app.pagination";
+import { AppUtility } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
 
 /** Base class of all services */
 export class Base {

@@ -1,6 +1,6 @@
-import { AppUtility } from "@components/app.utility";
-import { Privileges } from "@models/privileges";
-import { CounterInfo } from "@models/counters";
+import { AppUtility } from "@app/components/app.utility";
+import { Privileges } from "@app/models/privileges";
+import { CounterInfo } from "@app/models/counters";
 
 /** Base of all model/entity classes */
 export abstract class Base {

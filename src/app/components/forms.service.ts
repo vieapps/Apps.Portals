@@ -4,13 +4,13 @@ import { Validators, ValidatorFn, AsyncValidatorFn } from "@angular/forms";
 import { LoadingController, AlertController, ActionSheetController, ModalController, ToastController } from "@ionic/angular";
 import { TranslateService } from "@ngx-translate/core";
 import { CompleterData } from "ng2-completer";
-import { AppXHR } from "@components/app.apis";
-import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppFormsControlComponent } from "@components/forms.control.component";
-import { AppFormsViewComponent } from "@components/forms.view.component";
-import { ConfigurationService } from "@services/configuration.service";
-import { AppConfig } from "../app.config";
+import { AppConfig } from "@app/app.config";
+import { AppXHR } from "@app/components/app.apis";
+import { AppUtility } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppFormsControlComponent } from "@app/components/forms.control.component";
+import { AppFormsViewComponent } from "@app/components/forms.view.component";
+import { ConfigurationService } from "@app/services/configuration.service";
 
 /** Presents the settings of a segment (means a tab that contains group of controls) in the dynamic forms */
 export class AppFormsSegment {

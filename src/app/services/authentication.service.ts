@@ -1,12 +1,12 @@
 import { Injectable } from "@angular/core";
-import { AppRTU } from "@components/app.apis";
-import { AppCrypto } from "@components/app.crypto";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { Account } from "@models/account";
-import { Privileges } from "@models/privileges";
-import { Base as BaseService } from "@services/base.service";
-import { ConfigurationService } from "@services/configuration.service";
+import { AppRTU } from "@app/components/app.apis";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { Account } from "@app/models/account";
+import { Privileges } from "@app/models/privileges";
+import { Base as BaseService } from "@app/services/base.service";
+import { ConfigurationService } from "@app/services/configuration.service";
 
 @Injectable()
 export class AuthenticationService extends BaseService {

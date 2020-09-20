@@ -1,15 +1,14 @@
 import { Subscription } from "rxjs";
-import { Set } from "typescript-collections";
 import { Component, OnInit, OnDestroy, Input, ViewChild, ElementRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { FormGroup, FormControl, Validators } from "@angular/forms";
-import { AppCrypto } from "@components/app.crypto";
-import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { FilesService, FileOptions } from "@services/files.service";
-import { AttachmentInfo } from "@models/base";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppUtility, HashSet } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { FilesService, FileOptions } from "@app/services/files.service";
+import { AttachmentInfo } from "@app/models/base";
 
 @Component({
 	selector: "page-files-processor",
@@ -41,7 +40,7 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 
 	processing = false;
 	attachments: Array<AttachmentInfo>;
-	selected = new Set<string>();
+	selected = new HashSet<string>();
 	buttons = {
 		select: "Select",
 		cancel: "Cancel",

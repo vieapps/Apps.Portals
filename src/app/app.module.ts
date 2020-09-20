@@ -20,23 +20,24 @@ import { FileTransfer } from "@ionic-native/file-transfer/ngx";
 import { InAppBrowser } from "@ionic-native/in-app-browser/ngx";
 import { Clipboard } from "@ionic-native/clipboard/ngx";
 
-import { AppConfig } from "./app.config";
-import { AppComponent } from "./app.component";
-import { AppRoutingModule } from "./app.routing.module";
-import { AppFormsModule } from "@components/forms.module";
-import { AppFormsService } from "@components/forms.service";
-import { AppModulePreloader } from "@components/app.preloader";
-import { TimePipeModule } from "@components/time.pipe";
-import { AppReadyGuardService, RegisterGuardService, AuthenticatedGuardService, NotAuthenticatedGuardService } from "@services/base.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { UsersService } from "@services/users.service";
-import { FilesService } from "@services/files.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { PortalsCmsService } from "@services/portals.cms.service";
+import { AppConfig } from "@app/app.config";
+import { AppComponent } from "@app/app.component";
+import { AppRoutingModule } from "@app/app.routing.module";
+import { AppFormsModule } from "@app/components/forms.module";
+import { AppFormsService } from "@app/components/forms.service";
+import { AppModulePreloader } from "@app/components/app.preloader";
+import { TimePipeModule } from "@app/components/time.pipe";
+import { AppReadyGuardService, RegisterGuardService, AuthenticatedGuardService, NotAuthenticatedGuardService } from "@app/services/base.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { UsersService } from "@app/services/users.service";
+import { FilesService } from "@app/services/files.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { PortalsCmsService } from "@app/services/portals.cms.service";
 
-import { FilesProcessorModalPageModule } from "@controls/common/file.processor.modal.module";
-import { DataLookupModalPageModule } from "@controls/portals/data.lookup.modal.module";
+import { AppPreferencesControlModule } from "@app/controls/common/app.preferences.module";
+import { FilesProcessorModalPageModule } from "@app/controls/common/file.processor.modal.module";
+import { DataLookupModalPageModule } from "@app/controls/portals/data.lookup.modal.module";
 
 // ngx-translate factories
 export function HttpLoaderFactory(http: HttpClient) {
@@ -93,6 +94,7 @@ export class HammerConfig extends HammerGestureConfig {
 			useFactory: HttpLoaderFactory,
 			deps: [HttpClient]
 		}}),
+		AppPreferencesControlModule,
 		FilesProcessorModalPageModule,
 		DataLookupModalPageModule,
 		TimePipeModule,

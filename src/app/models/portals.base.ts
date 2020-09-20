@@ -1,7 +1,7 @@
 import { List } from "linqts";
-import { AppUtility } from "@components/app.utility";
-import { AppFormsControlConfig } from "@components/forms.service";
-import { Base as BaseModel } from "@models/base";
+import { AppUtility } from "@app/components/app.utility";
+import { AppFormsControlConfig } from "@app/components/forms.service";
+import { Base as BaseModel } from "@app/models/base";
 
 /** Abstract class for all portals' entity classes */
 export abstract class PortalBase extends BaseModel {

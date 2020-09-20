@@ -1,14 +1,14 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpEventType } from "@angular/common/http";
-import { AppRTU, AppXHR } from "@components/app.apis";
-import { AppEvents } from "@components/app.events";
-import { AppCrypto } from "@components/app.crypto";
-import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppFormsService, AppFormsControlConfig, AppFormsControl } from "@components/forms.service";
-import { Base as BaseService } from "@services/base.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AttachmentInfo } from "@models/base";
+import { AppRTU, AppXHR } from "@app/components/app.apis";
+import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppUtility } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppFormsService, AppFormsControlConfig, AppFormsControl } from "@app/components/forms.service";
+import { Base as BaseService } from "@app/services/base.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AttachmentInfo } from "@app/models/base";
 
 /** Presents the options for working with files of a business entity */
 export interface FileOptions {

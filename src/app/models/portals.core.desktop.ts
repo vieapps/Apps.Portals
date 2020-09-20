@@ -1,8 +1,8 @@
-import { Dictionary } from "typescript-collections";
-import { AppUtility } from "@components/app.utility";
-import { NestedObject, ElementUISettings } from "@models/portals.base";
-import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
-import { Portlet } from "@models/portals.core.portlet";
+import { List } from "linqts";
+import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { NestedObject, ElementUISettings } from "@app/models/portals.base";
+import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
+import { Portlet } from "@app/models/portals.core.portlet";
 
 export class Desktop extends CoreBaseModel implements NestedObject {
 
@@ -21,11 +21,6 @@ export class Desktop extends CoreBaseModel implements NestedObject {
 
 	/** All instances of desktop */
 	public static instances = new Dictionary<string, Desktop>();
-
-	/** All instances of desktop */
-	public static get all() {
-		return this.instances.values();
-	}
 
 	ParentID = undefined as string;
 	Title = undefined as string;
@@ -72,16 +67,13 @@ export class Desktop extends CoreBaseModel implements NestedObject {
 	/** Gets by identity */
 	public static get(id: string) {
 		return AppUtility.isNotEmpty(id)
-			? this.instances.getValue(id)
+			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
 	public static set(desktop: Desktop) {
-		if (desktop !== undefined) {
-			this.instances.setValue(desktop.ID, desktop);
-		}
-		return desktop;
+		return desktop === undefined ? undefined : this.instances.add(desktop.ID, desktop);
 	}
 
 	/** Updates into dictionary */
@@ -93,7 +85,12 @@ export class Desktop extends CoreBaseModel implements NestedObject {
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return AppUtility.isNotEmpty(id) && this.instances.containsKey(id);
+		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
+	}
+
+	/** Converts the array of objects to list */
+	public static toList(objects: Array<any>) {
+		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
 	}
 
 	public get Parent() {
@@ -103,7 +100,7 @@ export class Desktop extends CoreBaseModel implements NestedObject {
 	public get Children() {
 		const desktops = AppUtility.isArray(this.childrenIDs, true)
 			? this.childrenIDs.map(id => Desktop.get(id))
-			: Desktop.all.filter(desktop => desktop.ParentID === this.ID);
+			: Desktop.instances.toArray(desktop => desktop.ParentID === this.ID);
 		return desktops.sort(AppUtility.getCompareFunction("Title"));
 	}
 

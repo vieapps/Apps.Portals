@@ -1,7 +1,7 @@
-<ion-item [color]="configSvc.color">
+<ion-item [color]="color">
 	<input type="file" accept="image/png, image/jpeg" (change)="prepareImage($event)" />
 </ion-item>
-<ion-item *ngIf="!configSvc.isNativeApp" [color]="configSvc.color">
+<ion-item *ngIf="!isNativeApp" [color]="color">
 	<div>
 		<div>
 			<img-cropper [image]="htmlCropper.data" [settings]="htmlCropper.settings"></img-cropper>

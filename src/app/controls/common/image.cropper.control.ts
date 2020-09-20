@@ -1,20 +1,20 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild } from "@angular/core";
 import { ImageCropperComponent as HtmlImageCropper, CropperSettings as HtmlImageCropperSettings } from "ng2-img-cropper";
 import { Crop as NativeImageCropper } from "@ionic-native/crop/ngx";
-import { AppFormsControl, AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { FilesService } from "@services/files.service";
+import { AppFormsControl, AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { FilesService } from "@app/services/files.service";
 
 @Component({
 	selector: "control-image-cropper",
-	templateUrl: "./image.cropper.html",
-	styleUrls: ["./image.cropper.scss"]
+	templateUrl: "./image.cropper.control.html",
+	styleUrls: ["./image.cropper.control.scss"]
 })
 
 export class ImageCropperControl implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private filesSvc: FilesService,
 		private nativeImageCropper: NativeImageCropper
@@ -58,6 +58,14 @@ export class ImageCropperControl implements OnInit, OnDestroy {
 	/** Gets the data of image cropper */
 	get data() {
 		return this.configSvc.isNativeApp ? undefined : this.htmlCropper.data;
+	}
+
+	get color() {
+		return this.configSvc.color;
+	}
+
+	get isNativeApp() {
+		return this.configSvc.isNativeApp;
 	}
 
 	ngOnInit() {

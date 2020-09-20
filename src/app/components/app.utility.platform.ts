@@ -4,9 +4,9 @@ import { Keyboard } from "@ionic-native/keyboard/ngx";
 import { Clipboard } from "@ionic-native/clipboard/ngx";
 import { InAppBrowser } from "@ionic-native/in-app-browser/ngx";
 import { ElectronService } from "ngx-electron";
-import { AppCrypto } from "@components/app.crypto";
-import { AppUtility } from "@components/app.utility";
-import { AppConfig } from "../app.config";
+import { AppConfig } from "@app/app.config";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppUtility } from "@app/components/app.utility";
 
 /** Servicing component for working with app on a specific platform */
 export class PlatformUtility {
@@ -246,8 +246,9 @@ export class PlatformUtility {
 	}
 
 	/** Gets the redirect URI for working with external */
-	public static getRedirectURI(path: string, addAsRedirectParam: boolean = true) {
-		return (AppConfig.isWebApp ? this.parseURI(window.location.href).HostURI + AppConfig.url.base : AppConfig.URIs.activations) + (AppUtility.isTrue(addAsRedirectParam) ? `?redirect=${AppCrypto.urlEncode(path)}` : path);
+	public static getRedirectURI(path: string, addAsRedirectParam: boolean = false) {
+		return (AppConfig.isWebApp ? this.parseURI(window.location.href).HostURI + AppConfig.url.base : AppConfig.URIs.apps)
+			+ (AppUtility.isTrue(addAsRedirectParam) ? `home?redirect=${AppCrypto.urlEncode(path)}` : AppUtility.isNotEmpty(path) && path[0] === "/" ? path.substring(1) : path || "");
 	}
 
 	/** Gets the host name from an url */

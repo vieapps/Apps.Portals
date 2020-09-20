@@ -1,8 +1,8 @@
 <ion-list>
-	<ion-item *ngIf="inheritFromParent.allow" [color]="configSvc.color">
+	<ion-item *ngIf="inheritFromParent.allow" [color]="color">
 		<ion-label>{{ labels.inheritFromParent }}</ion-label>
 		<ion-toggle
-			[color]="configSvc.color"
+			[color]="color"
 			[checked]="inheritFromParent.inherit"
 			(ionChange)="onInheritFromParentChanged($event)"></ion-toggle>
 	</ion-item>
@@ -15,7 +15,7 @@
 				<ion-row>
 					<ion-col size-xs="12" size-lg="6">
 						<ion-list>
-							<ion-list-header [color]="configSvc.color">
+							<ion-list-header [color]="color">
 								<ion-label>
 									<span>
 										{{ labels.sections[section].roles }}
@@ -33,7 +33,7 @@
 									</ion-buttons>
 								</ion-label>
 							</ion-list-header>
-							<ion-item *ngFor="let role of roles[section]; trackBy: track" [color]="configSvc.color">
+							<ion-item *ngFor="let role of roles[section]; trackBy: track" [color]="color">
 								<ion-checkbox slot="end" [checked]="isRoleChecked(section, role.Value)" (ionChange)="selectRole($event, section, role.Value)"></ion-checkbox>
 								<ion-label>
 									{{ role.Label }}
@@ -43,7 +43,7 @@
 					</ion-col>
 					<ion-col size-xs="12" size-lg="6">
 						<ion-list>
-							<ion-list-header [color]="configSvc.color">
+							<ion-list-header [color]="color">
 								<ion-label>
 									<span>
 										{{ labels.sections[section].users }}
@@ -61,7 +61,7 @@
 									</ion-buttons>
 								</ion-label>
 							</ion-list-header>
-							<ion-item *ngFor="let user of users[section]; trackBy: track" [color]="configSvc.color">
+							<ion-item *ngFor="let user of users[section]; trackBy: track" [color]="color">
 								<ion-checkbox slot="end" [checked]="isUserChecked(section, user.Value)" (ionChange)="selectUser($event, section, user.Value)"></ion-checkbox>
 								<ion-label>
 									{{ user.Label }}

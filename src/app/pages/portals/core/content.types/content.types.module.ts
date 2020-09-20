@@ -6,19 +6,19 @@ import { IonicModule } from "@ionic/angular";
 export const routes: Routes = [
 	{
 		path: "search",
-		loadChildren: "@pages/portals/core/content.types/list/list.module#PortalsContentTypesListPageModule"
+		loadChildren: "@app/pages/portals/core/content.types/list/list.module#PortalsContentTypesListPageModule"
 	},
 	{
 		path: "list/:data",
-		loadChildren: "@pages/portals/core/content.types/list/list.module#PortalsContentTypesListPageModule"
+		loadChildren: "@app/pages/portals/core/content.types/list/list.module#PortalsContentTypesListPageModule"
 	},
 	{
 		path: "create",
-		loadChildren: "@pages/portals/core/content.types/update/update.module#PortalsContentTypesUpdatePageModule"
+		loadChildren: "@app/pages/portals/core/content.types/update/update.module#PortalsContentTypesUpdatePageModule"
 	},
 	{
 		path: "update/:data",
-		loadChildren: "@pages/portals/core/content.types/update/update.module#PortalsContentTypesUpdatePageModule"
+		loadChildren: "@app/pages/portals/core/content.types/update/update.module#PortalsContentTypesUpdatePageModule"
 	}
 ];
 

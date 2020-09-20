@@ -1,19 +1,18 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { UsersService } from "@services/users.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { Organization } from "@models/portals.core.organization";
-import { UserProfile } from "@models/user";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { UsersService } from "@app/services/users.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { Organization } from "@app/models/portals.core.organization";
+import { UserProfile } from "@app/models/user";
 
 @Component({
 	selector: "page-portals-core-organizations-list",
@@ -215,8 +214,10 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.organizations.push(Organization.get(o.ID) || Organization.deserialize(o, Organization.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Organization.all : results.map(o => Organization.get(o.ID) || Organization.deserialize(o, Organization.get(o.ID))));
-			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			let objects = results === undefined
+				? Organization.instances.toList()
+				: Organization.toList(results);
+			objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
 			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}

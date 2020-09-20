@@ -1,18 +1,17 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
-import { AppUtility } from "@components/app.utility";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { UsersService } from "@services/users.service";
-import { UserProfile } from "@models/user";
-import { RatingPoint } from "@models/rating.point";
+import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { UsersService } from "@app/services/users.service";
+import { UserProfile } from "@app/models/user";
+import { RatingPoint } from "@app/models/rating.point";
 
 @Component({
 	selector: "page-users-list",
@@ -178,21 +177,23 @@ export class UsersListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => {
 				const profile = UserProfile.deserialize(o, UserProfile.get(o.ID));
 				this.profiles.push(profile);
-				this.ratings[profile.ID] = profile.RatingPoints.getValue("General");
+				this.ratings[profile.ID] = profile.RatingPoints.get("General");
 			});
 		}
 		else {
-			let objects = new List(results === undefined ? UserProfile.all : results.map(o => UserProfile.deserialize(o, UserProfile.get(o.ID))));
-			objects = objects.OrderBy(o => o.Name).ThenByDescending(o => o.LastAccess);
+			let objects = results === undefined
+				? UserProfile.instances.toList().Select(obj => obj as UserProfile)
+				: UserProfile.toList(results);
+			objects = objects.OrderBy(obj => obj.Name).ThenByDescending(obj => obj.LastAccess);
 			if (results === undefined) {
 				if (this.pagination !== undefined) {
 					objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 				}
-				objects.ForEach(o => this.ratings[o.ID] = o.RatingPoints.getValue("General"));
+				objects.ForEach(o => this.ratings[o.ID] = o.RatingPoints.get("General"));
 				this.profiles = objects.ToArray();
 			}
 			else {
-				objects.ForEach(o => this.ratings[o.ID] = o.RatingPoints.getValue("General"));
+				objects.ForEach(o => this.ratings[o.ID] = o.RatingPoints.get("General"));
 				this.profiles = this.profiles.concat(objects.ToArray());
 			}
 		}

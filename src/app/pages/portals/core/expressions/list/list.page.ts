@@ -1,22 +1,21 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { Organization } from "@models/portals.core.organization";
-import { Module } from "@models/portals.core.module";
-import { Expression } from "@models/portals.core.expression";
-import { ContentType } from "@models/portals.core.content.type";
-import { ContentTypeDefinition } from "@models/portals.base";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { Organization } from "@app/models/portals.core.organization";
+import { Module } from "@app/models/portals.core.module";
+import { Expression } from "@app/models/portals.core.expression";
+import { ContentType } from "@app/models/portals.core.content.type";
+import { ContentTypeDefinition } from "@app/models/portals.base";
 
 @Component({
 	selector: "page-portals-core-expressions-list",
@@ -278,20 +277,17 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.expressions.push(Expression.get(o.ID) || Expression.deserialize(o, Expression.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Expression.all : results.map(o => Expression.get(o.ID) || Expression.deserialize(o, Expression.get(o.ID))));
-			if (this.contentType !== undefined) {
-				objects = objects.Where(o => o.RepositoryEntityID === this.contentType.ID);
-			}
-			else if (this.contentTypeDefinition !== undefined) {
-				objects = objects.Where(o => o.ContentTypeDefinitionID === this.contentTypeDefinition.ID);
-			}
-			else if (this.module !== undefined) {
-				objects = objects.Where(o => o.RepositoryID === this.module.ID);
-			}
-			else {
-				objects = objects.Where(o => o.SystemID === this.organization.ID);
-			}
-			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			const predicate: (expression: Expression) => boolean = this.contentType !== undefined
+			? obj => obj.RepositoryEntityID === this.contentType.ID
+			: this.contentTypeDefinition !== undefined
+				? obj => obj.ContentTypeDefinitionID === this.contentTypeDefinition.ID
+				: this.module !== undefined
+					? obj => obj.RepositoryID === this.module.ID
+					: obj => obj.SystemID === this.organization.ID;
+			let objects = results === undefined
+				? Expression.instances.toList(predicate)
+				: Expression.toList(results).Where(predicate);
+			objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
 			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}

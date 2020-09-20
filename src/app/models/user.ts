@@ -1,8 +1,8 @@
-import { Dictionary } from "typescript-collections";
-import { AppUtility } from "@components/app.utility";
-import { Base as BaseModel } from "@models/base";
-import { RatingPoint } from "@models/rating.point";
-import { AppConfig } from "../app.config";
+import { List } from "linqts";
+import { AppConfig } from "@app/app.config";
+import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { Base as BaseModel } from "@app/models/base";
+import { RatingPoint } from "@app/models/rating.point";
 
 /** Base user profile */
 export class UserProfileBase extends BaseModel {
@@ -60,21 +60,23 @@ export class UserProfileBase extends BaseModel {
 	/** Gets by identity */
 	public static get(id: string) {
 		return id !== undefined
-			? this.instances.getValue(id)
+			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
 	public static set(profile: UserProfileBase) {
-		if (profile !== undefined) {
-			this.instances.setValue(profile.ID, profile);
-		}
-		return profile;
+		return profile === undefined ? undefined : this.instances.add(profile.ID, profile);
 	}
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return id !== undefined && this.instances.containsKey(id);
+		return id !== undefined && this.instances.contains(id);
+	}
+
+	/** Converts the array of objects to list */
+	public static toList(objects: Array<any>) {
+		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
 	}
 
 	public get avatarURI() {
@@ -124,11 +126,6 @@ export class UserProfile extends UserProfileBase {
 	LastSync = new Date();
 	RatingPoints = new Dictionary<string, RatingPoint>();
 
-	/** Gets all user profile instances */
-	public static get all() {
-		return this.instances.values() as Array<UserProfile>;
-	}
-
 	/** Deserializes data to object */
 	public static deserialize(json: any, profile?: UserProfile) {
 		profile = profile || new UserProfile();
@@ -153,11 +150,16 @@ export class UserProfile extends UserProfileBase {
 			: undefined;
 	}
 
+	/** Converts the array of objects to list */
+	public static toList(objects: Array<any>) {
+		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
+	}
+
 	public copy(source: any, onCompleted?: (data: any) => void) {
 		super.copy(source, data => {
 			this.RatingPoints = new Dictionary<string, RatingPoint>();
 			if (AppUtility.isArray(data.RatingPoints, true)) {
-				(data.RatingPoints as Array<any>).forEach(o => this.RatingPoints.setValue(o.Type, RatingPoint.deserialize(o)));
+				(data.RatingPoints as Array<any>).forEach(o => this.RatingPoints.set(o.Type, RatingPoint.deserialize(o)));
 			}
 			if (onCompleted !== undefined) {
 				onCompleted(data);

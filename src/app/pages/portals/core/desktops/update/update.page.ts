@@ -1,20 +1,20 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { FormGroup } from "@angular/forms";
-import { AppCrypto } from "@components/app.crypto";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@components/forms.service";
-import { AppFormsControlComponent } from "@components/forms.control.component";
-import { ConfigurationService } from "@services/configuration.service";
-import { FilesService, FileOptions } from "@services/files.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { AttachmentInfo } from "@models/base";
-import { Organization } from "@models/portals.core.organization";
-import { Desktop } from "@models/portals.core.desktop";
-import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.modal.page";
-import { FilesProcessorModalPage } from "@controls/common/file.processor.modal.page";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@app/components/forms.service";
+import { AppFormsControlComponent } from "@app/components/forms.control.component";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { FilesService, FileOptions } from "@app/services/files.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { AttachmentInfo } from "@app/models/base";
+import { Organization } from "@app/models/portals.core.organization";
+import { Desktop } from "@app/models/portals.core.desktop";
+import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selector.modal.page";
+import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 
 @Component({
 	selector: "page-portals-core-desktops-update",

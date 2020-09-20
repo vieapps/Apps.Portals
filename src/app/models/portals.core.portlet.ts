@@ -1,9 +1,9 @@
-import { Dictionary } from "typescript-collections";
-import { AppUtility } from "@components/app.utility";
-import { ElementUISettings } from "@models/portals.base";
-import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
-import { ContentType } from "@models/portals.core.content.type";
-import { Desktop } from "@models/portals.core.desktop";
+import { List } from "linqts";
+import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { ElementUISettings } from "@app/models/portals.base";
+import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
+import { ContentType } from "@app/models/portals.core.content.type";
+import { Desktop } from "@app/models/portals.core.desktop";
 
 export class Portlet extends CoreBaseModel {
 
@@ -22,11 +22,6 @@ export class Portlet extends CoreBaseModel {
 
 	/** All instances of portlet */
 	public static instances = new Dictionary<string, Portlet>();
-
-	/** All instances of portlet */
-	public static get all() {
-		return this.instances.values();
-	}
 
 	Title = undefined as string;
 	Action = undefined as string;
@@ -136,16 +131,13 @@ export class Portlet extends CoreBaseModel {
 	/** Gets by identity */
 	public static get(id: string) {
 		return AppUtility.isNotEmpty(id)
-			? this.instances.getValue(id)
+			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
 	public static set(portlet: Portlet) {
-		if (portlet !== undefined) {
-			this.instances.setValue(portlet.ID, portlet);
-		}
-		return portlet;
+		return portlet === undefined ? undefined : this.instances.add(portlet.ID, portlet);
 	}
 
 	/** Updates into dictionary */
@@ -157,7 +149,12 @@ export class Portlet extends CoreBaseModel {
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return AppUtility.isNotEmpty(id) && this.instances.containsKey(id);
+		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
+	}
+
+	/** Converts the array of objects to list */
+	public static toList(objects: Array<any>) {
+		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
 	}
 
 	public get routerLink() {

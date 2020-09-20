@@ -1,20 +1,20 @@
 import { Component, OnInit } from "@angular/core";
 import { Router, RoutesRecognized, NavigationEnd } from "@angular/router";
 import { HttpClient } from "@angular/common/http";
-import { Platform, MenuController } from "@ionic/angular";
+import { Platform } from "@ionic/angular";
 import { SplashScreen } from "@ionic-native/splash-screen/ngx";
 import { StatusBar } from "@ionic-native/status-bar/ngx";
-import { AppRTU, AppXHR } from "@components/app.apis";
-import { AppEvents } from "@components/app.events";
-import { AppCrypto } from "@components/app.crypto";
-import { AppUtility } from "@components/app.utility";
-import { AppFormsService } from "@components/forms.service";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { UsersService } from "@services/users.service";
-import { PortalsCoreService } from "@services/portals.core.service";
+import { AppRTU, AppXHR } from "@app/components/app.apis";
+import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppUtility } from "@app/components/app.utility";
+import { AppFormsService } from "@app/components/forms.service";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { UsersService } from "@app/services/users.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
 
 @Component({
 	selector: "app-root",
@@ -26,7 +26,6 @@ export class AppComponent implements OnInit {
 	constructor(
 		private router: Router,
 		private platform: Platform,
-		private menuController: MenuController,
 		private splashScreen: SplashScreen,
 		private statusBar: StatusBar,
 		private appFormsSvc: AppFormsService,
@@ -43,48 +42,44 @@ export class AppComponent implements OnInit {
 	}
 
 	sidebar = {
-		left: {
-			header: {
-				image: undefined as string,
-				title: undefined as string,
-				routerLink: undefined as string,
-				routerParams: undefined as { [key: string]: any },
-				routerDirection: "forward"
-			},
-			menu: new Array<{
+		visible: true,
+		active: "menu",
+		menu: new Array<{
+			title?: string,
+			icon?: string,
+			thumbnail?: string,
+			parent?: {
 				title: string,
-				icon: string,
-				thumbnail: string,
-				parent: {
-					title: string,
-					url: string,
-					queryParams: { [key: string]: any },
-					direction: string,
-					onClick: () => void
-				},
-				items: Array<{
-					title: string,
-					url: string,
-					queryParams: { [key: string]: any },
-					icon: string,
-					thumbnail: string,
-					direction: string,
-					detail: boolean,
-					onClick: () => void
-				}>
-			}>()
+				url: string,
+				queryParams?: { [key: string]: any },
+				direction?: string,
+				onClick?: (info: any, sidebar: any) => void
+			},
+			items: Array<{
+				title: string,
+				url: string,
+				queryParams?: { [key: string]: any },
+				icon?: string,
+				thumbnail?: string,
+				direction?: string,
+				detail: boolean,
+				onClick?: (info: any, sidebar: any) => void
+			}>
+		}>(),
+		header: {
+			image: undefined as string,
+			title: undefined as string,
+			routerLink: undefined as string,
+			routerParams: undefined as { [key: string]: any },
+			routerDirection: "forward",
+			onClick: () => {}
 		},
-		right: {
-			icon: undefined as string,
-			onClick: undefined as (event: any) => void,
-			header: {
-				image: undefined as string,
-				title: undefined as string,
-				routerLink: undefined as string,
-				routerParams: undefined as { [key: string]: any },
-				routerDirection: "forward"
-			}
-		},
+		footer: new Array<{
+			name: string,
+			icon: string,
+			title?: string,
+			onClick?: (name: string, sidebar: any) => void
+		}>(),
 		home: {
 			title: "common.sidebar.home",
 			url: this.configSvc.appConfig.url.home,
@@ -99,6 +94,18 @@ export class AppComponent implements OnInit {
 
 	get color() {
 		return this.configSvc.color;
+	}
+
+	get isSidebarShown() {
+		return this.sidebar.visible && this.configSvc.screenWidth >= 1200;
+	}
+
+	get sidebarSignColor() {
+		return this.isSidebarShown ? "medium" : "light";
+	}
+
+	get appShell() {
+		return this.configSvc.appConfig.app.shell;
 	}
 
 	ngOnInit() {
@@ -136,7 +143,7 @@ export class AppComponent implements OnInit {
 				}
 			}
 
-			this.sidebar.left.header.title = this.configSvc.appConfig.app.name;
+			this.sidebar.header.title = this.configSvc.appConfig.app.name;
 			await this.updateSidebarAsync();
 
 			const isActivate = this.configSvc.isWebApp && AppUtility.isEquals("activate", this.configSvc.queryParams["prego"]);
@@ -146,7 +153,11 @@ export class AppComponent implements OnInit {
 	}
 
 	trackSidebarItem(index: number, item: any) {
-		return `${item.title}@${index}`;
+		return `${item.title || item.icon}@${index}`;
+	}
+
+	toogleSidebar() {
+		this.sidebar.visible = !this.sidebar.visible;
 	}
 
 	private async getSidebarItemsAsync() {
@@ -194,41 +205,50 @@ export class AppComponent implements OnInit {
 		};
 	}
 
+	private updateSidebar(args: any = {}) {
+		this.updateSidebarItem(args.MenuIndex !== undefined ? args.MenuIndex : -1, -1, args.ItemInfo);
+	}
+
 	private updateSidebarItem(menuIndex: number = -1, itemIndex: number = -1, itemInfo: any = {}) {
-		if (menuIndex > -1 && menuIndex < this.sidebar.left.menu.length) {
-			const oldItem = itemIndex > -1 && itemIndex < this.sidebar.left.menu[menuIndex].items.length
-				? this.sidebar.left.menu[menuIndex].items[itemIndex]
-				: {
-						title: undefined as string,
-						url: undefined as string,
-						queryParams: undefined as { [key: string]: any },
-						icon: undefined as string,
-						thumbnail: undefined as string,
-						direction: undefined as string
-					};
-			const updatedItem = {
-				title: itemInfo.title || oldItem.title,
-				url: itemInfo.url || oldItem.url,
-				queryParams: itemInfo.queryParams as { [key: string]: any } || oldItem.queryParams,
-				direction: itemInfo.direction || oldItem.direction || "forward",
-				icon: itemInfo.icon || oldItem.icon,
-				thumbnail: itemInfo.thumbnail || oldItem.thumbnail,
-				detail: !!itemInfo.detail,
-				onClick: itemInfo.onClick !== undefined && typeof itemInfo.onClick === "function" ? itemInfo.onClick : () => {}
-			};
-			if (itemIndex > -1 && itemIndex < this.sidebar.left.menu[menuIndex].items.length) {
-				this.sidebar.left.menu[menuIndex].items[itemIndex] = updatedItem;
-			}
-			else {
-				AppUtility.insertAt(this.sidebar.left.menu[menuIndex].items, updatedItem, itemIndex);
-			}
+		if (menuIndex < 0) {
+			menuIndex = 0;
+		}
+		else if (menuIndex >= this.sidebar.menu.length) {
+			menuIndex = this.sidebar.menu.length;
+			this.sidebar.menu.push({ items: []});
+		}
+		const oldItem = itemIndex > -1 && itemIndex < this.sidebar.menu[menuIndex].items.length
+			? this.sidebar.menu[menuIndex].items[itemIndex]
+			: {
+					title: undefined as string,
+					url: undefined as string,
+					queryParams: undefined as { [key: string]: any },
+					icon: undefined as string,
+					thumbnail: undefined as string,
+					direction: undefined as string
+				};
+		const updatedItem = {
+			title: itemInfo.title || oldItem.title,
+			url: itemInfo.url || oldItem.url,
+			queryParams: itemInfo.queryParams as { [key: string]: any } || oldItem.queryParams,
+			direction: itemInfo.direction || oldItem.direction || "forward",
+			icon: itemInfo.icon || oldItem.icon,
+			thumbnail: itemInfo.thumbnail || oldItem.thumbnail,
+			detail: !!itemInfo.detail,
+			onClick: itemInfo.onClick !== undefined && typeof itemInfo.onClick === "function" ? itemInfo.onClick : () => {}
+		};
+		if (itemIndex > -1 && itemIndex < this.sidebar.menu[menuIndex].items.length) {
+			this.sidebar.menu[menuIndex].items[itemIndex] = updatedItem;
+		}
+		else {
+			AppUtility.insertAt(this.sidebar.menu[menuIndex].items, updatedItem, itemIndex);
 		}
 	}
 
 	private async updateSidebarAsync(info: any = {}) {
 		const index = info.index !== undefined ? info.index as number : 0;
-		while (this.sidebar.left.menu.length < index + 1) {
-			this.sidebar.left.menu.push({
+		while (this.sidebar.menu.length < index + 1) {
+			this.sidebar.menu.push({
 				title: undefined,
 				icon: undefined,
 				thumbnail: undefined,
@@ -238,7 +258,7 @@ export class AppComponent implements OnInit {
 		}
 
 		if (info.reset !== undefined ? info.reset as boolean : true) {
-			this.sidebar.left.menu[index].items = [];
+			this.sidebar.menu[index].items = [];
 		}
 
 		if (index === 0) {
@@ -255,68 +275,11 @@ export class AppComponent implements OnInit {
 			if (this.authSvc.canRegisterNewAccounts) {
 				this.updateSidebarItem(index, -1, sidebarItems.register);
 			}
-
-			this.updateSidebarItem(index, -1, {
-				title: "Organizations",
-				url: "/portals/core/organizations/list/all",
-				direction: "root",
-				icon: "business",
-				detail: false
-			});
-			this.updateSidebarItem(index, -1, {
-				title: "Sites",
-				url: "/portals/core/sites/list/all",
-				direction: "root",
-				icon: "globe",
-				detail: false
-			});
-			this.updateSidebarItem(index, -1, {
-				title: "Roles",
-				url: "/portals/core/roles/list/all",
-				direction: "root",
-				icon: "body",
-				detail: false
-			});
-			this.updateSidebarItem(index, -1, {
-				title: "Desktops",
-				url: "/portals/core/desktops/list/all",
-				direction: "root",
-				icon: "desktop",
-				detail: false
-			});
-			this.updateSidebarItem(index, -1, {
-				title: "Modules",
-				url: "/portals/core/modules/list/all",
-				direction: "root",
-				icon: "albums",
-				detail: false
-			});
-			this.updateSidebarItem(index, -1, {
-				title: "Content Types",
-				url: "/portals/core/content.types/list/all",
-				direction: "root",
-				icon: "git-compare",
-				detail: false
-			});
-			this.updateSidebarItem(index, -1, {
-				title: "Expressions",
-				url: "/portals/core/expressions/list/all",
-				direction: "root",
-				icon: "construct",
-				detail: false
-			});
-			this.updateSidebarItem(index, -1, {
-				title: "CMS Categories",
-				url: "/portals/cms/categories/list/all",
-				direction: "root",
-				icon: "color-filter",
-				detail: false
-			});
 		}
 		else {
-			this.sidebar.left.menu[index].title = info.title;
-			this.sidebar.left.menu[index].icon = info.icon;
-			this.sidebar.left.menu[index].thumbnail = info.thumbnail;
+			this.sidebar.menu[index].title = info.title;
+			this.sidebar.menu[index].icon = info.icon;
+			this.sidebar.menu[index].thumbnail = info.thumbnail;
 		}
 
 		(info.items as Array<any> || []).map(item => {
@@ -333,11 +296,22 @@ export class AppComponent implements OnInit {
 		})
 		.filter(item => AppUtility.isNotEmpty(item.title) && AppUtility.isNotEmpty(item.url))
 		.forEach(item => this.updateSidebarItem(index, -1, item));
+
+		this.sidebar.footer = await this.portalsCoreSvc.getSidebarButtonsAsync();
+
+		if (this.sidebar.footer.length > 0) {
+			this.sidebar.footer.push({
+				name: "preferences",
+				icon: "settings",
+				title: await this.configSvc.getResourceAsync("common.preferences.label"),
+				onClick: (name, sidebar) => sidebar.active = name
+			});
+		}
 	}
 
 	private async normalizeSidebarMenuAsync() {
 		const sidebarItems = await this.getSidebarItemsAsync();
-		const items = this.sidebar.left.menu[0].items;
+		const items = this.sidebar.menu[0].items;
 		if (this.configSvc.isAuthenticated) {
 			AppUtility.removeAt(items, items.findIndex(item => item.url.startsWith(sidebarItems.register.url)));
 			const index = items.findIndex(item => item.url.startsWith(sidebarItems.login.url));
@@ -366,14 +340,16 @@ export class AppComponent implements OnInit {
 	}
 
 	private setupEventHandlers() {
-		AppEvents.on("OpenSidebar", async info => await this.menuController.open(info.args.Type || "start"));
+		AppEvents.on("OpenSidebar", _ => this.sidebar.visible = true);
+		AppEvents.on("CloseSidebar", _ => this.sidebar.visible = false);
+		AppEvents.on("ToggleSidebar", _ => this.toogleSidebar());
+
 		AppEvents.on("UpdateSidebar", async info => await this.updateSidebarAsync(info.args));
-
-		AppEvents.on("AddSidebarItem", info => this.updateSidebarItem(info.args.MenuIndex !== undefined ? info.args.MenuIndex : -1, -1, info.args.ItemInfo));
-		AppEvents.on("UpdateSidebarItem", info => this.updateSidebarItem(info.args.MenuIndex !== undefined ? info.args.MenuIndex : -1, info.args.ItemIndex !== undefined ? info.args.ItemIndex : -1, info.args.ItemInfo));
-
-		AppEvents.on("UpdateSidebarTitle", info => this.sidebar.left.header.title = AppUtility.isNotEmpty(info.args.Title) ? info.args.Title : this.sidebar.left.header.title);
+		AppEvents.on("UpdateSidebarTitle", info => this.sidebar.header.title = AppUtility.isNotEmpty(info.args.Title) ? info.args.Title : this.sidebar.header.title);
 		AppEvents.on("UpdateSidebarHome", info => this.sidebar.home = info.args);
+
+		AppEvents.on("AddSidebarItem", info => this.updateSidebar(info.args));
+		AppEvents.on("UpdateSidebarItem", info => this.updateSidebar(info.args));
 
 		AppEvents.on("Navigate", async info => {
 			const url = "LogIn" === info.args.Type
@@ -400,15 +376,15 @@ export class AppComponent implements OnInit {
 			if ("Updated" === info.args.Type) {
 				const profile = this.configSvc.getAccount().profile;
 				if (profile !== undefined) {
-					this.sidebar.left.header.title = profile.Name;
-					this.sidebar.left.header.image = profile.avatarURI;
-					this.sidebar.left.header.routerLink = `${this.configSvc.appConfig.url.users.profile}/my`;
-					this.sidebar.left.header.routerParams = undefined;
-					this.sidebar.left.header.routerDirection = "forward";
+					this.sidebar.header.title = profile.Name;
+					this.sidebar.header.image = profile.avatarURI;
+					this.sidebar.header.routerLink = `${this.configSvc.appConfig.url.users.profile}/my`;
+					this.sidebar.header.routerParams = undefined;
+					this.sidebar.header.routerDirection = "forward";
 				}
 				else {
-					this.sidebar.left.header.title = this.configSvc.appConfig.app.name;
-					this.sidebar.left.header.image = this.sidebar.left.header.routerLink = undefined;
+					this.sidebar.header.title = this.configSvc.appConfig.app.name;
+					this.sidebar.header.image = this.sidebar.header.routerLink = undefined;
 				}
 				await this.normalizeSidebarMenuAsync();
 			}

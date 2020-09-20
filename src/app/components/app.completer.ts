@@ -1,7 +1,7 @@
 import { Subject, Subscription } from "rxjs";
 import { CompleterData, CompleterItem } from "ng2-completer";
-import { AppXHR } from "@components/app.apis";
-import { AppUtility } from "@components/app.utility";
+import { AppXHR } from "@app/components/app.apis";
+import { AppUtility } from "@app/components/app.utility";
 
 /** Custom searching service of ng-completer */
 export class AppCustomCompleter extends Subject<CompleterItem[]> implements CompleterData {

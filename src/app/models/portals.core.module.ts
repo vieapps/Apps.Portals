@@ -1,9 +1,9 @@
-import { Dictionary } from "typescript-collections";
-import { AppUtility } from "@components/app.utility";
-import { Privileges } from "@models/privileges";
-import { PortalBase as BaseModel, NotificationSettings, EmailSettings } from "@models/portals.base";
-import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
-import { ContentType } from "@models/portals.core.content.type";
+import { List } from "linqts";
+import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { Privileges } from "@app/models/privileges";
+import { PortalBase as BaseModel, NotificationSettings, EmailSettings } from "@app/models/portals.base";
+import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
+import { ContentType } from "@app/models/portals.core.content.type";
 
 export class Module extends CoreBaseModel {
 
@@ -20,11 +20,6 @@ export class Module extends CoreBaseModel {
 
 	/** All instances of module */
 	public static instances = new Dictionary<string, Module>();
-
-	/** All instances of module */
-	public static get all() {
-		return this.instances.values();
-	}
 
 	/** Active module */
 	public static active: Module;
@@ -58,16 +53,13 @@ export class Module extends CoreBaseModel {
 	/** Gets by identity */
 	public static get(id: string) {
 		return AppUtility.isNotEmpty(id)
-			? this.instances.getValue(id)
+			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
 	public static set(module: Module) {
-		if (module !== undefined) {
-			this.instances.setValue(module.ID, module);
-		}
-		return module;
+		return module === undefined ? undefined : this.instances.add(module.ID, module);
 	}
 
 	/** Updates into dictionary */
@@ -79,7 +71,12 @@ export class Module extends CoreBaseModel {
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return AppUtility.isNotEmpty(id) && this.instances.containsKey(id);
+		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
+	}
+
+	/** Converts the array of objects to list */
+	public static toList(objects: Array<any>) {
+		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
 	}
 
 	public get moduleDefinition() {
@@ -89,7 +86,7 @@ export class Module extends CoreBaseModel {
 	}
 
 	public get contentTypes() {
-		return ContentType.all.filter(contentType => contentType.RepositoryID === this.ID).sort(AppUtility.getCompareFunction("Title"));
+		return ContentType.instances.toArray(contentType => contentType.RepositoryID === this.ID).sort(AppUtility.getCompareFunction("Title"));
 	}
 
 	public get routerLink() {

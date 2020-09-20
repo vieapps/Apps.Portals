@@ -1,18 +1,17 @@
 import { Subscription } from "rxjs";
 import { List } from "linqts";
-import { Dictionary } from "typescript-collections";
 import { Component, OnInit, OnDestroy, Input, ViewChild } from "@angular/core";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
-import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { PortalsCmsService } from "@services/portals.cms.service";
-import { Organization } from "@models/portals.core.organization";
-import { Module } from "@models/portals.core.module";
-import { ContentType } from "@models/portals.core.content.type";
+import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { PortalsCmsService } from "@app/services/portals.cms.service";
+import { Organization } from "@app/models/portals.core.organization";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
 
 @Component({
 	selector: "page-data-lookup",
@@ -268,7 +267,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			if (!this.multiple) {
 				this.selected.clear();
 			}
-			this.selected.setValue(item.ID, item);
+			this.selected.set(item.ID, item);
 		}
 		else {
 			this.selected.remove(item.ID);

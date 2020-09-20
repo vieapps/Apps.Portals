@@ -55,6 +55,18 @@
 			"identity": "Identity",
 			"label": "Management information",
 			"info": "Created by {{creator}} at {{created}} - {{modifier}} was modified at {{modified}}"
+		},
+		"preferences": {
+			"label": "Preferences",			
+			"options": {
+				"language": "Language",
+				"theme": "Use dark-theme"
+			},
+			"apps": {
+				"desktop:": "Desktop apps",
+				"mobile": "Mobile & Tablet apps"
+			},
+			"about": "Information"
 		}
 	},
 	"privileges": {

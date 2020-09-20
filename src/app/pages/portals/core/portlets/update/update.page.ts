@@ -1,24 +1,24 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { FormGroup } from "@angular/forms";
-import { AppCrypto } from "@components/app.crypto";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { AppPagination } from "@components/app.pagination";
-import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { FilesService, FileOptions } from "@services/files.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { AttachmentInfo } from "@models/base";
-import { Organization } from "@models/portals.core.organization";
-import { ContentType } from "@models/portals.core.content.type";
-import { Desktop } from "@models/portals.core.desktop";
-import { Portlet } from "@models/portals.core.portlet";
-import { Expression } from "@models/portals.core.expression";
-import { DesktopsSelectorModalPage } from "@controls/portals/desktop.selector.modal.page";
-import { FilesProcessorModalPage } from "@controls/common/file.processor.modal.page";
-import { DataLookupModalPage } from "@controls/portals/data.lookup.modal.page";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { AppPagination } from "@app/components/app.pagination";
+import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { FilesService, FileOptions } from "@app/services/files.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { AttachmentInfo } from "@app/models/base";
+import { Organization } from "@app/models/portals.core.organization";
+import { ContentType } from "@app/models/portals.core.content.type";
+import { Desktop } from "@app/models/portals.core.desktop";
+import { Portlet } from "@app/models/portals.core.portlet";
+import { Expression } from "@app/models/portals.core.expression";
+import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selector.modal.page";
+import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
+import { DataLookupModalPage } from "@app/controls/portals/data.lookup.modal.page";
 
 @Component({
 	selector: "page-portals-core-portlets-update",

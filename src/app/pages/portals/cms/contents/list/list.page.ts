@@ -1,23 +1,22 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { PortalsCmsService } from "@services/portals.cms.service";
-import { Organization } from "@models/portals.core.organization";
-import { Module } from "@models/portals.core.module";
-import { ContentType } from "@models/portals.core.content.type";
-import { Category } from "@models/portals.cms.category";
-import { Content } from "@models/portals.cms.content";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { PortalsCmsService } from "@app/services/portals.cms.service";
+import { Organization } from "@app/models/portals.core.organization";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
+import { Category } from "@app/models/portals.cms.category";
+import { Content } from "@app/models/portals.cms.content";
 
 @Component({
 	selector: "page-portals-cms-contents-list",
@@ -281,18 +280,11 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.contents.push(Content.get(o.ID) || Content.deserialize(o, Content.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Content.all : results.map(o => Content.get(o.ID) || Content.deserialize(o, Content.get(o.ID))));
-			objects = objects.Where(o => o.SystemID === this.organization.ID);
-			if (this.module !== undefined) {
-				objects = objects.Where(o => o.RepositoryID === this.module.ID);
-			}
-			if (this.contentType !== undefined) {
-				objects = objects.Where(o => o.RepositoryEntityID === this.contentType.ID);
-			}
-			if (this.category !== undefined) {
-				objects = objects.Where(o => o.CategoryID === this.category.ID || (o.OtherCategories !== undefined && o.OtherCategories.indexOf(this.category.ID) > -1));
-			}
-			objects = objects.OrderByDescending(o => o.StartDate).ThenByDescending(o => o.PublishedTime);
+			const predicate: (content: Content) => boolean = obj => obj.SystemID === this.organization.ID && (this.module !== undefined ? obj.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? obj.RepositoryEntityID === this.contentType.ID : true) && (this.category !== undefined ? obj.CategoryID === this.category.ID || (obj.OtherCategories !== undefined && obj.OtherCategories.indexOf(this.category.ID) > -1) : true);
+			let objects = results === undefined
+				? Content.instances.toList(predicate)
+				: Content.toList(results).Where(predicate);
+			objects = objects.OrderByDescending(obj => obj.StartDate).ThenByDescending(obj => obj.PublishedTime).ThenByDescending(obj => obj.LastModified);
 			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}

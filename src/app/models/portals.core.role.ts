@@ -1,7 +1,7 @@
-import { Dictionary } from "typescript-collections";
-import { AppUtility } from "@components/app.utility";
-import { NestedObject } from "@models/portals.base";
-import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
+import { List } from "linqts";
+import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { NestedObject } from "@app/models/portals.base";
+import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
 
 export class Role extends CoreBaseModel implements NestedObject {
 
@@ -20,11 +20,6 @@ export class Role extends CoreBaseModel implements NestedObject {
 
 	/** All instances of role */
 	public static instances = new Dictionary<string, Role>();
-
-	/** All instances of role */
-	public static get all() {
-		return this.instances.values();
-	}
 
 	ParentID = undefined as string;
 	Title = undefined as string;
@@ -51,16 +46,13 @@ export class Role extends CoreBaseModel implements NestedObject {
 	/** Gets by identity */
 	public static get(id: string) {
 		return AppUtility.isNotEmpty(id)
-			? this.instances.getValue(id)
+			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
 	public static set(role: Role) {
-		if (role !== undefined) {
-			this.instances.setValue(role.ID, role);
-		}
-		return role;
+		return role === undefined ? undefined : this.instances.add(role.ID, role);
 	}
 
 	/** Updates into dictionary */
@@ -72,7 +64,12 @@ export class Role extends CoreBaseModel implements NestedObject {
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return AppUtility.isNotEmpty(id) && this.instances.containsKey(id);
+		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
+	}
+
+	/** Converts the array of objects to list */
+	public static toList(objects: Array<any>) {
+		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
 	}
 
 	public get Parent() {
@@ -82,7 +79,7 @@ export class Role extends CoreBaseModel implements NestedObject {
 	public get Children() {
 		const roles = AppUtility.isArray(this.childrenIDs, true)
 			? this.childrenIDs.map(id => Role.get(id))
-			: Role.all.filter(role => role.ParentID === this.ID);
+			: Role.instances.toArray(role => role.ParentID === this.ID);
 		return roles.sort(AppUtility.getCompareFunction("Title"));
 	}
 

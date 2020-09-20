@@ -1,17 +1,17 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
-import { AppCrypto } from "@components/app.crypto";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { AppFormsControl, AppFormsControlConfig, AppFormsService } from "@components/forms.service";
-import { AppFormsComponent } from "@components/forms.component";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { UsersService } from "@services/users.service";
-import { UserProfile } from "@models/user";
-import { Account } from "@models/account";
-import { Privilege } from "@models/privileges";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { AppFormsControl, AppFormsControlConfig, AppFormsService } from "@app/components/forms.service";
+import { AppFormsComponent } from "@app/components/forms.component";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { UsersService } from "@app/services/users.service";
+import { UserProfile } from "@app/models/user";
+import { Account } from "@app/models/account";
+import { Privilege } from "@app/models/privileges";
 
 @Component({
 	selector: "page-users-update",

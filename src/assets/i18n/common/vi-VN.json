@@ -55,6 +55,18 @@
 			"identity": "Mã định danh",
 			"label": "Thông tin quản trị",
 			"info": "{{creator}} khởi tạo lúc {{created}} - {{modifier}} cập nhật lần cuối lúc {{modified}}"
+		},
+		"preferences": {
+			"label": "Tuỳ chỉnh",
+			"options": {
+				"language": "Ngôn ngữ",
+				"theme": "Sử dụng theme màu tối"
+			},
+			"apps": {
+				"desktop": "Apps cho máy tính",
+				"mobile": "Apps cho điện thoại"
+			},
+			"about": "Thông tin về app"
 		}
 	},
 	"privileges": {

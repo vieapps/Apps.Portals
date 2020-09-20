@@ -1,6 +1,11 @@
 {
 	"portals": {
-		"name": "Cổng tích hợp",
+		"name": "Cổng tích hợp nội dung",
+		"preferences": {
+			"cms": "Quản trị nội dung",
+			"portals": "Quản trị portals và thông tin hệ thống",
+			"notifications": "Thông báo"
+		},
 		"common": {
 			"unspecified": "Không xác định",
 			"advancedEdit": "Cập nhật cấp cao",

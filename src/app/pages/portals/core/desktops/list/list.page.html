@@ -2,7 +2,7 @@
 	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
 			<ion-back-button *ngIf="parentDesktop || searching" text=""></ion-back-button>
-			<ion-menu-button *ngIf="!parentDesktop"></ion-menu-button>
+			<ion-menu-button *ngIf="!parentDesktop && !searching"></ion-menu-button>
 		</ion-buttons>
 		<ion-buttons *ngIf="!searching" slot="end">
 			<ion-button [hidden]="searching" (click)="openSearchAsync()">

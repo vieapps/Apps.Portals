@@ -1,11 +1,10 @@
-import { Set } from "typescript-collections";
 import { Component, OnInit, Input } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { AppUtility } from "@components/app.utility";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppFormsControl, AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AttachmentInfo } from "@models/base";
+import { AppUtility, HashSet } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppFormsControl, AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AttachmentInfo } from "@app/models/base";
 
 @Component({
 	selector: "control-files-selector",
@@ -46,7 +45,7 @@ export class FilesSelectorControl implements OnInit {
 	/** Set to 'true' to show icon of links */
 	@Input() showIcons: boolean;
 
-	selected = new Set<string>();
+	selected = new HashSet<string>();
 
 	get color() {
 		return this.configSvc.color;

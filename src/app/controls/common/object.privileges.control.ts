@@ -1,23 +1,23 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef, Input, Output, EventEmitter } from "@angular/core";
-import { AppUtility } from "@components/app.utility";
-import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { UsersService } from "@services/users.service";
-import { Privilege, Privileges } from "@models/privileges";
-import { UserProfile } from "@models/user";
+import { AppUtility } from "@app/components/app.utility";
+import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { UsersService } from "@app/services/users.service";
+import { Privilege, Privileges } from "@app/models/privileges";
+import { UserProfile } from "@app/models/user";
 import { UsersSelectorModalPage } from "./user.selector.modal.page";
 
 @Component({
 	selector: "control-object-privileges",
-	templateUrl: "./object.privileges.html",
-	styleUrls: ["./object.privileges.scss"]
+	templateUrl: "./object.privileges.control.html",
+	styleUrls: ["./object.privileges.control.scss"]
 })
 
 export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private changeDetector: ChangeDetectorRef,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
@@ -51,6 +51,10 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 
 	/** The event handler to run when the control was changed */
 	@Output() change = new EventEmitter();
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	private current: Privileges;
 
@@ -256,7 +260,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 		modalProperties["multiple"] = true;
 
 		return this.appFormsSvc.showModalAsync(this.rolesSelector.modalComponent, modalProperties, async roles => {
-			AppUtility.updateSet(this.privileges.getRoles(section), roles as Array<string>);
+			this.privileges.getRoles(section).update(roles as Array<string>);
 			this.prepareRolesAndUsers([section]);
 			this.emitChanges();
 			await this.prepareRolesAndUsersAsync([section]);
@@ -269,7 +273,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 			undefined,
 			this.labels.confirmDelete,
 			async () => {
-				AppUtility.updateSet(this.privileges.getRoles(section), this.selectedRoles[section], false);
+				this.privileges.getRoles(section).update(this.selectedRoles[section], false);
 				this.selectedRoles[section] = [];
 				this.prepareRolesAndUsers([section]);
 				this.emitChanges();
@@ -300,7 +304,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 
 	async addUsersAsync(section: string) {
 		return this.appFormsSvc.showModalAsync(UsersSelectorModalPage, { section: section, multiple: true, hideEmails: !this.authSvc.isSystemAdministrator() }, async users => {
-			AppUtility.updateSet(this.privileges.getUsers(section), users as Array<string>);
+			this.privileges.getUsers(section).update(users as Array<string>);
 			this.prepareRolesAndUsers([section]);
 			this.emitChanges();
 			await this.prepareRolesAndUsersAsync([section]);
@@ -313,7 +317,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 			undefined,
 			this.labels.confirmDelete,
 			async () => {
-				AppUtility.updateSet(this.privileges.getUsers(section), this.selectedUsers[section], false);
+				this.privileges.getUsers(section).update(this.selectedUsers[section], false);
 				this.selectedUsers[section] = [];
 				this.prepareRolesAndUsers([section]);
 				this.emitChanges();

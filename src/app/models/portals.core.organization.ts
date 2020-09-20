@@ -1,10 +1,9 @@
 import { List } from "linqts";
-import { Dictionary } from "typescript-collections";
-import { AppUtility } from "@components/app.utility";
-import { Privileges } from "@models/privileges";
-import { NotificationSettings, EmailSettings } from "@models/portals.base";
-import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
-import { Module } from "@models/portals.core.module";
+import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { Privileges } from "@app/models/privileges";
+import { NotificationSettings, EmailSettings } from "@app/models/portals.base";
+import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
+import { Module } from "@app/models/portals.core.module";
 
 export class Organization extends CoreBaseModel {
 
@@ -22,11 +21,6 @@ export class Organization extends CoreBaseModel {
 
 	/** All instances of organization */
 	public static instances = new Dictionary<string, Organization>();
-
-	/** All instances of organization */
-	public static get all() {
-		return this.instances.values();
-	}
 
 	/** Active organization */
 	public static active: Organization;
@@ -92,16 +86,13 @@ export class Organization extends CoreBaseModel {
 	/** Gets by identity */
 	public static get(id: string) {
 		return AppUtility.isNotEmpty(id)
-			? this.instances.getValue(id)
+			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
 	public static set(organization: Organization) {
-		if (organization !== undefined) {
-			this.instances.setValue(organization.ID, organization);
-		}
-		return organization;
+		return organization === undefined ? undefined : this.instances.add(organization.ID, organization);
 	}
 
 	/** Updates into dictionary */
@@ -113,15 +104,20 @@ export class Organization extends CoreBaseModel {
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return AppUtility.isNotEmpty(id) && this.instances.containsKey(id);
+		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
+	}
+
+	/** Converts the array of objects to list */
+	public static toList(objects: Array<any>) {
+		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
 	}
 
 	public get modules() {
-		return new List(Module.all).Where(module => module.SystemID === this.ID).OrderBy(module => module.Title).ToArray();
+		return new List(Module.instances.toArray(module => module.SystemID === this.ID)).OrderBy(module => module.Title).ToArray();
 	}
 
 	public get contentTypes() {
-		return new List(Module.all).Where(module => module.SystemID === this.ID).Select(module => module.contentTypes).SelectMany(contentTypes => new List(contentTypes)).OrderBy(contentType => contentType.Title).ToArray();
+		return new List(Module.instances.toArray(module => module.SystemID === this.ID)).Select(module => module.contentTypes).SelectMany(contentTypes => new List(contentTypes)).OrderBy(contentType => contentType.Title).ToArray();
 	}
 
 	public get routerLink() {

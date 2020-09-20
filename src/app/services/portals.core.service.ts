@@ -1,29 +1,29 @@
 import { Injectable } from "@angular/core";
-import { AppRTU, AppMessage } from "@components/app.apis";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { AppCustomCompleter } from "@components/app.completer";
-import { AppPagination } from "@components/app.pagination";
-import { AppFormsControlConfig, AppFormsControlLookupOptionsConfig, AppFormsLookupValue, AppFormsControl, AppFormsService } from "@components/forms.service";
-import { AppFormsControlComponent } from "@components/forms.control.component";
-import { FilesProcessorModalPage } from "@controls/common/file.processor.modal.page";
-import { FileOptions } from "@services/files.service";
-import { Base as BaseService } from "@services/base.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { UsersService } from "@services/users.service";
-import { AttachmentInfo } from "@models/base";
-import { Account } from "@models/account";
-import { PortalBase as BaseModel, NotificationSettings, EmailNotificationSettings, WebHookNotificationSettings, EmailSettings } from "@models/portals.base";
-import { PortalCmsBase as CmsBaseModel } from "@models/portals.cms.base";
-import { Organization } from "@models/portals.core.organization";
-import { Module } from "@models/portals.core.module";
-import { ContentType } from "@models/portals.core.content.type";
-import { Expression } from "@models/portals.core.expression";
-import { Role } from "@models/portals.core.role";
-import { Site } from "@models/portals.core.site";
-import { Desktop } from "@models/portals.core.desktop";
-import { Portlet } from "@models/portals.core.portlet";
+import { AppRTU, AppMessage } from "@app/components/app.apis";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { AppCustomCompleter } from "@app/components/app.completer";
+import { AppPagination } from "@app/components/app.pagination";
+import { AppFormsControlConfig, AppFormsControlLookupOptionsConfig, AppFormsLookupValue, AppFormsControl, AppFormsService } from "@app/components/forms.service";
+import { AppFormsControlComponent } from "@app/components/forms.control.component";
+import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
+import { FileOptions } from "@app/services/files.service";
+import { Base as BaseService } from "@app/services/base.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { UsersService } from "@app/services/users.service";
+import { AttachmentInfo } from "@app/models/base";
+import { Account } from "@app/models/account";
+import { PortalBase as BaseModel, NotificationSettings, EmailNotificationSettings, WebHookNotificationSettings, EmailSettings } from "@app/models/portals.base";
+import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
+import { Organization } from "@app/models/portals.core.organization";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
+import { Expression } from "@app/models/portals.core.expression";
+import { Role } from "@app/models/portals.core.role";
+import { Site } from "@app/models/portals.core.site";
+import { Desktop } from "@app/models/portals.core.desktop";
+import { Portlet } from "@app/models/portals.core.portlet";
 
 @Injectable()
 export class PortalsCoreService extends BaseService {
@@ -50,7 +50,7 @@ export class PortalsCoreService extends BaseService {
 
 	public get activeOrganization() {
 		if (Organization.active === undefined) {
-			Organization.active = Organization.instances.size() > 0 ? Organization.all[0] : undefined;
+			Organization.active = Organization.instances.first();
 			if (Organization.active !== undefined && Organization.active.modules.length < 1) {
 				this.getOrganizationAsync(Organization.active.ID);
 			}
@@ -122,6 +122,7 @@ export class PortalsCoreService extends BaseService {
 				console.log("[Portals]: Modules of the active organization were initialized", Organization.active.modules);
 			}
 		}
+		await this.updateSidebarAsync();
 	}
 
 	public canManageOrganization(organization?: Organization, account?: Account) {
@@ -185,8 +186,8 @@ export class PortalsCoreService extends BaseService {
 					this.configSvc.appConfig.services.activeID = Organization.active.ID;
 				}
 			}
-			else if (Organization.instances.size() > 0) {
-				Organization.active = Organization.all[0];
+			else if (Organization.instances.size > 0) {
+				Organization.active = Organization.instances.first();
 				this.configSvc.appConfig.services.activeID = Organization.active.ID;
 			}
 			if (Organization.active !== undefined) {
@@ -303,12 +304,12 @@ export class PortalsCoreService extends BaseService {
 		let theme: string;
 		if (object instanceof Portlet) {
 			organization = Organization.get(object.SystemID);
-			site = Site.all.filter(s => s.SystemID === organization.ID).find(_ => true);
+			site = Site.instances.first(s => s.SystemID === organization.ID);
 			desktop = (object as Portlet).originalDesktop;
 		}
 		else if (object instanceof Desktop) {
 			organization = Organization.get(object.SystemID);
-			site = Site.all.filter(s => s.SystemID === organization.ID).find(_ => true);
+			site = Site.instances.first(s => s.SystemID === organization.ID);
 			desktop = object as Desktop;
 			theme  = desktop.Theme;
 		}
@@ -1054,6 +1055,104 @@ export class PortalsCoreService extends BaseService {
 		await super.readAsync(super.getURI(objectName, "refresh", `object-id=${id}`), onNext, onError, headers, useXHR);
 	}
 
+	public async getSidebarButtonsAsync() {
+		const buttons: Array<{ name: string, icon: string, title?: string, onClick?: (name: string, sidebar: any) => void }> = [
+			{
+				name: "cms",
+				icon: "library",
+				title: await this.configSvc.getResourceAsync("portals.preferences.cms"),
+				onClick: (name, sidebar) => {
+					sidebar.active = name;
+					AppEvents.broadcast("Portals:UpdateSidebarOfContentManagement");
+				}
+			},
+			{
+				name: "portals",
+				icon: "cog",
+				title: await this.configSvc.getResourceAsync("portals.preferences.portals"),
+				onClick: (name, sidebar) => {
+					sidebar.active = name;
+					AppEvents.broadcast("Portals:UpdateSidebarOfSystemManagement");
+				}
+			},
+			{
+				name: "notifications",
+				icon: "notifications",
+				title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
+				onClick: (name, sidebar) => {
+					sidebar.active = name;
+					AppEvents.broadcast("Portals:UpdateSidebarOfNotifications");
+				}
+			}
+		];
+		return buttons;
+	}
+
+	public async updateSidebarAsync() {
+		const items = [
+			{
+				title: "Organizations",
+				url: "/portals/core/organizations/list/all",
+				direction: "root",
+				icon: "business",
+				detail: false
+			},
+			{
+				title: "Sites",
+				url: "/portals/core/sites/list/all",
+				direction: "root",
+				icon: "globe",
+				detail: false
+			},
+			{
+				title: "Roles",
+				url: "/portals/core/roles/list/all",
+				direction: "root",
+				icon: "body",
+				detail: false
+			},
+			{
+				title: "Desktops",
+				url: "/portals/core/desktops/list/all",
+				direction: "root",
+				icon: "desktop",
+				detail: false
+			},
+			{
+				title: "Modules",
+				url: "/portals/core/modules/list/all",
+				direction: "root",
+				icon: "albums",
+				detail: false
+			},
+			{
+				title: "Content Types",
+				url: "/portals/core/content.types/list/all",
+				direction: "root",
+				icon: "git-compare",
+				detail: false
+			},
+			{
+				title: "Expressions",
+				url: "/portals/core/expressions/list/all",
+				direction: "root",
+				icon: "construct",
+				detail: false
+			},
+			{
+				title: "CMS Categories",
+				url: "/portals/cms/categories/list/all",
+				direction: "root",
+				icon: "color-filter",
+				detail: false
+			}
+		];
+		items.forEach(item => AppEvents.broadcast("UpdateSidebarItem", {
+			MenuIndex: 1,
+			ItemInfo: item
+		}));
+	}
+
 	public get organizationCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const organization = data !== undefined
@@ -1486,7 +1585,7 @@ export class PortalsCoreService extends BaseService {
 			if (parentRole !== undefined && parentRole.childrenIDs !== undefined) {
 				AppUtility.removeAt(parentRole.childrenIDs, parentRole.childrenIDs.indexOf(id));
 			}
-			Role.all.filter(role => role.ParentID === id).forEach(role => this.deleteRole(role.ID));
+			Role.instances.toArray(role => role.ParentID === id).forEach(role => this.deleteRole(role.ID));
 			Role.instances.remove(id);
 		}
 	}
@@ -1745,7 +1844,7 @@ export class PortalsCoreService extends BaseService {
 			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined) {
 				AppUtility.removeAt(parentDesktop.childrenIDs, parentDesktop.childrenIDs.indexOf(id));
 			}
-			Desktop.all.filter(desktop => desktop.ParentID === id).forEach(desktop => this.deleteDesktop(desktop.ID));
+			Desktop.instances.toArray(desktop => desktop.ParentID === id).forEach(desktop => this.deleteDesktop(desktop.ID));
 			Desktop.instances.remove(id);
 		}
 	}

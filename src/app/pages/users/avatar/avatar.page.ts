@@ -1,9 +1,9 @@
 import { Component, OnInit, Input, ViewChild } from "@angular/core";
-import { AppUtility } from "@components/app.utility";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { FilesService } from "@services/files.service";
-import { ImageCropperControl } from "@controls/common/image.cropper";
+import { AppUtility } from "@app/components/app.utility";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { FilesService } from "@app/services/files.service";
+import { ImageCropperControl } from "@app/controls/common/image.cropper.control";
 
 @Component({
 	selector: "page-users-avatar",

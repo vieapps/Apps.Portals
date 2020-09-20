@@ -1,4 +1,4 @@
-import { AppUtility } from "@components/app.utility";
+import { AppUtility } from "@app/components/app.utility";
 
 /** Statistic base information */
 export class StatisticBase {

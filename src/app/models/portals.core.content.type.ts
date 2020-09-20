@@ -1,9 +1,9 @@
-import { Dictionary } from "typescript-collections";
-import { AppUtility } from "@components/app.utility";
-import { Privileges } from "@models/privileges";
-import { PortalBase as BaseModel, NotificationSettings, EmailSettings } from "@models/portals.base";
-import { ExtendedPropertyDefinition, ExtendedControlDefinition, StandardControlDefinition } from "@models/portals.base";
-import { PortalCoreBase as CoreBaseModel } from "@models/portals.core.base";
+import { List } from "linqts";
+import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { Privileges } from "@app/models/privileges";
+import { PortalBase as BaseModel, NotificationSettings, EmailSettings } from "@app/models/portals.base";
+import { ExtendedPropertyDefinition, ExtendedControlDefinition, StandardControlDefinition } from "@app/models/portals.base";
+import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
 
 export class ContentType extends CoreBaseModel {
 
@@ -20,11 +20,6 @@ export class ContentType extends CoreBaseModel {
 
 	/** All instances of contentType */
 	public static instances = new Dictionary<string, ContentType>();
-
-	/** All instances of contentType */
-	public static get all() {
-		return this.instances.values();
-	}
 
 	Title = undefined as string;
 	Description = undefined as string;
@@ -63,16 +58,13 @@ export class ContentType extends CoreBaseModel {
 	/** Gets by identity */
 	public static get(id: string) {
 		return AppUtility.isNotEmpty(id)
-			? this.instances.getValue(id)
+			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
 	public static set(contentType: ContentType) {
-		if (contentType !== undefined) {
-			this.instances.setValue(contentType.ID, contentType);
-		}
-		return contentType;
+		return contentType === undefined ? undefined : this.instances.add(contentType.ID, contentType);
 	}
 
 	/** Updates into dictionary */
@@ -84,7 +76,12 @@ export class ContentType extends CoreBaseModel {
 
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
-		return AppUtility.isNotEmpty(id) && this.instances.containsKey(id);
+		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
+	}
+
+	/** Converts the array of objects to list */
+	public static toList(objects: Array<any>) {
+		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
 	}
 
 	public get routerLink() {

@@ -9,8 +9,14 @@
 @import "~@ionic/angular/css/text-transformation.css";
 @import "~@ionic/angular/css/flex-utils.css";
 
-/* allow select text */
-ion-content {
+/* olny allow select text in the content panels */
+ion-header, ion-footer, ion-content {
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+ion-app > ion-split-pane > ion-router-outlet ion-content {
 	-webkit-user-select: auto !important;
 	-moz-user-select: auto !important;
 	-ms-user-select: auto !important;
@@ -18,7 +24,7 @@ ion-content {
 }
 
 /* side menu */
-@media only screen and (min-width: 1280px) {
+@media only screen and (min-width: 1200px) {
 	.split-pane-md.split-pane-visible > .split-pane-side,
 	.split-pane-ios.split-pane-visible > .split-pane-side {
 		max-width: 320px;
@@ -37,12 +43,12 @@ ion-menu.menu-side-start > ion-header > ion-toolbar > ion-thumbnail img {
 	height: 36px;
 	width: 36px;
 }
+ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label {
+	line-height: 44px;
+}
 ion-menu > ion-content > ion-list > ion-menu-toggle img {
 	max-height: 44px;
 	margin-right: 16px;
-}
-ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label {
-	line-height: 44px;
 }
 
 /* footer toolbars */

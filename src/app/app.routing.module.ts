@@ -1,23 +1,23 @@
 import { NgModule } from "@angular/core";
 import { RouterModule, Routes } from "@angular/router";
-import { AppModulePreloader } from "@components/app.preloader";
-import { AppReadyGuardService } from "@services/base.service";
+import { AppModulePreloader } from "@app/components/app.preloader";
+import { AppReadyGuardService } from "@app/services/base.service";
 
 export const routes: Routes = [
 	{
 		path: "home",
 		data: { preload: true },
-		loadChildren: "@pages/home.module#HomePageModule"
+		loadChildren: "@app/pages/home.module#HomePageModule"
 	},
 	{
 		path: "users",
 		canActivate: [AppReadyGuardService],
-		loadChildren: "@pages/users/users.module#UsersModule"
+		loadChildren: "@app/pages/users/users.module#UsersModule"
 	},
 	{
 		path: "portals",
 		canActivate: [AppReadyGuardService],
-		loadChildren: "@pages/portals/portals.module#PortalsModule"
+		loadChildren: "@app/pages/portals/portals.module#PortalsModule"
 	},
 	{
 		path: "**",

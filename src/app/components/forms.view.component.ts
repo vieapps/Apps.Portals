@@ -1,8 +1,8 @@
 import { Component, OnInit, AfterViewInit, Input, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { AppFormsControl } from "@components/forms.service";
-import { AppUtility } from "@components/app.utility";
-import { ConfigurationService } from "@services/configuration.service";
+import { AppUtility } from "@app/components/app.utility";
+import { AppFormsControl } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
 
 @Component({
 	selector: "app-form-view",

@@ -1,21 +1,20 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
-import { AppEvents } from "@components/app.events";
-import { AppUtility } from "@components/app.utility";
-import { TrackingUtility } from "@components/app.utility.trackings";
-import { PlatformUtility } from "@components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@components/app.pagination";
-import { AppFormsService } from "@components/forms.service";
-import { ConfigurationService } from "@services/configuration.service";
-import { AuthenticationService } from "@services/authentication.service";
-import { PortalsCoreService } from "@services/portals.core.service";
-import { PortalsCmsService } from "@services/portals.cms.service";
-import { Organization } from "@models/portals.core.organization";
-import { ModuleDefinition } from "@models/portals.base";
-import { Module } from "@models/portals.core.module";
+import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { PortalsCmsService } from "@app/services/portals.cms.service";
+import { Organization } from "@app/models/portals.core.organization";
+import { ModuleDefinition } from "@app/models/portals.base";
+import { Module } from "@app/models/portals.core.module";
 
 @Component({
 	selector: "page-portals-core-modules-list",
@@ -272,22 +271,17 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.modules.push(Module.get(o.ID) || Module.deserialize(o, Module.get(o.ID))));
 		}
 		else {
-			let objects = new List(results === undefined ? Module.all : results.map(o => Module.get(o.ID) || Module.deserialize(o, Module.get(o.ID))));
-			if (AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.definitionID)) {
-				objects = objects.Where(o => o.SystemID === this.systemID && o.ModuleDefinitionID === this.definitionID);
-			}
-			else if (AppUtility.isNotEmpty(this.definitionID)) {
-				if (this.isSystemAdministrator) {
-					objects = objects.Where(o => o.ModuleDefinitionID === this.definitionID);
-				}
-				else {
-					objects = objects.Where(o => o.SystemID === this.systemID && o.ModuleDefinitionID === this.definitionID);
-				}
-			}
-			else {
-				objects = objects.Where(o => o.SystemID === this.systemID);
-			}
-			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+			const predicate: (module: Module) => boolean = AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.definitionID)
+				? obj => obj.SystemID === this.systemID && obj.ModuleDefinitionID === this.definitionID
+				: AppUtility.isNotEmpty(this.definitionID)
+					? this.isSystemAdministrator
+						? obj => obj.ModuleDefinitionID === this.definitionID
+						: obj => obj.SystemID === this.systemID && obj.ModuleDefinitionID === this.definitionID
+					: obj => obj.SystemID === this.systemID;
+			let objects = results === undefined
+				? Module.instances.toList(predicate)
+				: Module.toList(results).Where(predicate);
+			objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
 			if (results === undefined && this.pagination !== undefined) {
 				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 			}
