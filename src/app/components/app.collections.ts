@@ -31,13 +31,13 @@ declare global {
 		intersect(other: T[], comparer?: (value: T, array: T[]) => boolean, thisArg?: any): T[];
 
 		/** Gets the comparing function for sorting the elements */
-		compareFn(sorts: Array<{ name: string, reverse?: boolean, primer?: (object: T) => T }>): (a: T, b: T) => number;
+		compareFn(sorts: Array<{ name: string, reverse?: boolean, transformer?: (value: any) => any }>): (a: T, b: T) => number;
 
 		/** Produces the sorted elements by the specified conditions */
-		orderBy(sorts: Array<{ name: string, reverse?: boolean, primer?: (object: T) => T }>): T[];
+		orderBy(sorts: Array<{ name: string, reverse?: boolean, transformer?: (value: any) => any }>): T[];
 
 		/** Produces the sorted elements by the specified conditions */
-		sortBy(...sorts: Array<string | { name: string, reverse?: boolean, primer?: (object: T) => T }>): T[];
+		sortBy(...sorts: Array<string | { name: string, reverse?: boolean, transformer?: (value: any) => any }>): T[];
 
 		/** Converts to List object (for working with LINQ) */
 		toList(predicate?: (value: T, index: number, array: T[]) => value is T, thisArg?: any): List<T>;
@@ -51,8 +51,8 @@ declare global {
 }
 
 if (!Array.prototype.insert) {
-	Array.prototype.insert = function<T>(this: T[], value: T, index: number = -1): T[] {
-		if (index > -1 && index < this.length) {
+	Array.prototype.insert = function<T>(this: T[], value: T, index?: number): T[] {
+		if (index !== undefined && index > -1 && index < this.length) {
 			this.splice(index, 0, value);
 		}
 		else {
@@ -62,18 +62,18 @@ if (!Array.prototype.insert) {
 	};
 }
 
-if (!Array.prototype.removeAt) {
-	Array.prototype.removeAt = function<T>(this: T[], index: number): T[] {
-		if (index > -1 && index < this.length) {
-			this.splice(index, 1);
-		}
-		return this;
-	};
-}
-
 if (!Array.prototype.remove) {
 	Array.prototype.remove = function<T>(this: T[], value: T, findIndex?: (value: T, array: T[]) => number): T[] {
 		return this.removeAt(findIndex !== undefined ? findIndex(value, this) : this.indexOf(value));
+	};
+}
+
+if (!Array.prototype.removeAt) {
+	Array.prototype.removeAt = function<T>(this: T[], index: number): T[] {
+		if (index !== undefined && index > -1 && index < this.length) {
+			this.splice(index, 1);
+		}
+		return this;
 	};
 }
 
@@ -86,7 +86,7 @@ if (!Array.prototype.removeAll) {
 
 if (!Array.prototype.move) {
 	Array.prototype.move = function<T>(this: T[], from: number, to: number): T[] {
-		if (from !== to && from > -1 && from < this.length && to > -1 && to < this.length) {
+		if (from !== undefined && to !== undefined && from !== to && from > -1 && from < this.length && to > -1 && to < this.length) {
 			const items = this.splice(from, 1);
 			if (items !== undefined && items.length > 0) {
 				this.insert(items[0], to);
@@ -132,12 +132,12 @@ if (!Array.prototype.intersect) {
 }
 
 if (!Array.prototype.compareFn) {
-	Array.prototype.compareFn = function<T>(this: T[], sorts: Array<{ name: string, reverse?: boolean, primer?: (value: T) => T }>): (a: T, b: T) => number {
-		const compareFn = (a: T, b: T): number => a === b ? 0 : a < b ? -1 : 1;
+	Array.prototype.compareFn = function<T>(this: T[], sorts: Array<{ name: string, reverse?: boolean, transformer?: (value: any) => any }>): (a: T, b: T) => number {
+		const compareFn = (a: any, b: any): number => a === b ? 0 : a < b ? -1 : 1;
 		const sortBy = sorts.map(sort => {
 			return {
 				name: sort.name,
-				compare: (a: T, b: T) => (sort.reverse ? -1 : 1) * (sort.primer !== undefined ? compareFn(sort.primer(a), sort.primer(b)) : compareFn(a, b))
+				compare: (a: any, b: any) => (sort.reverse ? -1 : 1) * (sort.transformer !== undefined ? compareFn(sort.transformer(a), sort.transformer(b)) : compareFn(a, b))
 			};
 		});
 		return (a: T, b: T) => {
@@ -155,7 +155,7 @@ if (!Array.prototype.compareFn) {
 }
 
 if (!Array.prototype.orderBy) {
-	Array.prototype.orderBy = function<T>(this: T[], sorts: Array<{ name: string, reverse?: boolean, primer?: (value: T) => T }>): T[] {
+	Array.prototype.orderBy = function<T>(this: T[], sorts: Array<{ name: string, reverse?: boolean, transformer?: (value: any) => any }>): T[] {
 		return sorts !== undefined && sorts.length > 0
 			? this.sort(this.compareFn(sorts))
 			: this;
@@ -163,19 +163,19 @@ if (!Array.prototype.orderBy) {
 }
 
 if (!Array.prototype.sortBy) {
-	Array.prototype.sortBy = function<T>(this: T[], ...sorts: Array<string | { name: string, reverse?: boolean, primer?: (value: T) => T }>): T[] {
+	Array.prototype.sortBy = function<T>(this: T[], ...sorts: Array<string | { name: string, reverse?: boolean, transformer?: (value: any) => any }>): T[] {
 		return this.orderBy(sorts !== undefined && sorts.length > 0
 			? (sorts as Array<any>).filter(sort => sort !== undefined && sort !== null).map(sort => {
 					return typeof sort === "string"
 						? {
 								name: sort as string,
 								reverse: false,
-								primer: undefined as (value: T) => T
+								transformer: undefined as (value: any) => any
 							}
 						: {
 								name: sort.name as string,
 								reverse: true === sort.reverse,
-								primer: sort.primer as (value: T) => T
+								transformer: sort.transformer as (value: any) => any
 							};
 				})
 			: undefined
