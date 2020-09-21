@@ -39,8 +39,8 @@ declare global {
 		/** Produces the sorted elements by the specified conditions */
 		sortBy(...sorts: Array<string | { name: string, reverse?: boolean, transformer?: (value: any) => any }>): T[];
 
-		/** Gets the first */
-		first(predicate?: (value: T, index: number, array: T[]) => value is T, thisArg?: any): T;
+		/** Gets the first element that matched with the predicate */
+		first(predicate?: (value: T, index: number, array: T[]) => boolean): T;
 
 		/** Converts to List object (for working with LINQ) */
 		toList(predicate?: (value: T, index: number, array: T[]) => value is T, thisArg?: any): List<T>;
@@ -185,9 +185,14 @@ if (!Array.prototype.sortBy) {
 }
 
 if (!Array.prototype.first) {
-	Array.prototype.first = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => value is T, thisArg?: any): T {
-		const elements = this.filter(predicate, thisArg);
-		return elements !== undefined && elements.length > 0 ? elements[0] : undefined;
+	Array.prototype.first = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
+		for (let index = 0; index < this.length; index++) {
+			const value = this[index];
+			if (predicate === undefined || predicate(value, index, this)) {
+				return value;
+			}
+		}
+		return undefined;
 	};
 }
 
