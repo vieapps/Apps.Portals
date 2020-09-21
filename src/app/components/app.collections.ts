@@ -4,22 +4,22 @@ declare global {
 	interface Array<T> {
 
 		/** Inserts an element at a specified index/position */
-		insert(value: T, index?: number): Array<T>;
+		insert(value: T, index?: number): T[];
 
 		/** Removes an element */
-		remove(value: T, findIndex?: (value: T, array: T[]) => number): Array<T>;
+		remove(value: T, findIndex?: (value: T, array: T[]) => number): T[];
 
 		/** Removes an element at a specified index/position */
-		removeAt(index: number): Array<T>;
+		removeAt(index: number): T[];
 
 		/** Removes all elements */
-		removeAll(): Array<T>;
+		removeAll(): T[];
 
 		/** Moves an element from a old index/position to a new index/position */
-		move(from: number, to: number): Array<T>;
+		move(from: number, to: number): T[];
 
 		/** Produces the specified number of contiguous elements */
-		take(amount: number, skip?: number): Array<T>;
+		take(amount: number, skip?: number): T[];
 
 		/** Produces the distinct elements by using the equality comparer to compare values */
 		distinct(comparer?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): T[];
@@ -185,9 +185,7 @@ if (!Array.prototype.sortBy) {
 
 if (!Array.prototype.toList) {
 	Array.prototype.toList = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => value is T, thisArg?: any): List<T> {
-		return predicate !== undefined
-			? new List<T>(this.filter(predicate, thisArg))
-			: new List<T>(this);
+		return new List<T>(predicate !== undefined ? this.filter(predicate, thisArg) : this);
 	};
 }
 
