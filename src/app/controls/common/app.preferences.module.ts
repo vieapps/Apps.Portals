@@ -9,12 +9,8 @@ import { AppPreferencesControl } from "@app/controls/common/app.preferences.cont
 		CommonModule,
 		IonicModule
 	],
-	exports: [
-		AppPreferencesControl
-	],
-	declarations: [
-		AppPreferencesControl
-	]
+	exports: [AppPreferencesControl],
+	declarations: [AppPreferencesControl]
 })
 
 export class AppPreferencesControlModule {}
