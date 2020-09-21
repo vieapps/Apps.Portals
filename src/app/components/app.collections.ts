@@ -43,13 +43,13 @@ declare global {
 		first(predicate?: (value: T, index: number, array: T[]) => boolean): T;
 
 		/** Converts to List object (for working with LINQ) */
-		toList(predicate?: (value: T, index: number, array: T[]) => value is T, thisArg?: any): List<T>;
+		toList(predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): List<T>;
 
 		/** Converts to HashSet object */
-		toHashSet(predicate?: (value: T, index: number, array: T[]) => value is T, thisArg?: any): HashSet<T>;
+		toHashSet(predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): HashSet<T>;
 
 		/** Converts to Dictionary object */
-		toDictionary<K>(keySelector: (value: T) => K, predicate?: (value: T, index: number, array: T[]) => value is T, thisArg?: any): Dictionary<K, T>;
+		toDictionary<K>(keySelector: (value: T) => K, predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): Dictionary<K, T>;
 	}
 }
 
@@ -197,19 +197,19 @@ if (!Array.prototype.first) {
 }
 
 if (!Array.prototype.toList) {
-	Array.prototype.toList = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => value is T, thisArg?: any): List<T> {
+	Array.prototype.toList = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): List<T> {
 		return new List<T>(predicate !== undefined ? this.filter(predicate, thisArg) : this);
 	};
 }
 
 if (!Array.prototype.toHashSet) {
-	Array.prototype.toHashSet = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => value is T, thisArg?: any): HashSet<T> {
+	Array.prototype.toHashSet = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): HashSet<T> {
 		return new HashSet<T>(predicate !== undefined ? this.filter(predicate, thisArg) : this);
 	};
 }
 
 if (!Array.prototype.toDictionary) {
-	Array.prototype.toDictionary = function<K, T>(this: T[], keySelector: (value: T) => K, predicate?: (value: T, index: number, array: T[]) => value is T, thisArg?: any): Dictionary<K, T> {
+	Array.prototype.toDictionary = function<K, T>(this: T[], keySelector: (value: T) => K, predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): Dictionary<K, T> {
 		return new Dictionary<K, T>(predicate !== undefined ? this.filter(predicate, thisArg) : this, keySelector);
 	};
 }
