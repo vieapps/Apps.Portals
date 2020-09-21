@@ -99,7 +99,7 @@ export class Role extends CoreBaseModel implements NestedObject {
 	}
 
 	public get listURI() {
-		return `${this.routerLink.replace("/update/", "/list/")}?x-request=${AppUtility.toBase64Url({ ParentID: this.ID })}`;
+		return this.getRouterURI({ ParentID: this.ID }).replace("/update/", "/list/");
 	}
 
 }

@@ -162,7 +162,7 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							}
 							break;
 					}
-					url = object !== undefined ? object.routerLink : undefined;
+					url = object !== undefined ? object.getRouterURI({ ID: object.ID }) : undefined;
 				}
 			}
 		}
