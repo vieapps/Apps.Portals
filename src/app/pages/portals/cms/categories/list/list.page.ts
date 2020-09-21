@@ -469,7 +469,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	onReordered(event: any) {
 		try {
-			this.ordered.moveTo(event.detail.from as number, event.detail.to as number).forEach((category, orderIndex) => category.OrderIndex = orderIndex);
+			this.ordered.move(event.detail.from as number, event.detail.to as number).forEach((category, orderIndex) => category.OrderIndex = orderIndex);
 		}
 		catch (error) {
 			console.error("Error occurred while reordering", error);

@@ -403,7 +403,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 
 	onReordered(event: any, zoneName: string) {
 		try {
-			this.ordered.find(zone => zone.ID === zoneName).Children.moveTo(event.detail.from as number, event.detail.to as number).forEach((portlet, orderIndex) => portlet.OrderIndex = orderIndex);
+			this.ordered.find(zone => zone.ID === zoneName).Children.move(event.detail.from as number, event.detail.to as number).forEach((portlet, orderIndex) => portlet.OrderIndex = orderIndex);
 		}
 		catch (error) {
 			console.error("Error occurred while reordering", error);

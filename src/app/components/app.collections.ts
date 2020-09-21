@@ -15,8 +15,8 @@ declare global {
 		/** Removes all elements */
 		removeAll(): Array<T>;
 
-		/** Moves an element to a new position */
-		moveTo(from: number, to: number): Array<T>;
+		/** Moves an element from a old index/position to a new index/position */
+		move(from: number, to: number): Array<T>;
 
 		/** Produces the specified number of contiguous elements */
 		take(amount: number, skip?: number): Array<T>;
@@ -84,8 +84,8 @@ if (!Array.prototype.removeAll) {
 	};
 }
 
-if (!Array.prototype.moveTo) {
-	Array.prototype.moveTo = function<T>(this: T[], from: number, to: number): T[] {
+if (!Array.prototype.move) {
+	Array.prototype.move = function<T>(this: T[], from: number, to: number): T[] {
 		if (from !== to && from > -1 && from < this.length && to > -1 && to < this.length) {
 			const items = this.splice(from, 1);
 			if (items !== undefined && items.length > 0) {
