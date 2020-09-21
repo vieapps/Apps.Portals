@@ -185,22 +185,12 @@ export class UsersListPage implements OnInit, OnDestroy {
 			});
 		}
 		else {
-			let objects = (results === undefined ? UserProfile.instances.toArray().map(obj => obj as UserProfile) : UserProfile.toArray(results)).sortBy("Name", { name: "LastAccess", reverse: true });
-			// let objects = (results === undefined ? UserProfile.instances.toList().Select(obj => obj as UserProfile) : UserProfile.toList(results)).OrderBy(obj => obj.Name).ThenByDescending(obj => obj.LastAccess);
-			if (results === undefined) {
-				objects = objects.take(this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
-				this.profiles = objects;
-				// if (this.pagination !== undefined) {
-				// 	objects = objects.Take(this.pageNumber * this.pagination.PageSize);
-				// }
-				// this.profiles = objects.ToArray();
-			}
-			else {
-				this.profiles = this.profiles.concat(objects);
-				// this.profiles = this.profiles.concat(objects.ToArray());
-			}
+			const objects = (results === undefined
+				? UserProfile.instances.toArray().map(obj => obj as UserProfile)
+				: UserProfile.toArray(results)
+			).sortBy("Name", { name: "LastAccess", reverse: true }).take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
+			this.profiles = results === undefined ? objects : this.profiles.concat(objects);
 			objects.forEach(obj => this.ratings[obj.ID] = obj.RatingPoints.get("General"));
-			// objects.ForEach(obj => this.ratings[obj.ID] = obj.RatingPoints.get("General"));
 		}
 		if (onNext !== undefined) {
 			onNext();
