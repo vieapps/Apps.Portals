@@ -221,9 +221,9 @@ export class FilesService extends BaseService {
 					}
 				}
 				if (AppUtility.isObject(deleted, true)) {
-					AppUtility.removeAt(attachments, attachments.findIndex(attachment => attachment.ID === deleted.ID));
+					attachments.removeAt(attachments.findIndex(attachment => attachment.ID === deleted.ID));
 				}
-				formControl.value = attachments.length > 0 ? attachments.sort(AppUtility.getCompareFunction("Title", "Filename")) : undefined;
+				formControl.value = attachments.length > 0 ? attachments.sortBy("Title", "Filename") : undefined;
 			}
 			if (onCompleted !== undefined) {
 				onCompleted(formControl);

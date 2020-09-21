@@ -1,8 +1,8 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, Input, ViewChild } from "@angular/core";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
-import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { Dictionary } from "@app/components/app.collections";
+import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
 import { AppFormsService } from "@app/components/forms.service";
@@ -22,7 +22,7 @@ import { ContentType } from "@app/models/portals.core.content.type";
 export class DataLookupModalPage implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService
@@ -61,6 +61,10 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	private subscription: Subscription;
 	private organization: Organization;
@@ -214,18 +218,17 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			else {
 				let objects = (data.Objects as Array<DataItem>).filter(o => this.excludedIDs.indexOf(o.ID) < 0);
 				if (this.nested) {
-					objects = objects.sort(AppUtility.getCompareFunction("OrderIndex", "Title"));
+					objects = objects.sortBy("OrderIndex", "Title");
 				}
 				else {
 					const sortBy = this.prepareSortBy();
-					const sorts = Object.keys(sortBy).map(key => {
+					objects = objects.orderBy(Object.keys(sortBy).map(key => {
 						return { name: key, reverse: "Descending" === sortBy[key] };
-					});
-					objects.sort(AppUtility.getSortFunction(sorts));
+					}));
 				}
 				this.items = data !== undefined
 					? this.items.concat(objects)
-					: new List(objects).Take(this.pageNumber * this.pagination.PageSize).ToArray();
+					: objects.take(this.pageNumber * this.pagination.PageSize);
 				if (this.nested) {
 					this.items.forEach(item => this.updateParent(item));
 					this.rootItems = this.items.map(item => item);

@@ -1,4 +1,5 @@
-import { AppUtility, Dictionary, HashSet } from "@app/components/app.utility";
+import { HashSet, Dictionary } from "@app/components/app.collections";
+import { AppUtility } from "@app/components/app.utility";
 import { Privilege, Privileges } from "@app/models/privileges";
 import { UserProfile } from "@app/models/user";
 

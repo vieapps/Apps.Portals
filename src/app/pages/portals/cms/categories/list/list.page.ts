@@ -444,7 +444,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	private async openReorderAsync() {
-		this.reorderItems = this.categories.sort(AppUtility.getCompareFunction("OrderIndex", "Title")).map(c => {
+		this.reorderItems = this.categories.sortBy("OrderIndex", "Title").map(c => {
 			return {
 				ID: c.ID,
 				Title: c.Title,
@@ -469,7 +469,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	onReordered(event: any) {
 		try {
-			AppUtility.moveTo(this.ordered, event.detail.from as number, event.detail.to as number).forEach((category, orderIndex) => category.OrderIndex = orderIndex);
+			this.ordered.moveTo(event.detail.from as number, event.detail.to as number).forEach((category, orderIndex) => category.OrderIndex = orderIndex);
 		}
 		catch (error) {
 			console.error("Error occurred while reordering", error);

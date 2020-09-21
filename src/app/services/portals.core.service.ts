@@ -444,8 +444,7 @@ export class PortalsCoreService extends BaseService {
 		};
 
 		if (allowInheritFromParent) {
-			AppUtility.insertAt(
-				controlConfig.SubControls.Controls,
+			controlConfig.SubControls.Controls.insert(
 				{
 					Name: "InheritFromParent",
 					Type: "YesNo",
@@ -565,8 +564,7 @@ export class PortalsCoreService extends BaseService {
 		};
 
 		if (allowInheritFromParent) {
-			AppUtility.insertAt(
-				controlConfig.SubControls.Controls,
+			controlConfig.SubControls.Controls.insert(
 				{
 					Name: "InheritFromParent",
 					Type: "YesNo",
@@ -654,8 +652,7 @@ export class PortalsCoreService extends BaseService {
 		};
 
 		if (allowInheritFromParent) {
-			AppUtility.insertAt(
-				controlConfig.SubControls.Controls,
+			controlConfig.SubControls.Controls.insert(
 				{
 					Name: "InheritFromParent",
 					Type: "YesNo",
@@ -672,8 +669,7 @@ export class PortalsCoreService extends BaseService {
 		if (methods === undefined || methods.indexOf("Email") > -1) {
 			controlConfig.SubControls.Controls.push(this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmails));
 			const emailsByApprovalStatus = this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmailsByApprovalStatus, "EmailsByApprovalStatus", "emailsByApprovalStatus");
-			AppUtility.insertAt(
-				emailsByApprovalStatus.SubControls.Controls,
+			emailsByApprovalStatus.SubControls.Controls.insert(
 				{
 					Name: "Status",
 					Type: "Select",
@@ -944,8 +940,7 @@ export class PortalsCoreService extends BaseService {
 		};
 
 		if (allowInheritFromParent) {
-			AppUtility.insertAt(
-				controlConfig.SubControls.Controls,
+			controlConfig.SubControls.Controls.insert(
 				{
 					Name: "InheritFromParent",
 					Type: "YesNo",
@@ -1563,16 +1558,16 @@ export class PortalsCoreService extends BaseService {
 			if (AppUtility.isArray(json.Children, true)) {
 				role.childrenIDs = [];
 				(json.Children as Array<any>).map(c => this.updateRole(c)).filter(o => o !== undefined).forEach(o => role.childrenIDs.push(o.ID));
-				role.childrenIDs = role.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+				role.childrenIDs = role.childrenIDs.distinct();
 			}
 			let parentRole = Role.get(parentID);
 			if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.ID !== role.ParentID) {
-				AppUtility.removeAt(parentRole.childrenIDs, parentRole.childrenIDs.indexOf(role.ID));
+				parentRole.childrenIDs.removeAt(parentRole.childrenIDs.indexOf(role.ID));
 			}
 			parentRole = role.Parent;
 			if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.childrenIDs.indexOf(role.ID) < 0) {
 				parentRole.childrenIDs.push(role.ID);
-				parentRole.childrenIDs = parentRole.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+				parentRole.childrenIDs = parentRole.childrenIDs.distinct();
 			}
 			return role;
 		}
@@ -1583,7 +1578,7 @@ export class PortalsCoreService extends BaseService {
 		if (Role.contains(id)) {
 			const parentRole = Role.get(parentID);
 			if (parentRole !== undefined && parentRole.childrenIDs !== undefined) {
-				AppUtility.removeAt(parentRole.childrenIDs, parentRole.childrenIDs.indexOf(id));
+				parentRole.childrenIDs.removeAt(parentRole.childrenIDs.indexOf(id));
 			}
 			Role.instances.toArray(role => role.ParentID === id).forEach(role => this.deleteRole(role.ID));
 			Role.instances.remove(id);
@@ -1826,7 +1821,7 @@ export class PortalsCoreService extends BaseService {
 			}
 			let parentDesktop = Desktop.get(oldParentID);
 			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined && parentDesktop.ID !== desktop.ParentID) {
-				AppUtility.removeAt(parentDesktop.childrenIDs, parentDesktop.childrenIDs.indexOf(desktop.ID));
+				parentDesktop.childrenIDs.removeAt(parentDesktop.childrenIDs.indexOf(desktop.ID));
 			}
 			parentDesktop = desktop.Parent;
 			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined && parentDesktop.childrenIDs.indexOf(desktop.ID) < 0) {
@@ -1842,7 +1837,7 @@ export class PortalsCoreService extends BaseService {
 		if (Desktop.contains(id)) {
 			const parentDesktop = Desktop.get(parentID);
 			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined) {
-				AppUtility.removeAt(parentDesktop.childrenIDs, parentDesktop.childrenIDs.indexOf(id));
+				parentDesktop.childrenIDs.removeAt(parentDesktop.childrenIDs.indexOf(id));
 			}
 			Desktop.instances.toArray(desktop => desktop.ParentID === id).forEach(desktop => this.deleteDesktop(desktop.ID));
 			Desktop.instances.remove(id);
@@ -2027,7 +2022,7 @@ export class PortalsCoreService extends BaseService {
 				Portlet.instances.remove(message.Data.ID);
 				desktop = Desktop.get(message.Data.DesktopID);
 				if (desktop !== undefined && desktop.portlets !== undefined) {
-					AppUtility.removeAt(desktop.portlets, desktop.portlets.findIndex(p => p.ID === message.Data.ID));
+					desktop.portlets.removeAt(desktop.portlets.findIndex(p => p.ID === message.Data.ID));
 				}
 				if  (this.configSvc.appConfig.isDebug) {
 					console.log(`Delete a portlet from a desktop [Portlet ID: ${message.Data.ID} - Desktop: ${(desktop !== undefined ? desktop.FullTitle : "None")}]`, desktop);

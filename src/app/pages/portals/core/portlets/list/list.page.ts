@@ -171,7 +171,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.search"), "search", () => this.openSearchAsync())
 			];
 			if (this.desktop !== undefined && this.desktop.portlets !== undefined && this.desktop.portlets.length > 0) {
-				AppUtility.insertAt(this.actions, this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.reorder"), "swap-vertical", () => this.openReorderAsync()), 1);
+				this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.reorder"), "swap-vertical", () => this.openReorderAsync()), 1);
 				this.preparePortlets();
 				await this.appFormsSvc.hideLoadingAsync();
 			}
@@ -206,7 +206,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	}
 
 	private preparePortlets() {
-		this.portlets = this.desktop.portlets.sort(AppUtility.getCompareFunction("Zone", "OrderIndex"));
+		this.portlets = this.desktop.portlets.sortBy("Zone", "OrderIndex");
 	}
 
 	track(index: number, portlet: Portlet) {
@@ -403,7 +403,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 
 	onReordered(event: any, zoneName: string) {
 		try {
-			AppUtility.moveTo(this.ordered.find(zone => zone.ID === zoneName).Children, event.detail.from as number, event.detail.to as number).forEach((portlet, orderIndex) => portlet.OrderIndex = orderIndex);
+			this.ordered.find(zone => zone.ID === zoneName).Children.moveTo(event.detail.from as number, event.detail.to as number).forEach((portlet, orderIndex) => portlet.OrderIndex = orderIndex);
 		}
 		catch (error) {
 			console.error("Error occurred while reordering", error);

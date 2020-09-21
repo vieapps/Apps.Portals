@@ -216,7 +216,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, contentType, true, true, options => {
 			options.OnDelete = (data, formControl) => {
 				const lookupDisplayValues = formControl.lookupDisplayValues;
-				data.forEach(id => AppUtility.removeAt(lookupDisplayValues, lookupDisplayValues.findIndex(item => item.Value === id)));
+				data.forEach(id => lookupDisplayValues.removeAt(lookupDisplayValues.findIndex(item => item.Value === id)));
 				formControl.setValue(lookupDisplayValues.map(item => item.Value));
 				formControl.lookupDisplayValues = lookupDisplayValues;
 			};
@@ -312,7 +312,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, this.contentType, true, false, options => {
 			options.OnDelete = (data, formControl) => {
 				const lookupDisplayValues = formControl.lookupDisplayValues;
-				data.forEach(id => AppUtility.removeAt(lookupDisplayValues, lookupDisplayValues.findIndex(item => item.Value === id)));
+				data.forEach(id => lookupDisplayValues.removeAt(lookupDisplayValues.findIndex(item => item.Value === id)));
 				formControl.setValue(lookupDisplayValues.map(item => item.Value));
 				formControl.lookupDisplayValues = lookupDisplayValues;
 			};

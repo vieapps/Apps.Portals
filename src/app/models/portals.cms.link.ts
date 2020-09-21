@@ -1,5 +1,5 @@
-import { List } from "linqts";
-import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { Dictionary } from "@app/components/app.collections";
+import { AppUtility } from "@app/components/app.utility";
 import { NestedObject } from "@app/models/portals.base";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
@@ -83,9 +83,14 @@ export class Link extends CmsBaseModel implements NestedObject {
 		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
 	}
 
-	/** Converts the array of objects to list */
+	/** Deserializes the collection of objects to array */
+	public static toArray(objects: Array<any>) {
+		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
+	}
+
+	/** Deserializes the collection of objects to list */
 	public static toList(objects: Array<any>) {
-		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
+		return this.toArray(objects).toList();
 	}
 
 	public get Parent() {
@@ -96,7 +101,7 @@ export class Link extends CmsBaseModel implements NestedObject {
 		const links = AppUtility.isArray(this.childrenIDs, true)
 			? this.childrenIDs.map(id => Link.get(id))
 			: Link.instances.toArray(link => link.ParentID === this.ID);
-		return links.sort(AppUtility.getCompareFunction("OrderIndex", "Title"));
+		return links.sortBy("OrderIndex", "Title");
 	}
 
 	public get FullTitle(): string {

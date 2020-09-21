@@ -117,20 +117,16 @@ export class PortalsModulesUpdatePage implements OnInit {
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "module");
 
-		AppUtility.insertAt(
-			formConfig,
-			{
-				Name: "Organization",
-				Type: "Text",
-				Segment: "basic",
-				Extras: { Text: this.organization.Title },
-				Options: {
-					Label: "{{portals.modules.controls.Organization}}",
-					ReadOnly: true
-				}
-			},
-			0
-		);
+		formConfig.insert({
+			Name: "Organization",
+			Type: "Text",
+			Segment: "basic",
+			Extras: { Text: this.organization.Title },
+			Options: {
+				Label: "{{portals.modules.controls.Organization}}",
+				ReadOnly: true
+			}
+		}, 0);
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		control.Options.AutoFocus = true;
@@ -141,20 +137,16 @@ export class PortalsModulesUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ModuleDefinitionID"));
 		if (AppUtility.isNotEmpty(this.module.ID)) {
 			control.Hidden = true;
-			AppUtility.insertAt(
-				formConfig,
-				{
-					Name: "ModuleDefinition",
-					Type: "Text",
-					Segment: "basic",
-					Extras: { Text: this.definitions.find(definition => definition.ID === this.module.ModuleDefinitionID).Title },
-					Options: {
-						Label: control.Options.Label,
-						ReadOnly: true
-					}
-				},
-				formConfig.findIndex(ctrl => AppUtility.isEquals(ctrl.Name, "ModuleDefinitionID"))
-			);
+			formConfig.insert({
+				Name: "ModuleDefinition",
+				Type: "Text",
+				Segment: "basic",
+				Extras: { Text: this.definitions.find(definition => definition.ID === this.module.ModuleDefinitionID).Title },
+				Options: {
+					Label: control.Options.Label,
+					ReadOnly: true
+				}
+			}, formConfig.findIndex(ctrl => AppUtility.isEquals(ctrl.Name, "ModuleDefinitionID")));
 		}
 		else {
 			control.Options.Type = "dropdown";

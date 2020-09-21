@@ -134,8 +134,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "desktop");
 
-		AppUtility.insertAt(
-			formConfig,
+		formConfig.insert(
 			{
 				Name: "Organization",
 				Type: "Text",
@@ -150,8 +149,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		);
 
 		if (!AppUtility.isNotEmpty(this.desktop.ID)) {
-			AppUtility.insertAt(
-				formConfig,
+			formConfig.insert(
 				{
 					Name: "CopyFromID",
 					Type: "Lookup",
@@ -204,13 +202,13 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		control.Options.SelectOptions.Values = this.configSvc.languages.map(language => {
 			return { Value: language.Value, Label: language.Label };
 		});
-		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: unspecified }, 0);
+		control.Options.SelectOptions.Values.insert({ Value: "-", Label: unspecified }, 0);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Theme"));
 		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => {
 			return { Value: theme.name, Label: theme.name };
 		});
-		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: unspecified }, 0);
+		control.Options.SelectOptions.Values.insert({ Value: "-", Label: unspecified }, 0);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"));
 		control.Options.Rows = 18;
@@ -265,7 +263,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 			return { Value: value, Label: `{{portals.desktops.update.seo.${value}}}` };
 		});
 		await Promise.all(seo.map(async s => s.Label = await this.appFormsSvc.getResourceAsync(s.Label)));
-		AppUtility.insertAt(seo, { Value: "-", Label: unspecified }, 0);
+		seo.insert({ Value: "-", Label: unspecified }, 0);
 		control.SubControls.Controls.filter(ctrl => ctrl.Type === "Select").forEach(ctrl => ctrl.Options.SelectOptions.Values = seo);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));

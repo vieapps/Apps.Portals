@@ -2,8 +2,9 @@ import { Subscription } from "rxjs";
 import { Component, OnInit, OnDestroy, Input, ViewChild, ElementRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { FormGroup, FormControl, Validators } from "@angular/forms";
+import { HashSet } from "@app/components/app.collections";
 import { AppCrypto } from "@app/components/app.crypto";
-import { AppUtility, HashSet } from "@app/components/app.utility";
+import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -202,7 +203,7 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 
 	onDeleteQueuedFile(event: Event, index: number) {
 		event.stopPropagation();
-		AppUtility.removeAt(this.files, index);
+		this.files.removeAt(index);
 	}
 
 	uploadFiles() {

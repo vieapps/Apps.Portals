@@ -139,20 +139,16 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "site");
 
-		AppUtility.insertAt(
-			formConfig,
-			{
-				Name: "Organization",
-				Type: "Text",
-				Segment: "basic",
-				Extras: { Text: this.organization.Title },
-				Options: {
-					Label: "{{portals.sites.controls.Organization}}",
-					ReadOnly: true
-				}
-			},
-			0
-		);
+		formConfig.insert({
+			Name: "Organization",
+			Type: "Text",
+			Segment: "basic",
+			Extras: { Text: this.organization.Title },
+			Options: {
+				Label: "{{portals.sites.controls.Organization}}",
+				ReadOnly: true
+			}
+		}, 0);
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
 		control.Options.Rows = 2;
@@ -185,7 +181,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => {
 			return { Value: theme.name, Label: theme.name };
 		});
-		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: await this.configSvc.getResourceAsync("portals.common.unspecified") }, 0);
+		control.Options.SelectOptions.Values.insert({ Value: "-", Label: await this.configSvc.getResourceAsync("portals.common.unspecified") }, 0);
 
 		const homeDesktopCtrl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "HomeDesktopID"));
 		const searchDesktopCtrl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SearchDesktopID"));

@@ -241,7 +241,7 @@ export class AppComponent implements OnInit {
 			this.sidebar.menu[menuIndex].items[itemIndex] = updatedItem;
 		}
 		else {
-			AppUtility.insertAt(this.sidebar.menu[menuIndex].items, updatedItem, itemIndex);
+			this.sidebar.menu[menuIndex].items.insert(updatedItem, itemIndex);
 		}
 	}
 
@@ -313,13 +313,13 @@ export class AppComponent implements OnInit {
 		const sidebarItems = await this.getSidebarItemsAsync();
 		const items = this.sidebar.menu[0].items;
 		if (this.configSvc.isAuthenticated) {
-			AppUtility.removeAt(items, items.findIndex(item => item.url.startsWith(sidebarItems.register.url)));
+			items.removeAt(items.findIndex(item => item.url.startsWith(sidebarItems.register.url)));
 			const index = items.findIndex(item => item.url.startsWith(sidebarItems.login.url));
 			if (index > -1) {
 				items[index] = sidebarItems.profile;
 			}
 			else if (items.findIndex(item => item.url.startsWith(sidebarItems.profile.url)) < 0) {
-				AppUtility.insertAt(items, sidebarItems.profile);
+				items.insert(sidebarItems.profile);
 			}
 		}
 		else {
@@ -329,12 +329,12 @@ export class AppComponent implements OnInit {
 					items[index] = sidebarItems.login;
 				}
 				else {
-					AppUtility.insertAt(items, sidebarItems.login);
+					items.insert(sidebarItems.login);
 				}
 			}
 			if (this.authSvc.canRegisterNewAccounts && items.findIndex(item => item.url.startsWith(sidebarItems.register.url)) < 0) {
 				const index = items.findIndex(item => item.url.startsWith(sidebarItems.login.url));
-				AppUtility.insertAt(items, sidebarItems.register, index > -1 ? index + 1 : -1);
+				items.insert(sidebarItems.register, index > -1 ? index + 1 : -1);
 			}
 		}
 	}

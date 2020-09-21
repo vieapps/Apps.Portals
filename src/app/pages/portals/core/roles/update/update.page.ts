@@ -106,19 +106,15 @@ export class PortalsRolesUpdatePage implements OnInit {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "role");
-		AppUtility.insertAt(
-			formConfig,
-			{
-				Name: "Organization",
-				Type: "Text",
-				Extras: { Text: this.organization.Title },
-				Options: {
-					Label: "{{portals.roles.controls.Organization}}",
-					ReadOnly: true
-				},
+		formConfig.insert({
+			Name: "Organization",
+			Type: "Text",
+			Extras: { Text: this.organization.Title },
+			Options: {
+				Label: "{{portals.roles.controls.Organization}}",
+				ReadOnly: true
 			},
-			0
-		);
+		}, 0);
 
 		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title")).Options.AutoFocus = true;
 
@@ -175,8 +171,8 @@ export class PortalsRolesUpdatePage implements OnInit {
 			OnDelete: (selected, formControl) => {
 				const users = formControl.lookupValues;
 				selected.forEach(id => {
-					AppUtility.removeAt(users, users.indexOf(id));
-					AppUtility.removeAt(this.users, this.users.findIndex(user => user.Value === id));
+					users.remove(id);
+					this.users.removeAt(this.users.findIndex(user => user.Value === id));
 				});
 				formControl.lookupValues = users;
 				formControl.lookupDisplayValues = this.users;
@@ -186,7 +182,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 				OnAdd: async formControl => await this.appFormsSvc.showModalAsync(UsersSelectorModalPage, { multiple: true }, async selected => {
 					if (AppUtility.isArray(selected, true)) {
 						const users = formControl.lookupValues;
-						(selected as Array<string>).filter(id => users.indexOf(id) < 0).forEach(id => {
+						(selected as Array<string>).except(users).forEach(id => {
 							users.push(id);
 							this.users.push({
 								Value: id,
@@ -251,7 +247,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 			user.Description = profile.getEmail(!this.canModerateOrganization);
 			user.Image = profile.avatarURI;
 		}));
-		this.users = this.users.sort(AppUtility.getCompareFunction("Label", "Description"));
+		this.users = this.users.sortBy("Label", "Description");
 	}
 
 	onFormInitialized() {

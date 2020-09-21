@@ -1,5 +1,5 @@
 <ion-header>
-	<ion-toolbar [color]="configSvc.color">
+	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
 			<ion-button color="secondary" (click)="closeAsync()">
 				{{ labels.cancel }}
@@ -25,9 +25,9 @@
 	</ion-toolbar>
 </ion-header>
 
-<ion-content [color]="configSvc.color">
+<ion-content [color]="color">
 	<ion-list *ngIf="!searching" class="ion-padding-end">
-		<ion-item *ngIf="parentRole" [color]="configSvc.color" (click)="back($event)" class="parent ion-activatable" detail="false">
+		<ion-item *ngIf="parentRole" [color]="color" (click)="back($event)" class="parent ion-activatable" detail="false">
 			<ion-label>
 				<ion-icon name="chevron-back-outline" slot="icon-only" color="primary" class="ion-float-start"></ion-icon>
 				<span>
@@ -35,7 +35,7 @@
 				</span>
 			</ion-label>
 		</ion-item>
-		<ion-item *ngFor="let role of roles; trackBy: track" [color]="configSvc.color" detail="false">
+		<ion-item *ngFor="let role of roles; trackBy: track" [color]="color" detail="false">
 			<ion-buttons *ngIf="role.childrenIDs && role.childrenIDs.length > 0" slot="end">
 				<ion-button fill="clear" color="primary" (click)="show($event, role)">
 					<ion-icon name="chevron-forward-outline" slot="icon-only"></ion-icon>
@@ -53,7 +53,7 @@
 		</ion-item>
 	</ion-list>
 	<ion-list *ngIf="searching" class="ion-padding-end">
-		<ion-item *ngFor="let role of results; trackBy: track" [color]="configSvc.color" detail="false">
+		<ion-item *ngFor="let role of results; trackBy: track" [color]="color" detail="false">
 			<ion-checkbox slot="end" [checked]="selected.contains(role.ID)" (ionChange)="select($event, role.ID)"></ion-checkbox>
 			<ion-label>
 				<span>

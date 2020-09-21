@@ -1,5 +1,6 @@
+import { Dictionary } from "@app/components/app.collections";
+import { AppUtility } from "@app/components/app.utility";
 import { AppCrypto } from "@app/components/app.crypto";
-import { AppUtility, Dictionary } from "@app/components/app.utility";
 
 /** Presents a data pagination */
 export interface AppDataPagination {
@@ -34,7 +35,7 @@ export class AppPagination {
 					let index = 0;
 					while (index < array.length) {
 						if (AppUtility.isNull(array[index])) {
-							AppUtility.removeAt(array, index);
+							array.removeAt(index);
 						}
 						else {
 							index++;

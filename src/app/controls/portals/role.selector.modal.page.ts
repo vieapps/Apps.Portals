@@ -2,7 +2,8 @@ import { Subscription } from "rxjs";
 import { List } from "linqts";
 import { Component, OnInit, OnDestroy, Input, ViewChild } from "@angular/core";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
-import { AppUtility, HashSet } from "@app/components/app.utility";
+import { HashSet } from "@app/components/app.collections";
+import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
 import { AppFormsService } from "@app/components/forms.service";
@@ -20,7 +21,7 @@ import { Role } from "@app/models/portals.core.role";
 export class RolesSelectorModalPage implements OnInit, OnDestroy {
 
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
@@ -49,6 +50,10 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	private subscription: Subscription;
 	private organization: Organization;
@@ -116,14 +121,13 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		await this.startSearchAsync(async () => {
 			if (this.allowSystemRoles) {
 				if (this.section === "Contributive" || this.section === "Viewable" || this.section === "Downloadable") {
-					AppUtility.insertAt(this.roles, this.roleOfAll, 0);
-					AppUtility.insertAt(this.roles, this.roleOfAuthorized, 1);
+					this.roles.insert(this.roleOfAll, 0).insert(this.roleOfAuthorized, 1);
 					if (this.section === "Contributive" && !this.allowVisitorInContributiveSection) {
-						AppUtility.removeAt(this.roles, 0);
+						this.roles.removeAt(0);
 					}
 				}
 				else if (this.section === "Editable") {
-					AppUtility.insertAt(this.roles, this.roleOfAuthorized, 0);
+					this.roles.insert(this.roleOfAuthorized, 0);
 				}
 			}
 			await this.appFormsSvc.hideLoadingAsync();
@@ -258,7 +262,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	back(event: Event) {
 		event.stopPropagation();
 		this.parentRole = this.parentRole.Parent;
-		this.roles = (this.parentRole !== undefined ? this.parentRole.Children : Role.instances.toArray(o => o.SystemID === this.organization.ID && o.ParentID === undefined)).filter(o => this.excludedIDs.indexOf(o.ID) < 0).sort(AppUtility.getCompareFunction("Title"));
+		this.roles = (this.parentRole !== undefined ? this.parentRole.Children : Role.instances.toArray(o => o.SystemID === this.organization.ID && o.ParentID === undefined)).filter(o => this.excludedIDs.indexOf(o.ID) < 0).sortBy("Title");
 	}
 
 	show(event: Event, role: Role) {

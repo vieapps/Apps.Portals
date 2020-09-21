@@ -138,20 +138,16 @@ export class CmsCategoriesUpdatePage implements OnInit {
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.category", undefined, { "x-content-type-id": this.contentType.ID });
 
-		AppUtility.insertAt(
-			formConfig,
-			{
-				Name: "Info",
-				Type: "Text",
-				Segment: "basic",
-				Extras: { Text: `${this.organization.Title} - ${this.module.Title}` },
-				Options: {
-					Label: "{{portals.cms.categories.controls.Info}}",
-					ReadOnly: true
-				}
-			},
-			0
-		);
+		formConfig.insert({
+			Name: "Info",
+			Type: "Text",
+			Segment: "basic",
+			Extras: { Text: `${this.organization.Title} - ${this.module.Title}` },
+			Options: {
+				Label: "{{portals.cms.categories.controls.Info}}",
+				ReadOnly: true
+			}
+		}, 0);
 
 		let parentCategory = this.category.Parent;
 		if (parentCategory === undefined && AppUtility.isNotEmpty(this.category.ParentID)) {

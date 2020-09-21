@@ -696,7 +696,7 @@ export class AppFormsControl {
 			if (AppUtility.isArray(subConfig, true)) {
 				control.SubControls = {
 					AsArray: !!(subControls.AsArray || subControls.asArray || subControls.asarray),
-					Controls: (subConfig as Array<any>).map((subOptions, subOrder) => this.assign(subOptions, undefined, subOrder, control.Name)).sort(AppUtility.getCompareFunction("Order"))
+					Controls: (subConfig as Array<any>).map((subOptions, subOrder) => this.assign(subOptions, undefined, subOrder, control.Name)).sortBy("Order")
 				};
 				if (control.SubControls.Controls.length < 1) {
 					control.SubControls = undefined;
@@ -878,7 +878,7 @@ export class AppFormsService {
 			}
 			return formControl;
 		})
-		.sort(AppUtility.getCompareFunction("segmentIndex", "Order"))
+		.sortBy("segmentIndex", "Order")
 		.forEach((formControl, order) => {
 			formControl.Order = order;
 			formControls.push(formControl);

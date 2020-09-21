@@ -55,8 +55,7 @@ export class AppEvents {
 			const handlers = this.getHandlers(event);
 			let index = handlers.findIndex(handler => AppUtility.isEquals(identity, handler.identity));
 			while (index > -1) {
-				AppUtility.removeAt(handlers, index);
-				index = handlers.findIndex(handler => AppUtility.isEquals(identity, handler.identity));
+				index = handlers.removeAt(index).findIndex(handler => AppUtility.isEquals(identity, handler.identity));
 			}
 		}
 	}

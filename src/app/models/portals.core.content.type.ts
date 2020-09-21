@@ -1,5 +1,5 @@
-import { List } from "linqts";
-import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { Dictionary } from "@app/components/app.collections";
+import { AppUtility } from "@app/components/app.utility";
 import { Privileges } from "@app/models/privileges";
 import { PortalBase as BaseModel, NotificationSettings, EmailSettings } from "@app/models/portals.base";
 import { ExtendedPropertyDefinition, ExtendedControlDefinition, StandardControlDefinition } from "@app/models/portals.base";
@@ -79,9 +79,14 @@ export class ContentType extends CoreBaseModel {
 		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
 	}
 
-	/** Converts the array of objects to list */
+	/** Deserializes the collection of objects to array */
+	public static toArray(objects: Array<any>) {
+		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
+	}
+
+	/** Deserializes the collection of objects to list */
 	public static toList(objects: Array<any>) {
-		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
+		return this.toArray(objects).toList();
 	}
 
 	public get routerLink() {

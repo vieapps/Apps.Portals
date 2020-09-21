@@ -243,7 +243,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				: this.contentType.contentTypeDefinition.NestedObject
 					? ["view", "other"]
 					: [];
-			segments.forEach(segment => AppUtility.removeAt(formSegments, formSegments.findIndex(formSegment => formSegment.Name === segment)));
+			segments.forEach(segment => formSegments.removeAt(formSegments.findIndex(formSegment => formSegment.Name === segment)));
 		}
 
 		if (onCompleted !== undefined) {
@@ -263,14 +263,14 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		control.Options.SelectOptions.Values = ["List", "View"].map(action => {
 			return { Value: action, Label: `{{portals.portlets.actions.${action}}}` };
 		});
-		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: this.unspecified }, 0);
+		control.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "AlternativeAction"));
 		control.Options.SelectOptions.Interface = "popover";
 		control.Options.SelectOptions.Values = ["List", "View"].map(action => {
 			return { Value: action, Label: `{{portals.portlets.actions.${action}}}` };
 		});
-		AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: this.unspecified }, 0);
+		control.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "DesktopID"));
 		if (this.originalPortlet === undefined) {
@@ -305,20 +305,16 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		}
 		else {
 			control.Hidden = true;
-			AppUtility.insertAt(
-				formConfig,
-				{
-					Name: "Desktop",
-					Type: "Text",
-					Segment: control.Segment,
-					Extras: { Text: `${this.organization.Title} :: ${this.originalDesktop.FullTitle}` },
-					Options: {
-						Label: control.Options.Label,
-						ReadOnly: true
-					}
-				},
-				formConfig.findIndex(ctrl => ctrl.Name === control.Name)
-			);
+			formConfig.insert({
+				Name: "Desktop",
+				Type: "Text",
+				Segment: control.Segment,
+				Extras: { Text: `${this.organization.Title} :: ${this.originalDesktop.FullTitle}` },
+				Options: {
+					Label: control.Options.Label,
+					ReadOnly: true
+				}
+			}, formConfig.findIndex(ctrl => ctrl.Name === control.Name));
 		}
 
 		const otherDekstops = new Array<AppFormsLookupValue>();
@@ -334,69 +330,61 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			}));
 		}
 
-		AppUtility.insertAt(
-			formConfig,
-			{
-				Name: "OtherDesktops",
-				Type: "Lookup",
-				Segment: control.Segment,
-				Extras: { LookupDisplayValues: otherDekstops.length > 0 ? otherDekstops : undefined },
-				Options: {
-					Label: control.Options.Label.replace("DesktopID", "OtherDesktops"),
-					Description: control.Options.Description.replace("DesktopID", "OtherDesktops"),
-					Disabled: this.originalPortlet !== undefined,
-					LookupOptions: {
-						Multiple: true,
-						OnDelete: (data, formControl) => {
-							const lookupDisplayValues = formControl.lookupDisplayValues;
-							data.forEach(id => AppUtility.removeAt(lookupDisplayValues, lookupDisplayValues.findIndex(item => item.Value === id)));
-							formControl.setValue(lookupDisplayValues.map(item => item.Value));
-							formControl.lookupDisplayValues = lookupDisplayValues;
+		formConfig.insert({
+			Name: "OtherDesktops",
+			Type: "Lookup",
+			Segment: control.Segment,
+			Extras: { LookupDisplayValues: otherDekstops.length > 0 ? otherDekstops : undefined },
+			Options: {
+				Label: control.Options.Label.replace("DesktopID", "OtherDesktops"),
+				Description: control.Options.Description.replace("DesktopID", "OtherDesktops"),
+				Disabled: this.originalPortlet !== undefined,
+				LookupOptions: {
+					Multiple: true,
+					OnDelete: (data, formControl) => {
+						const lookupDisplayValues = formControl.lookupDisplayValues;
+						data.forEach(id => lookupDisplayValues.removeAt(lookupDisplayValues.findIndex(item => item.Value === id)));
+						formControl.setValue(lookupDisplayValues.map(item => item.Value));
+						formControl.lookupDisplayValues = lookupDisplayValues;
+					},
+					ModalOptions: {
+						Component: DesktopsSelectorModalPage,
+						ComponentProps: {
+							multiple: true,
+							organizationID: this.organization.ID
 						},
-						ModalOptions: {
-							Component: DesktopsSelectorModalPage,
-							ComponentProps: {
-								multiple: true,
-								organizationID: this.organization.ID
-							},
-							OnDismiss: async (data, formControl) => {
-								if (AppUtility.isArray(data, true)) {
-									const lookupDisplayValues = formControl.lookupDisplayValues;
-									const currentDesktopID = this.formControls.find(ctrl => ctrl.Name === "DesktopID").value;
-									(data as Array<string>).filter(id => id !== currentDesktopID).forEach(id => {
-										const otherDesktop = Desktop.get(id);
-										if (otherDesktop !== undefined && lookupDisplayValues.findIndex(item => item.Value === otherDesktop.ID) < 0) {
-											lookupDisplayValues.push({ Value: otherDesktop.ID, Label: otherDesktop.FullTitle });
-										}
-									});
-									formControl.setValue(lookupDisplayValues.map(item => item.Value));
-									formControl.lookupDisplayValues = lookupDisplayValues;
-								}
+						OnDismiss: async (data, formControl) => {
+							if (AppUtility.isArray(data, true)) {
+								const lookupDisplayValues = formControl.lookupDisplayValues;
+								const currentDesktopID = this.formControls.find(ctrl => ctrl.Name === "DesktopID").value;
+								(data as Array<string>).filter(id => id !== currentDesktopID).forEach(id => {
+									const otherDesktop = Desktop.get(id);
+									if (otherDesktop !== undefined && lookupDisplayValues.findIndex(item => item.Value === otherDesktop.ID) < 0) {
+										lookupDisplayValues.push({ Value: otherDesktop.ID, Label: otherDesktop.FullTitle });
+									}
+								});
+								formControl.setValue(lookupDisplayValues.map(item => item.Value));
+								formControl.lookupDisplayValues = lookupDisplayValues;
 							}
 						}
 					}
 				}
-			},
-			formConfig.findIndex(ctrl => ctrl.Name === control.Name) + 1
-		);
+			}
+		}, formConfig.findIndex(ctrl => ctrl.Name === control.Name) + 1);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Zone"));
 		if (AppUtility.isNotEmpty(this.portlet.ID) && !this.isAdvancedMode) {
 			control.Hidden = true;
-			AppUtility.insertAt(
-				formConfig,
-				{
-					Name: "ZoneName",
-					Type: "Text",
-					Segment: control.Segment,
-					Extras: { Text: this.portlet.Zone },
-					Options: {
-						Label: control.Options.Label,
-						ReadOnly: true
-					}
-				},
-				formConfig.findIndex(ctrl => ctrl.Name === control.Name)
-			);
+			formConfig.insert({
+				Name: "ZoneName",
+				Type: "Text",
+				Segment: control.Segment,
+				Extras: { Text: this.portlet.Zone },
+				Options: {
+					Label: control.Options.Label,
+					ReadOnly: true
+				}
+			}, formConfig.findIndex(ctrl => ctrl.Name === control.Name));
 		}
 		else {
 			control.Options.SelectOptions.Interface = "popover";
@@ -411,7 +399,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			control.Options.SelectOptions.Values = this.organization.contentTypes.filter(contentType => contentType.contentTypeDefinition.Portlets).map(contentType => {
 				return { Value: contentType.ID, Label: contentType.Title };
 			});
-			AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: this.unspecified }, 0);
+			control.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
 			control.Options.OnChanged = (_, formControl) => {
 				if (!AppUtility.isEquals(formControl.value, "-")) {
 					this.contentType = ContentType.get(formControl.value);
@@ -447,40 +435,32 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		}
 		else if (AppUtility.isNotEmpty(this.portlet.ID)) {
 			control.Hidden = true;
-			AppUtility.insertAt(
-				formConfig,
-				{
-					Name: "RepositoryEntity",
-					Type: "Text",
-					Segment: control.Segment,
-					Extras: { Text: this.contentType !== undefined ? this.contentType.Title : this.unspecified },
-					Options: {
-						Label: control.Options.Label,
-						ReadOnly: true
-					}
-				},
-				formConfig.findIndex(ctrl => ctrl.Name === control.Name)
-			);
+			formConfig.insert({
+				Name: "RepositoryEntity",
+				Type: "Text",
+				Segment: control.Segment,
+				Extras: { Text: this.contentType !== undefined ? this.contentType.Title : this.unspecified },
+				Options: {
+					Label: control.Options.Label,
+					ReadOnly: true
+				}
+			}, formConfig.findIndex(ctrl => ctrl.Name === control.Name));
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OriginalPortletID"));
 		if (AppUtility.isNotEmpty(this.portlet.ID) && AppUtility.isNotEmpty(this.portlet.OriginalPortletID)) {
 			control.Options.ReadOnly = true;
-			AppUtility.insertAt(
-				formConfig,
-				{
-					Name: "OriginalPortlet",
-					Type: "Text",
-					Segment: control.Segment,
-					Extras: { Text: this.originalPortlet !== undefined ? (this.originalPortlet.desktop !== undefined ? `${this.originalPortlet.desktop.FullTitle} :: ` : "") + this.originalPortlet.Title : this.unspecified },
-					Options: {
-						Label: control.Options.Label.replace("OriginalPortletID", "OriginalPortlet"),
-						Description: control.Options.Description.replace("OriginalPortletID", "OriginalPortlet"),
-						ReadOnly: true
-					}
-				},
-				formConfig.findIndex(ctrl => ctrl.Name === control.Name)
-			);
+			formConfig.insert({
+				Name: "OriginalPortlet",
+				Type: "Text",
+				Segment: control.Segment,
+				Extras: { Text: this.originalPortlet !== undefined ? (this.originalPortlet.desktop !== undefined ? `${this.originalPortlet.desktop.FullTitle} :: ` : "") + this.originalPortlet.Title : this.unspecified },
+				Options: {
+					Label: control.Options.Label.replace("OriginalPortletID", "OriginalPortlet"),
+					Description: control.Options.Description.replace("OriginalPortletID", "OriginalPortlet"),
+					ReadOnly: true
+				}
+			}, formConfig.findIndex(ctrl => ctrl.Name === control.Name));
 		}
 		else {
 			control.Hidden = true;
@@ -573,21 +553,17 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(this.portlet.ID)) {
 			if (!this.isAdvancedMode) {
 				control.Hidden = true;
-				AppUtility.insertAt(
-					listSettingsConfig,
-					{
-						Name: "ListOptions",
-						Type: "Text",
-						Extras: { Text: AppUtility.isObject(listSettings, true) && AppUtility.isObject(listSettings.Options, true) ? JSON.stringify(listSettings.Options) : undefined },
-						Options: {
-							Label: control.Options.Label,
-							ReadOnly: true,
-							Type: "textarea",
-							Rows: 18
-						}
-					},
-					listSettingsConfig.findIndex(ctrl => ctrl.Name === control.Name)
-				);
+				listSettingsConfig.insert({
+					Name: "ListOptions",
+					Type: "Text",
+					Extras: { Text: AppUtility.isObject(listSettings, true) && AppUtility.isObject(listSettings.Options, true) ? JSON.stringify(listSettings.Options) : undefined },
+					Options: {
+						Label: control.Options.Label,
+						ReadOnly: true,
+						Type: "textarea",
+						Rows: 18
+					}
+				}, listSettingsConfig.findIndex(ctrl => ctrl.Name === control.Name));
 			}
 		}
 		else {
@@ -605,21 +581,17 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(this.portlet.ID)) {
 			if (!this.isAdvancedMode) {
 				control.Hidden = true;
-				AppUtility.insertAt(
-					viewSettingsConfig,
-					{
-						Name: "ViewOptions",
-						Type: "Text",
-						Extras: { Text: AppUtility.isObject(viewSettings, true) && AppUtility.isObject(viewSettings.Options, true) ? JSON.stringify(viewSettings.Options) : undefined },
-						Options: {
-							Label: control.Options.Label,
-							ReadOnly: true,
-							Type: "textarea",
-							Rows: 18
-						}
-					},
-					viewSettingsConfig.findIndex(ctrl => ctrl.Name === control.Name)
-				);
+				viewSettingsConfig.insert({
+					Name: "ViewOptions",
+					Type: "Text",
+					Extras: { Text: AppUtility.isObject(viewSettings, true) && AppUtility.isObject(viewSettings.Options, true) ? JSON.stringify(viewSettings.Options) : undefined },
+					Options: {
+						Label: control.Options.Label,
+						ReadOnly: true,
+						Type: "textarea",
+						Rows: 18
+					}
+				}, viewSettingsConfig.findIndex(ctrl => ctrl.Name === control.Name));
 			}
 		}
 		else {
@@ -914,7 +886,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				await this.portalsCoreSvc.deletePortletAsync(
 					this.portlet.ID,
 					async data => {
-						AppUtility.removeAt(this.desktop.portlets, this.desktop.portlets.findIndex(p => p.ID === data.ID));
+						this.desktop.portlets.removeAt(this.desktop.portlets.findIndex(p => p.ID === data.ID));
 						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Portlet", Type: "Deleted", ID: data.ID, DekstopID: data.DekstopID });
 						await Promise.all([
 							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.portlets.update.buttons.delete"), this.configSvc.currentUrl),

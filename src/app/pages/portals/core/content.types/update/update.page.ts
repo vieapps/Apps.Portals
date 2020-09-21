@@ -1,8 +1,9 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@app/components/app.crypto";
+import { HashSet } from "@app/components/app.collections";
 import { AppEvents } from "@app/components/app.events";
-import { AppUtility, HashSet } from "@app/components/app.utility";
+import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppPagination } from "@app/components/app.pagination";
@@ -139,7 +140,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 
 	private getRepositories() {
 		return Module.instances.toArray(o => o.SystemID === this.organization.ID)
-			.sort(AppUtility.getCompareFunction("Title"))
+			.sortBy("Title")
 			.map(o => {
 				return {
 					Value: o.ID,
@@ -150,7 +151,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 	}
 
 	private getDefinitions(moduleID: string, onlyMultiple: boolean = false) {
-		let contentTypeDefinitions = this.getContentTypeDefinitions(moduleID).sort(AppUtility.getCompareFunction("Title"));
+		let contentTypeDefinitions = this.getContentTypeDefinitions(moduleID).sortBy("Title");
 		if (onlyMultiple) {
 			const contentTypeIDs = ContentType.instances.toArray(o => o.RepositoryID === moduleID).map(o => o.ContentTypeDefinitionID);
 			contentTypeDefinitions = contentTypeDefinitions.filter(o => o.MultipleIntances || (!o.MultipleIntances && contentTypeIDs.indexOf(o.ID) < 0));
@@ -184,20 +185,16 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "content.type");
 
-		AppUtility.insertAt(
-			formConfig,
-			{
-				Name: "Organization",
-				Type: "Text",
-				Segment: "basic",
-				Extras: { Text: this.organization.Title },
-				Options: {
-					Label: "{{portals.contenttypes.controls.Organization}}",
-					ReadOnly: true
-				}
-			},
-			0
-		);
+		formConfig.insert({
+			Name: "Organization",
+			Type: "Text",
+			Segment: "basic",
+			Extras: { Text: this.organization.Title },
+			Options: {
+				Label: "{{portals.contenttypes.controls.Organization}}",
+				ReadOnly: true
+			}
+		}, 0);
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		control.Options.AutoFocus = true;
@@ -208,8 +205,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryID"));
 		if (AppUtility.isNotEmpty(this.contentType.ID)) {
 			control.Hidden = true;
-			AppUtility.insertAt(
-				formConfig,
+			formConfig.insert(
 				{
 					Name: "Repository",
 					Type: "Text",
@@ -238,20 +234,16 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ContentTypeDefinitionID"));
 		if (AppUtility.isNotEmpty(this.contentType.ID)) {
 			control.Hidden = true;
-			AppUtility.insertAt(
-				formConfig,
-				{
-					Name: "ContentTypeDefinition",
-					Type: "Text",
-					Segment: "basic",
-					Extras: { Text: this.getDefinitions(this.contentType.RepositoryID).find(definition => definition.Value === this.contentType.ContentTypeDefinitionID).Label },
-					Options: {
-						Label: control.Options.Label,
-						ReadOnly: true
-					}
-				},
-				formConfig.findIndex(ctrl => ctrl.Name === control.Name)
-			);
+			formConfig.insert({
+				Name: "ContentTypeDefinition",
+				Type: "Text",
+				Segment: "basic",
+				Extras: { Text: this.getDefinitions(this.contentType.RepositoryID).find(definition => definition.Value === this.contentType.ContentTypeDefinitionID).Label },
+				Options: {
+					Label: control.Options.Label,
+					ReadOnly: true
+				}
+			}, formConfig.findIndex(ctrl => ctrl.Name === control.Name));
 		}
 		else {
 			control.Options.Type = "dropdown";

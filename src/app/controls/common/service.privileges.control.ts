@@ -66,7 +66,7 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 		this.selectInterface = (this.selectInterface || "popover").trim().toLowerCase();
 
 		if (this.privileges.findIndex(privilege => AppUtility.isEquals(privilege.ServiceName, this.service) && AppUtility.isEquals(privilege.ObjectName, "")) < 0) {
-			AppUtility.insertAt(this.privileges, new Privilege(this.service.toLowerCase()), 0);
+			this.privileges.insert(new Privilege(this.service.toLowerCase()), 0);
 		}
 
 		(this.configSvc.appConfig.services.all.find(service => AppUtility.isEquals(service.name, this.service)).objects || []).forEach(object => {

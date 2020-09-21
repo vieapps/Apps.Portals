@@ -945,7 +945,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			else {
 				this._selectOptions = this._selectOptions || [];
 				if (!event.detail.checked) {
-					AppUtility.removeAt(this._selectOptions, this._selectOptions.indexOf(event.detail.value));
+					this._selectOptions.remove(event.detail.value);
 				}
 				else if (this._selectOptions.indexOf(event.detail.value) < 0) {
 					this._selectOptions.push(event.detail.value);

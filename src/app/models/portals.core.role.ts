@@ -1,5 +1,5 @@
-import { List } from "linqts";
-import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { Dictionary } from "@app/components/app.collections";
+import { AppUtility } from "@app/components/app.utility";
 import { NestedObject } from "@app/models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
 
@@ -67,9 +67,14 @@ export class Role extends CoreBaseModel implements NestedObject {
 		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
 	}
 
-	/** Converts the array of objects to list */
+	/** Deserializes the collection of objects to array */
+	public static toArray(objects: Array<any>) {
+		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
+	}
+
+	/** Deserializes the collection of objects to list */
 	public static toList(objects: Array<any>) {
-		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
+		return this.toArray(objects).toList();
 	}
 
 	public get Parent() {
@@ -77,10 +82,7 @@ export class Role extends CoreBaseModel implements NestedObject {
 	}
 
 	public get Children() {
-		const roles = AppUtility.isArray(this.childrenIDs, true)
-			? this.childrenIDs.map(id => Role.get(id))
-			: Role.instances.toArray(role => role.ParentID === this.ID);
-		return roles.sort(AppUtility.getCompareFunction("Title"));
+		return (AppUtility.isArray(this.childrenIDs, true) ? this.childrenIDs.map(id => Role.get(id)) : Role.instances.toArray(role => role.ParentID === this.ID)).sortBy("Title");
 	}
 
 	public get FullTitle(): string {

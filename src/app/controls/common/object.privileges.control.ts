@@ -200,7 +200,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 				user.Image = profile.avatarURI;
 			}))
 		])));
-		(sections || this.sections).forEach(section => this.users[section] = this.users[section].sort(AppUtility.getCompareFunction("Label", "Description")));
+		(sections || this.sections).forEach(section => this.users[section] = this.users[section].sortBy("Label", "Description"));
 	}
 
 	private emitChanges() {
@@ -240,7 +240,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 			roles = this.selectedRoles[section] = new Array<string>();
 		}
 		if (!event.detail.checked) {
-			AppUtility.removeAt(roles, roles.indexOf(id));
+			roles.removeAt(roles.indexOf(id));
 		}
 		else if (roles.indexOf(id) < 0) {
 			roles.push(id);
@@ -295,7 +295,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 			users = this.selectedUsers[section] = new Array<string>();
 		}
 		if (!event.detail.checked) {
-			AppUtility.removeAt(users, users.indexOf(id));
+			users.removeAt(users.indexOf(id));
 		}
 		else if (users.indexOf(id) < 0) {
 			users.push(id);

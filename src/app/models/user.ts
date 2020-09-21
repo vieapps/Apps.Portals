@@ -1,6 +1,6 @@
-import { List } from "linqts";
 import { AppConfig } from "@app/app.config";
-import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { Dictionary } from "@app/components/app.collections";
+import { AppUtility } from "@app/components/app.utility";
 import { Base as BaseModel } from "@app/models/base";
 import { RatingPoint } from "@app/models/rating.point";
 
@@ -74,9 +74,14 @@ export class UserProfileBase extends BaseModel {
 		return id !== undefined && this.instances.contains(id);
 	}
 
-	/** Converts the array of objects to list */
+	/** Deserializes the collection of objects to array */
+	public static toArray(objects: Array<any>) {
+		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
+	}
+
+	/** Deserializes the collection of objects to list */
 	public static toList(objects: Array<any>) {
-		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
+		return this.toArray(objects).toList();
 	}
 
 	public get avatarURI() {
@@ -150,9 +155,14 @@ export class UserProfile extends UserProfileBase {
 			: undefined;
 	}
 
-	/** Converts the array of objects to list */
+	/** Deserializes the collection of objects to array */
+	public static toArray(objects: Array<any>) {
+		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
+	}
+
+	/** Deserializes the collection of objects to list */
 	public static toList(objects: Array<any>) {
-		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
+		return this.toArray(objects).toList();
 	}
 
 	public copy(source: any, onCompleted?: (data: any) => void) {

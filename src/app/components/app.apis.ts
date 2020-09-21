@@ -141,14 +141,12 @@ export class AppRTU {
 			let handlers = this.getServiceHandlers(service);
 			let index = handlers.findIndex(handler => AppUtility.isEquals(identity, handler.identity));
 			while (index > -1) {
-				AppUtility.removeAt(handlers, index);
-				index = handlers.findIndex(handler => AppUtility.isEquals(identity, handler.identity));
+				index = handlers.removeAt(index).findIndex(handler => AppUtility.isEquals(identity, handler.identity));
 			}
 			handlers = this.getObjectHandlers(service, object);
 			index = handlers.findIndex(handler => AppUtility.isEquals(identity, handler.identity));
 			while (index > -1) {
-				AppUtility.removeAt(handlers, index);
-				index = handlers.findIndex(handler => AppUtility.isEquals(identity, handler.identity));
+				index = handlers.removeAt(index).findIndex(handler => AppUtility.isEquals(identity, handler.identity));
 			}
 		}
 	}

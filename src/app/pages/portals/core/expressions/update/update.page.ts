@@ -141,20 +141,16 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "expression");
 
-		AppUtility.insertAt(
-			formConfig,
-			{
-				Name: "Organization",
-				Type: "Text",
-				Segment: "basic",
-				Extras: { Text: this.organization.Title },
-				Options: {
-					Label: "{{portals.expressions.controls.Organization}}",
-					ReadOnly: true
-				}
-			},
-			0
-		);
+		formConfig.insert({
+			Name: "Organization",
+			Type: "Text",
+			Segment: "basic",
+			Extras: { Text: this.organization.Title },
+			Options: {
+				Label: "{{portals.expressions.controls.Organization}}",
+				ReadOnly: true
+			}
+		}, 0);
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		control.Options.AutoFocus = true;
@@ -165,20 +161,16 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryID"));
 		if (AppUtility.isNotEmpty(this.expression.ID)) {
 			control.Hidden = true;
-			AppUtility.insertAt(
-				formConfig,
-				{
-					Name: "Repository",
-					Type: "Text",
-					Segment: "basic",
-					Extras: { Text: Module.get(this.expression.RepositoryID).Title },
-					Options: {
-						Label: control.Options.Label,
-						ReadOnly: true
-					}
-				},
-				formConfig.findIndex(ctrl => ctrl.Name === control.Name)
-			);
+			formConfig.insert({
+				Name: "Repository",
+				Type: "Text",
+				Segment: "basic",
+				Extras: { Text: Module.get(this.expression.RepositoryID).Title },
+				Options: {
+					Label: control.Options.Label,
+					ReadOnly: true
+				}
+			}, formConfig.findIndex(ctrl => ctrl.Name === control.Name));
 		}
 		else {
 			control.Options.SelectOptions.Values = this.organization.modules.map(module => {
@@ -198,20 +190,16 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		if (AppUtility.isNotEmpty(this.expression.ID)) {
 			control.Hidden = true;
 			if (AppUtility.isNotEmpty(this.expression.ContentTypeDefinitionID)) {
-				AppUtility.insertAt(
-					formConfig,
-					{
-						Name: "ContentTypeDefinition",
-						Type: "Text",
-						Segment: "basic",
-						Extras: { Text: this.getContentTypeDefinitions(this.expression.RepositoryID).find(definition => definition.ID  === this.expression.ContentTypeDefinitionID).Title },
-						Options: {
-							Label: control.Options.Label,
-							ReadOnly: true
-						}
-					},
-					formConfig.findIndex(ctrl => ctrl.Name === control.Name)
-				);
+				formConfig.insert({
+					Name: "ContentTypeDefinition",
+					Type: "Text",
+					Segment: "basic",
+					Extras: { Text: this.getContentTypeDefinitions(this.expression.RepositoryID).find(definition => definition.ID  === this.expression.ContentTypeDefinitionID).Title },
+					Options: {
+						Label: control.Options.Label,
+						ReadOnly: true
+					}
+				}, formConfig.findIndex(ctrl => ctrl.Name === control.Name));
 			}
 		}
 		else {
@@ -226,7 +214,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				contentTypeControl.Options.SelectOptions.Values = contentTypes.map(contentType => {
 					return { Value: contentType.ID, Label: contentType.Title };
 				});
-				AppUtility.insertAt(contentTypeControl.Options.SelectOptions.Values, { Value: "-", Label: this.unspecified }, 0);
+				contentTypeControl.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
 				contentTypeControl.controlRef.setValue(contentTypes.length > 0 ? contentTypes[0].ID : "-", { onlySelf: true });
 			};
 		}
@@ -235,20 +223,16 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		if (AppUtility.isNotEmpty(this.expression.ID)) {
 			control.Hidden = true;
 			if (AppUtility.isNotEmpty(this.expression.RepositoryEntityID)) {
-				AppUtility.insertAt(
-					formConfig,
-					{
-						Name: "RepositoryEntity",
-						Type: "Text",
-						Segment: "basic",
-						Extras: { Text: ContentType.get(this.expression.RepositoryEntityID).Title },
-						Options: {
-							Label: control.Options.Label,
-							ReadOnly: true
-						}
-					},
-					formConfig.findIndex(ctrl => ctrl.Name === control.Name)
-				);
+				formConfig.insert({
+					Name: "RepositoryEntity",
+					Type: "Text",
+					Segment: "basic",
+					Extras: { Text: ContentType.get(this.expression.RepositoryEntityID).Title },
+					Options: {
+						Label: control.Options.Label,
+						ReadOnly: true
+					}
+				}, formConfig.findIndex(ctrl => ctrl.Name === control.Name));
 			}
 		}
 		else {
@@ -262,7 +246,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			control.Options.SelectOptions.Values = contentTypes.map(contentType => {
 				return { Value: contentType.ID, Label: contentType.Title };
 			});
-			AppUtility.insertAt(control.Options.SelectOptions.Values, { Value: "-", Label: this.unspecified }, 0);
+			control.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
 		}
 
 		if (AppUtility.isNotEmpty(this.expression.ID)) {

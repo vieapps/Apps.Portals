@@ -566,7 +566,7 @@ export class PortalsCmsService extends BaseService {
 			}
 			let parentCategory = Category.get(parentID);
 			if (parentCategory !== undefined && parentCategory.childrenIDs !== undefined && parentCategory.ID !== category.ParentID) {
-				AppUtility.removeAt(parentCategory.childrenIDs, parentCategory.childrenIDs.indexOf(category.ID));
+				parentCategory.childrenIDs.removeAt(parentCategory.childrenIDs.indexOf(category.ID));
 			}
 			parentCategory = category.Parent;
 			if (parentCategory !== undefined && parentCategory.childrenIDs !== undefined && parentCategory.childrenIDs.indexOf(category.ID) < 0) {
@@ -582,7 +582,7 @@ export class PortalsCmsService extends BaseService {
 		if (Category.contains(id)) {
 			const parentCategory = Category.get(parentID);
 			if (parentCategory !== undefined && parentCategory.childrenIDs !== undefined) {
-				AppUtility.removeAt(parentCategory.childrenIDs, parentCategory.childrenIDs.indexOf(id));
+				parentCategory.childrenIDs.removeAt(parentCategory.childrenIDs.indexOf(id));
 			}
 			Category.instances.toArray(category => category.ParentID === id).forEach(category => this.deleteCategory(category.ID));
 			Category.instances.remove(id);
@@ -1176,9 +1176,9 @@ export class PortalsCmsService extends BaseService {
 	private fetchLink(link: Link) {
 		if (link !== undefined && link.childrenIDs === undefined) {
 			this.getLinkAsync(link.ID, _ => {
-				const o = Link.get(link.ID);
-				if (o.childrenIDs !== undefined && o.childrenIDs.length > 0) {
-					o.Children.forEach(c => this.fetchLink(c));
+				const obj = Link.get(link.ID);
+				if (obj.childrenIDs !== undefined && obj.childrenIDs.length > 0) {
+					obj.Children.forEach(cobj => this.fetchLink(cobj));
 				}
 			});
 		}
@@ -1190,12 +1190,12 @@ export class PortalsCmsService extends BaseService {
 			const link = Link.set(Link.deserialize(json, Link.get(json.ID)));
 			if (AppUtility.isArray(json.Children, true)) {
 				link.childrenIDs = [];
-				(json.Children as Array<any>).map(c => this.updateLink(c)).filter(o => o !== undefined).forEach(o => link.childrenIDs.push(o.ID));
+				(json.Children as Array<any>).map(c => this.updateLink(c)).filter(obj => obj !== undefined).forEach(obj => link.childrenIDs.push(obj.ID));
 				link.childrenIDs = link.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
 			}
 			let parentLink = Link.get(parentID);
 			if (parentLink !== undefined && parentLink.childrenIDs !== undefined && parentLink.ID !== link.ParentID) {
-				AppUtility.removeAt(parentLink.childrenIDs, parentLink.childrenIDs.indexOf(link.ID));
+				parentLink.childrenIDs.removeAt(parentLink.childrenIDs.indexOf(link.ID));
 			}
 			parentLink = link.Parent;
 			if (parentLink !== undefined && parentLink.childrenIDs !== undefined && parentLink.childrenIDs.indexOf(link.ID) < 0) {
@@ -1211,7 +1211,7 @@ export class PortalsCmsService extends BaseService {
 		if (Link.contains(id)) {
 			const parentLink = Link.get(parentID);
 			if (parentLink !== undefined && parentLink.childrenIDs !== undefined) {
-				AppUtility.removeAt(parentLink.childrenIDs, parentLink.childrenIDs.indexOf(id));
+				parentLink.childrenIDs.removeAt(parentLink.childrenIDs.indexOf(id));
 			}
 			Link.instances.toArray(link => link.ParentID === id).forEach(link => this.deleteLink(link.ID));
 			Link.instances.remove(id);
@@ -1229,10 +1229,10 @@ export class PortalsCmsService extends BaseService {
 			if (message.Type.Event === "Delete") {
 				if (attachments !== undefined) {
 					if (AppUtility.isArray(message.Data, true)) {
-						(message.Data as Array<AttachmentInfo>).forEach(attachment => AppUtility.removeAt(attachments, attachments.findIndex(a => a.ID === attachment.ID)));
+						(message.Data as Array<AttachmentInfo>).forEach(attachment => attachments.removeAt(attachments.findIndex(a => a.ID === attachment.ID)));
 					}
 					else {
-						AppUtility.removeAt(attachments, attachments.findIndex(a => a.ID === message.Data.ID));
+						attachments.removeAt(attachments.findIndex(a => a.ID === message.Data.ID));
 					}
 				}
 			}

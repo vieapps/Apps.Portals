@@ -1,5 +1,5 @@
-import { List } from "linqts";
-import { AppUtility, Dictionary } from "@app/components/app.utility";
+import { Dictionary } from "@app/components/app.collections";
+import { AppUtility } from "@app/components/app.utility";
 import { ElementUISettings } from "@app/models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
 
@@ -83,9 +83,14 @@ export class Site extends CoreBaseModel {
 		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
 	}
 
-	/** Converts the array of objects to list */
+	/** Deserializes the collection of objects to array */
+	public static toArray(objects: Array<any>) {
+		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
+	}
+
+	/** Deserializes the collection of objects to list */
 	public static toList(objects: Array<any>) {
-		return new List(objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID))));
+		return this.toArray(objects).toList();
 	}
 
 	public get routerLink() {

@@ -1,4 +1,5 @@
-import { AppUtility, HashSet } from "@app/components/app.utility";
+import { HashSet } from "@app/components/app.collections";
+import { AppUtility } from "@app/components/app.utility";
 
 /** Working privileges of an individual business service */
 export class Privilege {

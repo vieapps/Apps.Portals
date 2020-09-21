@@ -139,8 +139,12 @@ export class UsersListPage implements OnInit, OnDestroy {
 		}
 	}
 
+	private get paginationPrefix() {
+		return `profile@${this.usersSvc.name}`.toLowerCase();
+	}
+
 	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
-		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `profile@${this.usersSvc.name}`.toLowerCase()) || AppPagination.getDefault();
+		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
 		await this.searchAsync(onNext);
 	}
@@ -149,7 +153,7 @@ export class UsersListPage implements OnInit, OnDestroy {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
 			this.pageNumber++;
-			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `profile@${this.usersSvc.name}`.toLowerCase());
+			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
@@ -174,28 +178,29 @@ export class UsersListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => {
-				const profile = UserProfile.deserialize(o, UserProfile.get(o.ID));
+			(results || []).forEach(obj => {
+				const profile = UserProfile.deserialize(obj, UserProfile.get(obj.ID));
 				this.profiles.push(profile);
 				this.ratings[profile.ID] = profile.RatingPoints.get("General");
 			});
 		}
 		else {
-			let objects = results === undefined
-				? UserProfile.instances.toList().Select(obj => obj as UserProfile)
-				: UserProfile.toList(results);
-			objects = objects.OrderBy(obj => obj.Name).ThenByDescending(obj => obj.LastAccess);
+			let objects = (results === undefined ? UserProfile.instances.toArray().map(obj => obj as UserProfile) : UserProfile.toArray(results)).sortBy("Name", { name: "LastAccess", reverse: true });
+			// let objects = (results === undefined ? UserProfile.instances.toList().Select(obj => obj as UserProfile) : UserProfile.toList(results)).OrderBy(obj => obj.Name).ThenByDescending(obj => obj.LastAccess);
 			if (results === undefined) {
-				if (this.pagination !== undefined) {
-					objects = objects.Take(this.pageNumber * this.pagination.PageSize);
-				}
-				objects.ForEach(o => this.ratings[o.ID] = o.RatingPoints.get("General"));
-				this.profiles = objects.ToArray();
+				objects = objects.take(this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
+				this.profiles = objects;
+				// if (this.pagination !== undefined) {
+				// 	objects = objects.Take(this.pageNumber * this.pagination.PageSize);
+				// }
+				// this.profiles = objects.ToArray();
 			}
 			else {
-				objects.ForEach(o => this.ratings[o.ID] = o.RatingPoints.get("General"));
-				this.profiles = this.profiles.concat(objects.ToArray());
+				this.profiles = this.profiles.concat(objects);
+				// this.profiles = this.profiles.concat(objects.ToArray());
 			}
+			objects.forEach(obj => this.ratings[obj.ID] = obj.RatingPoints.get("General"));
+			// objects.ForEach(obj => this.ratings[obj.ID] = obj.RatingPoints.get("General"));
 		}
 		if (onNext !== undefined) {
 			onNext();
