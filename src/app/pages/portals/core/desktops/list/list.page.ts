@@ -285,16 +285,10 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		}
 		else {
 			const predicate: (dekstop: Desktop) => boolean = obj => obj.SystemID === this.organization.ID && obj.ParentID === this.parentID;
-			let objects = results === undefined
-				? Desktop.instances.toList(predicate)
-				: Desktop.toList(results).Where(predicate);
-			objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
-			if (results === undefined && this.pagination !== undefined) {
-				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
-			}
-			this.desktops = results === undefined
-				? objects.ToArray()
-				: this.desktops.concat(objects.ToArray());
+			const objects = (results === undefined ? Desktop.instances.toArray(predicate) : Desktop.toArray(results).filter(predicate))
+				.sortBy("Title", { name: "LastModified", reverse: true })
+				.take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
+			this.desktops = results === undefined ? objects : this.desktops.concat(objects);
 		}
 		if (onNext !== undefined) {
 			onNext();
