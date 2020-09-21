@@ -929,11 +929,11 @@ export class AppFormsService {
 		this.getFormGroup(formControls, form, validators, asyncValidators);
 		if (value !== undefined) {
 			this.updateControls(formControls, value);
-			this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.startsWith("Desktop") && !PlatformUtility.isSafari());
+			this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.indexOf("Desktop") > -1 && !PlatformUtility.isSafari());
 			form.patchValue(value);
 		}
 		else {
-			this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.startsWith("Desktop") && !PlatformUtility.isSafari());
+			this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.indexOf("Desktop") > -1 && !PlatformUtility.isSafari());
 		}
 	}
 
@@ -1077,14 +1077,14 @@ export class AppFormsService {
 	}
 
 	/** Validates the form and highlights all invalid controls (if has) */
-	public validate(form: FormGroup, onPreCompleted?: (form: FormGroup, valid: boolean) => void) {
+	public validate(form: FormGroup, onCompleted?: (form: FormGroup, valid: boolean) => void) {
 		form.updateValueAndValidity();
 		const invalid = form.invalid;
 		if (invalid) {
 			this.highlightInvalids(form);
 		}
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(form, !invalid);
+		if (onCompleted !== undefined) {
+			onCompleted(form, !invalid);
 		}
 		return !invalid;
 	}
