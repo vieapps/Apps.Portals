@@ -1556,13 +1556,11 @@ export class PortalsCoreService extends BaseService {
 		if (AppUtility.isObject(json, true)) {
 			const role = Role.set(Role.deserialize(json, Role.get(json.ID)));
 			if (AppUtility.isArray(json.Children, true)) {
-				role.childrenIDs = [];
-				(json.Children as Array<any>).map(c => this.updateRole(c)).filter(o => o !== undefined).forEach(o => role.childrenIDs.push(o.ID));
-				role.childrenIDs = role.childrenIDs.distinct();
+				role.childrenIDs = (json.Children as Array<any>).map(o => this.updateRole(o)).filter(o => o !== undefined).map(o => o.ID).distinct();
 			}
 			let parentRole = Role.get(parentID);
 			if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.ID !== role.ParentID) {
-				parentRole.childrenIDs.removeAt(parentRole.childrenIDs.indexOf(role.ID));
+				parentRole.childrenIDs.remove(role.ID);
 			}
 			parentRole = role.Parent;
 			if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.childrenIDs.indexOf(role.ID) < 0) {
@@ -1578,7 +1576,7 @@ export class PortalsCoreService extends BaseService {
 		if (Role.contains(id)) {
 			const parentRole = Role.get(parentID);
 			if (parentRole !== undefined && parentRole.childrenIDs !== undefined) {
-				parentRole.childrenIDs.removeAt(parentRole.childrenIDs.indexOf(id));
+				parentRole.childrenIDs.remove(id);
 			}
 			Role.instances.toArray(role => role.ParentID === id).forEach(role => this.deleteRole(role.ID));
 			Role.instances.remove(id);
@@ -1812,21 +1810,19 @@ export class PortalsCoreService extends BaseService {
 		if (AppUtility.isObject(json, true)) {
 			const desktop = Desktop.set(Desktop.deserialize(json, Desktop.get(json.ID)));
 			if (AppUtility.isArray(json.Children, true)) {
-				desktop.childrenIDs = [];
-				(json.Children as Array<any>).map(c => this.updateDesktop(c)).filter(o => o !== undefined).forEach(o => desktop.childrenIDs.push(o.ID));
-				desktop.childrenIDs = desktop.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+				desktop.childrenIDs = (json.Children as Array<any>).map(o => this.updateDesktop(o)).filter(o => o !== undefined).map(o => o.ID).distinct();
 			}
 			if (AppUtility.isArray(json.Portlets, true)) {
 				desktop.portlets = (json.Portlets as Array<any>).map(p => Portlet.update(p));
 			}
 			let parentDesktop = Desktop.get(oldParentID);
 			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined && parentDesktop.ID !== desktop.ParentID) {
-				parentDesktop.childrenIDs.removeAt(parentDesktop.childrenIDs.indexOf(desktop.ID));
+				parentDesktop.childrenIDs.remove(desktop.ID);
 			}
 			parentDesktop = desktop.Parent;
 			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined && parentDesktop.childrenIDs.indexOf(desktop.ID) < 0) {
 				parentDesktop.childrenIDs.push(desktop.ID);
-				parentDesktop.childrenIDs = parentDesktop.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+				parentDesktop.childrenIDs = parentDesktop.childrenIDs.distinct();
 			}
 			return desktop;
 		}
@@ -1837,7 +1833,7 @@ export class PortalsCoreService extends BaseService {
 		if (Desktop.contains(id)) {
 			const parentDesktop = Desktop.get(parentID);
 			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined) {
-				parentDesktop.childrenIDs.removeAt(parentDesktop.childrenIDs.indexOf(id));
+				parentDesktop.childrenIDs.remove(id);
 			}
 			Desktop.instances.toArray(desktop => desktop.ParentID === id).forEach(desktop => this.deleteDesktop(desktop.ID));
 			Desktop.instances.remove(id);

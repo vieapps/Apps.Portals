@@ -560,18 +560,16 @@ export class PortalsCmsService extends BaseService {
 		if (AppUtility.isObject(json, true)) {
 			const category = Category.set(Category.deserialize(json, Category.get(json.ID)));
 			if (AppUtility.isArray(json.Children, true)) {
-				category.childrenIDs = [];
-				(json.Children as Array<any>).map(c => this.updateCategory(c)).filter(o => o !== undefined).forEach(o => category.childrenIDs.push(o.ID));
-				category.childrenIDs = category.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+				category.childrenIDs = (json.Children as Array<any>).map(o => this.updateCategory(o)).filter(o => o !== undefined).map(o => o.ID).distinct();
 			}
 			let parentCategory = Category.get(parentID);
 			if (parentCategory !== undefined && parentCategory.childrenIDs !== undefined && parentCategory.ID !== category.ParentID) {
-				parentCategory.childrenIDs.removeAt(parentCategory.childrenIDs.indexOf(category.ID));
+				parentCategory.childrenIDs.remove(category.ID);
 			}
 			parentCategory = category.Parent;
 			if (parentCategory !== undefined && parentCategory.childrenIDs !== undefined && parentCategory.childrenIDs.indexOf(category.ID) < 0) {
 				parentCategory.childrenIDs.push(category.ID);
-				parentCategory.childrenIDs = parentCategory.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+				parentCategory.childrenIDs = parentCategory.childrenIDs.distinct();
 			}
 			return category;
 		}
@@ -582,7 +580,7 @@ export class PortalsCmsService extends BaseService {
 		if (Category.contains(id)) {
 			const parentCategory = Category.get(parentID);
 			if (parentCategory !== undefined && parentCategory.childrenIDs !== undefined) {
-				parentCategory.childrenIDs.removeAt(parentCategory.childrenIDs.indexOf(id));
+				parentCategory.childrenIDs.remove(id);
 			}
 			Category.instances.toArray(category => category.ParentID === id).forEach(category => this.deleteCategory(category.ID));
 			Category.instances.remove(id);
@@ -1189,18 +1187,16 @@ export class PortalsCmsService extends BaseService {
 		if (AppUtility.isObject(json, true)) {
 			const link = Link.set(Link.deserialize(json, Link.get(json.ID)));
 			if (AppUtility.isArray(json.Children, true)) {
-				link.childrenIDs = [];
-				(json.Children as Array<any>).map(c => this.updateLink(c)).filter(obj => obj !== undefined).forEach(obj => link.childrenIDs.push(obj.ID));
-				link.childrenIDs = link.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+				link.childrenIDs = (json.Children as Array<any>).map(obj => this.updateLink(obj)).filter(obj => obj !== undefined).map(obj => obj.ID).distinct();
 			}
 			let parentLink = Link.get(parentID);
 			if (parentLink !== undefined && parentLink.childrenIDs !== undefined && parentLink.ID !== link.ParentID) {
-				parentLink.childrenIDs.removeAt(parentLink.childrenIDs.indexOf(link.ID));
+				parentLink.childrenIDs.remove(link.ID);
 			}
 			parentLink = link.Parent;
 			if (parentLink !== undefined && parentLink.childrenIDs !== undefined && parentLink.childrenIDs.indexOf(link.ID) < 0) {
 				parentLink.childrenIDs.push(link.ID);
-				parentLink.childrenIDs = parentLink.childrenIDs.filter((id, index, array) => array.indexOf(id) === index);
+				parentLink.childrenIDs = parentLink.childrenIDs.distinct();
 			}
 			return link;
 		}
@@ -1211,7 +1207,7 @@ export class PortalsCmsService extends BaseService {
 		if (Link.contains(id)) {
 			const parentLink = Link.get(parentID);
 			if (parentLink !== undefined && parentLink.childrenIDs !== undefined) {
-				parentLink.childrenIDs.removeAt(parentLink.childrenIDs.indexOf(id));
+				parentLink.childrenIDs.remove(id);
 			}
 			Link.instances.toArray(link => link.ParentID === id).forEach(link => this.deleteLink(link.ID));
 			Link.instances.remove(id);
