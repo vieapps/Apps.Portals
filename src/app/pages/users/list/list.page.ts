@@ -185,10 +185,9 @@ export class UsersListPage implements OnInit, OnDestroy {
 			});
 		}
 		else {
-			const objects = (results === undefined
-				? UserProfile.instances.toArray().map(obj => obj as UserProfile)
-				: UserProfile.toArray(results)
-			).sortBy("Name", { name: "LastAccess", reverse: true }).take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
+			const objects = (results === undefined ? UserProfile.instances.toArray().map(obj => obj as UserProfile) : UserProfile.toArray(results))
+				.sortBy("Name", { name: "LastAccess", reverse: true })
+				.take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
 			this.profiles = results === undefined ? objects : this.profiles.concat(objects);
 			objects.forEach(obj => this.ratings[obj.ID] = obj.RatingPoints.get("General"));
 		}

@@ -240,7 +240,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 			roles = this.selectedRoles[section] = new Array<string>();
 		}
 		if (!event.detail.checked) {
-			roles.removeAt(roles.indexOf(id));
+			roles.remove(id);
 		}
 		else if (roles.indexOf(id) < 0) {
 			roles.push(id);
@@ -295,7 +295,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 			users = this.selectedUsers[section] = new Array<string>();
 		}
 		if (!event.detail.checked) {
-			users.removeAt(users.indexOf(id));
+			users.remove(id);
 		}
 		else if (users.indexOf(id) < 0) {
 			users.push(id);

@@ -1,5 +1,4 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, Input, ViewChild } from "@angular/core";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
@@ -117,7 +116,7 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 	}
 
 	async onInfiniteScrollAsync() {
-		if (this.pagination.PageNumber < this.pagination.TotalPages) {
+		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
 			await this.searchAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : new Promise<void>(() => {})));
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
@@ -126,8 +125,12 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 		}
 	}
 
+	private get paginationPrefix() {
+		return `profile@${this.usersSvc.name}`.toLowerCase();
+	}
+
 	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
-		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, `profile@${this.usersSvc.name}`.toLowerCase()) || AppPagination.getDefault();
+		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
 		await this.searchAsync(onNext);
 	}
@@ -136,16 +139,16 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
 			this.pageNumber++;
-			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, `profile@${this.usersSvc.name}`.toLowerCase());
+			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			if (this.searching) {
 				(data !== undefined ? data.Objects as Array<any> : []).forEach(o => this.results.push(UserProfile.get(o.ID)));
 			}
 			else {
-				const objects = new List(data !== undefined ? (data.Objects as Array<any>).map(o => UserProfile.get(o.ID)) : UserProfile.instances.toArray().map(o => o as UserProfile)).OrderBy(o => o.Name).ThenByDescending(o => o.LastAccess);
-				this.profiles = data === undefined
-					? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
-					: this.profiles.concat(objects.ToArray());
+				const objects = (data !== undefined ? (data.Objects as Array<any>).map(o => UserProfile.get(o.ID)) : UserProfile.instances.toArray().map(o => o as UserProfile))
+					.sortBy("Name", { name: "LastAccess", reverse: true })
+					.take(data === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
+				this.profiles = data === undefined ? objects : this.profiles.concat(objects);
 			}
 			if (onNext !== undefined) {
 				onNext();
