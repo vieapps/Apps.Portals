@@ -90,9 +90,9 @@ if (!Array.prototype.removeAll) {
 if (!Array.prototype.move) {
 	Array.prototype.move = function<T>(this: T[], from: number, to: number): T[] {
 		if (from !== undefined && to !== undefined && from !== to && from > -1 && from < this.length && to > -1 && to < this.length) {
-			const items = this.splice(from, 1);
-			if (items !== undefined && items.length > 0) {
-				this.insert(items[0], to);
+			const values = this.splice(from, 1);
+			if (values !== undefined && values.length > 0) {
+				this.insert(values[0], to);
 			}
 		}
 		return this;
@@ -101,12 +101,12 @@ if (!Array.prototype.move) {
 
 if (!Array.prototype.take) {
 	Array.prototype.take = function<T>(this: T[], amount: number, skip?: number): T[] {
-		const elements = skip !== undefined && skip > 0 && skip < this.length
+		const values = skip !== undefined && skip > 0 && skip < this.length
 			? this.slice(skip)
 			: this;
-		return amount !== undefined && amount > 0 && amount < elements.length
-			? elements.slice(0, amount)
-			: elements;
+		return amount !== undefined && amount > 0 && amount < values.length
+			? values.slice(0, amount)
+			: values;
 	};
 }
 
