@@ -32,7 +32,7 @@ export class Account {
 	public static deserialize(json: any, account?: Account, onCompleted?: (account: Account, data: any) => void) {
 		account = account || new Account();
 		AppUtility.copy(json, account, data => {
-			account.roles = (account.roles || []).filter((role, index, array) => array.indexOf(role) === index);
+			account.roles = (account.roles || []).distinct();
 			account.privileges = AppUtility.isArray(data.privileges, true)
 				? (data.privileges as Array<any>).map(o => Privilege.deserialize(o))
 				: new Array<Privilege>();

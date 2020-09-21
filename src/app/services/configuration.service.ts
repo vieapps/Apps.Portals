@@ -490,7 +490,7 @@ export class ConfigurationService extends BaseService {
 		}
 
 		if (AppUtility.isArray(data.Roles, true)) {
-			account.roles = (data.Roles as Array<string>).filter((role, index, array) => array.indexOf(role) === index);
+			account.roles = (data.Roles as Array<string>).distinct();
 		}
 
 		if (AppUtility.isArray(data.Privileges, true)) {
