@@ -610,8 +610,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public getDefaultContentTypeOfContent(module: Module) {
-		const contentTypes = this.getContentTypesOfContent(module);
-		return contentTypes.length > 0 ? contentTypes[0] : undefined;
+		return this.getContentTypesOfContent(module).first();
 	}
 
 	public get contentCompleterDataSource() {
@@ -788,8 +787,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public getDefaultContentTypeOfItem(module: Module) {
-		const contentTypes = this.getContentTypesOfItem(module);
-		return contentTypes.length > 0 ? contentTypes[0] : undefined;
+		return this.getContentTypesOfItem(module).first();
 	}
 
 	public get itemCompleterDataSource() {
@@ -963,8 +961,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public getDefaultContentTypeOfLink(module: Module) {
-		const contentTypes = this.getContentTypesOfLink(module);
-		return contentTypes.length > 0 ? contentTypes[0] : undefined;
+		return this.getContentTypesOfLink(module).first();
 	}
 
 	public get linkCompleterDataSource() {
