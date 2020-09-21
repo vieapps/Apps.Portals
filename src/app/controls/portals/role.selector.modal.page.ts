@@ -1,5 +1,4 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, Input, ViewChild } from "@angular/core";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
@@ -191,6 +190,10 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		return this.portalsCoreSvc.getPaginationPrefix("role");
 	}
 
+	private sort(roles: Role[]) {
+		return roles.sortBy("Title", { name: "LastModified", reverse: true });
+	}
+
 	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
 		if (this.organization !== undefined && AppUtility.isNotEmpty(this.organization.ID)) {
 			this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
@@ -212,12 +215,10 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 				(data !== undefined ? data.Objects as Array<any> : []).filter(o => this.excludedIDs.indexOf(o.ID) < 0).forEach(o => this.results.push(Role.get(o.ID)));
 			}
 			else {
-				const objects = new List(data !== undefined ? (data.Objects as Array<any>).map(o => Role.get(o.ID)) : Role.instances.toArray(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID))
-					.Where(o => this.excludedIDs.indexOf(o.ID) < 0)
-					.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
+				const objects = this.sort((data !== undefined ? (data.Objects as Array<any>).map(o => Role.get(o.ID)) : Role.instances.toArray(o => o.SystemID === this.organization.ID && o.ParentID === this.parentID)).filter(o => this.excludedIDs.indexOf(o.ID) < 0));
 				this.roles = data !== undefined
-					? this.roles.concat(objects.ToArray())
-					: objects.Take(this.pageNumber * this.pagination.PageSize).ToArray();
+					? this.roles.concat(objects)
+					: objects.take(this.pagination === undefined ? 0 : this.pageNumber * this.pagination.PageSize);
 			}
 			if (onNext !== undefined) {
 				onNext();
@@ -262,13 +263,13 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	back(event: Event) {
 		event.stopPropagation();
 		this.parentRole = this.parentRole.Parent;
-		this.roles = (this.parentRole !== undefined ? this.parentRole.Children : Role.instances.toArray(o => o.SystemID === this.organization.ID && o.ParentID === undefined)).filter(o => this.excludedIDs.indexOf(o.ID) < 0).sortBy("Title");
+		this.roles = this.sort((this.parentRole !== undefined ? this.parentRole.Children : Role.instances.toArray(o => o.SystemID === this.organization.ID && o.ParentID === undefined)).filter(o => this.excludedIDs.indexOf(o.ID) < 0));
 	}
 
 	show(event: Event, role: Role) {
 		event.stopPropagation();
 		this.parentRole = role;
-		this.roles = this.parentRole.Children.filter(o => this.excludedIDs.indexOf(o.ID) < 0);
+		this.roles = this.sort(this.parentRole.Children.filter(o => this.excludedIDs.indexOf(o.ID) < 0));
 	}
 
 }

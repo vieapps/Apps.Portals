@@ -197,6 +197,13 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			: this.sortBy || { LastModified: "Descending" };
 	}
 
+	private sort(items: DataItem[]) {
+		const orderBy = this.prepareSortBy();
+		return items.orderBy(Object.keys(orderBy).map(key => {
+			return { name: key, reverse: AppUtility.isEquals("Descending", orderBy[key]) };
+		}));
+	}
+
 	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
 		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.prepareSortBy() }) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
@@ -216,19 +223,10 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 				(data.Objects as Array<DataItem>).filter(o => this.excludedIDs.indexOf(o.ID) < 0).forEach(o => this.results.push(o));
 			}
 			else {
-				let objects = (data.Objects as Array<DataItem>).filter(o => this.excludedIDs.indexOf(o.ID) < 0);
-				if (this.nested) {
-					objects = objects.sortBy("OrderIndex", "Title");
-				}
-				else {
-					const sortBy = this.prepareSortBy();
-					objects = objects.orderBy(Object.keys(sortBy).map(key => {
-						return { name: key, reverse: "Descending" === sortBy[key] };
-					}));
-				}
+				const objects = this.sort(data.Objects as Array<DataItem>).filter(o => this.excludedIDs.indexOf(o.ID) < 0);
 				this.items = data !== undefined
 					? this.items.concat(objects)
-					: objects.take(this.pageNumber * this.pagination.PageSize);
+					: objects.take(this.pagination === undefined ? 0 : this.pageNumber * this.pagination.PageSize);
 				if (this.nested) {
 					this.items.forEach(item => this.updateParent(item));
 					this.rootItems = this.items.map(item => item);
@@ -286,13 +284,13 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	back(event: Event) {
 		event.stopPropagation();
 		this.parent = this.parent.Parent;
-		this.items = (this.parent !== undefined ? this.parent.Children : this.rootItems).filter(o => this.excludedIDs.indexOf(o.ID) < 0);
+		this.items = this.sort((this.parent !== undefined ? this.parent.Children : this.rootItems).filter(o => this.excludedIDs.indexOf(o.ID) < 0));
 	}
 
 	show(event: Event, item: DataItem) {
 		event.stopPropagation();
 		this.parent = item;
-		this.items = this.parent.Children.filter(o => this.excludedIDs.indexOf(o.ID) < 0);
+		this.items = this.sort(this.parent.Children.filter(o => this.excludedIDs.indexOf(o.ID) < 0));
 	}
 }
 
