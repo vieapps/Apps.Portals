@@ -1,5 +1,4 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
@@ -357,7 +356,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		let itemIndex = 0;
 		const zoneTitle = await this.configSvc.getResourceAsync("portals.portlets.update.reorder");
 		this.zones = [];
-		new List(this.portlets).OrderBy(p => p.Zone).ThenBy(p => p.OrderIndex).ForEach(portlet => {
+		this.portlets.sortBy("Zone", "OrderIndex").forEach(portlet => {
 			if (zoneName !== portlet.Zone) {
 				if (zoneName !== "" ) {
 					this.updateReorderItems(zoneName, zoneItems, AppUtility.format(zoneTitle, { zone: zoneName }), zoneIndex);
@@ -415,7 +414,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		if (this.hash !== AppCrypto.hash(this.ordered)) {
 			this.processing = true;
 			await this.appFormsSvc.showLoadingAsync(this.title);
-			const reordered = new List(this.ordered).Select(zone => zone.Children).SelectMany(portlets => new List(portlets)).Select(portlet => {
+			const reordered = this.ordered.toList().Select(zone => zone.Children).SelectMany(portlets => portlets.toList()).Select(portlet => {
 				return {
 					ID: portlet.ID,
 					OrderIndex: portlet.OrderIndex
