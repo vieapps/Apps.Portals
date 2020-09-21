@@ -444,18 +444,15 @@ export class PortalsCoreService extends BaseService {
 		};
 
 		if (allowInheritFromParent) {
-			controlConfig.SubControls.Controls.insert(
-				{
-					Name: "InheritFromParent",
-					Type: "YesNo",
-					Options: {
-						Label: "{{portals.common.controls.notifications.emails.inheritFromParent}}",
-						Type: "toggle",
-						OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name !== "InheritFromParent").forEach(ctrl => ctrl.Hidden = event.detail.checked)
-					}
-				},
-				0
-			);
+			controlConfig.SubControls.Controls.insert({
+				Name: "InheritFromParent",
+				Type: "YesNo",
+				Options: {
+					Label: "{{portals.common.controls.notifications.emails.inheritFromParent}}",
+					Type: "toggle",
+					OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name !== "InheritFromParent").forEach(ctrl => ctrl.Hidden = event.detail.checked)
+				}
+			}, 0);
 		}
 
 		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
@@ -564,18 +561,15 @@ export class PortalsCoreService extends BaseService {
 		};
 
 		if (allowInheritFromParent) {
-			controlConfig.SubControls.Controls.insert(
-				{
-					Name: "InheritFromParent",
-					Type: "YesNo",
-					Options: {
-						Label: "{{portals.common.controls.notifications.webhooks.inheritFromParent}}",
-						Type: "toggle",
-						OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name !== "InheritFromParent").forEach(ctrl => ctrl.Hidden = event.detail.checked)
-					}
-				},
-				0
-			);
+			controlConfig.SubControls.Controls.insert({
+				Name: "InheritFromParent",
+				Type: "YesNo",
+				Options: {
+					Label: "{{portals.common.controls.notifications.webhooks.inheritFromParent}}",
+					Type: "toggle",
+					OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name !== "InheritFromParent").forEach(ctrl => ctrl.Hidden = event.detail.checked)
+				}
+			}, 0);
 		}
 
 		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
@@ -652,40 +646,34 @@ export class PortalsCoreService extends BaseService {
 		};
 
 		if (allowInheritFromParent) {
-			controlConfig.SubControls.Controls.insert(
-				{
-					Name: "InheritFromParent",
-					Type: "YesNo",
-					Options: {
-						Label: "{{portals.common.controls.notifications.inheritFromParent}}",
-						Type: "toggle",
-						OnChanged: (event, formControl) => formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name === "Events" || ctrl.Name === "Methods").forEach(ctrl => ctrl.Hidden = event.detail.checked)
-					}
-				},
-				0
-			);
+			controlConfig.SubControls.Controls.insert({
+				Name: "InheritFromParent",
+				Type: "YesNo",
+				Options: {
+					Label: "{{portals.common.controls.notifications.inheritFromParent}}",
+					Type: "toggle",
+					OnChanged: (event, formControl) => formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name === "Events" || ctrl.Name === "Methods").forEach(ctrl => ctrl.Hidden = event.detail.checked)
+				}
+			}, 0);
 		}
 
 		if (methods === undefined || methods.indexOf("Email") > -1) {
 			controlConfig.SubControls.Controls.push(this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmails));
 			const emailsByApprovalStatus = this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmailsByApprovalStatus, "EmailsByApprovalStatus", "emailsByApprovalStatus");
-			emailsByApprovalStatus.SubControls.Controls.insert(
-				{
-					Name: "Status",
-					Type: "Select",
-					Hidden: inheritEmailsByApprovalStatus,
-					Options: {
-						Label: "{{status.approval.label}}",
-						SelectOptions: {
-							Interface: "popover",
-							Values: BaseModel.approvalStatus.map(value => {
-								return { Value: value, Label: `{{status.approval.${value}}}` };
-							})
-						}
+			emailsByApprovalStatus.SubControls.Controls.insert({
+				Name: "Status",
+				Type: "Select",
+				Hidden: inheritEmailsByApprovalStatus,
+				Options: {
+					Label: "{{status.approval.label}}",
+					SelectOptions: {
+						Interface: "popover",
+						Values: BaseModel.approvalStatus.map(value => {
+							return { Value: value, Label: `{{status.approval.${value}}}` };
+						})
 					}
-				},
-				allowInheritFromParent ? 1 : 0
-			);
+				}
+			}, allowInheritFromParent ? 1 : 0);
 			controlConfig.SubControls.Controls.push(emailsByApprovalStatus);
 			controlConfig.SubControls.Controls.push(this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmailsWhenPublish, "EmailsWhenPublish", "emailsWhenPublish"));
 		}
@@ -940,18 +928,15 @@ export class PortalsCoreService extends BaseService {
 		};
 
 		if (allowInheritFromParent) {
-			controlConfig.SubControls.Controls.insert(
-				{
-					Name: "InheritFromParent",
-					Type: "YesNo",
-					Options: {
-						Label: "{{portals.common.controls.emails.inheritFromParent}}",
-						Type: "toggle",
-						OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name !== "InheritFromParent").forEach(ctrl => ctrl.Hidden = event.detail.checked)
-					}
-				},
-				0
-			);
+			controlConfig.SubControls.Controls.insert({
+				Name: "InheritFromParent",
+				Type: "YesNo",
+				Options: {
+					Label: "{{portals.common.controls.emails.inheritFromParent}}",
+					Type: "toggle",
+					OnChanged: (event, formControl) =>  formControl.parentControl.SubControls.Controls.filter(ctrl => ctrl.Name !== "InheritFromParent").forEach(ctrl => ctrl.Hidden = event.detail.checked)
+				}
+			}, 0);
 		}
 
 		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
