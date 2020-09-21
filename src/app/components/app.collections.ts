@@ -156,9 +156,7 @@ if (!Array.prototype.compareFn) {
 
 if (!Array.prototype.orderBy) {
 	Array.prototype.orderBy = function<T>(this: T[], sorts: Array<{ name: string, reverse?: boolean, transformer?: (value: any) => any }>): T[] {
-		return sorts !== undefined && sorts.length > 0
-			? this.sort(this.compareFn(sorts))
-			: this;
+		return this.sort(sorts !== undefined && sorts.length > 0 ? this.compareFn(sorts) : undefined);
 	};
 }
 
