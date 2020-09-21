@@ -1,4 +1,3 @@
-import { List } from "linqts";
 import { AppUtility } from "@app/components/app.utility";
 import { AppFormsControlConfig } from "@app/components/forms.service";
 import { Base as BaseModel } from "@app/models/base";
@@ -15,7 +14,7 @@ export abstract class PortalBase extends BaseModel {
 
 	/** Get the collection of all content-type definition */
 	public static get contentTypeDefinitions() {
-		return new List(this.moduleDefinitions || []).Select(definition => definition.ContentTypeDefinitions).SelectMany(definition => new List(definition)).ToArray();
+		return (this.moduleDefinitions || []).toList().Select(definition => definition.ContentTypeDefinitions).SelectMany(definition => definition.toList()).ToArray();
 	}
 
 	/** Get the collection of all approval statuses */
