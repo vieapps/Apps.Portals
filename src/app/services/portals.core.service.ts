@@ -1543,9 +1543,9 @@ export class PortalsCoreService extends BaseService {
 	private fetchRole(role: Role) {
 		if (role !== undefined && role.childrenIDs === undefined) {
 			this.getRoleAsync(role.ID, _ => {
-				const o = Role.get(role.ID);
-				if (o.childrenIDs !== undefined && o.childrenIDs.length > 0) {
-					o.Children.forEach(c => this.fetchRole(c));
+				const obj = Role.get(role.ID);
+				if (obj.childrenIDs !== undefined && obj.childrenIDs.length > 0) {
+					obj.Children.forEach(c => this.fetchRole(c));
 				}
 			});
 		}
@@ -1797,9 +1797,9 @@ export class PortalsCoreService extends BaseService {
 	private fetchDesktop(desktop: Desktop) {
 		if (desktop !== undefined && (desktop.childrenIDs === undefined || desktop.portlets === undefined)) {
 			this.getDesktopAsync(desktop.ID, _ => {
-				const o = Desktop.get(desktop.ID);
-				if (o.childrenIDs !== undefined && o.childrenIDs.length > 0) {
-					o.Children.forEach(c => this.fetchDesktop(c));
+				const obj = Desktop.get(desktop.ID);
+				if (obj.childrenIDs !== undefined && obj.childrenIDs.length > 0) {
+					obj.Children.forEach(c => this.fetchDesktop(c));
 				}
 			});
 		}
