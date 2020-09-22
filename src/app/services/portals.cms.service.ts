@@ -142,33 +142,34 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async getActiveModuleAsync(useXHR: boolean = true) {
-		if (Module.active !== undefined && this.portalsCoreSvc.activeOrganization !== undefined && Module.active.SystemID !== this.portalsCoreSvc.activeOrganization.ID) {
-			Module.active = undefined;
-		}
+		const systemID = this.portalsCoreSvc.activeOrganization !== undefined
+			? this.portalsCoreSvc.activeOrganization.ID
+			: undefined;
+
+		Module.active = Module.active !== undefined && Module.active.SystemID !== systemID
+			? undefined
+			: Module.active;
+
 		if (Module.active === undefined) {
-			const modules: { [key: string]: string } = this.configSvc.appConfig.options.extras["modules"];
-			const moduleID: string = (modules || {})[this.portalsCoreSvc.activeOrganization.ID];
-			if (AppUtility.isNotEmpty(moduleID)) {
-				Module.active = Module.get(moduleID);
+			const modules: { [key: string]: string } = this.configSvc.appConfig.options.extras["modules"] || {};
+			const preferID = modules[this.portalsCoreSvc.activeOrganization.ID];
+			if (AppUtility.isNotEmpty(preferID)) {
+				Module.active = Module.get(preferID);
 				if (Module.active === undefined) {
-					await this.portalsCoreSvc.getModuleAsync(moduleID, _ => {
-						Module.active = Module.get(moduleID);
+					await this.portalsCoreSvc.getModuleAsync(preferID, _ => {
+						Module.active = Module.get(preferID);
 						if (Module.active !== undefined && !useXHR) {
 							AppEvents.broadcast(this.name, { Object: "Module", Type: "Changed", ID: Module.active.ID });
 						}
 					}, undefined, useXHR);
 				}
 			}
-			else if (Module.instances.size > 0) {
-				Module.active = this.portalsCoreSvc.activeOrganization.modules.find(module => module.ModuleDefinitionID === "A0000000000000000000000000000001");
-				if (Module.active === undefined) {
-					Module.active = Module.instances.first();
-				}
-			}
+			Module.active = Module.active || Module.instances.first(module => module.SystemID === systemID && module.ModuleDefinitionID === "A0000000000000000000000000000001") || Module.instances.first(module => module.SystemID === systemID);
 			if (Module.active !== undefined) {
 				await this.setActiveModuleAsync(Module.active.ID);
 			}
 		}
+
 		return Module.active;
 	}
 
@@ -181,12 +182,15 @@ export class PortalsCmsService extends BaseService {
 			await this.configSvc.storeOptionsAsync();
 			AppEvents.broadcast(this.name, { Object: "Module", Type: "Changed", ID: Module.active.ID });
 		}
+
 		if (this.configSvc.isDebug) {
 			console.log("[CMS Portals]: Active module", Module.active);
 		}
+
 		if (onNext !== undefined) {
 			onNext();
 		}
+
 		return Module.active;
 	}
 

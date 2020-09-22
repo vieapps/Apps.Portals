@@ -182,15 +182,11 @@ export class PortalsCoreService extends BaseService {
 						}
 					}, undefined, useXHR);
 				}
-				else {
-					this.configSvc.appConfig.services.activeID = Organization.active.ID;
-				}
 			}
-			else if (Organization.instances.size > 0) {
-				Organization.active = Organization.instances.first();
-				this.configSvc.appConfig.services.activeID = Organization.active.ID;
-			}
+
+			Organization.active = Organization.active || Organization.instances.first();
 			if (Organization.active !== undefined) {
+				this.configSvc.appConfig.services.activeID = Organization.active.ID;
 				AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
 			}
 		}
@@ -205,15 +201,19 @@ export class PortalsCoreService extends BaseService {
 			await this.configSvc.storeOptionsAsync();
 			AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
 		}
-		else if (Organization.active !== undefined) {
-			this.configSvc.appConfig.services.activeID = Organization.active.ID;
-		}
+
 		if (this.configSvc.isDebug) {
 			console.log("[Portals]: Active organization", Organization.active);
 		}
+
+		if (Organization.active !== undefined) {
+			this.configSvc.appConfig.services.activeID = Organization.active.ID;
+		}
+
 		if (onNext !== undefined) {
 			onNext();
 		}
+
 		return Organization.active;
 	}
 
