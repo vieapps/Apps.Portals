@@ -21,13 +21,13 @@ declare global {
 		/** Produces the specified number of contiguous elements */
 		take(amount: number, skip?: number): T[];
 
-		/** Produces the distinct elements by using the equality comparer to compare values */
+		/** Produces the distinct elements of the collection by using the equality comparer to compare values */
 		distinct(comparer?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): T[];
 
-		/** Produces the set difference of two arrays by using the equality comparer to compare values */
+		/** Produces the set difference of two collections by using the equality comparer to compare values */
 		except(other: T[], comparer?: (value: T, array: T[]) => boolean, thisArg?: any): T[];
 
-		/** Produces the set intersection of two arrays by using the equality comparer to compare values */
+		/** Produces the set intersection of two collections by using the equality comparer to compare values */
 		intersect(other: T[], comparer?: (value: T, array: T[]) => boolean, thisArg?: any): T[];
 
 		/** Gets the comparing function for sorting the elements */
@@ -217,15 +217,19 @@ if (!Array.prototype.toDictionary) {
 /** HashSet */
 export class HashSet<T> extends Set<T>  {
 
+	/** Creates new instance of HashSet */
 	constructor(values?: IterableIterator<T> | Array<T>) {
 		super();
 		this.update(values);
 	}
 
-	contains(value: T) {
-		return this.has(value);
+	/** Adds a value into this collection */
+	set(value: T) {
+		this.add(value);
+		return value;
 	}
 
+	/** Updates the values into this collection */
 	update(values: IterableIterator<T> | Array<T>, add: boolean = true, clearBeforeUpdating: boolean = false) {
 		if (clearBeforeUpdating) {
 			this.clear();
@@ -243,15 +247,17 @@ export class HashSet<T> extends Set<T>  {
 		return this;
 	}
 
-	set(value: T) {
-		this.add(value);
-		return value;
-	}
-
+	/** Removes a value from this collection */
 	remove(value: T) {
 		return this.delete(value);
 	}
 
+	/** Determines this collection has the value or not */
+	contains(value: T) {
+		return this.has(value);
+	}
+
+	/** Concatenates this collection with other collection */
 	concat(other: Set<T>) {
 		other.forEach(value => {
 			if (!this.has(value)) {
@@ -261,6 +267,7 @@ export class HashSet<T> extends Set<T>  {
 		return this;
 	}
 
+	/** Returns the first value that matched with the predicate */
 	first(predicate?: (value: T) => boolean) {
 		if (this.size > 0) {
 			const values = this.values();
@@ -273,6 +280,12 @@ export class HashSet<T> extends Set<T>  {
 		return undefined;
 	}
 
+	/** Returns the first value that matched with the predicate */
+	find(predicate?: (value: T) => boolean) {
+		return this.first(predicate);
+	}
+
+	/** Produces the sub-set of this collection by using the predicate */
 	filter(predicate: (value: T) => boolean) {
 		if (predicate !== undefined) {
 			const set = new HashSet<T>();
@@ -286,14 +299,17 @@ export class HashSet<T> extends Set<T>  {
 		return this;
 	}
 
+	/** Produces the set difference of two collections by using the equality comparer to compare values */
 	except(other: Set<T>) {
 		return other !== undefined ? this.filter(value => !other.has(value)) : this;
 	}
 
+	/** Produces the set intersection of two collections by using the equality comparer to compare values */
 	intersect(other: Set<T>) {
 		return other !== undefined ? this.filter(value => other.has(value)) : new HashSet<T>();
 	}
 
+	/** Converts the values of this collection to array */
 	toArray(predicate?: (value: T) => boolean) {
 		if (this.size > 0 && predicate !== undefined) {
 			const array = new Array<T>();
@@ -307,6 +323,7 @@ export class HashSet<T> extends Set<T>  {
 		return Array.from(this.values());
 	}
 
+	/** Converts the values of this collection to List object (for working with LINQ) */
 	toList(predicate?: (value: T) => boolean) {
 		return this.toArray(predicate).toList();
 	}
@@ -315,6 +332,7 @@ export class HashSet<T> extends Set<T>  {
 /** Dictionary */
 export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 
+	/** Creates new instance of Dictionary */
 	constructor(values?: IterableIterator<TValue> | Array<TValue>, keySelector?: (value: TValue) => TKey) {
 		super();
 		if (values !== undefined && keySelector !== undefined) {
@@ -324,15 +342,13 @@ export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 		}
 	}
 
-	contains(key: TKey) {
-		return this.has(key);
-	}
-
+	/** Adds the key-value pair into this collection */
 	add(key: TKey, value: TValue) {
 		this.set(key, value);
 		return value;
 	}
 
+	/** Updates the key-value pair into this collection */
 	update(key: TKey, value: TValue, updater: (v: TValue, k: TKey) => TValue = (v, k) => v) {
 		if (this.has(key)) {
 			this.set(key, updater(this.get(key), key));
@@ -343,10 +359,17 @@ export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 		return this;
 	}
 
+	/** Removes a value that specified by a key from this collection */
 	remove(key: TKey) {
 		return this.delete(key);
 	}
 
+	/** Determines this collection has the key or not */
+	contains(key: TKey) {
+		return this.has(key);
+	}
+
+	/** Concatenates this collection with other collection */
 	concat(other: Map<TKey, TValue>, resolve: (k: TKey, a: TValue, b: TValue) => TValue = (k, a, b) => b) {
 		other.forEach((value, key) => {
 			if (this.has(key)) {
@@ -359,6 +382,7 @@ export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 		return this;
 	}
 
+	/** Returns the first value that matched with the predicate */
 	first(predicate?: (value: TValue) => boolean) {
 		if (this.size > 0) {
 			const values = this.values();
@@ -371,6 +395,12 @@ export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 		return undefined;
 	}
 
+	/** Returns the first value that matched with the predicate */
+	find(predicate?: (value: TValue) => boolean) {
+		return this.first(predicate);
+	}
+
+	/** Produces the sub-set of this collection by using the predicate */
 	filter(predicate: (value: TValue, key: TKey) => boolean) {
 		const dictionary = new Dictionary<TKey, TValue>();
 		this.forEach((value, key) => {
@@ -381,14 +411,17 @@ export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 		return dictionary;
 	}
 
+	/** Produces the set difference of two collections by using the equality comparer to compare values */
 	except(other: Map<TKey, TValue>) {
 		return other !== undefined ? this.filter((_, key) => !other.has(key)) : this;
 	}
 
+	/** Produces the set intersection of two collections by using the equality comparer to compare values */
 	intersect(other: Map<TKey, TValue>) {
 		return other !== undefined ? this.filter((_, key) => other.has(key)) : new Dictionary<TKey, TValue>();
 	}
 
+	/** Converts the values of this collection to array */
 	toArray(predicate?: (value: TValue) => boolean) {
 		if (this.size > 0 && predicate !== undefined) {
 			const array = new Array<TValue>();
@@ -402,6 +435,7 @@ export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 		return Array.from(this.values());
 	}
 
+	/** Converts the values of this collection to List object (for working with LINQ) */
 	toList(predicate?: (value: TValue) => boolean) {
 		return this.toArray(predicate).toList();
 	}
