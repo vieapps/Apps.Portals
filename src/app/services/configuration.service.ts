@@ -43,7 +43,7 @@ export class ConfigurationService extends BaseService {
 		private electronSvc: ElectronService
 	) {
 		super("Configuration");
-		AppStorage.initializeAsync(this.storage, () => console.log(super.getLogMessage("KVP storage is ready")));
+		AppStorage.initializeAsync(this.storage, () => console.log(super.getLogMessage("Storage is ready. Driver: " + this.storage.driver)));
 		AppEvents.on("App", info => {
 			if ("PlatformIsReady" === info.args.Type) {
 				this.loadGeoMetaAsync();
