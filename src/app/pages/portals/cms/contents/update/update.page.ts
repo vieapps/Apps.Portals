@@ -278,7 +278,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 				})
 			},
 			file: {
-				label: await this.appFormsSvc.getResourceAsync("portals.cms.common.links.label")
+				label: await this.appFormsSvc.getResourceAsync("portals.cms.common.links.file")
 			}
 		};
 		const linkSelector = this.portalsCmsSvc.getLinkSelector(this.content, DataLookupModalPage, linkSelectorOptions);

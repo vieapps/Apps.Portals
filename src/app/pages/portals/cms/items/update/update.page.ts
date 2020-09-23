@@ -185,7 +185,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 				preProcess: (objects: Array<any>) => objects.forEach(object => Item.update(object))
 			},
 			file: {
-				label: await this.appFormsSvc.getResourceAsync("portals.cms.common.links.label")
+				label: await this.appFormsSvc.getResourceAsync("portals.cms.common.links.file")
 			}
 		};
 		const linkSelector = this.portalsCmsSvc.getLinkSelector(this.item, DataLookupModalPage, linkSelectorOptions);

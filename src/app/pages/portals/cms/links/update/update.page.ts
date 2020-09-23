@@ -284,8 +284,16 @@ export class CmsLinksUpdatePage implements OnInit {
 			control.Options.Disabled = true;
 		}
 
+		const linkSelectorOptions = {
+			file: {
+				label: await this.appFormsSvc.getResourceAsync("portals.cms.common.links.file")
+			}
+		};
+		const linkSelector = this.portalsCmsSvc.getLinkSelector(this.link, DataLookupModalPage, linkSelectorOptions);
 		const mediaSelector = this.portalsCmsSvc.getMediaSelector(this.link, await this.appFormsSvc.getResourceAsync("portals.cms.common.links.media"));
+
 		formConfig.filter(ctrl => AppUtility.isEquals(ctrl.Type, "TextEditor")).forEach(ctrl => {
+			ctrl.Extras["ckEditorLinkSelector"] = linkSelector;
 			ctrl.Extras["ckEditorMediaSelector"] = mediaSelector;
 			ctrl.Extras["ckEditorSimpleUpload"] = AppUtility.isNotEmpty(this.link.ID) ? this.portalsCmsSvc.getFileHeaders(this.link) : undefined;
 			ctrl.Extras["ckEditorTrustedHosts"] = this.configSvc.appConfig.URIs.medias;
