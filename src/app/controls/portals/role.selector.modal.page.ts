@@ -138,9 +138,9 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	}
 
 	getInfo(role: Role) {
-		return role.childrenIDs === undefined || role.childrenIDs.length < 1
-			? ""
-			: AppUtility.format(this.children, { number: role.childrenIDs.length, children: `${role.Children[0].Title}, ...` });
+		return AppUtility.isArray(role.childrenIDs, true) && role.childrenIDs.length > 0
+			? AppUtility.format(this.children, { number: role.childrenIDs.length, children: `${role.Children[0].Title}, ...` })
+			: "";
 	}
 
 	openSearch() {

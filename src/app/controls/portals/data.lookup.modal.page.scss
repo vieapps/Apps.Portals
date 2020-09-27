@@ -8,12 +8,12 @@ ion-item.parent > ion-label > ion-icon {
 	margin-top: 6px;
 	margin-right: 16px;
 }
-ion-item > ion-label > span {
+ion-item > ion-label > span,
+ion-item > ion-label > span > span {
 	display: block;
 	margin-top: 5px;
 }
 ion-item > ion-label > span > span {
-	display: inline-block;
-	font-size: 0.96em;
-	max-width: 50%;
+	clear: both;
+	font-size: .8rem;
 }

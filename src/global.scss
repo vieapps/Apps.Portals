@@ -124,7 +124,9 @@ app-form div.text > figure.image.image-style-align-left {
 	margin-top: 0;
 }
 app-form span.text > figure.image.image-style-align-right,
-app-form div.text > figure.image.image-style-align-right {
+app-form div.text > figure.image.image-style-align-right,
+app-form span.text > figure.image.image-style-side,
+app-form div.text > figure.image.image-style-side {
 	clear: none;
 	float: right;
 	margin-left: 16px;
@@ -160,6 +162,20 @@ app-form div.text > figure.media > audio {
 }
 app-form app-form-control figure.media.ck-widget > div.ck-media__wrapper {
 	max-width: 75%;
+}
+
+/* tables */
+app-form div.text > figure.table {
+	display: table;
+	width: 100%;
+}
+app-form div.text > figure.table[style='float:left;'],
+app-form div.text > figure.table[style='float:right;'],
+app-form div.text > figure.table[style='text-align:center;'] {
+	width: auto;
+}
+app-form div.text > figure.table > table {
+	margin: 0 auto;
 }
 
 /* buttons */
@@ -327,7 +343,7 @@ app-form-view > ion-item > ion-checkbox {
 }
 .text-editor .ck-editor__editable_inline {
 	min-height: 400px;
-	max-height: 700px;
+	max-height: 670px;
 	border-left: solid 1px var(--ck-color-toolbar-border) !important;
 	border-right: solid 1px var(--ck-color-toolbar-border) !important;
 	border-bottom: solid 1px var(--ck-color-toolbar-border) !important;

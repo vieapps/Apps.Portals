@@ -103,9 +103,9 @@ export class DesktopsSelectorModalPage implements OnInit, OnDestroy {
 	}
 
 	getInfo(desktop: Desktop) {
-		return desktop.childrenIDs === undefined || desktop.childrenIDs.length < 1
-			? ""
-			: AppUtility.format(this.children, { number: desktop.childrenIDs.length, children: `${desktop.Children[0].Title}, ...` });
+		return AppUtility.isArray(desktop.childrenIDs, true) && desktop.childrenIDs.length > 0
+			? AppUtility.format(this.children, { number: desktop.childrenIDs.length, children: `${desktop.Children[0].Title}, ...` })
+			: "";
 	}
 
 	openSearch() {

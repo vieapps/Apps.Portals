@@ -124,12 +124,6 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		return `${item.ID}@${index}`;
 	}
 
-	getInfo(item: DataItem) {
-		return item.Children === undefined || item.Children.length < 1
-			? ""
-			: AppUtility.format(this.children, { number: item.Children.length, children: `${item.Children[0].Title}, ...` });
-	}
-
 	openSearch() {
 		this.prepareFilterBy(false);
 		this.results = [];
@@ -161,7 +155,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	}
 
 	async onInfiniteScrollAsync() {
-		if (this.pagination.PageNumber < this.pagination.TotalPages) {
+		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
 			await this.searchAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : new Promise<void>(() => {})));
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
@@ -197,11 +191,14 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			: this.sortBy || { LastModified: "Descending" };
 	}
 
-	private sort(items: DataItem[]) {
+	private prepareItems(items: DataItem[], doSort: boolean = true) {
+		items.forEach(item => item.Info = AppUtility.isArray(item.Children, true) && item.Children.length > 0 ? AppUtility.format(this.children, { number: item.Children.length, children: `${item.Children[0].Title}, ...` }) : "");
 		const orderBy = this.prepareSortBy();
-		return items.orderBy(Object.keys(orderBy).map(key => {
-			return { name: key, reverse: AppUtility.isEquals("Descending", orderBy[key]) };
-		}));
+		return doSort
+			? items.orderBy(Object.keys(orderBy).map(key => {
+					return { name: key, reverse: AppUtility.isEquals("Descending", orderBy[key]) };
+				}))
+			: items;
 	}
 
 	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
@@ -220,10 +217,10 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request);
 			this.pagination.PageNumber = this.pageNumber;
 			if (this.searching) {
-				(data.Objects as Array<DataItem>).filter(o => this.excludedIDs.indexOf(o.ID) < 0).forEach(o => this.results.push(o));
+				this.results = this.results.concat(this.prepareItems((data.Objects as Array<DataItem>).filter(o => this.excludedIDs.indexOf(o.ID) < 0), false));
 			}
 			else {
-				const objects = this.sort(data.Objects as Array<DataItem>).filter(o => this.excludedIDs.indexOf(o.ID) < 0);
+				const objects = this.prepareItems(data.Objects as Array<DataItem>).filter(o => this.excludedIDs.indexOf(o.ID) < 0);
 				this.items = data !== undefined
 					? this.items.concat(objects)
 					: objects.take(this.pagination === undefined ? 0 : this.pageNumber * this.pagination.PageSize);
@@ -255,7 +252,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	}
 
 	private updateParent(item: DataItem) {
-		if (item.Children !== undefined && item.Children.length > 0) {
+		if (AppUtility.isArray(item.Children, true) && item.Children.length > 0) {
 			item.Children.forEach(child => {
 				child.Parent = item;
 				this.updateParent(child);
@@ -284,19 +281,21 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	back(event: Event) {
 		event.stopPropagation();
 		this.parent = this.parent.Parent;
-		this.items = this.sort((this.parent !== undefined ? this.parent.Children : this.rootItems).filter(o => this.excludedIDs.indexOf(o.ID) < 0));
+		this.items = this.prepareItems((this.parent !== undefined ? this.parent.Children : this.rootItems).filter(o => this.excludedIDs.indexOf(o.ID) < 0));
 	}
 
 	show(event: Event, item: DataItem) {
 		event.stopPropagation();
 		this.parent = item;
-		this.items = this.sort(this.parent.Children.filter(o => this.excludedIDs.indexOf(o.ID) < 0));
+		this.items = this.prepareItems(this.parent.Children.filter(o => this.excludedIDs.indexOf(o.ID) < 0));
 	}
+
 }
 
 interface DataItem {
 	ID: string;
 	Title: string;
+	Info?: string;
 	ParentID?: string;
 	OrderIndex?: number;
 	Parent?: DataItem;
