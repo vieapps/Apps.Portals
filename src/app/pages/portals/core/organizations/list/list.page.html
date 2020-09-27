@@ -43,7 +43,7 @@
   </ion-fab>
 	<ion-list class="ion-padding-end">
 		<ion-item-sliding *ngFor="let organization of organizations; let idx=index; trackBy: track">
-			<ion-item [color]="color" (click)="openAsync($event, organization)" class="ion-activatable" detail="false">
+			<ion-item class="ion-activatable" detail="false" [color]="color" (click)="openAsync($event, organization)">
 				<ion-buttons slot="end">
 					<ion-button *ngIf="isActive(organization)" fill="clear" color="primary" (click)="openAsync($event, organization)">
 						<ion-icon name="checkmark-circle" slot="icon-only"></ion-icon>

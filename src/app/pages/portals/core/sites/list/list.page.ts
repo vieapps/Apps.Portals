@@ -1,7 +1,7 @@
 import { Subscription } from "rxjs";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
+import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
@@ -32,6 +32,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 	}
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
+	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
 	private organization: Organization;
@@ -155,18 +156,6 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		return `${site.SubDomain}.${site.PrimaryDomain}` + (AppUtility.isNotEmpty(site.OtherDomains) ? `;${site.OtherDomains}` : "");
 	}
 
-	async showActionsAsync() {
-		await this.appFormsSvc.showActionSheetAsync(this.actions);
-	}
-
-	async createAsync() {
-		await this.configSvc.navigateForwardAsync("/portals/core/sites/create");
-	}
-
-	async openSearchAsync() {
-		await this.configSvc.navigateForwardAsync("/portals/core/sites/search");
-	}
-
 	onStartSearch(event: any) {
 		this.cancelSearch();
 		if (AppUtility.isNotEmpty(event.detail.value)) {
@@ -269,6 +258,35 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		if (onNext !== undefined) {
 			onNext();
 		}
+	}
+
+	async showActionsAsync() {
+		await this.listCtrl.closeSlidingItems();
+		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	}
+
+	async createAsync() {
+		await this.listCtrl.closeSlidingItems();
+		await this.configSvc.navigateForwardAsync("/portals/core/sites/create");
+	}
+
+	async openSearchAsync() {
+		await this.listCtrl.closeSlidingItems();
+		await this.configSvc.navigateForwardAsync("/portals/core/sites/search");
+	}
+
+	async editAsync(event: Event, site: Site) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.configSvc.navigateForwardAsync(site.routerURI);
+	}
+
+	async openAsync(event: Event, site: Site) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		const domain = `${site.SubDomain}.${site.PrimaryDomain}`.replace("*.", "www.").replace("www.www.", "www.");
+		const protocol = site.AlwaysUseHTTPs ? "https" : "http";
+		PlatformUtility.openURI(`${protocol}://${domain}`);
 	}
 
 }
