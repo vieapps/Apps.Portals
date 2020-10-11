@@ -92,13 +92,13 @@ export class PortalsCoreService extends BaseService {
 		});
 		if (this.configSvc.isReady) {
 			this.getDefinitionsAsync();
-			this.getActiveOrganizationAsync(false);
+			this.getActiveOrganizationAsync(undefined, false);
 		}
 		else {
 			AppEvents.on("App", info => {
 				if (info.args.Type === "Initialized") {
 					this.getDefinitionsAsync();
-					this.getActiveOrganizationAsync(false);
+					this.getActiveOrganizationAsync(undefined, false);
 				}
 			});
 		}
@@ -111,13 +111,13 @@ export class PortalsCoreService extends BaseService {
 			}
 		});
 		if (Organization.active === undefined) {
-			await this.getActiveOrganizationAsync(false);
+			await this.getActiveOrganizationAsync(undefined, false);
 			if (this.configSvc.isDebug) {
 				console.log("[Portals]: The active organization was initialized", Organization.active);
 			}
 		}
 		else if (Organization.active.modules.length < 1) {
-			await this.getActiveOrganizationAsync(false);
+			await this.getActiveOrganizationAsync(undefined, false);
 			if (this.configSvc.isDebug) {
 				console.log("[Portals]: Modules of the active organization were initialized", Organization.active.modules);
 			}
@@ -168,52 +168,35 @@ export class PortalsCoreService extends BaseService {
 		return this._themes;
 	}
 
-	public async getActiveOrganizationAsync(useXHR: boolean = true) {
-		if (Organization.active === undefined) {
-			const preferID: string = this.configSvc.appConfig.options.extras["organization"];
-			if (AppUtility.isNotEmpty(preferID)) {
-				Organization.active = Organization.get(preferID);
-				if (Organization.active === undefined) {
-					await this.getOrganizationAsync(preferID, _ => {
-						Organization.active = Organization.get(preferID);
-						this.configSvc.appConfig.services.activeID = Organization.active.ID;
-						if (Organization.active !== undefined && !useXHR) {
-							AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
-						}
-					}, undefined, useXHR);
-				}
-			}
-
-			Organization.active = Organization.active || Organization.instances.first();
-			if (Organization.active !== undefined) {
+	public async getActiveOrganizationAsync(preferID?: string, useXHR: boolean = true) {
+		preferID = AppUtility.isNotEmpty(preferID) ? preferID : this.configSvc.appConfig.options.extras["organization"];
+		if (AppUtility.isNotEmpty(preferID)) {
+			if (Organization.active !== undefined && AppUtility.isEquals(Organization.active.ID, preferID)) {
 				this.configSvc.appConfig.services.activeID = Organization.active.ID;
-				AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
+			}
+			else {
+				await this.getOrganizationAsync(preferID, async _ => await this.setActiveOrganizationAsync(Organization.get(preferID) || Organization.instances.first()), undefined, useXHR);
 			}
 		}
 		return Organization.active;
 	}
 
-	public async setActiveOrganizationAsync(organizationID: string, onNext?: () => void) {
-		if (AppUtility.isNotEmpty(organizationID) && Organization.contains(organizationID) && (Organization.active === undefined || Organization.active.ID !== organizationID)) {
-			Organization.active = Organization.get(organizationID);
-			this.configSvc.appConfig.options.extras["organization"] = Organization.active.ID;
-			this.configSvc.appConfig.services.activeID = Organization.active.ID;
-			await this.configSvc.storeOptionsAsync();
-			AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
+	public async setActiveOrganizationAsync(organization: Organization, onNext?: () => void) {
+		if (organization !== undefined) {
+			if (this.configSvc.isDebug) {
+				console.log("[Portals]: Active organization", organization);
+			}
+			this.configSvc.appConfig.services.activeID = organization.ID;
+			this.configSvc.appConfig.options.extras["organization"] = organization.ID;
+			if (Organization.active === undefined || Organization.active.ID !== organization.ID) {
+				Organization.active = organization;
+				AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
+				await this.configSvc.storeOptionsAsync();
+			}
 		}
-
-		if (this.configSvc.isDebug) {
-			console.log("[Portals]: Active organization", Organization.active);
-		}
-
-		if (Organization.active !== undefined) {
-			this.configSvc.appConfig.services.activeID = Organization.active.ID;
-		}
-
 		if (onNext !== undefined) {
 			onNext();
 		}
-
 		return Organization.active;
 	}
 
@@ -1155,18 +1138,7 @@ export class PortalsCoreService extends BaseService {
 		return super.search(
 			super.getSearchURI("organization", this.configSvc.relatedQuery),
 			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!Organization.contains(obj.ID)) {
-							Organization.update(obj);
-						}
-					});
-				}
-				if (onNext !== undefined) {
-					onNext(data);
-				}
-			},
+			data => this.processOrganizations(data, onNext),
 			error => {
 				console.error(super.getErrorMessage("Error occurred while searching organization(s)", error));
 				if (onError !== undefined) {
@@ -1180,18 +1152,7 @@ export class PortalsCoreService extends BaseService {
 		await super.searchAsync(
 			super.getSearchURI("organization", this.configSvc.relatedQuery),
 			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!Organization.contains(obj.ID)) {
-							Organization.update(obj);
-						}
-					});
-				}
-				if (onNext !== undefined) {
-					onNext(data);
-				}
-			},
+			data => this.processOrganizations(data, onNext),
 			error => {
 				console.error(super.getErrorMessage("Error occurred while searching organization(s)", error));
 				if (onError !== undefined) {
@@ -1316,6 +1277,19 @@ export class PortalsCoreService extends BaseService {
 				break;
 		}
 		AppEvents.broadcast(this.name, { Object: "Organization", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+	}
+
+	private processOrganizations(data: any, onNext?: (data?: any) => void) {
+		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+			(data.Objects as Array<any>).forEach(obj => {
+				if (!Organization.contains(obj.ID)) {
+					Organization.update(obj);
+				}
+			});
+		}
+		if (onNext !== undefined) {
+			onNext(data);
+		}
 	}
 
 	public get roleCompleterDataSource() {
@@ -1597,22 +1571,7 @@ export class PortalsCoreService extends BaseService {
 		return super.search(
 			super.getSearchURI("desktop", this.configSvc.relatedQuery),
 			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						const desktop = Desktop.get(obj.ID);
-						if (desktop === undefined) {
-							this.fetchDesktop(Desktop.update(obj));
-						}
-						else if (desktop.childrenIDs === undefined) {
-							this.fetchDesktop(desktop);
-						}
-					});
-				}
-				if (onNext !== undefined) {
-					onNext(data);
-				}
-			},
+			data => this.processDesktops(data, onNext),
 			error => {
 				console.error(super.getErrorMessage("Error occurred while searching desktop(s)", error));
 				if (onError !== undefined) {
@@ -1626,22 +1585,7 @@ export class PortalsCoreService extends BaseService {
 		await super.searchAsync(
 			super.getSearchURI("desktop", this.configSvc.relatedQuery),
 			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						const desktop = Desktop.get(obj.ID);
-						if (desktop === undefined) {
-							this.fetchDesktop(Desktop.update(obj));
-						}
-						else if (desktop.childrenIDs === undefined) {
-							this.fetchDesktop(desktop);
-						}
-					});
-				}
-				if (onNext !== undefined) {
-					onNext(data);
-				}
-			},
+			data => this.processDesktops(data, onNext),
 			error => {
 				console.error(super.getErrorMessage("Error occurred while searching desktop(s)", error));
 				if (onError !== undefined) {
@@ -1776,6 +1720,23 @@ export class PortalsCoreService extends BaseService {
 		AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
 		if (AppUtility.isNotEmpty(message.Data.ParentID)) {
 			AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+		}
+	}
+
+	private processDesktops(data: any, onNext?: (data?: any) => void) {
+		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+			(data.Objects as Array<any>).forEach(obj => {
+				const desktop = Desktop.get(obj.ID);
+				if (desktop === undefined) {
+					this.fetchDesktop(Desktop.update(obj));
+				}
+				else if (desktop.childrenIDs === undefined) {
+					this.fetchDesktop(desktop);
+				}
+			});
+		}
+		if (onNext !== undefined) {
+			onNext(data);
 		}
 	}
 

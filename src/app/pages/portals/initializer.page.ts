@@ -68,7 +68,7 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 				await this.portalsCoreSvc.getOrganizationAsync(organizationID, _ => organization = Organization.get(organizationID), undefined, true);
 			}
 			if (organization !== undefined) {
-				await this.portalsCoreSvc.setActiveOrganizationAsync(organization.ID);
+				await this.portalsCoreSvc.setActiveOrganizationAsync(organization);
 				const objectName = this.configSvc.requestParams["ObjectName"] as string;
 				const objectID = this.configSvc.requestParams["ObjectID"] as string;
 				if (AppUtility.isNotEmpty(objectName) && AppUtility.isNotEmpty(objectID)) {

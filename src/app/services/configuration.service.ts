@@ -385,7 +385,7 @@ export class ConfigurationService extends BaseService {
 			super.send({
 				ServiceName: "Users",
 				ObjectName: "Account",
-				Query: this.appConfig.getRelatedJson({ "x-status": "" })
+				Query: this.appConfig.getRelatedJson({ "x-status": "true" })
 			});
 			super.send({
 				ServiceName: "Users",
