@@ -1051,7 +1051,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				removePlugins.push("Code", "CodeBlock");
 			}
 			if (removePlugins.length > 0) {
-				this._ckEditorConfig.removePlugins = removePlugins.filter((id, index, array) => array.indexOf(id) === index);
+				this._ckEditorConfig.removePlugins = removePlugins.distinct();
 			}
 			const toolbar = this.control.Extras["ckEditorToolbar"];
 			if (AppUtility.isObject(toolbar, true) || AppUtility.isArray(toolbar, true)) {
