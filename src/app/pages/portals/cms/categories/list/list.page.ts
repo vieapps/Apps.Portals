@@ -156,7 +156,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 		this.module = this.contentType !== undefined
 			? Module.get(this.contentType.RepositoryID)
-			: await this.portalsCmsSvc.getActiveModuleAsync();
+			: await this.portalsCoreSvc.getActiveModuleAsync();
 
 		this.contentType = this.contentType || this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.module);
 
@@ -169,6 +169,8 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			]));
 			return;
 		}
+
+		AppEvents.broadcast(this.portalsCmsSvc.name, { Mode: "UpdateSidebarWithCategories" });
 
 		this.labels = {
 			edit: await this.configSvc.getResourceAsync("portals.cms.categories.list.labels.edit"),

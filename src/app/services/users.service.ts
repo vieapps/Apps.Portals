@@ -24,6 +24,19 @@ export class UsersService extends BaseService {
 	) {
 		super("Users");
 		AppRTU.registerAsServiceScopeProcessor(this.name, async message => await this.processUpdateMessageAsync(message));
+		AppEvents.on("App", async info => {
+			if (AppUtility.isEquals(info.args.Type, "OptionsUpdated") && this.configSvc.isAuthenticated) {
+				const profile = this.configSvc.getAccount().profile;
+				profile.Language = this.configSvc.appConfig.options.i18n;
+				profile.Options = this.configSvc.appConfig.options;
+				await this.updateProfileAsync(profile, async _ => {
+					await this.configSvc.storeSessionAsync();
+					if (this.configSvc.isDebug) {
+						console.log("[Users]: The account profile with options are updated", profile);
+					}
+				});
+			}
+		});
 	}
 
 	public get completerDataSource() {
@@ -384,9 +397,7 @@ export class UsersService extends BaseService {
 					if (this.configSvc.appConfig.options.i18n !== account.profile.Language) {
 						await this.configSvc.changeLanguageAsync(account.profile.Language);
 					}
-					else {
-						await this.configSvc.storeOptionsAsync();
-					}
+					await this.configSvc.updateOptionsAsync(account.profile.Options);
 					AppEvents.broadcast("Profile", { Type: "Updated" });
 					AppEvents.sendToElectron(this.name, message);
 					if (this.configSvc.isDebug) {

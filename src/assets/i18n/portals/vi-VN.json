@@ -6,6 +6,17 @@
 			"portals": "Quản trị portals và thông tin hệ thống",
 			"notifications": "Thông báo"
 		},
+		"sidebar": {
+			"organizations": "Đơn vị - Tổ chức",
+			"sites": "Site - Điểm truy cập",
+			"roles": "Vai trò sử dụng",
+			"desktops": "Desktop hiển thị",
+			"modules": "Module nghiệp vụ",
+			"content-types": "Kiểu dữ liệu nghiệp vụ",
+			"expressions": "Biểu thức truy vấn - sắp xếp",
+			"cms-categories": "Chuyên mục - Phân loại",
+			"cms-contents": "Các nội dung"
+		},
 		"common": {
 			"unspecified": "Không xác định",
 			"advancedEdit": "Cập nhật cấp cao",
@@ -336,9 +347,13 @@
 						"label": "Các thẻ meta bổ sung",
 						"description": "Các thẻ meta bổ sung sẽ được thêm vào phần HEAD của toàn bộ các desktop hiển thị, cần phải viết các thẻ meta đúng theo quy chuẩn của XML"
 					},
+					"ScriptLibraries": {
+						"label": "Các thư viện scripts bổ sung",
+						"description": "Các mã script thư viện (Javascript) bổ sung sẽ được thêm vào phần cuối (trước khi đóng thẻ BODY) của toàn bộ các desktop hiển thị.<br/>Các đoạn mã này phải nằm trong &lt;script&gt; và &lt;/script&gt; và có thể sử dụng jQuery ($), đồng thời cho phép trỏ ra các thư viện script ở bên ngoài.<br/>Tips: cũng có thể các thẻ HTML bổ sung vào đây cũng được."
+					},
 					"Scripts": {
 						"label": "Các mã scripts bổ sung",
-						"description": "Các mã script (Javascript) bổ sung sẽ được thêm vào phần cuối (trước khi đóng thẻ BODY) của toàn bộ các desktop hiển thị.<br/>Các đoạn mã này phải nằm trong &lt;script&gt; và &lt;/script&gt; và có thể sử dụng jQuery ($), đồng thời cho phép trỏ ra các thư viện script ở bên ngoài.<br/>Tips: cũng có thể các thẻ HTML bổ sung vào đây cũng được."
+						"description": "Các mã script (Javascript) bổ sung sẽ được thêm vào phần cuối (trước khi đóng thẻ BODY) của toàn bộ các desktop hiển thị.<br/>Các đoạn mã này KHÔNG được nằm trong thẻ &lt;script&gt; và &lt;/script&gt; (vì sẽ được tạo thành liên kết ngoài)."
 					}
 				},
 				"HttpIndicators": {
@@ -533,20 +548,25 @@
 					"placeholder": "",
 					"description": "Chỉ định ảnh bìa (cover) toàn bộ các desktop trong site để hiển thị mặc định đối với mạng xã hội khi nội dung không có ảnh bìa cụ thể, tốt nhất là loại .JPG hoặc .PNG có kích thước 1200x630 hoặc 600x315"
 				},
-				"Stylesheets": {
-					"label": "Các stylesheet (CSS) dùng chung toàn bộ site",
-					"placeholder": "",
-					"description": "Các mã stylesheet (CSS) dùng chung cho toàn bộ các desktop trong site. Lưu ý: nếu truy cập các desktop với thiết đặt của site khác, các mã stylesheet này sẽ không được sử dụng."
-				},
 				"MetaTags": {
 					"label": "Các thẻ meta bổ sung",
 					"placeholder": "",
 					"description": "Các thẻ meta bổ sung sẽ được thêm vào phần HEAD của toàn bộ các desktop trong site, cần phải viết các thẻ meta đúng theo quy chuẩn của XML"
 				},
+				"Stylesheets": {
+					"label": "Các stylesheet (CSS) dùng chung toàn bộ site",
+					"placeholder": "",
+					"description": "Các mã stylesheet (CSS) dùng chung cho toàn bộ các desktop trong site. Lưu ý: nếu truy cập các desktop với thiết đặt của site khác, các mã stylesheet này sẽ không được sử dụng."
+				},
+				"ScriptLibraries": {
+					"label": "Các thư viện scripts bổ sung",
+					"placeholder": "",
+					"description": "Các mã script thư viện (Javascript) bổ sung sẽ được thêm vào phần cuối (trước khi đóng thẻ BODY) của toàn bộ các desktop hiển thị của site.<br/>Các đoạn mã này phải nằm trong &lt;script&gt; và &lt;/script&gt; và có thể sử dụng jQuery ($), đồng thời cho phép trỏ ra các thư viện script ở bên ngoài.<br/>Tips: cũng có thể các thẻ HTML bổ sung vào đây cũng được."
+				},
 				"Scripts": {
 					"label": "Các mã scripts bổ sung",
 					"placeholder": "",
-					"description": "Các mã script (Javascript) bổ sung sẽ được thêm vào phần cuối (trước khi đóng thẻ BODY) của toàn bộ các desktop trong site.<br/>Các đoạn mã này phải nằm trong &lt;script&gt; và &lt;/script&gt; và có thể sử dụng jQuery ($), đồng thời cho phép trỏ ra các thư viện script ở bên ngoài.<br/>Tips: cũng có thể các thẻ HTML bổ sung vào đây cũng được."
+					"description": "Các mã script (Javascript) bổ sung sẽ được thêm vào phần cuối (trước khi đóng thẻ BODY) của toàn bộ các desktop hiển thị của site.<br/>Các đoạn mã này KHÔNG được nằm trong thẻ &lt;script&gt; và &lt;/script&gt; (vì sẽ được tạo thành liên kết ngoài)."
 				},
 				"RedirectToNoneWWW": {
 					"label": "Luôn điều hướng các liên kết có 'WWW' về gốc (để tạo URL ngắn hơn)",
@@ -664,10 +684,20 @@
 					"placeholder": "",
 					"description": "Các thẻ meta bổ sung sẽ được thêm vào phần HEAD của desktop hiển thị, cần phải viết các thẻ meta đúng theo quy chuẩn của XML"
 				},
+				"Stylesheets": {
+					"label": "Các stylesheet (CSS) bổ sung",
+					"placeholder": "",
+					"description": "Các mã stylesheet (CSS) bổ sung cho desktop"
+				},
+				"ScriptLibraries": {
+					"label": "Các thư viện scripts bổ sung",
+					"placeholder": "",
+					"description": "Các mã script thư viện (Javascript) bổ sung sẽ được thêm vào phần cuối (trước khi đóng thẻ BODY) của desktop hiển thị của site.<br/>Các đoạn mã này phải nằm trong &lt;script&gt; và &lt;/script&gt; và có thể sử dụng jQuery ($), đồng thời cho phép trỏ ra các thư viện script ở bên ngoài.<br/>Tips: cũng có thể các thẻ HTML bổ sung vào đây cũng được."
+				},
 				"Scripts": {
 					"label": "Các mã scripts bổ sung",
 					"placeholder": "",
-					"description": "Các mã script (Javascript) bổ sung sẽ được thêm vào phần cuối (trước khi đóng thẻ BODY) của desktop hiển thị.<br/>Các đoạn mã này phải nằm trong &lt;script&gt; và &lt;/script&gt; và có thể sử dụng jQuery ($), đồng thời cho phép trỏ ra các thư viện script ở bên ngoài.<br/>Tips: cũng có thể các thẻ HTML bổ sung vào đây cũng được."
+					"description": "Các mã script (Javascript) bổ sung sẽ được thêm vào phần cuối (trước khi đóng thẻ BODY) của desktop hiển thị.<br/>Các đoạn mã này KHÔNG được nằm trong thẻ &lt;script&gt; và &lt;/script&gt; (vì sẽ được tạo thành liên kết ngoài)."
 				},
 				"MainPortletID": {
 					"label": "Portlet chính",

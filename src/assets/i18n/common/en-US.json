@@ -4,7 +4,8 @@
 			"home": "Home",
 			"login": "Login",
 			"register": "Register",
-			"profile": "Profile"
+			"profile": "Profile",
+			"search": "Search"
 		},
 		"alert": {
 			"header": {

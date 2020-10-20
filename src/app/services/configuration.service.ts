@@ -214,7 +214,7 @@ export class ConfigurationService extends BaseService {
 				file: 819200000
 			};
 			this.appConfig.options.extras.fileLimits = limits;
-			this.storeOptionsAsync(() => console.log("[Configuration]: file limits were updated"));
+			this.saveOptionsAsync(() => console.log("[Configuration]: file limits were updated"));
 		}
 		return limits;
 	}
@@ -683,23 +683,37 @@ export class ConfigurationService extends BaseService {
 		const options = await AppStorage.getAsync("Options") || {};
 		if (options.i18n !== undefined && options.timezone !== undefined && options.extras !== undefined) {
 			this.appConfig.options = options;
-			if (this.appConfig.options.theme === undefined) {
-				this.appConfig.options.theme = "light";
-			}
-			await this.storeOptionsAsync(onNext);
+			this.appConfig.options.theme = this.appConfig.options.theme || "light";
+			await this.saveOptionsAsync(onNext);
 		}
 		else if (onNext !== undefined) {
 			onNext(options);
 		}
 	}
 
+	/** Updates the options of the app */
+	public async updateOptionsAsync(options: any, onNext?: (data?: any) => void) {
+		options = options || {};
+		Object.keys(options).forEach(name => this.appConfig.options[name] = options[name]);
+		await this.saveOptionsAsync(onNext);
+	}
+
 	/** Stores the options of the app */
 	public async storeOptionsAsync(onNext?: (data?: any) => void) {
-		await AppStorage.setAsync("Options", this.appConfig.options).then(() => {
+		await this.saveOptionsAsync(() => {
 			AppEvents.broadcast("App", { Type: "OptionsUpdated" });
 			if (this.isDebug) {
 				console.log(super.getLogMessage("Options are updated"), this.appConfig.options);
 			}
+			if (onNext !== undefined) {
+				onNext(this.appConfig.options);
+			}
+		});
+	}
+
+	/** Saves the options of the app into storage */
+	public async saveOptionsAsync(onNext?: (data?: any) => void) {
+		await AppStorage.setAsync("Options", this.appConfig.options).then(() => {
 			if (onNext !== undefined) {
 				onNext(this.appConfig.options);
 			}
@@ -714,10 +728,10 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Changes the language & locale of resources to use in the app */
-	public async changeLanguageAsync(language: string, storeOptions: boolean = true) {
+	public async changeLanguageAsync(language: string, saveOptions: boolean = true) {
 		this.appConfig.options.i18n = language;
 		await Promise.all([
-			storeOptions ? this.storeOptionsAsync() : new Promise<void>(() => {}),
+			saveOptions ? this.saveOptionsAsync() : new Promise<void>(() => {}),
 			this.setResourceLanguageAsync(language)
 		]).then(() => AppEvents.broadcast("App", { Type: "LanguageChanged" }));
 	}
@@ -791,6 +805,62 @@ export class ConfigurationService extends BaseService {
 
 	public getInstructionsAsync(service: string, language?: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.fetchAsync(`/statics/instructions/${service}/${language || this.appConfig.language}.json`, onNext, onError);
+	}
+
+	/** Gets top items for displaying at sidebar */
+	public async getSidebarTopItemsAsync() {
+		return {
+			home: {
+				title: await this.getResourceAsync("common.sidebar.home"),
+				link: this.appConfig.url.home,
+				queryParams: undefined as { [key: string]: any },
+				direction: "root",
+				detail: false,
+				icon: "home",
+				thumbnail: undefined as string,
+				onClick: () => {}
+			},
+			login: {
+				title: await this.getResourceAsync("common.sidebar.login"),
+				link: this.appConfig.url.users.login,
+				queryParams: undefined as { [key: string]: any },
+				direction: "forward",
+				detail: false,
+				icon: "log-in",
+				thumbnail: undefined as string,
+				onClick: () => {}
+			},
+			register: {
+				title: await this.getResourceAsync("common.sidebar.register"),
+				link: this.appConfig.url.users.register,
+				queryParams: undefined as { [key: string]: any },
+				direction: "forward",
+				detail: false,
+				icon: "person-add",
+				thumbnail: undefined as string,
+				onClick: () => {}
+			},
+			profile: {
+				title: await this.getResourceAsync("common.sidebar.profile"),
+				link: `${this.appConfig.url.users.profile}/my`,
+				queryParams: undefined as { [key: string]: any },
+				direction: "forward",
+				detail: false,
+				icon: "person",
+				thumbnail: undefined as string,
+				onClick: () => {}
+			},
+			search: {
+				title: await this.getResourceAsync("common.sidebar.search"),
+				link: this.appConfig.url.search,
+				queryParams: undefined as { [key: string]: any },
+				direction: "forward",
+				detail: false,
+				icon: "search",
+				thumbnail: undefined as string,
+				onClick: () => {}
+			}
+		};
 	}
 
 }

@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { ConfigurationService } from "@app/services/configuration.service";
-import { UsersService } from "@app/services/users.service";
 
 @Component({
 	selector: "control-app-preferences",
@@ -13,8 +12,7 @@ import { UsersService } from "@app/services/users.service";
 export class AppPreferencesControl implements OnInit, OnDestroy {
 
 	constructor(
-		private configSvc: ConfigurationService,
-		private usersSvc: UsersService
+		private configSvc: ConfigurationService
 	) {
 	}
 
@@ -66,6 +64,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 			desktop: "Desktop apps",
 			mobile: "Mobile & Tablet apps"
 		},
+		profile: "Profile",
 		about: "About",
 		ok: "OK",
 		cancel: "Cancel"
@@ -108,6 +107,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 				desktop: await this.configSvc.getResourceAsync("common.preferences.apps.desktop"),
 				mobile: await this.configSvc.getResourceAsync("common.preferences.apps.mobile")
 			},
+			profile: await this.configSvc.getResourceAsync("common.sidebar.profile"),
 			about: await this.configSvc.getResourceAsync("common.preferences.about"),
 			ok: await this.configSvc.getResourceAsync("common.buttons.ok"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
@@ -116,18 +116,9 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 
 	async onLanguageChangedAsync(event: any) {
 		if (this.options.language !== event.detail.value) {
-			this.options.language = event.detail.value;
-			if (this.configSvc.isAuthenticated) {
-				const profile = this.configSvc.getAccount().profile;
-				profile.Language = this.options.language;
-				await this.usersSvc.updateProfileAsync(profile, async _ => {
-					await this.configSvc.storeSessionAsync();
-					await this.configSvc.changeLanguageAsync(this.options.language);
-				});
-			}
-			else {
-				await this.configSvc.changeLanguageAsync(this.options.language);
-			}
+			this.configSvc.appConfig.options.i18n = this.options.language = event.detail.value;
+			await this.configSvc.changeLanguageAsync(this.options.language);
+			await this.configSvc.storeOptionsAsync();
 		}
 	}
 
@@ -135,6 +126,10 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		this.options.darkTheme = AppUtility.isTrue(event.detail.checked);
 		this.configSvc.appConfig.options.theme = this.options.darkTheme ? "dark" : "light";
 		await this.configSvc.storeOptionsAsync();
+	}
+
+	async openProfileAsync() {
+		await this.configSvc.navigateForwardAsync(this.configSvc.appConfig.url.users.profile + "/my");
 	}
 
 }

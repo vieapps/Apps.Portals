@@ -36,8 +36,8 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://vieapps.net",
 		id: "vieapps-ngx-portals",
-		version: "1.0.8",
-		frameworks: "ionic 5.3 - angular 8.2 - cordova 10.0",
+		version: "1.1.0",
+		frameworks: "ionic 5.4 - angular 8.2 - cordova 10.0",
 		mode: "",
 		platform: "",
 		os: "",
@@ -131,6 +131,7 @@ export class AppConfig {
 	public static url = {
 		stack: [] as Array<{ url: string, params: { [key: string]: any } }>,
 		home: "/home",
+		search: "/search",
 		base: undefined as string,
 		host: undefined as string,
 		routerParams: undefined as { [key: string]: any },

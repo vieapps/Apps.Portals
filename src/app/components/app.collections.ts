@@ -6,6 +6,9 @@ declare global {
 		/** Inserts an element at a specified index/position */
 		insert(value: T, index?: number): T[];
 
+		/** Updates an element at a specified index/position (replaces or inserts) */
+		update(value: T, index?: number): T[];
+
 		/** Removes an element */
 		remove(value: T, findIndex?: (value: T, array: T[]) => number): T[];
 
@@ -57,6 +60,18 @@ if (!Array.prototype.insert) {
 	Array.prototype.insert = function<T>(this: T[], value: T, index?: number): T[] {
 		if (index !== undefined && index > -1 && index < this.length) {
 			this.splice(index, 0, value);
+		}
+		else {
+			this.push(value);
+		}
+		return this;
+	};
+}
+
+if (!Array.prototype.update) {
+	Array.prototype.update = function<T>(this: T[], value: T, index?: number): T[] {
+		if (index !== undefined && index > -1 && index < this.length) {
+			this[index] = value;
 		}
 		else {
 			this.push(value);
@@ -402,13 +417,16 @@ export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 
 	/** Produces the sub-set of this collection by using the predicate */
 	filter(predicate: (value: TValue, key: TKey) => boolean) {
-		const dictionary = new Dictionary<TKey, TValue>();
-		this.forEach((value, key) => {
-			if (predicate(value, key)) {
-				dictionary.set(key, value);
-			}
-		});
-		return dictionary;
+		if (predicate !== undefined) {
+			const dictionary = new Dictionary<TKey, TValue>();
+			this.forEach((value, key) => {
+				if (predicate(value, key)) {
+					dictionary.set(key, value);
+				}
+			});
+			return dictionary;
+		}
+		return this;
 	}
 
 	/** Produces the set difference of two collections by using the equality comparer to compare values */

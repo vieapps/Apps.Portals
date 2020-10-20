@@ -58,6 +58,34 @@ export class PortalsCoreService extends BaseService {
 		return Organization.active;
 	}
 
+	public get activeModules() {
+		let modules: { [key: string]: string } = this.configSvc.appConfig.options.extras["modules"];
+		if (modules === undefined) {
+			modules = {};
+			this.configSvc.appConfig.options.extras["modules"] = modules;
+			this.configSvc.saveOptionsAsync();
+		}
+		return modules;
+	}
+
+	public get activeModule() {
+		if (Module.active === undefined) {
+			const systemID = this.activeOrganization !== undefined
+				? this.activeOrganization.ID
+				: undefined;
+			const moduleID = systemID !== undefined
+				? this.activeModules[systemID]
+				: undefined;
+			if (Module.contains(moduleID)) {
+				Module.active = Module.get(moduleID);
+			}
+			else if (moduleID !== undefined) {
+				this.getModuleAsync(moduleID, async _ => await this.setActiveModuleAsync(Module.get(moduleID)));
+			}
+		}
+		return Module.active;
+	}
+
 	private initialize() {
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Organization", message => this.processOrganizationUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Organization", message => this.processOrganizationUpdateMessage(message));
@@ -77,52 +105,42 @@ export class PortalsCoreService extends BaseService {
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Content.Type", message => this.processContentTypeUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Expression", message => this.processExpressionUpdateMessage(message));
 		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Expression", message => this.processExpressionUpdateMessage(message));
-		AppEvents.on("Portals", info => {
+		AppEvents.on(this.name, async info => {
 			if (info.args.Type === "RequestInfo" && AppUtility.isNotEmpty(info.args.ID)) {
 				if (info.args.Object === "Organization") {
-					this.getOrganizationAsync(info.args.ID);
+					await this.getOrganizationAsync(info.args.ID);
 				}
 				else if (info.args.Object === "Module") {
-					this.getModuleAsync(info.args.ID);
+					await this.getModuleAsync(info.args.ID);
 				}
 				else if (info.args.Object === "ContentType") {
-					this.getContentTypeAsync(info.args.ID);
+					await this.getContentTypeAsync(info.args.ID);
 				}
 			}
 		});
-		if (this.configSvc.isReady) {
-			this.getDefinitionsAsync();
-			this.getActiveOrganizationAsync(undefined, false);
-		}
-		else {
-			AppEvents.on("App", info => {
-				if (info.args.Type === "Initialized") {
-					this.getDefinitionsAsync();
-					this.getActiveOrganizationAsync(undefined, false);
-				}
-			});
-		}
 	}
 
-	public async initializeAysnc() {
-		await this.getDefinitionsAsync(() => {
+	public async initializeAysnc(onNext?: () => void) {
+		await this.getDefinitionsAsync(async () => {
 			if (this.configSvc.isDebug) {
-				console.log("[Portals]: The definitions were initialized", BaseModel.moduleDefinitions);
+				console.log("[Portals]: The definitions were fetched", BaseModel.moduleDefinitions);
 			}
 		});
 		if (Organization.active === undefined) {
-			await this.getActiveOrganizationAsync(undefined, false);
-			if (this.configSvc.isDebug) {
-				console.log("[Portals]: The active organization was initialized", Organization.active);
-			}
+			await this.getActiveOrganizationAsync(undefined, true, () => {
+				if (this.configSvc.isDebug) {
+					console.log("[Portals]: The active organization was fetched", Organization.active);
+				}
+			});
 		}
-		else if (Organization.active.modules.length < 1) {
-			await this.getActiveOrganizationAsync(undefined, false);
-			if (this.configSvc.isDebug) {
-				console.log("[Portals]: Modules of the active organization were initialized", Organization.active.modules);
-			}
+		if (Organization.active !== undefined && Organization.active.modules.length < 1) {
+			await this.getActiveOrganizationAsync(undefined, true, () => {
+				if (this.configSvc.isDebug) {
+					console.log("[Portals]: The active organization and modules were fetched", Organization.active, Organization.active.modules);
+				}
+			});
 		}
-		await this.updateSidebarAsync();
+		this.prepareSidebar(onNext);
 	}
 
 	public canManageOrganization(organization?: Organization, account?: Account) {
@@ -150,9 +168,9 @@ export class PortalsCoreService extends BaseService {
 					definition.ObjectDefinitions.forEach(objectDefinition => objectDefinition.ModuleDefinition = definition);
 				});
 			}
-			if (onNext !== undefined) {
-				onNext();
-			}
+		}
+		if (onNext !== undefined) {
+			onNext();
 		}
 		return BaseModel.moduleDefinitions;
 	}
@@ -161,14 +179,14 @@ export class PortalsCoreService extends BaseService {
 		if (this._themes === undefined) {
 			const path = this.configSvc.getDefinitionPath(this.name, "themes");
 			this._themes = this.configSvc.getDefinition(path) || await this.configSvc.fetchDefinitionAsync(path, false);
-			if (onNext !== undefined) {
-				onNext();
-			}
+		}
+		if (onNext !== undefined) {
+			onNext();
 		}
 		return this._themes;
 	}
 
-	public async getActiveOrganizationAsync(preferID?: string, useXHR: boolean = true) {
+	public async getActiveOrganizationAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void) {
 		preferID = AppUtility.isNotEmpty(preferID) ? preferID : this.configSvc.appConfig.options.extras["organization"];
 		if (AppUtility.isNotEmpty(preferID)) {
 			if (Organization.active !== undefined && AppUtility.isEquals(Organization.active.ID, preferID)) {
@@ -178,7 +196,27 @@ export class PortalsCoreService extends BaseService {
 				await this.getOrganizationAsync(preferID, async _ => await this.setActiveOrganizationAsync(Organization.get(preferID) || Organization.instances.first()), undefined, useXHR);
 			}
 		}
+		if (onNext !== undefined) {
+			onNext();
+		}
 		return Organization.active;
+	}
+
+	public async getAvailableOrganizationsAsync() {
+		const organizations = new Array<Organization>();
+		const organizationIDs = this.configSvc.appConfig.options.extras["organizations"] as Array<string>;
+		await Promise.all((organizationIDs || []).filter(id => AppUtility.isNotEmpty(id)).map(async id => {
+			let organization = Organization.get(id);
+			if (organization === undefined) {
+				await this.getOrganizationAsync(id, _ => {
+					organization = Organization.get(id);
+				}, undefined, true);
+			}
+			if (organization !== undefined) {
+				organizations.push(organization);
+			}
+		}));
+		return organizations.sortBy("Title");
 	}
 
 	public async setActiveOrganizationAsync(organization: Organization, onNext?: () => void) {
@@ -188,8 +226,17 @@ export class PortalsCoreService extends BaseService {
 			}
 			this.configSvc.appConfig.services.activeID = organization.ID;
 			this.configSvc.appConfig.options.extras["organization"] = organization.ID;
+			let organizations = this.configSvc.appConfig.options.extras["organizations"] as Array<string>;
+			if (organizations === undefined) {
+				organizations = new Array<string>();
+				this.configSvc.appConfig.options.extras["organizations"] = organizations;
+			}
+			if (organizations.indexOf(organization.ID) < 0) {
+				organizations.push(organization.ID);
+			}
 			if (Organization.active === undefined || Organization.active.ID !== organization.ID) {
 				Organization.active = organization;
+				await this.getActiveModuleAsync();
 				AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
 				await this.configSvc.storeOptionsAsync();
 			}
@@ -198,6 +245,55 @@ export class PortalsCoreService extends BaseService {
 			onNext();
 		}
 		return Organization.active;
+	}
+
+	public async getActiveModuleAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void) {
+		const systemID = this.activeOrganization !== undefined
+			? this.activeOrganization.ID
+			: undefined;
+
+		Module.active = Module.active !== undefined && Module.active.SystemID === systemID
+			? Module.active
+			: undefined;
+
+		if (Module.active === undefined) {
+			preferID = AppUtility.isNotEmpty(preferID)
+				? preferID
+				: AppUtility.isNotEmpty(systemID) ? this.activeModules[systemID] : undefined;
+			if (AppUtility.isNotEmpty(preferID)) {
+				if (Module.contains(preferID)) {
+					Module.active = Module.get(preferID);
+				}
+				else {
+					await this.getModuleAsync(preferID, async _ => await this.setActiveModuleAsync(Module.get(preferID) || Module.instances.first(module => module.SystemID === systemID && module.ModuleDefinitionID === "A0000000000000000000000000000001") || Module.instances.first(module => module.SystemID === systemID)), undefined, useXHR);
+				}
+			}
+		}
+
+		if (onNext !== undefined) {
+			onNext();
+		}
+		return Module.active;
+	}
+
+	public async setActiveModuleAsync(module: Module, onNext?: () => void) {
+		const store = this.activeModules[module.SystemID] === undefined;
+		this.activeModules[module.SystemID] = module.ID;
+		await (store ? this.configSvc.storeOptionsAsync() : this.configSvc.saveOptionsAsync());
+
+		if (Module.active === undefined || Module.active.ID !== module.ID) {
+			Module.active = module;
+			AppEvents.broadcast(this.name, { Object: "Module", Type: "Changed", ID: Module.active.ID });
+		}
+
+		if (this.configSvc.isDebug) {
+			console.log("[Portals]: Active module", Module.active);
+		}
+		if (onNext !== undefined) {
+			onNext();
+		}
+
+		return Module.active;
 	}
 
 	public setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onPreCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {
@@ -317,13 +413,20 @@ export class PortalsCoreService extends BaseService {
 		return theme;
 	}
 
-	public getAppURL(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }, objectName?: string, path?: string) {
+	public getRouterLink(contentType: ContentType, action?: string, title?: string, objectName?: string, path?: string) {
 		objectName = objectName || (contentType !== undefined ? contentType.getObjectName() : "unknown");
 		return `/portals/${path || "cms"}/`
 			+ (AppUtility.isEquals(objectName, "Category") ? "categories" : `${objectName}s`).toLowerCase() + "/"
 			+ (action || "list").toLowerCase() + "/"
-			+ AppUtility.toANSI(title || (contentType !== undefined ? contentType.ansiTitle : "untitled"), true)
-			+ `?x-request=${AppUtility.toBase64Url(params || { RepositoryEntityID: contentType !== undefined ? contentType.ID : undefined })}`;
+			+ AppUtility.toANSI(title || (contentType !== undefined ? contentType.ansiTitle : "untitled"), true);
+	}
+
+	public getRouterQueryParams(contentType: ContentType, params?: { [key: string]: any }) {
+		return { "x-request": AppUtility.toBase64Url(params || { RepositoryEntityID: contentType !== undefined ? contentType.ID : undefined }) };
+	}
+
+	public getAppURL(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }, objectName?: string, path?: string) {
+		return this.getRouterLink(contentType, action, title, objectName, path) + "?x-request=" + this.getRouterQueryParams(contentType, params)["x-request"];
 	}
 
 	public getPortalURL(object: CmsBaseModel, parent?: CmsBaseModel) {
@@ -1018,102 +1121,126 @@ export class PortalsCoreService extends BaseService {
 		await super.readAsync(super.getURI(objectName, "refresh", `object-id=${id}`), onNext, onError, headers, useXHR);
 	}
 
-	public async getSidebarButtonsAsync() {
+	public async getSidebarFooterButtonsAsync() {
 		const buttons: Array<{ name: string, icon: string, title?: string, onClick?: (name: string, sidebar: any) => void }> = [
 			{
 				name: "cms",
 				icon: "library",
 				title: await this.configSvc.getResourceAsync("portals.preferences.cms"),
-				onClick: (name, sidebar) => {
-					sidebar.active = name;
-					AppEvents.broadcast("Portals:UpdateSidebarOfContentManagement");
-				}
+				onClick: (name, sidebar) => this.openSidebar(name, sidebar)
 			},
 			{
 				name: "portals",
 				icon: "cog",
 				title: await this.configSvc.getResourceAsync("portals.preferences.portals"),
-				onClick: (name, sidebar) => {
-					sidebar.active = name;
-					AppEvents.broadcast("Portals:UpdateSidebarOfSystemManagement");
-				}
-			},
-			{
-				name: "notifications",
-				icon: "notifications",
-				title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
-				onClick: (name, sidebar) => {
-					sidebar.active = name;
-					AppEvents.broadcast("Portals:UpdateSidebarOfNotifications");
-				}
+				onClick: (name, sidebar) => this.openSidebar(name, sidebar)
+			// },
+			// {
+			// 	name: "notifications",
+			// 	icon: "notifications",
+			// 	title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
+			// 	onClick: (name, sidebar) => this.openSidebar(name, sidebar, "Notifications")
 			}
 		];
 		return buttons;
 	}
 
-	public async updateSidebarAsync() {
-		const items = [
-			{
-				title: "Organizations",
-				url: "/portals/core/organizations/list/all",
+	private openSidebar(name: string, sidebar: any, event?: string) {
+		if (sidebar.active !== name) {
+			sidebar.active = name;
+			AppEvents.broadcast(event || this.name, { mode: "OpenSidebar", name: name });
+		}
+	}
+
+	public prepareSidebar(onNext?: () => void) {
+		const items = new Array<{
+			title: string,
+			link: string,
+			queryParams?: { [key: string]: any },
+			direction?: string,
+			detail: boolean,
+			icon?: string,
+			thumbnail?: string,
+			onClick?: (info: any, sidebar: any) => void
+		}>();
+		const account = this.configSvc.getAccount();
+		const canManageOrganization = this.canManageOrganization(this.activeOrganization, account);
+		if (canManageOrganization) {
+			items.push
+			(
+				{
+					title: "{{portals.sidebar.organizations}}",
+					link: this.getRouterLink(undefined, "list", "all", "organization", "core"),
+					direction: "root",
+					detail: false,
+					icon: "business"
+				},
+				{
+					title: "{{portals.sidebar.sites}}",
+					link: this.getRouterLink(undefined, "list", "all", "site", "core"),
+					direction: "root",
+					detail: false,
+					icon: "globe"
+				},
+				{
+					title: "{{portals.sidebar.roles}}",
+					link: this.getRouterLink(undefined, "list", "all", "role", "core"),
+					direction: "root",
+					detail: false,
+					icon: "body"
+				},
+				{
+					title: "{{portals.sidebar.desktops}}",
+					link: this.getRouterLink(undefined, "list", "all", "desktop", "core"),
+					direction: "root",
+					detail: false,
+					icon: "desktop"
+				},
+				{
+					title: "{{portals.sidebar.modules}}",
+					link: this.getRouterLink(undefined, "list", "all", "module", "core"),
+					direction: "root",
+					detail: false,
+					icon: "albums"
+				}
+			);
+		}
+
+		items.push({
+			title: "{{portals.sidebar.content-types}}",
+			link: this.getRouterLink(undefined, "list", "all", "content.type", "core"),
+			direction: "root",
+			detail: false,
+			icon: "git-compare"
+		});
+
+		if (canManageOrganization) {
+			items.push({
+				title: "{{portals.sidebar.expressions}}",
+				link: this.getRouterLink(undefined, "list", "all", "expression", "core"),
 				direction: "root",
-				icon: "business",
-				detail: false
-			},
-			{
-				title: "Sites",
-				url: "/portals/core/sites/list/all",
-				direction: "root",
-				icon: "globe",
-				detail: false
-			},
-			{
-				title: "Roles",
-				url: "/portals/core/roles/list/all",
-				direction: "root",
-				icon: "body",
-				detail: false
-			},
-			{
-				title: "Desktops",
-				url: "/portals/core/desktops/list/all",
-				direction: "root",
-				icon: "desktop",
-				detail: false
-			},
-			{
-				title: "Modules",
-				url: "/portals/core/modules/list/all",
-				direction: "root",
-				icon: "albums",
-				detail: false
-			},
-			{
-				title: "Content Types",
-				url: "/portals/core/content.types/list/all",
-				direction: "root",
-				icon: "git-compare",
-				detail: false
-			},
-			{
-				title: "Expressions",
-				url: "/portals/core/expressions/list/all",
-				direction: "root",
-				icon: "construct",
-				detail: false
-			},
-			{
-				title: "CMS Categories",
-				url: "/portals/cms/categories/list/all",
-				direction: "root",
-				icon: "color-filter",
-				detail: false
-			}
-		];
-		items.forEach(item => AppEvents.broadcast("UpdateSidebarItem", {
-			MenuIndex: 1,
-			ItemInfo: item
-		}));
+				detail: false,
+				icon: "construct"
+			});
+		}
+
+		items.push({
+			title: "{{portals.sidebar.cms-categories}}",
+			link: this.getRouterLink(undefined, "list", "all", "category"),
+			direction: "root",
+			detail: false,
+			icon: "color-filter"
+		});
+
+		AppEvents.broadcast("UpdateSidebar", {
+			index: 1,
+			name: "portals",
+			reset: true,
+			items: items
+		});
+		if (onNext !== undefined) {
+			onNext();
+		}
 	}
 
 	public get organizationCompleterDataSource() {

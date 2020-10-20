@@ -39,6 +39,7 @@ export class UserProfileBase extends BaseModel {
 	Alias = "";
 	Bio = "";
 	Notes = "";
+	Options = {} as any;
 	LastUpdated = new Date();
 
 	// additional properties
@@ -53,7 +54,14 @@ export class UserProfileBase extends BaseModel {
 	/** Deserializes data to object */
 	public static deserialize(json: any, profile?: UserProfileBase) {
 		profile = profile || new UserProfileBase();
-		profile.copy(json);
+		profile.copy(json, data => {
+			profile.Status = data.Status || "Activated";
+			if (AppUtility.isNotEmpty(data.Options)) {
+				profile.Options = JSON.parse(data.Options);
+			}
+			delete profile["Privileges"];
+			delete profile["OriginalPrivileges"];
+		});
 		return profile;
 	}
 
@@ -120,6 +128,8 @@ export class UserProfile extends UserProfileBase {
 		name?: string
 	) {
 		super(name);
+		delete this["Privileges"];
+		delete this["OriginalPrivileges"];
 	}
 
 	Level = "Normal";
@@ -128,13 +138,20 @@ export class UserProfile extends UserProfileBase {
 	RestPoints = 0;
 	TotalRewards = 0;
 	TotalContributions = 0;
-	LastSync = new Date();
 	RatingPoints = new Dictionary<string, RatingPoint>();
+	LastSync = new Date();
 
 	/** Deserializes data to object */
 	public static deserialize(json: any, profile?: UserProfile) {
 		profile = profile || new UserProfile();
-		profile.copy(json);
+		profile.copy(json, data => {
+			profile.Status = data.Status || "Activated";
+			if (AppUtility.isNotEmpty(data.Options)) {
+				profile.Options = JSON.parse(data.Options);
+			}
+			delete profile["Privileges"];
+			delete profile["OriginalPrivileges"];
+		});
 		return profile;
 	}
 

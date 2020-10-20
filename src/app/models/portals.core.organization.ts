@@ -51,6 +51,7 @@ export class Organization extends CoreBaseModel {
 		[key: string]: string
 	};
 	MetaTags = undefined as string;
+	ScriptLibraries = undefined as string;
 	Scripts = undefined as string;
 	AlwaysUseHtmlSuffix = true;
 	RefreshUrls = undefined as {

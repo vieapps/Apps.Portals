@@ -4,7 +4,8 @@
 			"home": "Màn hình chính",
 			"login": "Đăng nhập",
 			"register": "Đăng ký tài khoản",
-			"profile": "Thông tin tài khoản"
+			"profile": "Thông tin tài khoản",
+			"search": "Tìm kiếm"
 		},
 		"alert": {
 			"header": {

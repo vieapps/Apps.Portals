@@ -280,9 +280,11 @@ export class UsersUpdatePage implements OnInit {
 			await this.showProfileAsync();
 		}
 		else {
+			const profile = this.update.form.value;
+			profile.Options = this.configSvc.appConfig.options;
 			await this.appFormsSvc.showLoadingAsync(this.title);
 			await this.usersSvc.updateProfileAsync(
-				this.update.form.value,
+				profile,
 				async () => {
 					if (this.profile.ID === this.configSvc.getAccount().id) {
 						this.configSvc.getAccount().profile = UserProfile.get(this.profile.ID);
@@ -293,7 +295,7 @@ export class UsersUpdatePage implements OnInit {
 								await this.configSvc.changeLanguageAsync(this.update.form.value.Language);
 							}
 							else {
-								await this.configSvc.storeOptionsAsync();
+								await this.configSvc.saveOptionsAsync();
 							}
 						}
 						AppEvents.broadcast("Profile", { Type: "Updated" });

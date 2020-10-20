@@ -1039,7 +1039,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				};
 			}
 			else {
-				removePlugins.push("ImageUpload", "MediaSelector");
+				removePlugins.push("ImageInsert", "MediaSelector");
 			}
 			if (this.control.Extras["ckEditorPageBreakIsAvailable"] === undefined) {
 				removePlugins.push("PageBreak");

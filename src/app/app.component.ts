@@ -15,6 +15,7 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { UsersService } from "@app/services/users.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
+import { PortalsCmsService } from "@app/services/portals.cms.service";
 
 @Component({
 	selector: "app-root",
@@ -33,6 +34,7 @@ export class AppComponent implements OnInit {
 		private authSvc: AuthenticationService,
 		private usersSvc: UsersService,
 		private portalsCoreSvc: PortalsCoreService,
+		private portalsCmsSvc: PortalsCmsService,
 		http: HttpClient
 	) {
 		if (this.configSvc.isDebug) {
@@ -43,35 +45,12 @@ export class AppComponent implements OnInit {
 
 	sidebar = {
 		visible: true,
-		active: "menu",
-		menu: new Array<{
-			title?: string,
-			icon?: string,
-			thumbnail?: string,
-			parent?: {
-				title: string,
-				url: string,
-				queryParams?: { [key: string]: any },
-				direction?: string,
-				onClick?: (info: any, sidebar: any) => void
-			},
-			items: Array<{
-				title: string,
-				url: string,
-				queryParams?: { [key: string]: any },
-				icon?: string,
-				thumbnail?: string,
-				direction?: string,
-				detail: boolean,
-				onClick?: (info: any, sidebar: any) => void
-			}>
-		}>(),
+		profile: false,
+		search: true,
+		active: "cms",
 		header: {
-			image: undefined as string,
 			title: undefined as string,
-			routerLink: undefined as string,
-			routerParams: undefined as { [key: string]: any },
-			routerDirection: "forward",
+			thumbnail: undefined as string,
 			onClick: () => {}
 		},
 		footer: new Array<{
@@ -80,16 +59,38 @@ export class AppComponent implements OnInit {
 			title?: string,
 			onClick?: (name: string, sidebar: any) => void
 		}>(),
-		home: {
-			title: "common.sidebar.home",
-			url: this.configSvc.appConfig.url.home,
-			queryParams: undefined as { [key: string]: any },
-			direction: "root",
-			icon: "home",
-			thumbnail: undefined as string,
-			detail: false,
-			onClick: () => {}
-		}
+		top: new Array<{
+			title: string,
+			link: string,
+			queryParams?: { [key: string]: any },
+			direction?: string,
+			detail: boolean,
+			icon?: string,
+			thumbnail?: string,
+			onClick?: (sidebar: any) => void
+		}>(),
+		menu: new Array<{
+			name: string,
+			parent?: {
+				title: string,
+				link: string,
+				queryParams?: { [key: string]: any },
+				detail: boolean,
+				icon?: string,
+				thumbnail?: string,
+				onClick?: (info: any, sidebar: any) => void
+			},
+			items: Array<{
+				title: string,
+				link: string,
+				queryParams?: { [key: string]: any },
+				direction?: string,
+				detail: boolean,
+				icon?: string,
+				thumbnail?: string,
+				onClick?: (info: any, sidebar: any) => void
+			}>
+		}>()
 	};
 
 	get color() {
@@ -144,7 +145,7 @@ export class AppComponent implements OnInit {
 			}
 
 			this.sidebar.header.title = this.configSvc.appConfig.app.name;
-			await this.updateSidebarAsync();
+			await this.updateSidebarAsync({}, true);
 
 			const isActivate = this.configSvc.isWebApp && AppUtility.isEquals("activate", this.configSvc.queryParams["prego"]);
 			await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "loading"}`));
@@ -156,80 +157,42 @@ export class AppComponent implements OnInit {
 		return `${item.title || item.icon}@${index}`;
 	}
 
-	toogleSidebar() {
+	toggleSidebar() {
 		this.sidebar.visible = !this.sidebar.visible;
 	}
 
-	private async getSidebarItemsAsync() {
-		return {
-			home: {
-				title: await this.configSvc.getResourceAsync(this.sidebar.home.title),
-				url: this.sidebar.home.url,
-				queryParams: this.sidebar.home.queryParams,
-				direction: this.sidebar.home.direction,
-				icon: this.sidebar.home.icon,
-				thumbnail: this.sidebar.home.thumbnail,
-				detail: this.sidebar.home.detail,
-				onClick: this.sidebar.home.onClick !== undefined && typeof this.sidebar.home.onClick === "function" ? this.sidebar.home.onClick : () => {}
-			},
-			login: {
-				title: await this.configSvc.getResourceAsync("common.sidebar.login"),
-				url: this.configSvc.appConfig.url.users.login,
-				queryParams: undefined as { [key: string]: any },
-				direction: "forward",
-				icon: "log-in",
-				thumbnail: undefined as string,
-				detail: false,
-				onClick: () => {}
-			},
-			register: {
-				title: await this.configSvc.getResourceAsync("common.sidebar.register"),
-				url: this.configSvc.appConfig.url.users.register,
-				queryParams: undefined as { [key: string]: any },
-				direction: "forward",
-				icon: "person-add",
-				thumbnail: undefined as string,
-				detail: false,
-				onClick: () => {}
-			},
-			profile: {
-				title: await this.configSvc.getResourceAsync("common.sidebar.profile"),
-				url: `${this.configSvc.appConfig.url.users.profile}/my`,
-				queryParams: undefined as { [key: string]: any },
-				direction: "forward",
-				icon: "person",
-				thumbnail: undefined as string,
-				detail: false,
-				onClick: () => {}
-			}
-		};
-	}
-
-	private updateSidebar(args: any = {}) {
-		this.updateSidebarItem(args.MenuIndex !== undefined ? args.MenuIndex : -1, -1, args.ItemInfo);
-	}
-
-	private updateSidebarItem(menuIndex: number = -1, itemIndex: number = -1, itemInfo: any = {}) {
+	private async updateSidebarItemAsync(menuIndex: number = -1, itemIndex: number = -1, itemInfo: any = {}) {
 		if (menuIndex < 0) {
 			menuIndex = 0;
 		}
 		else if (menuIndex >= this.sidebar.menu.length) {
 			menuIndex = this.sidebar.menu.length;
-			this.sidebar.menu.push({ items: []});
+			this.sidebar.menu.push({ name: undefined, items: []});
 		}
+
 		const oldItem = itemIndex > -1 && itemIndex < this.sidebar.menu[menuIndex].items.length
 			? this.sidebar.menu[menuIndex].items[itemIndex]
 			: {
 					title: undefined as string,
-					url: undefined as string,
+					link: undefined as string,
 					queryParams: undefined as { [key: string]: any },
 					icon: undefined as string,
 					thumbnail: undefined as string,
 					direction: undefined as string
 				};
-		const updatedItem = {
+
+		const updatedItem: {
+			title: string,
+			link: string,
+			queryParams?: { [key: string]: any },
+			icon?: string,
+			thumbnail?: string,
+			direction?: string,
+			detail: boolean,
+			onClick?: (info: any, sidebar: any) => void
+		} = {
 			title: itemInfo.title || oldItem.title,
-			url: itemInfo.url || oldItem.url,
+			link: itemInfo.link || oldItem.link,
 			queryParams: itemInfo.queryParams as { [key: string]: any } || oldItem.queryParams,
 			direction: itemInfo.direction || oldItem.direction || "forward",
 			icon: itemInfo.icon || oldItem.icon,
@@ -237,21 +200,41 @@ export class AppComponent implements OnInit {
 			detail: !!itemInfo.detail,
 			onClick: itemInfo.onClick !== undefined && typeof itemInfo.onClick === "function" ? itemInfo.onClick : () => {}
 		};
-		if (itemIndex > -1 && itemIndex < this.sidebar.menu[menuIndex].items.length) {
-			this.sidebar.menu[menuIndex].items[itemIndex] = updatedItem;
-		}
-		else {
-			this.sidebar.menu[menuIndex].items.insert(updatedItem, itemIndex);
-		}
+
+		updatedItem.title = updatedItem.title.startsWith("{{") && updatedItem.title.endsWith("}}")
+			? await this.configSvc.getResourceAsync(updatedItem.title.substr(2, updatedItem.title.length - 4).trim())
+			: updatedItem.title;
+
+		this.sidebar.menu[menuIndex].items.update(updatedItem, itemIndex);
 	}
 
-	private async updateSidebarAsync(info: any = {}) {
+	private async updateSidebarAsync(info: any = {}, updateTopItems: boolean = false) {
+		const header = info.header || {};
+		this.sidebar.header = {
+			title: header.title || this.sidebar.header.title,
+			thumbnail: header.thumbnail || this.sidebar.header.thumbnail,
+			onClick: header.onClick || this.sidebar.header.onClick
+		},
+
+		this.sidebar.footer = await this.portalsCoreSvc.getSidebarFooterButtonsAsync();
+		if (this.sidebar.footer.length > 0) {
+			this.sidebar.footer.push({
+				name: "preferences",
+				icon: "settings",
+				title: await this.configSvc.getResourceAsync("common.preferences.label"),
+				onClick: (name, sidebar) => sidebar.active = name
+			});
+		}
+
+		if (updateTopItems) {
+			const topItems = await this.configSvc.getSidebarTopItemsAsync();
+			this.sidebar.top = [topItems.home, topItems.profile, topItems.login, topItems.register, topItems.search];
+		}
+
 		const index = info.index !== undefined ? info.index as number : 0;
-		while (this.sidebar.menu.length < index + 1) {
+		while (this.sidebar.menu.length <= index) {
 			this.sidebar.menu.push({
-				title: undefined,
-				icon: undefined,
-				thumbnail: undefined,
+				name: undefined,
 				parent: undefined,
 				items: []
 			});
@@ -261,102 +244,70 @@ export class AppComponent implements OnInit {
 			this.sidebar.menu[index].items = [];
 		}
 
-		if (index === 0) {
-			const sidebarItems = await this.getSidebarItemsAsync();
-			this.updateSidebarItem(index, -1, sidebarItems.home);
+		this.sidebar.menu[index].name = info.name || this.sidebar.menu[index].name || "menu";
+		this.sidebar.menu[index].parent = info.parent !== undefined
+			? {
+					title: info.parent.title,
+					link: info.parent.link,
+					queryParams: info.parent.queryParams,
+					detail: !!info.parent.detail,
+					icon: info.parent.icon,
+					thumbnail: info.parent.thumbnail,
+					onClick: info.parent.onClick !== undefined && typeof info.parent.onClick === "function" ? info.parent.onClick as (info: any, sidebar: any) => void : () => {}
+				}
+			: this.sidebar.menu[index].parent;
 
-			if (this.configSvc.isAuthenticated) {
-				this.updateSidebarItem(index, -1, sidebarItems.profile);
-			}
-			else {
-				this.updateSidebarItem(index, -1, sidebarItems.login);
-			}
-
-			if (this.authSvc.canRegisterNewAccounts) {
-				this.updateSidebarItem(index, -1, sidebarItems.register);
-			}
-		}
-		else {
-			this.sidebar.menu[index].title = info.title;
-			this.sidebar.menu[index].icon = info.icon;
-			this.sidebar.menu[index].thumbnail = info.thumbnail;
-		}
-
-		(info.items as Array<any> || []).map(item => {
+		await Promise.all((info.items as Array<any> || []).map(item => {
 			return {
 				title: item.title,
-				url: item.url,
+				link: item.link,
 				queryParams: item.queryParams,
 				direction: item.direction,
+				detail: item.detail,
 				icon: item.icon,
 				thumbnail: item.thumbnail,
-				detail: item.detail,
 				onClick: item.onClick
 			};
 		})
-		.filter(item => AppUtility.isNotEmpty(item.title) && AppUtility.isNotEmpty(item.url))
-		.forEach(item => this.updateSidebarItem(index, -1, item));
-
-		this.sidebar.footer = await this.portalsCoreSvc.getSidebarButtonsAsync();
-
-		if (this.sidebar.footer.length > 0) {
-			this.sidebar.footer.push({
-				name: "preferences",
-				icon: "settings",
-				title: await this.configSvc.getResourceAsync("common.preferences.label"),
-				onClick: (name, sidebar) => sidebar.active = name
-			});
-		}
+		.filter(item => AppUtility.isNotEmpty(item.title) && AppUtility.isNotEmpty(item.link))
+		.map(item => this.updateSidebarItemAsync(index, -1, item)));
 	}
 
-	private async normalizeSidebarMenuAsync() {
-		const sidebarItems = await this.getSidebarItemsAsync();
-		const items = this.sidebar.menu[0].items;
+	private async normalizeSidebarAsync() {
+		const topItems = await this.configSvc.getSidebarTopItemsAsync();
 		if (this.configSvc.isAuthenticated) {
-			items.removeAt(items.findIndex(item => item.url.startsWith(sidebarItems.register.url)));
-			const index = items.findIndex(item => item.url.startsWith(sidebarItems.login.url));
-			if (index > -1) {
-				items[index] = sidebarItems.profile;
-			}
-			else if (items.findIndex(item => item.url.startsWith(sidebarItems.profile.url)) < 0) {
-				items.insert(sidebarItems.profile);
+			this.sidebar.top.removeAt(this.sidebar.top.findIndex(item => item.link.startsWith(topItems.login.link)));
+			this.sidebar.top.removeAt(this.sidebar.top.findIndex(item => item.link.startsWith(topItems.register.link)));
+			if (!this.sidebar.profile) {
+				this.sidebar.top.removeAt(this.sidebar.top.findIndex(item => item.link.startsWith(topItems.profile.link)));
 			}
 		}
 		else {
-			if (items.findIndex(item => item.url.startsWith(sidebarItems.login.url)) < 0) {
-				const index = items.findIndex(item => item.url.startsWith(sidebarItems.profile.url));
-				if (index > -1) {
-					items[index] = sidebarItems.login;
-				}
-				else {
-					items.insert(sidebarItems.login);
-				}
+			this.sidebar.top.removeAt(this.sidebar.top.findIndex(item => item.link.startsWith(topItems.profile.link)));
+			if (!this.authSvc.canRegisterNewAccounts) {
+				this.sidebar.top.removeAt(this.sidebar.top.findIndex(item => item.link.startsWith(topItems.register.link)));
 			}
-			if (this.authSvc.canRegisterNewAccounts && items.findIndex(item => item.url.startsWith(sidebarItems.register.url)) < 0) {
-				const index = items.findIndex(item => item.url.startsWith(sidebarItems.login.url));
-				items.insert(sidebarItems.register, index > -1 ? index + 1 : -1);
-			}
+		}
+		if (!this.sidebar.search) {
+			this.sidebar.top.removeAt(this.sidebar.top.findIndex(item => item.link.startsWith(topItems.search.link)));
 		}
 	}
 
 	private setupEventHandlers() {
 		AppEvents.on("OpenSidebar", _ => this.sidebar.visible = true);
 		AppEvents.on("CloseSidebar", _ => this.sidebar.visible = false);
-		AppEvents.on("ToggleSidebar", _ => this.toogleSidebar());
+		AppEvents.on("ToggleSidebar", _ => this.toggleSidebar());
+		AppEvents.on("ActiveSidebar", info => this.sidebar.active = info.args.name || "cms");
 
 		AppEvents.on("UpdateSidebar", async info => await this.updateSidebarAsync(info.args));
 		AppEvents.on("UpdateSidebarTitle", info => this.sidebar.header.title = AppUtility.isNotEmpty(info.args.Title) ? info.args.Title : this.sidebar.header.title);
-		AppEvents.on("UpdateSidebarHome", info => this.sidebar.home = info.args);
-
-		AppEvents.on("AddSidebarItem", info => this.updateSidebar(info.args));
-		AppEvents.on("UpdateSidebarItem", info => this.updateSidebar(info.args));
 
 		AppEvents.on("Navigate", async info => {
-			const url = "LogIn" === info.args.Type
+			const url = AppUtility.isEquals(info.args.Type, "LogIn")
 				? this.configSvc.appConfig.url.users.login
-				: "Profile" === info.args.Type
+				: AppUtility.isEquals(info.args.Type, "Profile")
 					? this.configSvc.appConfig.url.users.profile + "/my"
-					: "Accounts" === info.args.Type
+					: AppUtility.isEquals(info.args.Type, "Accounts")
 						? this.configSvc.appConfig.url.users.list
 						: info.args.Url;
 			switch ((info.args.Direction as string || "Forward").toLowerCase()) {
@@ -373,27 +324,27 @@ export class AppComponent implements OnInit {
 		});
 
 		AppEvents.on("Profile", async info => {
-			if ("Updated" === info.args.Type) {
+			if (AppUtility.isEquals(info.args.Type, "Updated")) {
 				const profile = this.configSvc.getAccount().profile;
 				if (profile !== undefined) {
-					this.sidebar.header.title = profile.Name;
-					this.sidebar.header.image = profile.avatarURI;
-					this.sidebar.header.routerLink = `${this.configSvc.appConfig.url.users.profile}/my`;
-					this.sidebar.header.routerParams = undefined;
-					this.sidebar.header.routerDirection = "forward";
+					this.sidebar.header = {
+						title: profile.Name,
+						thumbnail: profile.avatarURI,
+						onClick: () => {}
+					};
 				}
 				else {
 					this.sidebar.header.title = this.configSvc.appConfig.app.name;
-					this.sidebar.header.image = this.sidebar.header.routerLink = undefined;
+					this.sidebar.header.thumbnail = undefined;
 				}
-				await this.normalizeSidebarMenuAsync();
+				await this.normalizeSidebarAsync();
 			}
 		});
 
 		AppEvents.on("App", async info => {
-			if ("LanguageChanged" === info.args.Type) {
+			if (AppUtility.isEquals(info.args.Type, "LanguageChanged")) {
 				await this.updateSidebarAsync();
-				await this.normalizeSidebarMenuAsync();
+				await this.normalizeSidebarAsync();
 				AppEvents.sendToElectron("App", { Type: "LanguageChanged", Language: this.configSvc.appConfig.language });
 			}
 		});
@@ -507,6 +458,7 @@ export class AppComponent implements OnInit {
 			}});
 			this.appFormsSvc.hideLoadingAsync(async () => {
 				await this.portalsCoreSvc.initializeAysnc();
+				await this.portalsCmsSvc.initializeAsync();
 				if (onNext !== undefined) {
 					onNext();
 				}

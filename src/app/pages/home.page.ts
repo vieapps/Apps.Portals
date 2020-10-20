@@ -24,14 +24,6 @@ export class HomePage implements OnInit, OnDestroy {
 		return this.configSvc.color;
 	}
 
-	get appShell() {
-		return this.configSvc.appConfig.app.shell;
-	}
-
-	get downloadURLs() {
-		return this.configSvc.appConfig.downloadURLs;
-	}
-
 	ngOnInit() {
 		if (this.configSvc.isReady) {
 			this.prepareAsync();

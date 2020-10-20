@@ -45,6 +45,11 @@ ion-menu.menu-side-start > ion-header > ion-toolbar > ion-thumbnail img {
 }
 ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label {
 	line-height: 44px;
+	font-weight: bold;
+	cursor: pointer;
+}
+.md ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label {
+	text-transform: uppercase;
 }
 ion-menu > ion-content > ion-list > ion-menu-toggle img {
 	max-height: 44px;
@@ -107,39 +112,39 @@ app-form div.text {
 }
 
 /* images & medias */
-app-form span.text > figure.image,
-app-form div.text > figure.image,
-app-form span.text > figure.media,
-app-form div.text > figure.media {
+app-form span.text figure.image,
+app-form div.text figure.image,
+app-form span.text figure.media,
+app-form div.text figure.media {
 	display: table;
 	clear: both;
 	text-align: center;
 	margin: 1em auto;
 }
-app-form span.text > figure.image.image-style-align-left,
-app-form div.text > figure.image.image-style-align-left {
+app-form span.text figure.image.image-style-align-left,
+app-form div.text figure.image.image-style-align-left {
 	clear: none;
 	float: left;
 	margin-right: 16px;
 	margin-top: 0;
 }
-app-form span.text > figure.image.image-style-align-right,
-app-form div.text > figure.image.image-style-align-right,
-app-form span.text > figure.image.image-style-side,
-app-form div.text > figure.image.image-style-side {
+app-form span.text figure.image.image-style-align-right,
+app-form div.text figure.image.image-style-align-right,
+app-form span.text figure.image.image-style-side,
+app-form div.text figure.image.image-style-side {
 	clear: none;
 	float: right;
 	margin-left: 16px;
 	margin-top: 0;
 }
-app-form span.text > figure.image img,
-app-form div.text > figure.image img {
+app-form span.text figure.image img,
+app-form div.text figure.image img {
 	display: block;
 	margin: 0 auto;
 	max-width: 100%;
 }
-app-form span.text > figure.image > figcaption,
-app-form div.text > figure.image > figcaption {
+app-form span.text figure.image > figcaption,
+app-form div.text figure.image > figcaption {
 	display: table-caption;
 	caption-side: bottom;
 	word-break: break-word;
@@ -149,12 +154,12 @@ app-form div.text > figure.image > figcaption {
 	font-size: .75em;
 	outline-offset: -1px;
 }
-app-form span.text > figure.media > iframe,
-app-form div.text > figure.media > iframe,
-app-form span.text > figure.media > video,
-app-form div.text > figure.media > video,
-app-form span.text > figure.media > audio,
-app-form div.text > figure.media > audio {
+app-form span.text figure.media > iframe,
+app-form div.text figure.media > iframe,
+app-form span.text figure.media > video,
+app-form div.text figure.media > video,
+app-form span.text figure.media > audio,
+app-form div.text figure.media > audio {
 	max-width: 100%;
 }
 app-form app-form-control figure.media.ck-widget > div.ck-media__wrapper {
@@ -162,35 +167,38 @@ app-form app-form-control figure.media.ck-widget > div.ck-media__wrapper {
 }
 
 /* tables */
-app-form div.text > figure.table {
+app-form div.text figure.table {
 	display: table;
 	width: 100%;
 }
-app-form div.text > figure.table[style='float:left;'],
-app-form div.text > figure.table[style='float:right;'],
-app-form div.text > figure.table[style='text-align:center;'] {
+app-form div.text figure.table[style='float:left;'],
+app-form div.text figure.table[style='float:right;'],
+app-form div.text figure.table[style='text-align:center;'] {
 	width: auto;
 }
-app-form div.text > figure.table > table {
+app-form div.text figure.table > table {
 	margin: 0 auto;
 }
 
 /* special box */
 app-form div.text div.special.box,
 app-form div.text section.special.box {
-  border: solid 2px yellowgreen;
-  border-radius: 10px;
+  border: solid 2px #eee;
+  border-radius: 7px;
   padding: 15px;
-	margin: 15px;
 	max-width: 100%;
 }
 app-form div.text div.special.box.left,
-app-form div.text section.special.box.left {
+app-form div.text section.special.box.left,
+app-form div.text div.special.block.left,
+app-form div.text section.special.block.left {
 	float: left;
 	clear: none;
 }
 app-form div.text div.special.box.right,
-app-form div.text section.special.box.right {
+app-form div.text section.special.box.right,
+app-form div.text div.special.block.right,
+app-form div.text section.special.block.right {
 	float: right;
 	clear: none;
 }
@@ -202,7 +210,7 @@ app-form div.text div.special.box > h4,
 app-form div.text section.special.box > h4 {
   margin-top: 10px;
   padding-bottom: 15px;
-  border-bottom: solid 3px #008a00;
+  border-bottom: solid 3px #bbb;
 }
 
 /* buttons */

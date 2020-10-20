@@ -125,7 +125,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 
 		this.module = this.contentType !== undefined
 			? Module.get(this.contentType.RepositoryID)
-			: await this.portalsCmsSvc.getActiveModuleAsync();
+			: await this.portalsCoreSvc.getActiveModuleAsync();
 
 		this.contentType = this.contentType || this.portalsCmsSvc.getDefaultContentTypeOfContent(this.module);
 
@@ -141,6 +141,8 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 			]));
 			return;
 		}
+
+		AppEvents.broadcast(this.portalsCmsSvc.name, { Mode: "UpdateSidebarWithCategories" });
 
 		this.buttons = {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),

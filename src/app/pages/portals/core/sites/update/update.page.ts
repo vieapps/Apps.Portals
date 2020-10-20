@@ -272,8 +272,9 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 			backgoundImageControl.Options.Disabled = iconControl.Options.Disabled = coverControl.Options.Disabled = true;
 		}
 
+		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "MetaTags")).Options.Rows =
+			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ScriptLibraries")).Options.Rows = 5;
 		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Stylesheets")).Options.Rows =
-			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "MetaTags")).Options.Rows =
 			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Scripts")).Options.Rows = 15;
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "RedirectToNoneWWW"));

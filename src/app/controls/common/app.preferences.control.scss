@@ -37,3 +37,6 @@ div.about > section {
 	font-size: .8rem;
 	padding: 7.5px 0;
 }
+ion-list > ion-item:first-of-type {
+	cursor: pointer;
+}

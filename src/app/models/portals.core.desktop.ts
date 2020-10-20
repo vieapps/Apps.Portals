@@ -33,6 +33,8 @@ export class Desktop extends CoreBaseModel implements NestedObject {
 	IconURI = undefined as string;
 	CoverURI = undefined as string;
 	MetaTags = undefined as string;
+	Stylesheets = undefined as string;
+	ScriptLibraries = undefined as string;
 	Scripts = undefined as string;
 	MainPortletID = undefined as string;
 	SEOSettings = undefined as {

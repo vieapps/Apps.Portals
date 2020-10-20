@@ -99,9 +99,9 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			new AppFormsSegment("privileges", await this.configSvc.getResourceAsync("portals.organizations.update.segments.privileges")),
 			new AppFormsSegment("notifications", await this.configSvc.getResourceAsync("portals.organizations.update.segments.notifications")),
 			new AppFormsSegment("instructions", await this.configSvc.getResourceAsync("portals.organizations.update.segments.instructions")),
-			new AppFormsSegment("socials", await this.configSvc.getResourceAsync("portals.organizations.update.segments.socials")),
 			new AppFormsSegment("urls", await this.configSvc.getResourceAsync("portals.organizations.update.segments.urls")),
-			new AppFormsSegment("emails", await this.configSvc.getResourceAsync("portals.organizations.update.segments.emails"))
+			new AppFormsSegment("emails", await this.configSvc.getResourceAsync("portals.organizations.update.segments.emails")),
+			new AppFormsSegment("socials", await this.configSvc.getResourceAsync("portals.organizations.update.segments.socials"))
 		];
 		if (onCompleted !== undefined) {
 			onCompleted(formSegments);
@@ -234,7 +234,16 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 							Options: {
 								Label: "{{portals.organizations.controls.Others.MetaTags.label}}",
 								Description: "{{portals.organizations.controls.Others.MetaTags.description}}",
-								Rows: 10
+								Rows: 5
+							}
+						},
+						{
+							Name: "ScriptLibraries",
+							Type: "TextArea",
+							Options: {
+								Label: "{{portals.organizations.controls.Others.ScriptLibraries.label}}",
+								Description: "{{portals.organizations.controls.Others.ScriptLibraries.description}}",
+								Rows: 5
 							}
 						},
 						{

@@ -102,8 +102,12 @@ export class Category extends CmsBaseModel implements NestedObject {
 		return `/portals/cms/categories/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
+	public get listLink() {
+		return this.routerLink.replace("/update/", "/list/");
+	}
+
 	public get listURI() {
-		return `${this.routerLink.replace("/update/", "/list/")}?x-request=${AppUtility.toBase64Url({ ParentID: this.ID })}`;
+		return `${this.listLink}?x-request=${AppUtility.toBase64Url({ ParentID: this.ID })}`;
 	}
 
 }

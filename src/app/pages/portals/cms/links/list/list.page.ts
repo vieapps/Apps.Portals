@@ -155,7 +155,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 
 		this.module = this.contentType !== undefined
 			? Module.get(this.contentType.RepositoryID)
-			: await this.portalsCmsSvc.getActiveModuleAsync();
+			: await this.portalsCoreSvc.getActiveModuleAsync();
 
 		this.contentType = this.contentType || this.portalsCmsSvc.getDefaultContentTypeOfLink(this.module);
 
@@ -168,6 +168,8 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			]));
 			return;
 		}
+
+		AppEvents.broadcast(this.portalsCmsSvc.name, { Mode: "UpdateSidebarWithContentTypes" });
 
 		this.labels = {
 			children: await this.configSvc.getResourceAsync("portals.cms.links.list.labels.children"),

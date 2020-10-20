@@ -61,6 +61,7 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 		}
 		await TrackingUtility.trackAsync("Initialize and open a view of CMS Portals", "/portals/initializer");
 		const organizationID = this.configSvc.requestParams["SystemID"];
+		let forward = false;
 		let url: string;
 		if (AppUtility.isNotEmpty(organizationID)) {
 			let organization = Organization.get(organizationID);
@@ -142,6 +143,7 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							break;
 						case "content":
 						case "cms.content":
+							forward = true;
 							object = Content.get(objectID);
 							if (object === undefined) {
 								await this.portalsCmsSvc.getContentAsync(objectID, _ => object = Content.get(objectID), undefined, true);
@@ -149,6 +151,7 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							break;
 						case "item":
 						case "cms.item":
+							forward = true;
 							object = Item.get(objectID);
 							if (object === undefined) {
 								await this.portalsCmsSvc.getItemAsync(objectID, _ => object = Item.get(objectID), undefined, true);
@@ -156,6 +159,7 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							break;
 						case "link":
 						case "cms.link":
+							forward = true;
 							object = Link.get(objectID);
 							if (object === undefined) {
 								await this.portalsCmsSvc.getLinkAsync(objectID, _ => object = Link.get(objectID), undefined, true);
@@ -166,11 +170,11 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 				}
 			}
 		}
-		await this.navigateAsync(url);
+		await this.navigateAsync(url, forward);
 	}
 
-	private async navigateAsync(url?: string) {
-		await this.configSvc.navigateHomeAsync(url);
+	private async navigateAsync(url?: string, forward: boolean = true) {
+		await (forward ? this.configSvc.navigateForwardAsync(url) : this.configSvc.navigateHomeAsync(url));
 	}
 
 }
