@@ -13,6 +13,10 @@
 				"permanentLink": {
 					"label": "Liên kết cố định",
 					"description": "Hệ thống sẽ tự động mở đúng liên kết công khai từ liên kết cố định/không thay đổi này"
+				},
+				"featured": {
+					"updated": "Mới cập nhật",
+					"published": "Mới xuất bản"
 				}
 			},
 			"categories": {
