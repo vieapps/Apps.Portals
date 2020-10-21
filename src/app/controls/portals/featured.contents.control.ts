@@ -55,6 +55,11 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		const amounts = this.configSvc.appConfig.options.extras["featured"] || {};
 		this.amount = this.amount !== undefined ? this.amount : (this._isPublished ? amounts.published : amounts.updated) || 5;
 
+		if (this.configSvc.isReady) {
+			this.prepareAsync();
+			this.prepareContents();
+		}
+
 		AppEvents.on(this.portalsCmsSvc.name, async info => {
 			if (AppUtility.isEquals(info.args.Type, "FeaturedContentsPrepared")) {
 				await this.prepareAsync();
