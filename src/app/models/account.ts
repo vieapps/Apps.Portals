@@ -6,22 +6,19 @@ import { UserProfile } from "@app/models/user";
 /** Account of the app */
 export class Account {
 
-	constructor() {
-	}
-
 	/** All user account instances */
 	public static instances = new Dictionary<string, Account>();
 
-	id: string;
-	roles: Array<string>;
-	privileges: Array<Privilege>;
-	status: string;
-	twoFactors: {
+	id = undefined as string;
+	roles = ["All"];
+	privileges = undefined as Array<Privilege>;
+	status = undefined as string;
+	twoFactors = undefined as {
 		required: boolean,
 		providers: Array<{ Label: string, Type: string, Time: Date, Info: string }>
 	};
-	profile: UserProfile;
-	facebook: {
+	profile = undefined as UserProfile;
+	facebook = undefined as {
 		id: string,
 		name: string,
 		pictureUrl: string,
@@ -57,7 +54,7 @@ export class Account {
 	public static set(account: Account) {
 		return account === undefined
 			? undefined
-			: this.instances.set(account.id, account) || account;
+			: this.instances.add(account.id, account) || account;
 	}
 
 	/** Updates into dictionary */
