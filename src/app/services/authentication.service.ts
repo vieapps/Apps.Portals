@@ -280,11 +280,11 @@ export class AuthenticationService extends BaseService {
 
 	private async updateSessionWhenLogInAsync(data: any, onNext: (data?: any) => void) {
 		await this.configSvc.updateSessionAsync(data, () => AppRTU.start(() => {
-			AppEvents.broadcast("Session", { Type: "LogIn" });
-			AppEvents.sendToElectron("Users", { Type: "LogIn", Data: data });
 			if (onNext !== undefined) {
 				onNext(data);
 			}
+			AppEvents.broadcast("Session", { Type: "LogIn" });
+			AppEvents.sendToElectron("Users", { Type: "LogIn", Data: data });
 		}));
 	}
 
