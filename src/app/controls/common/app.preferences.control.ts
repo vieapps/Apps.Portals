@@ -82,7 +82,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.prepareAsync();
 		AppEvents.on("App", async info => {
-			if ("LanguageChanged" === info.args.Type) {
+			if (AppUtility.isEquals(info.args.Type, "Initialized") || AppUtility.isEquals(info.args.Type, "LanguageChanged")) {
 				await this.prepareLabelsAsync();
 			}
 		}, "AppPreferences");

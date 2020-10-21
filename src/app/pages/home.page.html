@@ -10,5 +10,9 @@
 </ion-header>
 
 <ion-content [color]="color">
-
+	<div *ngIf="isAuthenticated">
+		<control-cms-featured-contents name="updated"></control-cms-featured-contents>
+		<control-cms-featured-contents name="published" status="Published" orderBy="Date"></control-cms-featured-contents>
+	</div>
+	<control-app-preferences *ngIf="!isAuthenticated"></control-app-preferences>
 </ion-content>

@@ -3,12 +3,16 @@ import { CommonModule } from "@angular/common";
 import { RouterModule } from "@angular/router";
 import { IonicModule } from "@ionic/angular";
 import { HomePage } from "@app/pages/home.page";
+import { PortalsControlsModule } from "@app/controls/portals.controls.module";
+import { AppPreferencesControlModule } from "@app/controls/common/app.preferences.module";
 
 @NgModule({
 	providers: [],
 	imports: [
 		CommonModule,
 		IonicModule,
+		PortalsControlsModule,
+		AppPreferencesControlModule,
 		RouterModule.forChild([{ path: "", component: HomePage }])
 	],
 	exports: [],

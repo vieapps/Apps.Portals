@@ -24,6 +24,10 @@ export class HomePage implements OnInit, OnDestroy {
 		return this.configSvc.color;
 	}
 
+	get isAuthenticated() {
+		return this.configSvc.isAuthenticated;
+	}
+
 	ngOnInit() {
 		if (this.configSvc.isReady) {
 			this.prepareAsync();
