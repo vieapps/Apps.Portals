@@ -162,7 +162,7 @@ export class AuthenticationService extends BaseService {
 				}
 				else {
 					console.log(super.getLogMessage("Log in successful"), this.configSvc.isDebug ? data : "");
-					await this.updateSessionAsync(data, onNext);
+					await this.updateSessionWhenLogInAsync(data, onNext);
 				}
 			},
 			async error => {
@@ -195,7 +195,7 @@ export class AuthenticationService extends BaseService {
 			},
 			async data => {
 				console.log(super.getLogMessage("Log in with OTP successful"));
-				await this.updateSessionAsync(data, onNext);
+				await this.updateSessionWhenLogInAsync(data, onNext);
 			},
 			error => {
 				if (onError !== undefined) {
@@ -213,18 +213,16 @@ export class AuthenticationService extends BaseService {
 	public async logOutAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.deleteAsync(
 			"users/session",
-			async data => {
+			async data => await this.configSvc.updateSessionAsync(data, async () => await this.configSvc.registerSessionAsync(() => {
+				console.log(super.getLogMessage("Log out successful"), this.configSvc.isDebug ? data : "");
+				AppEvents.broadcast("Account", { Type: "Updated" });
+				AppEvents.broadcast("Profile", { Type: "Updated" });
 				AppEvents.broadcast("Session", { Type: "LogOut" });
 				AppEvents.sendToElectron("Users", { Type: "LogOut" });
-				await this.configSvc.updateSessionAsync(data, async () => await this.configSvc.registerSessionAsync(() => {
-					console.log(super.getLogMessage("Log out successful"), this.configSvc.isDebug ? data : "");
-					AppEvents.broadcast("Account", { Type: "Updated" });
-					AppEvents.broadcast("Profile", { Type: "Updated" });
-					if (onNext !== undefined) {
-						onNext(data);
-					}
-				}, onError), true);
-			},
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			}, onError), true),
 			error => {
 				if (onError !== undefined) {
 					onError(error);
@@ -280,10 +278,10 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	private async updateSessionAsync(data: any, onNext: (data?: any) => void) {
-		AppEvents.broadcast("Session", { Type: "LogIn" });
-		AppEvents.sendToElectron("Users", { Type: "LogIn", Data: data });
+	private async updateSessionWhenLogInAsync(data: any, onNext: (data?: any) => void) {
 		await this.configSvc.updateSessionAsync(data, () => AppRTU.start(() => {
+			AppEvents.broadcast("Session", { Type: "LogIn" });
+			AppEvents.sendToElectron("Users", { Type: "LogIn", Data: data });
 			if (onNext !== undefined) {
 				onNext(data);
 			}
