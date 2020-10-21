@@ -51,7 +51,7 @@ export class AppComponent implements OnInit {
 		header: {
 			title: undefined as string,
 			thumbnail: undefined as string,
-			onClick: () => {}
+			onClick: (sidebar: any) => {}
 		},
 		footer: new Array<{
 			name: string,
