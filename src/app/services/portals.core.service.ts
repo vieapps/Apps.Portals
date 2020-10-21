@@ -118,6 +118,11 @@ export class PortalsCoreService extends BaseService {
 				}
 			}
 		});
+		AppEvents.on("Account", info => {
+			if (AppUtility.isEquals(info.args.Type, "Updated")) {
+				this.prepareSidebar();
+			}
+		});
 	}
 
 	public async initializeAysnc(onNext?: () => void) {
@@ -248,8 +253,9 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getActiveModuleAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void) {
-		const systemID = this.activeOrganization !== undefined
-			? this.activeOrganization.ID
+		const activeOrganization = this.activeOrganization;
+		const systemID = activeOrganization !== undefined
+			? activeOrganization.ID
 			: undefined;
 
 		Module.active = Module.active !== undefined && Module.active.SystemID === systemID
@@ -265,7 +271,7 @@ export class PortalsCoreService extends BaseService {
 					Module.active = Module.get(preferID);
 				}
 				else {
-					await this.getModuleAsync(preferID, async _ => await this.setActiveModuleAsync(Module.get(preferID) || Module.instances.first(module => module.SystemID === systemID && module.ModuleDefinitionID === "A0000000000000000000000000000001") || Module.instances.first(module => module.SystemID === systemID)), undefined, useXHR);
+					await this.getModuleAsync(preferID, async _ => await this.setActiveModuleAsync(Module.get(preferID) || (activeOrganization !== undefined ? activeOrganization.defaultModule : undefined)), undefined, useXHR);
 				}
 			}
 		}
@@ -1122,26 +1128,30 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getSidebarFooterButtonsAsync() {
-		const buttons: Array<{ name: string, icon: string, title?: string, onClick?: (name: string, sidebar: any) => void }> = [
+		const buttons = [
 			{
 				name: "cms",
 				icon: "library",
 				title: await this.configSvc.getResourceAsync("portals.preferences.cms"),
-				onClick: (name, sidebar) => this.openSidebar(name, sidebar)
-			},
-			{
-				name: "portals",
-				icon: "cog",
-				title: await this.configSvc.getResourceAsync("portals.preferences.portals"),
-				onClick: (name, sidebar) => this.openSidebar(name, sidebar)
-			// },
-			// {
-			// 	name: "notifications",
-			// 	icon: "notifications",
-			// 	title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
-			// 	onClick: (name, sidebar) => this.openSidebar(name, sidebar, "Notifications")
+				onClick: (name: string, sidebar: any) => this.openSidebar(name, sidebar)
 			}
 		];
+		if (this.configSvc.isAuthenticated) {
+			buttons.push(
+				{
+					name: "portals",
+					icon: "cog",
+					title: await this.configSvc.getResourceAsync("portals.preferences.portals"),
+					onClick: (name, sidebar) => this.openSidebar(name, sidebar)
+				// },
+				// {
+				// 	name: "notifications",
+				// 	icon: "notifications",
+				// 	title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
+				// 	onClick: (name, sidebar) => this.openSidebar(name, sidebar, "Notifications")
+				}
+			);
+		}
 		return buttons;
 	}
 
@@ -1152,85 +1162,78 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	public prepareSidebar(onNext?: () => void) {
+	private prepareSidebar(onNext?: () => void) {
 		const items = new Array<{
 			title: string,
 			link: string,
-			queryParams?: { [key: string]: any },
 			direction?: string,
-			detail: boolean,
 			icon?: string,
-			thumbnail?: string,
 			onClick?: (info: any, sidebar: any) => void
 		}>();
-		const account = this.configSvc.getAccount();
-		const canManageOrganization = this.canManageOrganization(this.activeOrganization, account);
-		if (canManageOrganization) {
-			items.push
-			(
-				{
-					title: "{{portals.sidebar.organizations}}",
-					link: this.getRouterLink(undefined, "list", "all", "organization", "core"),
-					direction: "root",
-					detail: false,
-					icon: "business"
-				},
-				{
-					title: "{{portals.sidebar.sites}}",
-					link: this.getRouterLink(undefined, "list", "all", "site", "core"),
-					direction: "root",
-					detail: false,
-					icon: "globe"
-				},
-				{
-					title: "{{portals.sidebar.roles}}",
-					link: this.getRouterLink(undefined, "list", "all", "role", "core"),
-					direction: "root",
-					detail: false,
-					icon: "body"
-				},
-				{
-					title: "{{portals.sidebar.desktops}}",
-					link: this.getRouterLink(undefined, "list", "all", "desktop", "core"),
-					direction: "root",
-					detail: false,
-					icon: "desktop"
-				},
-				{
-					title: "{{portals.sidebar.modules}}",
-					link: this.getRouterLink(undefined, "list", "all", "module", "core"),
-					direction: "root",
-					detail: false,
-					icon: "albums"
-				}
-			);
-		}
 
-		items.push({
-			title: "{{portals.sidebar.content-types}}",
-			link: this.getRouterLink(undefined, "list", "all", "content.type", "core"),
-			direction: "root",
-			detail: false,
-			icon: "git-compare"
-		});
+		if (this.configSvc.isAuthenticated) {
+			const account = this.configSvc.getAccount();
+			const canManageOrganization = this.canManageOrganization(this.activeOrganization, account);
 
-		if (canManageOrganization) {
+			if (canManageOrganization) {
+				items.push
+				(
+					{
+						title: "{{portals.sidebar.organizations}}",
+						link: this.getRouterLink(undefined, "list", "all", "organization", "core"),
+						direction: "root",
+						icon: "business"
+					},
+					{
+						title: "{{portals.sidebar.sites}}",
+						link: this.getRouterLink(undefined, "list", "all", "site", "core"),
+						direction: "root",
+						icon: "globe"
+					},
+					{
+						title: "{{portals.sidebar.roles}}",
+						link: this.getRouterLink(undefined, "list", "all", "role", "core"),
+						direction: "root",
+						icon: "body"
+					},
+					{
+						title: "{{portals.sidebar.desktops}}",
+						link: this.getRouterLink(undefined, "list", "all", "desktop", "core"),
+						direction: "root",
+						icon: "desktop"
+					},
+					{
+						title: "{{portals.sidebar.modules}}",
+						link: this.getRouterLink(undefined, "list", "all", "module", "core"),
+						direction: "root",
+						icon: "albums"
+					}
+				);
+			}
+
 			items.push({
-				title: "{{portals.sidebar.expressions}}",
-				link: this.getRouterLink(undefined, "list", "all", "expression", "core"),
+				title: "{{portals.sidebar.content-types}}",
+				link: this.getRouterLink(undefined, "list", "all", "content.type", "core"),
 				direction: "root",
-				detail: false,
-				icon: "construct"
+				icon: "git-compare"
+			});
+
+			if (canManageOrganization) {
+				items.push({
+					title: "{{portals.sidebar.expressions}}",
+					link: this.getRouterLink(undefined, "list", "all", "expression", "core"),
+					direction: "root",
+					icon: "construct"
+				});
+			}
+
+			items.push({
+				title: "{{portals.sidebar.cms-categories}}",
+				link: this.getRouterLink(undefined, "list", "all", "category"),
+				direction: "root",
+				icon: "color-filter"
 			});
 		}
-
-		items.push({
-			title: "{{portals.sidebar.cms-categories}}",
-			link: this.getRouterLink(undefined, "list", "all", "category"),
-			direction: "root",
-			detail: false,
-			icon: "color-filter"
-		});
 
 		AppEvents.broadcast("UpdateSidebar", {
 			index: 1,
@@ -1238,6 +1241,7 @@ export class PortalsCoreService extends BaseService {
 			reset: true,
 			items: items
 		});
+
 		if (onNext !== undefined) {
 			onNext();
 		}
