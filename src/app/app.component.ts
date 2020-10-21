@@ -227,8 +227,11 @@ export class AppComponent implements OnInit {
 			this.sidebar.top = [topItems.home, topItems.profile, topItems.login, topItems.register, topItems.search];
 		}
 
-		const index = info.index !== undefined ? info.index as number : 0;
-		while (this.sidebar.menu.length <= index) {
+		let index = info.index !== undefined ? info.index as number : 0;
+		if (index < 0) {
+			index = this.sidebar.menu.length;
+		}
+		while (this.sidebar.menu.length < index + 1) {
 			this.sidebar.menu.push({
 				name: undefined,
 				parent: undefined,
