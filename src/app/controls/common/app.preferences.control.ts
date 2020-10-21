@@ -20,6 +20,10 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		return this.configSvc.color;
 	}
 
+	get isAuthenticated() {
+		return this.configSvc.isAuthenticated;
+	}
+
 	get logo() {
 		return "./assets/images/icon.png";
 	}

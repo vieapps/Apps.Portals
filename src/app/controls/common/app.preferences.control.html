@@ -1,7 +1,7 @@
 <div class="options">
 	<h2>{{ labels.options.label }}</h2>
 	<ion-list class="ion-margin-vertical">
-		<ion-item [color]="color" (click)="openProfileAsync()">
+		<ion-item *ngIf="isAuthenticated" [color]="color" (click)="openProfileAsync()">
 			<ion-label>{{ labels.profile }}</ion-label>
 		</ion-item>
 		<ion-item [color]="color">
