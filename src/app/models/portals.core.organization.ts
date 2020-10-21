@@ -130,4 +130,9 @@ export class Organization extends CoreBaseModel {
 		return `/portals/core/organizations/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
+	public get defaultModule() {
+		const modules = this.modules;
+		return modules.first(module => module.ModuleDefinitionID === "A0000000000000000000000000000001") || modules.first();
+	}
+
 }
