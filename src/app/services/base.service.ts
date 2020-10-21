@@ -16,7 +16,7 @@ export class Base {
 	constructor(
 		name?: string
 	) {
-		this._name = name || this.constructor.name;
+		this._name = name;
 	}
 
 	/** Gets name of the service (for working with paginations as prefix, display logs/errors, ...) */
