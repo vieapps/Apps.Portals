@@ -248,9 +248,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getActiveModuleAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void) {
-		const activeOrganization = this.activeOrganization;
-		const systemID = activeOrganization !== undefined
-			? activeOrganization.ID
+		const systemID = this.activeOrganization !== undefined
+			? this.activeOrganization.ID
 			: undefined;
 
 		Module.active = Module.active !== undefined && Module.active.SystemID === systemID
@@ -266,7 +265,7 @@ export class PortalsCoreService extends BaseService {
 					Module.active = Module.get(preferID);
 				}
 				else {
-					await this.getModuleAsync(preferID, async _ => await this.setActiveModuleAsync(Module.get(preferID) || (activeOrganization !== undefined ? activeOrganization.defaultModule : undefined)), undefined, useXHR);
+					await this.getModuleAsync(preferID, async _ => await this.setActiveModuleAsync(Module.get(preferID) || Module.instances.first(module => module.SystemID === systemID && module.ModuleDefinitionID === "A0000000000000000000000000000001") || Module.instances.first(module => module.SystemID === systemID)), undefined, useXHR);
 				}
 			}
 		}

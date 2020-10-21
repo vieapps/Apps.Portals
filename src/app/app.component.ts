@@ -105,10 +105,6 @@ export class AppComponent implements OnInit {
 		return this.isSidebarShown ? "medium" : "light";
 	}
 
-	get appShell() {
-		return this.configSvc.appConfig.app.shell;
-	}
-
 	ngOnInit() {
 		this.router.events.subscribe(event => {
 			if (event instanceof RoutesRecognized) {
@@ -325,6 +321,7 @@ export class AppComponent implements OnInit {
 
 		AppEvents.on("Profile", async info => {
 			if (AppUtility.isEquals(info.args.Type, "Updated")) {
+				// await this.normalizeSidebarAsync();
 				const profile = this.configSvc.getAccount().profile;
 				if (profile !== undefined) {
 					this.sidebar.header = {
@@ -337,7 +334,6 @@ export class AppComponent implements OnInit {
 					this.sidebar.header.title = this.configSvc.appConfig.app.name;
 					this.sidebar.header.thumbnail = undefined;
 				}
-				await this.normalizeSidebarAsync();
 			}
 		});
 

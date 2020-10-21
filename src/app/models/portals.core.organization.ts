@@ -126,11 +126,6 @@ export class Organization extends CoreBaseModel {
 		return Module.instances.toArray(module => module.SystemID === this.ID).toList().Select(module => module.contentTypes).SelectMany(contentTypes => contentTypes.toList()).OrderBy(contentType => contentType.Title).ToArray();
 	}
 
-	public get defaultModule() {
-		const modules = this.modules;
-		return modules.first(module => module.ModuleDefinitionID === "A0000000000000000000000000000001") || modules.first();
-	}
-
 	public get routerLink() {
 		return `/portals/core/organizations/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}

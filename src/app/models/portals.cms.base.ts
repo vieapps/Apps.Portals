@@ -25,7 +25,6 @@ export abstract class PortalCmsBase extends BaseModel {
 	public abstract SystemID: string;
 	public abstract RepositoryID: string;
 	public abstract RepositoryEntityID: string;
-	public abstract Status: string;
 	protected _thumbnails: AttachmentInfo[];
 	protected _attachments: AttachmentInfo[];
 

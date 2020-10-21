@@ -21,7 +21,6 @@ export class Category extends CmsBaseModel implements NestedObject {
 	/** All instances of category */
 	public static instances = new Dictionary<string, Category>();
 
-	Status = undefined as string;
 	ParentID = undefined as string;
 	OrderIndex = 0;
 	Title = undefined as string;
