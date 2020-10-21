@@ -355,7 +355,9 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		const desktop = AppUtility.clone(this.desktop, false);
 		desktop.Language = AppUtility.isNotEmpty(desktop.Language) ? desktop.Language : "-";
 		desktop.Theme = AppUtility.isNotEmpty(desktop.Theme) ? desktop.Theme : "-";
+		desktop.UISettings = desktop.UISettings || {};
 		desktop.SEOSettings = desktop.SEOSettings || {};
+		desktop.SEOSettings.SEOInfo = desktop.SEOSettings.SEOInfo || {};
 		this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "SEOSettings")).SubControls.Controls.filter(ctrl => ctrl.Type === "Select").forEach(ctrl => {
 			const value = desktop.SEOSettings[ctrl.Name];
 			desktop.SEOSettings[ctrl.Name] = AppUtility.isNotEmpty(value) ? value : "-";

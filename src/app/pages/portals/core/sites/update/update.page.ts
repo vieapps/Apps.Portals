@@ -353,6 +353,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		const site = AppUtility.clone(this.site, false);
 		site.Title = AppUtility.isNotEmpty(site.ID) ? site.Title : this.organization.Title;
 		site.Theme = AppUtility.isNotEmpty(site.Theme) ? site.Theme : "-";
+		site.UISettings = site.UISettings || {};
 		this.form.patchValue(site);
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(async () => {
