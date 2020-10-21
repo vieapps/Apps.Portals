@@ -182,7 +182,11 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 			}, `CMS.Contents:${(this.category !== undefined ? ":" + this.category.ID : "")}:Refresh`);
 
 			this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${(this.category === undefined ? this.organization.Title : this.organization.Title + " :: " + this.category.FullTitle)}]` });
-			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync(async () => {
+				if (this.category !== undefined && this.category.childrenIDs === undefined) {
+					await this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, async _ => await this.appFormsSvc.showToastAsync("The category was freshen-up"));
+				}
+			}));
 		}
 
 		if (this.configSvc.isDebug) {
