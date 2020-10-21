@@ -95,12 +95,15 @@ export class PortalsCmsService extends BaseService {
 		});
 		AppEvents.on("Session", async info => {
 			if (AppUtility.isEquals(info.args.Type, "LogIn") || AppUtility.isEquals(info.args.Type, "LogOut")) {
+				this._sidebarCategory = undefined;
+				this._sidebarContentType = undefined;
 				await this.updateSidebarAsync();
 			}
 		});
-
 		AppEvents.on("Profile", async info => {
 			if (AppUtility.isEquals(info.args.Type, "Updated")) {
+				this._sidebarCategory = undefined;
+				this._sidebarContentType = undefined;
 				await this.prepareFeaturedContentsAsync();
 				await this.updateSidebarAsync();
 			}
