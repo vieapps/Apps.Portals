@@ -213,7 +213,7 @@ export class AppComponent implements OnInit {
 		},
 
 		this.sidebar.footer = await this.portalsCoreSvc.getSidebarFooterButtonsAsync();
-		if (this.sidebar.footer.length > 0) {
+		if (this.sidebar.footer.length > 0 && this.configSvc.isAuthenticated) {
 			this.sidebar.footer.push({
 				name: "preferences",
 				icon: "settings",
@@ -321,7 +321,6 @@ export class AppComponent implements OnInit {
 
 		AppEvents.on("Profile", async info => {
 			if (AppUtility.isEquals(info.args.Type, "Updated")) {
-				// await this.normalizeSidebarAsync();
 				const profile = this.configSvc.getAccount().profile;
 				if (profile !== undefined) {
 					this.sidebar.header = {
@@ -339,9 +338,17 @@ export class AppComponent implements OnInit {
 
 		AppEvents.on("App", async info => {
 			if (AppUtility.isEquals(info.args.Type, "LanguageChanged")) {
-				await this.updateSidebarAsync();
+				await this.updateSidebarAsync({}, true);
 				await this.normalizeSidebarAsync();
 				AppEvents.sendToElectron("App", { Type: "LanguageChanged", Language: this.configSvc.appConfig.language });
+			}
+		});
+
+		AppEvents.on("Session", async info => {
+			if (AppUtility.isEquals(info.args.Type, "LogIn") || AppUtility.isEquals(info.args.Type, "LogOut")) {
+				await this.updateSidebarAsync({}, true);
+				await this.normalizeSidebarAsync();
+				this.sidebar.active = "cms";
 			}
 		});
 	}
@@ -453,6 +460,7 @@ export class AppComponent implements OnInit {
 				languages: appConfig.languages
 			}});
 			this.appFormsSvc.hideLoadingAsync(async () => {
+				await this.normalizeSidebarAsync();
 				await this.portalsCoreSvc.initializeAysnc();
 				await this.portalsCmsSvc.initializeAsync();
 				if (onNext !== undefined) {
