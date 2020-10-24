@@ -1024,6 +1024,11 @@
 						"label": "Liên kết nhãn bổ sung",
 						"placeholder": "",
 						"description": "Chỉ định liên kết cho nhãn bổ sung, sử dụng ký hiệu <b>~/</b> để chỉ định liên kết gốc"
+					},
+					"NumberOfNodes": {
+						"label": "Số lượng liên kết sẽ hiển thị",
+						"placeholder": "",
+						"description": "Chỉ định số lượng liên kết sẽ hiển thị (tính từ cuối - không kể các liên kết trang chủ, module nghiệp vụ, kiểu dữ liệu nghiệp vụ), đặt giá trị không (0) để hiển thị toàn bộ"
 					}
 				}
 			},

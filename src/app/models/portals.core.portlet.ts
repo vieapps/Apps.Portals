@@ -18,6 +18,8 @@ export class Portlet extends CoreBaseModel {
 		this.DesktopID = AppUtility.isNotEmpty(desktopID) ? desktopID : "";
 		this.RepositoryEntityID = AppUtility.isNotEmpty(repositoryEntityID) ? repositoryEntityID : undefined;
 		this.Zone = AppUtility.isNotEmpty(zone) ? zone : "Content";
+		delete this["Privileges"];
+		delete this["OriginalPrivileges"];
 	}
 
 	/** All instances of portlet */
