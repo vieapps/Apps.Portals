@@ -8,8 +8,10 @@ import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
+import { FilesService } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
+import { AttachmentInfo } from "@app/models/base";
 import { Privileges } from "@app/models/privileges";
 import { EmailNotificationSettings } from "@app/models/portals.base";
 import { Organization } from "@app/models/portals.core.organization";
@@ -32,6 +34,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private appFormsSvc: AppFormsService,
+		private filesSvc: FilesService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService
 	) {
@@ -236,6 +239,10 @@ export class CmsCategoriesUpdatePage implements OnInit {
 
 		if (AppUtility.isNotEmpty(this.category.ID)) {
 			formConfig.push(
+				this.filesSvc.getThumbnailFormControl("Thumbnails", "basic", true, true, controlConfig => controlConfig.Options.FilePickerOptions.OnDelete = (_, formControl) => {
+					formControl.setValue({ current: AppUtility.isObject(formControl.value, true) ? formControl.value.current : undefined, new: undefined, identity: AppUtility.isObject(formControl.value, true) ? formControl.value.identity : undefined }, { onlySelf: true });
+					this.hash = AppCrypto.hash(this.form.value);
+				}),
 				this.portalsCoreSvc.getAuditFormControl(this.category, "basic"),
 				this.appFormsSvc.getButtonControls(
 					"basic",
@@ -286,11 +293,28 @@ export class CmsCategoriesUpdatePage implements OnInit {
 
 		this.form.patchValue(category);
 		this.hash = AppCrypto.hash(this.form.value);
-		this.appFormsSvc.hideLoadingAsync();
+		this.appFormsSvc.hideLoadingAsync(() => {
+			if (AppUtility.isNotEmpty(this.category.ID)) {
+				if (this.category.thumbnails !== undefined) {
+					this.prepareThumbnails(this.category.thumbnails);
+					this.hash = AppCrypto.hash(this.form.value);
+				}
+				else {
+					this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.category), thumbnails => {
+						this.category.updateThumbnails(thumbnails);
+						this.prepareThumbnails(thumbnails);
+						this.hash = AppCrypto.hash(this.form.value);
+					});
+				}
+			}
+			if (this.configSvc.isDebug) {
+				console.log("<CMS Portals>: Category", this.category);
+			}
+		});
+	}
 
-		if (this.configSvc.isDebug) {
-			console.log("<CMS Portals>: Category", this.category);
-		}
+	private prepareThumbnails(thumbnails?: Array<AttachmentInfo>) {
+		this.filesSvc.prepareAttachmentsFormControl(this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails")), true, thumbnails);
 	}
 
 	async saveAsync() {
@@ -308,6 +332,10 @@ export class CmsCategoriesUpdatePage implements OnInit {
 				this.portalsCoreSvc.normalizeEmailSettings(category.EmailSettings);
 
 				if (AppUtility.isNotEmpty(category.ID)) {
+					const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
+					if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
+						await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.category, options => options.Extras["x-attachment-id"] = control.value.identity));
+					}
 					const oldParentID = this.category.ParentID;
 					await this.portalsCmsSvc.updateCategoryAsync(
 						category,
