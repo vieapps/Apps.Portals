@@ -595,19 +595,44 @@ export class ConfigurationService extends BaseService {
 		}
 	}
 
+	/** Gets the navigating URL */
+	public getNavigatingURL(url?: string, params?: { [key: string]: any }) {
+		url = url || this.appConfig.url.home;
+		if (params !== undefined) {
+			Object.keys(params).forEach(name => url += (url.indexOf("?") > 0 ? "&" : "?") + name + "=" + params[name]);
+		}
+		return url;
+	}
+
 	/** Sends a request to navigates to home screen */
-	public async navigateHomeAsync(url?: string, extras?: { [key: string]: any }) {
-		await this.navController.navigateRoot(url || this.appConfig.url.home, extras);
+	public async navigateHomeAsync(url?: string, params?: { [key: string]: any }) {
+		await this.navController.navigateRoot(this.getNavigatingURL(url || this.appConfig.url.home, params));
 	}
 
 	/** Sends a request to navigates back one step */
-	public async navigateBackAsync(url?: string, extras?: { [key: string]: any }) {
-		await this.navController.navigateBack(url || this.previousUrl, extras);
+	public async navigateBackAsync(url?: string, params?: { [key: string]: any }) {
+		await this.navController.navigateBack(this.getNavigatingURL(url || this.previousUrl, params));
 	}
 
 	/** Sends a request to navigates forward one step */
-	public async navigateForwardAsync(url: string, extras?: { [key: string]: any }) {
-		await this.navController.navigateForward(url || this.appConfig.url.home, extras);
+	public async navigateForwardAsync(url: string, params?: { [key: string]: any }) {
+		await this.navController.navigateForward(this.getNavigatingURL(url || this.appConfig.url.home, params));
+	}
+
+	/** Sends a request to navigates */
+	public async navigateAsync(direction?: string, url?: string, params?: { [key: string]: any }) {
+		switch ((direction || "forward").toLocaleLowerCase()) {
+			case "home":
+			case "root":
+					await this.navigateHomeAsync(url, params);
+				break;
+			case "back":
+				await this.navigateBackAsync(url, params);
+				break;
+			default:
+				await this.navigateForwardAsync(url, params);
+				break;
+		}
 	}
 
 	private async loadGeoMetaAsync() {
@@ -813,9 +838,8 @@ export class ConfigurationService extends BaseService {
 			home: {
 				title: await this.getResourceAsync("common.sidebar.home"),
 				link: this.appConfig.url.home,
-				queryParams: undefined as { [key: string]: any },
+				params: undefined as { [key: string]: string },
 				direction: "root",
-				detail: false,
 				icon: "home",
 				thumbnail: undefined as string,
 				onClick: () => {}
@@ -823,9 +847,8 @@ export class ConfigurationService extends BaseService {
 			login: {
 				title: await this.getResourceAsync("common.sidebar.login"),
 				link: this.appConfig.url.users.login,
-				queryParams: undefined as { [key: string]: any },
+				params: undefined as { [key: string]: string },
 				direction: "forward",
-				detail: false,
 				icon: "log-in",
 				thumbnail: undefined as string,
 				onClick: () => {}
@@ -833,9 +856,8 @@ export class ConfigurationService extends BaseService {
 			register: {
 				title: await this.getResourceAsync("common.sidebar.register"),
 				link: this.appConfig.url.users.register,
-				queryParams: undefined as { [key: string]: any },
+				params: undefined as { [key: string]: string },
 				direction: "forward",
-				detail: false,
 				icon: "person-add",
 				thumbnail: undefined as string,
 				onClick: () => {}
@@ -843,9 +865,8 @@ export class ConfigurationService extends BaseService {
 			profile: {
 				title: await this.getResourceAsync("common.sidebar.profile"),
 				link: `${this.appConfig.url.users.profile}/my`,
-				queryParams: undefined as { [key: string]: any },
+				params: undefined as { [key: string]: string },
 				direction: "forward",
-				detail: false,
 				icon: "person",
 				thumbnail: undefined as string,
 				onClick: () => {}
@@ -853,9 +874,8 @@ export class ConfigurationService extends BaseService {
 			search: {
 				title: await this.getResourceAsync("common.sidebar.search"),
 				link: this.appConfig.url.search,
-				queryParams: undefined as { [key: string]: any },
+				params: undefined as { [key: string]: string },
 				direction: "forward",
-				detail: false,
 				icon: "search",
 				thumbnail: undefined as string,
 				onClick: () => {}
