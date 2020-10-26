@@ -88,7 +88,7 @@ export class AppEvents {
 				this._electronService.ipcRenderer.send(event, AppUtility.clone(args || {}));
 			}
 			catch (error) {
-				console.error("Error occrred while sending an IPC message to Eletron", error, event, args);
+				console.error("[AppEvents]: Error occurred while sending an IPC message to Electron", error, event, args);
 			}
 		}
 	}
