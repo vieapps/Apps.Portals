@@ -53,7 +53,7 @@ ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-labe
 ion-menu > ion-content ion-list ion-item {
 	cursor: pointer;
 }
-ion-menu > ion-content ion-list.second > ion-item {
+ion-menu > ion-content ion-list.children > ion-item {
 	--padding-start: 32px;
 }
 .md ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label {

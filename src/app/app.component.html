@@ -57,7 +57,7 @@
 									{{ item.title }}
 								</ion-label>
 							</ion-item>
-							<ion-list *ngIf="sidebar.children && item.children && item.children.length > 0" [hidden]="!item.expanded" class="second">
+							<ion-list *ngIf="sidebar.children && item.children && item.children.length > 0" [hidden]="!item.expanded" class="children">
 								<ion-item *ngFor="let child of item.children; let childIndex=index; trackBy: trackSidebarItem" [color]="color" (click)="child.onClick($event, { menuIndex: menuIndex, itemIndex: itemIndex, childIndex: childIndex }, sidebar)" class="ion-activatable" detail="false">
 									<ion-icon *ngIf="child.icon" [name]="child.icon" [color]="child.iconColor" (click)="child.onClick($event, { menuIndex: menuIndex, itemIndex: itemIndex, childIndex: childIndex, expand: true }, sidebar)" slot="end"></ion-icon>
 									<ion-label>
