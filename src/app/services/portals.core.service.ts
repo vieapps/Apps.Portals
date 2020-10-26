@@ -1133,7 +1133,7 @@ export class PortalsCoreService extends BaseService {
 				name: "cms",
 				icon: "library",
 				title: await this.configSvc.getResourceAsync("portals.preferences.cms"),
-				onClick: (name: string, sidebar: any) => this.openSidebar(name, sidebar)
+				onClick: (event: Event, name: string, sidebar: any) => this.openSidebar(name, sidebar)
 			}
 		];
 		if (this.configSvc.isAuthenticated) {
@@ -1142,13 +1142,13 @@ export class PortalsCoreService extends BaseService {
 					name: "portals",
 					icon: "cog",
 					title: await this.configSvc.getResourceAsync("portals.preferences.portals"),
-					onClick: (name, sidebar) => this.openSidebar(name, sidebar)
+					onClick: (event: Event, name, sidebar) => this.openSidebar(name, sidebar)
 				// },
 				// {
 				// 	name: "notifications",
 				// 	icon: "notifications",
 				// 	title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
-				// 	onClick: (name, sidebar) => this.openSidebar(name, sidebar, "Notifications")
+				// 	onClick: (event: Event, name, sidebar) => this.openSidebar(name, sidebar, "Notifications")
 				}
 			);
 		}
@@ -1168,7 +1168,7 @@ export class PortalsCoreService extends BaseService {
 			link: string,
 			direction?: string,
 			icon?: string,
-			onClick?: (info: any, sidebar: any) => void
+			onClick?: (event: Event, info: any, sidebar: any) => void
 		}>();
 
 		if (this.configSvc.isAuthenticated) {

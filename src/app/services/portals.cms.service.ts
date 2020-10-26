@@ -76,7 +76,7 @@ export class PortalsCmsService extends BaseService {
 					if (this._sidebarContentType === undefined || this._sidebarContentType.ID !== info.args.ContentTypeID) {
 						this._sidebarContentType = ContentType.get(info.args.ContentTypeID);
 						if (this._sidebarContentType !== undefined) {
-							await this.updateSidebarWithCategoriesAsync(undefined, () => AppEvents.broadcast("ActiveSidebar", { name: "cms" }));
+							await this.updateSidebarWithCategoriesAsync(undefined, undefined, () => AppEvents.broadcast("ActiveSidebar", { name: "cms" }));
 						}
 					}
 					else {
@@ -84,7 +84,7 @@ export class PortalsCmsService extends BaseService {
 					}
 				}
 				else if (this._sidebarContentType === undefined) {
-					await this.updateSidebarWithCategoriesAsync(undefined, () => AppEvents.broadcast("ActiveSidebar", { name: "cms" }));
+					await this.updateSidebarWithCategoriesAsync(undefined, undefined, () => AppEvents.broadcast("ActiveSidebar", { name: "cms" }));
 				}
 			}
 			else if (AppUtility.isEquals(info.args.Type, "Changed") && (AppUtility.isEquals(info.args.Object, "Organization") || AppUtility.isEquals(info.args.Object, "Module"))) {
@@ -357,30 +357,10 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	private updateSidebarWithCategories(categories: Category[], parent?: any, onNext?: () => void) {
-		this.updateSidebar(
-			categories.map(category => {
-				const gotChildren = category.childrenIDs !== undefined && category.childrenIDs.length > 0;
-				const onClick: (info: any, sidebar: any) => void = gotChildren
-					? async () => await this.updateSidebarWithCategoriesAsync(category)
-					: undefined;
-				return {
-					title: category.Title,
-					link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", category.ansiTitle),
-					queryParams: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: category.ID }),
-					detail: gotChildren,
-					onClick: onClick
-				};
-			}),
-			parent,
-			onNext
-		);
-	}
-
 	private async updateSidebarAsync(onNext?: () => void) {
 		const activeModule = this.portalsCoreSvc.activeModule;
 		if (this.getDefaultContentTypeOfCategory(activeModule) !== undefined) {
-			await this.updateSidebarWithCategoriesAsync(undefined, onNext);
+			await this.updateSidebarWithCategoriesAsync(undefined, undefined, onNext);
 		}
 		else if (activeModule !== undefined) {
 			await this.updateSidebarWithContentTypesAsync(undefined, onNext);
@@ -388,21 +368,33 @@ export class PortalsCmsService extends BaseService {
 		AppEvents.broadcast("ActiveSidebar", { name: activeModule !== undefined && activeModule.contentTypes.length > 0 ? "cms" : this.configSvc.isAuthenticated ? "portals" : "cms" });
 	}
 
-	private async updateSidebarWithCategoriesAsync(parent?: Category, onNext?: () => void) {
+	private async updateSidebarWithContentTypesAsync(definitionID?: string, onNext?: () => void) {
+		const filterBy: (contentType: ContentType) => boolean = AppUtility.isNotEmpty(definitionID)
+			? contentType => contentType.ContentTypeDefinitionID === definitionID
+			: contentType => contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000001" && contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000002";
+		this.updateSidebar(
+			this.portalsCoreSvc.activeModule.contentTypes.filter(filterBy).sortBy("Title").map(contentType => {
+				return {
+					title: contentType.Title,
+					link: this.portalsCoreSvc.getRouterLink(contentType, "list"),
+					params: this.portalsCoreSvc.getRouterQueryParams(contentType)
+				};
+			}),
+			{ title: await this.configSvc.getResourceAsync("portals.sidebar.cms-contents") },
+			onNext
+		);
+	}
+
+	private async updateSidebarWithCategoriesAsync(parent?: Category, expandedID?: string, onNext?: () => void) {
 		if (parent !== undefined) {
 			this._sidebarCategory = parent;
 			this._sidebarContentType = this._sidebarContentType || this.getDefaultContentTypeOfContent(parent.module);
-			this.updateSidebarWithCategories(
-				parent.Children,
-				{
-					title: parent.Title,
-					link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", parent.ansiTitle),
-					queryParams: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: parent.ID }),
-					detail: true,
-					onClick: async info => await this.updateSidebarWithCategoriesAsync(this._sidebarCategory !== undefined ? this._sidebarCategory.Parent : undefined, async () => await this.configSvc.navigateBackAsync(info.link + "?x-request=" + info.queryParams["x-request"]))
-				},
-				onNext
-			);
+			const info = this.getSidebarItems(parent.Children, parent);
+			const index = info.items.findIndex(item => item.id === expandedID);
+			if (index > -1) {
+				info.items[index].expanded = true;
+			}
+			this.updateSidebar(info.items, info.parent, onNext);
 		}
 		else {
 			const contentType = this.getDefaultContentTypeOfCategory(this.portalsCoreSvc.activeModule);
@@ -419,13 +411,10 @@ export class PortalsCmsService extends BaseService {
 						]},
 						{ OrderIndex: "Ascending", Title: "Ascending" }
 					),
-					async data => this.updateSidebarWithCategories(
-						data !== undefined ? Category.toArray(data.Objects) : Category.instances.toArray(category => category.SystemID === contentType.SystemID && category.ParentID === undefined).sortBy("OrderIndex", "Title"),
-						{
-							title: await this.configSvc.getResourceAsync("portals.sidebar.cms-categories")
-						},
-						onNext
-					)
+					data => {
+						const info = this.getSidebarItems(data !== undefined ? Category.toArray(data.Objects) : Category.instances.toArray(category => category.SystemID === contentType.SystemID && category.ParentID === undefined).sortBy("OrderIndex", "Title"));
+						this.updateSidebar(info.items, info.parent, onNext);
+					}
 				);
 			}
 			else if (onNext !== undefined) {
@@ -434,21 +423,66 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	private async updateSidebarWithContentTypesAsync(definitionID?: string, onNext?: () => void) {
-		const filterBy: (contentType: ContentType) => boolean = AppUtility.isNotEmpty(definitionID)
-			? contentType => contentType.ContentTypeDefinitionID === definitionID
-			: contentType => contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000001" && contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000002";
-		this.updateSidebar(
-			this.portalsCoreSvc.activeModule.contentTypes.filter(filterBy).sortBy("Title").map(contentType => {
-				return {
-					title: contentType.Title,
-					link: this.portalsCoreSvc.getRouterLink(contentType, "list"),
-					queryParams: this.portalsCoreSvc.getRouterQueryParams(contentType)
-				};
+	private getSidebarItems(categories: Category[], parent?: Category): { items: any[], parent: any } {
+		const expand: (menuItem: any, parentID?: string, dontUpdateExpaned?: boolean) => void = async (menuItem, parentID, dontUpdateExpaned) => {
+			if (parentID === undefined) {
+				if (!dontUpdateExpaned) {
+					menuItem.expanded = !menuItem.expanded;
+				}
+				menuItem.icon = menuItem.expanded ? "chevron-down" : "chevron-forward";
+			}
+			else {
+				await this.updateSidebarWithCategoriesAsync(Category.get(parentID), menuItem.id);
+			}
+		};
+
+		const getItem: (category: Category) => any = category => {
+			return {
+				title: category.Title,
+				link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", category.ansiTitle),
+				params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: category.ID }),
+				id: category.ID,
+				onClick: async (event: Event, info: any, sidebar: any) => {
+					const menuItem = info.childIndex !== undefined
+						? sidebar.menu[info.menuIndex].items[info.itemIndex].children[info.childIndex]
+						: sidebar.menu[info.menuIndex].items[info.itemIndex];
+					if (AppUtility.isTrue(info.expand)) {
+						event.stopPropagation();
+						expand(menuItem, info.childIndex === undefined ? undefined : sidebar.menu[info.menuIndex].items[info.itemIndex].id);
+					}
+					else {
+						await this.configSvc.navigateAsync(menuItem.direction, menuItem.link, menuItem.params);
+						if (menuItem.children !== undefined && menuItem.children.length > 0) {
+							expand(menuItem, info.childIndex === undefined ? undefined : sidebar.menu[info.menuIndex].items[info.itemIndex].id, menuItem.expanded);
+						}
+					}
+				}
+			};
+		};
+
+		const getChildren: (childrenCategories: Category[]) => any[] = childrenCategories => {
+			return childrenCategories.map(category => {
+				const item = getItem(category);
+				item.children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : [];
+				return item;
+			});
+		};
+
+		return {
+			items: categories.map(category => {
+				const item = getItem(category);
+				item.children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : [];
+				return item;
 			}),
-			{ title: await this.configSvc.getResourceAsync("portals.sidebar.cms-contents") },
-			onNext
-		);
+			parent: {
+				title: parent === undefined ? "{{portals.sidebar.cms-categories}}" : parent.Title,
+				link: parent === undefined ? undefined : this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", parent.ansiTitle),
+				params: parent === undefined ? undefined : this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: parent.ID }),
+				expandable: parent !== undefined,
+				onClick: async () => await this.updateSidebarWithCategoriesAsync(this._sidebarCategory !== undefined ? this._sidebarCategory.Parent : undefined, this._sidebarCategory !== undefined ? this._sidebarCategory.ID : undefined),
+				id: parent === undefined ? undefined : parent.ID,
+			}
+		};
 	}
 
 	private processContentTypeUpdateMessage(message: AppMessage) {

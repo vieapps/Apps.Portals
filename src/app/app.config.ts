@@ -10,19 +10,19 @@ export class AppConfig {
 	/** URIs of the remote API and related resources */
 	public static URIs = {
 		/** APIs */
-		apis: "https://apis.vieapps.com/",
+		apis: "https://apis.vieapps.net/",
 
 		/** Real-time Updater (if not provided, the uri of the APIs will be used) */
 		updates: undefined as string,
 
 		/** Files HTTP service */
-		files: "https://fs.vieapps.com/",
+		files: "https://fs.vieapps.net/",
 
 		/** Portals HTTP service */
-		portals: "https://portals.vieapps.com/",
+		portals: "https://portals.vieapps.net/",
 
 		/** Apps on the web to perform activation or other business process */
-		apps: "https://cms.vieapps.com/",
+		apps: "https://cms.vieapps.net/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
 		medias: ["fs.vieportal.net"] as Array<string>
@@ -36,7 +36,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://vieapps.net",
 		id: "vieapps-ngx-portals",
-		version: "1.1.0",
+		version: "1.1.2",
 		frameworks: "ionic 5.4 - angular 8.2 - cordova 10.0",
 		mode: "",
 		platform: "",

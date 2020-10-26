@@ -47,49 +47,38 @@ export class AppComponent implements OnInit {
 		visible: true,
 		profile: false,
 		search: true,
+		children: true,
 		active: "cms",
 		header: {
 			title: undefined as string,
 			thumbnail: undefined as string,
-			onClick: (sidebar: any) => {}
+			onClick: (_: Event, __: any) => {}
 		},
 		footer: new Array<{
 			name: string,
 			icon: string,
 			title?: string,
-			onClick?: (name: string, sidebar: any) => void
+			onClick?: (event: Event, name: string, sidebar: any) => void
 		}>(),
 		top: new Array<{
 			title: string,
 			link: string,
-			queryParams?: { [key: string]: any },
+			params?: { [key: string]: string },
 			direction?: string,
-			detail: boolean,
 			icon?: string,
-			thumbnail?: string,
-			onClick?: (sidebar: any) => void
+			onClick?: (event: Event, info: any, sidebar: any) => void
 		}>(),
 		menu: new Array<{
 			name: string,
 			parent?: {
 				title: string,
 				link: string,
-				queryParams?: { [key: string]: any },
-				detail: boolean,
-				icon?: string,
-				thumbnail?: string,
-				onClick?: (info: any, sidebar: any) => void
+				params?: { [key: string]: string },
+				expandable: boolean,
+				onClick?: (event: Event, info: any, sidebar: any) => void,
+				id?: string
 			},
-			items: Array<{
-				title: string,
-				link: string,
-				queryParams?: { [key: string]: any },
-				direction?: string,
-				detail: boolean,
-				icon?: string,
-				thumbnail?: string,
-				onClick?: (info: any, sidebar: any) => void
-			}>
+			items: Array<SidebarMenuItem>
 		}>()
 	};
 
@@ -150,11 +139,40 @@ export class AppComponent implements OnInit {
 	}
 
 	trackSidebarItem(index: number, item: any) {
-		return `${item.title || item.icon}@${index}`;
+		return `${item.id || item.name || item.title}@${index}`;
 	}
 
 	toggleSidebar() {
 		this.sidebar.visible = !this.sidebar.visible;
+	}
+
+	private getSidebarItem(itemInfo: any = {}, oldItem: any = {}, onCompleted?: (item: SidebarMenuItem) => void) {
+		const gotChildren = AppUtility.isArray(itemInfo.children, true) && (itemInfo.children as Array<any>).length > 0;
+		const isExpanded = gotChildren && !!itemInfo.expanded;
+		const sidebarItem: SidebarMenuItem = {
+			title: itemInfo.title || oldItem.title,
+			link: itemInfo.link || oldItem.link,
+			params: itemInfo.params as { [key: string]: string } || oldItem.params,
+			direction: itemInfo.direction || oldItem.direction || "forward",
+			onClick: itemInfo.onClick !== undefined && typeof itemInfo.onClick === "function"
+				? itemInfo.onClick
+				: async (_, info, sidebar) => {
+					const menuItem = info.childIndex !== undefined
+						? sidebar.menu[info.menuIndex].items[info.itemIndex].children[info.childIndex]
+						: sidebar.menu[info.menuIndex].items[info.itemIndex];
+					await this.configSvc.navigateAsync(menuItem.direction, menuItem.link, menuItem.params);
+				},
+			children: gotChildren ? (itemInfo.children as Array<any>).map(item => this.getSidebarItem(item)) : [],
+			expanded: isExpanded,
+			id: itemInfo.id,
+			icon: itemInfo.icon || (gotChildren ? isExpanded ? "chevron-down" : "chevron-forward" : undefined),
+			iconColor: itemInfo.iconColor || "medium",
+			iconSlot: itemInfo.icon !== undefined ? itemInfo.iconSlot || "start" : "end"
+		};
+		if (onCompleted !== undefined) {
+			onCompleted(sidebarItem);
+		}
+		return sidebarItem;
 	}
 
 	private async updateSidebarItemAsync(menuIndex: number = -1, itemIndex: number = -1, itemInfo: any = {}) {
@@ -165,43 +183,16 @@ export class AppComponent implements OnInit {
 			menuIndex = this.sidebar.menu.length;
 			this.sidebar.menu.push({ name: undefined, items: []});
 		}
-
-		const oldItem = itemIndex > -1 && itemIndex < this.sidebar.menu[menuIndex].items.length
-			? this.sidebar.menu[menuIndex].items[itemIndex]
-			: {
-					title: undefined as string,
-					link: undefined as string,
-					queryParams: undefined as { [key: string]: any },
-					icon: undefined as string,
-					thumbnail: undefined as string,
-					direction: undefined as string
-				};
-
-		const updatedItem: {
-			title: string,
-			link: string,
-			queryParams?: { [key: string]: any },
-			icon?: string,
-			thumbnail?: string,
-			direction?: string,
-			detail: boolean,
-			onClick?: (info: any, sidebar: any) => void
-		} = {
-			title: itemInfo.title || oldItem.title,
-			link: itemInfo.link || oldItem.link,
-			queryParams: itemInfo.queryParams as { [key: string]: any } || oldItem.queryParams,
-			direction: itemInfo.direction || oldItem.direction || "forward",
-			icon: itemInfo.icon || oldItem.icon,
-			thumbnail: itemInfo.thumbnail || oldItem.thumbnail,
-			detail: !!itemInfo.detail,
-			onClick: itemInfo.onClick !== undefined && typeof itemInfo.onClick === "function" ? itemInfo.onClick : () => {}
-		};
-
-		updatedItem.title = updatedItem.title.startsWith("{{") && updatedItem.title.endsWith("}}")
-			? await this.configSvc.getResourceAsync(updatedItem.title.substr(2, updatedItem.title.length - 4).trim())
-			: updatedItem.title;
-
-		this.sidebar.menu[menuIndex].items.update(updatedItem, itemIndex);
+		this.sidebar.menu[menuIndex].items.update(
+			this.getSidebarItem(
+				itemInfo,
+				itemIndex > -1 && itemIndex < this.sidebar.menu[menuIndex].items.length ? this.sidebar.menu[menuIndex].items[itemIndex] : {},
+				async sidebarItem => sidebarItem.title = sidebarItem.title.startsWith("{{") && sidebarItem.title.endsWith("}}")
+					? await this.configSvc.getResourceAsync(sidebarItem.title.substr(2, sidebarItem.title.length - 4).trim())
+					: sidebarItem.title
+			),
+			itemIndex
+		);
 	}
 
 	private async updateSidebarAsync(info: any = {}, updateTopItems: boolean = false) {
@@ -218,7 +209,7 @@ export class AppComponent implements OnInit {
 				name: "preferences",
 				icon: "settings",
 				title: await this.configSvc.getResourceAsync("common.preferences.label"),
-				onClick: (name, sidebar) => sidebar.active = name
+				onClick: (_, name, sidebar) => sidebar.active = name
 			});
 		}
 
@@ -248,24 +239,30 @@ export class AppComponent implements OnInit {
 			? {
 					title: info.parent.title,
 					link: info.parent.link,
-					queryParams: info.parent.queryParams,
-					detail: !!info.parent.detail,
-					icon: info.parent.icon,
-					thumbnail: info.parent.thumbnail,
-					onClick: info.parent.onClick !== undefined && typeof info.parent.onClick === "function" ? info.parent.onClick as (info: any, sidebar: any) => void : () => {}
+					params: info.parent.params,
+					expandable: !!info.parent.expandable,
+					onClick: info.parent.onClick !== undefined && typeof info.parent.onClick === "function"
+						? info.parent.onClick as (event: Event, info: any, sidebar: any) => void
+						: () => {}
 				}
 			: this.sidebar.menu[index].parent;
+		if (this.sidebar.menu[index].parent !== undefined && this.sidebar.menu[index].parent.title.startsWith("{{") && this.sidebar.menu[index].parent.title.endsWith("}}")) {
+			this.sidebar.menu[index].parent.title = await this.configSvc.getResourceAsync(this.sidebar.menu[index].parent.title.substr(2, this.sidebar.menu[index].parent.title.length - 4).trim());
+		}
 
 		await Promise.all((info.items as Array<any> || []).map(item => {
 			return {
 				title: item.title,
 				link: item.link,
-				queryParams: item.queryParams,
+				params: item.params,
 				direction: item.direction,
-				detail: item.detail,
+				onClick: item.onClick,
+				children: item.children,
+				expanded: item.expanded,
+				id: item.id,
 				icon: item.icon,
-				thumbnail: item.thumbnail,
-				onClick: item.onClick
+				iconColor: item.iconColor,
+				iconSlot: item.iconSlot
 			};
 		})
 		.filter(item => AppUtility.isNotEmpty(item.title) && AppUtility.isNotEmpty(item.link))
@@ -490,8 +487,31 @@ export class AppComponent implements OnInit {
 					}
 				}
 				AppEvents.broadcast("App", { Type: "FullyInitialized" });
+				AppEvents.sendToElectron("App", { Type: "FullyInitialized", Data: {
+					URIs: appConfig.URIs,
+					app: appConfig.app,
+					session: appConfig.session,
+					services: appConfig.services,
+					accountRegistrations: appConfig.accountRegistrations,
+					options: appConfig.options,
+					languages: appConfig.languages
+				}});
 			});
 		});
 	}
 
+}
+
+export interface SidebarMenuItem {
+	title: string;
+	link: string;
+	params?: { [key: string]: string };
+	direction?: string;
+	onClick?: (event: Event, info: any, sidebar: any) => void;
+	children?: Array<SidebarMenuItem>;
+	expanded: boolean;
+	id?: string;
+	icon?: string;
+	iconColor?: string;
+	iconSlot?: string;
 }

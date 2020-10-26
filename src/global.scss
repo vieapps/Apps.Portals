@@ -30,9 +30,6 @@ ion-app > ion-split-pane > ion-router-outlet ion-content {
 		max-width: 320px;
 	}
 }
-ion-list {
-	padding: 0 !important;
-}
 ion-menu.menu-side-start > ion-header > ion-toolbar > ion-thumbnail img {
 	border-radius: 50%;
 	width: 80%;
@@ -43,10 +40,21 @@ ion-menu.menu-side-start > ion-header > ion-toolbar > ion-thumbnail img {
 	height: 36px;
 	width: 36px;
 }
+ion-menu > ion-content > ion-list,
+ion-menu > ion-content > ion-list > ion-menu-toggle > div > ion-list {
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
+}
 ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label {
 	line-height: 44px;
 	font-weight: bold;
 	cursor: pointer;
+}
+ion-menu > ion-content ion-list ion-item {
+	cursor: pointer;
+}
+ion-menu > ion-content ion-list.second > ion-item {
+	--padding-start: 32px;
 }
 .md ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label {
 	text-transform: uppercase;

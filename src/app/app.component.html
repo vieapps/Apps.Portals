@@ -9,7 +9,7 @@
 					<ion-thumbnail *ngIf="sidebar.header.thumbnail" slot="start" (click)="sidebar.header.onClick(sidebar)">
 						<img [src]="sidebar.header.thumbnail" />
 					</ion-thumbnail>
-					<ion-title (click)="sidebar.header.onClick(sidebar)">
+					<ion-title (click)="sidebar.header.onClick($event, sidebar)">
 						{{ sidebar.header.title }}
 					</ion-title>
 				</ion-toolbar>
@@ -18,7 +18,7 @@
 			<ion-footer>
 				<ion-toolbar [color]="color">
 					<ion-buttons *ngIf="sidebar.footer.length > 0" slot="start">
-						<ion-button *ngFor="let item of sidebar.footer; trackBy: trackSidebarItem" fill="clear" [title]="item.title" [color]="sidebar.active === item.name ? 'primary' : 'medium'" (click)="item.onClick(item.name, sidebar)">
+						<ion-button *ngFor="let item of sidebar.footer; trackBy: trackSidebarItem" fill="clear" [title]="item.title" [color]="sidebar.active === item.name ? 'primary' : 'medium'" (click)="item.onClick($event, item.name, sidebar)">
 							<ion-icon [name]="item.icon" slot="icon-only"></ion-icon>
 						</ion-button>
 					</ion-buttons>
@@ -32,34 +32,40 @@
 
 			<ion-content [color]="color">
 
-				<ion-list [hidden]="sidebar.active === 'notifications' || sidebar.active === 'preferences'" class="ion-margin-vertical">
+				<ion-list [hidden]="sidebar.active === 'notifications' || sidebar.active === 'preferences'" class="ion-margin-vertical" lines="full">
 
 					<ion-menu-toggle auto-hide="false" [hidden]="sidebar.active === 'portals'">
-						<ion-item *ngFor="let item of sidebar.top; trackBy: trackSidebarItem" [routerLink]="item.link" [queryParams]="item.queryParams" [routerDirection]="item.direction" [detail]="item.detail" [color]="color" (click)="item.onClick(sidebar)">
+						<ion-item *ngFor="let item of sidebar.top; trackBy: trackSidebarItem" [routerLink]="item.link" [queryParams]="item.params" [routerDirection]="item.direction" [color]="color" (click)="item.onClick($event, item, sidebar)" detail="false">
 							<ion-icon *ngIf="item.icon" [name]="item.icon" slot="start"></ion-icon>
 							<ion-label>
-								<img *ngIf="item.thumbnail" [src]="item.thumbnail" class="ion-float-start" />
 								{{ item.title }}
 							</ion-label>
 						</ion-item>
 					</ion-menu-toggle>
 
-					<ion-menu-toggle *ngFor="let menu of sidebar.menu; trackBy: trackSidebarItem" [hidden]="sidebar.active !== menu.name" auto-hide="false">
-						<ion-list-header *ngIf="menu.parent && menu.parent.title" [color]="color" (click)="menu.parent.onClick(menu.parent, sidebar)" class="ion-padding-top">
+					<ion-menu-toggle *ngFor="let menu of sidebar.menu; let menuIndex=index; trackBy: trackSidebarItem" [hidden]="sidebar.active !== menu.name" auto-hide="false">
+						<ion-list-header *ngIf="menu.parent && menu.parent.title" [color]="color" (click)="menu.parent.onClick($event, menu.parent, sidebar)" class="ion-padding-top">
 							<ion-label>
-								<ion-icon *ngIf="!menu.parent.icon && menu.parent.detail" name="chevron-back" slot="start"></ion-icon>
-								<ion-icon *ngIf="menu.parent.icon" [name]="menu.parent.icon" slot="start"></ion-icon>
-								<img *ngIf="menu.parent.thumbnail" [src]="menu.parent.thumbnail" class="ion-float-start" />
+								<ion-icon *ngIf="menu.parent.expandable" name="chevron-back" slot="start"></ion-icon>
 								{{ menu.parent.title }}
 							</ion-label>
 						</ion-list-header>
-						<ion-item *ngFor="let item of menu.items; trackBy: trackSidebarItem" [routerLink]="item.link" [queryParams]="item.queryParams" [routerDirection]="item.direction" [detail]="item.detail" [color]="color" (click)="item.onClick(item, sidebar)">
-							<ion-icon *ngIf="item.icon" [name]="item.icon" slot="start"></ion-icon>
-							<ion-label>
-								<img *ngIf="item.thumbnail" [src]="item.thumbnail" class="ion-float-start" />
-								{{ item.title }}
-							</ion-label>
-						</ion-item>
+						<div *ngFor="let item of menu.items; let itemIndex=index; trackBy: trackSidebarItem">
+							<ion-item [color]="color" (click)="item.onClick($event, { menuIndex: menuIndex, itemIndex: itemIndex }, sidebar)" class="ion-activatable" detail="false">
+								<ion-icon *ngIf="item.icon" [name]="item.icon" [color]="item.iconColor" [slot]="item.iconSlot" (click)="item.onClick($event, { menuIndex: menuIndex, itemIndex: itemIndex, expand: true }, sidebar)"></ion-icon>
+								<ion-label>
+									{{ item.title }}
+								</ion-label>
+							</ion-item>
+							<ion-list *ngIf="sidebar.children && item.children && item.children.length > 0" [hidden]="!item.expanded" class="second">
+								<ion-item *ngFor="let child of item.children; let childIndex=index; trackBy: trackSidebarItem" [color]="color" (click)="child.onClick($event, { menuIndex: menuIndex, itemIndex: itemIndex, childIndex: childIndex }, sidebar)" class="ion-activatable" detail="false">
+									<ion-icon *ngIf="child.icon" [name]="child.icon" [color]="child.iconColor" (click)="child.onClick($event, { menuIndex: menuIndex, itemIndex: itemIndex, childIndex: childIndex, expand: true }, sidebar)" slot="end"></ion-icon>
+									<ion-label>
+										{{ child.title }}
+									</ion-label>
+								</ion-item>
+							</ion-list>
+						</div>
 					</ion-menu-toggle>
 
 				</ion-list>
