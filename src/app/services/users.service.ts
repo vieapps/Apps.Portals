@@ -399,7 +399,7 @@ export class UsersService extends BaseService {
 					}
 					await this.configSvc.updateOptionsAsync(account.profile.Options);
 					AppEvents.broadcast("Profile", { Type: "Updated" });
-					AppEvents.sendToElectron(this.name, message);
+					AppEvents.sendToElectron("Users", { Type: "Profile", Data: account.profile });
 					if (this.configSvc.isDebug) {
 						console.log(super.getLogMessage("User profile is updated"), account.profile);
 					}
