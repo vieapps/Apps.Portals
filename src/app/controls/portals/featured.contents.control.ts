@@ -7,7 +7,7 @@ import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 
 @Component({
-	selector: "control-cms-featured-contents",
+	selector: "control-cms-portals-featured-contents",
 	templateUrl: "./featured.contents.control.html",
 	styleUrls: ["./featured.contents.control.scss"]
 })
