@@ -264,6 +264,7 @@ export class UsersUpdatePage implements OnInit {
 				options.Required = true;
 			}
 		});
+		this.configSvc.appConfig.accountRegistrations.excluded.forEach(name => config.removeAt(config.findIndex(ctrl => ctrl.Name === name)));
 
 		this.update.language = this.profile.Language;
 		this.update.darkTheme = AppUtility.isEquals("dark", this.configSvc.color);
@@ -289,7 +290,7 @@ export class UsersUpdatePage implements OnInit {
 					if (this.profile.ID === this.configSvc.getAccount().id) {
 						this.configSvc.getAccount().profile = UserProfile.get(this.profile.ID);
 						await this.configSvc.storeSessionAsync();
-						if (this.update.language !== this.update.form.value.Language || this.update.darkTheme !== this.update.form.value.DarkTheme) {
+						if (this.update.form.value.Language !== undefined && this.update.form.value.DarkTheme !== undefined && (this.update.language !== this.update.form.value.Language || this.update.darkTheme !== this.update.form.value.DarkTheme)) {
 							this.configSvc.appConfig.options.theme = this.update.form.value.DarkTheme ? "dark" : "light";
 							if (this.update.language !== this.update.form.value.Language) {
 								await this.configSvc.changeLanguageAsync(this.update.form.value.Language);

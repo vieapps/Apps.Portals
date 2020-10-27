@@ -89,6 +89,7 @@ export class AppConfig {
 		registrable: true,
 		required: [],
 		hidden: ["Gender", "BirthDay", "Address", "Addresses", "Mobile"],
+		excluded: ["Language", "DarkTheme"],
 		sendInvitationRole: "Authenticated",
 		setServicePrivilegs: false,
 		setServicePrivilegsRole: "ServiceAdministrator",
