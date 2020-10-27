@@ -59,6 +59,14 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 			this.prepareAsync();
 			this.prepareContents();
 		}
+		else {
+			AppEvents.on("App", info => {
+				if (AppUtility.isEquals(info.args.Type, "Initialized")) {
+					this.prepareAsync();
+					this.prepareContents();
+				}
+			}, "FeaturedContents:AppInitialized");
+		}
 
 		AppEvents.on(this.portalsCmsSvc.name, async info => {
 			if (AppUtility.isEquals(info.args.Type, "FeaturedContentsPrepared")) {
@@ -72,6 +80,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
+		AppEvents.off("App", "FeaturedContents:AppInitialized");
 		AppEvents.off(this.portalsCmsSvc.name, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents`);
 	}
 
