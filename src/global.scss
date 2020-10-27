@@ -23,6 +23,12 @@ ion-app > ion-split-pane > ion-router-outlet ion-content {
 	user-select: auto !important;
 }
 
+/* avoid white-padding that not matched with theme color */
+ion-list {
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
+}
+
 /* side menu */
 @media only screen and (min-width: 1200px) {
 	.split-pane-md.split-pane-visible > .split-pane-side,
@@ -39,11 +45,6 @@ ion-menu.menu-side-start > ion-header > ion-toolbar > ion-thumbnail img {
 .ios ion-menu.menu-side-start > ion-header > ion-toolbar > ion-thumbnail {
 	height: 36px;
 	width: 36px;
-}
-ion-menu > ion-content > ion-list,
-ion-menu > ion-content > ion-list > ion-menu-toggle > div > ion-list {
-	padding-top: 0 !important;
-	padding-bottom: 0 !important;
 }
 ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label {
 	line-height: 44px;
