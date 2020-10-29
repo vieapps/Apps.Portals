@@ -1,0 +1,18 @@
+ion-grid > ion-row > ion-col {
+	cursor: pointer;
+}
+ion-grid > ion-row > ion-col.title {
+	font-size: 14px;
+	font-weight: bold;
+	text-transform: uppercase;
+	padding-left: 0;
+}
+ion-grid > ion-row > ion-col > ion-item > ion-label > span {
+	display: none;
+}
+ion-grid > ion-row > ion-col > ion-item:hover > ion-label > span {
+	display: block;
+}
+ion-grid span {
+	display: none !important;
+}

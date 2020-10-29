@@ -17,6 +17,17 @@
 				"featured": {
 					"updated": "Mới cập nhật",
 					"published": "Mới xuất bản"
+				},
+				"shortcuts": {
+					"active": {
+						"organization": "Đơn vị hoạt động: {{organization}}",
+						"module": "Module hoạt động: {{module}}"
+					},
+					"labels": {
+						"shortcuts": "Lối tắt quản trị nội dung",
+						"contents": "Quản trị tin - bài",
+						"others": "Quản trị các nội dung khác"
+					}
 				}
 			},
 			"categories": {

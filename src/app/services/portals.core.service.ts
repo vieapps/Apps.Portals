@@ -145,7 +145,12 @@ export class PortalsCoreService extends BaseService {
 				}
 			});
 		}
-		this.prepareSidebar(onNext);
+		this.prepareSidebar(() => {
+			AppEvents.broadcast(this.name, { Type: "PortalsInitialized" });
+			if (onNext !== undefined) {
+				onNext();
+			}
+		});
 	}
 
 	public canManageOrganization(organization?: Organization, account?: Account) {
@@ -420,7 +425,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public getRouterLink(contentType: ContentType, action?: string, title?: string, objectName?: string, path?: string) {
-		objectName = objectName || (contentType !== undefined ? contentType.getObjectName() : "unknown");
+		objectName = AppUtility.isNotEmpty(objectName) ? objectName : contentType !== undefined ? contentType.getObjectName() : "unknown";
 		return `/portals/${path || "cms"}/`
 			+ (AppUtility.isEquals(objectName, "Category") ? "categories" : `${objectName}s`).toLowerCase() + "/"
 			+ (action || "list").toLowerCase() + "/"

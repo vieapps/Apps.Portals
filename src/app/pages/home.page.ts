@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { ConfigurationService } from "@app/services/configuration.service";
 
@@ -34,14 +35,14 @@ export class HomePage implements OnInit, OnDestroy {
 		}
 		else {
 			AppEvents.on("App", info => {
-				if ("Initialized" === info.args.Type) {
+				if (AppUtility.isEquals(info.args.Type, "Initialized")) {
 					this.prepareAsync();
 				}
 			}, "Home:AppInitialized");
 		}
 
 		AppEvents.on("App", info => {
-			if ("LanguageChanged" === info.args.Type) {
+			if (AppUtility.isEquals(info.args.Type, "LanguageChanged")) {
 				this.setTitleAsync();
 			}
 		}, "Home:LanguageChanged");

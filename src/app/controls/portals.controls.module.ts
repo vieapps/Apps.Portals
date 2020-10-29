@@ -6,6 +6,7 @@ import { DataLookupModalPageModule } from "@app/controls/portals/data.lookup.mod
 import { DesktopsSelectorModalPageModule } from "@app/controls/portals/desktop.selector.modal.module";
 import { RolesSelectorModalPageModule } from "@app/controls/portals/role.selector.modal.module";
 import { FeaturedContentsControl } from "@app/controls/portals/featured.contents.control";
+import { ShortcutsControl } from "@app/controls/portals/shortcuts.control";
 
 @NgModule({
 	providers: [],
@@ -18,10 +19,12 @@ import { FeaturedContentsControl } from "@app/controls/portals/featured.contents
 		RolesSelectorModalPageModule
 	],
 	exports: [
-		FeaturedContentsControl
+		FeaturedContentsControl,
+		ShortcutsControl
 	],
 	declarations: [
-		FeaturedContentsControl
+		FeaturedContentsControl,
+		ShortcutsControl
 	]
 })
 

@@ -884,3 +884,17 @@ export class ConfigurationService extends BaseService {
 	}
 
 }
+
+export interface Shortcut {
+	title: string;
+	url?: string;
+	direction?: string;
+	icon?: {
+		name?: string;
+		color?: string;
+	};
+	order?: number;
+	editable?: boolean;
+	removable?: boolean;
+	onClick?: (event: Event, index: number, shortcut: Shortcut) => void;
+}

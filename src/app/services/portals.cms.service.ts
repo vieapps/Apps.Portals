@@ -142,7 +142,12 @@ export class PortalsCmsService extends BaseService {
 		}
 
 		await this.prepareFeaturedContentsAsync();
-		await this.updateSidebarAsync(onNext);
+		await this.updateSidebarAsync(() => {
+			AppEvents.broadcast(this.name, { Type: "CMSPortalsInitialized" });
+			if (onNext !== undefined) {
+				onNext();
+			}
+		});
 	}
 
 	public canManage(object: CmsBaseModel, account?: Account) {
