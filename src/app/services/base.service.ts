@@ -92,7 +92,7 @@ export class Base {
 				ServiceName: requestedPath.serviceName,
 				ObjectName: requestedPath.objectName,
 				Query: requestedPath.query,
-				Verb: request.Verb,
+				Verb: request.Verb || "GET",
 				Body: request.Body,
 				Header: request.Header,
 				Extra: request.Extra
