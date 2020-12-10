@@ -133,7 +133,9 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		else {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.search"), "search", () => this.openSearchAsync())
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.search"), "search", () => this.openSearchAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
 			];
 			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 			AppEvents.on("Portals", info => {
@@ -287,6 +289,14 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		const domain = `${site.SubDomain}.${site.PrimaryDomain}`.replace("*.", "www.").replace("www.www.", "www.");
 		const protocol = site.AlwaysUseHTTPs ? "https" : "http";
 		PlatformUtility.openURI(`${protocol}://${domain}`);
+	}
+
+	async exportToExcelAsync() {
+		await this.portalsCoreSvc.exportToExcelAsync("Site", this.organization.ID);
+	}
+
+	async importFromExcelAsync() {
+		await this.portalsCoreSvc.importFromExcelAsync("Site", this.organization.ID);
 	}
 
 }

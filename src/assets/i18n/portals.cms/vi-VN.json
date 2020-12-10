@@ -82,6 +82,11 @@
 						"label": "Liên kết tĩnh",
 						"placeholder": "",
 						"description": "Chỉ định liên kết tĩnh/cố định của chuyên mục.<br/>Tips: có thể sử dụng ký hiệu '<b>~/</b>' để chỉ định liên kết từ gốc (root), hoặc sử dụng '<b>javascript:</b>' để chỉ định chạy hàm Javascript."
+					},
+					"Notes": {
+						"label": "Ghi chú",
+						"placeholder": "",
+						"description": "Sử dụng để ghi chú hoặc ghi nhận một số thông tin đặc biệt"
 					}
 				},
 				"list": {

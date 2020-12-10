@@ -169,7 +169,9 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		else {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.expressions.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.expressions.title.search"), "search", () => this.openSearchAsync())
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.expressions.title.search"), "search", () => this.openSearchAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
 			];
 			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 			AppEvents.on(this.portalsCoreSvc.name, info => {
@@ -325,6 +327,14 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(expression.getRouterURI({ ID: expression.ID, Advanced: true }));
+	}
+
+	async exportToExcelAsync() {
+		await this.portalsCoreSvc.exportToExcelAsync("Expression", this.organization.ID);
+	}
+
+	async importFromExcelAsync() {
+		await this.portalsCoreSvc.importFromExcelAsync("Expression", this.organization.ID);
 	}
 
 }

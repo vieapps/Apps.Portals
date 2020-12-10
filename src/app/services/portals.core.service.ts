@@ -2,8 +2,9 @@ import { Injectable } from "@angular/core";
 import { AppRTU, AppMessage } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppCustomCompleter } from "@app/components/app.completer";
-import { AppPagination } from "@app/components/app.pagination";
+import { AppPagination, AppDataPagination } from "@app/components/app.pagination";
 import { AppFormsControlConfig, AppFormsControlLookupOptionsConfig, AppFormsLookupValue, AppFormsControl, AppFormsService } from "@app/components/forms.service";
 import { AppFormsControlComponent } from "@app/components/forms.control.component";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
@@ -12,6 +13,7 @@ import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { UsersService } from "@app/services/users.service";
+import { FilesService } from "@app/services/files.service";
 import { AttachmentInfo } from "@app/models/base";
 import { Account } from "@app/models/account";
 import { PortalBase as BaseModel, NotificationSettings, EmailNotificationSettings, WebHookNotificationSettings, EmailSettings } from "@app/models/portals.base";
@@ -32,6 +34,7 @@ export class PortalsCoreService extends BaseService {
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private usersSvc: UsersService,
+		private filesSvc: FilesService,
 		private appFormsSvc: AppFormsService
 	) {
 		super("Portals");
@@ -1179,6 +1182,15 @@ export class PortalsCoreService extends BaseService {
 		if (this.configSvc.isAuthenticated) {
 			const account = this.configSvc.getAccount();
 			const canManageOrganization = this.canManageOrganization(this.activeOrganization, account);
+
+			if (this.authSvc.isSystemAdministrator(account)) {
+				items.push({
+					title: "{{portals.sidebar.logs}}",
+					link: "/logs",
+					direction: "root",
+					icon: "file-tray-full"
+				});
+			}
 
 			if (canManageOrganization) {
 				items.push
@@ -2795,6 +2807,219 @@ export class PortalsCoreService extends BaseService {
 				break;
 		}
 		AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+	}
+
+	public async exportToExcelAsync(objectName: string, systemID?: string, repositoryID?: string, repositoryEntityID?: string, filterBy?: any, sortBy?: any, pagination?: AppDataPagination, maxPages?: number, onCompleted?: (message: AppMessage) => void, onProgress?: (percentage: string) => void, onError?: (error?: any) => void) {
+		await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.common.excel.action.export"));
+		const request = {
+			SystemID: systemID,
+			RepositoryID: repositoryID,
+			RepositoryEntityID: repositoryEntityID,
+			ObjectName: objectName,
+			FilterBy: filterBy || {},
+			SortBy: sortBy || {},
+			Pagination: pagination || {}
+		};
+		request.Pagination["MaxPages"] = maxPages !== undefined && maxPages > 0 ? maxPages : 0;
+		await super.sendAsync(
+			{
+				Path: super.getURI("excel", "export") + "?x-request=" + AppUtility.toBase64Url(request),
+				Verb: "GET",
+				Header: this.configSvc.appConfig.getAuthenticatedHeaders()
+			},
+			async data => {
+				const processID = data !== undefined ? data.ProcessID as string : undefined;
+				if (AppUtility.isNotEmpty(processID)) {
+					if (this.configSvc.isDebug) {
+						console.log(`[Portals]: Start to export objects to Excel - Process ID: ${processID}`);
+					}
+					AppRTU.registerAsObjectScopeProcessor(
+						this.name,
+						"Excel",
+						async message => {
+							switch (message.Data.Status || "") {
+								case "Done":
+									if (this.configSvc.isDebug) {
+										console.log(`[Portals]: THe export objects to Excel process was completed - Process ID: ${processID}`);
+									}
+									AppRTU.unregister(processID, this.name, "Excel");
+									if (onProgress !== undefined) {
+										onProgress(message.Data.Percentage);
+									}
+									if (onCompleted !== undefined) {
+										await this.appFormsSvc.hideLoadingAsync();
+										onCompleted(message);
+									}
+									else {
+										await this.appFormsSvc.showAlertAsync(
+											"Excel",
+											await this.configSvc.getResourceAsync("portals.common.excel.message.export"),
+											undefined,
+											() => PlatformUtility.openURI(this.filesSvc.getTemporaryFileURI(message)),
+											await this.configSvc.getResourceAsync("common.buttons.download"),
+											await this.configSvc.getResourceAsync("common.buttons.cancel")
+										);
+									}
+									break;
+								case "Error":
+									if (this.configSvc.isDebug) {
+										console.error(`[Portals]: Error occurred while exporting objects to Excel - Process ID: ${processID}`, message);
+									}
+									AppRTU.unregister(processID, this.name, "Excel");
+									if (onError !== undefined) {
+										await this.appFormsSvc.hideLoadingAsync();
+										onError(message.Data.Error);
+									}
+									else {
+										await this.appFormsSvc.showErrorAsync(message.Data.Error);
+									}
+									break;
+								default:
+									if (this.configSvc.isDebug) {
+										console.log(`[Portals]: Exporting - Process ID: ${processID} - ${message.Data.Percentage}`);
+									}
+									if (onProgress !== undefined) {
+										onProgress(message.Data.Percentage);
+									}
+									break;
+							}
+						},
+						processID
+					);
+				}
+				else {
+					await this.appFormsSvc.hideLoadingAsync();
+				}
+			},
+			async error => {
+				if (onError !== undefined) {
+					await this.appFormsSvc.hideLoadingAsync();
+					onError(error);
+				}
+				else {
+					await this.appFormsSvc.showErrorAsync(error);
+				}
+			}
+		);
+	}
+
+	public async importFromExcelAsync(objectName: string, systemID?: string, repositoryID?: string, repositoryEntityID?: string, onCompleted?: (message: AppMessage) => void, onProgress?: (percentage: string) => void, onError?: (error?: any) => void) {
+		await this.appFormsSvc.showModalAsync(
+			FilesProcessorModalPage,
+			{
+				mode: "upload",
+				temporary: true,
+				multiple: false,
+				accept: ".xls,.xlsx",
+				fileOptions: {
+					ServiceName: this.name,
+					ObjectName: objectName,
+					SystemID: systemID,
+					RepositoryID: repositoryID,
+					RepositoryEntityID: repositoryEntityID,
+					IsShared: false,
+					IsTracked: false,
+					IsTemporary: true
+				},
+				buttonLabels: {
+					upload: await this.configSvc.getResourceAsync("portals.common.excel.button")
+				},
+				handlers: {
+					onUploaded: async (uploadedData: Array<any>) => {
+						await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.common.excel.action.import"));
+						const info = uploadedData[0];
+						const nodeID = info["x-node"] as string;
+						const filename = info["x-filename"] as string;
+						await super.sendAsync(
+							{
+								Path: super.getURI("excel", "import") + "?x-request=" + AppUtility.toBase64Url({
+									SystemID: systemID,
+									RepositoryID: repositoryID,
+									RepositoryEntityID: repositoryEntityID,
+									ObjectName: objectName,
+									NodeID: nodeID,
+									Filename: filename
+								}),
+								Verb: "GET",
+								Header: this.configSvc.appConfig.getAuthenticatedHeaders()
+							},
+							async data => {
+								const processID = data !== undefined ? data.ProcessID as string : undefined;
+								if (AppUtility.isNotEmpty(processID)) {
+									if (this.configSvc.isDebug) {
+										console.log(`[Portals]: Start to import objects from Excel - Process ID: ${processID}`);
+									}
+									AppRTU.registerAsObjectScopeProcessor(
+										this.name,
+										"Excel",
+										async message => {
+											switch (message.Data.Status || "") {
+												case "Done":
+													if (this.configSvc.isDebug) {
+														console.log(`[Portals]: The import objects from Excel process was completed - Process ID: ${processID}`);
+													}
+													AppRTU.unregister(processID, this.name, "Excel");
+													if (onProgress !== undefined) {
+														onProgress(message.Data.Percentage);
+													}
+													if (onCompleted !== undefined) {
+														await this.appFormsSvc.hideLoadingAsync();
+														onCompleted(message);
+													}
+													else {
+														await this.appFormsSvc.showAlertAsync(
+															"Excel",
+															await this.configSvc.getResourceAsync("portals.common.excel.message.import"),
+															undefined,
+															undefined,
+															await this.configSvc.getResourceAsync("common.buttons.close")
+														);
+													}
+													break;
+												case "Error":
+													if (this.configSvc.isDebug) {
+														console.error(`[Portals]: Error occurred while importing objects from Excel - Process ID: ${processID}`, message);
+													}
+													AppRTU.unregister(processID, this.name, "Excel");
+													if (onError !== undefined) {
+														await this.appFormsSvc.hideLoadingAsync();
+														onError(message.Data.Error);
+													}
+													else {
+														await this.appFormsSvc.showErrorAsync(message.Data.Error);
+													}
+													break;
+												default:
+													if (this.configSvc.isDebug) {
+														console.log(`[Portals]: Importing - Process ID: ${processID} - ${message.Data.Percentage}`);
+													}
+													if (onProgress !== undefined) {
+														onProgress(message.Data.Percentage);
+													}
+													break;
+											}
+										},
+										processID
+									);
+								}
+								else {
+									await this.appFormsSvc.hideLoadingAsync();
+								}
+							},
+							async error => {
+								if (onError !== undefined) {
+									await this.appFormsSvc.hideLoadingAsync();
+									onError(error);
+								}
+								else {
+									await this.appFormsSvc.showErrorAsync(error);
+								}
+							}
+						);
+					}
+				}
+			}
+		);
 	}
 
 }

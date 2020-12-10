@@ -179,9 +179,6 @@ export class CmsCategoriesUpdatePage implements OnInit {
 			};
 		});
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
-		control.Options.Rows = 2;
-
 		let desktop = Desktop.get(this.category.DesktopID);
 		if (desktop === undefined && AppUtility.isNotEmpty(this.category.DesktopID)) {
 			await this.portalsCoreSvc.getDesktopAsync(this.category.DesktopID, _ => desktop = Desktop.get(this.category.DesktopID), undefined, true);
@@ -234,15 +231,15 @@ export class CmsCategoriesUpdatePage implements OnInit {
 			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "notifications", true, AppUtility.isNull(this.category.EmailSettings))
 		);
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
-		control.Options.AutoFocus = true;
-
 		if (AppUtility.isNotEmpty(this.category.ID)) {
-			formConfig.push(
+			formConfig.insert(
 				this.filesSvc.getThumbnailFormControl("Thumbnails", "basic", true, true, controlConfig => controlConfig.Options.FilePickerOptions.OnDelete = (_, formControl) => {
 					formControl.setValue({ current: AppUtility.isObject(formControl.value, true) ? formControl.value.current : undefined, new: undefined, identity: AppUtility.isObject(formControl.value, true) ? formControl.value.identity : undefined }, { onlySelf: true });
 					this.hash = AppCrypto.hash(this.form.value);
 				}),
+				formConfig.findIndex(ctrl => AppUtility.isEquals(ctrl.Name, "OrderIndex"))
+			);
+			formConfig.push(
 				this.portalsCoreSvc.getAuditFormControl(this.category, "basic"),
 				this.appFormsSvc.getButtonControls(
 					"basic",
@@ -268,6 +265,9 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		}
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
+		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title")).Options.AutoFocus = true;
+		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description")).Options.Rows = 2;
+		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Notes")).Options.Rows = 2;
 
 		if (AppUtility.isNotEmpty(this.category.ID)) {
 			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));

@@ -11,7 +11,6 @@ import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { Organization } from "@app/models/portals.core.organization";
 import { ModuleDefinition } from "@app/models/portals.base";
 import { Module } from "@app/models/portals.core.module";
@@ -28,8 +27,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
-		private portalsCoreSvc: PortalsCoreService,
-		private portalsCmsSvc: PortalsCmsService
+		private portalsCoreSvc: PortalsCoreService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
@@ -152,7 +150,9 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		else {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.search"), "search", () => this.openSearchAsync())
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.search"), "search", () => this.openSearchAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
 			];
 			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 			AppEvents.on("Portals", info => {
@@ -314,6 +314,14 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 
 	isActive(module: Module) {
 		return module !== undefined && Module.active !== undefined && AppUtility.isEquals(module.ID, Module.active.ID);
+	}
+
+	async exportToExcelAsync() {
+		await this.portalsCoreSvc.exportToExcelAsync("Module", this.organization.ID);
+	}
+
+	async importFromExcelAsync() {
+		await this.portalsCoreSvc.importFromExcelAsync("Module", this.organization.ID);
 	}
 
 }

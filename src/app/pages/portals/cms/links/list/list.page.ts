@@ -197,6 +197,12 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.links.title.reorder"), "swap-vertical", () => this.openReorderAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.links.title.search"), "search", () => this.openSearchAsync())
 			];
+			if (this.canUpdate) {
+				this.actions.push(
+					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
+					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
+				);
+			}
 
 			this.parentID = this.configSvc.requestParams["ParentID"];
 			this.parentLink = Link.get(this.parentID);
@@ -524,6 +530,14 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		this.redordering = false;
 		await this.prepareTitleAsync();
 		await this.appFormsSvc.hideLoadingAsync(onNext);
+	}
+
+	async exportToExcelAsync() {
+		await this.portalsCoreSvc.exportToExcelAsync("CMS.Link", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined);
+	}
+
+	async importFromExcelAsync() {
+		await this.portalsCoreSvc.importFromExcelAsync("CMS.Link", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined);
 	}
 
 }

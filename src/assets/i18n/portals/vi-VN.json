@@ -7,6 +7,7 @@
 			"notifications": "Thông báo"
 		},
 		"sidebar": {
+			"logs": "Logs hệ thống",
 			"organizations": "Đơn vị - Tổ chức",
 			"sites": "Site - Điểm truy cập",
 			"roles": "Vai trò sử dụng",
@@ -20,6 +21,17 @@
 		"common": {
 			"unspecified": "Không xác định",
 			"advancedEdit": "Cập nhật cấp cao",
+			"excel": {
+				"action": {
+					"export": "Kết xuất dữ liệu ra Excel",
+					"import": "Nhập dữ liệu từ Excel"
+				},
+				"message": {
+					"export": "Kết xuất dữ liệu thành công, chọn 'Tải xuống' để tải về file Excel",
+					"import": "Đã nhập dữ liệu từ file Excel thành công"
+				},
+				"button": "Tải lên & cập nhật"
+			},
 			"controls": {
 				"notifications": {
 					"inheritFromParent": "Sử dụng thiết đặt các sự kiện và phương thức gửi thông báo từ cấp trên",
@@ -573,8 +585,18 @@
 					"placeholder": "",
 					"description": ""
 				},
+				"UseInlineStylesheets": {
+					"label": "Sử dụng các mã stylesheets trực tiếp thay cho liên kết ra bên ngoài",
+					"placeholder": "",
+					"description": ""
+				},
+				"UseInlineScripts": {
+					"label": "Sử dụng các mã scripts trực tiếp thay cho liên kết ra bên ngoài",
+					"placeholder": "",
+					"description": ""
+				},
 				"SEOInfo": {
-					"label": "",
+					"label": "Thiết đặt thông số SEO",
 					"placeholder": "",
 					"description": "",
 					"Title": {

@@ -280,6 +280,12 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "RedirectToNoneWWW"));
 		control.Options.Type = "toggle";
 
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "UseInlineStylesheets"));
+		control.Options.Type = "toggle";
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "UseInlineScripts"));
+		control.Options.Type = "toggle";
+
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SEOInfo"));
 		control.SubControls.Controls.filter(ctrl => AppUtility.isEquals(ctrl.Type, "TextArea")).forEach(ctrl => ctrl.Options.Rows = 10);
 
