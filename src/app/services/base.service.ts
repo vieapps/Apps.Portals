@@ -151,18 +151,20 @@ export class Base {
 	 * @param objectName The name of the object
 	 * @param objectID The identity of the object
 	 * @param query The additional query
+	 * @param serviceName The name of the service
 	*/
-	protected getURI(objectName: string, objectID?: string, query?: string) {
-		return `${this.name.toLowerCase()}/${objectName.toLowerCase()}` + (AppUtility.isNotEmpty(objectID) ? `/${objectID}` : "") + (AppUtility.isNotEmpty(query) ? `?${query}` : "");
+	protected getURI(objectName: string, objectID?: string, query?: string, serviceName?: string) {
+		return `${(serviceName || this.name).toLowerCase()}${AppUtility.isNotEmpty(objectName) ? "/" + objectName.toLowerCase() : ""}` + (AppUtility.isNotEmpty(objectID) ? `/${objectID}` : "") + (AppUtility.isNotEmpty(query) ? `?${query}` : "");
 	}
 
 	/**
 	 * Gets the URI for searching (with "x-request" parameter in the query string)
 	 * @param objectName The name of the object for searching
 	 * @param query The additional query
+	 * @param serviceName The name of the service
 	*/
-	protected getSearchURI(objectName: string, query?: string) {
-		return this.getURI(objectName, "search", "x-request={{request}}" + (query !== undefined ? `&${query}` : ""));
+	protected getSearchURI(objectName: string, query?: string, serviceName?: string) {
+		return this.getURI(objectName, "search", "x-request={{request}}" + (query !== undefined ? `&${query}` : ""), serviceName);
 	}
 
 	/**
