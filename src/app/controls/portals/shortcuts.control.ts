@@ -44,13 +44,14 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		}
 		AppEvents.on(this.portalsCoreSvc.name, async info => {
 			if (this.shortcuts.length > 0 && (AppUtility.isEquals(info.args.Type, "Changed") || AppUtility.isEquals(info.args.Type, "PortalsInitialized") || AppUtility.isEquals(info.args.Type, "CMSPortalsInitialized"))) {
+				const organization = await this.portalsCoreSvc.getActiveOrganizationAsync();
 				const module = await this.portalsCoreSvc.getActiveModuleAsync();
 				const contentType = this.portalsCmsSvc.getDefaultContentTypeOfLink(module) || this.portalsCmsSvc.getDefaultContentTypeOfItem(module);
 				if (AppUtility.isEquals(info.args.Object, "Organization")) {
-					this.shortcuts[0].title = AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.organization"), { organization: this.portalsCoreSvc.activeOrganization.Title });
+					this.shortcuts[0].title = AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.organization"), { organization: organization !== undefined ? this.portalsCoreSvc.activeOrganization.Title : "N/A" });
 				}
 				else {
-					this.shortcuts[1].title = AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.module"), { module: module.Title });
+					this.shortcuts[1].title = AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.module"), { module: module !== undefined ? module.Title : "N/A" });
 				}
 				this.shortcuts[3].url = this.portalsCoreSvc.getAppURL(contentType);
 			}
@@ -116,7 +117,6 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			shortcut.removable = shortcut.removable !== undefined ? shortcut.removable : true;
 			shortcut.onClick = shortcut.onClick !== undefined ? shortcut.onClick : async (e, i, s) => await this.navigateAsync(e, i, s);
 		});
-		console.warn("Shortcuts", this.shortcuts, module, contentType);
 	}
 
 	track(index: number, shortcut: Shortcut) {
