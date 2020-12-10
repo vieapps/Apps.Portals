@@ -53,6 +53,8 @@ export class ConfigurationService extends BaseService {
 
 	private _definitions: { [key: string]: any } = {};
 
+	public logs = new Array<Log>();
+
 	/** Gets the configuration of the app */
 	public get appConfig() {
 		return AppConfig;
@@ -883,6 +885,27 @@ export class ConfigurationService extends BaseService {
 		};
 	}
 
+	/** Gets logging items */
+	public async GetLogsAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.searchAsync(
+			super.getSearchURI(undefined, undefined, "logs"),
+			request,
+			data => {
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while searching logs", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			},
+			true,
+			true
+		);
+	}
+
 }
 
 export interface Shortcut {
@@ -897,4 +920,16 @@ export interface Shortcut {
 	editable?: boolean;
 	removable?: boolean;
 	onClick?: (event: Event, index: number, shortcut: Shortcut) => void;
+}
+
+export interface Log {
+	ID: string;
+	Time: Date;
+	CorrelationID: string;
+	DeveloperID?: string;
+	AppID?: string;
+	ServiceName: string;
+	ObjectName: string;
+	Logs: string;
+	Stack: string;
 }

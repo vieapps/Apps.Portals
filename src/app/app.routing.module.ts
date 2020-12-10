@@ -15,6 +15,11 @@ export const routes: Routes = [
 		loadChildren: "@app/pages/users/users.module#UsersModule"
 	},
 	{
+		path: "logs",
+		canActivate: [AppReadyGuardService],
+		loadChildren: "@app/pages/logs/logs.module#LogsModule"
+	},
+	{
 		path: "portals",
 		canActivate: [AppReadyGuardService],
 		loadChildren: "@app/pages/portals/portals.module#PortalsModule"
