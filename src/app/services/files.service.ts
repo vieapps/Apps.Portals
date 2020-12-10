@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpEventType } from "@angular/common/http";
-import { AppRTU, AppXHR } from "@app/components/app.apis";
+import { AppRTU, AppXHR, AppMessage } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
@@ -155,6 +155,21 @@ export class FilesService extends BaseService {
 
 	public async uploadFileAsync(data: FormData, options: FileOptions, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		await this.uploadAsync("files", data, this.getFileHeaders(options), onNext, onError);
+	}
+
+	public uploadTemporaryFile(data: FormData, options: FileOptions, onNext?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
+		return this.upload("temp.file", data, this.getFileHeaders(options), onNext, onError, onProgress);
+	}
+
+	public async uploadTemporaryFileAsync(data: FormData, options: FileOptions, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await this.uploadAsync("temp.file", data, this.getFileHeaders(options), onNext, onError);
+	}
+
+	public getTemporaryFileURI(message: AppMessage) {
+		const query = this.configSvc.appConfig.getAuthenticatedHeaders();
+		query["x-node"] = message.Data.NodeID;
+		query["x-filename"] = message.Data.Filename;
+		return `${this.configSvc.appConfig.URIs.apis}temp.download?${AppUtility.getQueryOfJson(query)}`;
 	}
 
 	public prepareAttachment(attachment: AttachmentInfo) {
