@@ -30,8 +30,21 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 	@Input() mode: string;
 	@Input() private fileOptions: FileOptions;
 	@Input() private attachment: AttachmentInfo;
-	@Input() private handlers: { onSelect?: (attachments: AttachmentInfo[]) => void; onEdit?: (attachment: AttachmentInfo) => void; onDelete?: (attachment: AttachmentInfo) => void; predicate?: (attachment: AttachmentInfo) => boolean };
-	@Input() private multiple: boolean;
+	@Input() private handlers: {
+		onSelect?: (attachments: AttachmentInfo[]) => void;
+		onEdit?: (attachment: AttachmentInfo) => void;
+		onDelete?: (attachment: AttachmentInfo) => void;
+		onUploaded?: (data: any) => void;
+		predicate?: (attachment: AttachmentInfo) => boolean;
+	};
+	@Input() private temporary: boolean;
+	@Input() private buttonLabels: {
+		select: string;
+		cancel: string;
+		update: string;
+		upload: string;
+	};
+	@Input() multiple: boolean;
 	@Input() allowSelect: boolean;
 	@Input() allowEdit: boolean;
 	@Input() allowDelete: boolean;
@@ -61,6 +74,7 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 
 	private hash = "";
 	private subscriptions: Array<Subscription>;
+	private uploadedData = [];
 
 	get locale() {
 		return this.configSvc.locale;
@@ -73,7 +87,10 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.mode = AppUtility.isNotEmpty(this.mode) ? this.mode.trim().toLowerCase() : "select";
 		this.handlers = this.handlers || {};
-		this.multiple = this.multiple !== undefined ? AppUtility.isTrue(this.multiple) : false;
+		this.temporary = this.temporary !== undefined ? AppUtility.isTrue(this.temporary) : false;
+		this.multiple = this.temporary
+			? false
+			: this.multiple !== undefined ? AppUtility.isTrue(this.multiple) : true;
 		this.allowSelect = this.handlers.onSelect !== undefined && typeof this.handlers.onSelect === "function"
 			? this.allowSelect !== undefined ? AppUtility.isTrue(this.allowSelect) : false
 			: false;
@@ -85,6 +102,7 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 			: false;
 		this.showIcons = this.showIcons !== undefined ? AppUtility.isTrue(this.showIcons) : false;
 		this.accept = AppUtility.isNotEmpty(this.accept) ? this.accept.trim().toLowerCase() : "*";
+		this.buttonLabels = this.buttonLabels || { select: undefined, cancel: undefined, update: undefined, upload: undefined };
 		this.initializeAsync();
 	}
 
@@ -96,10 +114,10 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 
 	async initializeAsync() {
 		this.buttons = {
-			select: await this.configSvc.getResourceAsync("common.buttons.select"),
-			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
-			update: await this.configSvc.getResourceAsync("common.buttons.update"),
-			upload: await this.configSvc.getResourceAsync("common.buttons.upload")
+			select: this.buttonLabels.select || await this.configSvc.getResourceAsync("common.buttons.select"),
+			cancel: this.buttonLabels.cancel || await this.configSvc.getResourceAsync("common.buttons.cancel"),
+			update: this.buttonLabels.update || await this.configSvc.getResourceAsync("common.buttons.update"),
+			upload: this.buttonLabels.upload || await this.configSvc.getResourceAsync("common.buttons.upload")
 		};
 		if (this.mode === "edit") {
 			this.initializeUpdateFormAsync();
@@ -195,6 +213,9 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 	}
 
 	onSelectFiles(event: any) {
+		if (!this.multiple) {
+			this.files.removeAll();
+		}
 		for (let index = 0; index < event.target.files.length; index++) {
 			this.files.push({ data: event.target.files[index], percentage: "0%" });
 		}
@@ -208,27 +229,47 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 
 	uploadFiles() {
 		if (this.files.length > 0) {
-			this.processing = true;
-			this.subscriptions = [];
-			this.files.forEach((file, index) => this.subscriptions.push(this.filesSvc.uploadFile(
-				this.filesSvc.getFormData(file.data),
-				this.fileOptions,
-				_ => PlatformUtility.invoke(() => {
-					if (this.subscriptions !== undefined && this.subscriptions.length > index && this.subscriptions[index] !== undefined) {
-						this.subscriptions[index].unsubscribe();
-						this.subscriptions[index] = undefined;
+			const onNext: (index: number, data?: any) => void = (index, data) => PlatformUtility.invoke(() => {
+				this.uploadedData.push(data);
+				if (this.subscriptions !== undefined && this.subscriptions.length > index && this.subscriptions[index] !== undefined) {
+					this.subscriptions[index].unsubscribe();
+					this.subscriptions[index] = undefined;
+				}
+				if (this.subscriptions === undefined || this.subscriptions.find(subscription => subscription !== undefined) === undefined) {
+					this.subscriptions = undefined;
+					if (this.handlers.onUploaded !== undefined) {
+						this.appFormsSvc.hideModalAsync(this.uploadedData, this.handlers.onUploaded);
 					}
-					if (this.subscriptions === undefined || this.subscriptions.find(subscription => subscription !== undefined) === undefined) {
-						this.subscriptions = undefined;
+					else {
 						this.appFormsSvc.hideModalAsync();
 					}
-				}, 13),
-				async error => {
-					await this.appFormsSvc.showErrorAsync(error);
-					this.processing = false;
-				},
-				percentage => this.files[index].percentage = percentage
-			)));
+				}
+			}, 13);
+			const onError: (error?: any) => void = async error => {
+				await this.appFormsSvc.showErrorAsync(error);
+				this.processing = false;
+			};
+			const onProgress: (index: number, percentage: string) => void = (index, percentage) => this.files[index].percentage = percentage;
+			this.processing = true;
+			this.subscriptions = [];
+			if (this.temporary) {
+				this.files.forEach((file, index) => this.subscriptions.push(this.filesSvc.uploadTemporaryFile(
+					this.filesSvc.getFormData(file.data),
+					this.fileOptions,
+					data => onNext(index, data),
+					onError,
+					percentage => onProgress(index, percentage)
+				)));
+			}
+			else {
+				this.files.forEach((file, index) => this.subscriptions.push(this.filesSvc.uploadFile(
+					this.filesSvc.getFormData(file.data),
+					this.fileOptions,
+					data => onNext(index, data),
+					onError,
+					percentage => onProgress(index, percentage)
+				)));
+			}
 		}
 	}
 
