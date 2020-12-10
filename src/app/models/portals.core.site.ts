@@ -38,6 +38,8 @@ export class Site extends CoreBaseModel {
 	ScriptLibraries = undefined as string;
 	Scripts = undefined as string;
 	RedirectToNoneWWW = true;
+	UseInlineStylesheets = false;
+	UseInlineScripts = false;
 	SEOInfo = undefined as {
 		Title?: string;
 		Description?: string;

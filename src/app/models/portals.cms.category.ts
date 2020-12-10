@@ -30,6 +30,7 @@ export class Category extends CmsBaseModel implements NestedObject {
 	DesktopID = undefined as string;
 	OpenBy = "DesktopWithAlias";
 	SpecifiedURI = undefined as string;
+	Notes = undefined as string;
 	Notifications = undefined as NotificationSettings;
 	EmailSettings = undefined as EmailSettings;
 	Created = undefined as Date;
