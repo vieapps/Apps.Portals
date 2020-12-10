@@ -20,28 +20,28 @@ export class AppFormsSegment {
 		label?: string,
 		icon?: string
 	) {
-		this.name = name || "";
-		this.label = label || "";
-		this.icon = icon;
+		this._name = name || "";
+		this._label = label || "";
+		this._icon = icon;
 	}
 
-	private name: string;
-	private label: string;
-	private icon: string;
+	private _name: string;
+	private _label: string;
+	private _icon: string;
 
 	/** Gets the name of the segment */
 	get Name() {
-		return this.name;
+		return this._name;
 	}
 
 	/** Gets the lable of the segment */
 	get Label() {
-		return this.label;
+		return this._label;
 	}
 
 	/** Gets the icon name of the segment */
 	get Icon() {
-		return this.icon;
+		return this._icon;
 	}
 
 }
