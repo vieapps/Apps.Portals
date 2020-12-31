@@ -82,7 +82,7 @@ export class AppFormsViewComponent implements OnInit, AfterViewInit {
 	}
 
 	get datetimeFormat() {
-		return this.control.Extras["DateTimeFormat"] || this.control.Extras["datetimeFormat"] || "h:mm a @ d/M/y";
+		return this.control.Extras["DateTimeFormat"] || this.control.Extras["datetimeFormat"] || (this.control.Options.DatePickerOptions.AllowTimes ? "h:mm a @ d/M/y" : "d/M/y");
 	}
 
 	get isNumber() {

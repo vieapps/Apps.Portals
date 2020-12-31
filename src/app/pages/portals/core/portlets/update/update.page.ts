@@ -834,10 +834,10 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 					await this.portalsCoreSvc.updatePortletAsync(
 						portlet,
 						async data => {
-							if (this.originalDesktop !== undefined) {
+							if (this.originalDesktop !== undefined && this.originalDesktop.portlets !== undefined) {
 								this.originalDesktop.portlets[this.originalDesktop.portlets.findIndex(p => p.ID === data.ID)] = Portlet.get(data.ID);
 							}
-							else {
+							else if (this.desktop !== undefined && this.desktop.portlets !== undefined) {
 								this.desktop.portlets[this.desktop.portlets.findIndex(p => p.ID === data.ID)] = Portlet.get(data.ID);
 							}
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Portlet", Type: "Updated", ID: data.ID, DekstopID: data.DekstopID });
@@ -850,6 +850,9 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 						async error => {
 							this.processing = false;
 							await this.showErrorAsync(error);
+						},
+						{
+							"IsAdvancedMode": this.isAdvancedMode.toString()
 						}
 					);
 				}

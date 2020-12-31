@@ -285,13 +285,12 @@ export class CmsCategoriesUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const category = AppUtility.clone(this.category, false, ["Notifications", "EmailSettings"]);
-		delete category["Privileges"];
-		category.OriginalPrivileges = Privileges.clonePrivileges(this.category.OriginalPrivileges);
-		category.Notifications = this.portalsCoreSvc.getNotificationSettings(this.category.Notifications, this.emailsByApprovalStatus);
-		category.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.category.EmailSettings);
-
-		this.form.patchValue(category);
+		this.form.patchValue(AppUtility.clone(this.category, false, ["Notifications", "EmailSettings"], obj => {
+			delete obj["Privileges"];
+			obj.OriginalPrivileges = Privileges.clonePrivileges(this.category.OriginalPrivileges);
+			obj.Notifications = this.portalsCoreSvc.getNotificationSettings(this.category.Notifications, this.emailsByApprovalStatus);
+			obj.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.category.EmailSettings);
+		}));
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (AppUtility.isNotEmpty(this.category.ID)) {
@@ -347,12 +346,13 @@ export class CmsCategoriesUpdatePage implements OnInit {
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.update")),
-								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+								this.appFormsSvc.hideLoadingAsync()
 							]);
+							await this.configSvc.navigateBackAsync();
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -364,12 +364,13 @@ export class CmsCategoriesUpdatePage implements OnInit {
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.new")),
-								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+								this.appFormsSvc.hideLoadingAsync()
 							]);
+							await this.configSvc.navigateBackAsync();
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}
@@ -412,10 +413,11 @@ export class CmsCategoriesUpdatePage implements OnInit {
 						await Promise.all([
 							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.buttons.delete"), this.configSvc.currentUrl),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.delete")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							this.appFormsSvc.hideLoadingAsync()
 						]);
+						await this.configSvc.navigateBackAsync();
 					},
-					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error)),
+					async error => await this.appFormsSvc.showErrorAsync(error),
 					{ "x-children": mode }
 				);
 			},

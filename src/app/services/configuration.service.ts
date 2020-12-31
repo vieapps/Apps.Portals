@@ -830,6 +830,11 @@ export class ConfigurationService extends BaseService {
 		return await this.fetchDefinitionAsync(this.getDefinitionPath(serviceName, objectName, definitionName, query));
 	}
 
+	public removeDefinition(serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {
+		const path = this.getDefinitionPath(serviceName, objectName, definitionName, query);
+		delete this._definitions[AppCrypto.md5(path.toLowerCase())];
+	}
+
 	public getInstructionsAsync(service: string, language?: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.fetchAsync(`/statics/instructions/${service}/${language || this.appConfig.language}.json`, onNext, onError);
 	}

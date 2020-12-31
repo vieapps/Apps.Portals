@@ -35,6 +35,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 	private canModerateOrganization = false;
 	private hash = "";
 	private unspecified = "unspecified";
+	private isAdvancedMode = false;
 
 	title = "";
 	form = new FormGroup({});
@@ -104,6 +105,9 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			const contentTypeID = this.configSvc.requestParams["RepositoryEntityID"] || contentTypes.length > 0 ? contentTypes[0].ID : undefined;
 			this.expression = new Expression(this.organization.ID, module.ID, contentTypeDefinitionID, contentTypeID, this.configSvc.requestParams["Title"]);
 		}
+		else {
+			this.isAdvancedMode = AppUtility.isTrue(this.configSvc.requestParams["Advanced"]);
+		}
 
 		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.expression.SystemID) {
 			await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid")));
@@ -130,6 +134,11 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			formSegments.push(
 				new AppFormsSegment("filter", await this.configSvc.getResourceAsync("portals.expressions.update.segments.filter")),
 				new AppFormsSegment("sorts", await this.configSvc.getResourceAsync("portals.expressions.update.segments.sorts"))
+			);
+		}
+		if (this.isAdvancedMode) {
+			formSegments.push(
+				new AppFormsSegment("xrequest", "Encode 'x-request'")
 			);
 		}
 		if (onCompleted !== undefined) {
@@ -290,6 +299,48 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			);
 		}
 
+		if (this.isAdvancedMode) {
+			formConfig.push(
+				{
+					Name: "JSONXRequest",
+					Type: "TextArea",
+					Segment: "xrequest",
+					Options: {
+						Label: "JSON of x-request (FilterBy, SortBy, Pagination)",
+						Rows: 20
+					}
+				},
+				{
+					Name: "EncodedXRequest",
+					Type: "TextArea",
+					Segment: "xrequest",
+					Options: {
+						Label: "Url-Encoded of x-request",
+						Rows: 5
+					}
+				},
+				this.appFormsSvc.getButtonControls(
+					"xrequest",
+					{
+						Name: "Encode",
+						Label: "Encode the JSON",
+						OnClick: async () => {
+							try {
+								this.form.controls.EncodedXRequest.setValue(AppUtility.toBase64Url(JSON.parse(this.form.controls.JSONXRequest.value)));
+							}
+							catch (error) {
+								await this.appFormsSvc.showErrorAsync(error);
+							}
+						},
+						Options: {
+							Fill: "clear",
+							Css: "ion-float-end"
+						}
+					}
+				)
+			);
+		}
+
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (AppUtility.isNotEmpty(this.expression.ID)) {
 			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
@@ -324,6 +375,25 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			if (this.configSvc.isDebug) {
 				console.log("<Portals>: Expression", this.expression, this.form.value);
 			}
+			if (this.isAdvancedMode) {
+				this.form.controls.JSONXRequest.setValue(JSON.stringify({
+					FilterBy: {
+						And: [{
+							SystemID: {
+								Equals: this.organization.ID
+							}
+						}]
+					}
+					,
+					SortBy: { Created: "Descending" },
+					Pagination: {
+						TotalRecords: -1,
+						TotalPages: 0,
+						PageSize: 20,
+						PageNumber: 0
+					}
+				}));
+			}
 		});
 	}
 
@@ -338,6 +408,12 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 
 				const expression = this.form.value;
 				expression.RepositoryEntityID = AppUtility.isNotEmpty(expression.RepositoryEntityID) && expression.RepositoryEntityID !== "-" ? expression.RepositoryEntityID : undefined;
+
+				if (this.isAdvancedMode) {
+					delete expression["JSONXRequest"];
+					delete expression["EncodedXRequest"];
+					delete expression["Encode"];
+				}
 
 				if (AppUtility.isNotEmpty(this.expression.ID)) {
 					try {
@@ -368,8 +444,9 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.expressions.update.messages.success.update")),
-								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+								this.appFormsSvc.hideLoadingAsync()
 							]);
+							await this.configSvc.navigateBackAsync();
 						},
 						async error => {
 							this.processing = false;

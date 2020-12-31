@@ -262,10 +262,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	onFormInitialized() {
-		const item = AppUtility.clone(this.item, false);
-		item.Tags = AppUtility.isNotEmpty(this.item.Tags) ? AppUtility.toStr(AppUtility.toArray(this.item.Tags, ","), ", ") : undefined;
-
-		this.form.patchValue(item);
+		this.form.patchValue(AppUtility.clone(this.item, false, undefined, obj => Item.normalizeClonedProperties(this.item, obj)));
 		this.hash.content = AppCrypto.hash(this.form.value);
 
 		this.appFormsSvc.hideLoadingAsync(() => {
@@ -343,12 +340,13 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 								await Promise.all([
 									TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
-									this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+									this.appFormsSvc.hideLoadingAsync()
 								]);
+								await this.configSvc.navigateBackAsync();
 							},
 							async error => {
 								this.processing = false;
-								await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+								await this.appFormsSvc.showErrorAsync(error);
 							}
 						);
 					}
@@ -366,12 +364,13 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new")),
-								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+								this.appFormsSvc.hideLoadingAsync()
 							]);
+							await this.configSvc.navigateBackAsync();
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error));
+							await this.appFormsSvc.showErrorAsync(error);
 						}
 					);
 				}

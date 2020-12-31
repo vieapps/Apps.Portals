@@ -180,7 +180,7 @@ export class AppUtility {
 		this.getProperties(obj).forEach(info => {
 			if (this.isNull(obj[info.name])) {
 				if (excluded === undefined || excluded.indexOf(info.name) < 0) {
-					delete obj[name];
+					delete obj[info.name];
 				}
 			}
 			else if (this.isObject(obj[info.name])) {

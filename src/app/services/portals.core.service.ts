@@ -90,24 +90,52 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	private initialize() {
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Organization", message => this.processOrganizationUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Organization", message => this.processOrganizationUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Role", message => this.processRoleUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Role", message => this.processRoleUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Desktop", message => this.processDesktopUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Desktop", message => this.processDesktopUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Portlet", message => this.processPortletUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Portlet", message => this.processPortletUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Site", message => this.processSiteUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Site", message => this.processSiteUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Module", message => this.processModuleUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Module", message => this.processModuleUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "ContentType", message => this.processContentTypeUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Content.Type", message => this.processContentTypeUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.ContentType", message => this.processContentTypeUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Content.Type", message => this.processContentTypeUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Expression", message => this.processExpressionUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Expression", message => this.processExpressionUpdateMessage(message));
+		AppRTU.registerAsServiceScopeProcessor(this.name, message => {
+			switch (message.Type.Object) {
+				case "Organization":
+				case "Core.Organization":
+					this.processOrganizationUpdateMessage(message);
+					break;
+
+				case "Role":
+				case "Core.Role":
+					this.processRoleUpdateMessage(message);
+					break;
+
+				case "Site":
+				case "Core.Site":
+					this.processSiteUpdateMessage(message);
+					break;
+
+				case "Desktop":
+				case "Core.Desktop":
+					this.processDesktopUpdateMessage(message);
+					break;
+
+				case "Portlet":
+				case "Core.Portlet":
+					this.processPortletUpdateMessage(message);
+					break;
+
+				case "Module":
+				case "Core.Module":
+					this.processModuleUpdateMessage(message);
+					break;
+
+				case "ContentType":
+				case "Content.Type":
+				case "Core.ContentType":
+				case "Core.Content.Type":
+					this.processContentTypeUpdateMessage(message);
+					break;
+
+				case "Expression":
+				case "Core.Expression":
+					this.processExpressionUpdateMessage(message);
+					break;
+			}
+		});
+
 		AppEvents.on(this.name, async info => {
 			if (info.args.Type === "RequestInfo" && AppUtility.isNotEmpty(info.args.ID)) {
 				if (info.args.Object === "Organization") {
@@ -149,6 +177,9 @@ export class PortalsCoreService extends BaseService {
 			});
 		}
 		this.prepareSidebar(() => {
+			if (this.configSvc.isDebug) {
+				console.log("[Portals]: The portal management sidebar has been prepared");
+			}
 			AppEvents.broadcast(this.name, { Type: "PortalsInitialized" });
 			if (onNext !== undefined) {
 				onNext();
@@ -2050,7 +2081,7 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	public async updatePortletAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async updatePortletAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
 		await super.updateAsync(
 			super.getURI("portlet", body.ID),
 			body,
@@ -2065,7 +2096,9 @@ export class PortalsCoreService extends BaseService {
 				if (onError !== undefined) {
 					onError(error);
 				}
-			}
+			},
+			headers,
+			useXHR
 		);
 	}
 
@@ -2631,6 +2664,7 @@ export class PortalsCoreService extends BaseService {
 			case "Create":
 			case "Update":
 				ContentType.update(message.Data);
+				this.configSvc.removeDefinition(this.name, ContentType.get(message.Data.ID).getObjectName(true), undefined, { "x-content-type-id": message.Data.ID });
 				break;
 
 			case "Delete":

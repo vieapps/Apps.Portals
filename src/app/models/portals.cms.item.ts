@@ -41,15 +41,12 @@ export class Item extends CmsBaseModel {
 	public static deserialize(json: any, item?: Item) {
 		item = item || new Item();
 		item.copy(json, data => {
+			item.normalizeExtendedProperties(data);
 			if (AppUtility.isArray(data.Thumbnails, true)) {
 				item.updateThumbnails(data.Thumbnails);
 			}
 			if (AppUtility.isArray(data.Attachments, true)) {
 				item.updateAttachments(data.Attachments);
-			}
-			const contentType = item.contentType;
-			if (contentType !== undefined && AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
-				contentType.ExtendedPropertyDefinitions.forEach(definition => item[definition.Name] = data[definition.Name]);
 			}
 		});
 		item.ansiTitle = AppUtility.toANSI(item.Title).toLowerCase();

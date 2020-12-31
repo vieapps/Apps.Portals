@@ -1,5 +1,4 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
@@ -186,7 +185,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		this.children = await this.configSvc.getResourceAsync("portals.cms.links.list.children");
 
 		if (this.searching) {
-			this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
+			this.prepareFilterBy(false);
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.links.list.searchbar");
 			PlatformUtility.focus(this.searchCtrl);
 			await this.appFormsSvc.hideLoadingAsync();
@@ -244,7 +243,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	private prepareFilterBy() {
+	private prepareFilterBy(addParentID: boolean = true) {
 		this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
 		if (this.module !== undefined) {
 			this.filterBy.And.push({ RepositoryID: { Equals: this.module.ID } });
@@ -252,11 +251,13 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		if (this.contentType !== undefined) {
 			this.filterBy.And.push({ RepositoryEntityID: { Equals: this.contentType.ID } });
 		}
-		this.filterBy.And.push({ ParentID: "IsNull" });
+		if (addParentID) {
+			this.filterBy.And.push({ ParentID: "IsNull" });
+		}
 	}
 
 	private prepareLinks() {
-		this.links = new List(this.parentLink.Children).OrderBy(o => o.OrderIndex).ThenBy(o => o.Title).ToArray();
+		this.links = this.parentLink.Children.toList().OrderBy(o => o.OrderIndex).ThenBy(o => o.Title).ToArray();
 		if (this.configSvc.isDebug) {
 			console.log("<CMS>: the child links", this.links);
 		}
@@ -491,7 +492,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		if (this.hash !== AppCrypto.hash(this.ordered)) {
 			this.processing = true;
 			await this.appFormsSvc.showLoadingAsync(this.title);
-			const reordered = new List(this.ordered).Select(category => {
+			const reordered = this.ordered.toList().Select(category => {
 				return {
 					ID: category.ID,
 					OrderIndex: category.OrderIndex
@@ -537,7 +538,29 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	}
 
 	async importFromExcelAsync() {
-		await this.portalsCoreSvc.importFromExcelAsync("CMS.Link", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined);
+		await this.portalsCoreSvc.importFromExcelAsync(
+			"CMS.Link",
+			this.organization.ID,
+			this.module !== undefined ? this.module.ID : undefined,
+			this.contentType !== undefined ? this.contentType.ID : undefined,
+			async _ => {
+				await this.appFormsSvc.showLoadingAsync();
+				this.links = [];
+				this.pageNumber = 0;
+				AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination), this.paginationPrefix);
+				Link.instances
+					.toArray(link => this.contentType !== undefined ? this.contentType.ID === link.RepositoryEntityID : this.organization.ID === link.SystemID)
+					.map(link => link.ID)
+					.forEach(id => Link.instances.remove(id));
+				await this.startSearchAsync(async () => await this.appFormsSvc.showAlertAsync(
+					"Excel",
+					await this.configSvc.getResourceAsync("portals.common.excel.message.import"),
+					undefined,
+					undefined,
+					await this.configSvc.getResourceAsync("common.buttons.close")
+				));
+			}
+		);
 	}
 
 }

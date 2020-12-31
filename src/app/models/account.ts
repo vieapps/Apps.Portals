@@ -103,7 +103,7 @@ export class Account {
 	*/
 	public isInPrivilege(users: HashSet<string>, roles: HashSet<string>) {
 		let isIn = users !== undefined && AppUtility.isNotEmpty(this.id) ? users.contains(this.id) : false;
-		while (!isIn && roles !== undefined) {
+		if (!isIn && roles !== undefined) {
 			for (const role in this.roles) {
 				isIn = roles.contains(role);
 				if (isIn) {

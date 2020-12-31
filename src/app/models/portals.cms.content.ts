@@ -60,15 +60,12 @@ export class Content extends CmsBaseModel {
 			content.StartDate = AppUtility.isNotEmpty(data.StartDate) ? new Date(data.StartDate) : undefined;
 			content.EndDate = AppUtility.isNotEmpty(data.EndDate) && data.EndDate !== "-" ? new Date(data.EndDate) : undefined;
 			content.PublishedTime = AppUtility.isNotEmpty(data.PublishedTime) ? new Date(data.PublishedTime) : undefined;
+			content.normalizeExtendedProperties(data);
 			if (AppUtility.isArray(data.Thumbnails, true)) {
 				content.updateThumbnails(data.Thumbnails);
 			}
 			if (AppUtility.isArray(data.Attachments, true)) {
 				content.updateAttachments(data.Attachments);
-			}
-			const contentType = content.contentType;
-			if (contentType !== undefined && AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
-				contentType.ExtendedPropertyDefinitions.forEach(definition => content[definition.Name] = data[definition.Name]);
 			}
 		});
 		content.ansiTitle = AppUtility.toANSI(content.Title).toLowerCase();

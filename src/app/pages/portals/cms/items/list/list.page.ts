@@ -342,7 +342,29 @@ export class CmsItemListPage implements OnInit, OnDestroy {
 	}
 
 	async importFromExcelAsync() {
-		await this.portalsCoreSvc.importFromExcelAsync("CMS.Item", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined);
+		await this.portalsCoreSvc.importFromExcelAsync(
+			"CMS.Item",
+			this.organization.ID,
+			this.module !== undefined ? this.module.ID : undefined,
+			this.contentType !== undefined ? this.contentType.ID : undefined,
+			async _ => {
+				await this.appFormsSvc.showLoadingAsync();
+				this.items = [];
+				this.pageNumber = 0;
+				AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination), this.paginationPrefix);
+				Item.instances
+					.toArray(item => this.contentType !== undefined ? this.contentType.ID === item.RepositoryEntityID : this.organization.ID === item.SystemID)
+					.map(item => item.ID)
+					.forEach(id => Item.instances.remove(id));
+				await this.startSearchAsync(async () => await this.appFormsSvc.showAlertAsync(
+					"Excel",
+					await this.configSvc.getResourceAsync("portals.common.excel.message.import"),
+					undefined,
+					undefined,
+					await this.configSvc.getResourceAsync("common.buttons.close")
+				));
+			}
+		);
 	}
 
 }

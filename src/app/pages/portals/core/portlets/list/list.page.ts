@@ -205,7 +205,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	}
 
 	private preparePortlets() {
-		this.portlets = this.desktop.portlets.sortBy("Zone", "OrderIndex");
+		this.portlets = (this.desktop.portlets || []).sortBy("Zone", "OrderIndex");
 	}
 
 	track(index: number, portlet: Portlet) {

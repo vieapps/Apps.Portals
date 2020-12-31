@@ -420,13 +420,11 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	onFormInitialized() {
-		const content = AppUtility.clone(this.content, false, ["StartDate", "EndDate", "PublishedTime"]);
-		content.StartDate = AppUtility.toIsoDate(this.content.StartDate);
-		content.EndDate = AppUtility.toIsoDate(this.content.EndDate);
-		content.PublishedTime = AppUtility.toIsoDateTime(this.content.PublishedTime, true);
-		content.Tags = AppUtility.isNotEmpty(this.content.Tags) ? AppUtility.toStr(AppUtility.toArray(this.content.Tags, ","), ", ") : undefined;
-
-		this.form.patchValue(content);
+		this.form.patchValue(AppUtility.clone(this.content, false, ["StartDate", "EndDate", "PublishedTime"], obj => Content.normalizeClonedProperties(this.content, obj, () => {
+			obj.StartDate = AppUtility.toIsoDate(this.content.StartDate);
+			obj.EndDate = AppUtility.toIsoDate(this.content.EndDate);
+			obj.PublishedTime = AppUtility.toIsoDateTime(this.content.PublishedTime, true);
+		})));
 		this.hash.content = AppCrypto.hash(this.form.value);
 
 		this.appFormsSvc.hideLoadingAsync(() => {
@@ -493,8 +491,9 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 						await Promise.all([
 							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							this.appFormsSvc.hideLoadingAsync()
 						]);
+						await this.configSvc.navigateBackAsync();
 					}
 					else {
 						const oldCategoryID = this.content.CategoryID;
@@ -540,8 +539,9 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 							await Promise.all([
 								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new")),
-								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+								this.appFormsSvc.hideLoadingAsync()
 							]);
+							await this.configSvc.navigateBackAsync();
 						},
 						async error => {
 							this.processing = false;
@@ -570,8 +570,9 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 						await Promise.all([
 							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"), this.configSvc.currentUrl),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							this.appFormsSvc.hideLoadingAsync()
 						]);
+						await this.configSvc.navigateBackAsync();
 					},
 					async error => await this.appFormsSvc.showErrorAsync(error)
 				);

@@ -1,5 +1,4 @@
 import { Subscription } from "rxjs";
-import { List } from "linqts";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
@@ -257,7 +256,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	private prepareCategories() {
-		this.categories = new List(this.parentCategory.Children).OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
+		this.categories = this.parentCategory.Children.toList().OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
 	}
 
 	track(index: number, category: Category) {
@@ -489,7 +488,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		if (this.hash !== AppCrypto.hash(this.ordered)) {
 			this.processing = true;
 			await this.appFormsSvc.showLoadingAsync(this.title);
-			const reordered = new List(this.ordered).Select(category => {
+			const reordered = this.ordered.toList().Select(category => {
 				return {
 					ID: category.ID,
 					OrderIndex: category.OrderIndex
@@ -535,7 +534,29 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	async importFromExcelAsync() {
-		await this.portalsCoreSvc.importFromExcelAsync("CMS.Category", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined);
+		await this.portalsCoreSvc.importFromExcelAsync(
+			"CMS.Category",
+			this.organization.ID,
+			this.module !== undefined ? this.module.ID : undefined,
+			this.contentType !== undefined ? this.contentType.ID : undefined,
+			async _ => {
+				await this.appFormsSvc.showLoadingAsync();
+				this.categories = [];
+				this.pageNumber = 0;
+				AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination), this.paginationPrefix);
+				Category.instances
+					.toArray(category => this.contentType !== undefined ? this.contentType.ID === category.RepositoryEntityID : this.organization.ID === category.SystemID)
+					.map(category => category.ID)
+					.forEach(id => Category.instances.remove(id));
+				await this.startSearchAsync(async () => await this.appFormsSvc.showAlertAsync(
+					"Excel",
+					await this.configSvc.getResourceAsync("portals.common.excel.message.import"),
+					undefined,
+					undefined,
+					await this.configSvc.getResourceAsync("common.buttons.close")
+				));
+			}
+		);
 	}
 
 }

@@ -79,6 +79,43 @@ export abstract class PortalCmsBase extends BaseModel {
 		return this._attachments;
 	}
 
+	public static normalizeClonedProperties(original: PortalCmsBase, copy: any, onCompleted?: () => void) {
+		const tags = original["Tags"];
+		if (AppUtility.isNotEmpty(tags)) {
+			copy["Tags"] = AppUtility.toStr(AppUtility.toArray(tags, ","), ", ");
+		}
+		const contentType = original.contentType;
+		if (contentType !== undefined && AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
+			contentType.ExtendedPropertyDefinitions.filter(definition => definition.Mode === "DateTime").forEach(definition => {
+				const value = original[definition.Name];
+				if (AppUtility.isNotNull(value)) {
+					const ctrl = contentType.ExtendedControlDefinitions.first(def => def.Name === definition.Name);
+					copy[definition.Name] = ctrl !== undefined && ctrl.DatePickerWithTimes === true
+						? AppUtility.toIsoDateTime(new Date(value), true)
+						: AppUtility.toIsoDate(new Date(value));
+				}
+			});
+		}
+		if (onCompleted !== undefined) {
+			onCompleted();
+		}
+	}
+
+	public normalizeExtendedProperties(data: any, onCompleted?: () => void) {
+		const contentType = this.contentType;
+		if (contentType !== undefined && AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
+			contentType.ExtendedPropertyDefinitions.forEach(definition => {
+				const value = data[definition.Name];
+				this[definition.Name] = definition.Mode === "DateTime" && AppUtility.isNotEmpty(value)
+					? new Date(value)
+					: value;
+			});
+		}
+		if (onCompleted !== undefined) {
+			onCompleted();
+		}
+	}
+
 	public updateThumbnails(thumbnails: AttachmentInfo[]) {
 		this._thumbnails = thumbnails;
 	}

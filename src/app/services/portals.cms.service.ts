@@ -52,19 +52,43 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	private initialize() {
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Category", message => this.processCategoryUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "CMS.Category", message => this.processCategoryUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Cms.Category", message => this.processCategoryUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Content", message => this.processContentUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "CMS.Content", message => this.processContentUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Cms.Content", message => this.processContentUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Item", message => this.processItemUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "CMS.Item", message => this.processItemUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Cms.Item", message => this.processItemUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Link", message => this.processLinkUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "CMS.Link", message => this.processLinkUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Cms.Link", message => this.processLinkUpdateMessage(message));
+		AppRTU.registerAsServiceScopeProcessor(this.name, message => {
+			switch (message.Type.Object) {
+				case "Category":
+				case "CMS.Category":
+				case "Cms.Category":
+					this.processCategoryUpdateMessage(message);
+					break;
+
+				case "Content":
+				case "CMS.Content":
+				case "Cms.Content":
+					this.processContentUpdateMessage(message);
+					break;
+
+				case "Item":
+				case "CMS.Item":
+				case "Cms.Item":
+					this.processItemUpdateMessage(message);
+					break;
+
+				case "Link":
+				case "CMS.Link":
+				case "Cms.Link":
+					this.processLinkUpdateMessage(message);
+					break;
+
+				case "ContentType":
+				case "Content.Type":
+				case "Core.ContentType":
+				case "Core.Content.Type":
+					this.processContentTypeUpdateMessage(message);
+					break;
+			}
+		});
+
 		AppRTU.registerAsServiceScopeProcessor(this.filesSvc.name, message => this.processAttachmentUpdateMessage(message));
+
 		AppEvents.on(this.name, async info => {
 			if (AppUtility.isEquals(info.args.Mode, "UpdateSidebarWithContentTypes")) {
 				this._sidebarCategory = undefined;
@@ -93,6 +117,7 @@ export class PortalsCmsService extends BaseService {
 				await this.updateSidebarAsync();
 			}
 		});
+
 		AppEvents.on("Session", async info => {
 			if (AppUtility.isEquals(info.args.Type, "LogIn") || AppUtility.isEquals(info.args.Type, "LogOut")) {
 				this._sidebarCategory = undefined;
@@ -100,6 +125,7 @@ export class PortalsCmsService extends BaseService {
 				await this.updateSidebarAsync();
 			}
 		});
+
 		AppEvents.on("Profile", async info => {
 			if (AppUtility.isEquals(info.args.Type, "Updated")) {
 				this._sidebarCategory = undefined;
@@ -108,10 +134,6 @@ export class PortalsCmsService extends BaseService {
 				await this.updateSidebarAsync();
 			}
 		});
-		AppRTU.registerAsObjectScopeProcessor(this.name, "ContentType", message => this.processContentTypeUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Content.Type", message => this.processContentTypeUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.ContentType", message => this.processContentTypeUpdateMessage(message));
-		AppRTU.registerAsObjectScopeProcessor(this.name, "Core.Content.Type", message => this.processContentTypeUpdateMessage(message));
 	}
 
 	public async initializeAsync(onNext?: () => void) {
@@ -141,8 +163,19 @@ export class PortalsCmsService extends BaseService {
 			});
 		}
 
-		await this.prepareFeaturedContentsAsync();
+		if (Module.active !== undefined && Module.active.contentTypes.length < 1) {
+			await this.portalsCoreSvc.getActiveModuleAsync(undefined, true, () => {
+				if (this.configSvc.isDebug) {
+					console.log("[CMS Portals]: The active module and content-types were fetched", Module.active);
+				}
+			});
+		}
+
+		// await this.prepareFeaturedContentsAsync();
 		await this.updateSidebarAsync(() => {
+			if (this.configSvc.isDebug) {
+				console.log("[CMS Portals]: The CMS sidebar has been prepared");
+			}
 			AppEvents.broadcast(this.name, { Type: "CMSPortalsInitialized" });
 			if (onNext !== undefined) {
 				onNext();
@@ -520,7 +553,12 @@ export class PortalsCmsService extends BaseService {
 			};
 			const onNext: (data?: any) => void = data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).map(obj => Content.get(obj.ID)).filter(obj => obj !== undefined).forEach(obj => this._featuredContents.set(obj.ID, obj));
+					if (isSimpleItem) {
+						(data.Objects as Array<any>).map(obj => Item.get(obj.ID)).filter(obj => obj !== undefined).forEach(obj => this._featuredContents.set(obj.ID, obj));
+					}
+					else {
+						(data.Objects as Array<any>).map(obj => Content.get(obj.ID)).filter(obj => obj !== undefined).forEach(obj => this._featuredContents.set(obj.ID, obj));
+					}
 				}
 				onCompleted();
 			};

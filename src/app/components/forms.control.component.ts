@@ -340,7 +340,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	/** Gets the value of this control */
 	get value() {
 		return this.isDatePickerControl || this.isTextDatePickerControl
-			? AppUtility.toIsoDateTime(new Date(this.formControl.value), true)
+			? this.datetimeValue
 			: this.formControl.value;
 	}
 
@@ -358,7 +358,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	get datetimeValue() {
 		return this.formControl.value !== undefined
-			? AppUtility.toIsoDateTime(new Date(this.formControl.value), true)
+			? this.control.Options.DatePickerOptions.AllowTimes
+				? AppUtility.toIsoDateTime(new Date(this.formControl.value), true)
+				: AppUtility.toIsoDate(new Date(this.formControl.value))
 			: undefined;
 	}
 
