@@ -965,7 +965,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			}
 		}
 
-		// normal control
+		// other
 		else if (!this.isFilePickerControl) {
 			// set value
 			this.setValue(event !== undefined && event.detail !== undefined ? event.detail.value : event);

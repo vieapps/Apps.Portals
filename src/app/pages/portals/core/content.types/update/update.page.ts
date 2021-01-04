@@ -289,12 +289,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 		["CreateNewVersionWhenUpdated", "AllowComments", "UseSocialNetworkComments"].forEach(name => formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, name)).Options.Type = "toggle");
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "DefaultCommentStatus"));
-		control.Options.SelectOptions.Interface = "popover";
-		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
-			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values) as Array<string>).map(value => {
-				return { Value: value, Label: `{{status.approval.${value}}}` };
-			});
-		}
+		this.portalsCoreSvc.prepareApprovalStatusControl(control, "popover");
 
 		formConfig.push(
 			{
@@ -404,9 +399,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const contentType = AppUtility.clone(this.contentType, false, ["ExtendedPropertyDefinitions", "ExtendedControlDefinitions", "StandardControlDefinitions", "Notifications", "EmailSettings"]);
-		delete contentType["Privileges"];
-
+		const contentType = AppUtility.clone(this.contentType, false, ["ExtendedPropertyDefinitions", "ExtendedControlDefinitions", "StandardControlDefinitions", "Notifications", "EmailSettings"], obj => delete obj["Privileges"]);
 		contentType.OriginalPrivileges = Privileges.clonePrivileges(this.contentType.OriginalPrivileges);
 		contentType.Notifications = this.portalsCoreSvc.getNotificationSettings(this.contentType.Notifications, this.emailsByApprovalStatus);
 		contentType.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.contentType.EmailSettings);

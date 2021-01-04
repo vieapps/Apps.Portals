@@ -44,7 +44,7 @@ export class AppCrypto {
 		if (preHash !== undefined) {
 			preHash(obj);
 		}
-		return this.md5(JSON.stringify(obj || {}, (_, value) => typeof value === "undefined" ? null : value));
+		return this.md5(JSON.stringify(obj || {}, (_, value) => typeof value === "undefined" ? null : typeof value === "object" && (value instanceof Set || value instanceof Map) ? Array.from(value.entries()) : value));
 	}
 
 	/** Signs the string with the specified key using HMAC SHA256 */
