@@ -1295,6 +1295,18 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
+	public prepareApprovalStatusControl(controlConfig: AppFormsControlConfig, selectInterface?: string) {
+		controlConfig.Options.SelectOptions.Interface = selectInterface || "popover";
+		controlConfig.Options.SelectOptions.Values = AppUtility.isNotEmpty(controlConfig.Options.SelectOptions.Values)
+			? (AppUtility.toArray(controlConfig.Options.SelectOptions.Values, "#;") as Array<string>).map(value => {
+					return { Value: value, Label: `{{status.approval.${value}}}` };
+				})
+			: BaseModel.approvalStatus.map(value => {
+					return { Value: value, Label: `{{status.approval.${value}}}` };
+				});
+		return controlConfig;
+	}
+
 	public get organizationCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const organization = data !== undefined

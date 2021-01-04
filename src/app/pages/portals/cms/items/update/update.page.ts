@@ -164,12 +164,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.item", undefined, { "x-content-type-id": this.contentType.ID });
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
-		control.Options.SelectOptions.Interface = "popover";
-		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
-			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values) as Array<string>).map(value => {
-				return { Value: value, Label: `{{status.approval.${value}}}` };
-			});
-		}
+		this.portalsCoreSvc.prepareApprovalStatusControl(control, "popover");
 		if (!this.canModerate) {
 			control.Options.Disabled = true;
 		}

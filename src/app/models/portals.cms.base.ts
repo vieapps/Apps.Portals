@@ -86,15 +86,35 @@ export abstract class PortalCmsBase extends BaseModel {
 		}
 		const contentType = original.contentType;
 		if (contentType !== undefined && AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
-			contentType.ExtendedPropertyDefinitions.filter(definition => definition.Mode === "DateTime").forEach(definition => {
-				const value = original[definition.Name];
-				if (AppUtility.isNotNull(value)) {
-					const ctrl = contentType.ExtendedControlDefinitions.first(def => def.Name === definition.Name);
-					copy[definition.Name] = ctrl !== undefined && ctrl.DatePickerWithTimes === true
-						? AppUtility.toIsoDateTime(new Date(value), true)
-						: AppUtility.toIsoDate(new Date(value));
-				}
-			});
+			if (AppUtility.isNotEmpty(original.ID)) {
+				contentType.ExtendedPropertyDefinitions.filter(definition => definition.Mode === "DateTime").forEach(definition => {
+					const value = original[definition.Name];
+					if (AppUtility.isNotNull(value)) {
+						const ctrl = contentType.ExtendedControlDefinitions.first(def => def.Name === definition.Name);
+						copy[definition.Name] = ctrl !== undefined && ctrl.DatePickerWithTimes === true
+							? AppUtility.toIsoDateTime(new Date(value), true)
+							: AppUtility.toIsoDate(new Date(value));
+					}
+				});
+			}
+			else {
+				contentType.ExtendedPropertyDefinitions.filter(definition => AppUtility.isNotNull(definition.DefaultValue)).forEach(definition => {
+					let value: any = definition.DefaultValue;
+					switch (definition.Mode) {
+						case "YesNo":
+							value = definition.DefaultValue.toLowerCase() === "true";
+							break;
+						case "DateTime":
+							value = new Date(definition.DefaultValue);
+							break;
+						case "IntegralNumber":
+						case "IntegralNumber":
+							value = +definition.DefaultValue;
+							break;
+					}
+					copy[definition.Name] = value;
+				});
+			}
 		}
 		if (onCompleted !== undefined) {
 			onCompleted();
@@ -105,10 +125,27 @@ export abstract class PortalCmsBase extends BaseModel {
 		const contentType = this.contentType;
 		if (contentType !== undefined && AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
 			contentType.ExtendedPropertyDefinitions.forEach(definition => {
-				const value = data[definition.Name];
-				this[definition.Name] = definition.Mode === "DateTime" && AppUtility.isNotEmpty(value)
-					? new Date(value)
-					: value;
+				let value = data[definition.Name];
+				if (AppUtility.isNotNull(value)) {
+					if (definition.Mode === "DateTime" && AppUtility.isNotEmpty(value)) {
+						value = new Date(value);
+					}
+				}
+				else if (AppUtility.isNotNull(definition.DefaultValue)) {
+					switch (definition.Mode) {
+						case "YesNo":
+							value = definition.DefaultValue.toLowerCase() === "true";
+							break;
+						case "DateTime":
+							value = new Date(definition.DefaultValue);
+							break;
+						case "IntegralNumber":
+						case "IntegralNumber":
+							value = +definition.DefaultValue;
+							break;
+					}
+				}
+				this[definition.Name] = value;
 			});
 		}
 		if (onCompleted !== undefined) {

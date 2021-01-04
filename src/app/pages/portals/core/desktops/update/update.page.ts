@@ -258,7 +258,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SEOSettings"));
-		const seo = (AppUtility.toArray(control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "TitleMode")).Options.SelectOptions.Values) as Array<string>).map(value => {
+		const seo = (AppUtility.toArray(control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "TitleMode")).Options.SelectOptions.Values, "#;") as Array<string>).map(value => {
 			return { Value: value, Label: `{{portals.desktops.update.seo.${value}}}` };
 		});
 		await Promise.all(seo.map(async s => s.Label = await this.appFormsSvc.getResourceAsync(s.Label)));

@@ -38,19 +38,6 @@ export abstract class PortalBase extends BaseModel {
 	/** The title (only ANSI characters) for working with URIs and filters */
 	public abstract ansiTitle: string;
 
-	/** Prepares the approval status control */
-	public static prepareApprovalStatusControl(controlConfig: AppFormsControlConfig, selectInterface?: string) {
-		controlConfig.Options.SelectOptions.Interface = selectInterface || "popover";
-		controlConfig.Options.SelectOptions.Values = AppUtility.isNotEmpty(controlConfig.Options.SelectOptions.Values)
-			? (AppUtility.toArray(controlConfig.Options.SelectOptions.Values) as Array<string>).map(value => {
-					return { Value: value, Label: `{{status.approval.${value}}}` };
-				})
-			: this.approvalStatus.map(value => {
-					return { Value: value, Label: `{{status.approval.${value}}}` };
-				});
-		return controlConfig;
-	}
-
 }
 
 /** Interface of a module definition */

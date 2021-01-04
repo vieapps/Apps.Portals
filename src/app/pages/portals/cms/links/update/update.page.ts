@@ -177,7 +177,7 @@ export class CmsLinksUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ChildrenMode"));
 		control.Options.SelectOptions.AsBoxes = true;
 		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
-			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values) as Array<string>).map(value => {
+			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values, "#;") as Array<string>).map(value => {
 				return { Value: value, Label: `{{portals.cms.links.controls.ChildrenMode.${value}}}` };
 			});
 		}
@@ -274,12 +274,7 @@ export class CmsLinksUpdatePage implements OnInit {
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
-		control.Options.SelectOptions.Interface = "popover";
-		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
-			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values) as Array<string>).map(value => {
-				return { Value: value, Label: `{{status.approval.${value}}}` };
-			});
-		}
+		this.portalsCoreSvc.prepareApprovalStatusControl(control, "popover");
 		if (!this.canModerate) {
 			control.Options.Disabled = true;
 		}

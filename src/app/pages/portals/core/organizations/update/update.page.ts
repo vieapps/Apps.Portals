@@ -10,7 +10,7 @@ import { AppFormsControlComponent } from "@app/components/forms.control.componen
 import { ConfigurationService } from "@app/services/configuration.service";
 import { UsersService } from "@app/services/users.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { PortalBase as BaseModel, EmailNotificationSettings } from "@app/models/portals.base";
+import { EmailNotificationSettings } from "@app/models/portals.base";
 import { Organization } from "@app/models/portals.core.organization";
 import { Privileges } from "@app/models/privileges";
 import { UserProfile } from "@app/models/user";
@@ -437,7 +437,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
-		BaseModel.prepareApprovalStatusControl(control);
+		this.portalsCoreSvc.prepareApprovalStatusControl(control);
 		if (!this.canModerateOrganization) {
 			control.Options.Disabled = true;
 		}

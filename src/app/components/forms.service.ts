@@ -563,7 +563,7 @@ export class AppFormsControl {
 				const selectValues = selectOptions.Values || selectOptions.values;
 				control.Options.SelectOptions = {
 					Values: AppUtility.isNotEmpty(selectValues)
-						? (AppUtility.toArray(selectValues) as Array<string>).map(value => {
+						? (AppUtility.toArray(selectValues, "#;") as Array<string>).map(value => {
 								return { Value: value, Label: value };
 							})
 						: AppUtility.isArray(selectValues, true)
@@ -789,7 +789,7 @@ export class AppFormsService {
 												: { Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value, Description: data.Description || data.description };
 										})
 								: AppUtility.isNotEmpty(values)
-									? (AppUtility.toArray(values) as Array<string>).map(value => {
+									? (AppUtility.toArray(values, "#;") as Array<string>).map(value => {
 											return { Value: value, Label: value };
 										})
 									: AppUtility.isNotNull(values)
