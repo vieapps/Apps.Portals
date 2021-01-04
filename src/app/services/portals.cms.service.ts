@@ -450,7 +450,7 @@ export class PortalsCmsService extends BaseService {
 						{ OrderIndex: "Ascending", Title: "Ascending" }
 					),
 					data => {
-						const info = this.getSidebarItems(data !== undefined ? Category.toArray(data.Objects) : Category.instances.toArray(category => category.SystemID === contentType.SystemID && category.ParentID === undefined).sortBy("OrderIndex", "Title"));
+						const info = this.getSidebarItems(data !== undefined ? Category.toArray(data.Objects) : Category.instances.toArray(category => category.SystemID === contentType.SystemID && category.RepositoryID === contentType.RepositoryID && category.ParentID === undefined).sortBy("OrderIndex", "Title"));
 						this.updateSidebar(info.items, info.parent, onNext);
 					}
 				);

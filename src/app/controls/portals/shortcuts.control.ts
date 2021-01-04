@@ -101,7 +101,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			removable: false
 		}, 2);
 
-		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfLink(module) || this.portalsCmsSvc.getDefaultContentTypeOfItem(module);
+		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfItem(module) || this.portalsCmsSvc.getDefaultContentTypeOfLink(module);
 		this.shortcuts.insert({
 			title: shortcuts.others as string || await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.labels.others"),
 			url: this.portalsCoreSvc.getAppURL(contentType),

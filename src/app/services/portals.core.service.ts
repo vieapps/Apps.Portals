@@ -322,7 +322,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async setActiveModuleAsync(module: Module, onNext?: () => void) {
-		const store = this.activeModules[module.SystemID] === undefined;
+		const store = this.activeModules[module.SystemID] !== module.ID;
 		this.activeModules[module.SystemID] = module.ID;
 		await (store ? this.configSvc.storeOptionsAsync() : this.configSvc.saveOptionsAsync());
 

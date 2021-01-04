@@ -10,33 +10,33 @@ export class AppConfig {
 	/** URIs of the remote API and related resources */
 	public static URIs = {
 		/** APIs */
-		apis: "https://apis.petrolimex.com.vn/",
+		apis: "https://apis.vieapps.com/",
 
 		/** Real-time Updater (if not provided, the uri of the APIs will be used) */
 		updates: undefined as string,
 
 		/** Files HTTP service */
-		files: "https://files.petrolimex.com.vn/",
+		files: "https://files.vieapps.com/",
 
 		/** Portals HTTP service */
-		portals: "https://portals.petrolimex.com.vn/",
+		portals: "https://portals.vieapps.com/",
 
 		/** Apps on the web to perform activation or other business process */
-		apps: "https://cms.petrolimex.com.vn/",
+		apps: "https://cms.vieapps.com/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
-		medias: ["fs.petrolimex.com.vn"] as Array<string>
+		medias: ["fs.vieapps.com"] as Array<string>
 	};
 
 	/** Information of the app */
 	public static app = {
-		name: "PLX Portals",
+		name: "NGX Portals",
 		description: "Manage information and related services of CMS Portals",
-		copyright: "© Hanoi Software JSC",
-		license: "special agreement between Hanoi Software JSC and Petrolimex",
-		homepage: "https://cms.petrolimex.com.vn",
+		copyright: "© VIEApps.et",
+		license: "Apache-2.0",
+		homepage: "https://cms.vieapps.com",
 		id: "vieapps-ngx-portals",
-		version: "1.3.0",
+		version: "1.4.0",
 		frameworks: "ionic 5.5 - angular 8.2 - cordova 10.0",
 		mode: "",
 		platform: "",
