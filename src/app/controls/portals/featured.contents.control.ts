@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, Input } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
@@ -29,6 +30,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 
 	contents = new Array<CmsBaseModel>();
 	private _isPublished = false;
+	private _preparing = false;
 
 	get color() {
 		return this.configSvc.color;
@@ -56,35 +58,49 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		this.amount = this.amount !== undefined ? this.amount : (this._isPublished ? amounts.published : amounts.updated) || 5;
 
 		if (this.configSvc.isReady) {
-			this.prepareAsync();
-			this.prepareContents();
+			PlatformUtility.invoke(() => this.prepareAsync(), 1234);
 		}
 		else {
 			AppEvents.on("App", info => {
 				if (AppUtility.isEquals(info.args.Type, "Initialized")) {
-					this.prepareAsync();
-					this.prepareContents();
+					PlatformUtility.invoke(() => this.prepareAsync(), 1234);
 				}
-			}, "FeaturedContents:AppInitialized");
+			}, `FeaturedContents:AppInitialized:${this._isPublished}`);
 		}
 
-		AppEvents.on(this.portalsCmsSvc.name, async info => {
+		AppEvents.on(this.portalsCmsSvc.name, info => {
 			if (AppUtility.isEquals(info.args.Type, "FeaturedContentsPrepared")) {
-				await this.prepareAsync();
-				this.prepareContents();
+				PlatformUtility.invoke(() => {
+					if (this.configSvc.isDebug) {
+						console.log(`[FeaturedContent]: fire event to update featured contents - Published: ${this._isPublished}`);
+					}
+					this.prepareAsync(true);
+				}, 1234);
 			}
-			else if (AppUtility.isEquals(info.args.Object, "CMS.Content") || AppUtility.isEquals(info.args.Object, "CMS.Item")) {
-				this.prepareContents();
-			}
-		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents`);
+		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
+
+		if (this.configSvc.isDebug) {
+			console.log(`[FeaturedContent]: control was initialized - Published: ${this._isPublished}`);
+		}
 	}
 
 	ngOnDestroy() {
-		AppEvents.off("App", "FeaturedContents:AppInitialized");
-		AppEvents.off(this.portalsCmsSvc.name, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents`);
+		AppEvents.off("App", `FeaturedContents:AppInitialized:${this._isPublished}`);
+		AppEvents.off(this.portalsCmsSvc.name, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
 	}
 
-	private async prepareAsync() {
+	private async prepareAsync(force: boolean = false, prepareLabels: boolean = true) {
+		if (!this._preparing) {
+			this._preparing = true;
+			if (prepareLabels) {
+				await this.prepareLabelsAsync();
+			}
+			this.prepareContents(force);
+			this._preparing = false;
+		}
+	}
+
+	private async prepareLabelsAsync() {
 		if (this.label === undefined) {
 			this.label = this._isPublished
 				? await this.configSvc.getResourceAsync("portals.cms.common.featured.published")
@@ -95,16 +111,19 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}
 	}
 
-	private prepareContents() {
-		const filterBy: (content: CmsBaseModel) => boolean = AppUtility.isNotEmpty(this.status)
-			? content => content.Status === this.status
-			: _ => true;
-		const orderBy = [{ name: "LastModified", reverse: true }];
-		if (this._isPublished) {
-			orderBy.insert({ name: "StartDate", reverse: true }, 0);
-			orderBy.insert({ name: "PublishedTime", reverse: true }, 1);
+	private prepareContents(force: boolean = false) {
+		if (!this.contents.length || force) {
+			const organizationID = this.portalsCoreSvc.activeOrganization !== undefined ? this.portalsCoreSvc.activeOrganization.ID : undefined;
+			const filterBy: (content: CmsBaseModel) => boolean = AppUtility.isNotEmpty(this.status)
+				? content => content.SystemID === organizationID && content.Status === this.status
+				: content => content.SystemID === organizationID && true;
+			const orderBy = [{ name: "LastModified", reverse: true }];
+			if (this._isPublished) {
+				orderBy.insert({ name: "StartDate", reverse: true }, 0);
+				orderBy.insert({ name: "PublishedTime", reverse: true }, 1);
+			}
+			this.contents = this.portalsCmsSvc.featuredContents.filter(filterBy).orderBy(orderBy).take(this.amount);
 		}
-		this.contents = this.portalsCmsSvc.featuredContents.filter(filterBy).orderBy(orderBy).take(this.amount);
 	}
 
 	track(index: number, content: CmsBaseModel) {

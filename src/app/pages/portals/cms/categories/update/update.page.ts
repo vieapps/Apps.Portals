@@ -307,7 +307,8 @@ export class CmsCategoriesUpdatePage implements OnInit {
 				}
 			}
 			if (this.configSvc.isDebug) {
-				console.log("<CMS Portals>: Category", this.category);
+				console.log("<CMS Portals>: Category (request info)", this.category, this.configSvc.requestParams);
+				console.log("<CMS Portals>: Category (management info)", `\n- Organization:`, this.organization, `\n- Module:`, this.module, `\n- Content Type:`, this.contentType);
 			}
 		});
 	}

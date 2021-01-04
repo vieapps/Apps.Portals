@@ -117,6 +117,9 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
 			search: await this.configSvc.getResourceAsync("common.buttons.search")
 		};
+		if (this.configSvc.isDebug) {
+			console.log("[DataLookup]: lookup portal data", `\n- Organization: ${this.organizationID}`, this.organization, `\n- Module: ${this.moduleID}`, this.module, `\n- Content Type: ${this.contentTypeID}`, this.contentType, `\n- Multiple & Nested:`, this.multiple, this.nested);
+		}
 		await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 	}
 

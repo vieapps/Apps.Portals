@@ -208,6 +208,9 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 
 			if (this.parentLink !== undefined) {
 				this.prepareLinks();
+				this.contentType = this.parentLink.contentType;
+				this.module = this.parentLink.module;
+				this.organization = this.parentLink.organization;
 				await this.prepareTitleAsync();
 				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on(this.portalsCoreSvc.name, info => {
@@ -229,7 +232,8 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("<CMS Portals>: Links", this.configSvc.requestParams, this.filterBy, this.sortBy);
+			console.log("<CMS Portals>: Links (request info)", this.configSvc.requestParams, this.filterBy, this.sortBy);
+			console.log("<CMS Portals>: Links (management info)", `\n- Organization:`, this.organization, `\n- Module:`, this.module, `\n- Content Type:`, this.contentType);
 		}
 	}
 

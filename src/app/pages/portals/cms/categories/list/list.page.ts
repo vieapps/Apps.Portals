@@ -210,6 +210,9 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 			if (this.parentCategory !== undefined) {
 				this.prepareCategories();
+				this.contentType = this.parentCategory.contentType;
+				this.module = this.parentCategory.module;
+				this.organization = this.parentCategory.organization;
 				await this.prepareTitleAsync();
 				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on(this.portalsCoreSvc.name, info => {
@@ -229,7 +232,8 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 				}, "CMS.Categories:Refresh");
 			}
 			if (this.configSvc.isDebug) {
-				console.log("<CMS Portals>: Categories", this.configSvc.requestParams, this.filterBy, this.sortBy);
+				console.log("<CMS Portals>: Categories (request info)", this.configSvc.requestParams, this.filterBy, this.sortBy);
+				console.log("<CMS Portals>: Categories (management info)", `\n- Organization:`, this.organization, `\n- Module:`, this.module, `\n- Content Type:`, this.contentType);
 			}
 		}
 	}
