@@ -272,8 +272,8 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 			control.value = AppUtility.isEquals(control.Name, "Audits")
 				? await this.portalsCoreSvc.getAuditInfoAsync(this.link)
 				: this.link[control.Name];
-			control.Hidden = control.value === undefined;
-			if (!control.Hidden) {
+				control.Hidden = AppUtility.isEmpty(control.value);
+				if (!control.Hidden) {
 				if (AppUtility.isEquals(control.Type, "TextEditor")) {
 					control.value = this.portalsCmsSvc.normalizeRichHtml(control.value);
 				}

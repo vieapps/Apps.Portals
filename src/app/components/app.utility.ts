@@ -45,6 +45,11 @@ export class AppUtility {
 		return obj !== undefined && obj !== null;
 	}
 
+	/** Checks to see the string is undefined or empty */
+	public static isEmpty(obj?: any) {
+		return this.isNull(obj) || (typeof obj === "string" && (obj as string).trim() === "");
+	}
+
 	/** Checks to see the string is defined and not empty */
 	public static isNotEmpty(obj?: any) {
 		return this.isNotNull(obj) && typeof obj === "string" && (obj as string).trim() !== "";

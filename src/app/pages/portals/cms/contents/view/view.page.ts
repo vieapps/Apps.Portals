@@ -262,7 +262,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			control.value = AppUtility.isEquals(control.Name, "Audits")
 				? await this.portalsCoreSvc.getAuditInfoAsync(this.content)
 				: this.content[control.Name];
-			control.Hidden = control.value === undefined;
+			control.Hidden = AppUtility.isEmpty(control.value);
 			if (!control.Hidden) {
 				if (AppUtility.isEquals(control.Type, "TextEditor")) {
 					control.value = this.portalsCmsSvc.normalizeRichHtml(control.value);
