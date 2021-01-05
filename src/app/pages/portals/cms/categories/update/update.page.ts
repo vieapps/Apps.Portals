@@ -212,7 +212,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OpenBy"));
 		control.Options.SelectOptions.AsBoxes = true;
 		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
-			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values) as Array<string>).map(value => {
+			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values, "#;") as Array<string>).map(value => {
 				return { Value: value, Label: `{{portals.cms.categories.controls.OpenBy.${value}}}` };
 			});
 		}
