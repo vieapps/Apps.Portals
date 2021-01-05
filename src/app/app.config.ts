@@ -16,7 +16,7 @@ export class AppConfig {
 		updates: undefined as string,
 
 		/** Files HTTP service */
-		files: "https://files.vieapps.net/",
+		files: "https://fs.vieapps.net/",
 
 		/** Portals HTTP service */
 		portals: "https://portals.vieapps.net/",
@@ -25,7 +25,7 @@ export class AppConfig {
 		apps: "https://cms.vieapps.net/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
-		medias: ["fs.vieapps.net", "fs.vieportal.net"] as Array<string>
+		medias: ["fs.vieportal.net"] as Array<string>
 	};
 
 	/** Information of the app */
@@ -33,10 +33,10 @@ export class AppConfig {
 		name: "NGX Portals",
 		description: "Manage information and related services of CMS Portals",
 		copyright: "© VIEApps.net",
-		license: "Apache-2.0",
+		license: "special",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx-portals",
-		version: "1.4.3",
+		version: "1.4.5",
 		frameworks: "ionic 5.5 - angular 8.2 - cordova 10.0",
 		mode: "",
 		platform: "",

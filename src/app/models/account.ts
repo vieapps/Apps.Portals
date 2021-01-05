@@ -102,16 +102,7 @@ export class Account {
 	 * @param roles The collection of roles that need to check with this account
 	*/
 	public isInPrivilege(users: HashSet<string>, roles: HashSet<string>) {
-		let isIn = users !== undefined && AppUtility.isNotEmpty(this.id) ? users.contains(this.id) : false;
-		if (!isIn && roles !== undefined) {
-			for (const role in this.roles) {
-				isIn = roles.contains(role);
-				if (isIn) {
-					break;
-				}
-			}
-		}
-		return isIn;
+		return (users !== undefined && AppUtility.isNotEmpty(this.id) && users.contains(this.id)) || (roles !== undefined && roles.intersect(new HashSet<string>(this.roles)).size > 0);
 	}
 
 	/**

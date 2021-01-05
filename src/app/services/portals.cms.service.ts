@@ -112,6 +112,9 @@ export class PortalsCmsService extends BaseService {
 				}
 			}
 			else if (AppUtility.isEquals(info.args.Type, "Changed") && (AppUtility.isEquals(info.args.Object, "Organization") || AppUtility.isEquals(info.args.Object, "Module"))) {
+				if (this.configSvc.isDebug) {
+					console.log("[CMS Portals]: Update sidebar when organization/module was changed");
+				}
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				await this.updateSidebarAsync();
@@ -120,6 +123,9 @@ export class PortalsCmsService extends BaseService {
 
 		AppEvents.on("Session", async info => {
 			if (AppUtility.isEquals(info.args.Type, "LogIn") || AppUtility.isEquals(info.args.Type, "LogOut")) {
+				if (this.configSvc.isDebug) {
+					console.log("[CMS Portals]: Update sidebar when log out");
+				}
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				await this.updateSidebarAsync();
@@ -128,6 +134,9 @@ export class PortalsCmsService extends BaseService {
 
 		AppEvents.on("Profile", async info => {
 			if (AppUtility.isEquals(info.args.Type, "Updated")) {
+				if (this.configSvc.isDebug) {
+					console.log("[CMS Portals]: Update sidebar when profiles' options was updated from APIs", this.getDefaultContentTypeOfCategory(this.portalsCoreSvc.activeModule));
+				}
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				await this.prepareFeaturedContentsAsync();

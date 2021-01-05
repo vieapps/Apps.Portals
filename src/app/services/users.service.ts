@@ -32,7 +32,7 @@ export class UsersService extends BaseService {
 				await this.updateProfileAsync(profile, async _ => {
 					await this.configSvc.storeSessionAsync();
 					if (this.configSvc.isDebug) {
-						console.log("[Users]: The account profile with options are updated", profile);
+						console.log("[Users]: The account profile with options are updated with APIs", profile);
 					}
 				});
 			}

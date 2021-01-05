@@ -66,14 +66,18 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(organizationID)) {
 			let organization = Organization.get(organizationID);
 			if (organization === undefined) {
+				if (this.configSvc.isDebug) {
+					console.log("<Portals Initializer>: prepare organization with a specified identity", organizationID);
+				}
 				await this.portalsCoreSvc.getOrganizationAsync(organizationID, _ => organization = Organization.get(organizationID), undefined, true);
 			}
 			if (organization !== undefined) {
 				await this.portalsCoreSvc.setActiveOrganizationAsync(organization);
 				const objectName = this.configSvc.requestParams["ObjectName"] as string;
 				const objectID = this.configSvc.requestParams["ObjectID"] as string;
+				let object: BaseModel;
+
 				if (AppUtility.isNotEmpty(objectName) && AppUtility.isNotEmpty(objectID)) {
-					let object: BaseModel;
 					switch (objectName.toLowerCase()) {
 						case "organization":
 						case "core.organization":
@@ -167,6 +171,21 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							break;
 					}
 					url = object !== undefined ? object.getRouterURI({ ID: object.ID }) : undefined;
+					if (this.configSvc.isDebug) {
+						console.log("<Portals Initializer>: prepare the requested object", objectName, objectID, object, url);
+					}
+				}
+
+				if (this.portalsCoreSvc.activeModule === undefined) {
+					if (this.configSvc.isDebug) {
+						console.log("<Portals Initializer>: prepare module when no one was actived");
+					}
+					if (object !== undefined && object instanceof Module) {
+						await this.portalsCoreSvc.setActiveModuleAsync(object as Module);
+					}
+					else {
+						await this.portalsCoreSvc.getActiveModuleAsync();
+					}
 				}
 			}
 		}

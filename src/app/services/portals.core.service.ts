@@ -151,6 +151,9 @@ export class PortalsCoreService extends BaseService {
 		});
 		AppEvents.on("Account", info => {
 			if (AppUtility.isEquals(info.args.Type, "Updated")) {
+				if (this.configSvc.isDebug) {
+					console.log("[Portals]: Update sidebar when account was updated");
+				}
 				this.prepareSidebar();
 			}
 		});
@@ -306,11 +309,56 @@ export class PortalsCoreService extends BaseService {
 				? preferID
 				: AppUtility.isNotEmpty(systemID) ? this.activeModules[systemID] : undefined;
 			if (AppUtility.isNotEmpty(preferID)) {
+				if (this.configSvc.isDebug) {
+					console.log("[Portals]: prepare active module with a specified identity", preferID);
+				}
 				if (Module.contains(preferID)) {
 					Module.active = Module.get(preferID);
 				}
 				else {
 					await this.getModuleAsync(preferID, async _ => await this.setActiveModuleAsync(Module.get(preferID) || (activeOrganization !== undefined ? activeOrganization.defaultModule : undefined)), undefined, useXHR);
+				}
+			}
+			else if (activeOrganization !== undefined) {
+				const modules = activeOrganization.modules;
+				if (this.configSvc.isDebug) {
+					console.log("[Portals]: prepare active module & related content-types", modules.length, modules, activeOrganization.contentTypes);
+				}
+				if (modules.length > 0) {
+					if (this.configSvc.isDebug) {
+						console.log("[Portals]: prepare active module with default module of the organization", activeOrganization.defaultModule);
+					}
+					await this.setActiveModuleAsync(activeOrganization.defaultModule);
+				}
+				else {
+					const filterBy = {
+						And: [{
+							SystemID: {
+								Equals: activeOrganization.ID
+							}
+						}]
+					};
+					if (this.configSvc.isDebug) {
+						console.log("[Portals]: prepare available modules", filterBy);
+					}
+					await this.searchModuleAsync(
+						AppPagination.buildRequest(filterBy, undefined, undefined),
+						async data => {
+							if (this.configSvc.isDebug) {
+								console.log("[Portals]: Available modules", data.Objects);
+							}
+							const module = activeOrganization.defaultModule;
+							if (module !== undefined) {
+								await this.setActiveModuleAsync(module);
+							}
+						},
+						error => console.error("[Portals]: Cannot get available modules", error),
+						true,
+						useXHR,
+						{
+							"x-init": "true"
+						}
+					);
 				}
 			}
 		}
@@ -2383,7 +2431,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async searchModuleAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
+	public async searchModuleAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
 		await super.searchAsync(
 			super.getSearchURI("module", this.configSvc.relatedQuery),
 			request,
@@ -2406,7 +2454,8 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			dontProcessPagination,
-			useXHR
+			useXHR,
+			headers
 		);
 	}
 
