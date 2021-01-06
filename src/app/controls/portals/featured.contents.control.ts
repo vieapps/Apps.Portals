@@ -69,10 +69,10 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}
 
 		AppEvents.on(this.portalsCmsSvc.name, info => {
-			if (AppUtility.isEquals(info.args.Type, "FeaturedContentsPrepared")) {
+			if (AppUtility.isEquals(info.args.Type, "FeaturedContentsPrepared") || (AppUtility.isEquals(info.args.Type, "Changed") && (AppUtility.isEquals(info.args.Object, "Organization") || AppUtility.isEquals(info.args.Object, "Module")))) {
 				PlatformUtility.invoke(() => {
 					if (this.configSvc.isDebug) {
-						console.log(`[FeaturedContent]: fire event to update featured contents - Published: ${this._isPublished}`);
+						console.log(`<Featured Contents>: fire event to update featured contents - Published: ${this._isPublished}`, info.args);
 					}
 					this.prepareAsync(true);
 				}, 1234);
@@ -80,7 +80,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
 
 		if (this.configSvc.isDebug) {
-			console.log(`[FeaturedContent]: control was initialized - Published: ${this._isPublished}`);
+			console.log(`<Featured Contents>: control was initialized - Published: ${this._isPublished}`);
 		}
 	}
 
@@ -116,7 +116,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 			const organizationID = this.portalsCoreSvc.activeOrganization !== undefined ? this.portalsCoreSvc.activeOrganization.ID : undefined;
 			const filterBy: (content: CmsBaseModel) => boolean = AppUtility.isNotEmpty(this.status)
 				? content => content.SystemID === organizationID && content.Status === this.status
-				: content => content.SystemID === organizationID && true;
+				: content => content.SystemID === organizationID;
 			const orderBy = [{ name: "LastModified", reverse: true }];
 			if (this._isPublished) {
 				orderBy.insert({ name: "StartDate", reverse: true }, 0);
