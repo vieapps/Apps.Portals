@@ -98,11 +98,11 @@ export class Account {
 
 	/**
 	 * Determines this account is got a privilege or not
-	 * @param users The collection of identities that need to check with this account
-	 * @param roles The collection of roles that need to check with this account
+	 * @param users The collection of user identities that need to check with this account
+	 * @param roles The collection of role identities that need to check with this account
 	*/
 	public isInPrivilege(users: HashSet<string>, roles: HashSet<string>) {
-		return (users !== undefined && AppUtility.isNotEmpty(this.id) && users.contains(this.id)) || (roles !== undefined && roles.intersect(new HashSet<string>(this.roles)).size > 0);
+		return (users !== undefined && AppUtility.isNotEmpty(this.id) && users.contains(this.id)) || (roles !== undefined && roles.toArray().intersect(this.roles).length > 0);
 	}
 
 	/**
