@@ -51,6 +51,16 @@ export class PortalsCoreService extends BaseService {
 		return BaseModel.contentTypeDefinitions;
 	}
 
+	public get activeOrganizations() {
+		let organizations = this.configSvc.appConfig.options.extras["organizations"] as Array<string>;
+		if (organizations === undefined) {
+			organizations = new Array<string>();
+			this.configSvc.appConfig.options.extras["organizations"] = organizations;
+			this.configSvc.saveOptionsAsync();
+		}
+		return organizations;
+	}
+
 	public get activeOrganization() {
 		if (Organization.active === undefined) {
 			Organization.active = Organization.instances.first();
@@ -233,25 +243,28 @@ export class PortalsCoreService extends BaseService {
 		return this._themes;
 	}
 
-	public async getActiveOrganizationAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void) {
-		preferID = AppUtility.isNotEmpty(preferID) ? preferID : this.configSvc.appConfig.options.extras["organization"];
-		if (AppUtility.isNotEmpty(preferID)) {
-			if (Organization.active !== undefined && AppUtility.isEquals(Organization.active.ID, preferID)) {
-				this.configSvc.appConfig.services.activeID = Organization.active.ID;
+	public getActiveOrganizations() {
+		const organizations = new Array<Organization>();
+		const organizationIDs = this.activeOrganizations;
+		organizationIDs.forEach(organizationID => {
+			const organization = this.getOrganization(organizationID, false);
+			if (organization === undefined) {
+				this.getOrganizationAsync(organizationID, _ => {
+					if (this.getOrganization(organizationID, false) === undefined) {
+						organizationIDs.remove(organizationID);
+					}
+				});
 			}
 			else {
-				await this.getOrganizationAsync(preferID, async _ => await this.setActiveOrganizationAsync(Organization.get(preferID) || Organization.instances.first()), undefined, useXHR);
+				organizations.push(organization);
 			}
-		}
-		if (onNext !== undefined) {
-			onNext();
-		}
-		return Organization.active;
+		});
+		return organizations;
 	}
 
-	public async getAvailableOrganizationsAsync() {
+	public async getActiveOrganizationsAsync() {
 		const organizations = new Array<Organization>();
-		const organizationIDs = this.configSvc.appConfig.options.extras["organizations"] as Array<string>;
+		const organizationIDs = this.activeOrganizations;
 		await Promise.all((organizationIDs || []).filter(id => AppUtility.isNotEmpty(id)).map(async id => {
 			let organization = Organization.get(id);
 			if (organization === undefined) {
@@ -266,6 +279,29 @@ export class PortalsCoreService extends BaseService {
 		return organizations.sortBy("Title");
 	}
 
+	public async getActiveOrganizationAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void) {
+		preferID = AppUtility.isNotEmpty(preferID)
+			? preferID
+			: this.configSvc.appConfig.options.extras["organization"];
+		if (AppUtility.isNotEmpty(preferID)) {
+			if (Organization.active !== undefined && AppUtility.isEquals(Organization.active.ID, preferID)) {
+				this.configSvc.appConfig.services.activeID = Organization.active.ID;
+			}
+			else {
+				await this.getOrganizationAsync(
+					preferID,
+					async _ => await this.setActiveOrganizationAsync(Organization.get(preferID) || Organization.instances.first()),
+					undefined,
+					useXHR
+				);
+			}
+		}
+		if (onNext !== undefined) {
+			onNext();
+		}
+		return Organization.active;
+	}
+
 	public async setActiveOrganizationAsync(organization: Organization, onNext?: () => void) {
 		if (organization !== undefined) {
 			if (this.configSvc.isDebug) {
@@ -273,13 +309,8 @@ export class PortalsCoreService extends BaseService {
 			}
 			this.configSvc.appConfig.services.activeID = organization.ID;
 			this.configSvc.appConfig.options.extras["organization"] = organization.ID;
-			let organizations = this.configSvc.appConfig.options.extras["organizations"] as Array<string>;
-			if (organizations === undefined) {
-				organizations = new Array<string>();
-				this.configSvc.appConfig.options.extras["organizations"] = organizations;
-			}
-			if (organizations.indexOf(organization.ID) < 0) {
-				organizations.push(organization.ID);
+			if (this.activeOrganizations.indexOf(organization.ID) < 0) {
+				this.activeOrganizations.push(organization.ID);
 			}
 			if (Organization.active === undefined || Organization.active.ID !== organization.ID) {
 				Organization.active = organization;
@@ -292,6 +323,15 @@ export class PortalsCoreService extends BaseService {
 			onNext();
 		}
 		return Organization.active;
+	}
+
+	public async removeActiveOrganizationAsync(organizationID: string, onNext?: () => void) {
+		this.configSvc.appConfig.options.extras["organization"] = undefined;
+		this.activeOrganizations.remove(organizationID);
+		delete this.activeModules[organizationID];
+		Organization.active = undefined;
+		Module.active = undefined;
+		await this.setActiveOrganizationAsync(Organization.get(this.activeOrganizations.first()), onNext);
 	}
 
 	public async getActiveModuleAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void) {
@@ -316,48 +356,30 @@ export class PortalsCoreService extends BaseService {
 					Module.active = Module.get(preferID);
 				}
 				else {
-					await this.getModuleAsync(preferID, async _ => await this.setActiveModuleAsync(Module.get(preferID) || (activeOrganization !== undefined ? activeOrganization.defaultModule : undefined)), undefined, useXHR);
+					await this.getModuleAsync(
+						preferID,
+						async _ => await this.setActiveModuleAsync(Module.get(preferID) || (activeOrganization !== undefined ? activeOrganization.defaultModule : undefined)),
+						undefined,
+						useXHR
+					);
 				}
 			}
 			else if (activeOrganization !== undefined) {
-				const modules = activeOrganization.modules;
-				if (this.configSvc.isDebug) {
-					console.log("[Portals]: prepare active module & related content-types", modules.length, modules, activeOrganization.contentTypes);
-				}
-				if (modules.length > 0) {
+				if (activeOrganization.modules.length > 0) {
 					if (this.configSvc.isDebug) {
 						console.log("[Portals]: prepare active module with default module of the organization", activeOrganization.defaultModule);
 					}
 					await this.setActiveModuleAsync(activeOrganization.defaultModule);
 				}
 				else {
-					const filterBy = {
-						And: [{
-							SystemID: {
-								Equals: activeOrganization.ID
-							}
-						}]
-					};
 					if (this.configSvc.isDebug) {
-						console.log("[Portals]: prepare available modules", filterBy);
+						console.log("[Portals]: re-fetch the organization & related modules/content-types");
 					}
-					await this.searchModuleAsync(
-						AppPagination.buildRequest(filterBy, undefined, undefined),
-						async data => {
-							if (this.configSvc.isDebug) {
-								console.log("[Portals]: Available modules", data.Objects);
-							}
-							const module = activeOrganization.defaultModule;
-							if (module !== undefined) {
-								await this.setActiveModuleAsync(module);
-							}
-						},
-						error => console.error("[Portals]: Cannot get available modules", error),
-						true,
-						useXHR,
-						{
-							"x-init": "true"
-						}
+					await this.getOrganizationAsync(
+						activeOrganization.ID,
+						async _ => await this.setActiveModuleAsync(activeOrganization.defaultModule),
+						undefined,
+						useXHR
 					);
 				}
 			}
@@ -1261,50 +1283,41 @@ export class PortalsCoreService extends BaseService {
 		if (this.configSvc.isAuthenticated) {
 			const account = this.configSvc.getAccount();
 			const canManageOrganization = this.canManageOrganization(this.activeOrganization, account);
+			const canModerateOrganization = this.canModerateOrganization(this.activeOrganization, account);
 
 			if (this.authSvc.isSystemAdministrator(account)) {
-				items.push({
-					title: "{{portals.sidebar.logs}}",
-					link: "/logs",
-					direction: "root",
-					icon: "file-tray-full"
-				});
-			}
-
-			if (canManageOrganization) {
-				items.push
-				(
+				items.push(
+					{
+						title: "{{portals.sidebar.logs}}",
+						link: "/logs",
+						direction: "root",
+						icon: "file-tray-full"
+					},
 					{
 						title: "{{portals.sidebar.organizations}}",
 						link: this.getRouterLink(undefined, "list", "all", "organization", "core"),
 						direction: "root",
 						icon: "business"
-					},
-					{
-						title: "{{portals.sidebar.sites}}",
-						link: this.getRouterLink(undefined, "list", "all", "site", "core"),
-						direction: "root",
-						icon: "globe"
-					},
-					{
-						title: "{{portals.sidebar.roles}}",
-						link: this.getRouterLink(undefined, "list", "all", "role", "core"),
-						direction: "root",
-						icon: "body"
-					},
-					{
-						title: "{{portals.sidebar.desktops}}",
-						link: this.getRouterLink(undefined, "list", "all", "desktop", "core"),
-						direction: "root",
-						icon: "desktop"
-					},
-					{
-						title: "{{portals.sidebar.modules}}",
-						link: this.getRouterLink(undefined, "list", "all", "module", "core"),
-						direction: "root",
-						icon: "albums"
 					}
 				);
+			}
+
+			if (canManageOrganization) {
+				items.push({
+					title: "{{portals.sidebar.roles}}",
+					link: this.getRouterLink(undefined, "list", "all", "role", "core"),
+					direction: "root",
+					icon: "body"
+				});
+			}
+
+			if (canModerateOrganization) {
+				items.push({
+					title: "{{portals.sidebar.modules}}",
+					link: this.getRouterLink(undefined, "list", "all", "module", "core"),
+					direction: "root",
+					icon: "albums"
+				});
 			}
 
 			items.push({
@@ -1314,12 +1327,30 @@ export class PortalsCoreService extends BaseService {
 				icon: "git-compare"
 			});
 
-			if (canManageOrganization) {
+			if (canModerateOrganization) {
 				items.push({
 					title: "{{portals.sidebar.expressions}}",
 					link: this.getRouterLink(undefined, "list", "all", "expression", "core"),
 					direction: "root",
 					icon: "construct"
+				});
+			}
+
+			if (canManageOrganization) {
+				items.push({
+					title: "{{portals.sidebar.sites}}",
+					link: this.getRouterLink(undefined, "list", "all", "site", "core"),
+					direction: "root",
+					icon: "globe"
+				});
+			}
+
+			if (canModerateOrganization) {
+				items.push({
+					title: "{{portals.sidebar.desktops}}",
+					link: this.getRouterLink(undefined, "list", "all", "desktop", "core"),
+					direction: "root",
+					icon: "desktop"
 				});
 			}
 
@@ -2481,8 +2512,12 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
+	public getModule(id: string, getActiveModuleWhenNotFound: boolean = true) {
+		return Module.get(id) || (getActiveModuleWhenNotFound ? this.activeModule : undefined);
+	}
+
 	public async getModuleAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		if (Module.contains(id)) {
+		if (Module.contains(id) && Module.get(id).contentTypes.length > 0) {
 			if (onNext) {
 				onNext();
 			}
@@ -2612,7 +2647,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async searchContentTypeAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async searchContentTypeAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		await super.searchAsync(
 			super.getSearchURI("content.type", this.configSvc.relatedQuery),
 			request,
@@ -2629,11 +2664,13 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching content type(s)", error));
+				console.error(super.getErrorMessage("Error occurred while searching content-type(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
-			}
+			},
+			false,
+			useXHR
 		);
 	}
 

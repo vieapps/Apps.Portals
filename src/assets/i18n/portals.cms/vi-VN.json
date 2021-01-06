@@ -27,6 +27,13 @@
 						"shortcuts": "Lối tắt quản trị nội dung",
 						"contents": "Quản trị tin - bài",
 						"others": "Quản trị các nội dung khác"
+					},
+					"select": {
+						"organization": "Chọn đơn vị - tổ chức",
+						"module": "Chọn module làm việc"
+					},
+					"messages": {
+						"removeOrganization": "Chắc chắn muốn rời khỏi '{{name}}'?"
 					}
 				}
 			},

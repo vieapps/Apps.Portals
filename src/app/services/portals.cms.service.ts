@@ -124,7 +124,7 @@ export class PortalsCmsService extends BaseService {
 		AppEvents.on("Session", async info => {
 			if (AppUtility.isEquals(info.args.Type, "LogIn") || AppUtility.isEquals(info.args.Type, "LogOut")) {
 				if (this.configSvc.isDebug) {
-					console.log("[CMS Portals]: Update sidebar when log out");
+					console.log("[CMS Portals]: Update sidebar when the user was logged (" + info.args.Type.toLowerCase() + ")");
 				}
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
@@ -133,9 +133,12 @@ export class PortalsCmsService extends BaseService {
 		});
 
 		AppEvents.on("Profile", async info => {
-			if (AppUtility.isEquals(info.args.Type, "Updated")) {
+			if (AppUtility.isEquals(info.args.Type, "Updated") && !AppUtility.isEquals(info.args.Mode, "Storage")) {
 				if (this.configSvc.isDebug) {
-					console.log("[CMS Portals]: Update sidebar when profiles' options was updated from APIs", this.getDefaultContentTypeOfCategory(this.portalsCoreSvc.activeModule));
+					console.log("[CMS Portals]: Update sidebar when profiles' options was updated", this.getDefaultContentTypeOfCategory(this.portalsCoreSvc.activeModule));
+				}
+				if (Organization.active !== undefined && this.portalsCoreSvc.activeOrganizations.indexOf(Organization.active.ID) < 0) {
+					await this.portalsCoreSvc.removeActiveOrganizationAsync(Organization.active.ID);
 				}
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
@@ -586,7 +589,7 @@ export class PortalsCmsService extends BaseService {
 
 	private async prepareFeaturedContentsAsync() {
 		if (this.configSvc.isAuthenticated) {
-			this.prepareFeaturedContents(await this.portalsCoreSvc.getAvailableOrganizationsAsync());
+			this.prepareFeaturedContents(await this.portalsCoreSvc.getActiveOrganizationsAsync());
 		}
 	}
 

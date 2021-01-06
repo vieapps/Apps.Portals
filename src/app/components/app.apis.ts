@@ -259,7 +259,7 @@ export class AppRTU {
 				if (this.isReady) {
 					this.sendRequests(true);
 				}
-			}, 345);
+			}, 456);
 		};
 
 		// assign 'on-close' event handler

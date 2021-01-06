@@ -322,6 +322,9 @@ export class AppComponent implements OnInit {
 		AppEvents.on("Profile", async info => {
 			if (AppUtility.isEquals(info.args.Type, "Updated")) {
 				const profile = this.configSvc.getAccount().profile;
+				if (this.configSvc.isDebug) {
+					console.log("<AppComponent>: Update sidebars' title & thumbnail from user profile", profile);
+				}
 				if (profile !== undefined) {
 					this.sidebar.header = {
 						title: profile.Name,
@@ -349,6 +352,10 @@ export class AppComponent implements OnInit {
 				await this.updateSidebarAsync({}, true);
 				await this.normalizeSidebarAsync();
 				this.sidebar.active = "cms";
+				if (AppUtility.isEquals(info.args.Type, "LogOut")) {
+					this.sidebar.header.title = this.configSvc.appConfig.app.name;
+					this.sidebar.header.thumbnail = undefined;
+				}
 			}
 		});
 	}

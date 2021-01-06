@@ -27,14 +27,16 @@ export class UsersService extends BaseService {
 		AppEvents.on("App", async info => {
 			if (AppUtility.isEquals(info.args.Type, "OptionsUpdated") && this.configSvc.isAuthenticated) {
 				const profile = this.configSvc.getAccount().profile;
-				profile.Language = this.configSvc.appConfig.options.i18n;
-				profile.Options = this.configSvc.appConfig.options;
-				await this.updateProfileAsync(profile, async _ => {
-					await this.configSvc.storeSessionAsync();
-					if (this.configSvc.isDebug) {
-						console.log("[Users]: The account profile with options are updated with APIs", profile);
-					}
-				});
+				if (profile !== undefined) {
+					profile.Language = this.configSvc.appConfig.options.i18n;
+					profile.Options = this.configSvc.appConfig.options;
+					await this.updateProfileAsync(profile, async _ => {
+						await this.configSvc.storeSessionAsync();
+						if (this.configSvc.isDebug) {
+							console.log("[Users]: The account profiles' options are updated to APIs", profile);
+						}
+					});
+				}
 			}
 		});
 	}
@@ -343,6 +345,7 @@ export class UsersService extends BaseService {
 							console.warn(super.getLogMessage("The session was updated with new access token"), this.configSvc.appConfig.session);
 							AppEvents.sendToElectron(this.name, { Type: "Session", Data: this.configSvc.appConfig.session });
 						});
+						AppEvents.broadcast("Account", { Type: "Updated", Mode: "Session" });
 						break;
 
 					case "Revoke":
@@ -360,8 +363,8 @@ export class UsersService extends BaseService {
 								AppRTU.restart("Restart when the session was revoked by the APIs");
 							}));
 						}
-						AppEvents.broadcast("Account", { Type: "Updated" });
-						AppEvents.broadcast("Profile", { Type: "Updated" });
+						AppEvents.broadcast("Account", { Type: "Updated", Mode: "Session" });
+						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Session" });
 						AppEvents.sendToElectron(this.name, { Type: "LogOut" });
 						break;
 
@@ -383,7 +386,7 @@ export class UsersService extends BaseService {
 			case "Account":
 				this.configSvc.updateAccount(message.Data);
 				if (this.configSvc.isAuthenticated && account.id === message.Data.ID) {
-					AppEvents.broadcast("Account", { Type: "Updated" });
+					AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
 					AppEvents.sendToElectron(this.name, message);
 				}
 				break;
@@ -398,10 +401,10 @@ export class UsersService extends BaseService {
 						await this.configSvc.changeLanguageAsync(account.profile.Language);
 					}
 					await this.configSvc.updateOptionsAsync(account.profile.Options);
-					AppEvents.broadcast("Profile", { Type: "Updated" });
-					AppEvents.sendToElectron("Users", { Type: "Profile", Data: account.profile });
+					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
+					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: account.profile });
 					if (this.configSvc.isDebug) {
-						console.log(super.getLogMessage("User profile is updated"), account.profile);
+						console.log(super.getLogMessage("User profile was updated from APIs"), account.profile);
 					}
 					if (this.configSvc.appConfig.facebook.token !== undefined && this.configSvc.appConfig.facebook.id !== undefined) {
 						this.configSvc.getFacebookProfile();

@@ -382,7 +382,7 @@ export class ConfigurationService extends BaseService {
 		if (this.isAuthenticated) {
 			this.appConfig.session.account.id = this.appConfig.session.token.uid;
 			if (this.appConfig.session.account.profile !== undefined) {
-				AppEvents.broadcast("Profile", { Type: "Updated" });
+				AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Storage" });
 			}
 			super.send({
 				ServiceName: "Users",
@@ -412,12 +412,12 @@ export class ConfigurationService extends BaseService {
 			const session = await AppStorage.getAsync("Session");
 			if (AppUtility.isObject(session, true)) {
 				this.appConfig.session = JSON.parse(JSON.stringify(session));
-				AppEvents.broadcast("Session", { Type: "Loaded" });
+				AppEvents.broadcast("Session", { Type: "Loaded", Mode: "Storage" });
 				this.appConfig.session.account = Account.deserialize(this.appConfig.session.account);
 				if (this.appConfig.session.account.id !== undefined) {
 					Account.set(this.appConfig.session.account);
 					if (this.appConfig.session.account.profile !== undefined) {
-						AppEvents.broadcast("Profile", { Type: "Updated" });
+						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Storage" });
 					}
 				}
 				if (this.isDebug) {
@@ -526,7 +526,7 @@ export class ConfigurationService extends BaseService {
 		if (this.isAuthenticated && this.getAccount().id === account.id) {
 			this.appConfig.session.account = account;
 			if (this.isDebug) {
-				console.log(super.getLogMessage("Account is updated"), this.appConfig.session.account);
+				console.log(super.getLogMessage("Account was updated"), this.appConfig.session.account);
 			}
 			Account.set(account);
 			if (this.appConfig.app.persistence) {
@@ -925,6 +925,7 @@ export interface Shortcut {
 	editable?: boolean;
 	removable?: boolean;
 	onClick?: (event: Event, index: number, shortcut: Shortcut) => void;
+	onRemove?: (event: Event, index: number, shortcut: Shortcut) => void;
 }
 
 export interface Log {
