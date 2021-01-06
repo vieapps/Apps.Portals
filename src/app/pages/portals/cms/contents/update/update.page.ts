@@ -510,8 +510,9 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 								await Promise.all([
 									TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
 									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
-									this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+									this.appFormsSvc.hideLoadingAsync()
 								]);
+								await this.configSvc.navigateBackAsync();
 							},
 							async error => {
 								this.processing = false;
