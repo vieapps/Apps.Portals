@@ -7,7 +7,7 @@
 	<ion-item *ngFor="let content of contents; trackBy: track" [color]="color" (click)="viewAsync($event, content)" class="ion-activatable" detail="false">
 		<ion-label>
 			<ion-thumbnail class="ion-float-start ion-padding-end">
-				<img [src]="content.thumbnailURI" />
+				<img [src]="content.ThumbnailURI" />
 			</ion-thumbnail>
 			<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
 				{{ content.Created | date:'h:mm a @ d/M/y' }} <br/> {{ content.LastModified | time:locale }}
@@ -16,18 +16,18 @@
 				{{ content.Title }}
 				<ion-icon name="radio" slot="icon-only"></ion-icon>
 			</span>
-			<div *ngIf="content['CategoryID']">
+			<div *ngIf="content.Category">
 				<span *ngIf="content.Status === 'Published'">
 					<ion-icon name="alarm" slot="icon-only" color="medium"></ion-icon>
-					{{ content['PublishedTime'] | date:'h:mm a @ d/M/y' }}
+					{{ content.PublishedTime | date:'h:mm a @ d/M/y' }}
 				</span>
 				<span>
 					<ion-icon name="time" slot="icon-only" color="medium"></ion-icon>
-					{{ content['StartDate'] | date:'d/M/y' }}
+					{{ content.StartDate | date:'d/M/y' }}
 				</span>
-				<span *ngIf="content['category']">
+				<span>
 					<ion-icon name="color-filter" slot="icon-only" color="medium"></ion-icon>
-					{{ content['category'].FullTitle }}
+					{{ content.Category.FullTitle }}
 				</span>
 			</div>
 		</ion-label>
