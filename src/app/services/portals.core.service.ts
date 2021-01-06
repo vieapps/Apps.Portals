@@ -326,6 +326,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async removeActiveOrganizationAsync(organizationID: string, onNext?: () => void) {
+		this.configSvc.appConfig.services.activeID = undefined;
 		this.configSvc.appConfig.options.extras["organization"] = undefined;
 		this.activeOrganizations.remove(organizationID);
 		delete this.activeModules[organizationID];
@@ -350,7 +351,7 @@ export class PortalsCoreService extends BaseService {
 				: AppUtility.isNotEmpty(systemID) ? this.activeModules[systemID] : undefined;
 			if (AppUtility.isNotEmpty(preferID)) {
 				if (this.configSvc.isDebug) {
-					console.log("[Portals]: prepare active module with a specified identity", preferID);
+					console.log("[Portals]: prepare active module with a specified identity => " + preferID);
 				}
 				if (Module.contains(preferID)) {
 					Module.active = Module.get(preferID);

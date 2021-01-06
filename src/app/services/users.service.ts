@@ -344,7 +344,7 @@ export class UsersService extends BaseService {
 						await this.configSvc.updateSessionAsync(message.Data, () => {
 							console.warn(super.getLogMessage("The session was updated with new access token"), this.configSvc.appConfig.session);
 							AppEvents.sendToElectron(this.name, { Type: "Session", Data: this.configSvc.appConfig.session });
-						});
+						}, false, false, false);
 						AppEvents.broadcast("Account", { Type: "Updated", Mode: "Session" });
 						break;
 
@@ -361,7 +361,7 @@ export class UsersService extends BaseService {
 							await this.configSvc.updateSessionAsync(message.Data, async () => await this.configSvc.registerSessionAsync(() => {
 								console.warn(super.getLogMessage("The session was revoked by the APIs"), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 								AppRTU.restart("Restart when the session was revoked by the APIs");
-							}));
+							}), false, false, false);
 						}
 						AppEvents.broadcast("Account", { Type: "Updated", Mode: "Session" });
 						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Session" });

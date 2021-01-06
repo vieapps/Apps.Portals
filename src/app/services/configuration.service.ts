@@ -342,7 +342,7 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Updates the session and stores into storage */
-	public async updateSessionAsync(session: any, onNext?: (data?: any) => void, dontStore: boolean = false) {
+	public async updateSessionAsync(session: any, onNext?: (data?: any) => void, dontStore: boolean = false, broadcast: boolean = true, fetch: boolean = true) {
 		if (AppUtility.isNotEmpty(session.ID)) {
 			this.appConfig.session.id = session.ID;
 		}
@@ -381,19 +381,21 @@ export class ConfigurationService extends BaseService {
 		this.appConfig.session.account = this.getAccount(!this.isAuthenticated);
 		if (this.isAuthenticated) {
 			this.appConfig.session.account.id = this.appConfig.session.token.uid;
-			if (this.appConfig.session.account.profile !== undefined) {
+			if (broadcast && this.appConfig.session.account.profile !== undefined) {
 				AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Storage" });
 			}
-			super.send({
-				ServiceName: "Users",
-				ObjectName: "Account",
-				Query: this.appConfig.getRelatedJson({ "x-status": "true" })
-			});
-			super.send({
-				ServiceName: "Users",
-				ObjectName: "Profile",
-				Query: this.appConfig.getRelatedJson({ "object-identity": this.appConfig.session.account.id })
-			});
+			if (fetch) {
+				super.send({
+					ServiceName: "Users",
+					ObjectName: "Account",
+					Query: this.appConfig.getRelatedJson({ "x-status": "true" })
+				});
+				super.send({
+					ServiceName: "Users",
+					ObjectName: "Profile",
+					Query: this.appConfig.getRelatedJson({ "object-identity": this.appConfig.session.account.id })
+				});
+			}
 		}
 
 		if (dontStore) {
