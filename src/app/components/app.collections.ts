@@ -234,8 +234,7 @@ export class HashSet<T> extends Set<T>  {
 
 	/** Creates new instance of HashSet */
 	constructor(values?: IterableIterator<T> | Array<T>) {
-		super();
-		this.update(values);
+		super(values);
 	}
 
 	/** Adds a value into this collection */
@@ -254,7 +253,7 @@ export class HashSet<T> extends Set<T>  {
 				if (!add) {
 					this.delete(value);
 				}
-				else if (!this.has(value)) {
+				else {
 					this.add(value);
 				}
 			}
@@ -270,16 +269,6 @@ export class HashSet<T> extends Set<T>  {
 	/** Determines this collection has the value or not */
 	contains(value: T) {
 		return this.has(value);
-	}
-
-	/** Concatenates this collection with other collection */
-	concat(other: Set<T>) {
-		other.forEach(value => {
-			if (!this.has(value)) {
-				this.add(value);
-			}
-		});
-		return this;
 	}
 
 	/** Returns the first value that matched with the predicate */
@@ -310,6 +299,14 @@ export class HashSet<T> extends Set<T>  {
 				}
 			});
 			return set;
+		}
+		return this;
+	}
+
+	/** Concatenates this collection with other collection */
+	concat(other: Set<T>) {
+		if (other !== undefined) {
+			other.forEach(value => this.add(value));
 		}
 		return this;
 	}
@@ -384,19 +381,6 @@ export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 		return this.has(key);
 	}
 
-	/** Concatenates this collection with other collection */
-	concat(other: Map<TKey, TValue>, resolve: (k: TKey, a: TValue, b: TValue) => TValue = (k, a, b) => b) {
-		other.forEach((value, key) => {
-			if (this.has(key)) {
-				this.set(key, resolve(key, this.get(key), value));
-			}
-			else {
-				this.set(key, value);
-			}
-		});
-		return this;
-	}
-
 	/** Returns the first value that matched with the predicate */
 	first(predicate?: (value: TValue) => boolean) {
 		if (this.size > 0) {
@@ -426,6 +410,19 @@ export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 			});
 			return dictionary;
 		}
+		return this;
+	}
+
+	/** Concatenates this collection with other collection */
+	concat(other: Map<TKey, TValue>, resolve: (k: TKey, a: TValue, b: TValue) => TValue = (k, a, b) => b) {
+		other.forEach((value, key) => {
+			if (this.has(key)) {
+				this.set(key, resolve(key, this.get(key), value));
+			}
+			else {
+				this.set(key, value);
+			}
+		});
 		return this;
 	}
 
