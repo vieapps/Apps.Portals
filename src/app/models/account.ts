@@ -74,7 +74,7 @@ export class Account {
 	 * @param role The role need to check with this accounts' roles
 	*/
 	public isInRole(role: string) {
-		return role !== undefined && this.roles !== undefined && this.roles.find(r => AppUtility.isEquals(r, role)) !== undefined;
+		return role !== undefined && this.roles !== undefined && this.roles.indexOf(role) > -1;
 	}
 
 	/**
@@ -102,7 +102,7 @@ export class Account {
 	 * @param roles The collection of role identities that need to check with this account
 	*/
 	public isInPrivilege(users: HashSet<string>, roles: HashSet<string>) {
-		return (users !== undefined && AppUtility.isNotEmpty(this.id) && users.contains(this.id)) || (roles !== undefined && roles.toArray().intersect(this.roles).length > 0);
+		return (users !== undefined && users.contains(this.id)) || (roles !== undefined && roles.toArray().intersect(this.roles).length > 0);
 	}
 
 	/**
