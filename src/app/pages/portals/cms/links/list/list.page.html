@@ -1,7 +1,7 @@
 <ion-header>
 	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
-			<ion-back-button *ngIf="searching || (parentLink && !redordering)" text=""></ion-back-button>
+			<ion-back-button *ngIf="searching || !redordering" text=""></ion-back-button>
 			<ion-menu-button *ngIf="!parentLink && !redordering"></ion-menu-button>
 			<ion-button *ngIf="redordering" fill="clear" color="secondary" [disabled]="processing" (click)="cancelReorderAsync()">
 				{{ labels.cancel }}
