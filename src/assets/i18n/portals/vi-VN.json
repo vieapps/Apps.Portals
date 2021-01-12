@@ -216,6 +216,11 @@
 				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác",
 				"children": "{{number}} nội dung cấp dưới: {{children}}"
 			},
+			"cache": {
+				"title": "Xoá dữ liệu bộ đệm (cache)",
+				"confirm": "Chắc chắn muốn xoá dữ liệu bộ đệm (cache)?",
+				"done": "Đã xoá dữ liệu bộ đệm (cache) thành công"
+			},
 			"errors": {
 				"alias": {
 					"organization": "Tên rút gọn của đơn vị - tổ chức đã được sử dụng bởi đơn vị khác, cần lựa chọn tên khác",
@@ -403,7 +408,8 @@
 			"list": {
 				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác đơn vị - tổ chức",
 				"owner": "Tài khoản chủ sở hữu: {{owner}}",
-				"invalid": "Thông tin về đơn vị - tổ chức chưa đúng, cần chọn đơn vị - tổ chức sẽ hoạt động"
+				"invalid": "Thông tin về đơn vị - tổ chức chưa đúng, cần chọn đơn vị - tổ chức sẽ hoạt động",
+				"active": "Chỉ định sử dụng đơn vị - tổ chức"
 			},
 			"update": {
 				"segments": {
@@ -1131,7 +1137,8 @@
 			},
 			"list": {
 				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác module nghiệp vụ",
-				"invalid": "Chưa chỉ định module nghiệp vụ"
+				"invalid": "Chưa chỉ định module nghiệp vụ",
+				"active": "Chỉ định sử dụng module nghiệp vụ"
 			},
 			"update": {
 				"segments": {

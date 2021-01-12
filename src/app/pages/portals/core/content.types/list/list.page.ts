@@ -66,10 +66,11 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 	labels = {
 		edit: "Update this content type",
 		advancedEdit: "Update this content type in advanced mode",
-		showContents: "View the list of contents",
-		showExpressions: "Expressions",
+		contents: "View the list of contents",
+		expressions: "Expressions",
 		filter: "Quick filter",
-		cancel: "Cancel"
+		cancel: "Cancel",
+		cache: "Clear cache"
 	};
 
 	get locale() {
@@ -155,10 +156,11 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		this.labels = {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
 			advancedEdit: await this.configSvc.getResourceAsync("portals.common.advancedEdit"),
-			showContents: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list"),
-			showExpressions: await this.configSvc.getResourceAsync("portals.expressions.title.list", { info: "" }),
+			contents: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list"),
+			expressions: await this.configSvc.getResourceAsync("portals.expressions.title.list", { info: "" }),
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
-			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
+			cache: await this.configSvc.getResourceAsync("portals.common.cache.title")
 		};
 
 		const title = await this.configSvc.getResourceAsync("portals.contenttypes.title.list");
@@ -320,6 +322,12 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(contentType, undefined, undefined, undefined, "expression", "core"));
+	}
+
+	async clearCacheAsync(event: Event, contentType: ContentType) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.portalsCoreSvc.clearCacheAsync("content.type", contentType.ID);
 	}
 
 	async exportToExcelAsync() {

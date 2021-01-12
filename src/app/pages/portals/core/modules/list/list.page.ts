@@ -57,6 +57,12 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		icon?: string,
 		handler: () => void
 	}>;
+	labels = {
+		edit: "Update this module",
+		active: "Set active",
+		contentTypes: "View the list of content-types",
+		cache: "Clear cache"
+	};
 
 	get locale() {
 		return this.configSvc.locale;
@@ -116,6 +122,13 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 			]));
 			return;
 		}
+
+		this.labels = {
+			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
+			active: await this.configSvc.getResourceAsync("portals.module.list.active"),
+			contentTypes: await this.configSvc.getResourceAsync("portals.contenttypes.title.list", { info: "" }),
+			cache: await this.configSvc.getResourceAsync("portals.common.cache.title")
+		};
 
 		if (!AppUtility.isNotEmpty(this.systemID) && !AppUtility.isNotEmpty(this.definitionID)) {
 			this.systemID = this.organization.ID;
@@ -232,6 +245,12 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "list", module.ansiTitle, { SystemID: module.SystemID, RepositoryID: module.ID }, "content.type", "core"));
+	}
+
+	async clearCacheAsync(event: Event, module: Module) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.portalsCoreSvc.clearCacheAsync("module", module.ID);
 	}
 
 	async setActiveAsync(event: Event, module: Module) {

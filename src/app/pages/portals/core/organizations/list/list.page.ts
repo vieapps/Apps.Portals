@@ -61,6 +61,10 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 		handler: () => void
 	}>;
 	labels = {
+		edit: "Update this module",
+		active: "Set active",
+		sites: "View the list of sites",
+		cache: "Clear cache",
 		filter: "Quick filter",
 		cancel: "Cancel"
 	};
@@ -116,6 +120,10 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 		}
 
 		this.labels = {
+			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
+			active: await this.configSvc.getResourceAsync("portals.organizations.list.active"),
+			sites: await this.configSvc.getResourceAsync("portals.sites.title.list", { info: "" }),
+			cache: await this.configSvc.getResourceAsync("portals.common.cache.title"),
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
@@ -323,6 +331,12 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateHomeAsync(this.portalsCoreSvc.getAppURL(undefined, "list", organization.ansiTitle, { SystemID: organization.ID }, "site", "core"));
+	}
+
+	async clearCacheAsync(event: Event, organization: Organization) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.portalsCoreSvc.clearCacheAsync("organization", organization.ID);
 	}
 
 	async exportToExcelAsync() {

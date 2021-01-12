@@ -3199,4 +3199,24 @@ export class PortalsCoreService extends BaseService {
 		};
 	}
 
+	public async clearCacheAsync(objectName: string, objectID: string) {
+		await this.appFormsSvc.showAlertAsync(
+			"Cache",
+			await this.configSvc.getResourceAsync("portals.common.cache.confirm"),
+			undefined,
+			async () => {
+				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.common.cache.title"));
+				await super.readAsync(
+					super.getURI("caches", objectName, "object-id=" + objectID),
+					async _ => await this.appFormsSvc.showAlertAsync("Cache", await this.configSvc.getResourceAsync("portals.common.cache.done")),
+					async error => await this.appFormsSvc.showErrorAsync(error),
+					undefined,
+					true
+				);
+			},
+			await this.configSvc.getResourceAsync("common.buttons.ok"),
+			await this.configSvc.getResourceAsync("common.buttons.cancel")
+		);
+	}
+
 }

@@ -63,7 +63,8 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		view: "View the list of child desktops",
 		portlets: "Portlets",
 		filter: "Quick filter",
-		cancel: "Cancel"
+		cancel: "Cancel",
+		cache: "Clear cache"
 	};
 	filtering = false;
 	private objects = new Array<Desktop>();
@@ -149,7 +150,8 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			view: await this.configSvc.getResourceAsync("portals.desktops.list.view"),
 			portlets: await this.configSvc.getResourceAsync("portals.portlets.title.list", { info: "" }),
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
-			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
+			cache: await this.configSvc.getResourceAsync("portals.common.cache.title")
 		};
 
 		if (this.searching) {
@@ -354,6 +356,12 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
 		await this.portalsCoreSvc.refreshDesktopAsync(desktop.ID, async _ => await this.appFormsSvc.showToastAsync("The desktop was freshen-up"));
+	}
+
+	async clearCacheAsync(event: Event, desktop: Desktop) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.portalsCoreSvc.clearCacheAsync("desktop", desktop.ID);
 	}
 
 	async exportToExcelAsync() {
