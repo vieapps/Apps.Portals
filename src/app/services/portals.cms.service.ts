@@ -1035,7 +1035,19 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async refreshContentAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await this.portalsCoreSvc.refreshAsync("cms.content", id, onNext, onError, true, headers);
+		await this.portalsCoreSvc.refreshAsync(
+			"cms.content",
+			id,
+			data => {
+				Content.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			onError,
+			true,
+			headers
+		);
 	}
 
 	private processContentUpdateMessage(message: AppMessage) {
@@ -1213,7 +1225,19 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async refreshItemAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await this.portalsCoreSvc.refreshAsync("cms.item", id, onNext, onError, true, headers);
+		await this.portalsCoreSvc.refreshAsync(
+			"cms.item",
+			id,
+			data => {
+				Item.update(data);
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			onError,
+			true,
+			headers
+		);
 	}
 
 	private processItemUpdateMessage(message: AppMessage) {
