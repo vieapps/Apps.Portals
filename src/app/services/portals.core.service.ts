@@ -3189,4 +3189,14 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
+	public getPortalFileHeaders(object: CmsBaseModel) {
+		return {
+			"x-service-name": this.name,
+			"x-object-name": object.contentType.getObjectName(),
+			"x-system-id": object.SystemID,
+			"x-entity": object.contentType.ID,
+			"x-object-id": object.ID
+		};
+	}
+
 }

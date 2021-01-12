@@ -343,6 +343,24 @@ export class FilesService extends BaseService {
 		);
 	}
 
+	public async deleteThumbnailAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		await super.deleteAsync(
+			super.getURI("thumbnail", id),
+			data => {
+				if (onNext !== undefined) {
+					onNext(data);
+				}
+			},
+			error => {
+				console.error(super.getErrorMessage("Error occurred while deleting a thumbnail", error));
+				if (onError !== undefined) {
+					onError(error);
+				}
+			},
+			headers
+		);
+	}
+
 	public getAttachmentsFormControl(name: string, segment: string, label: string, allowSelect: boolean = false, allowDelete: boolean = false, allowEdit: boolean = false, editAttachmentModalPage?: any, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const controlConfig = {
 			Name: name || "Attachments",

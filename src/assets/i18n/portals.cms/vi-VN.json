@@ -270,7 +270,8 @@
 						"confirm": {
 							"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo nội dung?",
 							"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của nội dung?",
-							"delete": "Chắc chắn muốn xoá bỏ nội dung?"
+							"delete": "Chắc chắn muốn xoá bỏ nội dung?",
+							"deleteThumbnail": "Chắc chắn muốn xoá ảnh đại diện?"
 						},
 						"success": {
 							"new": "Đã khởi tạo nội dung thành công",
@@ -280,7 +281,8 @@
 					},
 					"buttons": {
 						"delete": "Xoá nội dung",
-						"remove": "Đồng ý xoá"
+						"remove": "Đồng ý xoá",
+						"deleteThumbnail": "Xoá ảnh đại diện"
 					}
 				},
 				"view": {

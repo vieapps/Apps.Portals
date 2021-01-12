@@ -45,7 +45,8 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		status: "Status",
 		update: "Update",
 		moderate: "Moderate",
-		delete: "Delete"
+		delete: "Delete",
+		deleteThumbnail: "Delete Thumbnail"
 	};
 	actions: Array<{
 		text: string,
@@ -119,10 +120,8 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		}
 
 		if (!canView) {
-			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateBackAsync()
-			]));
+			await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync("Hmmmmmm...."));
+			await this.configSvc.navigateBackAsync();
 			return;
 		}
 
@@ -133,15 +132,18 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			status: await this.configSvc.getResourceAsync("portals.cms.contents.controls.Status.label"),
 			update: await this.configSvc.getResourceAsync("common.buttons.update"),
 			moderate: await this.configSvc.getResourceAsync("common.buttons.moderate"),
-			delete: await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete")
+			delete: await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"),
+			deleteThumbnail: await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.deleteThumbnail")
 		};
 
 		if (this.canEdit) {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(this.resources.update, "create", () => this.updateAsync()),
-				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderateAsync()),
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.deleteAsync())
 			];
+			if (this.canModerate) {
+				this.actions.insert(this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderateAsync()), 1);
+			}
 		}
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
@@ -184,10 +186,35 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 		formConfig.push(
 			this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments"),
+		);
+		if (this.canEdit) {
+			const buttons = this.appFormsSvc.getButtonControls(
+				"attachments",
+				{
+					Name: "DeleteThumbnail",
+					Label: this.resources.deleteThumbnail,
+					OnClick: async () => await this.deleteThumbnailAsync(),
+					Options: {
+						Fill: "clear",
+						Color: "danger",
+						Css: "ion-float-end",
+						Icon: {
+							Name: "trash",
+							Slot: "start"
+						}
+					}
+				}
+			);
+			buttons.Name = "ThumbnailButtons";
+			formConfig.push(buttons);
+		}
+
+		formConfig.push(
 			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label")),
 			this.portalsCmsSvc.getPermanentLinkFormControl(this.content, "management"),
 			this.portalsCoreSvc.getAuditFormControl(this.content, "management")
 		);
+
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 
 		const control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
@@ -254,11 +281,16 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	private prepareAttachments(name: string, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo) {
 		const formControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, name));
 		const isThumbnails = AppUtility.isEquals(name, "Thumbnails");
-		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, control => control.Hidden = control.value === undefined);
+		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, control => {
+			control.Hidden = control.value === undefined;
+			if (isThumbnails) {
+				this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons").Hidden = control.Hidden;
+			}
+		});
 	}
 
 	private prepareValues() {
-		this.formControls.filter(control => !control.Hidden && !AppUtility.isEquals(control.Name, "Thumbnails") && !AppUtility.isEquals(control.Name, "Attachments") && !AppUtility.isEquals(control.Name, "Buttons")).forEach(async control => {
+		this.formControls.filter(ctrl => !ctrl.Hidden && ctrl.Name !== "Thumbnails" && ctrl.Name !== "Attachments" && ctrl.Name !== "Buttons" && ctrl.Name !== "ThumbnailButtons").forEach(async control => {
 			control.value = AppUtility.isEquals(control.Name, "Audits")
 				? await this.portalsCoreSvc.getAuditInfoAsync(this.content)
 				: this.content[control.Name];
@@ -373,6 +405,27 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				);
 			},
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove"),
+			await this.configSvc.getResourceAsync("common.buttons.cancel")
+		);
+	}
+
+	async deleteThumbnailAsync() {
+		await this.appFormsSvc.showAlertAsync(
+			undefined,
+			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.deleteThumbnail"),
+			undefined,
+			async () => {
+				await this.filesSvc.deleteThumbnailAsync(
+					this.content.thumbnails[0].ID,
+					async _ => {
+						this.prepareAttachments("Thumbnails", [], undefined, this.content.thumbnails[0]);
+						this.content.thumbnails.removeAll();
+					},
+					async error => await this.appFormsSvc.showErrorAsync(error),
+					this.portalsCoreSvc.getPortalFileHeaders(this.content)
+				);
+			},
+			await this.configSvc.getResourceAsync("common.buttons.delete"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
 	}

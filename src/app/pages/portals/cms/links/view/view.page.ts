@@ -49,7 +49,8 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 		status: "Status",
 		update: "Update",
 		moderate: "Moderate",
-		delete: "Delete"
+		delete: "Delete",
+		deleteThumbnail: "Delete Thumbnail"
 	};
 	actions: Array<{
 		text: string,
@@ -137,7 +138,8 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 			status: await this.configSvc.getResourceAsync("portals.cms.links.controls.Status.label"),
 			update: await this.configSvc.getResourceAsync("common.buttons.update"),
 			moderate: await this.configSvc.getResourceAsync("common.buttons.moderate"),
-			delete: await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.delete")
+			delete: await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.delete"),
+			deleteThumbnail: await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.deleteThumbnail")
 		};
 
 		if (this.canEdit) {
@@ -184,7 +186,31 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.link", undefined, { "x-content-type-id": this.link.RepositoryEntityID });
 		formConfig.push(
-			this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments"),
+			this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments")
+		);
+		if (this.canEdit) {
+			const buttons = this.appFormsSvc.getButtonControls(
+				"attachments",
+				{
+					Name: "DeleteThumbnail",
+					Label: this.resources.deleteThumbnail,
+					OnClick: async () => await this.deleteThumbnailAsync(),
+					Options: {
+						Fill: "clear",
+						Color: "danger",
+						Css: "ion-float-end",
+						Icon: {
+							Name: "trash",
+							Slot: "start"
+						}
+					}
+				}
+			);
+			buttons.Name = "ThumbnailButtons";
+			formConfig.push(buttons);
+		}
+
+		formConfig.push(
 			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label")),
 			this.portalsCoreSvc.getAuditFormControl(this.link, "basic")
 		);
@@ -264,11 +290,16 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 	private prepareAttachments(name: string, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo) {
 		const formControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, name));
 		const isThumbnails = AppUtility.isEquals(name, "Thumbnails");
-		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, control => control.Hidden = control.value === undefined);
+		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, control => {
+			control.Hidden = control.value === undefined;
+			if (isThumbnails) {
+				this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons").Hidden = control.Hidden;
+			}
+		});
 	}
 
 	private prepareValues() {
-		this.formControls.filter(control => !control.Hidden && !AppUtility.isEquals(control.Name, "Thumbnails") && !AppUtility.isEquals(control.Name, "Attachments") && !AppUtility.isEquals(control.Name, "Buttons")).forEach(async control => {
+		this.formControls.filter(ctrl => !ctrl.Hidden && ctrl.Name !== "Thumbnails" && ctrl.Name !== "Attachments" && ctrl.Name !== "Buttons" && ctrl.Name !== "ThumbnailButtons").forEach(async control => {
 			control.value = AppUtility.isEquals(control.Name, "Audits")
 				? await this.portalsCoreSvc.getAuditInfoAsync(this.link)
 				: this.link[control.Name];
@@ -411,6 +442,27 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 					checked: mode.value === "delete"
 				};
 			})
+		);
+	}
+
+	async deleteThumbnailAsync() {
+		await this.appFormsSvc.showAlertAsync(
+			undefined,
+			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.deleteThumbnail"),
+			undefined,
+			async () => {
+				await this.filesSvc.deleteThumbnailAsync(
+					this.link.thumbnails[0].ID,
+					async _ => {
+						this.prepareAttachments("Thumbnails", [], undefined, this.link.thumbnails[0]);
+						this.link.thumbnails.removeAll();
+					},
+					async error => await this.appFormsSvc.showErrorAsync(error),
+					this.portalsCoreSvc.getPortalFileHeaders(this.link)
+				);
+			},
+			await this.configSvc.getResourceAsync("common.buttons.delete"),
+			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
 	}
 
