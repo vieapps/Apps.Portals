@@ -36,6 +36,9 @@ ion-list {
 		max-width: 320px;
 	}
 }
+ion-menu.menu-side-start > ion-header > ion-toolbar > ion-thumbnail {
+	cursor: pointer;
+}
 ion-menu.menu-side-start > ion-header > ion-toolbar > ion-thumbnail img {
 	border-radius: 50%;
 	width: 80%;
@@ -73,7 +76,7 @@ ion-footer > ion-toolbar {
 	padding-left: 8px;
 } 
 
-/* header toolbars on iOS */
+/* header toolbars & searchbars on iOS */
 .plt-ios ion-header ion-toolbar:first-child {
 	padding-top: 0;
 }
