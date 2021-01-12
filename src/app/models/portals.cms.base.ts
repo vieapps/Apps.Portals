@@ -88,13 +88,10 @@ export abstract class PortalCmsBase extends BaseModel {
 		if (contentType !== undefined && AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
 			if (AppUtility.isNotEmpty(original.ID)) {
 				contentType.ExtendedPropertyDefinitions.filter(definition => definition.Mode === "DateTime").forEach(definition => {
-					const value = original[definition.Name];
-					if (AppUtility.isNotNull(value)) {
-						const ctrl = contentType.ExtendedControlDefinitions.first(def => def.Name === definition.Name);
-						copy[definition.Name] = ctrl !== undefined && ctrl.DatePickerWithTimes === true
-							? AppUtility.toIsoDateTime(new Date(value), true)
-							: AppUtility.toIsoDate(new Date(value));
-					}
+					const ctrl = contentType.ExtendedControlDefinitions.first(def => def.Name === definition.Name);
+					copy[definition.Name] = ctrl !== undefined && ctrl.DatePickerWithTimes === true
+						? AppUtility.toIsoDateTime(new Date(original[definition.Name]), true)
+						: AppUtility.toIsoDate(new Date(original[definition.Name]));
 				});
 			}
 			else {
@@ -108,7 +105,7 @@ export abstract class PortalCmsBase extends BaseModel {
 							value = new Date(definition.DefaultValue);
 							break;
 						case "IntegralNumber":
-						case "IntegralNumber":
+						case "FloatingPointNumber":
 							value = +definition.DefaultValue;
 							break;
 					}
@@ -126,12 +123,7 @@ export abstract class PortalCmsBase extends BaseModel {
 		if (contentType !== undefined && AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
 			contentType.ExtendedPropertyDefinitions.forEach(definition => {
 				let value = data[definition.Name];
-				if (AppUtility.isNotNull(value)) {
-					if (definition.Mode === "DateTime" && AppUtility.isNotEmpty(value)) {
-						value = new Date(value);
-					}
-				}
-				else if (AppUtility.isNotNull(definition.DefaultValue)) {
+				if (AppUtility.isNull(value) && AppUtility.isNotNull(definition.DefaultValue)) {
 					switch (definition.Mode) {
 						case "YesNo":
 							value = definition.DefaultValue.toLowerCase() === "true";
@@ -140,10 +132,13 @@ export abstract class PortalCmsBase extends BaseModel {
 							value = new Date(definition.DefaultValue);
 							break;
 						case "IntegralNumber":
-						case "IntegralNumber":
+						case "FloatingPointNumber":
 							value = +definition.DefaultValue;
 							break;
 					}
+				}
+				else if (definition.Mode === "DateTime" && AppUtility.isNotEmpty(value)) {
+					value = new Date(value);
 				}
 				this[definition.Name] = value;
 			});
