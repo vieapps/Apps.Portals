@@ -400,6 +400,9 @@ export class AppUtility {
 			return undefined;
 		}
 		const datetime = new Date(date);
+		if (isNaN(datetime.getTime())) {
+			return undefined;
+		}
 		if (useLocalTimezone) {
 			const timeOffsetInHours = (datetime.getTimezoneOffset() / 60) * (-1);
 			datetime.setHours(datetime.getHours() + timeOffsetInHours);
@@ -414,9 +417,10 @@ export class AppUtility {
 
 	/** Converts date-time object to ISO 8601 date string to use with date-picker */
 	public static toIsoDate(date: string | number | Date) {
-		return date === undefined || "-" === date
+		const isoDateTime = date === undefined || "-" === date
 			? undefined
-			: this.toIsoDateTime(date, true, true).substr(0, 10);
+			: this.toIsoDateTime(date, true, true);
+		return isoDateTime !== undefined ? isoDateTime.substr(0, 10) : undefined;
 	}
 
 	/** Converts the ANSI string to a string that can use in an URI */
