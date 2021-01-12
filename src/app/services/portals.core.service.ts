@@ -1283,42 +1283,42 @@ export class PortalsCoreService extends BaseService {
 
 		if (this.configSvc.isAuthenticated) {
 			const account = this.configSvc.getAccount();
-			const canManageOrganization = this.canManageOrganization(this.activeOrganization, account);
-			const canModerateOrganization = this.canModerateOrganization(this.activeOrganization, account);
+			const isSystemAdministrator = this.authSvc.isSystemAdministrator(account);
+			const canManageOrganization = isSystemAdministrator || this.canManageOrganization(this.activeOrganization, account);
+			const canModerateOrganization = canManageOrganization || this.canModerateOrganization(this.activeOrganization, account);
 
-			if (this.authSvc.isSystemAdministrator(account)) {
+			if (isSystemAdministrator) {
 				items.push(
 					{
 						title: "{{portals.sidebar.logs}}",
 						link: "/logs",
 						direction: "root",
 						icon: "file-tray-full"
-					},
-					{
-						title: "{{portals.sidebar.organizations}}",
-						link: this.getRouterLink(undefined, "list", "all", "organization", "core"),
-						direction: "root",
-						icon: "business"
 					}
 				);
 			}
 
 			if (canManageOrganization) {
-				items.push({
-					title: "{{portals.sidebar.roles}}",
-					link: this.getRouterLink(undefined, "list", "all", "role", "core"),
-					direction: "root",
-					icon: "body"
-				});
-			}
-
-			if (canModerateOrganization) {
-				items.push({
-					title: "{{portals.sidebar.modules}}",
-					link: this.getRouterLink(undefined, "list", "all", "module", "core"),
-					direction: "root",
-					icon: "albums"
-				});
+				items.push(
+					{
+						title: "{{portals.sidebar.organizations}}",
+						link: this.getRouterLink(undefined, "list", "all", "organization", "core"),
+						direction: "root",
+						icon: "business"
+					},
+					{
+						title: "{{portals.sidebar.roles}}",
+						link: this.getRouterLink(undefined, "list", "all", "role", "core"),
+						direction: "root",
+						icon: "body"
+					},
+					{
+						title: "{{portals.sidebar.modules}}",
+						link: this.getRouterLink(undefined, "list", "all", "module", "core"),
+						direction: "root",
+						icon: "albums"
+					}
+				);
 			}
 
 			items.push({
@@ -1375,6 +1375,20 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
+	public addOrganizationControl(controls: AppFormsControlConfig[], label: string, organization?: Organization, readOnly: boolean = true, position: number = 0) {
+		controls.insert({
+			Name: "Organization",
+			Type: "Text",
+			Segment: "basic",
+			Extras: { Text: (organization || this.activeOrganization).Title },
+			Options: {
+				Label: label,
+				ReadOnly: readOnly
+			}
+		}, position);
+		return controls;
+	}
+
 	public prepareApprovalStatusControl(controlConfig: AppFormsControlConfig, selectInterface?: string) {
 		controlConfig.Options.SelectOptions.Interface = selectInterface || "popover";
 		controlConfig.Options.SelectOptions.Values = AppUtility.isNotEmpty(controlConfig.Options.SelectOptions.Values)
@@ -1384,6 +1398,28 @@ export class PortalsCoreService extends BaseService {
 			: BaseModel.approvalStatus.map(value => {
 					return { Value: value, Label: `{{status.approval.${value}}}` };
 				});
+		return controlConfig;
+	}
+
+	public async prepareLanguageControlAsync(controlConfig: AppFormsControlConfig, required: boolean = false, addUnspecified: boolean = true, selectInterface?: string) {
+		controlConfig.Required = required;
+		controlConfig.Options.SelectOptions.Interface = selectInterface || "popover";
+		controlConfig.Options.SelectOptions.Values = this.configSvc.languages.map(language => {
+			return { Value: language.Value, Label: language.Label };
+		});
+		if (addUnspecified) {
+			controlConfig.Options.SelectOptions.Values.insert({ Value: "-", Label: await this.configSvc.getResourceAsync("portals.common.unspecified") }, 0);
+		}
+		return controlConfig;
+	}
+
+	public async prepareThemeControlAsync(controlConfig: AppFormsControlConfig, selectInterface?: string) {
+		const themes = await this.getThemesAsync();
+		controlConfig.Options.SelectOptions.Interface = selectInterface || "alert";
+		controlConfig.Options.SelectOptions.Values = themes.map(theme => {
+			return { Value: theme.name, Label: theme.name };
+		});
+		controlConfig.Options.SelectOptions.Values.insert({ Value: "-", Label: await this.configSvc.getResourceAsync("portals.common.unspecified") }, 0);
 		return controlConfig;
 	}
 
