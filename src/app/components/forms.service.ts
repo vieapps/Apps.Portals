@@ -1280,7 +1280,7 @@ export class AppFormsService {
 	}
 
 	/** Shows the action sheet */
-	public async showActionSheetAsync(buttons: Array<{ text: string; role?: string; icon?: string; handler?: () => void }>, backdropDismiss: boolean = false, dontAddCancelButton: boolean = false) {
+	public async showActionSheetAsync(buttons: Array<{ text: string; role?: string; icon?: string; handler?: () => void }>, backdropDismiss: boolean = true, dontAddCancelButton: boolean = false) {
 		await this.hideLoadingAsync();
 		if (AppUtility.isFalse(dontAddCancelButton)) {
 			buttons.push(this.getActionSheetButton(await this.getResourceAsync("common.buttons.cancel"), "close", async () => await this.hideActionSheetAsync(), "cancel"));
