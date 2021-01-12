@@ -38,6 +38,34 @@ export abstract class PortalBase extends BaseModel {
 	/** The title (only ANSI characters) for working with URIs and filters */
 	public abstract ansiTitle: string;
 
+	/** Filters the collecting using 'indexOf' on ANSI Title */
+	public static getFilterBy(query: string, predicate?: (object: any) => boolean) {
+		const terms = AppUtility.toANSI(query.replace(/\"/g, "")).split(" ");
+		const andTerms = terms.filter(term => term[0] === "+").map(term => term.substr(1));
+		const orTerms = terms.except(terms.filter(term => term[0] === "+"));
+		const filterBy: (object: PortalBase) => boolean = object => {
+			let matched = predicate !== undefined ? predicate(object) : true;
+			if (matched && andTerms.length > 0) {
+				for (let index = 0; index < andTerms.length; index++) {
+					matched = object.ansiTitle.indexOf(andTerms[index]) > -1;
+					if (!matched) {
+						break;
+					}
+				}
+			}
+			if (matched && orTerms.length > 0) {
+				for (let index = 0; index < orTerms.length; index++) {
+					matched = object.ansiTitle.indexOf(orTerms[index]) > -1;
+					if (matched) {
+						break;
+					}
+				}
+			}
+			return matched;
+		};
+		return filterBy;
+	}
+
 }
 
 /** Interface of a module definition */
