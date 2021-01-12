@@ -138,17 +138,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "site");
-
-		formConfig.insert({
-			Name: "Organization",
-			Type: "Text",
-			Segment: "basic",
-			Extras: { Text: this.organization.Title },
-			Options: {
-				Label: "{{portals.sites.controls.Organization}}",
-				ReadOnly: true
-			}
-		}, 0);
+		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.sites.controls.Organization}}", this.organization);
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
 		control.Options.Rows = 2;
@@ -160,28 +150,15 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		control.Options.Type = "toggle";
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
-		control.Options.SelectOptions.Interface = "popover";
-		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
-			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values) as Array<string>).map(value => {
-				return { Value: value, Label: `{{status.approval.${value}}}` };
-			});
-		}
+		this.portalsCoreSvc.prepareApprovalStatusControl(control);
 		if (!this.canModerateOrganization) {
 			control.Options.Disabled = true;
 		}
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Language"));
-		control.Options.SelectOptions.Interface = "popover";
-		control.Options.SelectOptions.Values = this.configSvc.languages.map(language => {
-			return { Value: language.Value, Label: language.Label };
-		});
-
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Theme"));
-		// control.Options.Type = "dropdown";
-		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => {
-			return { Value: theme.name, Label: theme.name };
-		});
-		control.Options.SelectOptions.Values.insert({ Value: "-", Label: await this.configSvc.getResourceAsync("portals.common.unspecified") }, 0);
+		await Promise.all([
+			this.portalsCoreSvc.prepareLanguageControlAsync(formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Language")), true, false),
+			this.portalsCoreSvc.prepareThemeControlAsync(formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Theme")))
+		]);
 
 		const homeDesktopCtrl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "HomeDesktopID"));
 		const searchDesktopCtrl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SearchDesktopID"));

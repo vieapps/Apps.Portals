@@ -37,12 +37,15 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 
 	private organization: Organization;
 	private subscription: Subscription;
-	private isSystemAdministrator = false;
-	private canModerateOrganization = false;
+	private objects = new Array<Site>();
+
+	isSystemAdministrator = false;
+	canModerateOrganization = false;
 
 	title = "Sites";
 	sites = new Array<Site>();
 	searching = false;
+	filtering = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
@@ -57,6 +60,10 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		icon?: string,
 		handler: () => void
 	}>;
+	labels = {
+		filter: "Quick filter",
+		cancel: "Cancel"
+	};
 
 	get locale() {
 		return this.configSvc.locale;
@@ -117,6 +124,11 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 			return;
 		}
 
+		this.labels = {
+			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
+		};
+
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.sites.title.${(this.searching ? "search" : "list")}`);
 		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: this.isSystemAdministrator ? "" : `[${this.organization.Title}]` });
@@ -126,14 +138,14 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 			: [{ SystemID: { Equals: this.organization.ID } }];
 
 		if (this.searching) {
-			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.sites.list.searchbar");
+			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.sites.list.search");
 			PlatformUtility.focus(this.searchCtrl);
 			await this.appFormsSvc.hideLoadingAsync();
 		}
 		else {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.search"), "search", () => this.openSearchAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.search"), "search", () => this.openSearchAsync(false)),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
 			];
@@ -158,31 +170,47 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		return `${site.SubDomain}.${site.PrimaryDomain}` + (AppUtility.isNotEmpty(site.OtherDomains) ? `;${site.OtherDomains}` : "");
 	}
 
-	onStartSearch(event: any) {
-		this.cancelSearch();
+	async onSearch(event: any) {
+		if (this.subscription !== undefined) {
+			this.subscription.unsubscribe();
+			this.subscription = undefined;
+		}
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
 			if (this.searching) {
+				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.messages.searching"));
 				this.sites = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				this.searchAsync(() => this.infiniteScrollCtrl.disabled = false);
+				await this.searchAsync(async () => {
+					this.infiniteScrollCtrl.disabled = false;
+					await this.appFormsSvc.hideLoadingAsync();
+				});
 			}
 			else {
-				this.prepareResults();
+				this.sites = this.objects.filter(Site.getFilterBy(this.filterBy.Query));
 			}
+		}
+		else {
+			this.onClear();
 		}
 	}
 
-	onClearSearch() {
-		this.cancelSearch();
+	onClear() {
 		this.filterBy.Query = undefined;
-		this.sites = [];
+		this.sites = this.filtering ? this.objects.map(obj => obj) : [];
 	}
 
-	onCancelSearch() {
-		this.onClearSearch();
-		this.startSearchAsync();
+	async onCancel() {
+		if (this.searching) {
+			await this.configSvc.navigateBackAsync();
+		}
+		else {
+			PlatformUtility.invoke(() => {
+				this.onClear();
+				this.filtering = false;
+			}, 123);
+		}
 	}
 
 	async onInfiniteScrollAsync() {
@@ -226,16 +254,6 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	private cancelSearch(dontDisableInfiniteScroll?: boolean) {
-		if (this.subscription !== undefined) {
-			this.subscription.unsubscribe();
-			this.subscription = undefined;
-		}
-		if (AppUtility.isFalse(dontDisableInfiniteScroll)) {
-			this.infiniteScrollCtrl.disabled = true;
-		}
-	}
-
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
 			(results || []).forEach(o => this.sites.push(Site.get(o.ID) || Site.deserialize(o, Site.get(o.ID))));
@@ -272,9 +290,17 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		await this.configSvc.navigateForwardAsync("/portals/core/sites/create");
 	}
 
-	async openSearchAsync() {
+	async openSearchAsync(filtering: boolean = true) {
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync("/portals/core/sites/search");
+		if (filtering) {
+			this.filtering = true;
+			PlatformUtility.focus(this.searchCtrl);
+			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
+			this.objects = this.sites.map(obj => obj);
+		}
+		else {
+			await this.configSvc.navigateForwardAsync("/portals/core/sites/search");
+		}
 	}
 
 	async editAsync(event: Event, site: Site) {

@@ -1,25 +1,29 @@
 <ion-header>
 	<ion-toolbar [color]="color">
-		<ion-buttons slot="start">
-			<ion-back-button *ngIf="parentRole || searching" text=""></ion-back-button>
-			<ion-menu-button *ngIf="!parentRole && !searching"></ion-menu-button>
+		<ion-buttons [hidden]="searching || filtering" slot="start">
+			<ion-back-button [hidden]="!parentRole" text=""></ion-back-button>
+			<ion-menu-button [hidden]="parentRole"></ion-menu-button>
 		</ion-buttons>
-		<ion-buttons *ngIf="!searching" slot="end">
-			<ion-button [hidden]="searching" (click)="openSearchAsync()">
+		<ion-buttons [hidden]="searching || filtering" slot="end">
+			<ion-button [title]="labels.filter" (click)="openSearchAsync()">
 				<ion-icon name="search" slot="icon-only"></ion-icon>
 			</ion-button>
 		</ion-buttons>
-		<ion-title [hidden]="searching">
+		<ion-title [hidden]="searching || filtering">
 			{{ title }}
 		</ion-title>
-		<ion-searchbar [hidden]="!searching"
-			(ionChange)="onStartSearch($event)"
-			(ionClear)="onClearSearch()"
-			(ionCancel)="onCancelSearch()"></ion-searchbar>
+		<ion-searchbar [hidden]="!searching && !filtering"
+			debounce="450"
+			showCancelButton="always"
+			cancelButtonIcon="arrow-back"
+			[cancelButtonText]="labels.cancel"
+			(ionChange)="onSearch($event)"
+			(ionClear)="onClear()"
+			(ionCancel)="onCancel()"></ion-searchbar>
 	</ion-toolbar>
 </ion-header>
 
-<ion-footer *ngIf="gotPagination || actions">
+<ion-footer *ngIf="(gotPagination || actions) && !filtering">
 	<ion-toolbar [color]="color">
 		<span *ngIf="gotPagination" slot="start">
 			<ion-icon name="body" color="primary" slot="start"></ion-icon>

@@ -133,20 +133,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "desktop");
-
-		formConfig.insert(
-			{
-				Name: "Organization",
-				Type: "Text",
-				Segment: "basic",
-				Extras: { Text: this.organization.Title },
-				Options: {
-					Label: "{{portals.desktops.controls.Organization}}",
-					ReadOnly: true
-				}
-			},
-			0
-		);
+		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.desktops.controls.Organization}}");
 
 		if (!AppUtility.isNotEmpty(this.desktop.ID)) {
 			formConfig.insert(
@@ -194,21 +181,10 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 			control.Options.LookupOptions = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID")).Options.LookupOptions;
 		}
 
-		const unspecified = await this.configSvc.getResourceAsync("portals.common.unspecified");
-
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Language"));
-		control.Required = false;
-		control.Options.SelectOptions.Interface = "popover";
-		control.Options.SelectOptions.Values = this.configSvc.languages.map(language => {
-			return { Value: language.Value, Label: language.Label };
-		});
-		control.Options.SelectOptions.Values.insert({ Value: "-", Label: unspecified }, 0);
-
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Theme"));
-		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => {
-			return { Value: theme.name, Label: theme.name };
-		});
-		control.Options.SelectOptions.Values.insert({ Value: "-", Label: unspecified }, 0);
+		await Promise.all([
+			this.portalsCoreSvc.prepareLanguageControlAsync(formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Language"))),
+			this.portalsCoreSvc.prepareThemeControlAsync(formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Theme")))
+		]);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Template"));
 		control.Options.Rows = 18;
@@ -262,7 +238,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 			return { Value: value, Label: `{{portals.desktops.update.seo.${value}}}` };
 		});
 		await Promise.all(seo.map(async s => s.Label = await this.appFormsSvc.getResourceAsync(s.Label)));
-		seo.insert({ Value: "-", Label: unspecified }, 0);
+		seo.insert({ Value: "-", Label: await this.configSvc.getResourceAsync("portals.common.unspecified") }, 0);
 		control.SubControls.Controls.filter(ctrl => ctrl.Type === "Select").forEach(ctrl => ctrl.Options.SelectOptions.Values = seo);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));

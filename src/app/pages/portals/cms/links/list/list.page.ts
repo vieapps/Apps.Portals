@@ -186,7 +186,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 
 		if (this.searching) {
 			this.prepareFilterBy(false);
-			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.links.list.searchbar");
+			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.links.list.search");
 			PlatformUtility.focus(this.searchCtrl);
 			await this.appFormsSvc.hideLoadingAsync();
 		}
@@ -277,7 +277,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			: AppUtility.format(this.children, { number: link.childrenIDs.length, children: `${link.Children[0].Title}${(link.childrenIDs.length > 1 ? `, ${link.Children[1].Title}` : "")}, ...` });
 	}
 
-	onStartSearch(event: any) {
+	onSearch(event: any) {
 		this.cancelSearch();
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
@@ -293,15 +293,10 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	onClearSearch() {
+	onClear() {
 		this.cancelSearch();
 		this.filterBy.Query = undefined;
 		this.links = [];
-	}
-
-	onCancelSearch() {
-		this.onClearSearch();
-		this.startSearchAsync();
 	}
 
 	async onInfiniteScrollAsync() {

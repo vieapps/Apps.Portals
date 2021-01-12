@@ -106,15 +106,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "role");
-		formConfig.insert({
-			Name: "Organization",
-			Type: "Text",
-			Extras: { Text: this.organization.Title },
-			Options: {
-				Label: "{{portals.roles.controls.Organization}}",
-				ReadOnly: true
-			},
-		}, 0);
+		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.roles.controls.Organization}}");
 
 		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title")).Options.AutoFocus = true;
 

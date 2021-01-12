@@ -1,11 +1,9 @@
-import { Subscription } from "rxjs";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
+import { IonList, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
-import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -32,11 +30,9 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
 
-	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
-	private subscription: Subscription;
 	private isSystemAdministrator = false;
 	private canModerateOrganization = false;
 	private systemID: string;
@@ -47,7 +43,6 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 
 	title = "Modules";
 	modules = new Array<Module>();
-	searching = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
@@ -88,12 +83,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		if (!this.searching) {
-			AppEvents.off(this.portalsCoreSvc.name, this.definition !== undefined ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
-		}
-		else if (this.subscription !== undefined) {
-			this.subscription.unsubscribe();
-		}
+		AppEvents.off(this.portalsCoreSvc.name, this.definition !== undefined ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
 	}
 
 	private async initializeAsync() {
@@ -138,29 +128,18 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 			this.filterBy.And.push({ ModuleDefinitionID: { Equals: this.definitionID } });
 		}
 
-		this.searching = this.configSvc.currentUrl.endsWith("/search");
-		const title = await this.configSvc.getResourceAsync(`portals.modules.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
-
-		if (this.searching) {
-			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.modules.list.searchbar");
-			PlatformUtility.focus(this.searchCtrl);
-			await this.appFormsSvc.hideLoadingAsync();
-		}
-		else {
-			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.search"), "search", () => this.openSearchAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
-			];
-			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
-			AppEvents.on("Portals", info => {
-				if (info.args.Object === "Module" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
-					this.prepareResults();
-				}
-			}, this.definition !== undefined ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
-		}
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("portals.modules.title.list", { info: `[${this.organization.Title}]` });
+		this.actions = [
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.create"), "create", () => this.createAsync()),
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
+		];
+		await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+		AppEvents.on("Portals", info => {
+			if (info.args.Object === "Module" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
+				this.prepareResults();
+			}
+		}, this.definition !== undefined ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
 
 		if (this.configSvc.isDebug) {
 			console.log("<Portals>: Modules", this.configSvc.requestParams, this.filterBy, this.sortBy);
@@ -182,37 +161,6 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 
 	async createAsync() {
 		await this.configSvc.navigateForwardAsync("/portals/core/modules/create");
-	}
-
-	async openSearchAsync() {
-		await this.configSvc.navigateForwardAsync("/portals/core/modules/search");
-	}
-
-	onStartSearch(event: any) {
-		this.cancelSearch();
-		if (AppUtility.isNotEmpty(event.detail.value)) {
-			this.filterBy.Query = event.detail.value;
-			if (this.searching) {
-				this.modules = [];
-				this.pageNumber = 0;
-				this.pagination = AppPagination.getDefault();
-				this.searchAsync(() => this.infiniteScrollCtrl.disabled = false);
-			}
-			else {
-				this.prepareResults();
-			}
-		}
-	}
-
-	onClearSearch() {
-		this.cancelSearch();
-		this.filterBy.Query = undefined;
-		this.modules = [];
-	}
-
-	onCancelSearch() {
-		this.onClearSearch();
-		this.startSearchAsync();
 	}
 
 	async onInfiniteScrollAsync() {
@@ -240,7 +188,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 	}
 
 	private async searchAsync(onNext?: () => void) {
-		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
+		this.request = AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
@@ -248,47 +196,27 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
 		};
-		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchModule(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
-		}
-		else {
-			await this.portalsCoreSvc.searchModuleAsync(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
-		}
-	}
-
-	private cancelSearch(dontDisableInfiniteScroll?: boolean) {
-		if (this.subscription !== undefined) {
-			this.subscription.unsubscribe();
-			this.subscription = undefined;
-		}
-		if (AppUtility.isFalse(dontDisableInfiniteScroll)) {
-			this.infiniteScrollCtrl.disabled = true;
-		}
+		await this.portalsCoreSvc.searchModuleAsync(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
 	}
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
-		if (this.searching) {
-			(results || []).forEach(o => this.modules.push(Module.get(o.ID) || Module.deserialize(o, Module.get(o.ID))));
+		const predicate: (module: Module) => boolean = AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.definitionID)
+			? obj => obj.SystemID === this.systemID && obj.ModuleDefinitionID === this.definitionID
+			: AppUtility.isNotEmpty(this.definitionID)
+				? this.isSystemAdministrator
+					? obj => obj.ModuleDefinitionID === this.definitionID
+					: obj => obj.SystemID === this.systemID && obj.ModuleDefinitionID === this.definitionID
+				: obj => obj.SystemID === this.systemID;
+		let objects = results === undefined
+			? Module.instances.toList(predicate)
+			: Module.toList(results).Where(predicate);
+		objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
+		if (results === undefined && this.pagination !== undefined) {
+			objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 		}
-		else {
-			const predicate: (module: Module) => boolean = AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.definitionID)
-				? obj => obj.SystemID === this.systemID && obj.ModuleDefinitionID === this.definitionID
-				: AppUtility.isNotEmpty(this.definitionID)
-					? this.isSystemAdministrator
-						? obj => obj.ModuleDefinitionID === this.definitionID
-						: obj => obj.SystemID === this.systemID && obj.ModuleDefinitionID === this.definitionID
-					: obj => obj.SystemID === this.systemID;
-			let objects = results === undefined
-				? Module.instances.toList(predicate)
-				: Module.toList(results).Where(predicate);
-			objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
-			if (results === undefined && this.pagination !== undefined) {
-				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
-			}
-			this.modules = results === undefined
-				? objects.ToArray()
-				: this.modules.concat(objects.ToArray());
-		}
+		this.modules = results === undefined
+			? objects.ToArray()
+			: this.modules.concat(objects.ToArray());
 		if (onNext !== undefined) {
 			onNext();
 		}

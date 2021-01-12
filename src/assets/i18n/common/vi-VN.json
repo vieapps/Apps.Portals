@@ -32,10 +32,12 @@
 			"search": "Tìm",
 			"upload": "Tải lên",
 			"download": "Tải xuống",
-			"refresh": "Làm tươi"
+			"refresh": "Làm tươi",
+			"filter": "Lọc nhanh"
 		},
 		"messages": {
 			"loading": "Tải dữ liệu...",
+			"searching": "Tìm kiếm dữ liệu...",
 			"activating": "Kích hoạt...",
 			"processing": "Xử lý...",
 			"errors": {

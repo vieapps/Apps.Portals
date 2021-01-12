@@ -39,16 +39,16 @@
 			},
 			"categories": {
 				"title": {
-					"list": "Danh sách chuyên mục {{info}}",
-					"search": "Tìm kiếm chuyên mục",
-					"reorder": "Thay đổi thứ tự chuyên mục",
-					"create": "Tạo mới chuyên mục",
-					"update": "Cập nhật chuyên mục"
+					"list": "Danh sách phân loại {{info}}",
+					"search": "Tìm kiếm phân loại",
+					"reorder": "Thay đổi thứ tự phân loại",
+					"create": "Tạo mới phân loại",
+					"update": "Cập nhật phân loại"
 				},
 				"controls": {
-					"Info": "Chuyên mục của",
+					"Info": "phân loại của",
 					"ParentID": {
-						"label": "Chuyên mục cấp trên",
+						"label": "phân loại cấp trên",
 						"placeholder": "",
 						"description": ""
 					},
@@ -58,7 +58,7 @@
 						"description": ""
 					},
 					"Title": {
-						"label": "Tên chuyên mục",
+						"label": "Tên phân loại",
 						"placeholder": "",
 						"description": ""
 					},
@@ -75,12 +75,12 @@
 					"DesktopID": {
 						"label": "Desktop hiển thị",
 						"placeholder": "",
-						"description": "Desktop mặc định sử dụng để hiển thị các nội dung của chuyên mục, sẽ sử dụng desktop của kiểu dữ liệu nghiêp vụ nội dung tương ứng nếu không có desktop nào được chỉ định"
+						"description": "Desktop mặc định sử dụng để hiển thị các nội dung của phân loại, sẽ sử dụng desktop của kiểu dữ liệu nghiêp vụ nội dung tương ứng nếu không có desktop nào được chỉ định"
 					},
 					"OpenBy": {
-						"label": "Cách thức mở chuyên mục",
+						"label": "Cách thức mở phân loại",
 						"placeholder": "",
-						"description": "Chỉ định cách thức mở (tạo liên kết) của chuyên mục",
+						"description": "Chỉ định cách thức mở (tạo liên kết) của phân loại",
 						"DesktopWithAlias": "Mở desktop hiển thị với tên rút gọn",
 						"DesktopOnly": "Chỉ mở desktop hiển thị",
 						"SpecifiedURI": "Mở theo liên kết tĩnh được chỉ định ở dưới"
@@ -88,7 +88,7 @@
 					"SpecifiedURI": {
 						"label": "Liên kết tĩnh",
 						"placeholder": "",
-						"description": "Chỉ định liên kết tĩnh/cố định của chuyên mục.<br/>Tips: có thể sử dụng ký hiệu '<b>~/</b>' để chỉ định liên kết từ gốc (root), hoặc sử dụng '<b>javascript:</b>' để chỉ định chạy hàm Javascript."
+						"description": "Chỉ định liên kết tĩnh/cố định của phân loại.<br/>Tips: có thể sử dụng ký hiệu '<b>~/</b>' để chỉ định liên kết từ gốc (root), hoặc sử dụng '<b>javascript:</b>' để chỉ định chạy hàm Javascript."
 					},
 					"Notes": {
 						"label": "Ghi chú",
@@ -97,11 +97,11 @@
 					}
 				},
 				"list": {
-					"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác chuyên mục",
-					"children": "{{number}} chuyên mục cấp dưới: {{children}}",
+					"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác phân loại, đặt dấu + ở đầu nếu bắt buộc phải có",
+					"children": "{{number}} phân loại cấp dưới: {{children}}",
 					"labels": {
-						"edit": "Cập nhật chuyên mục",
-						"children": "Xem danh sách chuyên mục cấp dưới",
+						"edit": "Cập nhật phân loại",
+						"children": "Xem danh sách phân loại cấp dưới",
 						"view": "Xem danh sách nội dung"
 					},
 					"buttons": {
@@ -118,19 +118,19 @@
 					},
 					"messages": {
 						"confirm": {
-							"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo chuyên mục?",
-							"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của chuyên mục?",
-							"delete": "Chắc chắn muốn xoá bỏ chuyên mục và các thông tin liên quan?",
-							"remove": "Chuyên mục và toàn bộ nội dung tin/bài của chuyên mục này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
+							"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo phân loại?",
+							"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của phân loại?",
+							"delete": "Chắc chắn muốn xoá bỏ phân loại và các thông tin liên quan?",
+							"remove": "phân loại và toàn bộ nội dung tin/bài của phân loại này sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)"
 						},
 						"success": {
-							"new": "Đã khởi tạo chuyên mục thành công",
-							"update": "Đã cập nhật các thay đổi của chuyên mục thành công",
-							"delete": "Đã đưa chuyên mục và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
+							"new": "Đã khởi tạo phân loại thành công",
+							"update": "Đã cập nhật các thay đổi của phân loại thành công",
+							"delete": "Đã đưa phân loại và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
 						}
 					},
 					"buttons": {
-						"delete": "Xoá chuyên mục",
+						"delete": "Xoá phân loại",
 						"remove": "Đồng ý xoá"
 					}
 				}
@@ -138,6 +138,7 @@
 			"contents": {
 				"title": {
 					"search": "Tìm kiếm nội dung",
+					"filter": "Tìm nhanh theo từ khoá",
 					"list": "Danh sách nội dung {{info}}",
 					"create": "Tạo mới nội dung",
 					"update": "Cập nhật nội dung",
@@ -150,14 +151,14 @@
 						"description": "Nội dung sẽ chỉ xuất hiện công khai khi trạng thái là 'Xuất bản'"
 					},
 					"CategoryID": {
-						"label": "Chuyên mục",
+						"label": "phân loại",
 						"placeholder": "",
-						"description": "Chỉ định chuyên mục mà nội dung sẽ xuất hiện chính ở đó"
+						"description": "Chỉ định phân loại mà nội dung sẽ xuất hiện chính ở đó"
 					},
 					"OtherCategories": {
-						"label": "Chuyên mục đồng thời xuất hiện",
+						"label": "phân loại đồng thời xuất hiện",
 						"placeholder": "",
-						"description": "Chỉ định các chuyên mục mà nội dung sẽ đồng thời xuất hiện ở đó"
+						"description": "Chỉ định các phân loại mà nội dung sẽ đồng thời xuất hiện ở đó"
 					},
 					"Alias": {
 						"label": "Tên rút gọn",
@@ -256,7 +257,8 @@
 					}
 				},
 				"list": {
-					"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác"
+					"search": "cho từ khoá vào \"..\" để tìm kiếm chính xác trong phân loại, đặt dấu + ở đầu nếu bắt buộc phải có",
+					"filter": "nhập từ khoá (không dấu cũng được) để lọc theo tiêu đề, đặt dấu + ở đầu nếu bắt buộc phải có"
 				},
 				"update": {
 					"segments": {
@@ -309,9 +311,9 @@
 						"description": ""
 					},
 					"Title": {
-						"label": "Tên liên kết",
+						"label": "Tiêu đề",
 						"placeholder": "",
-						"description": "Tên của liên kết sẽ được sử dụng như nhãn hiển thị"
+						"description": "Tiêu đề của liên kết sẽ được sử dụng như nhãn hiển thị"
 					},
 					"Summary": {
 						"label": "Diễn giải",
@@ -357,7 +359,7 @@
 					}
 				},
 				"list": {
-					"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác liên kết",
+					"search": "cho từ khoá vào \"..\" để tìm kiếm chính xác liên kết, đặt dấu + ở đầu nếu bắt buộc phải có",
 					"children": "{{number}} liên kết cấp dưới: {{children}}",
 					"labels": {
 						"edit": "Cập nhật liên kết",

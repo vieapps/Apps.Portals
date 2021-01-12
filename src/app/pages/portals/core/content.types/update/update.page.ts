@@ -184,17 +184,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "content.type");
-
-		formConfig.insert({
-			Name: "Organization",
-			Type: "Text",
-			Segment: "basic",
-			Extras: { Text: this.organization.Title },
-			Options: {
-				Label: "{{portals.contenttypes.controls.Organization}}",
-				ReadOnly: true
-			}
-		}, 0);
+		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.contenttypes.controls.Organization}}", this.organization);
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		control.Options.AutoFocus = true;
@@ -220,7 +210,6 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 			);
 		}
 		else {
-			control.Options.Type = "dropdown";
 			control.Options.SelectOptions.Values = this.getRepositories();
 			control.Options.OnChanged = (_, formControl) => {
 				const definitions = this.getDefinitions(formControl.value, true);
@@ -246,7 +235,6 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 			}, formConfig.findIndex(ctrl => ctrl.Name === control.Name));
 		}
 		else {
-			control.Options.Type = "dropdown";
 			control.Options.SelectOptions.Values = this.getDefinitions(Module.instances.size > 0 ? Module.instances.toArray()[0].ID : undefined, true);
 			control.Options.OnChanged = (_, formControl) => {
 				if (formControl.selectOptions.length > 0) {

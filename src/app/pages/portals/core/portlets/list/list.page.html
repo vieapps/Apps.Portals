@@ -1,31 +1,34 @@
 <ion-header>
 	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
-			<ion-back-button *ngIf="searching" text=""></ion-back-button>
-			<ion-back-button *ngIf="!redordering && !searching" text=""></ion-back-button>
-			<ion-button *ngIf="redordering" fill="clear" color="secondary" [disabled]="processing" (click)="cancelReorderAsync()">
+			<ion-back-button [hidden]="filtering || redordering" text=""></ion-back-button>
+			<ion-button [hidden]="!redordering" fill="clear" color="secondary" [disabled]="processing" (click)="cancelReorderAsync()">
 				{{ buttons.cancel }}
 			</ion-button>
 		</ion-buttons>
-		<ion-buttons *ngIf="redordering || !searching" slot="end">
-			<ion-button *ngIf="!redordering && !searching" (click)="openSearchAsync()">
+		<ion-buttons slot="end">
+			<ion-button [hidden]="filtering" (click)="openSearchAsync()">
 				<ion-icon name="search" slot="icon-only"></ion-icon>
 			</ion-button>
-			<ion-button *ngIf="redordering" fill="clear" color="primary" [disabled]="processing" (click)="doReorderAsync()">
+			<ion-button [hidden]="!redordering" fill="clear" color="primary" [disabled]="processing" (click)="doReorderAsync()">
 				{{ buttons.save }}
 			</ion-button>
 		</ion-buttons>
-		<ion-title [hidden]="searching">
+		<ion-title [hidden]="filtering">
 			{{ title }}
 		</ion-title>
-		<ion-searchbar [hidden]="!searching"
-			(ionChange)="onStartSearch($event)"
-			(ionClear)="onClearSearch()"
-			(ionCancel)="onCancelSearch()"></ion-searchbar>
+		<ion-searchbar [hidden]="!filtering"
+			debounce="450"
+			showCancelButton="always"
+			cancelButtonIcon="arrow-back"
+			[cancelButtonText]="labels.cancel"
+			(ionChange)="onSearch($event)"
+			(ionClear)="onClear()"
+			(ionCancel)="onCancel()"></ion-searchbar>
 	</ion-toolbar>
 </ion-header>
 
-<ion-footer *ngIf="!redordering && (pagination || actions)">
+<ion-footer *ngIf="!redordering && !filtering && (pagination || actions)">
 	<ion-toolbar [color]="color">
 		<span *ngIf="pagination" slot="start">
 			<ion-icon name="globe" color="primary" slot="start"></ion-icon>
@@ -42,7 +45,7 @@
 </ion-footer>
 
 <ion-content [color]="color">
-	<ion-fab *ngIf="!redordering && !searching" vertical="bottom" horizontal="end" slot="fixed">
+	<ion-fab *ngIf="!redordering" vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button (click)="createAsync()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>

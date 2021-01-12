@@ -316,7 +316,11 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 					if (this.hash.content === AppCrypto.hash(item)) {
 						const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 						if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-							await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.item, options => options.Extras["x-attachment-id"] = control.value.identity));
+							await this.filesSvc.uploadThumbnailAsync(
+								control.value.new,
+								this.portalsCmsSvc.getFileOptions(this.item, options => options.Extras["x-attachment-id"] = control.value.identity),
+								async _ => await this.portalsCmsSvc.refreshItemAsync(item.ID)
+							);
 						}
 						await Promise.all([
 							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),

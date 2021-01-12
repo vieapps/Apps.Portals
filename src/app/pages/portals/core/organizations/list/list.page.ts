@@ -9,6 +9,7 @@ import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
 import { UsersService } from "@app/services/users.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { Organization } from "@app/models/portals.core.organization";
@@ -24,6 +25,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	constructor(
 		private configSvc: ConfigurationService,
+		private authSvc: AuthenticationService,
 		private usersSvc: UsersService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService
@@ -37,10 +39,13 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	private subscription: Subscription;
 	private owner: string;
+	private objects = new Array<Organization>();
 
+	isSystemAdministrator = false;
 	title = "Organizations";
 	organizations = new Array<Organization>();
 	searching = false;
+	filtering = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
@@ -55,6 +60,10 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 		icon?: string,
 		handler: () => void
 	}>;
+	labels = {
+		filter: "Quick filter",
+		cancel: "Cancel"
+	};
 
 	get locale() {
 		return this.configSvc.locale;
@@ -88,13 +97,28 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
 
-		if (!this.portalsCoreSvc.canModerateOrganization()) {
-			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateHomeAsync()
-			]));
-			return;
+		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
+
+		if (!this.isSystemAdministrator) {
+			this.organizations = [];
+			await Promise.all(this.portalsCoreSvc.activeOrganizations.map(async id => {
+				await this.portalsCoreSvc.getOrganizationAsync(id);
+				const organization = Organization.get(id);
+				if (organization !== undefined && this.portalsCoreSvc.canModerateOrganization(organization)) {
+					this.organizations.push(organization);
+				}
+			}));
+			if (this.organizations.length < 1) {
+				await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync("Hmmmmmm...."));
+				await this.configSvc.navigateHomeAsync();
+				return;
+			}
 		}
+
+		this.labels = {
+			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
+		};
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.organizations.title.${(this.searching ? "search" : "list")}`);
@@ -105,10 +129,10 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			PlatformUtility.focus(this.searchCtrl);
 			await this.appFormsSvc.hideLoadingAsync();
 		}
-		else {
+		else if (this.isSystemAdministrator) {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.search"), "search", () => this.openSearchAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.organizations.title.search"), "search", () => this.openSearchAsync(false)),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
 			];
@@ -122,6 +146,9 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 				console.log("<Portals>: Organizations", this.configSvc.requestParams, this.filterBy, this.sortBy);
 			}
 		}
+		else {
+			await this.appFormsSvc.hideLoadingAsync();
+		}
 	}
 
 	track(index: number, organization: Organization) {
@@ -133,31 +160,47 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			+ (this.configSvc.screenWidth < 1024 ? "" : (AppUtility.isNotEmpty(organization.Description) ? ` - ${(organization.Description.length > 30 ? organization.Description.substr(0, 30) + " ..." : organization.Description)}` : ""));
 	}
 
-	onStartSearch(event: any) {
-		this.cancelSearch();
+	async onSearch(event: any) {
+		if (this.subscription !== undefined) {
+			this.subscription.unsubscribe();
+			this.subscription = undefined;
+		}
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
 			if (this.searching) {
+				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.messages.searching"));
 				this.organizations = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				this.searchAsync(() => this.infiniteScrollCtrl.disabled = false);
+				await this.searchAsync(async () => {
+					this.infiniteScrollCtrl.disabled = false;
+					await this.appFormsSvc.hideLoadingAsync();
+				});
 			}
 			else {
-				this.prepareResults();
+				this.organizations = this.objects.filter(Organization.getFilterBy(this.filterBy.Query));
 			}
+		}
+		else {
+			this.onClear();
 		}
 	}
 
-	onClearSearch() {
-		this.cancelSearch();
+	onClear() {
 		this.filterBy.Query = undefined;
-		this.organizations = [];
+		this.organizations = this.filtering ? this.objects.map(obj => obj) : [];
 	}
 
-	onCancelSearch() {
-		this.onClearSearch();
-		this.startSearchAsync();
+	async onCancel() {
+		if (this.searching) {
+			await this.configSvc.navigateBackAsync();
+		}
+		else {
+			PlatformUtility.invoke(() => {
+				this.onClear();
+				this.filtering = false;
+			}, 123);
+		}
 	}
 
 	async onInfiniteScrollAsync() {
@@ -201,16 +244,6 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	private cancelSearch(dontDisableInfiniteScroll?: boolean) {
-		if (this.subscription !== undefined) {
-			this.subscription.unsubscribe();
-			this.subscription = undefined;
-		}
-		if (AppUtility.isFalse(dontDisableInfiniteScroll)) {
-			this.infiniteScrollCtrl.disabled = true;
-		}
-	}
-
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
 			(results || []).forEach(o => this.organizations.push(Organization.get(o.ID) || Organization.deserialize(o, Organization.get(o.ID))));
@@ -250,18 +283,30 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	async createAsync() {
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync("/portals/core/organizations/create");
+		if (this.isSystemAdministrator) {
+			await this.configSvc.navigateForwardAsync("/portals/core/organizations/create");
+		}
 	}
 
-	async openSearchAsync() {
+	async openSearchAsync(filtering: boolean = true) {
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync("/portals/core/organizations/search");
+		if (filtering) {
+			this.filtering = true;
+			PlatformUtility.focus(this.searchCtrl);
+			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
+			this.objects = this.organizations.map(obj => obj);
+		}
+		else {
+			await this.configSvc.navigateForwardAsync("/portals/core/organizations/search");
+		}
 	}
 
 	async openAsync(event: Event, organization: Organization) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(organization.routerURI);
+		if (this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(organization)) {
+			await this.configSvc.navigateForwardAsync(organization.routerURI);
+		}
 	}
 
 	async setActiveAsync(event: Event, organization: Organization) {

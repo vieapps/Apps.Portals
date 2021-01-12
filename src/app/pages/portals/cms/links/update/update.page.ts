@@ -420,7 +420,11 @@ export class CmsLinksUpdatePage implements OnInit {
 					if (this.hash.content === AppCrypto.hash(link)) {
 						const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 						if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-							await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.link, options => options.Extras["x-attachment-id"] = control.value.identity));
+							await this.filesSvc.uploadThumbnailAsync(
+								control.value.new,
+								this.portalsCmsSvc.getFileOptions(this.link, options => options.Extras["x-attachment-id"] = control.value.identity),
+								async _ => await this.portalsCmsSvc.refreshLinkAsync(link.ID)
+							);
 						}
 						await Promise.all([
 							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),

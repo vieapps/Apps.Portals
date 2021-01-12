@@ -71,6 +71,12 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		edit: "Update",
 		view: "View"
 	};
+	filtering = false;
+	labels = {
+		filter: "Quick filter",
+		cancel: "Cancel"
+	};
+	private objects = new Array<Content>();
 
 	get color() {
 		return this.configSvc.color;
@@ -149,6 +155,11 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 			view: await this.configSvc.getResourceAsync("common.buttons.view")
 		};
 
+		this.labels = {
+			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
+		};
+
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.cms.contents.title.${(this.searching ? "search" : "list")}`);
 		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: "" });
@@ -165,14 +176,14 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		}
 
 		if (this.searching) {
-			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.searchbar");
+			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.search");
 			PlatformUtility.focus(this.searchCtrl);
 			await this.appFormsSvc.hideLoadingAsync();
 		}
 		else {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.search"), "search", () => this.openSearchAsync())
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.search"), "search", () => this.openSearchAsync(false))
 			];
 			if (this.canUpdate) {
 				this.actions.push(
@@ -205,31 +216,47 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		return `${content.ID}@${index}`;
 	}
 
-	onStartSearch(event: any) {
-		this.cancelSearch();
+	async onSearch(event: any) {
+		if (this.subscription !== undefined) {
+			this.subscription.unsubscribe();
+			this.subscription = undefined;
+		}
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
 			if (this.searching) {
+				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.messages.searching"));
 				this.contents = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				this.searchAsync(() => this.infiniteScrollCtrl.disabled = false);
+				await this.searchAsync(async () => {
+					this.infiniteScrollCtrl.disabled = false;
+					await this.appFormsSvc.hideLoadingAsync();
+				});
 			}
 			else {
-				this.prepareResults();
+				this.contents = this.objects.filter(Content.getFilterBy(this.filterBy.Query));
 			}
+		}
+		else {
+			this.onClear();
 		}
 	}
 
-	onClearSearch() {
-		this.cancelSearch();
+	onClear() {
 		this.filterBy.Query = undefined;
-		this.contents = [];
+		this.contents = this.filtering ? this.objects.map(obj => obj) : [];
 	}
 
-	onCancelSearch() {
-		this.onClearSearch();
-		this.startSearchAsync();
+	async onCancel() {
+		if (this.searching) {
+			await this.configSvc.navigateBackAsync();
+		}
+		else {
+			PlatformUtility.invoke(() => {
+				this.onClear();
+				this.filtering = false;
+			}, 123);
+		}
 	}
 
 	async onInfiniteScrollAsync() {
@@ -278,16 +305,6 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	private cancelSearch(dontDisableInfiniteScroll?: boolean) {
-		if (this.subscription !== undefined) {
-			this.subscription.unsubscribe();
-			this.subscription = undefined;
-		}
-		if (AppUtility.isFalse(dontDisableInfiniteScroll)) {
-			this.infiniteScrollCtrl.disabled = true;
-		}
-	}
-
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
 			(results || []).forEach(o => this.contents.push(Content.get(o.ID) || Content.deserialize(o, Content.get(o.ID))));
@@ -315,9 +332,17 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		await this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
-	async openSearchAsync() {
+	async openSearchAsync(filtering: boolean = true) {
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync("/portals/cms/contents/search");
+		if (filtering) {
+			this.filtering = true;
+			PlatformUtility.focus(this.searchCtrl);
+			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
+			this.objects = this.contents.map(obj => obj);
+		}
+		else {
+			await this.configSvc.navigateForwardAsync("/portals/cms/contents/search");
+		}
 	}
 
 	async createAsync() {

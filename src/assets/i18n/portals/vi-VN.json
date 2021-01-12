@@ -15,7 +15,7 @@
 			"modules": "Module nghiệp vụ",
 			"content-types": "Kiểu dữ liệu nghiệp vụ",
 			"expressions": "Biểu thức truy vấn - sắp xếp",
-			"cms-categories": "Chuyên mục - Phân loại",
+			"cms-categories": "Phân loại nội dung",
 			"cms-contents": "Các nội dung"
 		},
 		"common": {
@@ -617,7 +617,7 @@
 				}
 			},
 			"list": {
-				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác site"
+				"search": "cho từ khoá vào \"..\" để tìm kiếm chính xác site, đặt dấu + ở đầu nếu bắt buộc phải có"
 			},
 			"update": {
 				"segments": {

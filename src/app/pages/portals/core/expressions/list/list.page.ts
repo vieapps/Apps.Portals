@@ -46,10 +46,12 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 	private contentType: ContentType;
 	private contentTypeDefinitions: Array<ContentTypeDefinition>;
 	private contentTypeDefinition: ContentTypeDefinition;
+	private objects = new Array<Expression>();
 
 	title = "Expressions";
 	expressions = new Array<Expression>();
 	searching = false;
+	filtering = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
@@ -66,7 +68,9 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 	}>;
 	labels = {
 		edit: "Update this expression",
-		advancedEdit: "Update this expression in advanced mode"
+		advancedEdit: "Update this expression in advanced mode",
+		filter: "Quick filter",
+		cancel: "Cancel"
 	};
 
 	get locale() {
@@ -147,7 +151,9 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 
 		this.labels = {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
-			advancedEdit: await this.configSvc.getResourceAsync("portals.expressions.update.buttons.edit")
+			advancedEdit: await this.configSvc.getResourceAsync("portals.expressions.update.buttons.edit"),
+			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
@@ -169,7 +175,7 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		else {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.expressions.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.expressions.title.search"), "search", () => this.openSearchAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.expressions.title.search"), "search", () => this.openSearchAsync(false)),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
 			];
@@ -196,31 +202,47 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 			+ (AppUtility.isNotEmpty(expression.Description) ? ` - ${expression.Description}` : "");
 	}
 
-	onStartSearch(event: any) {
-		this.cancelSearch();
+	async onSearch(event: any) {
+		if (this.subscription !== undefined) {
+			this.subscription.unsubscribe();
+			this.subscription = undefined;
+		}
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
 			if (this.searching) {
+				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.messages.searching"));
 				this.expressions = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				this.searchAsync(() => this.infiniteScrollCtrl.disabled = false);
+				await this.searchAsync(async () => {
+					this.infiniteScrollCtrl.disabled = false;
+					await this.appFormsSvc.hideLoadingAsync();
+				});
 			}
 			else {
-				this.prepareResults();
+				this.expressions = this.objects.filter(Expression.getFilterBy(this.filterBy.Query));
 			}
+		}
+		else {
+			this.onClear();
 		}
 	}
 
-	onClearSearch() {
-		this.cancelSearch();
+	onClear() {
 		this.filterBy.Query = undefined;
-		this.expressions = [];
+		this.expressions = this.filtering ? this.objects.map(obj => obj) : [];
 	}
 
-	onCancelSearch() {
-		this.onClearSearch();
-		this.startSearchAsync();
+	async onCancel() {
+		if (this.searching) {
+			await this.configSvc.navigateBackAsync();
+		}
+		else {
+			PlatformUtility.invoke(() => {
+				this.onClear();
+				this.filtering = false;
+			}, 123);
+		}
 	}
 
 	async onInfiniteScrollAsync() {
@@ -264,16 +286,6 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	private cancelSearch(dontDisableInfiniteScroll?: boolean) {
-		if (this.subscription !== undefined) {
-			this.subscription.unsubscribe();
-			this.subscription = undefined;
-		}
-		if (AppUtility.isFalse(dontDisableInfiniteScroll)) {
-			this.infiniteScrollCtrl.disabled = true;
-		}
-	}
-
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
 			(results || []).forEach(o => this.expressions.push(Expression.get(o.ID) || Expression.deserialize(o, Expression.get(o.ID))));
@@ -307,9 +319,17 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		await this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
-	async openSearchAsync() {
+	async openSearchAsync(filtering: boolean = true) {
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync("/portals/core/expressions/search");
+		if (filtering) {
+			this.filtering = true;
+			PlatformUtility.focus(this.searchCtrl);
+			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
+			this.objects = this.expressions.map(obj => obj);
+		}
+		else {
+			await this.configSvc.navigateForwardAsync("/portals/core/expressions/search");
+		}
 	}
 
 	async createAsync() {

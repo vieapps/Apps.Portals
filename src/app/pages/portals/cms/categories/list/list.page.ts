@@ -273,7 +273,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			: AppUtility.format(this.children, { number: category.childrenIDs.length, children: `${category.Children[0].Title}${(category.childrenIDs.length > 1 ? `, ${category.Children[1].Title}` : "")}, ...` });
 	}
 
-	onStartSearch(event: any) {
+	onSearch(event: any) {
 		this.cancelSearch();
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
@@ -289,15 +289,10 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	onClearSearch() {
+	onClear() {
 		this.cancelSearch();
 		this.filterBy.Query = undefined;
 		this.categories = [];
-	}
-
-	onCancelSearch() {
-		this.onClearSearch();
-		this.startSearchAsync();
 	}
 
 	async onInfiniteScrollAsync() {

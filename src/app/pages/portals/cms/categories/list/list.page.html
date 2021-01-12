@@ -8,9 +8,6 @@
 			</ion-button>
 		</ion-buttons>
 		<ion-buttons *ngIf="!searching || redordering" slot="end">
-			<ion-button *ngIf="!searching && !redordering" (click)="openSearchAsync()">
-				<ion-icon name="search" slot="icon-only"></ion-icon>
-			</ion-button>
 			<ion-button *ngIf="redordering" fill="clear" color="primary" [disabled]="processing" (click)="doReorderAsync()">
 				{{ labels.save }}
 			</ion-button>
@@ -19,9 +16,8 @@
 			{{ title }}
 		</ion-title>
 		<ion-searchbar [hidden]="!searching"
-			(ionChange)="onStartSearch($event)"
-			(ionClear)="onClearSearch()"
-			(ionCancel)="onCancelSearch()"></ion-searchbar>
+			(ionChange)="onSearch($event)"
+			(ionClear)="onClear()"></ion-searchbar>
 	</ion-toolbar>
 </ion-header>
 

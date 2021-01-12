@@ -149,17 +149,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "expression");
-
-		formConfig.insert({
-			Name: "Organization",
-			Type: "Text",
-			Segment: "basic",
-			Extras: { Text: this.organization.Title },
-			Options: {
-				Label: "{{portals.expressions.controls.Organization}}",
-				ReadOnly: true
-			}
-		}, 0);
+		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.expressions.controls.Organization}}", this.organization);
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		control.Options.AutoFocus = true;

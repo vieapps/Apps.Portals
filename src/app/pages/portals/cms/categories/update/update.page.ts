@@ -334,7 +334,11 @@ export class CmsCategoriesUpdatePage implements OnInit {
 				if (AppUtility.isNotEmpty(category.ID)) {
 					const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 					if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-						await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.category, options => options.Extras["x-attachment-id"] = control.value.identity));
+						await this.filesSvc.uploadThumbnailAsync(
+							control.value.new,
+							this.portalsCmsSvc.getFileOptions(this.category, options => options.Extras["x-attachment-id"] = control.value.identity),
+							async _ => await this.portalsCmsSvc.refreshCategoryAsync(category.ID)
+						);
 					}
 					const oldParentID = this.category.ParentID;
 					await this.portalsCmsSvc.updateCategoryAsync(

@@ -116,17 +116,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "module");
-
-		formConfig.insert({
-			Name: "Organization",
-			Type: "Text",
-			Segment: "basic",
-			Extras: { Text: this.organization.Title },
-			Options: {
-				Label: "{{portals.modules.controls.Organization}}",
-				ReadOnly: true
-			}
-		}, 0);
+		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.modules.controls.Organization}}", this.organization);
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		control.Options.AutoFocus = true;
@@ -149,7 +139,6 @@ export class PortalsModulesUpdatePage implements OnInit {
 			}, formConfig.findIndex(ctrl => AppUtility.isEquals(ctrl.Name, "ModuleDefinitionID")));
 		}
 		else {
-			control.Options.Type = "dropdown";
 			control.Options.SelectOptions.Values = this.definitions.map(definition => {
 				return {
 					Value: definition.ID,

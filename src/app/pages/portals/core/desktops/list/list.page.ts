@@ -62,7 +62,11 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		refresh: "Refresh",
 		view: "View the list of child desktops",
 		portlets: "Portlets",
+		filter: "Quick filter",
+		cancel: "Cancel"
 	};
+	filtering = false;
+	private objects = new Array<Desktop>();
 
 	get locale() {
 		return this.configSvc.locale;
@@ -143,7 +147,9 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
 			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			view: await this.configSvc.getResourceAsync("portals.desktops.list.view"),
-			portlets: await this.configSvc.getResourceAsync("portals.portlets.title.list", { info: "" })
+			portlets: await this.configSvc.getResourceAsync("portals.portlets.title.list", { info: "" }),
+			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
 		if (this.searching) {
@@ -155,7 +161,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		else {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.desktops.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.desktops.title.search"), "search", () => this.openSearchAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.desktops.title.search"), "search", () => this.openSearchAsync(false)),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
 			];
@@ -203,31 +209,47 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			: AppUtility.format(this.labels.children, { number: desktop.childrenIDs.length, children: `${desktop.Children[0].Title}${(desktop.childrenIDs.length > 1 ? `, ${desktop.Children[1].Title}` : "")}, ...` });
 	}
 
-	onStartSearch(event: any) {
-		this.cancelSearch();
+	async onSearch(event: any) {
+		if (this.subscription !== undefined) {
+			this.subscription.unsubscribe();
+			this.subscription = undefined;
+		}
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
 			if (this.searching) {
+				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.messages.searching"));
 				this.desktops = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				this.searchAsync(() => this.infiniteScrollCtrl.disabled = false);
+				await this.searchAsync(async () => {
+					this.infiniteScrollCtrl.disabled = false;
+					await this.appFormsSvc.hideLoadingAsync();
+				});
 			}
 			else {
-				this.prepareResults();
+				this.desktops = this.objects.filter(Desktop.getFilterBy(this.filterBy.Query));
 			}
+		}
+		else if (this.searching) {
+			this.onClear();
 		}
 	}
 
-	onClearSearch() {
-		this.cancelSearch();
+	onClear() {
 		this.filterBy.Query = undefined;
-		this.desktops = [];
+		this.desktops = this.filtering ? this.objects.map(obj => obj) : [];
 	}
 
-	onCancelSearch() {
-		this.onClearSearch();
-		this.startSearchAsync();
+	async onCancel() {
+		if (this.searching) {
+			await this.configSvc.navigateBackAsync();
+		}
+		else {
+			PlatformUtility.invoke(() => {
+				this.onClear();
+				this.filtering = false;
+			}, 123);
+		}
 	}
 
 	async onInfiniteScrollAsync() {
@@ -271,16 +293,6 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	private cancelSearch(dontDisableInfiniteScroll?: boolean) {
-		if (this.subscription !== undefined) {
-			this.subscription.unsubscribe();
-			this.subscription = undefined;
-		}
-		if (AppUtility.isFalse(dontDisableInfiniteScroll)) {
-			this.infiniteScrollCtrl.disabled = true;
-		}
-	}
-
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
 			(results || []).forEach(o => this.desktops.push(Desktop.get(o.ID) || Desktop.deserialize(o, Desktop.get(o.ID))));
@@ -302,9 +314,17 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		await this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
-	async openSearchAsync() {
+	async openSearchAsync(filtering: boolean = true) {
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync("/portals/core/desktops/search");
+		if (filtering) {
+			this.filtering = true;
+			PlatformUtility.focus(this.searchCtrl);
+			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
+			this.objects = this.desktops.map(obj => obj);
+		}
+		else {
+			await this.configSvc.navigateForwardAsync("/portals/core/desktops/search");
+		}
 	}
 
 	async createAsync() {

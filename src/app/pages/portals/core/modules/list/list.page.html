@@ -1,21 +1,11 @@
 <ion-header>
 	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
-			<ion-back-button *ngIf="searching" text=""></ion-back-button>
-			<ion-menu-button *ngIf="!searching"></ion-menu-button>
+			<ion-menu-button></ion-menu-button>
 		</ion-buttons>
-		<ion-buttons *ngIf="!searching" slot="end">
-			<ion-button [hidden]="searching" (click)="openSearchAsync()">
-				<ion-icon name="search" slot="icon-only"></ion-icon>
-			</ion-button>
-		</ion-buttons>
-		<ion-title [hidden]="searching">
+		<ion-title>
 			{{ title }}
 		</ion-title>
-		<ion-searchbar [hidden]="!searching"
-			(ionChange)="onStartSearch($event)"
-			(ionClear)="onClearSearch()"
-			(ionCancel)="onCancelSearch()"></ion-searchbar>
 	</ion-toolbar>
 </ion-header>
 

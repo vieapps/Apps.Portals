@@ -1,4 +1,3 @@
-import { Subscription } from "rxjs";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
@@ -37,20 +36,19 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
-	private subscription: Subscription;
 	private isSystemAdministrator = false;
 	private canModerateOrganization = false;
 	private systemID: string;
 	private organization: Organization;
 	private repositoryID: string;
-	private module: Module;
 	private definitionID: string;
 	private definition: ContentTypeDefinition;
 	private definitions: Array<ContentTypeDefinition>;
+	private objects = new Array<ContentType>();
 
 	title = "ContentTypes";
+	filtering = false;
 	contentTypes = new Array<ContentType>();
-	searching = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
@@ -69,7 +67,9 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		edit: "Update this content type",
 		advancedEdit: "Update this content type in advanced mode",
 		showContents: "View the list of contents",
-		showExpressions: "Expressions"
+		showExpressions: "Expressions",
+		filter: "Quick filter",
+		cancel: "Cancel"
 	};
 
 	get locale() {
@@ -97,19 +97,12 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		if (!this.searching) {
-			let identity = "ContentTypes:Refresh";
-			if (this.definition !== undefined) {
-				identity = `ContentTypes:${this.definitionID}:Refresh`;
-			}
-			else if (AppUtility.isNotEmpty(this.repositoryID)) {
-				identity = `ContentTypes:${this.repositoryID}:Refresh`;
-			}
-			AppEvents.off(this.portalsCoreSvc.name, identity);
-		}
-		else if (this.subscription !== undefined) {
-			this.subscription.unsubscribe();
-		}
+		const identity = this.definition !== undefined
+			? `ContentTypes:${this.definitionID}:Refresh`
+			: AppUtility.isNotEmpty(this.repositoryID)
+				? `ContentTypes:${this.repositoryID}:Refresh`
+				: "ContentTypes:Refresh";
+		AppEvents.off(this.portalsCoreSvc.name, identity);
 	}
 
 	private async initializeAsync() {
@@ -120,7 +113,6 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		this.definitionID = this.configSvc.requestParams["DefinitionID"];
 
 		this.organization = this.portalsCoreSvc.getOrganization(this.systemID);
-		this.module = Module.get(this.repositoryID);
 		this.definitions = this.portalsCoreSvc.contentTypeDefinitions;
 		this.definition = AppUtility.isNotEmpty(this.definitionID) ? this.definitions.find(definition => definition.ID === this.definitionID) : undefined;
 
@@ -164,11 +156,12 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
 			advancedEdit: await this.configSvc.getResourceAsync("portals.common.advancedEdit"),
 			showContents: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list"),
-			showExpressions: await this.configSvc.getResourceAsync("portals.expressions.title.list", { info: "" })
+			showExpressions: await this.configSvc.getResourceAsync("portals.expressions.title.list", { info: "" }),
+			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
-		this.searching = this.configSvc.currentUrl.endsWith("/search");
-		const title = await this.configSvc.getResourceAsync(`portals.contenttypes.title.${(this.searching ? "search" : "list")}`);
+		const title = await this.configSvc.getResourceAsync("portals.contenttypes.title.list");
 		const titleInfo = AppUtility.isNotEmpty(this.repositoryID)
 			? Module.contains(this.repositoryID)
 				? Module.get(this.repositoryID).Title
@@ -178,32 +171,22 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 				: undefined;
 		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: titleInfo !== undefined ? `[${titleInfo}]` : "" });
 
-		if (this.searching) {
-			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.contenttypes.list.searchbar");
-			PlatformUtility.focus(this.searchCtrl);
-			await this.appFormsSvc.hideLoadingAsync();
-		}
-		else {
-			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.contenttypes.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.contenttypes.title.search"), "search", () => this.openSearchAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
-			];
-			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
-			let identity = "ContentTypes:Refresh";
-			if (this.definition !== undefined) {
-				identity = `ContentTypes:${this.definitionID}:Refresh`;
+		this.actions = [
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.contenttypes.title.create"), "create", () => this.createAsync()),
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
+		];
+		await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+		const identity = this.definition !== undefined
+			? `ContentTypes:${this.definitionID}:Refresh`
+			: AppUtility.isNotEmpty(this.repositoryID)
+				? `ContentTypes:${this.repositoryID}:Refresh`
+				: "ContentTypes:Refresh";
+		AppEvents.on(this.portalsCoreSvc.name, info => {
+			if (info.args.Object === "Content.Type" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
+				this.prepareResults();
 			}
-			else if (AppUtility.isNotEmpty(this.repositoryID)) {
-				identity = `ContentTypes:${this.repositoryID}:Refresh`;
-			}
-			AppEvents.on(this.portalsCoreSvc.name, info => {
-				if (info.args.Object === "Content.Type" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
-					this.prepareResults();
-				}
-			}, identity);
-		}
+		}, identity);
 
 		if (this.configSvc.isDebug) {
 			console.log("<Portals>: ContentTypes", this.configSvc.requestParams, this.filterBy, this.sortBy);
@@ -220,31 +203,26 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		return `${(module !== undefined ? `Module: ${module.Title} - ` : "")}Definition: ${contentTypeDefinition.Title}${(AppUtility.isNotEmpty(contentType.Description) ? " - " + contentType.Description : "")}`;
 	}
 
-	onStartSearch(event: any) {
-		this.cancelSearch();
+	onSearch(event: any) {
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
-			if (this.searching) {
-				this.contentTypes = [];
-				this.pageNumber = 0;
-				this.pagination = AppPagination.getDefault();
-				this.searchAsync(() => this.infiniteScrollCtrl.disabled = false);
-			}
-			else {
-				this.prepareResults();
-			}
+			this.contentTypes = this.objects.filter(ContentType.getFilterBy(this.filterBy.Query));
+		}
+		else {
+			this.contentTypes = this.objects.map(obj => obj);
 		}
 	}
 
-	onClearSearch() {
-		this.cancelSearch();
+	onClear() {
 		this.filterBy.Query = undefined;
-		this.contentTypes = [];
+		this.contentTypes = this.objects.map(obj => obj);
 	}
 
-	onCancelSearch() {
-		this.onClearSearch();
-		this.startSearchAsync();
+	async onCancel() {
+		PlatformUtility.invoke(() => {
+			this.onClear();
+			this.filtering = false;
+		}, 123);
 	}
 
 	async onInfiniteScrollAsync() {
@@ -272,7 +250,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 	}
 
 	private async searchAsync(onNext?: () => void) {
-		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
+		this.request = AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
@@ -280,49 +258,29 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
 		};
-		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchContentType(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
-		}
-		else {
-			await this.portalsCoreSvc.searchContentTypeAsync(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
-		}
-	}
-
-	private cancelSearch(dontDisableInfiniteScroll?: boolean) {
-		if (this.subscription !== undefined) {
-			this.subscription.unsubscribe();
-			this.subscription = undefined;
-		}
-		if (AppUtility.isFalse(dontDisableInfiniteScroll)) {
-			this.infiniteScrollCtrl.disabled = true;
-		}
+		await this.portalsCoreSvc.searchContentTypeAsync(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
 	}
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
-		if (this.searching) {
-			(results || []).forEach(o => this.contentTypes.push(ContentType.get(o.ID) || ContentType.deserialize(o, ContentType.get(o.ID))));
+		const predicate: (contentType:  ContentType) => boolean = AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.repositoryID) && AppUtility.isNotEmpty(this.definitionID)
+			? obj => obj.SystemID === this.systemID && obj.RepositoryID === this.repositoryID && obj.ContentTypeDefinitionID === this.definitionID
+			: AppUtility.isNotEmpty(this.definitionID)
+				? this.isSystemAdministrator
+					? obj => obj.ContentTypeDefinitionID === this.definitionID
+					: obj => obj.SystemID === this.systemID && obj.ContentTypeDefinitionID === this.definitionID
+				: AppUtility.isNotEmpty(this.repositoryID)
+					? obj => obj.RepositoryID === this.repositoryID
+					: obj => obj.SystemID === this.systemID;
+		let objects = results === undefined
+			? ContentType.instances.toList(predicate)
+			: ContentType.toList(results).Where(predicate);
+		objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
+		if (results === undefined && this.pagination !== undefined) {
+			objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 		}
-		else {
-			const predicate: (contentType:  ContentType) => boolean = AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.repositoryID) && AppUtility.isNotEmpty(this.definitionID)
-				? obj => obj.SystemID === this.systemID && obj.RepositoryID === this.repositoryID && obj.ContentTypeDefinitionID === this.definitionID
-				: AppUtility.isNotEmpty(this.definitionID)
-					? this.isSystemAdministrator
-						? obj => obj.ContentTypeDefinitionID === this.definitionID
-						: obj => obj.SystemID === this.systemID && obj.ContentTypeDefinitionID === this.definitionID
-					: AppUtility.isNotEmpty(this.repositoryID)
-						? obj => obj.RepositoryID === this.repositoryID
-						: obj => obj.SystemID === this.systemID;
-			let objects = results === undefined
-				? ContentType.instances.toList(predicate)
-				: ContentType.toList(results).Where(predicate);
-			objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
-			if (results === undefined && this.pagination !== undefined) {
-				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
-			}
-			this.contentTypes = results === undefined
-				? objects.ToArray()
-				: this.contentTypes.concat(objects.ToArray());
-		}
+		this.contentTypes = results === undefined
+			? objects.ToArray()
+			: this.contentTypes.concat(objects.ToArray());
 		if (onNext !== undefined) {
 			onNext();
 		}
@@ -335,7 +293,10 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 
 	async openSearchAsync() {
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync("/portals/core/content.types/search");
+		this.filtering = true;
+		PlatformUtility.focus(this.searchCtrl);
+		this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
+		this.objects = this.contentTypes.map(obj => obj);
 	}
 
 	async createAsync() {

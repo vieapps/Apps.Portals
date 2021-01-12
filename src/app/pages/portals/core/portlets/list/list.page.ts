@@ -46,7 +46,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 
 	title = "Portlets";
 	portlets = new Array<Portlet>();
-	searching = false;
+	filtering = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
@@ -66,7 +66,9 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	}>;
 	labels = {
 		edit: "Update this portlet",
-		advancedEdit: "Update this portlet in advanced mode"
+		advancedEdit: "Update this portlet in advanced mode",
+		filter: "Quick filter",
+		cancel: "Cancel"
 	};
 	processing = false;
 	redordering = false;
@@ -77,6 +79,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	};
 	private hash = "";
 	private ordered: Array<NestedObject>;
+	private objects = new Array<Portlet>();
 
 	get locale() {
 		return this.configSvc.locale;
@@ -103,10 +106,8 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		if (!this.searching) {
-			AppEvents.off(this.portalsCoreSvc.name, "Portlets:Refresh");
-		}
-		else if (this.subscription !== undefined) {
+		AppEvents.off(this.portalsCoreSvc.name, "Portlets:Refresh");
+		if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 		}
 	}
@@ -148,7 +149,9 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 
 		this.labels = {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
-			advancedEdit: await this.configSvc.getResourceAsync("portals.common.advancedEdit")
+			advancedEdit: await this.configSvc.getResourceAsync("portals.common.advancedEdit"),
+			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
 		this.buttons = {
@@ -156,38 +159,29 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
-		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		await this.prepareTitleAsync();
 
-		if (this.searching) {
-			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.portlets.list.searchbar");
-			PlatformUtility.focus(this.searchCtrl);
+		this.actions = [
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.create"), "create", () => this.createAsync())
+		];
+		if (this.desktop !== undefined && this.desktop.portlets !== undefined && this.desktop.portlets.length > 0) {
+			this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.reorder"), "swap-vertical", () => this.openReorderAsync()));
+			this.preparePortlets();
 			await this.appFormsSvc.hideLoadingAsync();
 		}
 		else {
-			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.search"), "search", () => this.openSearchAsync())
-			];
-			if (this.desktop !== undefined && this.desktop.portlets !== undefined && this.desktop.portlets.length > 0) {
-				this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.reorder"), "swap-vertical", () => this.openReorderAsync()), 1);
-				this.preparePortlets();
-				await this.appFormsSvc.hideLoadingAsync();
-			}
-			else {
-				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
-			}
-			AppEvents.on(this.portalsCoreSvc.name, info => {
-				if (info.args.Object === "Portlet") {
-					if (this.desktop !== undefined && this.desktop.ID === info.args.DesktopID) {
-						this.preparePortlets();
-					}
-					else {
-						this.prepareResults();
-					}
-				}
-			}, "Portlets:Refresh");
+			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 		}
+		AppEvents.on(this.portalsCoreSvc.name, info => {
+			if (info.args.Object === "Portlet") {
+				if (this.desktop !== undefined && this.desktop.ID === info.args.DesktopID) {
+					this.preparePortlets();
+				}
+				else {
+					this.prepareResults();
+				}
+			}
+		}, "Portlets:Refresh");
 
 		if (this.configSvc.isDebug) {
 			console.log("<Portals>: Portlets", this.configSvc.requestParams, this.filterBy, this.sortBy);
@@ -199,7 +193,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 			this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("portals.portlets.title.reorder");
 		}
 		else {
-			const title = await this.configSvc.getResourceAsync(`portals.portlets.title.${(this.searching ? "search" : "list")}`);
+			const title = await this.configSvc.getResourceAsync("portals.portlets.title.list");
 			this.configSvc.appTitle = this.title = AppUtility.format(title, { info: this.desktop !== undefined ? `[${this.desktop.FullTitle}]` : "" });
 		}
 	}
@@ -212,31 +206,26 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		return `${portlet.ID}@${index}`;
 	}
 
-	onStartSearch(event: any) {
-		this.cancelSearch();
+	onSearch(event: any) {
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
-			if (this.searching) {
-				this.portlets = [];
-				this.pageNumber = 0;
-				this.pagination = AppPagination.getDefault();
-				this.searchAsync(() => this.infiniteScrollCtrl.disabled = false);
-			}
-			else {
-				this.prepareResults();
-			}
+			this.portlets = this.objects.filter(Portlet.getFilterBy(this.filterBy.Query));
+		}
+		else {
+			this.onClear();
 		}
 	}
 
-	onClearSearch() {
-		this.cancelSearch();
+	onClear() {
 		this.filterBy.Query = undefined;
-		this.portlets = [];
+		this.portlets = this.objects.map(obj => obj);
 	}
 
-	onCancelSearch() {
-		this.onClearSearch();
-		this.startSearchAsync();
+	async onCancel() {
+		PlatformUtility.invoke(() => {
+			this.onClear();
+			this.filtering = false;
+		}, 123);
 	}
 
 	async onInfiniteScrollAsync() {
@@ -264,7 +253,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	}
 
 	private async searchAsync(onNext?: () => void) {
-		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
+		this.request = AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination);
 		const onNextAsync = async (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
@@ -272,46 +261,26 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
 		};
-		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchPortlet(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
-		}
-		else {
-			await this.portalsCoreSvc.searchPortletAsync(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
-		}
-	}
-
-	private cancelSearch(dontDisableInfiniteScroll?: boolean) {
-		if (this.subscription !== undefined) {
-			this.subscription.unsubscribe();
-			this.subscription = undefined;
-		}
-		if (AppUtility.isFalse(dontDisableInfiniteScroll)) {
-			this.infiniteScrollCtrl.disabled = true;
-		}
+		await this.portalsCoreSvc.searchPortletAsync(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
 	}
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
-		if (this.searching) {
-			(results || []).forEach(o => this.portlets.push(Portlet.get(o.ID) || Portlet.deserialize(o, Portlet.get(o.ID))));
+		const predicate: (portlet: Portlet) => boolean = this.desktop !== undefined
+			? obj => obj.DesktopID === this.desktop.ID
+			: obj => obj.SystemID === this.organization.ID;
+		let objects = results === undefined
+			? Portlet.instances.toList(predicate)
+			: Portlet.toList(results).Where(predicate);
+		if (this.desktop === undefined) {
+			objects = objects.OrderBy(obj => obj.DesktopID);
 		}
-		else {
-			const predicate: (portlet: Portlet) => boolean = this.desktop !== undefined
-				? obj => obj.DesktopID === this.desktop.ID
-				: obj => obj.SystemID === this.organization.ID;
-			let objects = results === undefined
-				? Portlet.instances.toList(predicate)
-				: Portlet.toList(results).Where(predicate);
-			if (this.desktop === undefined) {
-				objects = objects.OrderBy(obj => obj.DesktopID);
-			}
-			objects = objects.OrderBy(obj => obj.Zone).ThenBy(obj => obj.OrderIndex);
-			if (results === undefined && this.pagination !== undefined) {
-				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
-			}
-			this.portlets = results === undefined
-				? objects.ToArray()
-				: this.portlets.concat(objects.ToArray());
+		objects = objects.OrderBy(obj => obj.Zone).ThenBy(obj => obj.OrderIndex);
+		if (results === undefined && this.pagination !== undefined) {
+			objects = objects.Take(this.pageNumber * this.pagination.PageSize);
 		}
+		this.portlets = results === undefined
+			? objects.ToArray()
+			: this.portlets.concat(objects.ToArray());
 		if (onNext !== undefined) {
 			onNext();
 		}
@@ -324,7 +293,10 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 
 	async openSearchAsync() {
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync("/portals/core/portlets/search");
+		this.filtering = true;
+			PlatformUtility.focus(this.searchCtrl);
+			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
+			this.objects = this.portlets.map(obj => obj);
 	}
 
 	async createAsync() {

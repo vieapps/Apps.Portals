@@ -56,6 +56,12 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		icon?: string,
 		handler: () => void
 	}>;
+	filtering = false;
+	labels = {
+		filter: "Quick filter",
+		cancel: "Cancel"
+	};
+	private objects = new Array<Role>();
 
 	get locale() {
 		return this.configSvc.locale;
@@ -126,6 +132,11 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 			return;
 		}
 
+		this.labels = {
+			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
+		};
+
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.roles.title.${(this.searching ? "search" : "list")}`);
 		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: "" });
@@ -140,7 +151,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		else {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.roles.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.roles.title.search"), "search", () => this.openSearchAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.roles.title.search"), "search", () => this.openSearchAsync(false)),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
 			];
@@ -188,31 +199,47 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 			: AppUtility.format(this.children, { number: role.childrenIDs.length, children: `${role.Children[0].Title}${(role.childrenIDs.length > 1 ? `, ${role.Children[1].Title}` : "")}, ...` });
 	}
 
-	onStartSearch(event: any) {
-		this.cancelSearch();
+	async onSearch(event: any) {
+		if (this.subscription !== undefined) {
+			this.subscription.unsubscribe();
+			this.subscription = undefined;
+		}
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
 			if (this.searching) {
+				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.messages.searching"));
 				this.roles = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				this.searchAsync(() => this.infiniteScrollCtrl.disabled = false);
+				await this.searchAsync(async () => {
+					this.infiniteScrollCtrl.disabled = false;
+					await this.appFormsSvc.hideLoadingAsync();
+				});
 			}
 			else {
-				this.prepareResults();
+				this.roles = this.objects.filter(Role.getFilterBy(this.filterBy.Query));
 			}
+		}
+		else {
+			this.onClear();
 		}
 	}
 
-	onClearSearch() {
-		this.cancelSearch();
+	onClear() {
 		this.filterBy.Query = undefined;
-		this.roles = [];
+		this.roles = this.filtering ? this.objects.map(obj => obj) : [];
 	}
 
-	onCancelSearch() {
-		this.onClearSearch();
-		this.startSearchAsync();
+	async onCancel() {
+		if (this.searching) {
+			await this.configSvc.navigateBackAsync();
+		}
+		else {
+			PlatformUtility.invoke(() => {
+				this.onClear();
+				this.filtering = false;
+			}, 123);
+		}
 	}
 
 	async onInfiniteScrollAsync() {
@@ -256,16 +283,6 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	private cancelSearch(dontDisableInfiniteScroll?: boolean) {
-		if (this.subscription !== undefined) {
-			this.subscription.unsubscribe();
-			this.subscription = undefined;
-		}
-		if (AppUtility.isFalse(dontDisableInfiniteScroll)) {
-			this.infiniteScrollCtrl.disabled = true;
-		}
-	}
-
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
 			(results || []).forEach(o => this.roles.push(Role.get(o.ID) || Role.deserialize(o, Role.get(o.ID))));
@@ -290,8 +307,17 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		await this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
-	async openSearchAsync() {
-		await this.configSvc.navigateForwardAsync("/portals/core/roles/search");
+	async openSearchAsync(filtering: boolean = true) {
+		await this.listCtrl.closeSlidingItems();
+		if (filtering) {
+			this.filtering = true;
+			PlatformUtility.focus(this.searchCtrl);
+			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
+			this.objects = this.roles.map(obj => obj);
+		}
+		else {
+			await this.configSvc.navigateForwardAsync("/portals/core/roles/search");
+		}
 	}
 
 	async createAsync() {
