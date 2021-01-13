@@ -387,7 +387,15 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 	}
 
 	async moderateAsync() {
-		await this.configSvc.navigateForwardAsync(this.link.routerURI.replace("/view/", "/update/"));
+		const availableStatuses = ["Draft", "Pending"];
+		if (this.canEdit) {
+			availableStatuses.push("Rejected", "Approved");
+		}
+		if (this.canModerate) {
+			availableStatuses.push("Published", "Archieved");
+		}
+		const currentStatus = availableStatuses.indexOf(this.link.Status) > -1 ? this.link.Status : "Draft";
+		await this.portalsCoreSvc.approveAsync(this.link.contentType.ID, this.link.ID, currentStatus, availableStatuses);
 	}
 
 	async deleteAsync() {

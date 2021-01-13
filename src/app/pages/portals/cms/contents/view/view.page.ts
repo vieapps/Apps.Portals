@@ -140,11 +140,9 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		if (this.canEdit) {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(this.resources.update, "create", () => this.updateAsync()),
+				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderateAsync()),
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.deleteAsync())
 			];
-			if (this.canModerate) {
-				this.actions.insert(this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderateAsync()), 1);
-			}
 		}
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
