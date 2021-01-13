@@ -107,11 +107,11 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 			this.canEdit = canView = this.canModerate || this.portalsCmsSvc.canEdit(this.item, account) || AppUtility.isEquals(this.item.CreatedID, account.id);
 		}
 		else if (AppUtility.isEquals(this.item.Status, "Approved")) {
-			this.canEdit = this.canModerate;
-			canView = this.canEdit || this.portalsCmsSvc.canEdit(this.item, account) || AppUtility.isEquals(this.item.CreatedID, account.id);
+			this.canEdit = this.canModerate || this.portalsCmsSvc.canEdit(this.item, account);
+			canView = this.canEdit || AppUtility.isEquals(this.item.CreatedID, account.id);
 		}
 		else if (AppUtility.isEquals(this.item.Status, "Published")) {
-			this.canEdit = this.canModerate;
+			this.canEdit = this.canModerate || this.portalsCmsSvc.canEdit(this.item, account);
 			canView = this.portalsCmsSvc.canView(this.item, account);
 		}
 		else {
@@ -329,7 +329,15 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 	}
 
 	async moderateAsync() {
-		await this.configSvc.navigateForwardAsync(this.item.routerURI.replace("/view/", "/update/"));
+		const availableStatuses = ["Draft", "Pending"];
+		if (this.canEdit) {
+			availableStatuses.push("Rejected", "Approved");
+		}
+		if (this.canModerate) {
+			availableStatuses.push("Published", "Archieved");
+		}
+		const currentStatus = availableStatuses.indexOf(this.item.Status) > -1 ? this.item.Status : "Draft";
+		await this.portalsCoreSvc.approveAsync(this.item.contentType.ID, this.item.ID, currentStatus, availableStatuses);
 	}
 
 	async deleteAsync() {

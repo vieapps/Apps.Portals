@@ -3199,7 +3199,7 @@ export class PortalsCoreService extends BaseService {
 		};
 	}
 
-	public async clearCacheAsync(objectName: string, objectID: string) {
+	public async clearCacheAsync(objectName: string, objectID: string, useXHR: boolean = false) {
 		await this.appFormsSvc.showAlertAsync(
 			"Cache",
 			await this.configSvc.getResourceAsync("portals.common.cache.confirm"),
@@ -3211,11 +3211,55 @@ export class PortalsCoreService extends BaseService {
 					async _ => await this.appFormsSvc.showAlertAsync("Cache", await this.configSvc.getResourceAsync("portals.common.cache.done")),
 					async error => await this.appFormsSvc.showErrorAsync(error),
 					undefined,
-					true
+					useXHR
 				);
 			},
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
+		);
+	}
+
+	public async approveAsync(entityInfo: string, id: string, currentStatus: string, availableStatuses: string[], useXHR: boolean = false) {
+		const title = await this.configSvc.getResourceAsync("common.buttons.moderate");
+		const statuses = availableStatuses.map(status => {
+			return {
+				label: "",
+				value: status
+			};
+		});
+		await Promise.all(statuses.map(async status => status.label = await this.configSvc.getResourceAsync(`portals.common.approval.${status.value}`)));
+		if (statuses.findIndex(status => status.value === "Published") > 0) {
+			statuses.find(status => status.value === "Pending").label = await this.configSvc.getResourceAsync("portals.common.approval.Pending2");
+		}
+		await this.appFormsSvc.showAlertAsync(
+			title,
+			undefined,
+			await this.configSvc.getResourceAsync("portals.common.approval.label", { status: await this.configSvc.getResourceAsync(`status.approval.${currentStatus}`) }),
+			async status => {
+				await this.appFormsSvc.showLoadingAsync(title);
+				await super.readAsync(
+					super.getURI("approve", id),
+					async _ => {
+						await this.appFormsSvc.showAlertAsync(title, await this.configSvc.getResourceAsync("portals.common.approval.message", { status: await this.configSvc.getResourceAsync(`status.approval.${status}`) }));
+					},
+					async error => await this.appFormsSvc.showErrorAsync(error),
+					{
+						"x-entity": entityInfo,
+						"x-status": status
+					},
+					useXHR
+				);
+			},
+			await this.configSvc.getResourceAsync("common.buttons.ok"),
+			await this.configSvc.getResourceAsync("common.buttons.cancel"),
+			statuses.map(status => {
+				return {
+					type: "radio",
+					label: status.label,
+					value: status.value,
+					checked: status.value === currentStatus
+				};
+			})
 		);
 	}
 

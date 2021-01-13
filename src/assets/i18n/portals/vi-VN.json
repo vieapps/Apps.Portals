@@ -221,6 +221,17 @@
 				"confirm": "Chắc chắn muốn xoá dữ liệu bộ đệm (cache)?",
 				"done": "Đã xoá dữ liệu bộ đệm (cache) thành công"
 			},
+			"approval": {
+				"label": "Trạng thái hiện tại: {{status}}",
+				"message": "Đã phê duyệt theo trạng thái mới ({{status}}) thành công",
+				"Draft": "Chuyển về bản nháp",
+				"Pending": "Gửi duyệt",
+				"Pending2": "Chuyển về đợi duyệt",
+				"Rejected": "Từ chối",
+				"Approved": "Duyệt & Gửi đăng",
+				"Published": "Xuất bản",
+				"Archieved": "Chuyển về lưu trữ"
+			},
 			"errors": {
 				"alias": {
 					"organization": "Tên rút gọn của đơn vị - tổ chức đã được sử dụng bởi đơn vị khác, cần lựa chọn tên khác",

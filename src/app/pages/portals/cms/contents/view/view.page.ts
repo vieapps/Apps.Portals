@@ -33,6 +33,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	private content: Content;
 	canModerate = false;
 	canEdit = false;
+	canDoApproval = false;
 	title = "";
 	formConfig: Array<AppFormsControlConfig>;
 	formSegments = {
@@ -108,11 +109,11 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			this.canEdit = canView = this.canModerate || this.portalsCmsSvc.canEdit(this.content, account) || AppUtility.isEquals(this.content.CreatedID, account.id);
 		}
 		else if (AppUtility.isEquals(this.content.Status, "Approved")) {
-			this.canEdit = this.canModerate;
-			canView = this.canEdit || this.portalsCmsSvc.canEdit(this.content, account) || AppUtility.isEquals(this.content.CreatedID, account.id);
+			this.canEdit = this.canModerate || this.portalsCmsSvc.canEdit(this.content, account);
+			canView = this.canEdit || AppUtility.isEquals(this.content.CreatedID, account.id);
 		}
 		else if (AppUtility.isEquals(this.content.Status, "Published")) {
-			this.canEdit = this.canModerate;
+			this.canEdit = this.canModerate || this.portalsCmsSvc.canEdit(this.content, account);
 			canView = this.portalsCmsSvc.canView(this.content, account);
 		}
 		else {
@@ -378,7 +379,15 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	async moderateAsync() {
-		await this.configSvc.navigateForwardAsync(this.content.routerURI.replace("/view/", "/update/"));
+		const availableStatuses = ["Draft", "Pending"];
+		if (this.canEdit) {
+			availableStatuses.push("Rejected", "Approved");
+		}
+		if (this.canModerate) {
+			availableStatuses.push("Published", "Archieved");
+		}
+		const currentStatus = availableStatuses.indexOf(this.content.Status) > -1 ? this.content.Status : "Draft";
+		await this.portalsCoreSvc.approveAsync(this.content.contentType.ID, this.content.ID, currentStatus, availableStatuses);
 	}
 
 	async deleteAsync() {
