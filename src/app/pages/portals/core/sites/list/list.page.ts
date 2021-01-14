@@ -62,7 +62,10 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 	}>;
 	labels = {
 		filter: "Quick filter",
-		cancel: "Cancel"
+		cancel: "Cancel",
+		edit: "Update this site",
+		open: "Open  this site",
+		cache: "Clear cache"
 	};
 
 	get locale() {
@@ -126,7 +129,10 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 
 		this.labels = {
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
-			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
+			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
+			open: await this.configSvc.getResourceAsync("portals.sites.list.open"),
+			cache: await this.configSvc.getResourceAsync("portals.common.cache.title")
 		};
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
@@ -315,6 +321,12 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		const domain = `${site.SubDomain}.${site.PrimaryDomain}`.replace("*.", "www.").replace("www.www.", "www.");
 		const protocol = site.AlwaysUseHTTPs ? "https" : "http";
 		PlatformUtility.openURI(`${protocol}://${domain}`);
+	}
+
+	async clearCacheAsync(event: Event, site: Site) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.portalsCoreSvc.clearCacheAsync("site", site.ID);
 	}
 
 	async exportToExcelAsync() {

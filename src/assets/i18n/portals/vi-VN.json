@@ -634,7 +634,8 @@
 				}
 			},
 			"list": {
-				"search": "cho từ khoá vào \"..\" để tìm kiếm chính xác site, đặt dấu + ở đầu nếu bắt buộc phải có"
+				"search": "cho từ khoá vào \"..\" để tìm kiếm chính xác site, đặt dấu + ở đầu nếu bắt buộc phải có",
+				"open": "Mở site theo tên miền mặc định"
 			},
 			"update": {
 				"segments": {
