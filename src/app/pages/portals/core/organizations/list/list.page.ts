@@ -117,6 +117,9 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 				await this.configSvc.navigateHomeAsync();
 				return;
 			}
+			else {
+				this.fetchOwners();
+			}
 		}
 
 		this.labels = {
@@ -268,20 +271,18 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 				? objects.ToArray()
 				: this.organizations.concat(objects.ToArray());
 		}
-		this.organizations.forEach(organization => this.getOwnerAsync(organization));
+		this.fetchOwners();
 		if (onNext !== undefined) {
 			onNext();
 		}
 	}
 
-	private async getOwnerAsync(organization: Organization) {
-		if (organization.owner === undefined && AppUtility.isNotEmpty(organization.OwnerID)) {
-			let owner = UserProfile.get(organization.OwnerID);
-			if (owner === undefined) {
-				await this.usersSvc.getProfileAsync(organization.OwnerID, _ => owner = UserProfile.get(organization.OwnerID) || new UserProfile("Unknonwn"), undefined, true);
+	private fetchOwners() {
+		this.organizations.forEach(async organization => {
+			if (AppUtility.isEmpty(organization.owner) && AppUtility.isNotEmpty(organization.OwnerID)) {
+				await this.usersSvc.getProfileAsync(organization.OwnerID, _ => organization.owner = (UserProfile.get(organization.OwnerID) || new UserProfile("Unknonwn")).Name);
 			}
-			organization.owner = owner.Name;
-		}
+		});
 	}
 
 	async showActionsAsync() {
