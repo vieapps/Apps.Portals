@@ -121,7 +121,7 @@ export class Portlet extends CoreBaseModel {
 					portlet.PaginationSettings = portlet.PaginationSettings || { ShowPageLinks: true, NumberOfPageLinks: 5 };
 				}
 				if (AppUtility.isArray(data.OtherDesktops, true)) {
-					portlet.otherDesktops = (data.OtherDesktops as Array<string>).filter((id, index, array) => array.indexOf(id) === index);
+					portlet.otherDesktops = (data.OtherDesktops as Array<string>).distinct();
 				}
 			}
 		});

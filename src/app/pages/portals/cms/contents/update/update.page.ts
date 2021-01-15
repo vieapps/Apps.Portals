@@ -207,12 +207,12 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OtherCategories"));
-		control.Extras = { LookupDisplayValues: otherCategories.length > 0 ? otherCategories : undefined };
+		control.Extras = { LookupDisplayValues: otherCategories.length > 0 ? otherCategories.sortBy("Label") : undefined };
 		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, contentType, true, true, options => {
 			options.OnDelete = (data, formControl) => {
 				const lookupDisplayValues = formControl.lookupDisplayValues;
 				data.forEach(id => lookupDisplayValues.removeAt(lookupDisplayValues.findIndex(item => item.Value === id)));
-				formControl.setValue(lookupDisplayValues.map(item => item.Value));
+				formControl.setValue(lookupDisplayValues.sortBy("Label").map(item => item.Value));
 				formControl.lookupDisplayValues = lookupDisplayValues;
 			};
 			options.ModalOptions.OnDismiss = (data, formControl) => {
@@ -224,7 +224,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 							lookupDisplayValues.push({ Value: category.ID, Label: category.FullTitle });
 						}
 					});
-					formControl.setValue(lookupDisplayValues.map(item => item.Value));
+					formControl.setValue(lookupDisplayValues.sortBy("Label").map(item => item.Value));
 					formControl.lookupDisplayValues = lookupDisplayValues;
 				}
 			};

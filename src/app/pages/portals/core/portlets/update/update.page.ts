@@ -199,7 +199,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			if (this.originalPortlet !== undefined) {
 				this.otherDesktops = this.otherDesktops.concat([this.portlet.DesktopID]);
 			}
-			this.otherDesktops = this.otherDesktops.filter((id, index, array) => array.indexOf(id) === index);
+			this.otherDesktops = this.otherDesktops.distinct();
 		}
 
 		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.portlet.SystemID) {
@@ -334,7 +334,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			Name: "OtherDesktops",
 			Type: "Lookup",
 			Segment: control.Segment,
-			Extras: { LookupDisplayValues: otherDekstops.length > 0 ? otherDekstops : undefined },
+			Extras: { LookupDisplayValues: otherDekstops.length > 0 ? otherDekstops.sortBy("Label") : undefined },
 			Options: {
 				Label: control.Options.Label.replace("DesktopID", "OtherDesktops"),
 				Description: control.Options.Description.replace("DesktopID", "OtherDesktops"),
@@ -344,7 +344,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 					OnDelete: (data, formControl) => {
 						const lookupDisplayValues = formControl.lookupDisplayValues;
 						data.forEach(id => lookupDisplayValues.removeAt(lookupDisplayValues.findIndex(item => item.Value === id)));
-						formControl.setValue(lookupDisplayValues.map(item => item.Value));
+						formControl.setValue(lookupDisplayValues.sortBy("Label").map(item => item.Value));
 						formControl.lookupDisplayValues = lookupDisplayValues;
 					},
 					ModalOptions: {
@@ -363,7 +363,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 										lookupDisplayValues.push({ Value: otherDesktop.ID, Label: otherDesktop.FullTitle });
 									}
 								});
-								formControl.setValue(lookupDisplayValues.map(item => item.Value));
+								formControl.setValue(lookupDisplayValues.sortBy("Label").map(item => item.Value));
 								formControl.lookupDisplayValues = lookupDisplayValues;
 							}
 						}

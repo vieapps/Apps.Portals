@@ -61,6 +61,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		edit: "Update this module",
 		active: "Set active",
 		contentTypes: "View the list of content-types",
+		expressions: "Expressions",
 		cache: "Clear cache"
 	};
 
@@ -127,6 +128,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
 			active: await this.configSvc.getResourceAsync("portals.module.list.active"),
 			contentTypes: await this.configSvc.getResourceAsync("portals.contenttypes.title.list", { info: "" }),
+			expressions: await this.configSvc.getResourceAsync("portals.expressions.title.list", { info: "" }),
 			cache: await this.configSvc.getResourceAsync("portals.common.cache.title")
 		};
 
@@ -245,6 +247,12 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
 		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "list", module.ansiTitle, { SystemID: module.SystemID, RepositoryID: module.ID }, "content.type", "core"));
+	}
+
+	async showExpressionsAsync(event: Event, module: Module) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, undefined, undefined, { RepositoryID: module.ID }, "expression", "core"));
 	}
 
 	async clearCacheAsync(event: Event, module: Module) {

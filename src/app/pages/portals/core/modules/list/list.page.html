@@ -61,6 +61,9 @@
 				<ion-item-option color="dark" [title]="labels.contentTypes" (click)="showContentTypesAsync($event, module)">
 					<ion-icon name="git-compare" slot="icon-only"></ion-icon>
 				</ion-item-option>
+				<ion-item-option color="warning" [title]="labels.expressions" (click)="showExpressionsAsync($event, module)">
+					<ion-icon name="construct" slot="icon-only"></ion-icon>
+				</ion-item-option>
 				<ion-item-option color="medium" [title]="labels.cache" (click)="clearCacheAsync($event, module)">
 					<ion-icon name="dice" slot="icon-only"></ion-icon>
 				</ion-item-option>

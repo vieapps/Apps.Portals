@@ -159,11 +159,11 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.expressions.title.${(this.searching ? "search" : "list")}`);
 		const titleInfo = this.contentType !== undefined
-			? this.contentType.Title
+			? this.organization.Title + " > " + this.contentType.Title
 			: this.contentTypeDefinition !== undefined
-				? this.contentTypeDefinition.Title
+				? this.organization.Title + " > " + this.contentTypeDefinition.Title
 				: this.module !== undefined
-					? this.module.Title
+					? this.organization.Title + " > " + this.module.Title
 					: this.organization.Title;
 		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: titleInfo !== undefined ? `[${titleInfo}]` : "" });
 
