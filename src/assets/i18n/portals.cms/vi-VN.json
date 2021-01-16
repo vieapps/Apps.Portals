@@ -102,7 +102,14 @@
 					"labels": {
 						"edit": "Cập nhật phân loại",
 						"children": "Xem danh sách phân loại cấp dưới",
-						"view": "Xem danh sách nội dung"
+						"view": "Xem danh sách nội dung",
+						"move": "Di chuyển toàn bộ nội dung sang phân loại khác",
+						"moveFirstConfirm": "Chắc chắn muốn di chuyển sang phân loại khác?",
+						"moveLastConfirm": "Thực sự muốn di chuyển sang phân loại khác?",
+						"moveExplanation": "Di chuyển toàn bộ nội dung trong phân loại hiện tại sang phân loại khác",
+						"moveNoCategory": "Chưa có mã định danh của kiểu dữ liệu/phân loại khác",
+						"moveInvalidCategory": "Cần nhập lại chính xác mã định danh của kiểu dữ liệu/phân loại khác",
+						"moveDone": "Đã di chuyển sang phân loại khác thành công"
 					},
 					"buttons": {
 						"edit": "Cập nhật",

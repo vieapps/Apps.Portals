@@ -1259,7 +1259,14 @@
 			"list": {
 				"searchbar": "cho từ khoá vào \"..\" để tìm kiếm chính xác kiểu dữ liệu nghiệp vụ",
 				"invalid": "Chưa chỉ định kiểu dữ liệu nghiệp vụ",
-				"no": "Chưa có kiểu dữ liệu nghiệp vụ nào"
+				"no": "Chưa có kiểu dữ liệu nghiệp vụ nào",
+				"move": "Di chuyển kiểu dữ liệu và toàn bộ nội dung sang module khác",
+				"moveFirstConfirm": "Chắc chắn muốn di chuyển sang module khác?",
+				"moveLastConfirm": "Thực sự muốn di chuyển sang module khác?",
+				"moveExplanation": "Di chuyển kiểu dữ liệu và toàn bộ nội dung hiện tại sang module khác",
+				"moveNoModule": "Chưa có mã định danh của module khác",
+				"moveInvalidModule": "Cần nhập lại chính xác mã định danh của module khác",
+				"moveDone": "Đã di chuyển sang module khác thành công"
 			},
 			"update": {
 				"segments": {

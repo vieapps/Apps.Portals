@@ -132,7 +132,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 		this.resources = {
 			status: await this.configSvc.getResourceAsync("portals.cms.contents.controls.Status.label"),
 			update: await this.configSvc.getResourceAsync("common.buttons.update"),
-			moderate: await this.configSvc.getResourceAsync("common.buttons.moderate"),
+			moderate: await this.configSvc.getResourceAsync("common.buttons.approve"),
 			delete: await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"),
 			deleteThumbnail: await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.deleteThumbnail")
 		};

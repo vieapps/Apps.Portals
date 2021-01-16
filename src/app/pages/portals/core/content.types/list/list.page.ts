@@ -70,7 +70,8 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		expressions: "Expressions",
 		filter: "Quick filter",
 		cancel: "Cancel",
-		cache: "Clear cache"
+		cache: "Clear cache",
+		move: "Move content-type and contents to other module"
 	};
 
 	get locale() {
@@ -160,7 +161,8 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 			expressions: await this.configSvc.getResourceAsync("portals.expressions.title.list", { info: "" }),
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
-			cache: await this.configSvc.getResourceAsync("portals.common.cache.title")
+			cache: await this.configSvc.getResourceAsync("portals.common.cache.title"),
+			move: await this.configSvc.getResourceAsync("portals.contenttypes.list.move")
 		};
 
 		const title = await this.configSvc.getResourceAsync("portals.contenttypes.title.list");
@@ -201,8 +203,12 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 
 	getInfo(contentType: ContentType) {
 		const module = Module.get(contentType.RepositoryID);
-		const contentTypeDefinition = Organization.contentTypeDefinitions.find(definition => definition.ID === contentType.ContentTypeDefinitionID);
-		return `${(module !== undefined ? `Module: ${module.Title} - ` : "")}Definition: ${contentTypeDefinition.Title}${(AppUtility.isNotEmpty(contentType.Description) ? " - " + contentType.Description : "")}`;
+		return `${(module !== undefined ? `Module: ${module.Title} - ` : "")}Definition: ${contentType.contentTypeDefinition.Title}${(AppUtility.isNotEmpty(contentType.Description) ? " - " + contentType.Description : "")}`;
+	}
+
+	canMove(contentType: ContentType) {
+		const objectName = contentType.getObjectName(false);
+		return this.isSystemAdministrator && ("Link" === objectName || "Item" === objectName);
 	}
 
 	onSearch(event: any) {
@@ -328,6 +334,35 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();
 		await this.portalsCoreSvc.clearCacheAsync("content.type", contentType.ID);
+	}
+
+	async moveAsync(event: Event, contentType: ContentType) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.portalsCoreSvc.moveAsync(
+			"ContentType",
+			contentType.ID,
+			{
+				firstConfirm: await this.appFormsSvc.getResourceAsync("portals.contenttypes.list.moveFirstConfirm"),
+				lastConfirm: await this.appFormsSvc.getResourceAsync("portals.contenttypes.list.moveLastConfirm"),
+				explanation: await this.appFormsSvc.getResourceAsync("portals.contenttypes.list.moveExplanation"),
+				noData: await this.appFormsSvc.getResourceAsync("portals.contenttypes.list.moveNoModule"),
+				invalidData: await this.appFormsSvc.getResourceAsync("portals.contenttypes.list.moveInvalidModule"),
+				done: await this.appFormsSvc.getResourceAsync("portals.contenttypes.list.moveDone")
+			},
+			(data: any, previousData?: any) => previousData !== undefined ? data.moduleID === previousData.moduleID : AppUtility.isNotEmpty(data.moduleID),
+			[{
+				type: "text",
+				name: "moduleID",
+				placeholder: "Module ID"
+			}],
+			data => {
+				return { "x-module-id": data.moduleID };
+			}
+		);
+		if (this.configSvc.isDebug) {
+			console.log("<Portals>: move content-type and belong contents to other module", contentType);
+		}
 	}
 
 	async exportToExcelAsync() {

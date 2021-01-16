@@ -3263,4 +3263,42 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
+	public async moveAsync(objectName: string, objectID: string, resources: { firstConfirm: string; lastConfirm: string; explanation: string; noData: string; invalidData: string; done: string; }, validate: (data: any, previousData?: any) => boolean, inputs: any[], getHeaders: (data: any) => { [key: string]: string }, useXHR: boolean = false) {
+		const move = await this.configSvc.getResourceAsync("common.buttons.move");
+		const cancel = await this.configSvc.getResourceAsync("common.buttons.cancel");
+		await this.appFormsSvc.showAlertAsync(
+			move,
+			resources.firstConfirm,
+			resources.explanation,
+			async firstData => validate(firstData)
+				? await this.appFormsSvc.showAlertAsync(
+					move,
+					resources.lastConfirm,
+					resources.explanation,
+					async lastData => {
+						if (validate(lastData, firstData)) {
+							await this.appFormsSvc.showLoadingAsync(move);
+							await super.readAsync(
+								super.getURI("move", objectName, "object-id=" + objectID),
+								async () => await this.appFormsSvc.showAlertAsync(move, resources.done),
+								async error => await this.appFormsSvc.showErrorAsync(error),
+								getHeaders(lastData),
+								useXHR
+							);
+						}
+						else {
+							await this.appFormsSvc.showAlertAsync(move, resources.invalidData);
+						}
+					},
+					move,
+					cancel,
+					inputs
+				)
+			: await this.appFormsSvc.showAlertAsync(move, resources.noData),
+			move,
+			cancel,
+			inputs
+		);
+	}
+
 }

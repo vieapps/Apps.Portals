@@ -19,7 +19,8 @@
 			"ok": "Đồng ý",
 			"done": "Hoàn thành",
 			"add": "Thêm",
-			"moderate": "Phê duyệt",
+			"moderate": "Kiểm duyệt",
+			"approve": "Phê duyệt",
 			"create": "Tạo mới",
 			"update": "Cập nhật",
 			"delete": "Xoá",
@@ -33,7 +34,8 @@
 			"upload": "Tải lên",
 			"download": "Tải xuống",
 			"refresh": "Làm tươi",
-			"filter": "Lọc nhanh"
+			"filter": "Lọc nhanh",
+			"move": "Di chuyển"
 		},
 		"messages": {
 			"loading": "Tải dữ liệu...",

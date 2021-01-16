@@ -49,6 +49,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	private children = "{{number}} children: {{children}}";
 	private alias = "Alias";
 
+	isSystemAdministrator = false;
 	canUpdate = false;
 	canContribute = false;
 
@@ -77,7 +78,8 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		refresh: "Refresh",
 		expression: "Create new expression",
 		save: "Save",
-		cancel: "Cancel"
+		cancel: "Cancel",
+		move: "Move contents to other category"
 	};
 	processing = false;
 	redordering = false;
@@ -159,7 +161,8 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 		this.contentType = this.contentType || this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.module);
 
-		this.canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
+		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
+		this.canUpdate = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
 		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
 		if (!this.canContribute) {
 			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
@@ -178,7 +181,8 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			expression: await this.configSvc.getResourceAsync("portals.expressions.title.create"),
 			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			save: await this.configSvc.getResourceAsync("common.buttons.save"),
-			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
+			move: await this.configSvc.getResourceAsync("portals.cms.categories.list.labels.move"),
 		};
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
@@ -526,6 +530,45 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		this.redordering = false;
 		await this.prepareTitleAsync();
 		await this.appFormsSvc.hideLoadingAsync(onNext);
+	}
+
+	async moveAsync(event: Event, category: Category) {
+		event.stopPropagation();
+		await this.listCtrl.closeSlidingItems();
+		await this.portalsCoreSvc.moveAsync(
+			"Category",
+			category.ID,
+			{
+				firstConfirm: await this.appFormsSvc.getResourceAsync("portals.cms.categories.list.labels.moveFirstConfirm"),
+				lastConfirm: await this.appFormsSvc.getResourceAsync("portals.cms.categories.list.labels.moveLastConfirm"),
+				explanation: await this.appFormsSvc.getResourceAsync("portals.cms.categories.list.labels.moveExplanation"),
+				noData: await this.appFormsSvc.getResourceAsync("portals.cms.categories.list.labels.moveNoCategory"),
+				invalidData: await this.appFormsSvc.getResourceAsync("portals.cms.categories.list.labels.moveInvalidCategory"),
+				done: await this.appFormsSvc.getResourceAsync("portals.cms.categories.list.labels.moveDone")
+			},
+			(data: any, previousData?: any) => previousData !== undefined ? data.contentTypeID === previousData.contentTypeID && data.categoryID === previousData.categoryID : AppUtility.isNotEmpty(data.contentTypeID) && AppUtility.isNotEmpty(data.categoryID),
+			[
+				{
+					type: "text",
+					name: "contentTypeID",
+					placeholder: "Content Type ID"
+				},
+				{
+					type: "text",
+					name: "categoryID",
+					placeholder: "Category ID"
+				}
+			],
+			data => {
+				return {
+					"x-content-type-id": data.contentTypeID,
+					"x-category-id": data.categoryID
+				};
+			}
+		);
+		if (this.configSvc.isDebug) {
+			console.log("<Portals>: move contents to other category", category);
+		}
 	}
 
 	async exportToExcelAsync() {

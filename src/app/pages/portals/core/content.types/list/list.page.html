@@ -71,14 +71,17 @@
 				<ion-item-option color="warning" [title]="labels.expressions" (click)="showExpressionsAsync($event, contentType)">
 					<ion-icon name="construct" slot="icon-only"></ion-icon>
 				</ion-item-option>
-				<ion-item-option color="secondary" [title]="labels.contents" (click)="showContentsAsync($event, contentType)">
-					<ion-icon name="file-tray-full" slot="icon-only"></ion-icon>
+				<ion-item-option *ngIf="canMove(contentType)" color="danger" [title]="labels.move" (click)="moveAsync($event, contentType)">
+					<ion-icon name="shuffle" slot="icon-only"></ion-icon>
 				</ion-item-option>
 				<ion-item-option color="medium" [title]="labels.cache" (click)="clearCacheAsync($event, contentType)">
 					<ion-icon name="dice" slot="icon-only"></ion-icon>
 				</ion-item-option>
 				<ion-item-option color="dark" [title]="labels.advancedEdit" (click)="editAsync($event, contentType, true)">
 					<ion-icon name="settings" slot="icon-only"></ion-icon>
+				</ion-item-option>
+				<ion-item-option color="secondary" [title]="labels.contents" (click)="showContentsAsync($event, contentType)">
+					<ion-icon name="file-tray-full" slot="icon-only"></ion-icon>
 				</ion-item-option>
 				<ion-item-option color="primary" [title]="labels.edit" (click)="editAsync($event, contentType)">
 					<ion-icon name="create" slot="icon-only"></ion-icon>

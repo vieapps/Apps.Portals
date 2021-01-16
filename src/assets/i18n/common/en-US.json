@@ -20,6 +20,7 @@
 			"done": "Done",
 			"add": "Add",
 			"moderate": "Moderate",
+			"approve": "Approve",
 			"create": "Create new",
 			"update": "Update",
 			"delete": "Delete",
@@ -32,7 +33,9 @@
 			"search": "Search",
 			"upload": "Upload",
 			"download": "Download",
-			"refresh": "Refresh"
+			"refresh": "Refresh",
+			"filter": "Quick filter",
+			"move": "Move"
 		},
 		"messages": {
 			"loading": "Loading...",
