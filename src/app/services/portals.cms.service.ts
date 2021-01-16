@@ -242,6 +242,17 @@ export class PortalsCmsService extends BaseService {
 				start = AppUtility.indexOf(html, "<oembed", start + 1);
 			}
 
+			// remove 'height' from all images (img tags)
+			start = AppUtility.indexOf(html, "<img");
+			while (start > -1) {
+				const end = AppUtility.indexOf(html, ">", start + 1) + 1;
+				let img = html.substr(start, end - start);
+				img = img.replace("height=", "data-height=");
+				img = img.replace("height:", "data-height:");
+				html = html.substr(0, start) + img + html.substr(end);
+				start = AppUtility.indexOf(html, "<img", start + 1);
+			}
+
 			// add 'target' into all archors (a tags)
 			start = AppUtility.indexOf(html, "<a");
 			while (start > -1) {
