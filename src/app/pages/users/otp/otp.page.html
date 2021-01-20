@@ -74,7 +74,7 @@
 	</ion-list>
 	<ion-buttons *ngIf="provision.uri !== ''" class="ion-padding">
 		<ion-button fill="solid" color="primary" [disabled]="!password || !provision.value || provision.value.length < 5 || provision.value.length > 10" (click)="addAsync()">
-			<ion-icon name="done-all" slot="start"></ion-icon>
+			<ion-icon name="checkmark-done" slot="start"></ion-icon>
 			{{ labels.buttons.verify }}
 		</ion-button>
 	</ion-buttons>

@@ -475,7 +475,6 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		control.Options.Type = "toggle";
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Theme"));
-		// control.Options.Type = "dropdown";
 		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => {
 			return { Value: theme.name, Label: theme.name };
 		});
@@ -566,7 +565,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 
 		organization.Notifications = this.portalsCoreSvc.getNotificationSettings(this.organization.Notifications, this.emailsByApprovalStatus, false);
 		organization.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.organization.EmailSettings, false);
-		organization.Others = { MetaTags: organization.MetaTags, Scripts: organization.Scripts };
+		organization.Others = { MetaTags: organization.MetaTags, ScriptLibraries: organization.ScriptLibraries, Scripts: organization.Scripts };
 
 		organization.RefreshUrls = organization.RefreshUrls || {};
 		organization.RefreshUrls.Addresses = AppUtility.toStr(organization.RefreshUrls.Addresses, "\n");
@@ -595,6 +594,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		});
 
 		delete organization["MetaTags"];
+		delete organization["ScriptLibraries"];
 		delete organization["Scripts"];
 
 		this.form.patchValue(organization);
@@ -625,6 +625,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 
 				organization.ExpiredDate = organization.ExpiredDate !== undefined ? AppUtility.toIsoDate(organization.ExpiredDate).replace(/\-/g, "/") : "-";
 				organization.MetaTags = organization.Others.MetaTags;
+				organization.ScriptLibraries = organization.Others.ScriptLibraries;
 				organization.Scripts = organization.Others.Scripts;
 				organization.RefreshUrls.Addresses = AppUtility.toArray(organization.RefreshUrls.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));
 				organization.RedirectUrls.Addresses = AppUtility.toArray(organization.RedirectUrls.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));

@@ -46,9 +46,9 @@
 					"update": "Cập nhật phân loại"
 				},
 				"controls": {
-					"Info": "phân loại của",
+					"Info": "Phân loại của",
 					"ParentID": {
-						"label": "phân loại cấp trên",
+						"label": "Phân loại cấp trên",
 						"placeholder": "",
 						"description": ""
 					},
@@ -58,7 +58,7 @@
 						"description": ""
 					},
 					"Title": {
-						"label": "Tên phân loại",
+						"label": "Tiêu đề",
 						"placeholder": "",
 						"description": ""
 					},
@@ -78,9 +78,9 @@
 						"description": "Desktop mặc định sử dụng để hiển thị các nội dung của phân loại, sẽ sử dụng desktop của kiểu dữ liệu nghiêp vụ nội dung tương ứng nếu không có desktop nào được chỉ định"
 					},
 					"OpenBy": {
-						"label": "Cách thức mở phân loại",
+						"label": "Cách thức mở phân loại nội dung",
 						"placeholder": "",
-						"description": "Chỉ định cách thức mở (tạo liên kết) của phân loại",
+						"description": "Chỉ định cách thức mở (tạo liên kết) của phân loại nội dung",
 						"DesktopWithAlias": "Mở desktop hiển thị với tên rút gọn",
 						"DesktopOnly": "Chỉ mở desktop hiển thị",
 						"SpecifiedURI": "Mở theo liên kết tĩnh được chỉ định ở dưới"
@@ -158,12 +158,12 @@
 						"description": "Nội dung sẽ chỉ xuất hiện công khai khi trạng thái là 'Xuất bản'"
 					},
 					"CategoryID": {
-						"label": "phân loại",
+						"label": "Phân loại nội dung",
 						"placeholder": "",
 						"description": "Chỉ định phân loại mà nội dung sẽ xuất hiện chính ở đó"
 					},
 					"OtherCategories": {
-						"label": "phân loại đồng thời xuất hiện",
+						"label": "Phân loại nội dung đồng thời xuất hiện",
 						"placeholder": "",
 						"description": "Chỉ định các phân loại mà nội dung sẽ đồng thời xuất hiện ở đó"
 					},

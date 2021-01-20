@@ -140,11 +140,9 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 			return;
 		}
 
+		this.filterBy.And.push({ SystemID: { Equals: this.organization.ID } });
 		if (this.desktop !== undefined) {
 			this.filterBy.And.push({ DesktopID: { Equals: this.desktop.ID } });
-		}
-		else {
-			this.filterBy.And.push({ SystemID: { Equals: this.organization.ID } });
 		}
 
 		this.labels = {

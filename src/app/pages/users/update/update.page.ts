@@ -115,7 +115,9 @@ export class UsersUpdatePage implements OnInit {
 	onFormInitialized(event: AppFormsComponent) {
 		if (this.update.config === event.config) {
 			this.update.form.patchValue(this.profile);
-			this.update.form.controls.DarkTheme.setValue(this.update.darkTheme);
+			if (this.update.form.controls !== undefined && this.update.form.controls.DarkTheme !== undefined) {
+				this.update.form.controls.DarkTheme.setValue(this.update.darkTheme);
+			}
 			this.update.hash = AppCrypto.hash(this.update.form.value);
 		}
 	}
