@@ -107,7 +107,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
 		this.organization = Organization.get(this.organizationID) || await this.portalsCoreSvc.getActiveOrganizationAsync();
-		this.module = Module.get(this.moduleID);
+		this.module = Module.get(this.moduleID) || await this.portalsCoreSvc.getActiveModuleAsync();
 		this.contentType = ContentType.get(this.contentTypeID);
 		this.prepareFilterBy(true);
 		this.children = await this.configSvc.getResourceAsync("portals.common.lookup.children");
@@ -118,7 +118,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			search: await this.configSvc.getResourceAsync("common.buttons.search")
 		};
 		if (this.configSvc.isDebug) {
-			console.log("[DataLookup]: lookup portal data", `\n- Organization: ${this.organizationID}`, this.organization, `\n- Module: ${this.moduleID}`, this.module, `\n- Content Type: ${this.contentTypeID}`, this.contentType, `\n- Multiple & Nested:`, this.multiple, this.nested);
+			console.log(`[DataLookup]: lookup portal data (${this.objectName})`, `\n- Organization: ${this.organizationID}`, this.organization, `\n- Module: ${this.moduleID}`, this.module, `\n- Content Type: ${this.contentTypeID}`, this.contentType, "\n- Multiple & Nested:", this.multiple, this.nested, "\n- Filter:", this.filterBy);
 		}
 		await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 	}

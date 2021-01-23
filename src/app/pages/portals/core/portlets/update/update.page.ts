@@ -122,7 +122,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		if (this.portlet === undefined) {
-			this.isAdvancedMode = this.isSystemModerator;
+			this.isAdvancedMode = this.canModerateOrganization;
 			this.contentType = ContentType.get(this.configSvc.requestParams["RepositoryEntityID"]) || this.organization.contentTypes.filter(contentType => contentType.contentTypeDefinition.Portlets)[0];
 			this.portlet = new Portlet(this.desktop.SystemID, this.desktop.ID, this.contentType.ID);
 			this.portlet.Action = "List";
@@ -156,7 +156,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			};
 		}
 		else {
-			this.isAdvancedMode = this.isSystemModerator && AppUtility.isTrue(this.configSvc.requestParams["Advanced"]);
+			this.isAdvancedMode = this.canModerateOrganization && AppUtility.isTrue(this.configSvc.requestParams["Advanced"]);
 			if (AppUtility.isNotEmpty(this.portlet.OriginalPortletID)) {
 				this.originalPortlet = Portlet.get(this.portlet.OriginalPortletID);
 				if (this.originalPortlet === undefined) {
@@ -395,19 +395,40 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryEntityID"));
-		if (this.isAdvancedMode) {
+		if (this.isAdvancedMode || AppUtility.isEmpty(this.portlet.ID)) {
 			control.Options.SelectOptions.Values = this.organization.contentTypes.filter(contentType => contentType.contentTypeDefinition.Portlets).map(contentType => {
 				return { Value: contentType.ID, Label: contentType.Title };
 			});
 			control.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
 			control.Options.OnChanged = (_, formControl) => {
 				if (!AppUtility.isEquals(formControl.value, "-")) {
-					this.contentType = ContentType.get(formControl.value);
 					const expressionControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExpressionID"));
-					expressionControl.Options.LookupOptions.ModalOptions.ComponentProps.filters = { Or: [
-						{ ContentTypeDefinitionID: { Equals: this.contentType.ContentTypeDefinitionID } },
-						{ RepositoryEntityID: { Equals: this.contentType.ID } }
-					]};
+					this.contentType = ContentType.get(formControl.value);
+					if (this.contentType !== undefined) {
+						expressionControl.Options.LookupOptions.ModalOptions.ComponentProps.filters = {
+							And: [
+								{
+									SystemID: {
+										Equals: this.contentType.SystemID
+									}
+								},
+								{
+									RepositoryID: {
+										Equals: this.contentType.RepositoryID
+									}
+								},
+								{
+									Or: [
+										{ ContentTypeDefinitionID: { Equals: this.contentType.ContentTypeDefinitionID } },
+										{ RepositoryEntityID: { Equals: this.contentType.ID } }
+									]
+								}
+							]
+						};
+						expressionControl.Options.LookupOptions.ModalOptions.ComponentProps.organizationID = this.contentType.SystemID;
+						expressionControl.Options.LookupOptions.ModalOptions.ComponentProps.moduleID = this.contentType.RepositoryID;
+						expressionControl.Options.LookupOptions.ModalOptions.ComponentProps.contentTypeID = this.contentType.ID;
+					}
 					expressionControl.controlRef.setValue(undefined);
 					let settingsControl = this.formControls.find(ctrl => ctrl.Name === "ListSettings");
 					if (settingsControl !== undefined) {

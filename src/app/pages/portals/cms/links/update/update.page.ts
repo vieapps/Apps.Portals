@@ -126,7 +126,7 @@ export class CmsLinksUpdatePage implements OnInit {
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 
-		if (AppUtility.isNotEmpty(this.link.ID) && this.link.childrenIDs === undefined) {
+		if (AppUtility.isNotEmpty(this.link.ID) && this.link.ChildrenMode === "Normal" && this.link.childrenIDs === undefined) {
 			this.portalsCmsSvc.refreshLinkAsync(this.link.ID, async _ => await this.appFormsSvc.showToastAsync("The link was freshen-up"));
 		}
 	}
@@ -239,23 +239,22 @@ export class CmsLinksUpdatePage implements OnInit {
 		};
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryObjectID"));
-		control.Options.LookupOptions.ModalOptions.Component = DataLookupModalPage;
-		control.Options.LookupOptions.ModalOptions.ComponentProps.organizationID = this.organization.ID;
-		control.Options.LookupOptions.ModalOptions.ComponentProps.moduleID = this.link.LookupRepositoryID;
-		control.Options.LookupOptions.ModalOptions.ComponentProps.contentTypeID = this.link.LookupRepositoryEntityID;
-		control.Options.LookupOptions.ModalOptions.ComponentProps.nested = true;
-		control.Options.LookupOptions.ModalOptions.ComponentProps.excludedIDs = AppUtility.isNotEmpty(this.link.ID) ? [this.link.ID] : undefined;
-		control.Options.LookupOptions.OnDelete = (_, formControl) => {
-			formControl.setValue(undefined);
-			formControl.lookupDisplayValues = undefined;
-		};
-		control.Options.LookupOptions.ModalOptions.OnDismiss = (values, formControl) => {
-			if (AppUtility.isArray(values, true) && values[0].ID !== formControl.value) {
-				formControl.setValue(values[0].ID);
-				const nestedObject: NestedObject = Link.get(values[0].ID) || Category.get(values[0].ID || values[0]);
-				formControl.lookupDisplayValues = [{ Value: nestedObject.ID, Label: nestedObject.FullTitle || nestedObject.Title }];
-			}
-		};
+		const lookupContentType = ContentType.get(this.link.LookupRepositoryEntityID);
+		this.portalsCoreSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, lookupContentType, false, true, options => {
+			options.ModalOptions.ComponentProps.objectName = lookupContentType !== undefined ? lookupContentType.getObjectName(true) : undefined;
+			options.ModalOptions.ComponentProps.excludedIDs = AppUtility.isNotEmpty(this.link.ID) ? [this.link.ID] : undefined;
+			options.OnDelete = (_, formControl) => {
+				formControl.setValue(undefined);
+				formControl.lookupDisplayValues = undefined;
+			};
+			options.ModalOptions.OnDismiss = (values, formControl) => {
+				if (AppUtility.isArray(values, true) && values[0].ID !== formControl.value) {
+					formControl.setValue(values[0].ID);
+					const nestedObject: NestedObject = Link.get(values[0].ID) || Category.get(values[0].ID || values[0]);
+					formControl.lookupDisplayValues = [{ Value: nestedObject.ID, Label: nestedObject.FullTitle || nestedObject.Title }];
+				}
+			};
+		});
 		if (AppUtility.isNotEmpty(this.link.ID) && AppUtility.isNotEmpty(this.link.LookupRepositoryObjectID)) {
 			let nestedObject: NestedObject = Link.get(this.link.LookupRepositoryObjectID) || Category.get(this.link.LookupRepositoryObjectID);
 			if (nestedObject === undefined) {

@@ -299,38 +299,37 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 					control.value = this.portalsCmsSvc.normalizeRichHtml(control.value);
 				}
 				else {
-					let category: Category;
-					let categories: string;
-					let relateds: string;
-					let content: Content;
 					switch (control.Name) {
 						case "Status":
 							control.value = await this.appFormsSvc.getResourceAsync(`status.approval.${control.value}`);
 							break;
 
 						case "CategoryID":
-							category = Category.get(this.content.CategoryID);
-							if (category === undefined) {
-								await this.portalsCmsSvc.getCategoryAsync(this.content.CategoryID, _ => category = Category.get(this.content.CategoryID), undefined, true);
+							let mainCategory = Category.get(this.content.CategoryID);
+							if (mainCategory === undefined) {
+								await this.portalsCmsSvc.getCategoryAsync(this.content.CategoryID, _ => mainCategory = Category.get(this.content.CategoryID), undefined, true);
 							}
-							if (category !== undefined) {
-								control.value = category.FullTitle;
+							if (mainCategory !== undefined) {
+								control.value = mainCategory.FullTitle;
 							}
 							break;
 
 						case "OtherCategories":
-							categories = "";
-							await Promise.all(this.content.OtherCategories.map(async categoryID => {
-								category = Category.get(categoryID);
-								if (category === undefined) {
-									await this.portalsCmsSvc.getCategoryAsync(categoryID, _ => category = Category.get(categoryID), undefined, true);
-								}
-								if (category !== undefined) {
-									categories += `<li>${category.FullTitle}</li>`;
-								}
-							}));
-							control.value = `<ul>${categories}</ul>`;
 							control.Type = "TextArea";
+							control.value = "";
+							if (AppUtility.isArray(this.content.OtherCategories, true)) {
+								let otherCategories = "";
+								await Promise.all(this.content.OtherCategories.map(async id => {
+									let otherCategory = Category.get(id);
+									if (otherCategory === undefined) {
+										await this.portalsCmsSvc.getCategoryAsync(id, _ => otherCategory = Category.get(id), undefined, true);
+									}
+									if (otherCategory !== undefined) {
+										otherCategories += `<li>${otherCategory.FullTitle}</li>`;
+									}
+								}));
+								control.value = `<ul>${otherCategories}</ul>`;
+							}
 							break;
 
 						case "AllowComments":
@@ -342,25 +341,31 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 							break;
 
 						case "Relateds":
-							relateds = "";
-							await Promise.all(this.content.Relateds.map(async contentID => {
-								content = Content.get(contentID);
-								if (content === undefined) {
-									await this.portalsCmsSvc.getContentAsync(contentID, _ => content = Content.get(contentID), undefined, true);
-								}
-								if (content !== undefined) {
-									relateds += `<li>${content.Title}</li>`;
-								}
-							}));
-							control.value = `<ul>${relateds}</ul>`;
 							control.Type = "TextArea";
+							control.value = "";
+							if (AppUtility.isArray(this.content.Relateds, true)) {
+								let relateds = "";
+								await Promise.all(this.content.Relateds.map(async id => {
+									let content = Content.get(id);
+									if (content === undefined) {
+										await this.portalsCmsSvc.getContentAsync(id, _ => content = Content.get(id), async _ => await this.portalsCmsSvc.getContentAsync(id, __ => content = Content.get(id), undefined, true), true);
+									}
+									if (content !== undefined) {
+										relateds += `<li>${content.Title}</li>`;
+									}
+								}));
+								control.value = `<ul>${relateds}</ul>`;
+							}
 							break;
 
 						case "ExternalRelateds":
-							relateds = "";
-							this.content.ExternalRelateds.forEach(related => relateds += `<li><a href="${related.URL}" target=\"_blank\">${related.Title}</a></li>`);
-							control.value = `<ul>${relateds}</ul>`;
 							control.Type = "TextArea";
+							control.value = "";
+							if (AppUtility.isArray(this.content.ExternalRelateds, true)) {
+								let relateds = "";
+								this.content.ExternalRelateds.forEach(related => relateds += `<li><a href="${related.URL}" target=\"_blank\">${related.Title}</a></li>`);
+								control.value = `<ul>${relateds}</ul>`;
+							}
 							break;
 					}
 				}

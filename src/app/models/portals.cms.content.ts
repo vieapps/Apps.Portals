@@ -114,6 +114,15 @@ export class Content extends CmsBaseModel {
 		return `/portals/cms/contents/view/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
+	public async preloadAsync(getCategoryAsync: (id: string) => Promise<void>, getContentAsync: (id: string) => Promise<void>) {
+		if (getCategoryAsync !== undefined && AppUtility.isArray(this.OtherCategories, true)) {
+			await Promise.all(this.OtherCategories.filter(id => !Category.contains(id)).map(id => getCategoryAsync(id)));
+		}
+		if (getContentAsync !== undefined && AppUtility.isArray(this.Relateds, true)) {
+			await Promise.all(this.Relateds.filter(id => !Content.contains(id)).map(id => getContentAsync(id)));
+		}
+	}
+
 }
 
 export interface ExternalRelated {

@@ -36,7 +36,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx-portals",
-		version: "2.1.3",
+		version: "2.1.7",
 		frameworks: "ionic 5.5 - angular 8.2 - cordova 10.0",
 		mode: "",
 		platform: "",
@@ -267,8 +267,8 @@ export class AppConfig {
 	public static getRelatedJson(additional?: { [key: string]: string }, service?: string, activeID?: string, onPreCompleted?: (json: any) => void) {
 		const json: { [key: string]: string } = {
 			"language": this.language,
-			"related-service": (AppUtility.isNotEmpty(service) ? service : this.services.active).trim().toLowerCase(),
-			"active-id": (AppUtility.isNotEmpty(activeID) ? activeID : this.services.activeID).trim().toLowerCase()
+			"related-service": (AppUtility.isNotEmpty(service) ? service : this.services.active || "").trim().toLowerCase(),
+			"active-id": (AppUtility.isNotEmpty(activeID) ? activeID : this.services.activeID || "").trim().toLowerCase()
 		};
 		if (AppUtility.isObject(additional, true)) {
 			Object.keys(additional).forEach(key => json[key] = additional[key]);
