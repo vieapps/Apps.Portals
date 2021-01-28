@@ -184,9 +184,9 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		};
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
-		await this.prepareTitleAsync();
 		this.children = await this.configSvc.getResourceAsync("portals.cms.categories.list.children");
 		this.alias = await this.configSvc.getResourceAsync("portals.cms.categories.controls.Alias.label");
+		await this.prepareTitleAsync();
 
 		if (this.searching) {
 			this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
@@ -197,10 +197,10 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		else {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.reorder"), "swap-vertical", () => this.openReorderAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.search"), "search", () => this.openSearchAsync())
 			];
 			if (this.canUpdate) {
+				this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.reorder"), "swap-vertical", () => this.openReorderAsync()), 1);
 				this.actions.push(
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
@@ -211,21 +211,21 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			this.parentCategory = Category.get(this.parentID);
 
 			if (this.parentCategory !== undefined) {
-				this.prepareCategories();
 				this.contentType = this.parentCategory.contentType;
 				this.module = this.parentCategory.module;
 				this.organization = this.parentCategory.organization;
+				this.prepareCategories();
 				await this.prepareTitleAsync();
 				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on(this.portalsCoreSvc.name, info => {
-					if (info.args.Object === "CMS.Category" && (this.parentCategory.ID === info.args.ID || this.parentCategory.ID === info.args.ParentID)) {
+					if (info.args.Object === "CMS.Category") {
 						this.prepareCategories();
 					}
-				}, `CMS.Categoriess:${this.parentCategory.ID}:Refresh`);
+				}, `CMS.Categories:${this.parentCategory.ID}:Refresh`);
 			}
 			else {
-				await this.prepareTitleAsync();
 				this.prepareFilterBy();
+				await this.prepareTitleAsync();
 				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					if (info.args.Object === "CMS.Category") {
@@ -262,7 +262,10 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	private prepareCategories() {
-		this.categories = this.parentCategory.Children.toList().OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
+		this.categories = this.parentCategory.Children;
+		if (this.configSvc.isDebug) {
+			console.log("<CMS Portals>: Categories (children)", this.categories);
+		}
 	}
 
 	track(index: number, item: any) {
@@ -353,17 +356,17 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.categories.push(Category.get(o.ID) || Category.deserialize(o, Category.get(o.ID))));
 		}
 		else {
-			const predicate: (category: Category) => boolean = obj => obj.SystemID === this.organization.ID && obj.ParentID === this.parentID && (this.module !== undefined ? obj.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? obj.RepositoryEntityID === this.contentType.ID : true);
+			const predicate: (category: Category) => boolean = obj => obj.SystemID === this.organization.ID && (this.module !== undefined ? obj.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? obj.RepositoryEntityID === this.contentType.ID : true) && obj.ParentID === this.parentID;
 			let objects = results === undefined
-				? Category.instances.toList(predicate)
-				: Category.toList(results).Where(predicate);
-			objects = objects.OrderBy(obj => obj.OrderIndex).ThenBy(obj => obj.Title);
+				? Category.instances.toArray(predicate)
+				: Category.toArray(results).filter(predicate);
+			objects = objects.sortBy("OrderIndex", "Title");
 			if (results === undefined && this.pagination !== undefined) {
-				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
+				objects = objects.take(this.pageNumber * this.pagination.PageSize);
 			}
 			this.categories = results === undefined
-				? objects.ToArray()
-				: this.categories.concat(objects.ToArray());
+				? objects
+				: this.categories.concat(objects);
 		}
 		if (onNext !== undefined) {
 			onNext();

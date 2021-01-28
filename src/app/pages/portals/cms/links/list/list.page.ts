@@ -179,8 +179,8 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		};
 
 		this.searching = this.configSvc.currentUrl.endsWith("/search");
-		await this.prepareTitleAsync();
 		this.children = await this.configSvc.getResourceAsync("portals.cms.links.list.children");
+		await this.prepareTitleAsync();
 
 		if (this.searching) {
 			this.prepareFilterBy(false);
@@ -191,10 +191,10 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		else {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.links.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.links.title.reorder"), "swap-vertical", () => this.openReorderAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.links.title.search"), "search", () => this.openSearchAsync())
 			];
 			if (this.canUpdate) {
+				this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.links.title.reorder"), "swap-vertical", () => this.openReorderAsync()), 1);
 				this.actions.push(
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
@@ -205,21 +205,21 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			this.parentLink = Link.get(this.parentID);
 
 			if (this.parentLink !== undefined) {
-				this.prepareLinks();
 				this.contentType = this.parentLink.contentType;
 				this.module = this.parentLink.module;
 				this.organization = this.parentLink.organization;
+				this.prepareLinks();
 				await this.prepareTitleAsync();
 				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on(this.portalsCoreSvc.name, info => {
-					if (info.args.Object === "CMS.Link" && (this.parentLink.ID === info.args.ID || this.parentLink.ID === info.args.ParentID)) {
+					if (info.args.Object === "CMS.Link") {
 						this.prepareLinks();
 					}
 				}, `CMS.Links:${this.parentLink.ID}:Refresh`);
 			}
 			else {
-				await this.prepareTitleAsync();
 				this.prepareFilterBy();
+				await this.prepareTitleAsync();
 				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					if (info.args.Object === "CMS.Link") {
@@ -259,9 +259,9 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	}
 
 	private prepareLinks() {
-		this.links = this.parentLink.Children.toList().OrderBy(o => o.OrderIndex).ThenBy(o => o.Title).ToArray();
+		this.links = this.parentLink.Children;
 		if (this.configSvc.isDebug) {
-			console.log("<CMS>: the child links", this.links);
+			console.log("<CMS Portals>: Links (children)", this.links);
 		}
 	}
 
@@ -353,17 +353,17 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			(results || []).forEach(o => this.links.push(Link.get(o.ID) || Link.deserialize(o, Link.get(o.ID))));
 		}
 		else {
-			const predicate: (link: Link) => boolean = obj => obj.SystemID === this.organization.ID && obj.ParentID === this.parentID && (this.module !== undefined ? obj.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? obj.RepositoryEntityID === this.contentType.ID : true);
+			const predicate: (link: Link) => boolean = obj => obj.SystemID === this.organization.ID && (this.module !== undefined ? obj.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? obj.RepositoryEntityID === this.contentType.ID : true) && obj.ParentID === this.parentID;
 			let objects = results === undefined
-				? Link.instances.toList(predicate)
-				: Link.toList(results).Where(predicate);
-			objects = objects.OrderBy(obj => obj.OrderIndex).ThenBy(obj => obj.Title);
+				? Link.instances.toArray(predicate)
+				: Link.toArray(results).filter(predicate);
+			objects = objects.sortBy("OrderIndex", "Title");
 			if (results === undefined && this.pagination !== undefined) {
-				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
+				objects = objects.take(this.pageNumber * this.pagination.PageSize);
 			}
 			this.links = results === undefined
-				? objects.ToArray()
-				: this.links.concat(objects.ToArray());
+				? objects
+				: this.links.concat(objects);
 		}
 		if (onNext !== undefined) {
 			onNext();

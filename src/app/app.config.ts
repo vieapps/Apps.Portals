@@ -36,7 +36,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx-portals",
-		version: "2.1.7",
+		version: "2.2.0",
 		frameworks: "ionic 5.5 - angular 8.2 - cordova 10.0",
 		mode: "",
 		platform: "",
