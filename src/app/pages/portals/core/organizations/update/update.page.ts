@@ -611,6 +611,8 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		organization.RedirectUrls.Addresses = AppUtility.toStr(organization.RedirectUrls.Addresses, "\n");
 		organization.RedirectUrls.AllHttp404 = organization.RedirectUrls.AllHttp404 !== undefined ? !!organization.RedirectUrls.AllHttp404 : false;
 
+		organization.FakeURIs = { FakeFilesHttpURI: this.organization.FakeFilesHttpURI, FakePortalsHttpURI: this.organization.FakePortalsHttpURI };
+
 		this.instructions = organization.Instructions || {};
 		Organization.instructionElements.forEach(type => {
 			this.instructions[type] = this.instructions[type] || {};
@@ -632,6 +634,8 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		delete organization["MetaTags"];
 		delete organization["ScriptLibraries"];
 		delete organization["Scripts"];
+		delete organization["FakeFilesHttpURI"];
+		delete organization["FakePortalsHttpURI"];
 
 		this.form.patchValue(organization);
 		this.hash = AppCrypto.hash(this.form.value);
@@ -665,10 +669,13 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				organization.Scripts = organization.Others.Scripts;
 				organization.RefreshUrls.Addresses = AppUtility.toArray(organization.RefreshUrls.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));
 				organization.RedirectUrls.Addresses = AppUtility.toArray(organization.RedirectUrls.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));
+				organization.FakeFilesHttpURI = organization.FakeURIs.FakeFilesHttpURI;
+				organization.FakePortalsHttpURI = organization.FakeURIs.FakePortalsHttpURI;
 				organization.OriginalPrivileges = Privileges.getPrivileges(organization.Privileges);
 				this.portalsCoreSvc.normalizeNotificationSettings(organization.Notifications, this.emailsByApprovalStatus);
 
 				delete organization["Others"];
+				delete organization["FakeURIs"];
 				delete organization["Privileges"];
 
 				if (AppUtility.isNotEmpty(organization.ID)) {
