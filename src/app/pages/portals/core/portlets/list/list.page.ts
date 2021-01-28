@@ -13,9 +13,7 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { NestedObject } from "@app/models/portals.base";
-import { Organization } from "@app/models/portals.core.organization";
-import { Desktop } from "@app/models/portals.core.desktop";
-import { Portlet } from "@app/models/portals.core.portlet";
+import { Organization, Desktop, Portlet } from "@app/models/portals.core.all";
 
 @Component({
 	selector: "page-portals-core-portlets-list",

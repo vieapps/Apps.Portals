@@ -10,8 +10,7 @@ import { AppPagination, AppDataPagination, AppDataRequest } from "@app/component
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { Organization } from "@app/models/portals.core.organization";
-import { Role } from "@app/models/portals.core.role";
+import { Organization, Role } from "@app/models/portals.core.all";
 
 @Component({
 	selector: "page-portals-core-roles-list",

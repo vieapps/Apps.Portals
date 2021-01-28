@@ -9,10 +9,7 @@ import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsServic
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { Organization } from "@app/models/portals.core.organization";
-import { Module } from "@app/models/portals.core.module";
-import { ContentType } from "@app/models/portals.core.content.type";
-import { Expression } from "@app/models/portals.core.expression";
+import { Organization, Module, ContentType, Expression } from "@app/models/portals.core.all";
 
 @Component({
 	selector: "page-portals-core-expressions-update",

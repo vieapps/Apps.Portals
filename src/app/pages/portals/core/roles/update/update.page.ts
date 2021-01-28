@@ -8,9 +8,8 @@ import { AppFormsControl, AppFormsControlConfig, AppFormsService, AppFormsLookup
 import { ConfigurationService } from "@app/services/configuration.service";
 import { UsersService } from "@app/services/users.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { Organization } from "@app/models/portals.core.organization";
-import { Role } from "@app/models/portals.core.role";
 import { UserProfile } from "@app/models/user";
+import { Organization, Role } from "@app/models/portals.core.all";
 import { RolesSelectorModalPage } from "@app/controls/portals/role.selector.modal.page";
 import { UsersSelectorModalPage } from "@app/controls/common/user.selector.modal.page";
 

@@ -9,9 +9,8 @@ import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { Organization } from "@app/models/portals.core.organization";
+import { Organization, Module } from "@app/models/portals.core.all";
 import { ModuleDefinition } from "@app/models/portals.base";
-import { Module } from "@app/models/portals.core.module";
 
 @Component({
 	selector: "page-portals-core-modules-list",

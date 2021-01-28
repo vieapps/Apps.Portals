@@ -11,8 +11,7 @@ import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { Organization } from "@app/models/portals.core.organization";
-import { Site } from "@app/models/portals.core.site";
+import { Organization, Site } from "@app/models/portals.core.all";
 
 @Component({
 	selector: "page-portals-core-sites-list",

@@ -10,9 +10,7 @@ import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { Organization } from "@app/models/portals.core.organization";
-import { Module } from "@app/models/portals.core.module";
-import { ContentType } from "@app/models/portals.core.content.type";
+import { Organization, Module, ContentType } from "@app/models/portals.core.all";
 import { ContentTypeDefinition } from "@app/models/portals.base";
 
 @Component({

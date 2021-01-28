@@ -11,8 +11,7 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { FilesService, FileOptions } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { AttachmentInfo } from "@app/models/base";
-import { Organization } from "@app/models/portals.core.organization";
-import { Desktop } from "@app/models/portals.core.desktop";
+import { Organization, Desktop } from "@app/models/portals.core.all";
 import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selector.modal.page";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 

@@ -12,11 +12,8 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { Privileges } from "@app/models/privileges";
-import { Organization } from "@app/models/portals.core.organization";
 import { ModuleDefinition, ExtendedPropertyDefinition, ExtendedControlDefinition, StandardControlDefinition, EmailNotificationSettings } from "@app/models/portals.base";
-import { Module } from "@app/models/portals.core.module";
-import { ContentType } from "@app/models/portals.core.content.type";
-import { Desktop } from "@app/models/portals.core.desktop";
+import { Organization, Module, ContentType, Desktop } from "@app/models/portals.core.all";
 import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selector.modal.page";
 import { RolesSelectorModalPage } from "@app/controls/portals/role.selector.modal.page";
 
