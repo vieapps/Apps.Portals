@@ -6,18 +6,8 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { Base as BaseModel } from "@app/models/base";
-import { Organization } from "@app/models/portals.core.organization";
-import { Role } from "@app/models/portals.core.role";
-import { Site } from "@app/models/portals.core.site";
-import { Desktop } from "@app/models/portals.core.desktop";
-import { Portlet } from "@app/models/portals.core.portlet";
-import { Module } from "@app/models/portals.core.module";
-import { ContentType } from "@app/models/portals.core.content.type";
-import { Expression } from "@app/models/portals.core.expression";
-import { Category } from "@app/models/portals.cms.category";
-import { Content } from "@app/models/portals.cms.content";
-import { Item } from "@app/models/portals.cms.item";
-import { Link } from "@app/models/portals.cms.link";
+import { Organization, Role, Site, Desktop, Portlet, Module, ContentType, Expression } from "@app/models/portals.core.all";
+import { Category, Content, Item, Link } from "@app/models/portals.cms.all";
 
 @Component({
 	selector: "page-portal-initializer",
