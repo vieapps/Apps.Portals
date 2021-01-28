@@ -14,9 +14,7 @@ import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { NestedObject } from "@app/models/portals.base";
-import { Organization } from "@app/models/portals.core.organization";
-import { Module } from "@app/models/portals.core.module";
-import { ContentType } from "@app/models/portals.core.content.type";
+import { Organization, Module, ContentType } from "@app/models/portals.core.all";
 import { Link } from "@app/models/portals.cms.link";
 
 @Component({
@@ -267,8 +265,8 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	track(index: number, link: Link) {
-		return `${link.ID}@${index}`;
+	track(index: number, item: any) {
+		return `${item.ID}@${index}`;
 	}
 
 	getInfo(link: Link) {
@@ -471,10 +469,6 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		this.hash = AppCrypto.hash(this.ordered);
 		this.redordering = true;
 		await this.prepareTitleAsync();
-	}
-
-	trackReorderItem(index: number, item: NestedObject) {
-		return `${item.ID}@${index}`;
 	}
 
 	onReordered(event: any) {

@@ -12,11 +12,8 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
-import { Organization } from "@app/models/portals.core.organization";
-import { Module } from "@app/models/portals.core.module";
-import { ContentType } from "@app/models/portals.core.content.type";
-import { Category } from "@app/models/portals.cms.category";
-import { Content } from "@app/models/portals.cms.content";
+import { Organization, Module, ContentType } from "@app/models/portals.core.all";
+import { Category, Content } from "@app/models/portals.cms.all";
 
 @Component({
 	selector: "page-portals-cms-contents-list",

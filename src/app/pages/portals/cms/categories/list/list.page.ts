@@ -267,8 +267,8 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		this.categories = this.parentCategory.Children.toList().OrderBy(o => o.OrderIndex).ThenByDescending(o => o.Title).ToArray();
 	}
 
-	track(index: number, category: Category) {
-		return `${category.ID}@${index}`;
+	track(index: number, item: any) {
+		return `${item.ID}@${index}`;
 	}
 
 	getInfo(category: Category) {
@@ -471,10 +471,6 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		this.hash = AppCrypto.hash(this.ordered);
 		this.redordering = true;
 		await this.prepareTitleAsync();
-	}
-
-	trackReorderItem(index: number, item: NestedObject) {
-		return `${item.ID}@${index}`;
 	}
 
 	onReordered(event: any) {

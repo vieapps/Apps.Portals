@@ -95,7 +95,7 @@
 	</ion-infinite-scroll>
 	<ion-list *ngIf="redordering" #reorderingIems>
 		<ion-reorder-group (ionItemReorder)="onReordered($event)" disabled="false">
-			<ion-item *ngFor="let item of reorderItems; trackBy: trackReorderItem" [color]="color">
+			<ion-item *ngFor="let item of reorderItems; trackBy: track" [color]="color">
 				<ion-label>
 					{{ item.Title }}
 				</ion-label>
