@@ -92,7 +92,10 @@ export class Category extends CmsBaseModel implements NestedObject {
 	}
 
 	public get Children() {
-		return (AppUtility.isArray(this.childrenIDs, true) ? this.childrenIDs.map(id => Category.get(id)) : Category.instances.toArray(category => category.ParentID === this.ID)).sortBy("OrderIndex", "Title");
+		const children = AppUtility.isArray(this.childrenIDs, true)
+			? this.childrenIDs.map(id => Category.get(id))
+			: Category.instances.toArray(category => category.ParentID === this.ID);
+		return children.sortBy("OrderIndex", "Title");
 	}
 
 	public get FullTitle(): string {

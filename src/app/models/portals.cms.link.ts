@@ -93,10 +93,10 @@ export class Link extends CmsBaseModel implements NestedObject {
 	}
 
 	public get Children() {
-		const links = AppUtility.isArray(this.childrenIDs, true)
+		const children = AppUtility.isArray(this.childrenIDs, true)
 			? this.childrenIDs.map(id => Link.get(id))
 			: Link.instances.toArray(link => link.ParentID === this.ID);
-		return links.sortBy("OrderIndex", "Title");
+		return children.sortBy("OrderIndex", "Title");
 	}
 
 	public get FullTitle(): string {
