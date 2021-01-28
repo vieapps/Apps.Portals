@@ -414,6 +414,17 @@
 						"description": "Các URLs ở trên sẽ được chuyển hướng khi gặp lỗi không tìm thấy (HTTP 404), một địa chỉ URL nằm trên 1 dòng, nhập theo mẫu 'URL nguồn|URL đích.<br/><u>Chú ý</u>: có thể sử dụng ký hiệu '<b>~/</b>' để chỉ định liên kết từ gốc (root), sử dụng ký hiệu '<b>*</b>' để chỉ định toàn bộ liên kết (nguồn)."
 					},
 					"AllHttp404": "Chuyển hướng toàn bộ các liên kết không tìm thấy (HTTP 404) về liên kết toàn bộ (*) hoặc về trang chủ"
+				},
+				"FakeURIs": {
+					"label": "Các địa chỉ 'máy chủ rởm':"
+				},
+				"FakeFilesHttpURI": {
+					"label": "Địa chỉ máy chủ dịch vụ files",
+					"description": "Chỉ định địa chỉ 'máy chủ chủ dịch vụ files rởm' để sử dụng trong mã HTML nhằm che dấu địa chỉ thật của máy chủ dịch vụ files (thông thường sử dụng qua proxy như CloudFlare)"
+				},
+				"FakePortalsHttpURI": {
+					"label": "Địa chỉ máy chủ dịch vụ portals",
+					"description": "Chỉ định địa chỉ 'máy chủ chủ dịch vụ portals rởm' để sử dụng trong mã HTML nhằm che dấu địa chỉ thật của máy chủ dịch vụ portals (thông thường sử dụng qua proxy như CloudFlare)"
 				}
 			},
 			"list": {

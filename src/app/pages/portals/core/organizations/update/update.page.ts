@@ -8,6 +8,7 @@ import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@app/components/forms.service";
 import { AppFormsControlComponent } from "@app/components/forms.control.component";
 import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
 import { UsersService } from "@app/services/users.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { EmailNotificationSettings } from "@app/models/portals.base";
@@ -27,6 +28,7 @@ import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selecto
 export class PortalsOrganizationsUpdatePage implements OnInit {
 	constructor(
 		private configSvc: ConfigurationService,
+		private authSvc: AuthenticationService,
 		private usersSvc: UsersService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService
@@ -47,6 +49,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		cancel: "Cancel"
 	};
 
+	private isSystemAdministrator = false;
 	private canModerateOrganization = false;
 	private organization: Organization;
 	private hash = "";
@@ -72,7 +75,8 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		await this.appFormsSvc.showLoadingAsync();
 		this.organization = Organization.get(this.configSvc.requestParams["ID"]);
 
-		this.canModerateOrganization = this.portalsCoreSvc.canModerateOrganization(this.organization);
+		this.isSystemAdministrator = this.authSvc.isSystemAdministrator();
+		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 		if (!this.canModerateOrganization) {
 			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
@@ -371,6 +375,37 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 					]
 				}
 			},
+			{
+				Name: "FakeURIs",
+				Segment: "urls",
+				Options: {
+					Label: await this.appFormsSvc.getResourceAsync("portals.organizations.controls.FakeURIs.label")
+				},
+				SubControls: {
+					Controls: [
+						{
+							Name: "FakeFilesHttpURI",
+							Type: "TextBox",
+							Options: {
+								Type: "url",
+								Label: "{{portals.organizations.controls.FakeFilesHttpURI.label}}",
+								Description: "{{portals.organizations.controls.FakeFilesHttpURI.description}}",
+								MaxLength: 250
+							}
+						},
+						{
+							Name: "FakePortalsHttpURI",
+							Type: "TextBox",
+							Options: {
+								Type: "url",
+								Label: "{{portals.organizations.controls.FakePortalsHttpURI.label}}",
+								Description: "{{portals.organizations.controls.FakePortalsHttpURI.description}}",
+								MaxLength: 250
+							}
+						}
+					]
+				}
+			},
 			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "emails", false),
 		);
 
@@ -542,6 +577,8 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		}
 		control.SubControls.Controls.forEach((ctrl, index) => ctrl.Options.Label = `#${index + 1}`);
 
+		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "FakeURIs")).Hidden = !this.isSystemAdministrator;
+
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (AppUtility.isNotEmpty(this.organization.ID)) {
 			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
@@ -568,7 +605,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 
 		organization.RefreshUrls = organization.RefreshUrls || {};
 		organization.RefreshUrls.Addresses = AppUtility.toStr(organization.RefreshUrls.Addresses, "\n");
-		organization.RefreshUrls.Interval = organization.RefreshUrls.Interval || 15;
+		organization.RefreshUrls.Interval = organization.RefreshUrls.Interval || 25;
 
 		organization.RedirectUrls = organization.RedirectUrls || {};
 		organization.RedirectUrls.Addresses = AppUtility.toStr(organization.RedirectUrls.Addresses, "\n");
