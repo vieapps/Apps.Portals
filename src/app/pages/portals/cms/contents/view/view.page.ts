@@ -9,8 +9,7 @@ import { FilesService } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { AttachmentInfo } from "@app/models/base";
-import { Category } from "@app/models/portals.cms.category";
-import { Content } from "@app/models/portals.cms.content";
+import { Category, Content } from "@app/models/portals.cms.all";
 
 @Component({
 	selector: "page-portals-cms-contents-view",

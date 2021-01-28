@@ -11,10 +11,8 @@ import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { AttachmentInfo } from "@app/models/base";
 import { NestedObject } from "@app/models/portals.base";
-import { Module } from "@app/models/portals.core.module";
-import { ContentType } from "@app/models/portals.core.content.type";
-import { Link } from "@app/models/portals.cms.link";
-import { Category } from "@app/models/portals.cms.category";
+import { Module, ContentType } from "@app/models/portals.core.all";
+import { Link, Category } from "@app/models/portals.cms.all";
 
 @Component({
 	selector: "page-portals-cms-links-view",
