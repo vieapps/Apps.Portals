@@ -3,7 +3,7 @@ import { AppUtility } from "@app/components/app.utility";
 import { Privileges } from "@app/models/privileges";
 import { PortalBase as BaseModel, NotificationSettings, EmailSettings } from "@app/models/portals.base";
 import { ExtendedPropertyDefinition, ExtendedControlDefinition, StandardControlDefinition } from "@app/models/portals.base";
-import { PortalCoreBase as CoreBaseModel, Organization, Module } from "@app/models/portals.core.all";
+import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
 
 export class ContentType extends CoreBaseModel {
 
@@ -87,18 +87,6 @@ export class ContentType extends CoreBaseModel {
 	/** Deserializes the collection of objects to list */
 	public static toList(objects: Array<any>) {
 		return this.toArray(objects).toList();
-	}
-
-	public get organization() {
-		return AppUtility.isNotEmpty(this.SystemID)
-			? Organization.get(this.SystemID)
-			: undefined;
-	}
-
-	public get module() {
-		return AppUtility.isNotEmpty(this.RepositoryID)
-			? Module.get(this.RepositoryID)
-			: undefined;
 	}
 
 	public get contentTypeDefinition() {

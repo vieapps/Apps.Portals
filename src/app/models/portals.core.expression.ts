@@ -1,7 +1,10 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { FilterBy, SortBy } from "@app/models/portals.base";
-import { PortalCoreBase as CoreBaseModel, Organization, Module, ContentType } from "@app/models/portals.core.all";
+import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
+import { Organization } from "@app/models/portals.core.organization";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
 
 export class Expression extends CoreBaseModel {
 

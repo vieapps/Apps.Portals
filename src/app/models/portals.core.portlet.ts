@@ -1,7 +1,10 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { ElementUISettings } from "@app/models/portals.base";
-import { PortalCoreBase as CoreBaseModel, Organization, ContentType, Desktop } from "@app/models/portals.core.all";
+import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
+import { Organization } from "@app/models/portals.core.organization";
+import { ContentType } from "@app/models/portals.core.content.type";
+import { Desktop } from "@app/models/portals.core.desktop";
 
 export class Portlet extends CoreBaseModel {
 

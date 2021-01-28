@@ -2,7 +2,9 @@ import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { Privileges } from "@app/models/privileges";
 import { NotificationSettings, EmailSettings } from "@app/models/portals.base";
-import { PortalCoreBase as CoreBaseModel, Module, ContentType } from "@app/models/portals.core.all";
+import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
 
 export class Organization extends CoreBaseModel {
 
@@ -66,6 +68,8 @@ export class Organization extends CoreBaseModel {
 		Name: string;
 		Content: string;
 	}>;
+	FakeFilesHttpURI = undefined as string;
+	FakePortalsHttpURI = undefined as string;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;
