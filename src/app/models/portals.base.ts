@@ -1,5 +1,4 @@
 import { AppUtility } from "@app/components/app.utility";
-import { AppFormsControlConfig } from "@app/components/forms.service";
 import { Base as BaseModel } from "@app/models/base";
 
 /** Abstract class for all portals' entity classes */

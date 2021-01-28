@@ -3,7 +3,7 @@ import { AppUtility } from "@app/components/app.utility";
 import { Privileges } from "@app/models/privileges";
 import { PortalBase as BaseModel, NotificationSettings, EmailSettings } from "@app/models/portals.base";
 import { ExtendedPropertyDefinition, ExtendedControlDefinition, StandardControlDefinition } from "@app/models/portals.base";
-import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
+import { PortalCoreBase as CoreBaseModel, Organization, Module } from "@app/models/portals.core.all";
 
 export class ContentType extends CoreBaseModel {
 
@@ -89,14 +89,26 @@ export class ContentType extends CoreBaseModel {
 		return this.toArray(objects).toList();
 	}
 
-	public get routerLink() {
-		return `/portals/core/content.types/update/${AppUtility.toURI(this.ansiTitle)}`;
+	public get organization() {
+		return AppUtility.isNotEmpty(this.SystemID)
+			? Organization.get(this.SystemID)
+			: undefined;
+	}
+
+	public get module() {
+		return AppUtility.isNotEmpty(this.RepositoryID)
+			? Module.get(this.RepositoryID)
+			: undefined;
 	}
 
 	public get contentTypeDefinition() {
 		return AppUtility.isNotEmpty(this.ContentTypeDefinitionID)
 			? (BaseModel.contentTypeDefinitions || []).find(definition => definition.ID === this.ContentTypeDefinitionID)
 			: undefined;
+	}
+
+	public get routerLink() {
+		return `/portals/core/content.types/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
 	public getObjectName(includePrefixAndSuffix: boolean = false) {

@@ -1,9 +1,7 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { ElementUISettings } from "@app/models/portals.base";
-import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
-import { ContentType } from "@app/models/portals.core.content.type";
-import { Desktop } from "@app/models/portals.core.desktop";
+import { PortalCoreBase as CoreBaseModel, Organization, ContentType, Desktop } from "@app/models/portals.core.all";
 
 export class Portlet extends CoreBaseModel {
 
@@ -164,8 +162,10 @@ export class Portlet extends CoreBaseModel {
 		return this.toArray(objects).toList();
 	}
 
-	public get routerLink() {
-		return `/portals/core/portlets/update/${AppUtility.toURI(this.ansiTitle)}`;
+	public get organization() {
+		return AppUtility.isNotEmpty(this.SystemID)
+			? Organization.get(this.SystemID)
+			: undefined;
 	}
 
 	public get contentType() {
@@ -187,6 +187,10 @@ export class Portlet extends CoreBaseModel {
 	public get originalDesktop() {
 		const originalPortlet = this.originalPortlet;
 		return originalPortlet !== undefined ? originalPortlet.desktop : this.desktop;
+	}
+
+	public get routerLink() {
+		return `/portals/core/portlets/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
 	public get listingInfo() {

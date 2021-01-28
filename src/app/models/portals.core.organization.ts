@@ -2,8 +2,7 @@ import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { Privileges } from "@app/models/privileges";
 import { NotificationSettings, EmailSettings } from "@app/models/portals.base";
-import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
-import { Module } from "@app/models/portals.core.module";
+import { PortalCoreBase as CoreBaseModel, Module, ContentType } from "@app/models/portals.core.all";
 
 export class Organization extends CoreBaseModel {
 
@@ -123,7 +122,7 @@ export class Organization extends CoreBaseModel {
 	}
 
 	public get contentTypes() {
-		return Module.instances.toArray(module => module.SystemID === this.ID).toList().Select(module => module.contentTypes).SelectMany(contentTypes => contentTypes.toList()).OrderBy(contentType => contentType.Title).ToArray();
+		return ContentType.instances.toArray(contentType => contentType.SystemID === this.ID).sortBy("Title");
 	}
 
 	public get routerLink() {

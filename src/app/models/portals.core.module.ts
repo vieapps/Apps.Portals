@@ -2,8 +2,7 @@ import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { Privileges } from "@app/models/privileges";
 import { PortalBase as BaseModel, NotificationSettings, EmailSettings } from "@app/models/portals.base";
-import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
-import { ContentType } from "@app/models/portals.core.content.type";
+import { PortalCoreBase as CoreBaseModel, Organization, ContentType } from "@app/models/portals.core.all";
 
 export class Module extends CoreBaseModel {
 
@@ -82,6 +81,12 @@ export class Module extends CoreBaseModel {
 	/** Deserializes the collection of objects to list */
 	public static toList(objects: Array<any>) {
 		return this.toArray(objects).toList();
+	}
+
+	public get organization() {
+		return AppUtility.isNotEmpty(this.SystemID)
+			? Organization.get(this.SystemID)
+			: undefined;
 	}
 
 	public get moduleDefinition() {

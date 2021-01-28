@@ -1,7 +1,7 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { NestedObject } from "@app/models/portals.base";
-import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
+import { PortalCoreBase as CoreBaseModel, Organization } from "@app/models/portals.core.all";
 
 export class Role extends CoreBaseModel implements NestedObject {
 
@@ -92,6 +92,12 @@ export class Role extends CoreBaseModel implements NestedObject {
 
 	public get OrderIndex() {
 		return 0;
+	}
+
+	public get organization() {
+		return AppUtility.isNotEmpty(this.SystemID)
+			? Organization.get(this.SystemID)
+			: undefined;
 	}
 
 	public get routerLink() {

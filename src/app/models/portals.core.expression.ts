@@ -1,9 +1,7 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { FilterBy, SortBy } from "@app/models/portals.base";
-import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
-import { Module } from "@app/models/portals.core.module";
-import { ContentType } from "@app/models/portals.core.content.type";
+import { PortalCoreBase as CoreBaseModel, Organization, Module, ContentType } from "@app/models/portals.core.all";
 
 export class Expression extends CoreBaseModel {
 
@@ -85,6 +83,12 @@ export class Expression extends CoreBaseModel {
 
 	public get routerLink() {
 		return `/portals/core/expressions/update/${AppUtility.toURI(this.ansiTitle)}`;
+	}
+
+	public get organization() {
+		return AppUtility.isNotEmpty(this.SystemID)
+			? Organization.get(this.SystemID)
+			: undefined;
 	}
 
 	public get module() {
