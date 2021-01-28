@@ -17,15 +17,8 @@ import { FilesService } from "@app/services/files.service";
 import { AttachmentInfo } from "@app/models/base";
 import { Account } from "@app/models/account";
 import { PortalBase as BaseModel, NotificationSettings, EmailNotificationSettings, WebHookNotificationSettings, EmailSettings } from "@app/models/portals.base";
+import { Organization, Role, Module, ContentType, Expression, Site, Desktop, Portlet } from "@app/models/portals.core.all";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
-import { Organization } from "@app/models/portals.core.organization";
-import { Module } from "@app/models/portals.core.module";
-import { ContentType } from "@app/models/portals.core.content.type";
-import { Expression } from "@app/models/portals.core.expression";
-import { Role } from "@app/models/portals.core.role";
-import { Site } from "@app/models/portals.core.site";
-import { Desktop } from "@app/models/portals.core.desktop";
-import { Portlet } from "@app/models/portals.core.portlet";
 
 @Injectable()
 export class PortalsCoreService extends BaseService {

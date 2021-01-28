@@ -16,16 +16,10 @@ import { AppFormsService, AppFormsControlConfig, AppFormsControlLookupOptionsCon
 import { AppFormsControlComponent } from "@app/components/forms.control.component";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 import { Account } from "@app/models/account";
-import { Organization } from "@app/models/portals.core.organization";
-import { Module } from "@app/models/portals.core.module";
-import { ContentType } from "@app/models/portals.core.content.type";
-import { Desktop } from "@app/models/portals.core.desktop";
 import { AttachmentInfo } from "@app/models/base";
+import { Organization, Module, ContentType, Desktop } from "@app/models/portals.core.all";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
-import { Category } from "@app/models/portals.cms.category";
-import { Content } from "@app/models/portals.cms.content";
-import { Item } from "@app/models/portals.cms.item";
-import { Link } from "@app/models/portals.cms.link";
+import { Category, Content, Item, Link } from "@app/models/portals.cms.all";
 
 @Injectable()
 export class PortalsCmsService extends BaseService {
@@ -847,9 +841,9 @@ export class PortalsCmsService extends BaseService {
 	private updateCategory(json: any, parentID?: string) {
 		if (AppUtility.isObject(json, true)) {
 			const category = Category.set(Category.deserialize(json, Category.get(json.ID)));
-			if (AppUtility.isArray(json.Children, true)) {
-				category.childrenIDs = (json.Children as Array<any>).map(o => this.updateCategory(o)).filter(o => o !== undefined).map(o => o.ID).distinct();
-			}
+			category.childrenIDs = AppUtility.isArray(json.Children, true)
+				? (json.Children as Array<any>).map(o => this.updateCategory(o)).filter(o => o !== undefined).map(o => o.ID).distinct()
+				: [];
 			let parentCategory = Category.get(parentID);
 			if (parentCategory !== undefined && parentCategory.childrenIDs !== undefined && parentCategory.ID !== category.ParentID) {
 				parentCategory.childrenIDs.remove(category.ID);
@@ -1497,9 +1491,9 @@ export class PortalsCmsService extends BaseService {
 	private updateLink(json: any, parentID?: string) {
 		if (AppUtility.isObject(json, true)) {
 			const link = Link.set(Link.deserialize(json, Link.get(json.ID)));
-			if (AppUtility.isArray(json.Children, true)) {
-				link.childrenIDs = (json.Children as Array<any>).map(obj => this.updateLink(obj)).filter(obj => obj !== undefined).map(obj => obj.ID).distinct();
-			}
+			link.childrenIDs = AppUtility.isArray(json.Children, true)
+				? (json.Children as Array<any>).map(obj => this.updateLink(obj)).filter(obj => obj !== undefined).map(obj => obj.ID).distinct()
+				: [];
 			let parentLink = Link.get(parentID);
 			if (parentLink !== undefined && parentLink.childrenIDs !== undefined && parentLink.ID !== link.ParentID) {
 				parentLink.childrenIDs.remove(link.ID);
