@@ -191,7 +191,9 @@ export class UsersService extends BaseService {
 						onError(error);
 					}
 				},
-				undefined,
+				{
+					"x-app": this.configSvc.appConfig.app.id
+				},
 				useXHR
 			);
 		}
