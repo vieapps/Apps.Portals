@@ -5,14 +5,16 @@
 		<ion-menu side="start" menuId="start" contentId="main">
 
 			<ion-header>
-				<ion-toolbar [color]="color">
-					<ion-thumbnail *ngIf="sidebar.header.thumbnail" slot="start" (click)="sidebar.header.onClick(sidebar)">
-						<img [src]="sidebar.header.thumbnail" />
-					</ion-thumbnail>
-					<ion-title (click)="sidebar.header.onClick($event, sidebar)">
-						{{ sidebar.header.title }}
-					</ion-title>
-				</ion-toolbar>
+				<ion-menu-toggle auto-hide="false">
+					<ion-toolbar [color]="color">
+						<ion-thumbnail *ngIf="sidebar.header.thumbnail" slot="start" (click)="sidebar.header.onThumbnailClick(sidebar)">
+							<img [src]="sidebar.header.thumbnail" />
+						</ion-thumbnail>
+						<ion-title (click)="sidebar.header.onTitleClick($event, sidebar)">
+							{{ sidebar.header.title }}
+						</ion-title>
+					</ion-toolbar>
+				</ion-menu-toggle>
 			</ion-header>
 
 			<ion-footer>

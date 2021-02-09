@@ -1,9 +1,8 @@
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild } from "@angular/core";
-import { ImageCropperComponent as HtmlImageCropper, CropperSettings as HtmlImageCropperSettings } from "ng2-img-cropper";
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from "@angular/core";
+import { ImageCroppedEvent } from "ngx-image-cropper";
 import { Crop as NativeImageCropper } from "@ionic-native/crop/ngx";
-import { AppFormsControl, AppFormsService } from "@app/components/forms.service";
+import { AppFormsControl } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
-import { FilesService } from "@app/services/files.service";
 
 @Component({
 	selector: "control-image-cropper",
@@ -15,8 +14,6 @@ export class ImageCropperControl implements OnInit, OnDestroy {
 
 	constructor(
 		private configSvc: ConfigurationService,
-		private appFormsSvc: AppFormsService,
-		private filesSvc: FilesService,
 		private nativeImageCropper: NativeImageCropper
 	) {
 	}
@@ -43,22 +40,11 @@ export class ImageCropperControl implements OnInit, OnDestroy {
 	/** The event handler to run when the control was changed */
 	@Output() change = new EventEmitter();
 
-	@ViewChild(HtmlImageCropper, { static: false }) private htmlImageCropper: HtmlImageCropper;
-
-	htmlCropper: {
-		data: {
-			/** Gets the cropped image */
-			image: string;
-			/** Gets the original image */
-			original: any
-		};
-		settings: HtmlImageCropperSettings;
+	htmlCropper = {
+		event: undefined as Event,
+		cropped: undefined,
+		current: undefined as string
 	};
-
-	/** Gets the data of image cropper */
-	get data() {
-		return this.configSvc.isNativeApp ? undefined : this.htmlCropper.data;
-	}
 
 	get color() {
 		return this.configSvc.color;
@@ -66,6 +52,10 @@ export class ImageCropperControl implements OnInit, OnDestroy {
 
 	get isNativeApp() {
 		return this.configSvc.isNativeApp;
+	}
+
+	get data() {
+		return this.configSvc.isNativeApp ? undefined : this.htmlCropper.cropped;
 	}
 
 	ngOnInit() {
@@ -88,22 +78,7 @@ export class ImageCropperControl implements OnInit, OnDestroy {
 	}
 
 	private prepareHtmlCropper() {
-		const htmlCropperSettings = new HtmlImageCropperSettings();
-		htmlCropperSettings.width = this.settings.selectorWidth || 100;
-		htmlCropperSettings.height = this.settings.selectorHeight || 100;
-		htmlCropperSettings.croppedWidth = this.settings.croppedWidth || 300;
-		htmlCropperSettings.croppedHeight = this.settings.croppedHeight || 300;
-		htmlCropperSettings.canvasWidth = this.settings.canvasWidth || 242;
-		htmlCropperSettings.canvasHeight = this.settings.canvasHeight || 242;
-		htmlCropperSettings.noFileInput = true;
-
-		this.htmlCropper = {
-			data: {
-				image: this.settings.currentImage,
-				original: undefined
-			},
-			settings: htmlCropperSettings
-		};
+		this.htmlCropper.current = this.settings.currentImage;
 	}
 
 	private emitChanges() {
@@ -114,33 +89,28 @@ export class ImageCropperControl implements OnInit, OnDestroy {
 		});
 	}
 
-	prepareImage($event: any) {
-		const file: File = $event.target.files.length > 0 ? $event.target.files[0] : undefined;
+	prepareImage(event: any) {
+		const file: File = event.target.files.length > 0 ? event.target.files[0] : undefined;
 		if (file !== undefined && file.type.startsWith("image/")) {
 			if (this.configSvc.isNativeApp) {
-				this.prepareImageOfNativeCropper(file);
+				this.prepareImageOfNativeCropper(event);
 			}
 			else {
-				this.prepareImageOfHtmlCropper(file);
+				this.prepareImageOfHtmlCropper(event);
 			}
 		}
 	}
 
-	private prepareImageOfNativeCropper(file: File) {
+	private prepareImageOfNativeCropper(event: any) {
 	}
 
-	private prepareImageOfHtmlCropper(file: File) {
-		this.filesSvc.readAsDataURL(
-			file,
-			data => {
-				const image = new Image();
-				image.src = data;
-				this.htmlImageCropper.setImage(image);
-				this.emitChanges();
-			},
-			this.settings.limitSize || this.configSvc.fileLimits.avatar,
-			async () => await this.appFormsSvc.showToastAsync(this.settings.limitExceedMessage || "Too big...")
-		);
+	private prepareImageOfHtmlCropper(event: any) {
+		this.htmlCropper.event = event;
+	}
+
+	whenImageOfHtmlCropperWasCropped(event: ImageCroppedEvent) {
+		this.htmlCropper.cropped = event.base64;
+		this.emitChanges();
 	}
 
 }

@@ -30,22 +30,23 @@ ion-list {
 }
 
 /* side menu */
-@media only screen and (min-width: 1200px) {
+@media (min-width: 1200px) {
 	.split-pane-md.split-pane-visible > .split-pane-side,
 	.split-pane-ios.split-pane-visible > .split-pane-side {
 		max-width: 320px;
 	}
 }
-ion-menu.menu-side-start > ion-header > ion-toolbar > ion-thumbnail {
+ion-menu.menu-side-start > ion-header > ion-menu-toggle > ion-toolbar > ion-thumbnail,
+ion-menu.menu-side-start > ion-header > ion-menu-toggle > ion-toolbar > ion-title {
 	cursor: pointer;
 }
-ion-menu.menu-side-start > ion-header > ion-toolbar > ion-thumbnail img {
+ion-menu.menu-side-start > ion-header > ion-menu-toggle > ion-toolbar > ion-thumbnail img {
 	border-radius: 50%;
 	width: 80%;
 	height: 80%;
 	margin: 10%;
 }
-.ios ion-menu.menu-side-start > ion-header > ion-toolbar > ion-thumbnail {
+.ios ion-menu.menu-side-start > ion-header > ion-menu-toggle > ion-toolbar > ion-thumbnail {
 	height: 36px;
 	width: 36px;
 }

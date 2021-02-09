@@ -4,10 +4,15 @@
 <ion-item *ngIf="!isNativeApp" [color]="color">
 	<div>
 		<div>
-			<img-cropper [image]="htmlCropper.data" [settings]="htmlCropper.settings"></img-cropper>
+			<image-cropper format="png"
+				[imageChangedEvent]="htmlCropper.event"
+				[maintainAspectRatio]="true"
+				[aspectRatio]="1 / 1"				
+				(imageCropped)="whenImageOfHtmlCropperWasCropped($event)"></image-cropper>
 		</div>
 		<div>
-			<img *ngIf="htmlCropper.data.image" [src]="htmlCropper.data.image" [width]="htmlCropper.settings.croppedWidth" [height]="htmlCropper.settings.croppedHeight" />
+			<img *ngIf="htmlCropper.cropped" [src]="htmlCropper.cropped"/>
+			<img *ngIf="!htmlCropper.cropped && htmlCropper.current" [src]="htmlCropper.current"/>
 		</div>
 	</div>
 </ion-item>

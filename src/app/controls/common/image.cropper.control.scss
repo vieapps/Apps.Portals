@@ -3,9 +3,10 @@ ion-item > div {
 }
 ion-item > div > div {
 	margin-bottom: 16px;
+	text-align: center;
 }
-ion-item > div > div:first-of-type {
-	margin-right: 30px;
+ion-item > div > div:last-of-type {
+	padding-left: 30px;
 }
 ion-item > div > div > img {
 	border-radius: 50%;
@@ -17,9 +18,4 @@ ion-item > input {
 	display: block;
 	width: 100%;
 	height: 22px;
-}
-@media only screen and (min-width: 600px) {
-	ion-item > div > div {
-		float: left;
-	}
 }

@@ -50,9 +50,10 @@ export class AppComponent implements OnInit {
 		children: true,
 		active: "cms",
 		header: {
-			title: undefined as string,
 			thumbnail: undefined as string,
-			onClick: (_: Event, __: Sidebar) => {}
+			onThumbnailClick: (_: Event, __: Sidebar) => {},
+			title: undefined as string,
+			onTitleClick: (_: Event, __: Sidebar) => {}
 		},
 		footer: new Array<{
 			name: string,
@@ -198,9 +199,10 @@ export class AppComponent implements OnInit {
 	private async updateSidebarAsync(info: any = {}, updateTopItems: boolean = false) {
 		const header = info.header || {};
 		this.sidebar.header = {
-			title: header.title || this.sidebar.header.title,
 			thumbnail: header.thumbnail || this.sidebar.header.thumbnail,
-			onClick: header.onClick || this.sidebar.header.onClick
+			onThumbnailClick: header.onThumbnailClick || this.sidebar.header.onThumbnailClick,
+			title: header.title || this.sidebar.header.title,
+			onTitleClick: header.onTitleClick || this.sidebar.header.onTitleClick
 		},
 
 		this.sidebar.footer = await this.portalsCoreSvc.getSidebarFooterButtonsAsync();
@@ -324,14 +326,20 @@ export class AppComponent implements OnInit {
 				const profile = this.configSvc.getAccount().profile;
 				if (profile !== undefined) {
 					this.sidebar.header.thumbnail = profile.avatarURI;
-					this.sidebar.header.onClick = () => AppEvents.broadcast("Navigate", { Type: "Profile" });
+					this.sidebar.header.onThumbnailClick = () => AppEvents.broadcast("Navigate", { Type: "Profile" });
 					if (this.portalsCoreSvc.activeOrganization !== undefined) {
 						this.sidebar.header.title = this.portalsCoreSvc.activeOrganization.Alias;
+						this.sidebar.header.onTitleClick = this.portalsCoreSvc.canManageOrganization()
+							? async () => await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.activeOrganization.routerURI)
+							: () => {};
+					}
+					else {
+						this.sidebar.header.onTitleClick = () => {};
 					}
 				}
 				else {
 					this.sidebar.header.title = this.configSvc.appConfig.app.name;
-					this.sidebar.header.thumbnail = this.sidebar.header.onClick = undefined;
+					this.sidebar.header.thumbnail = this.sidebar.header.onTitleClick = undefined;
 				}
 			}
 		});
@@ -339,6 +347,9 @@ export class AppComponent implements OnInit {
 		AppEvents.on(this.portalsCoreSvc.name, info => {
 			if (AppUtility.isEquals(info.args.Type, "Changed") && AppUtility.isEquals(info.args.Object, "Organization")) {
 				this.sidebar.header.title = this.portalsCoreSvc.activeOrganization.Alias;
+				this.sidebar.header.onTitleClick = this.portalsCoreSvc.canManageOrganization()
+					? async () => await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.activeOrganization.routerURI)
+					: () => {};
 			}
 		});
 
@@ -356,8 +367,10 @@ export class AppComponent implements OnInit {
 				await this.normalizeSidebarAsync();
 				this.sidebar.active = "cms";
 				if (AppUtility.isEquals(info.args.Type, "LogOut")) {
+					this.sidebar.header.thumbnail = undefined;
+					this.sidebar.header.onThumbnailClick = () => {};
 					this.sidebar.header.title = this.configSvc.appConfig.app.name;
-					this.sidebar.header.thumbnail = this.sidebar.header.onClick = undefined;
+					this.sidebar.header.onTitleClick = () => {};
 				}
 			}
 		});
@@ -519,33 +532,34 @@ export interface Sidebar {
 	children: boolean;
 	active: string;
 	header: {
-		title: string;
 		thumbnail: string;
-		onClick: (event: Event, sidebar: Sidebar) => void
+		onThumbnailClick: (event: Event, sidebar: Sidebar) => void;
+		title: string;
+		onTitleClick: (event: Event, sidebar: Sidebar) => void;
 	};
 	footer: Array<{
 		name: string;
 		icon: string;
 		title?: string;
-		onClick?: (event: Event, name: string, sidebar: Sidebar) => void
+		onClick?: (event: Event, name: string, sidebar: Sidebar) => void;
 	}>;
 	top: Array<{
 		title: string;
 		link: string;
-		params?: { [key: string]: string },
+		params?: { [key: string]: string };
 		direction?: string;
 		icon?: string;
-		onClick?: (event: Event, info: any, sidebar: Sidebar) => void
+		onClick?: (event: Event, info: any, sidebar: Sidebar) => void;
 	}>;
 	menu: Array<{
 		name: string;
 		parent?: {
 			title: string;
 			link: string;
-			params?: { [key: string]: string },
-			expandable: boolean,
-			onClick?: (event: Event, info: any, sidebar: Sidebar) => void,
-			id?: string
+			params?: { [key: string]: string };
+			expandable: boolean;
+			onClick?: (event: Event, info: any, sidebar: Sidebar) => void;
+			id?: string;
 		};
 		items: Array<SidebarMenuItem>
 	}>;
