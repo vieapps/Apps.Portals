@@ -163,7 +163,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async initializeAysnc(onNext?: () => void) {
-		await this.getDefinitionsAsync(async () => {
+		await this.getDefinitionsAsync(() => {
 			if (this.configSvc.isDebug) {
 				console.log("[Portals]: The definitions were fetched", BaseModel.moduleDefinitions);
 			}
