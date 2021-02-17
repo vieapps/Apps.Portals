@@ -55,7 +55,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 		return AppPagination.computeTotal(this.pageNumber, this.pagination);
 	}
 
-	get logs() {
+	get predicate() {
 		const correlationID = this.filterBy["CorrelationID"];
 		const serviceName = this.filterBy["ServiceName"];
 		if (AppUtility.isNotEmpty(correlationID) || AppUtility.isNotEmpty(serviceName)) {
@@ -64,11 +64,14 @@ export class LogsListPage implements OnInit, OnDestroy {
 				: AppUtility.isNotEmpty(correlationID)
 					? log => log.CorrelationID === correlationID
 					: log => log.ServiceName === serviceName;
-			return this.configSvc.logs.filter(predicate);
+			return predicate;
 		}
-		else {
-			return this.configSvc.logs;
-		}
+		return undefined;
+	}
+
+	get logs() {
+		const predicate = this.predicate;
+		return predicate !== undefined ? this.configSvc.logs.filter(predicate) : this.configSvc.logs;
 	}
 
 	ngOnInit() {
@@ -121,7 +124,8 @@ export class LogsListPage implements OnInit, OnDestroy {
 	onChanged(event: any, selectAll: boolean = false) {
 		if (event.detail.checked) {
 			if (selectAll) {
-				this.selected = this.configSvc.logs.map(log => log.ID).toHashSet();
+				const predicate = this.predicate;
+				this.selected = (predicate !== undefined ? this.configSvc.logs.filter(predicate) : this.configSvc.logs).map(log => log.ID).toHashSet();
 			}
 			else {
 				this.selected.add(event.detail.value);
@@ -167,7 +171,9 @@ export class LogsListPage implements OnInit, OnDestroy {
 			undefined,
 			undefined,
 			data => {
-				console.log("filtered", data);
+				if (this.configSvc.isDebug) {
+					console.log("<Logs>: Filtered", data);
+				}
 				if (AppUtility.isNotEmpty(data.CorrelationID)) {
 					this.filterBy["CorrelationID"] = data.CorrelationID;
 				}
