@@ -887,22 +887,24 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		// special control: date-picker
 		if (this.isDatePickerControl) {
 			try {
-				const year = event.detail.value.year;
-				const month = event.detail.value.month;
-				const day = event.detail.value.day;
-				let value = `${year.text}-${month.text}-${day.text}`;
-				if (this.control.Options.DatePickerOptions.AllowTimes) {
-					const hour = event.detail.value.hour;
-					const minute = event.detail.value.minute;
-					const second = event.detail.value.second;
-					if (hour !== undefined && minute !== undefined) {
-						value += `T${hour.text}:${minute.text}` + (second !== undefined ? `:${second.text}` : "") + "Z";
-					}
+				const time = {
+					year: event.detail.value.year,
+					month: event.detail.value.month,
+					day: event.detail.value.day,
+					hour: event.detail.value.hour,
+					minute: event.detail.value.minute,
+					second: event.detail.value.second
+				};
+				let value = time.year !== undefined && time.month !== undefined && time.day !== undefined
+					? `${time.year.text}-${time.month.text}-${time.day.text}`
+					: event.detail.value;
+				if (this.control.Options.DatePickerOptions.AllowTimes && time.hour !== undefined && time.minute !== undefined) {
+					value += `T${time.hour.text}:${time.minute.text}` + (time.second !== undefined ? `:${time.second.text}` : "") + "Z";
 				}
 				this.setValue(new Date(value));
 			}
 			catch (error) {
-				console.error("[Forms]: Error occurred while preparing date-time value", error);
+				console.error("[Forms]: Error occurred while preparing date-time value", error, event);
 			}
 			this.focusNext();
 		}
