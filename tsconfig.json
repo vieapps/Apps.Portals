@@ -25,6 +25,9 @@
 			"core-js/es6/*": ["node_modules/core-js/es/*"]
 		}
 	},
+	"angularCompilerOptions": {
+		"strictTemplates": true
+	},
 	"exclude": [
 		"dist",
 		"node_modules",
