@@ -1,4 +1,4 @@
-import { NgModule } from "@angular/core";
+import { NgModule, Injectable } from "@angular/core";
 import { BrowserModule, HammerGestureConfig, HAMMER_GESTURE_CONFIG } from "@angular/platform-browser";
 import { HttpClient, HttpClientModule } from "@angular/common/http";
 import { RouteReuseStrategy } from "@angular/router";
@@ -50,6 +50,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 }
 
 // hammerjs config for working with touch gestures
+@Injectable()
 export class HammerConfig extends HammerGestureConfig {
 	options = {
 		touchAction: "auto"
