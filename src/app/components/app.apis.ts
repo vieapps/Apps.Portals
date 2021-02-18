@@ -49,6 +49,7 @@ export class AppRTU {
 	};
 	private static _pingTime = new Date().getTime();
 	private static _attempt = 0;
+	private static _continuationMessage = "";
 
 	/** Gets the last time when got PING */
 	public static get pingTime() {
@@ -311,9 +312,11 @@ export class AppRTU {
 				json = JSON.parse(event.data || "{}");
 			}
 			catch (error) {
-				console.error("[AppRTU]: Error occurred while parsing JSON data", error, event);
 				json = {};
+				console.error("[AppRTU]: Error occurred while parsing JSON", error);
 			}
+
+			// prepare handlers
 			const successCallback = AppUtility.isNotEmpty(json.ID) ? this._requests.successCallbacks[json.ID] : undefined;
 			const errorCallback = AppUtility.isNotEmpty(json.ID) ? this._requests.errorCallbacks[json.ID] : undefined;
 
