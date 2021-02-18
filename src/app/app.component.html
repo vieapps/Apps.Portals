@@ -7,7 +7,7 @@
 			<ion-header>
 				<ion-menu-toggle auto-hide="false">
 					<ion-toolbar [color]="color">
-						<ion-thumbnail *ngIf="sidebar.header.thumbnail" slot="start" (click)="sidebar.header.onThumbnailClick(sidebar)">
+						<ion-thumbnail *ngIf="sidebar.header.thumbnail" slot="start" (click)="sidebar.header.onThumbnailClick($event, sidebar)">
 							<img [src]="sidebar.header.thumbnail" />
 						</ion-thumbnail>
 						<ion-title (click)="sidebar.header.onTitleClick($event, sidebar)">
