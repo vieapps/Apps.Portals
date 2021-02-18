@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
-import { HashSet, Dictionary } from "@app/components/app.collections";
+import { Dictionary } from "@app/components/app.collections";
 import { AppRTU, AppXHR, AppMessage } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
@@ -546,55 +546,71 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	private prepareFeaturedContents(availableOrganizations: Organization[]) {
-		const status = new HashSet<string>();
-		availableOrganizations.forEach(organization => this.getContentTypesOfContent(organization.defaultModule).concat(this.getContentTypesOfItem(organization.defaultModule)).forEach(contentType => {
-			status.set(contentType.ID);
-			const isSimpleItem = contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000002";
-			const request = AppPagination.buildRequest(
-				{ And: [
-					{ SystemID: { Equals: contentType.SystemID } },
-					{ RepositoryID: { Equals: contentType.RepositoryID } },
-					{ RepositoryEntityID: { Equals: contentType.ID } }
-				]},
-				isSimpleItem ? { LastModified: "Descending" } : { StartDate: "Descending", PublishedTime: "Descending", LastModified: "Descending" }
-			);
-			const onCompleted = () => {
-				status.remove(contentType.ID);
-				if (status.size < 1) {
-					if (this.configSvc.isDebug) {
-						console.log("[CMS Portals]: featured contents are prepared");
-					}
-					AppEvents.broadcast(this.name, { Type: "FeaturedContentsPrepared" });
-				}
-			};
-			const onNext: (data?: any) => void = data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					if (isSimpleItem) {
-						(data.Objects as Array<any>).map(obj => Item.get(obj.ID)).filter(obj => obj !== undefined).forEach(obj => this._featuredContents.set(obj.ID, obj));
-					}
-					else {
-						(data.Objects as Array<any>).map(obj => Content.get(obj.ID)).filter(obj => obj !== undefined).forEach(obj => this._featuredContents.set(obj.ID, obj));
-					}
-				}
-				onCompleted();
-			};
-			const onError: (error?: any) => void = error => {
-				console.error("[CMS Portals]: Error occurred while preparing featured contents", error);
-				onCompleted();
-			};
-			if (isSimpleItem) {
-				this.searchItemAsync(request, onNext, onError);
+	private async getFeaturedContentsAsync(contentTypes: ContentType[], index: number) {
+		const contentType = contentTypes[index];
+		const isSimpleItem = contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000002";
+		const request = AppPagination.buildRequest(
+			{ And: [
+				{ SystemID: { Equals: contentType.SystemID } },
+				{ RepositoryID: { Equals: contentType.RepositoryID } },
+				{ RepositoryEntityID: { Equals: contentType.ID } }
+			]},
+			isSimpleItem ? { LastModified: "Descending" } : { StartDate: "Descending", PublishedTime: "Descending", LastModified: "Descending" }
+		);
+		const onCompleted = () => {
+			if (index < contentTypes.length - 1) {
+				PlatformUtility.invoke(async () => {
+					await this.getFeaturedContentsAsync(contentTypes, index + 1);
+				}, 13);
 			}
 			else {
-				this.searchContentAsync(request, onNext, onError);
+				if (this.configSvc.isDebug) {
+					console.log("[CMS Portals]: featured contents are prepared");
+				}
+				AppEvents.broadcast(this.name, { Type: "FeaturedContentsPrepared" });
 			}
-		}));
+		};
+		const onNext: (data?: any) => void = data => {
+			if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+				if (isSimpleItem) {
+					(data.Objects as Array<any>).map(obj => Item.get(obj.ID)).filter(obj => obj !== undefined).forEach(obj => this._featuredContents.set(obj.ID, obj));
+				}
+				else {
+					(data.Objects as Array<any>).map(obj => Content.get(obj.ID)).filter(obj => obj !== undefined).forEach(obj => this._featuredContents.set(obj.ID, obj));
+				}
+			}
+			onCompleted();
+		};
+		const onError: (error?: any) => void = error => {
+			console.error("[CMS Portals]: Error occurred while preparing featured contents", error);
+			onCompleted();
+		};
+		if (isSimpleItem) {
+			await this.searchItemAsync(request, onNext, onError);
+		}
+		else {
+			await this.searchContentAsync(request, onNext, onError);
+		}
 	}
 
 	private async prepareFeaturedContentsAsync() {
 		if (this.configSvc.isAuthenticated) {
-			this.prepareFeaturedContents(await this.portalsCoreSvc.getActiveOrganizationsAsync());
+			const activeOrganization = await this.portalsCoreSvc.getActiveOrganizationAsync();
+			const availableOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync();
+			availableOrganizations.removeAt(availableOrganizations.findIndex(org => org.ID === activeOrganization.ID));
+			PlatformUtility.invoke(async () => {
+				const activeContentTypes = this.getContentTypesOfContent(activeOrganization.defaultModule).concat(this.getContentTypesOfItem(activeOrganization.defaultModule));
+				if (activeContentTypes.length > 0) {
+					await this.getFeaturedContentsAsync(activeContentTypes, 0);
+				}
+				let availableContentTypes = new Array<ContentType>();
+				availableOrganizations.forEach(organization => availableContentTypes = availableContentTypes.concat(this.getContentTypesOfContent(organization.defaultModule)).concat(this.getContentTypesOfItem(organization.defaultModule)));
+				if (availableContentTypes.length > 0) {
+					PlatformUtility.invoke(async () => {
+						await this.getFeaturedContentsAsync(availableContentTypes, 0);
+					}, 3456);
+				}
+			}, 456);
 		}
 	}
 
