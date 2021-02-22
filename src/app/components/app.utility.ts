@@ -275,10 +275,19 @@ export class AppUtility {
 	}
 
 	/** Removes tags from the HTML content */
-	public static removeTags(html?: string) {
-		return this.isNotEmpty(html)
-			? html.replace(/<\/?[^>]+(>|$)/g, "")
-			: "";
+	public static removeTags(html: string, keepTags?: string[]) {
+		if (this.isNotEmpty(html)) {
+			(keepTags || []).forEach(tag => {
+				html = html.replace(this.toRegExp("/\\<" + tag + "\\>/gi"), `[${tag}]`);
+				html = html.replace(this.toRegExp("/\\<\\/" + tag + "\\>/gi"), `[/${tag}]`);
+			});
+			html = html.replace(/(<([^>]+)>)/gi, "");
+			(keepTags || []).forEach(tag => {
+				html = html.replace(this.toRegExp("/\\[" + tag + "\\]/gi"), `<${tag}>`);
+				html = html.replace(this.toRegExp("/\\[\\/" + tag + "\\]/gi"), `</${tag}>`);
+			});
+		}
+		return html || "";
 	}
 
 	/** Normalizes the HTML content */
@@ -289,7 +298,7 @@ export class AppUtility {
 				: html
 			: "";
 		return wellHtml !== ""
-			? wellHtml.replace(/\&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/\r/g, "").replace(/\n/g, "<br/>")
+			? wellHtml.replace(/\&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/\t/g, "").replace(/\r/g, "").replace(/\n/g, "<br/>")
 			: "";
 	}
 
