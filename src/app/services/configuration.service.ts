@@ -266,15 +266,17 @@ export class ConfigurationService extends BaseService {
 			this.appConfig.app.mode = "Desktop";
 			this.appConfig.url.base = "";
 			this.appConfig.app.platform = `${this.appConfig.app.os} Desktop`;
-			this.electronSvc.ipcRenderer.on("electron.ipc2app", ($event: any, $info: any) => {
-				$info = $info || {};
-				if (AppUtility.isNotEmpty($info.event)) {
-					AppEvents.broadcast($info.event, $info.args);
-				}
-				if (this.isDebug) {
-					console.log("[Electron]: Got an IPC message", $event, $info);
-				}
-			});
+			if (this.electronSvc.ipcRenderer) {
+				this.electronSvc.ipcRenderer.on("electron.ipc2app", ($event: any, $info: any) => {
+					$info = $info || {};
+					if (AppUtility.isNotEmpty($info.event)) {
+						AppEvents.broadcast($info.event, $info.args);
+					}
+					if (this.isDebug) {
+						console.log("[Electron]: Got an IPC message", $event, $info);
+					}
+				});
+			}
 		}
 		else {
 			this.appConfig.app.shell = isNativeApp ? "Cordova" : "Browser";

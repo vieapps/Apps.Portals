@@ -1267,10 +1267,10 @@ export class PortalsCoreService extends BaseService {
 
 	private prepareSidebar(onNext?: () => void) {
 		const items = new Array<{
-			title: string,
-			link: string,
-			direction?: string,
-			icon?: string,
+			title: string;
+			link: string;
+			direction?: string;
+			icon?: { name: string };
 			onClick?: (event: Event, info: any, sidebar: any) => void
 		}>();
 
@@ -1286,7 +1286,7 @@ export class PortalsCoreService extends BaseService {
 						title: "{{portals.sidebar.logs}}",
 						link: "/logs",
 						direction: "root",
-						icon: "file-tray-full"
+						icon: { name: "file-tray-full" }
 					}
 				);
 			}
@@ -1297,19 +1297,19 @@ export class PortalsCoreService extends BaseService {
 						title: "{{portals.sidebar.organizations}}",
 						link: this.getRouterLink(undefined, "list", "all", "organization", "core"),
 						direction: "root",
-						icon: "business"
+						icon: { name: "business" }
 					},
 					{
 						title: "{{portals.sidebar.roles}}",
 						link: this.getRouterLink(undefined, "list", "all", "role", "core"),
 						direction: "root",
-						icon: "body"
+						icon: { name: "body" }
 					},
 					{
 						title: "{{portals.sidebar.modules}}",
 						link: this.getRouterLink(undefined, "list", "all", "module", "core"),
 						direction: "root",
-						icon: "albums"
+						icon: { name: "albums" }
 					}
 				);
 			}
@@ -1318,7 +1318,7 @@ export class PortalsCoreService extends BaseService {
 				title: "{{portals.sidebar.content-types}}",
 				link: this.getRouterLink(undefined, "list", "all", "content.type", "core"),
 				direction: "root",
-				icon: "git-compare"
+				icon: { name: "git-compare" }
 			});
 
 			if (canModerateOrganization) {
@@ -1326,7 +1326,7 @@ export class PortalsCoreService extends BaseService {
 					title: "{{portals.sidebar.expressions}}",
 					link: this.getRouterLink(undefined, "list", "all", "expression", "core"),
 					direction: "root",
-					icon: "construct"
+					icon: { name: "construct" }
 				});
 			}
 
@@ -1335,7 +1335,7 @@ export class PortalsCoreService extends BaseService {
 					title: "{{portals.sidebar.sites}}",
 					link: this.getRouterLink(undefined, "list", "all", "site", "core"),
 					direction: "root",
-					icon: "globe"
+					icon: { name: "globe" }
 				});
 			}
 
@@ -1344,7 +1344,7 @@ export class PortalsCoreService extends BaseService {
 					title: "{{portals.sidebar.desktops}}",
 					link: this.getRouterLink(undefined, "list", "all", "desktop", "core"),
 					direction: "root",
-					icon: "desktop"
+					icon: { name: "desktop" }
 				});
 			}
 
@@ -1352,7 +1352,7 @@ export class PortalsCoreService extends BaseService {
 				title: "{{portals.sidebar.cms-categories}}",
 				link: this.getRouterLink(undefined, "list", "all", "category"),
 				direction: "root",
-				icon: "color-filter"
+				icon: { name: "color-filter" }
 			});
 		}
 

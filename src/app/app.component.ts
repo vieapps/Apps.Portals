@@ -150,12 +150,18 @@ export class AppComponent implements OnInit {
 	private getSidebarItem(itemInfo: any = {}, oldItem: any = {}, onCompleted?: (item: SidebarMenuItem) => void) {
 		const gotChildren = AppUtility.isArray(itemInfo.children, true) && (itemInfo.children as Array<any>).length > 0;
 		const isExpanded = gotChildren && !!itemInfo.expanded;
+		const icon = itemInfo.icon || {};
+		if (icon.name === undefined && gotChildren) {
+			icon.name = isExpanded ? "chevron-down" : "chevron-forward",
+			icon.color = "medium";
+			icon.slot = "end";
+		}
 		const sidebarItem: SidebarMenuItem = {
 			title: itemInfo.title || oldItem.title,
 			link: itemInfo.link || oldItem.link,
 			params: itemInfo.params as { [key: string]: string } || oldItem.params,
 			direction: itemInfo.direction || oldItem.direction || "forward",
-			onClick: itemInfo.onClick !== undefined && typeof itemInfo.onClick === "function"
+			onClick: typeof itemInfo.onClick === "function"
 				? itemInfo.onClick
 				: async (_, info, sidebar) => {
 					const menuItem = info.childIndex !== undefined
@@ -166,9 +172,7 @@ export class AppComponent implements OnInit {
 			children: gotChildren ? (itemInfo.children as Array<any>).map(item => this.getSidebarItem(item)) : [],
 			expanded: isExpanded,
 			id: itemInfo.id,
-			icon: itemInfo.icon || (gotChildren ? isExpanded ? "chevron-down" : "chevron-forward" : undefined),
-			iconColor: itemInfo.iconColor || "medium",
-			iconSlot: itemInfo.icon !== undefined ? itemInfo.iconSlot || "start" : "end"
+			icon: icon
 		};
 		if (onCompleted !== undefined) {
 			onCompleted(sidebarItem);
@@ -243,7 +247,7 @@ export class AppComponent implements OnInit {
 					link: info.parent.link,
 					params: info.parent.params,
 					expandable: !!info.parent.expandable,
-					onClick: info.parent.onClick !== undefined && typeof info.parent.onClick === "function"
+					onClick: typeof info.parent.onClick === "function"
 						? info.parent.onClick as (event: Event, info: any, sidebar: Sidebar) => void
 						: () => {}
 				}
@@ -253,6 +257,9 @@ export class AppComponent implements OnInit {
 		}
 
 		await Promise.all((info.items as Array<any> || []).map(item => {
+			const icon = item.icon || { name: undefined };
+			icon.color = icon.color || "medium";
+			icon.slot = icon.slot || "start";
 			return {
 				title: item.title,
 				link: item.link,
@@ -262,9 +269,7 @@ export class AppComponent implements OnInit {
 				children: item.children,
 				expanded: item.expanded,
 				id: item.id,
-				icon: item.icon,
-				iconColor: item.iconColor,
-				iconSlot: item.iconSlot
+				icon: icon
 			};
 		})
 		.filter(item => AppUtility.isNotEmpty(item.title) && AppUtility.isNotEmpty(item.link))
@@ -574,7 +579,9 @@ export interface SidebarMenuItem {
 	children?: Array<SidebarMenuItem>;
 	expanded: boolean;
 	id?: string;
-	icon?: string;
-	iconColor?: string;
-	iconSlot?: string;
+	icon?: {
+		name: string;
+		color?: string;
+		slot?: string;
+	};
 }

@@ -479,12 +479,12 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	private getSidebarItems(categories: Category[], parent?: Category): { items: any[], parent: any } {
-		const expand: (menuItem: any, parentID?: string, dontUpdateExpaned?: boolean) => void = async (menuItem, parentID, dontUpdateExpaned) => {
+		const expand: (menuItem: any, parentID?: string, dontUpdateExpaned?: boolean) => void = async (menuItem, parentID, dontUpdateExpanded) => {
 			if (parentID === undefined) {
-				if (!dontUpdateExpaned) {
+				if (!dontUpdateExpanded) {
 					menuItem.expanded = !menuItem.expanded;
 				}
-				menuItem.icon = menuItem.expanded ? "chevron-down" : "chevron-forward";
+				menuItem.icon = { name: menuItem.expanded ? "chevron-down" : "chevron-forward", color: "medium", slot: "end" };
 			}
 			else {
 				await this.updateSidebarWithCategoriesAsync(Category.get(parentID), menuItem.id);
