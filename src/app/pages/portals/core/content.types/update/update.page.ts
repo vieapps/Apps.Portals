@@ -35,7 +35,6 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 	private contentType: ContentType;
 	private organization: Organization;
 	private definitions: Array<ModuleDefinition>;
-	private isSystemModerator = false;
 	private canModerateOrganization = false;
 	private isAdvancedMode = false;
 	private extendable = false;
@@ -77,8 +76,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 			await this.portalsCoreSvc.getOrganizationAsync(this.contentType.SystemID, _ => this.organization = Organization.get(this.contentType.SystemID), undefined, true);
 		}
 
-		this.isSystemModerator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
-		this.canModerateOrganization = this.isSystemModerator || this.portalsCoreSvc.canModerateOrganization(this.organization);
+		this.canModerateOrganization = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined) || this.portalsCoreSvc.canModerateOrganization(this.organization);
 		if (!this.canModerateOrganization) {
 			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
@@ -117,7 +115,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 		this.definitions = await this.portalsCoreSvc.getDefinitionsAsync();
 		if (AppUtility.isNotEmpty(this.contentType.ID)) {
 			const contentTypeDefinition = this.getContentTypeDefinitions(this.contentType.RepositoryID).find(definition => definition.ID === this.contentType.ContentTypeDefinitionID);
-			this.isAdvancedMode = this.isSystemModerator && AppUtility.isTrue(this.configSvc.requestParams["Advanced"]);
+			this.isAdvancedMode = this.canModerateOrganization && AppUtility.isTrue(this.configSvc.requestParams["Advanced"]);
 			this.extendable = contentTypeDefinition !== undefined && contentTypeDefinition.Extendable;
 		}
 
