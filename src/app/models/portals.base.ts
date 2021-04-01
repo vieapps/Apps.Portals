@@ -173,6 +173,17 @@ export interface EmailSettings {
 	};
 }
 
+/** Interface of web-hook settings */
+export interface WebHookSettings {
+	SignAlgorithm?: string;
+	SignKey?: string;
+	SignatureName?: string;
+	SignatureAsHex?: boolean;
+	SignatureInQuery?: boolean;
+	AdditionalQuery?: string;
+	AdditionalHeader?: string;
+}
+
 /** Interface of UI settings of all elements */
 export interface ElementUISettings {
 	Padding?: string;

@@ -1,7 +1,7 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { Privileges } from "@app/models/privileges";
-import { NotificationSettings, EmailSettings } from "@app/models/portals.base";
+import { NotificationSettings, EmailSettings, WebHookSettings } from "@app/models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
 import { Module } from "@app/models/portals.core.module";
 import { ContentType } from "@app/models/portals.core.content.type";
@@ -64,6 +64,7 @@ export class Organization extends CoreBaseModel {
 		AllHttp404?: boolean;
 	};
 	EmailSettings = undefined as EmailSettings;
+	WebHookSettings = undefined as WebHookSettings;
 	HttpIndicators = undefined as Array<{
 		Name: string;
 		Content: string;

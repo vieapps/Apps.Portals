@@ -16,7 +16,7 @@ import { UsersService } from "@app/services/users.service";
 import { FilesService } from "@app/services/files.service";
 import { AttachmentInfo } from "@app/models/base";
 import { Account } from "@app/models/account";
-import { PortalBase as BaseModel, NotificationSettings, EmailNotificationSettings, WebHookNotificationSettings, EmailSettings } from "@app/models/portals.base";
+import { PortalBase as BaseModel, NotificationSettings, EmailNotificationSettings, WebHookNotificationSettings, EmailSettings, WebHookSettings } from "@app/models/portals.base";
 import { Organization, Role, Module, ContentType, Expression, Site, Desktop, Portlet } from "@app/models/portals.core.all";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
@@ -657,31 +657,20 @@ export class PortalsCoreService extends BaseService {
 		return controlConfig;
 	}
 
-	public getWebHookNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	private getWebHookFormControl(name: string, label: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const controlConfig: AppFormsControlConfig = {
-			Name: "WebHooks",
+			Name: name,
 			Options: {
-				Label: "{{portals.common.controls.notifications.webhooks.label}}",
+				Label: label,
 			},
 			SubControls: {
 				Controls: [
 					{
-						Name: "EndpointURLs",
-						Type: "TextArea",
-						Hidden: inheritFromParent,
-						Options: {
-							Label: "{{portals.common.controls.notifications.webhooks.endpointURLs.label}}",
-							PlaceHolder: "{{portals.common.controls.notifications.webhooks.endpointURLs.placeholder}}",
-							Description: "{{portals.common.controls.notifications.webhooks.endpointURLs.description}}"
-						}
-					},
-					{
 						Name: "SignAlgorithm",
 						Type: "Select",
-						Hidden: inheritFromParent,
 						Options: {
-							Label: "{{portals.common.controls.notifications.webhooks.signAlgorithm.label}}",
-							Description: "{{portals.common.controls.notifications.webhooks.signAlgorithm.description}}",
+							Label: "{{portals.common.controls.webhooks.signAlgorithm.label}}",
+							Description: "{{portals.common.controls.webhooks.signAlgorithm.description}}",
 							SelectOptions: {
 								Interface: "popover",
 								Values: ["MD5", "SHA1", "SHA256", "SHA384", "SHA512", "RIPEMD160", "BLAKE128", "BLAKE256", "BLAKE384", "BLAKE512"]
@@ -690,70 +679,93 @@ export class PortalsCoreService extends BaseService {
 					},
 					{
 						Name: "SignKey",
-						Hidden: inheritFromParent,
 						Options: {
-							Label: "{{portals.common.controls.notifications.webhooks.signKey.label}}",
-							Description: "{{portals.common.controls.notifications.webhooks.signKey.description}}"
+							Label: "{{portals.common.controls.webhooks.signKey.label}}",
+							Description: "{{portals.common.controls.webhooks.signKey.description}}"
 						}
 					},
 					{
 						Name: "SignatureName",
-						Hidden: inheritFromParent,
 						Options: {
-							Label: "{{portals.common.controls.notifications.webhooks.signatureName.label}}",
-							Description: "{{portals.common.controls.notifications.webhooks.signatureName.description}}"
+							Label: "{{portals.common.controls.webhooks.signatureName.label}}",
+							Description: "{{portals.common.controls.webhooks.signatureName.description}}"
 						}
 					},
 					{
 						Name: "SignatureAsHex",
 						Type: "YesNo",
-						Hidden: inheritFromParent,
 						Options: {
-							Label: "{{portals.common.controls.notifications.webhooks.signatureAsHex.label}}",
+							Label: "{{portals.common.controls.webhooks.signatureAsHex.label}}",
 							Type: "toggle"
 						}
 					},
 					{
 						Name: "SignatureInQuery",
 						Type: "YesNo",
-						Hidden: inheritFromParent,
 						Options: {
-							Label: "{{portals.common.controls.notifications.webhooks.signatureInQuery.label}}",
-							Type: "toggle"
-						}
-					},
-					{
-						Name: "GenerateIdentity",
-						Type: "YesNo",
-						Hidden: inheritFromParent,
-						Options: {
-							Label: "{{portals.common.controls.notifications.webhooks.generateIdentity.label}}",
+							Label: "{{portals.common.controls.webhooks.signatureInQuery.label}}",
 							Type: "toggle"
 						}
 					},
 					{
 						Name: "AdditionalQuery",
 						Type: "TextArea",
-						Hidden: inheritFromParent,
 						Options: {
-							Label: "{{portals.common.controls.notifications.webhooks.additionalQuery.label}}",
-							Description: "{{portals.common.controls.notifications.webhooks.additionalQuery.description}}",
+							Label: "{{portals.common.controls.webhooks.additionalQuery.label}}",
+							Description: "{{portals.common.controls.webhooks.additionalQuery.description}}",
 							Rows: 10
 						}
 					},
 					{
 						Name: "AdditionalHeader",
 						Type: "TextArea",
-						Hidden: inheritFromParent,
 						Options: {
-							Label: "{{portals.common.controls.notifications.webhooks.additionalHeader.label}}",
-							Description: "{{portals.common.controls.notifications.webhooks.additionalHeader.description}}",
+							Label: "{{portals.common.controls.webhooks.additionalHeader.label}}",
+							Description: "{{portals.common.controls.webhooks.additionalHeader.description}}",
 							Rows: 10
 						}
 					}
 				]
 			}
 		};
+
+		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
+		if (onCompleted !== undefined) {
+			onCompleted(controlConfig);
+		}
+		return controlConfig;
+	}
+
+	public getWebHookNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+		const controlConfig = this.getWebHookFormControl("WebHooks", "{{portals.common.controls.notifications.webhooks.label}}");
+		controlConfig.SubControls.Controls.insert({
+			Name: "EndpointURLs",
+			Type: "TextArea",
+			Options: {
+				Label: "{{portals.common.controls.notifications.webhooks.endpointURLs.label}}",
+				PlaceHolder: "{{portals.common.controls.notifications.webhooks.endpointURLs.placeholder}}",
+				Description: "{{portals.common.controls.notifications.webhooks.endpointURLs.description}}"
+			}
+		}, 0);
+		controlConfig.SubControls.Controls.insert({
+			Name: "GenerateIdentity",
+			Type: "YesNo",
+			Options: {
+				Label: "{{portals.common.controls.notifications.webhooks.generateIdentity.label}}",
+				Type: "toggle"
+			}
+		}, controlConfig.SubControls.Controls.findIndex(ctrl => ctrl.Name === "AdditionalQuery"));
+
+		controlConfig.SubControls.Controls.find(ctrl => ctrl.Name === "SignKey").Options.Description = "{{portals.common.controls.notifications.webhooks.signKey.description}}";
+		controlConfig.SubControls.Controls.find(ctrl => ctrl.Name === "SignatureName").Options.Description = "{{portals.common.controls.notifications.webhooks.signatureName.description}}";
+
+		let control = controlConfig.SubControls.Controls.find(ctrl => ctrl.Name === "AdditionalQuery");
+		control.Options.Label = "{{portals.common.controls.notifications.webhooks.additionalQuery.label}}";
+		control.Options.Description = "{{portals.common.controls.notifications.webhooks.additionalQuery.description}}";
+
+		control = controlConfig.SubControls.Controls.find(ctrl => ctrl.Name === "AdditionalHeader");
+		control.Options.Label = "{{portals.common.controls.notifications.webhooks.additionalHeader.label}}";
+		control.Options.Description = "{{portals.common.controls.notifications.webhooks.additionalHeader.description}}";
 
 		if (allowInheritFromParent) {
 			controlConfig.SubControls.Controls.insert({
@@ -767,7 +779,10 @@ export class PortalsCoreService extends BaseService {
 			}, 0);
 		}
 
-		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
+		controlConfig.SubControls.Controls.forEach((ctrl, index) => {
+			ctrl.Order = index;
+			ctrl.Hidden = inheritFromParent;
+		});
 		if (onCompleted !== undefined) {
 			onCompleted(controlConfig);
 		}
@@ -1157,6 +1172,28 @@ export class PortalsCoreService extends BaseService {
 		if (settings && settings.InheritFromParent) {
 			settings = undefined;
 		}
+		if (onCompleted !== undefined) {
+			onCompleted(settings);
+		}
+		return settings;
+	}
+
+	public getWebHookSettingsFormControl(name: string, segment?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+		const controlConfig = this.getWebHookFormControl(name || "WebHookSettings", "{{portals.common.controls.webhooks.label}}");
+		controlConfig.Segment = segment;
+		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
+		if (onCompleted !== undefined) {
+			onCompleted(controlConfig);
+		}
+		return controlConfig;
+	}
+
+	public getWebHookSettings(webhookSettings: WebHookSettings, onCompleted?: (settings: any) => void) {
+		const settings = AppUtility.clone(webhookSettings || {
+			SignAlgorithm: "SHA256",
+			SignatureAsHex: true,
+			SignatureInQuery: false
+		});
 		if (onCompleted !== undefined) {
 			onCompleted(settings);
 		}

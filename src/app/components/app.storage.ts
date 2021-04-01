@@ -10,9 +10,9 @@ export class AppStorage {
 		if (this._storage === undefined && storage !== undefined && storage !== null) {
 			this._storage = storage;
 			await this._storage.ready();
-			if (onNext !== undefined) {
-				onNext();
-			}
+		}
+		if (onNext !== undefined) {
+			onNext();
 		}
 	}
 

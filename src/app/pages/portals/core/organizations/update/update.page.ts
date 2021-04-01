@@ -193,112 +193,6 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				}
 			},
 			{
-				Name: "Socials",
-				Segment: "socials",
-				Type: "Select",
-				Options: {
-					Label: "{{portals.organizations.controls.Socials}}",
-					SelectOptions: {
-						Multiple: true,
-						AsBoxes: true,
-						Values: socials
-					}
-				}
-			},
-			{
-				Name: "Trackings",
-				Segment: "socials",
-				Options: {
-					Label: "{{portals.organizations.controls.Trackings.label}}"
-				},
-				SubControls: {
-					Controls: trackings.map(tracking => {
-						return {
-							Name: tracking,
-							Options: {
-								Label: `{{portals.organizations.controls.Trackings.${tracking}.label}}`,
-								Description: `{{portals.organizations.controls.Trackings.${tracking}.description}}`
-							}
-						};
-					})
-				}
-			},
-			{
-				Name: "Others",
-				Segment: "socials",
-				Options: {
-					Label: "{{portals.organizations.controls.Others.label}}"
-				},
-				SubControls: {
-					Controls: [
-						{
-							Name: "MetaTags",
-							Type: "TextArea",
-							Options: {
-								Label: "{{portals.organizations.controls.Others.MetaTags.label}}",
-								Description: "{{portals.organizations.controls.Others.MetaTags.description}}",
-								Rows: 5
-							}
-						},
-						{
-							Name: "ScriptLibraries",
-							Type: "TextArea",
-							Options: {
-								Label: "{{portals.organizations.controls.Others.ScriptLibraries.label}}",
-								Description: "{{portals.organizations.controls.Others.ScriptLibraries.description}}",
-								Rows: 5
-							}
-						},
-						{
-							Name: "Scripts",
-							Type: "TextArea",
-							Options: {
-								Label: "{{portals.organizations.controls.Others.Scripts.label}}",
-								Description: "{{portals.organizations.controls.Others.Scripts.description}}",
-								Rows: 15
-							}
-						}
-					]
-				}
-			},
-			{
-				Name: "HttpIndicators",
-				Segment: "socials",
-				Options: {
-					Label: "{{portals.organizations.controls.HttpIndicators.label}}"
-				},
-				SubControls: {
-					AsArray: true,
-					Controls: [{
-						Options: {},
-						SubControls: {
-							Controls: [
-								{
-									Name: "Name",
-									Type: "TextBox",
-									Options: {
-										Type: "text",
-										Label: "{{portals.organizations.controls.HttpIndicators.Name.label}}",
-										Description: "{{portals.organizations.controls.HttpIndicators.Name.description}}",
-										MaxLength: 250
-									}
-								},
-								{
-									Name: "Content",
-									Type: "TextArea",
-									Options: {
-										Type: "text",
-										Label: "{{portals.organizations.controls.HttpIndicators.Content.label}}",
-										Description: "{{portals.organizations.controls.HttpIndicators.Content.description}}",
-										MaxLength: 4000
-									}
-								}
-							]
-						}
-					}]
-				}
-			},
-			{
 				Name: "AlwaysUseHtmlSuffix",
 				Type: "YesNo",
 				Segment: "urls",
@@ -407,6 +301,128 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				}
 			},
 			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "emails", false),
+			{
+				Name: "Socials",
+				Segment: "socials",
+				Type: "Select",
+				Options: {
+					Label: "{{portals.organizations.controls.Socials}}",
+					SelectOptions: {
+						Multiple: true,
+						AsBoxes: true,
+						Values: socials
+					}
+				}
+			},
+			{
+				Name: "Trackings",
+				Segment: "socials",
+				Options: {
+					Label: "{{portals.organizations.controls.Trackings.label}}"
+				},
+				SubControls: {
+					Controls: trackings.map(tracking => {
+						return {
+							Name: tracking,
+							Options: {
+								Label: `{{portals.organizations.controls.Trackings.${tracking}.label}}`,
+								Description: `{{portals.organizations.controls.Trackings.${tracking}.description}}`
+							}
+						};
+					})
+				}
+			},
+			this.portalsCoreSvc.getWebHookSettingsFormControl("WebHookSettings", "socials", config => {
+				config.SubControls.Controls.insert({
+					Name: "URL",
+					Type: "TextBox",
+					Options: {
+						Label: "{{portals.common.controls.webhooks.url.label}}",
+						Description: "{{portals.common.controls.webhooks.url.description}}",
+						ReadOnly: true,
+						Icon: {
+							Name: "copy",
+							OnClick: (_, formControl) => PlatformUtility.copyToClipboard(formControl.value, async () => await this.appFormsSvc.showToastAsync("Copied..."))
+						}
+					}
+				}, 0);
+				config.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
+			}),
+			{
+				Name: "Others",
+				Segment: "socials",
+				Options: {
+					Label: "{{portals.organizations.controls.Others.label}}"
+				},
+				SubControls: {
+					Controls: [
+						{
+							Name: "MetaTags",
+							Type: "TextArea",
+							Options: {
+								Label: "{{portals.organizations.controls.Others.MetaTags.label}}",
+								Description: "{{portals.organizations.controls.Others.MetaTags.description}}",
+								Rows: 5
+							}
+						},
+						{
+							Name: "ScriptLibraries",
+							Type: "TextArea",
+							Options: {
+								Label: "{{portals.organizations.controls.Others.ScriptLibraries.label}}",
+								Description: "{{portals.organizations.controls.Others.ScriptLibraries.description}}",
+								Rows: 5
+							}
+						},
+						{
+							Name: "Scripts",
+							Type: "TextArea",
+							Options: {
+								Label: "{{portals.organizations.controls.Others.Scripts.label}}",
+								Description: "{{portals.organizations.controls.Others.Scripts.description}}",
+								Rows: 15
+							}
+						}
+					]
+				}
+			},
+			{
+				Name: "HttpIndicators",
+				Segment: "socials",
+				Options: {
+					Label: "{{portals.organizations.controls.HttpIndicators.label}}"
+				},
+				SubControls: {
+					AsArray: true,
+					Controls: [{
+						Options: {},
+						SubControls: {
+							Controls: [
+								{
+									Name: "Name",
+									Type: "TextBox",
+									Options: {
+										Type: "text",
+										Label: "{{portals.organizations.controls.HttpIndicators.Name.label}}",
+										Description: "{{portals.organizations.controls.HttpIndicators.Name.description}}",
+										MaxLength: 250
+									}
+								},
+								{
+									Name: "Content",
+									Type: "TextArea",
+									Options: {
+										Type: "text",
+										Label: "{{portals.organizations.controls.HttpIndicators.Content.label}}",
+										Description: "{{portals.organizations.controls.HttpIndicators.Content.description}}",
+										MaxLength: 4000
+									}
+								}
+							]
+						}
+					}]
+				}
+			}
 		);
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
@@ -595,12 +611,13 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const organization = AppUtility.clone(this.organization, false, ["Notifications", "EmailSettings"]);
+		const organization = AppUtility.clone(this.organization, false, ["Notifications", "EmailSettings", "WebHookSettings"]);
 		organization.Privileges = Privileges.clonePrivileges(this.organization.Privileges);
 		organization.ExpiredDate = AppUtility.toIsoDate(organization.ExpiredDate);
 
 		organization.Notifications = this.portalsCoreSvc.getNotificationSettings(this.organization.Notifications, this.emailsByApprovalStatus, false);
 		organization.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.organization.EmailSettings, false);
+		organization.WebHookSettings = this.portalsCoreSvc.getWebHookSettings(this.organization.WebHookSettings, settings => settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}`);
 		organization.Others = { MetaTags: organization.MetaTags, ScriptLibraries: organization.ScriptLibraries, Scripts: organization.Scripts };
 
 		organization.RefreshUrls = organization.RefreshUrls || {};
@@ -647,7 +664,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		}, 234));
 
 		if (this.configSvc.isDebug) {
-			console.log("<Portals>: Organization", this.organization);
+			console.log("<Portals>: Organization", this.organization, this.form, organization);
 		}
 	}
 

@@ -70,30 +70,18 @@
 						"description": "Nếu được chỉ định (có ít nhất 01 địa chỉ email, có đề và nội dung), thông báo qua emails này sẽ được gửi theo cách thức bổ sung thêm (so với thông báo qua emails mặc định) khi trạng thái là 'Xuất bản - Published'"
 					},
 					"webhooks": {
+						"label": "Thiết đặt gửi thông báo qua Web Hooks",
 						"inheritFromParent": "Sử dụng thiết đặt từ cấp trên để gửi thông báo qua webhooks",
-						"label": "Thiết đặt gửi thông báo qua webhooks",
 						"endpointURLs": {
 							"label": "Địa chỉ nhận web-hooks",
 							"placeholder": "vd: https://apis.vieapps.net/webhooks",
 							"description": "Các địa chỉ web nhận thông báo webhooks, mỗi một địa chỉ trên một dòng, phải bắt đầu bằng http:// hoặc https://"
 						},
-						"signAlgorithm": {
-							"label": "Phương pháp ký HMAC",
-							"description": "Chỉ định phương pháp ký từ nội dung message bằng khoá được tạo từ cụm từ tạo khoá chữ ký"
-						},
 						"signKey": {
-							"label": "Cụm từ tạo khoá để chữ ký",
 							"description": "Chỉ định cụm từ tạo khoá để ký webhooks.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng giá trị mặc định theo thứ tự ưu tiên:<br/>- Mã định danh của app đang tương tác<br/>- Cụm khoá mặc định của hệ thống"
 						},
 						"signatureName": {
-							"label": "Tên của tham số chữ ký",
 							"description": "Chỉ định tên của tham số chữ ký trong webhooks.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng tên của phương pháp, vd: HmacSha256Signature"
-						},
-						"signatureAsHex": {
-							"label": "Chữ ký dạng hex (tắt nếu muốn chữ ký dạng base64)"
-						},
-						"signatureInQuery": {
-							"label": "Đặt chữ ký trong query-string (tắt nếu muốn đặt chữ ký trong header)"
 						},
 						"generateIdentity": {
 							"label": "Tạo lại mã định danh của dữ liệu (nếu có)"
@@ -145,6 +133,39 @@
 						"to": "Gửi tới địa chỉ email",
 						"subject": "Tiêu đề email thử nghiệm",
 						"body": "Nội dung email thử nghiệm"
+					}
+				},
+				"webhooks": {
+					"label": "Thiết đặt nhận thông tin qua Web Hooks",
+					"url": {
+						"label": "URL để nhận thông tin qua Web Hooks",
+						"description": "URL ở trên được sử dụng đối với các hệ thống bên ngoài nhằm truyền thông tin vào hệ thống qua Web Hook (truyền qua HTTP bằng phương thức POST)"
+					},
+					"signAlgorithm": {
+						"label": "Phương pháp ký HMAC",
+						"description": "Chỉ định phương pháp ký từ nội dung message bằng khoá được tạo từ cụm từ tạo khoá chữ ký"
+					},
+					"signKey": {
+						"label": "Cụm từ tạo khoá để chữ ký",
+						"description": "Chỉ định cụm từ tạo khoá để tạo chữ ký kiểm tra tính hợp lệ của webhooks.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng giá trị mặc định theo thứ tự ưu tiên:<br/>- Mã định danh của app đang tương tác<br/>- Cụm khoá mặc định của hệ thống"
+					},
+					"signatureName": {
+						"label": "Tên của tham số chữ ký",
+						"description": "Chỉ định tên của tham số chữ ký để kiểm tra tính hợp lệ của webhooks.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng tên của phương pháp, vd: HmacSha256Signature"
+					},
+					"signatureAsHex": {
+						"label": "Chữ ký dạng hex (tắt nếu muốn chữ ký dạng base64)"
+					},
+					"signatureInQuery": {
+						"label": "Đặt chữ ký trong query-string (tắt nếu muốn đặt chữ ký trong header)"
+					},
+					"additionalQuery": {
+						"label": "Tham số phải có trong query-string",
+						"description": "Chỉ định các tham số buộc phải có trong query-string đối với thông tin truyền vào (dạng JSON).<br/>Ví dụ:<br/>{<br/>&nbsp;&nbsp;\"webhook.query\":\"this is web hook query\"<br/>}"
+					},
+					"additionalHeader": {
+						"label": "Tham số phải có trong header",
+						"description": "Chỉ định các tham số buộc phải có trong header đối với thông tin truyền vào (dạng JSON).<br/>Ví dụ:<br/>{<br/>&nbsp;&nbsp;\"webhook.header\":\"this is web hook header\"<br/>}"
 					}
 				},
 				"UISettings": {
