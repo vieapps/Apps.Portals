@@ -503,7 +503,7 @@ export class AppComponent implements OnInit {
 							params: {}
 						};
 						try {
-							redirect = AppCrypto.urlDecode(redirect);
+							redirect = AppCrypto.decodeBase64Url(redirect);
 							if (this.configSvc.isDebug) {
 								console.warn(`<AppComponent>: Redirect to the requested URI => ${redirect}`);
 							}

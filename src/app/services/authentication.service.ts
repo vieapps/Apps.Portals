@@ -146,11 +146,11 @@ export class AuthenticationService extends BaseService {
 		return this.configSvc.appConfig.accountRegistrations.setServicePrivilegs && this.canDo(this.configSvc.appConfig.accountRegistrations.setServicePrivilegsRole);
 	}
 
-	public async logInAsync(email: string, password: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async logInAsync(account: string, password: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
-			"users/session",
+			super.getURI("session", undefined, this.configSvc.relatedQuery, "users"),
 			{
-				Email: AppCrypto.rsaEncrypt(email),
+				Account: AppCrypto.rsaEncrypt(account),
 				Password: AppCrypto.rsaEncrypt(password)
 			},
 			async data => {
@@ -185,13 +185,13 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public async logInOTPAsync(userID: string, otpProvider: string, otpCode: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async logInOTPAsync(id: string, info: string, otp: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
-			"users/session",
+			super.getURI("session", undefined, this.configSvc.relatedQuery, "users"),
 			{
-				ID: AppCrypto.rsaEncrypt(userID),
-				Info: AppCrypto.rsaEncrypt(otpProvider),
-				OTP: AppCrypto.rsaEncrypt(otpCode)
+				ID: AppCrypto.rsaEncrypt(id),
+				Info: AppCrypto.rsaEncrypt(info),
+				OTP: AppCrypto.rsaEncrypt(otp)
 			},
 			async data => {
 				console.log(super.getLogMessage("Log in with OTP successful"));
@@ -212,7 +212,7 @@ export class AuthenticationService extends BaseService {
 
 	public async logOutAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.deleteAsync(
-			"users/session",
+			super.getURI("session", undefined, this.configSvc.relatedQuery, "users"),
 			async data => await this.configSvc.updateSessionAsync(data, async () => await this.configSvc.registerSessionAsync(() => {
 				console.log(super.getLogMessage("Log out successful"), this.configSvc.isDebug ? data : "");
 				AppEvents.broadcast("Account", { Type: "Updated" });
@@ -236,11 +236,11 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public async resetPasswordAsync(email: string, captcha: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async resetPasswordAsync(account: string, captcha: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
-			`users/account/reset?uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`,
+			super.getURI("account", "reset", `uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`, "users"),
 			{
-				Email: AppCrypto.rsaEncrypt(email)
+				Account: AppCrypto.rsaEncrypt(account)
 			},
 			onNext,
 			error => {
@@ -255,9 +255,28 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
+	public async renewPasswordAsync(account: string, otp: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		await super.updateAsync(
+			super.getURI("account", "renew", this.configSvc.relatedQuery, "users"),
+			{
+				Account: AppCrypto.rsaEncrypt(account),
+				OtpCode: AppCrypto.rsaEncrypt(otp)
+			},
+			onNext,
+			error => {
+				if (onError !== undefined) {
+					onError(error);
+				}
+				else {
+					super.showError("Error occurred while renewing password", error);
+				}
+			}
+		);
+	}
+
 	public async registerCaptchaAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.readAsync(
-			`users/captcha?register=${this.configSvc.appConfig.session.id}`,
+			super.getURI("captcha", undefined, `register=${this.configSvc.appConfig.session.id}&${this.configSvc.relatedQuery}`, "users"),
 			data => {
 				this.configSvc.appConfig.session.captcha = {
 					code: data.Code,

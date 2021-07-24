@@ -76,7 +76,7 @@ export class FilesService extends BaseService {
 			"x-repository-id": options.RepositoryID,
 			"x-entity": options.RepositoryEntityID,
 			"x-object-id": options.ObjectID,
-			"x-object-title": AppCrypto.urlEncode(options.ObjectTitle || ""),
+			"x-object-title": AppCrypto.encodeBase64Url(options.ObjectTitle || ""),
 			"x-shared": AppUtility.isTrue(options.IsShared) ? "true" : undefined,
 			"x-tracked": AppUtility.isTrue(options.IsTracked) ? "true" : undefined,
 			"x-temporary": AppUtility.isTrue(options.IsTemporary) ? "true" : undefined

@@ -42,7 +42,7 @@ export class Base {
 	}
 
 	/**
-		* Sends a request to an endpoint API via HXR
+		* Sends a request to an endpoint API via XHR
 		* @param verb HTTP verb to perform the request
 		* @param uri Full URI of the end-point API's uri to perform the request
 		* @param headers Additional headers to perform the request
@@ -102,7 +102,7 @@ export class Base {
 			try {
 				let uri = AppXHR.getURI(request.Path);
 				if (request.Extra !== undefined) {
-					uri += (uri.indexOf("?") > 0 ? "&" : "?") + `x-request-extra=${AppUtility.toBase64Url(request.Extra)}`;
+					uri += (uri.indexOf("?") > 0 ? "&" : "?") + `x-request-extra=${AppCrypto.jsonEncode(request.Extra)}`;
 				}
 				const data = await this.requestAsync(request.Verb || "GET", uri, request.Header, request.Body);
 				if (onSuccess !== undefined) {
@@ -177,7 +177,7 @@ export class Base {
 	 * @param headers The additional header
 	*/
 	protected search(path: string, request: any = {}, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }) {
-		return AppXHR.get(AppUtility.format(path, { request: AppUtility.toBase64Url(request) }), headers).subscribe(
+		return AppXHR.get(AppUtility.format(path, { request: AppCrypto.jsonEncode(request) }), headers).subscribe(
 			data => {
 				if (AppUtility.isFalse(dontProcessPagination)) {
 					const requestedPath = this.parseRequestedPath(path);
@@ -218,7 +218,7 @@ export class Base {
 			}
 			await this.sendAsync(
 				{
-					Path: AppUtility.format(path, { request: AppUtility.toBase64Url(request) }),
+					Path: AppUtility.format(path, { request: AppCrypto.jsonEncode(request) }),
 					Verb: "GET",
 					Header: headers
 				},
@@ -351,7 +351,7 @@ export class AppReadyGuardService implements CanActivate {
 
 	canActivate() {
 		if (!AppConfig.isReady) {
-			AppConfig.url.redirectToWhenReady = AppCrypto.urlEncode(this.location.path());
+			AppConfig.url.redirectToWhenReady = AppCrypto.encodeBase64Url(this.location.path());
 			this.router.navigateByUrl(AppConfig.url.home);
 		}
 		return AppConfig.isReady;
@@ -370,7 +370,7 @@ export class AuthenticatedGuardService implements CanActivate {
 
 	canActivate() {
 		if (!AppConfig.isAuthenticated) {
-			this.router.navigateByUrl(AppConfig.url.users.login + "?next=" + AppCrypto.urlEncode(this.location.path()));
+			this.router.navigateByUrl(AppConfig.url.users.login + "?next=" + AppCrypto.encodeBase64Url(this.location.path()));
 		}
 		return AppConfig.isAuthenticated;
 	}

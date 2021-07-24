@@ -7,6 +7,7 @@ import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
+import { UsersService } from "@app/services/users.service";
 
 @Component({
 	selector: "page-users-login",
@@ -19,7 +20,8 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 	constructor(
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
-		private authSvc: AuthenticationService
+		private authSvc: AuthenticationService,
+		private usersSvc: UsersService
 	) {
 	}
 
@@ -85,13 +87,14 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 	}
 
 	async openLoginAsync() {
-		this.login.config = [
+		this.login.config = this.login.config || [
 			{
-				Name: "Email",
+				Name: "Account",
 				Required: true,
 				Options: {
-					Type: "email",
-					Label: await this.configSvc.getResourceAsync("users.login.login.controls.Email"),
+					Type: this.configSvc.appConfig.accountRegistrations.phoneIsAllowed ? "text" : "email",
+					Label: await this.configSvc.getResourceAsync(`users.login.login.controls.${this.configSvc.appConfig.accountRegistrations.phoneIsAllowed ? "Account" : "Email"}.label`),
+					PlaceHolder: await this.configSvc.getResourceAsync(`users.login.login.controls.${this.configSvc.appConfig.accountRegistrations.phoneIsAllowed ? "Account" : "Email"}.placeholder`),
 					MinLength: 1,
 					MaxLength: 150,
 					AutoFocus: true
@@ -142,13 +145,13 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 			}
 			await this.appFormsSvc.showLoadingAsync(this.title);
 			await this.authSvc.logInAsync(
-				this.login.form.value.Email,
+				this.login.form.value.Account,
 				this.login.form.value.Password,
 				async data => await Promise.all([
 					TrackingUtility.trackAsync(this.title, this.configSvc.appConfig.url.users.login),
 					this.appFormsSvc.hideLoadingAsync(async () => await (data.Require2FA ? this.openLoginOTPAsync(data) : this.closeAsync()))
 				]),
-				async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => this.login.controls.find(c => AppUtility.isEquals(c.Name, "Email")).focus())
+				async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => this.login.controls.find(ctrl => ctrl.Name === "Account").focus())
 			);
 		}
 	}
@@ -157,9 +160,9 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 		this.otp.providers = data.Providers;
 		this.otp.value = {
 			ID: data.ID,
-			Provider: this.otp.providers[0].Info
+			Provider: this.otp.providers.first().Info
 		};
-		this.otp.config = [
+		this.otp.config = this.otp.config || [
 			{
 				Name: "ID",
 				Hidden: true
@@ -167,7 +170,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 			{
 				Name: "Provider",
 				Type: "Select",
-				Hidden: this.otp.providers.length < 2,
+				Hidden: this.otp.providers.length < 2 && this.otp.providers.first(info => info.Type === "App") !== undefined,
 				Options: {
 					Label: await this.configSvc.getResourceAsync("users.login.otp.controls.Provider"),
 					SelectOptions: {
@@ -178,6 +181,15 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 							};
 						})
 					},
+					OnChanged: async (_, control) => {
+						const provider = this.otp.providers.firstOrDefault(p => p.Info === control.value);
+						if (provider !== undefined && provider.Type === "SMS") {
+							await this.requestOTPAsync();
+						}
+						else {
+							this.otp.controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "OTP")).focus();
+						}
+					}
 				}
 			},
 			{
@@ -186,21 +198,54 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 				Options: {
 					Label: await this.configSvc.getResourceAsync("users.login.otp.controls.OTP.label"),
 					Description: "",
-					MinLength: 5,
-					MaxLength: 10,
+					MinLength: 4,
+					MaxLength: 12,
 					AutoFocus: true
 				}
 			}
 		];
-		this.otp.subscription = this.otp.form.valueChanges.subscribe(async value => {
-			const provider = this.otp.providers.find(p => AppUtility.isEquals(p.Info, value.Provider)) || this.otp.providers[0];
-			this.otp.controls.find(c => AppUtility.isEquals(c.Name, "OTP")).Options.Description = AppUtility.isEquals("SMS", provider.Type)
-				? await this.configSvc.getResourceAsync("users.login.otp.controls.OTP.description.sms")
-				: await this.configSvc.getResourceAsync("users.login.otp.controls.OTP.description.app", { label: provider.Label });
-		});
-		this.otp.button.label = await this.configSvc.getResourceAsync("users.login.otp.button");
+		if (this.otp.subscription === undefined) {
+			if (this.otp.providers.first(provider => provider.Type === "SMS")) {
+				this.otp.config.find(ctrl => ctrl.Name === "Provider").Options.Icon = {
+					Name: "chatbox-ellipses",
+					Color: "secondary",
+					Fill: "clear",
+					Slot: "end",
+					OnClick: async (_, control) => {
+						const provider = this.otp.providers.firstOrDefault(p => p.Info === control.value);
+						if (provider !== undefined && provider.Type === "SMS") {
+							await this.requestOTPAsync();
+						}
+						else {
+							this.otp.controls.find(ctrl => ctrl.Name === "OTP").focus();
+						}
+					}
+				};
+			}
+			this.otp.subscription = this.otp.form.valueChanges.subscribe(async value => {
+				const provider = this.otp.providers.firstOrDefault(p => p.Info === value.Provider);
+				this.otp.controls.find(ctrl => ctrl.Name === "OTP").Options.Description = provider.Type === "SMS"
+					? await this.configSvc.getResourceAsync("users.login.otp.controls.OTP.description.sms")
+					: await this.configSvc.getResourceAsync("users.login.otp.controls.OTP.description.app");
+			});
+		}
 		this.mode = "otp";
+		this.otp.button.label = await this.configSvc.getResourceAsync("users.login.otp.button");
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.login.otp.title");
+	}
+
+	async requestOTPAsync(control?: AppFormsControl, account?: string, provider?: string, query?: string) {
+		await this.usersSvc.prepare2FAMethodAsync(
+			() => (control || this.otp.controls.find(ctrl => ctrl.Name === "OTP")).focus(),
+			async error => {
+				await this.appFormsSvc.showErrorAsync(error);
+				(control || this.otp.controls.find(ctrl => ctrl.Name === "OTP")).focus();
+			},
+			`x-sms-otp=${account || this.otp.form.value.ID}` + (AppUtility.isNotEmpty(query) ? "&" + query : "") + "&x-body=" + AppCrypto.jsonEncode({
+				OtpType: AppCrypto.rsaEncrypt("SMS"),
+				OtpPhone: AppCrypto.rsaEncrypt(provider || this.otp.form.value.Provider)
+			})
+		);
 	}
 
 	async logInOTPAsync() {
@@ -214,27 +259,59 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 					TrackingUtility.trackAsync(this.title, this.configSvc.appConfig.url.users.otp),
 					this.appFormsSvc.hideLoadingAsync(async () => await this.closeAsync())
 				]),
-				async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => this.otp.controls.find(c => AppUtility.isEquals(c.Name, "OTP")).controlRef.deleteValue())
+				async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => {
+					const control = this.otp.controls.find(ctrl => ctrl.Name === "OTP");
+					control.controlRef.deleteValue();
+					control.focus();
+				})
 			);
 		}
 	}
 
 	async openResetPasswordAsync() {
-		this.reset.config = [
+		this.reset.config = this.reset.config || [
 			{
-				Name: "Email",
+				Name: "Account",
 				Required: true,
 				Options: {
-					Type: "email",
-					Label: await this.configSvc.getResourceAsync("users.login.login.controls.Email"),
+					Type: this.configSvc.appConfig.accountRegistrations.phoneIsAllowed ? "text" : "email",
+					Label: await this.configSvc.getResourceAsync(`users.login.login.controls.${this.configSvc.appConfig.accountRegistrations.phoneIsAllowed ? "Account" : "Email"}.label`),
+					PlaceHolder: await this.configSvc.getResourceAsync(`users.login.login.controls.${this.configSvc.appConfig.accountRegistrations.phoneIsAllowed ? "Account" : "Email"}.placeholder`),
 					MinLength: 1,
 					MaxLength: 150,
 					AutoFocus: true
 				}
 			},
 			{
+				Name: "OTP",
+				Required: false,
+				Hidden: true,
+				Options: {
+					Label: await this.configSvc.getResourceAsync("users.login.reset.controls.Captcha.label"),
+					Description: await this.configSvc.getResourceAsync("users.login.reset.controls.Captcha.sms"),
+					MinLength: 4,
+					MaxLength: 12,
+					Icon: {
+						Name: "chatbox-ellipses",
+						Color: "secondary",
+						Fill: "clear",
+						Slot: "end",
+						OnClick: async () => {
+							const account = this.reset.form.value.Account;
+							if (AppUtility.isNotEmpty(account) && AppUtility.isPhone(account)) {
+								await this.requestOTPAsync(this.reset.controls.find(ctrl => ctrl.Name === "OTP"), account, account, `x-sms-account=${AppCrypto.encodeBase64Url(account)}`);
+							}
+							else {
+								this.reset.controls.find(ctrl => ctrl.Name === "Account").focus();
+							}
+						}
+					}
+				}
+			},
+			{
 				Name: "Captcha",
-				Required: true,
+				Required: false,
+				Hidden: true,
 				Type: "Captcha",
 				Options: {
 					Label: await this.configSvc.getResourceAsync("users.login.reset.controls.Captcha.label"),
@@ -245,7 +322,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 			}
 		];
 		this.reset.button = {
-			label: await this.configSvc.getResourceAsync("users.login.reset.button"),
+			label: await this.configSvc.getResourceAsync("common.buttons.continue"),
 			icon: undefined
 		};
 		this.mode = "reset";
@@ -253,35 +330,87 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 	}
 
 	async resetPasswordAsync() {
-		if (this.appFormsSvc.validate(this.reset.form)) {
-			await this.appFormsSvc.showLoadingAsync(this.title);
-			await this.authSvc.resetPasswordAsync(
-				this.reset.form.value.Email,
-				this.reset.form.value.Captcha,
-				async () => await Promise.all([
-					TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.url.users.root}/reset`),
-					this.appFormsSvc.showAlertAsync(
-						await this.configSvc.getResourceAsync("users.login.reset.title"),
-						undefined,
-						await this.configSvc.getResourceAsync("users.login.reset.message", { email: this.reset.form.value.Email }),
-						async () => await this.closeAsync()
-					)
-				]),
-				async error => await Promise.all([
-					this.refreshCaptchaAsync(),
-					this.appFormsSvc.showErrorAsync(error, undefined, () => this.reset.controls.find(c => AppUtility.isEquals(c.Name, "Captcha")).controlRef.deleteValue())
-				])
-			);
+		const account = this.reset.form.value.Account;
+		if (AppUtility.isEmpty(account)) {
+			return;
+		}
+
+		if (this.configSvc.appConfig.accountRegistrations.phoneIsAllowed && AppUtility.isPhone(account)) {
+			const control = this.reset.controls.find(ctrl => ctrl.Name === "OTP");
+			const otp = this.reset.form.value.OTP;
+			if (AppUtility.isEmpty(otp)) {
+				if (control.Hidden) {
+					control.Hidden = false;
+					this.reset.button.label = await this.configSvc.getResourceAsync("users.login.reset.button");
+					await this.requestOTPAsync(control, account, account, `x-sms-account=${AppCrypto.encodeBase64Url(account)}`);
+				}
+				control.focus(123);
+			}
+			else {
+				await this.appFormsSvc.showLoadingAsync(this.title);
+				await this.authSvc.renewPasswordAsync(
+					account,
+					otp,
+					async () => await Promise.all([
+						TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.url.users.root}/reset`),
+						this.appFormsSvc.showAlertAsync(
+							await this.configSvc.getResourceAsync("users.login.reset.title"),
+							undefined,
+							await this.configSvc.getResourceAsync("users.login.reset.messages.sms", { account: this.reset.form.value.Account }),
+							async () => await this.openLoginAsync()
+						)
+					]),
+					async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => {
+						control.controlRef.deleteValue();
+						control.focus(123);
+					})
+				);
+			}
+		}
+
+		else {
+			const control = this.reset.controls.find(ctrl => ctrl.Name === "Captcha");
+			const captcha = this.reset.form.value.Captcha;
+			if (AppUtility.isEmpty(captcha)) {
+				if (control.Hidden) {
+					control.Hidden = false;
+					this.reset.button.label = await this.configSvc.getResourceAsync("users.login.reset.button");
+					this.refreshCaptchaAsync();
+				}
+				control.focus(123);
+			}
+			else {
+				await this.appFormsSvc.showLoadingAsync(this.title);
+				await this.authSvc.resetPasswordAsync(
+					account,
+					captcha,
+					async () => await Promise.all([
+						TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.url.users.root}/reset`),
+						this.appFormsSvc.showAlertAsync(
+							await this.configSvc.getResourceAsync("users.login.reset.title"),
+							undefined,
+							await this.configSvc.getResourceAsync("users.login.reset.messages.account", { account: this.reset.form.value.Account }),
+							async () => await this.closeAsync()
+						)
+					]),
+					async error => await Promise.all([
+						this.refreshCaptchaAsync(),
+						this.appFormsSvc.showErrorAsync(error, undefined, () => control.controlRef.deleteValue())
+					])
+				);
+			}
 		}
 	}
 
 	onResetPasswordFormInitialized() {
-		this.refreshCaptchaAsync();
-		this.reset.form.patchValue({ Email: this.login.form.value.Email });
+		if (!this.reset.controls.find(ctrl => ctrl.Name === "Captcha").Hidden) {
+			this.refreshCaptchaAsync();
+		}
+		this.reset.form.patchValue({ Account: this.login.form.value.Account });
 	}
 
 	async refreshCaptchaAsync() {
-		await this.authSvc.registerCaptchaAsync(() => this.reset.controls.find(c => AppUtility.isEquals(c.Name, "Captcha")).captchaURI = this.configSvc.appConfig.session.captcha.uri);
+		await this.authSvc.registerCaptchaAsync(() => this.reset.controls.find(ctrl => ctrl.Name === "Captcha").captchaURI = this.configSvc.appConfig.session.captcha.uri);
 	}
 
 	onRefreshCaptcha() {
@@ -291,7 +420,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 	async closeAsync() {
 		if (AppUtility.isNotEmpty(this.configSvc.queryParams["next"])) {
 			try {
-				await this.configSvc.navigateHomeAsync(AppCrypto.urlDecode(this.configSvc.queryParams["next"]));
+				await this.configSvc.navigateHomeAsync(AppCrypto.decodeBase64Url(this.configSvc.queryParams["next"]));
 			}
 			catch (error) {
 				console.error("<Login>: Error occurred while redirecting", error);

@@ -148,13 +148,13 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "expression");
 		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.expressions.controls.Organization}}", this.organization);
 
-		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
+		let control = formConfig.find(ctrl => ctrl.Name === "Title");
 		control.Options.AutoFocus = true;
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
+		control = formConfig.find(ctrl => ctrl.Name === "Description");
 		control.Options.Rows = 2;
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryID"));
+		control = formConfig.find(ctrl => ctrl.Name === "RepositoryID");
 		if (AppUtility.isNotEmpty(this.expression.ID)) {
 			control.Hidden = true;
 			formConfig.insert({
@@ -174,7 +174,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			});
 			control.Options.OnChanged = async (_, formControl) => {
 				const definitions = this.getContentTypeDefinitions(formControl.value);
-				const definitionsControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ContentTypeDefinitionID"));
+				const definitionsControl = this.formControls.find(ctrl => ctrl.Name === "ContentTypeDefinitionID");
 				definitionsControl.Options.SelectOptions.Values = definitions.map(definition => {
 					return { Value: definition.ID, Label: definition.Title };
 				});
@@ -182,7 +182,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			};
 		}
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ContentTypeDefinitionID"));
+		control = formConfig.find(ctrl => ctrl.Name === "ContentTypeDefinitionID");
 		if (AppUtility.isNotEmpty(this.expression.ID)) {
 			control.Hidden = true;
 			if (AppUtility.isNotEmpty(this.expression.ContentTypeDefinitionID)) {
@@ -203,19 +203,19 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				return { Value: definition.ID, Label: definition.Title };
 			});
 			control.Options.OnChanged = (_, formControl) => {
-				const module = Module.get(this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryID")).value);
+				const module = Module.get(this.formControls.find(ctrl => ctrl.Name === "RepositoryID").value);
 				const contentTypeDefinitionID = formControl.value;
 				const contentTypes = module.contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === contentTypeDefinitionID);
-				const contentTypeControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryEntityID"));
+				const contentTypeControl = this.formControls.find(ctrl => ctrl.Name === "RepositoryEntityID");
 				contentTypeControl.Options.SelectOptions.Values = contentTypes.map(contentType => {
 					return { Value: contentType.ID, Label: contentType.Title };
 				});
 				contentTypeControl.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
-				contentTypeControl.controlRef.setValue(contentTypes.length > 0 ? contentTypes[0].ID : "-", { onlySelf: true });
+				contentTypeControl.controlRef.setValue(contentTypes.length > 0 ? contentTypes.first().ID : "-", { onlySelf: true });
 			};
 		}
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryEntityID"));
+		control = formConfig.find(ctrl => ctrl.Name === "RepositoryEntityID");
 		if (AppUtility.isNotEmpty(this.expression.ID)) {
 			control.Hidden = true;
 			if (AppUtility.isNotEmpty(this.expression.RepositoryEntityID)) {
@@ -313,7 +313,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 						Label: "Encode the JSON",
 						OnClick: async () => {
 							try {
-								this.form.controls.EncodedXRequest.setValue(AppUtility.toBase64Url(JSON.parse(this.form.controls.JSONXRequest.value)));
+								this.form.controls.EncodedXRequest.setValue(AppCrypto.jsonEncode(JSON.parse(this.form.controls.JSONXRequest.value)));
 							}
 							catch (error) {
 								await this.appFormsSvc.showErrorAsync(error);
@@ -330,8 +330,8 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (AppUtility.isNotEmpty(this.expression.ID)) {
-			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
-			control.Order = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Audits")).Order + 1;
+			control = formConfig.find(ctrl => ctrl.Name === "ID");
+			control.Order = formConfig.find(ctrl => ctrl.Name === "Audits").Order + 1;
 			control.Hidden = false;
 			control.Options.Label = "{{common.audits.identity}}";
 			control.Options.ReadOnly = true;
@@ -370,8 +370,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 								Equals: this.organization.ID
 							}
 						}]
-					}
-					,
+					},
 					SortBy: { Created: "Descending" },
 					Pagination: {
 						TotalRecords: -1,

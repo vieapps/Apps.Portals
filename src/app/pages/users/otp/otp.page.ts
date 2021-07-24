@@ -1,5 +1,7 @@
 import { Component, OnInit, ViewChild } from "@angular/core";
 import { IonInput } from "@ionic/angular";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppFormsService } from "@app/components/forms.service";
@@ -25,36 +27,50 @@ export class UsersOtpPage implements OnInit {
 	providers = new Array<{ Type: string, Label: string, Time: Date, Info: string }>();
 	required = false;
 	status = "off";
+	state = "show";
+	mode = "app";
+	password = "";
 	provision = {
 		info: "",
 		uri: "",
-		value: ""
+		value: "",
+		phone: ""
 	};
-	password = "";
 	labels = {
 		status: "status",
-		providers: "providers",
-		buttons: {
-			on: "Power on",
-			delete: "Delete",
-			verify: "Verify",
-			done: "Done"
+		providers: {
+			title: "providers",
+			select: "select",
+			app: "Use an authenticator app",
+			sms: "Use SMS OTP"
 		},
-		qrcode: {
-			image: "QR code",
-			control: "QR code"
+	};
+	buttons = {
+		on: "Power on",
+		delete: "Delete",
+		add: "Add",
+		send: "Send OTP",
+		verify: "Verify",
+		done: "Done"
+	};
+	controls = {
+		app: {
+			label: "QR code for the authenticator app",
+			description: "Open authenticator app, scan the QR code and enter the generated code.<br/>Can use Google Authenticator/Microsoft Authenticator on AppStore/PlayStore"
 		},
-		instruction: {
-			main: "Open authenticator app",
-			app: "Google Authenticator/Microsoft Authenticator"
+		sms: {
+			label: "Phone number",
+			description: "Enter your phone number and click 'Send OTP' button to receive a password"
 		},
+		provision: "Enter the OTP code of the authenticator app",
 		password: {
-			label: "Old password",
+			label: "Password",
 			show: false
 		}
 	};
 
-	@ViewChild(IonInput, { static: false }) private otpCtrl: IonInput;
+	@ViewChild("phone", { static: false }) private phoneCtrl: IonInput;
+	@ViewChild("otp", { static: false }) private otpCtrl: IonInput;
 
 	get color() {
 		return this.configSvc.color;
@@ -64,48 +80,62 @@ export class UsersOtpPage implements OnInit {
 		return this.configSvc.locale;
 	}
 
+	get phoneIsAllowed() {
+		return this.configSvc.appConfig.accountRegistrations.phoneIsAllowed;
+	}
+
+	get gotAuthenticatorApp() {
+		return this.providers.first(info => info.Type === "App") !== undefined;
+	}
+
 	ngOnInit() {
-		Promise.all([
-			this.prepareLabelsAsync(),
-			this.prepareAsync()
-		]);
+		this.prepareAsync();
 	}
 
 	async prepareAsync(onNext?: () => void) {
 		const account = this.configSvc.getAccount();
 		this.required = account.twoFactors !== undefined ? account.twoFactors.required : false;
 		this.providers = account.twoFactors !== undefined ? account.twoFactors.providers : [];
+		this.mode = this.gotAuthenticatorApp ? "sms" : "app";
 		this.password = "";
-		this.provision = {
-			info: "",
-			uri: "",
-			value: ""
-		};
-		await this.prepareStatusAsync();
+		await Promise.all([
+			this.prepareResourcesAsync(),
+			this.prepareStatusAsync()
+		]);
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.profile.otp.title");
 		if (onNext !== undefined) {
 			onNext();
 		}
 	}
 
-	async prepareLabelsAsync() {
+	async prepareResourcesAsync() {
 		this.labels = {
 			status: await this.configSvc.getResourceAsync("users.profile.otp.status.label"),
-			providers: await this.configSvc.getResourceAsync("users.profile.otp.labels.providers"),
-			buttons: {
-				on: await this.configSvc.getResourceAsync("users.profile.otp.buttons.on"),
-				delete: await this.configSvc.getResourceAsync("users.profile.otp.buttons.delete"),
-				verify: await this.configSvc.getResourceAsync("users.profile.otp.buttons.verify"),
-				done: await this.configSvc.getResourceAsync("common.buttons.done")
+			providers: {
+				title: await this.configSvc.getResourceAsync("users.profile.otp.providers.title"),
+				select: await this.configSvc.getResourceAsync("users.profile.otp.providers.select"),
+				app: await this.configSvc.getResourceAsync("users.profile.otp.providers.app"),
+				sms: await this.configSvc.getResourceAsync("users.profile.otp.providers.sms")
+			}
+		};
+		this.buttons = {
+			on: await this.configSvc.getResourceAsync("users.profile.otp.buttons.on"),
+			delete: await this.configSvc.getResourceAsync("users.profile.otp.buttons.delete"),
+			add: await this.configSvc.getResourceAsync("common.buttons.add"),
+			send: await this.configSvc.getResourceAsync("users.profile.otp.buttons.send"),
+			verify: await this.configSvc.getResourceAsync("users.profile.otp.buttons.verify"),
+			done: await this.configSvc.getResourceAsync("common.buttons.done")
+		};
+		this.controls = {
+			app: {
+				label: await this.configSvc.getResourceAsync("users.profile.otp.controls.app.label"),
+				description: await this.configSvc.getResourceAsync("users.profile.otp.controls.app.description")
 			},
-			qrcode: {
-				image: await this.configSvc.getResourceAsync("users.profile.otp.labels.qrcode.image"),
-				control: await this.configSvc.getResourceAsync("users.profile.otp.labels.qrcode.control")
+			sms: {
+				label: await this.configSvc.getResourceAsync("users.profile.otp.controls.sms.label"),
+				description: await this.configSvc.getResourceAsync("users.profile.otp.controls.sms.description")
 			},
-			instruction: {
-				main: await this.configSvc.getResourceAsync("users.profile.otp.labels.instruction.main"),
-				app: await this.configSvc.getResourceAsync("users.profile.otp.labels.instruction.app")
-			},
+			provision: await this.configSvc.getResourceAsync(`users.profile.otp.controls.provision.${this.mode}`),
 			password: {
 				label: await this.configSvc.getResourceAsync("users.profile.password.controls.OldPassword"),
 				show: false
@@ -122,21 +152,54 @@ export class UsersOtpPage implements OnInit {
 	}
 
 	async provisonAsync() {
-		await this.appFormsSvc.showLoadingAsync(this.title);
+		this.state = "setup";
+		this.password = "";
+		this.provision.value = "";
+		this.provision.uri = "";
+		this.controls.provision = await this.configSvc.getResourceAsync(`users.profile.otp.controls.provision.${this.mode}`);
+
+		if (this.mode === "sms") {
+			if (AppUtility.isNotEmpty(this.provision.phone) && AppUtility.isPhone(this.provision.phone)) {
+				await this.appFormsSvc.showAlertAsync(
+					await this.configSvc.getResourceAsync("users.profile.otp.buttons.verify"),
+					undefined,
+					await this.configSvc.getResourceAsync("users.profile.otp.messages.verify", { label: this.provision.phone }),
+					async () => {
+						await this.appFormsSvc.showLoadingAsync(this.title);
+						await this.prepare2FAMethodAsync();
+					},
+					await this.configSvc.getResourceAsync("common.buttons.ok"),
+					await this.configSvc.getResourceAsync("common.buttons.cancel")
+				);
+			}
+			else {
+				await this.prepareStatusAsync();
+				PlatformUtility.focus(this.phoneCtrl);
+			}
+		}
+		else {
+			await this.appFormsSvc.showLoadingAsync(this.title);
+			await this.prepare2FAMethodAsync();
+		}
+	}
+
+	async prepare2FAMethodAsync() {
 		await this.usersSvc.prepare2FAMethodAsync(
 			async data => {
 				this.provision.info = data.Provisioning;
-				this.provision.uri = data.URI;
+				this.provision.uri = this.mode === "sms" ? "" : data.URI;
 				await Promise.all([
 					this.prepareStatusAsync(),
-					this.appFormsSvc.hideLoadingAsync(() => {
-						this.provision.value = "";
-						this.password = "";
-						PlatformUtility.focus(this.otpCtrl);
-					})
+					this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.focus(this.otpCtrl))
 				]);
 			},
-			async error => await this.appFormsSvc.showErrorAsync(error)
+			async error => await this.appFormsSvc.showErrorAsync(error),
+			this.mode === "sms"
+				? "x-body=" + AppCrypto.jsonEncode({
+					OtpType: AppCrypto.rsaEncrypt("SMS"),
+					OtpPhone: AppCrypto.rsaEncrypt(this.provision.phone)
+				})
+				: undefined
 		);
 	}
 
@@ -146,10 +209,19 @@ export class UsersOtpPage implements OnInit {
 			this.password,
 			this.provision.info,
 			this.provision.value,
-			async () => await this.prepareAsync(async () => await Promise.all([
-				TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.url.users.update}/otp`),
-				this.appFormsSvc.hideLoadingAsync()
-			])),
+			async () => {
+				this.state = "show";
+				this.password = "";
+				this.provision.info = "";
+				this.provision.value = "";
+				this.provision.uri = "";
+				this.provision.phone = "";
+				await this.prepareAsync();
+				await Promise.all([
+					TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.url.users.update}/otp`),
+					this.appFormsSvc.hideLoadingAsync()
+				]);
+			},
 			async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => {
 				this.provision.value = "";
 				this.password = "";

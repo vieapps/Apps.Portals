@@ -65,8 +65,8 @@ export abstract class PortalCmsBase extends BaseModel {
 				? this.thumbnails[0].URIs.Direct
 				: AppUtility.isNotEmpty(this.thumbnails[0].URI)
 					? this.thumbnails[0].URI
-					: AppConfig.URIs.files + "thumbnails/no-image.png"
-			: AppConfig.URIs.files + "thumbnails/no-image.png";
+					: `${AppConfig.URIs.files}thumbnails/no-image.png`
+			: `${AppConfig.URIs.files}thumbnails/no-image.png`;
 	}
 
 	public get thumbnails() {

@@ -1,4 +1,5 @@
 import { Dictionary } from "@app/components/app.collections";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { NestedObject, NotificationSettings, EmailSettings } from "@app/models/portals.base";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
@@ -112,7 +113,7 @@ export class Category extends CmsBaseModel implements NestedObject {
 	}
 
 	public get listURI() {
-		return `${this.listLink}?x-request=${AppUtility.toBase64Url({ ParentID: this.ID })}`;
+		return `${this.listLink}?x-request=${AppCrypto.jsonEncode({ ParentID: this.ID })}`;
 	}
 
 }

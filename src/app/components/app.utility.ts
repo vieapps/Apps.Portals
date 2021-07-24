@@ -35,6 +35,18 @@ export class AppUtility {
 		return obj !== undefined && obj instanceof Date;
 	}
 
+	/** Gets the state that determines the email address is valid or not */
+	public static isEmail(email?: string) {
+		const regex = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+		return regex.test(String(email).trim().replace(/\s+/g, "").replace(/#/g, ""));
+	}
+
+	/** Gets the state that determines the phone number is valid or not */
+	public static isPhone(phone?: string) {
+		const regex = /^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$/i;
+		return regex.test(String(phone).trim().replace(/\s+/g, "").replace(/-/g, "").replace(/\./g, ""));
+	}
+
 	/** Checks to see the object is null or not */
 	public static isNull(obj?: any) {
 		return obj === undefined || obj === null;
@@ -65,18 +77,6 @@ export class AppUtility {
 		return this.isNotEmpty(str) && this.isNotEmpty(substr)
 			? str.indexOf(substr, start)
 			: -1;
-	}
-
-	/** Gets the state that determines the email address is valid or not */
-	public static isValidEmail(email?: string) {
-		const atPos = this.isNotEmpty(email) ? email.indexOf("@") : -1;
-		const dotPos = this.isNotEmpty(email) ? email.indexOf(".", atPos + 1) : -1;
-		return atPos > 0 && dotPos > atPos;
-	}
-
-	/** Gets the hidden email address for displaying at the public */
-	public static getHiddenEmail(email: string) {
-		return `${email.substr(0, email.indexOf("@") - 2)}**@**${email.substr(email.indexOf("@") + 3)}`;
 	}
 
 	/** Parses the error */
@@ -258,7 +258,7 @@ export class AppUtility {
 	public static getJsonOfQuery(value: string): { [key: string]: any } {
 		try {
 			return this.isNotEmpty(value)
-				? JSON.parse(AppCrypto.urlDecode(value))
+				? AppCrypto.jsonDecode(value)
 				: {};
 		}
 		catch (error) {
@@ -329,13 +329,6 @@ export class AppUtility {
 			tokenParams.filter(param => param.name === key).forEach(param => template = template.replace(this.toRegExp(`/${param.token}/g`), value));
 		});
 		return template;
-	}
-
-	/** Stringifys the JSON and encode as base64-url */
-	public static toBase64Url(json: any) {
-		return this.isObject(json, true)
-			? AppCrypto.urlEncode(JSON.stringify(json, (_, value) => typeof value === "undefined" ? null : value))
-			: "";
 	}
 
 	/** Converts the string/object to an array of strings/key-value pair/value of objects' properties */

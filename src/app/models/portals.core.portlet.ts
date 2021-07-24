@@ -1,4 +1,5 @@
 import { Dictionary } from "@app/components/app.collections";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { ElementUISettings } from "@app/models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
@@ -127,7 +128,7 @@ export class Portlet extends CoreBaseModel {
 			}
 		});
 		portlet.ansiTitle = AppUtility.toANSI(portlet.Title).toLowerCase();
-		portlet.routerParams["x-request"] = AppUtility.toBase64Url({ ID: portlet.ID, DesktopID: portlet.DesktopID });
+		portlet.routerParams["x-request"] = AppCrypto.jsonEncode({ ID: portlet.ID, DesktopID: portlet.DesktopID });
 		return portlet;
 	}
 

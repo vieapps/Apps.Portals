@@ -35,7 +35,8 @@
 			"download": "Tải xuống",
 			"refresh": "Làm tươi",
 			"filter": "Lọc nhanh",
-			"move": "Di chuyển"
+			"move": "Di chuyển",
+			"continue": "Tiếp theo"
 		},
 		"messages": {
 			"loading": "Tải dữ liệu...",

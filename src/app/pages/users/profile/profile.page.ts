@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsService } from "@app/components/forms.service";
@@ -208,7 +209,7 @@ export class UsersProfilePage implements OnInit {
 	}
 
 	openUpdateAsync(mode?: string) {
-		return this.configSvc.navigateForwardAsync(`${this.configSvc.appConfig.url.users.update}/${(this.id === undefined ? "my" : AppUtility.toANSI(this.profile.Name, true))}?x-request=${AppUtility.toBase64Url({ ID: this.profile.ID, Mode: mode || "profile" })}`);
+		return this.configSvc.navigateForwardAsync(`${this.configSvc.appConfig.url.users.update}/${(this.id === undefined ? "my" : AppUtility.toANSI(this.profile.Name, true))}?x-request=${AppCrypto.jsonEncode({ ID: this.profile.ID, Mode: mode || "profile" })}`);
 	}
 
 	openOTPAsync() {

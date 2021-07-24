@@ -1,6 +1,7 @@
 import { Injectable } from "@angular/core";
 import { AppRTU, AppMessage } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppCustomCompleter } from "@app/components/app.completer";
@@ -386,6 +387,10 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async setActiveModuleAsync(module: Module, onNext?: () => void) {
+		if (module === undefined) {
+			return Module.active;
+		}
+
 		const store = this.activeModules[module.SystemID] !== module.ID;
 		this.activeModules[module.SystemID] = module.ID;
 		await (store ? this.configSvc.storeOptionsAsync() : this.configSvc.saveOptionsAsync());
@@ -475,13 +480,13 @@ export class PortalsCoreService extends BaseService {
 
 	public async getTemplateAsync(name: string, theme?: string, mainDirectory?: string, subDirectory?: string) {
 		let template: string;
-		await super.fetchAsync(super.getURI("definitions", "template", "x-request=" + AppUtility.toBase64Url({ Name: name, Theme: theme, MainDirectory: mainDirectory, SubDirectory: subDirectory })), data => template = data.Template);
+		await super.fetchAsync(super.getURI("definitions", "template", "x-request=" + AppCrypto.jsonEncode({ Name: name, Theme: theme, MainDirectory: mainDirectory, SubDirectory: subDirectory })), data => template = data.Template);
 		return template || "";
 	}
 
 	public async getTemplateZonesAsync(dekstopID: string) {
 		let zones: Array<string>;
-		await super.fetchAsync(super.getURI("definitions", "template", "x-request=" + AppUtility.toBase64Url({ Mode: "Zones", DesktopID: dekstopID })), data => zones = data);
+		await super.fetchAsync(super.getURI("definitions", "template", "x-request=" + AppCrypto.jsonEncode({ Mode: "Zones", DesktopID: dekstopID })), data => zones = data);
 		return zones || [];
 	}
 
@@ -531,7 +536,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public getRouterQueryParams(contentType: ContentType, params?: { [key: string]: any }) {
-		return { "x-request": AppUtility.toBase64Url(params || { RepositoryEntityID: contentType !== undefined ? contentType.ID : undefined }) };
+		return { "x-request": AppCrypto.jsonEncode(params || { RepositoryEntityID: contentType !== undefined ? contentType.ID : undefined }) };
 	}
 
 	public getAppURL(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }, objectName?: string, path?: string) {
@@ -738,9 +743,12 @@ export class PortalsCoreService extends BaseService {
 
 	public getWebHookNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const controlConfig = this.getWebHookFormControl("WebHooks", "{{portals.common.controls.notifications.webhooks.label}}");
+		controlConfig.SubControls.Controls.forEach(ctrl => ctrl.Hidden = inheritFromParent);
+
 		controlConfig.SubControls.Controls.insert({
 			Name: "EndpointURLs",
 			Type: "TextArea",
+			Hidden: inheritFromParent,
 			Options: {
 				Label: "{{portals.common.controls.notifications.webhooks.endpointURLs.label}}",
 				PlaceHolder: "{{portals.common.controls.notifications.webhooks.endpointURLs.placeholder}}",
@@ -750,6 +758,7 @@ export class PortalsCoreService extends BaseService {
 		controlConfig.SubControls.Controls.insert({
 			Name: "GenerateIdentity",
 			Type: "YesNo",
+			Hidden: inheritFromParent,
 			Options: {
 				Label: "{{portals.common.controls.notifications.webhooks.generateIdentity.label}}",
 				Type: "toggle"
@@ -779,10 +788,7 @@ export class PortalsCoreService extends BaseService {
 			}, 0);
 		}
 
-		controlConfig.SubControls.Controls.forEach((ctrl, index) => {
-			ctrl.Order = index;
-			ctrl.Hidden = inheritFromParent;
-		});
+		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
 			onCompleted(controlConfig);
 		}
@@ -1465,7 +1471,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("organization", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchURI("organization", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Organization.contains(obj.ID) ? convertToCompleterItem(Organization.get(obj.ID)) : convertToCompleterItem(Organization.update(Organization.deserialize(obj)))),
 			convertToCompleterItem
 		);
@@ -1641,7 +1647,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("role", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchURI("role", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
 				const role = Role.get(obj.ID);
 				return role === undefined
@@ -1891,7 +1897,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("desktop", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchURI("desktop", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
 				const desktop = Desktop.get(obj.ID);
 				return desktop === undefined
@@ -2135,7 +2141,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("portlet", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchURI("portlet", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Portlet.contains(obj.ID) ? convertToCompleterItem(Portlet.get(obj.ID)) : convertToCompleterItem(Portlet.update(Portlet.deserialize(obj)))),
 			convertToCompleterItem
 		);
@@ -2329,7 +2335,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("site", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchURI("site", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Site.contains(obj.ID) ? convertToCompleterItem(Site.get(obj.ID)) : convertToCompleterItem(Site.update(Site.deserialize(obj)))),
 			convertToCompleterItem
 		);
@@ -2498,7 +2504,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("module", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchURI("module", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Module.contains(obj.ID) ? convertToCompleterItem(Module.get(obj.ID)) : convertToCompleterItem(Module.update(Module.deserialize(obj)))),
 			convertToCompleterItem
 		);
@@ -2683,7 +2689,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("content.type", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchURI("content.type", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => ContentType.contains(obj.ID) ? convertToCompleterItem(ContentType.get(obj.ID)) : convertToCompleterItem(ContentType.update(ContentType.deserialize(obj)))),
 			convertToCompleterItem
 		);
@@ -2857,7 +2863,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("expression", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchURI("expression", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Expression.contains(obj.ID) ? convertToCompleterItem(Expression.get(obj.ID)) : convertToCompleterItem(Expression.update(Expression.deserialize(obj)))),
 			convertToCompleterItem
 		);
@@ -3022,7 +3028,7 @@ export class PortalsCoreService extends BaseService {
 		request.Pagination["MaxPages"] = maxPages !== undefined && maxPages > 0 ? maxPages : 0;
 		await super.sendAsync(
 			{
-				Path: super.getURI("excel", "export", "x-request=" + AppUtility.toBase64Url(request)),
+				Path: super.getURI("excel", "export", "x-request=" + AppCrypto.jsonEncode(request)),
 				Header: this.configSvc.appConfig.getAuthenticatedHeaders()
 			},
 			async data => {
@@ -3130,7 +3136,7 @@ export class PortalsCoreService extends BaseService {
 						const filename = info["x-filename"] as string;
 						await super.sendAsync(
 							{
-								Path: super.getURI("excel", "import", "x-request=" + AppUtility.toBase64Url({
+								Path: super.getURI("excel", "import", "x-request=" + AppCrypto.jsonEncode({
 									SystemID: systemID,
 									RepositoryID: repositoryID,
 									RepositoryEntityID: repositoryEntityID,

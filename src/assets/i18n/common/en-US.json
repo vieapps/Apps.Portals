@@ -35,7 +35,8 @@
 			"download": "Download",
 			"refresh": "Refresh",
 			"filter": "Quick filter",
-			"move": "Move"
+			"move": "Move",
+			"continue": "Continue"
 		},
 		"messages": {
 			"loading": "Loading...",

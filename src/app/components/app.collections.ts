@@ -45,6 +45,9 @@ declare global {
 		/** Gets the first element that matched with the predicate */
 		first(predicate?: (value: T, index: number, array: T[]) => boolean): T;
 
+		/** Gets the first or default element that matched with the predicate */
+		firstOrDefault(predicate?: (value: T, index: number, array: T[]) => boolean): T;
+
 		/** Converts to List object (for working with LINQ) */
 		toList(predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): List<T>;
 
@@ -211,6 +214,12 @@ if (!Array.prototype.first) {
 	};
 }
 
+if (!Array.prototype.firstOrDefault) {
+	Array.prototype.firstOrDefault = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
+		return this.first(predicate) || this.first();
+	};
+}
+
 if (!Array.prototype.toList) {
 	Array.prototype.toList = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): List<T> {
 		return new List<T>(predicate !== undefined ? this.filter(predicate, thisArg) : this);
@@ -282,6 +291,11 @@ export class HashSet<T> extends Set<T>  {
 			}
 		}
 		return undefined;
+	}
+
+	/** Returns the first or default value that matched with the predicate */
+	firstOrDefault(predicate?: (value: T) => boolean) {
+		return this.first(predicate) || this.first();
 	}
 
 	/** Returns the first value that matched with the predicate */
@@ -392,6 +406,11 @@ export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 			}
 		}
 		return undefined;
+	}
+
+	/** Returns the first or default value that matched with the predicate */
+	firstOrDefault(predicate?: (value: TValue) => boolean) {
+		return this.first(predicate) || this.first();
 	}
 
 	/** Returns the first value that matched with the predicate */

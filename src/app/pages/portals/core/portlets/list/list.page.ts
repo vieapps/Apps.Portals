@@ -298,7 +298,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	async createAsync() {
 		await this.listCtrl.closeSlidingItems();
 		if (this.desktop !== undefined) {
-			await this.configSvc.navigateForwardAsync(`/portals/core/portlets/create?x-request=${AppUtility.toBase64Url({ DesktopID: this.desktop.ID })}`);
+			await this.configSvc.navigateForwardAsync(`/portals/core/portlets/create?x-request=${AppCrypto.jsonEncode({ DesktopID: this.desktop.ID })}`);
 		}
 	}
 

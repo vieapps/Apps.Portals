@@ -90,7 +90,7 @@ export class AppRTU {
 	}
 
 	private static getObjectHandlers(service: string, object: string) {
-		const type = service + "#" + (object || "");
+		const type = `${service}#${object || ""}`;
 		this._objectScopeHandlers[type] = this._objectScopeHandlers[type] || [];
 		return this._objectScopeHandlers[type];
 	}
@@ -232,7 +232,7 @@ export class AppRTU {
 		// create new instance of WebSocket
 		this._status = "initializing";
 		this._uri = (AppUtility.isNotEmpty(AppConfig.URIs.updates) ? AppConfig.URIs.updates : AppConfig.URIs.apis).replace("http://", "ws://").replace("https://", "wss://");
-		this._websocket = new WebSocket(`${this._uri}v?x-session-id=${AppCrypto.urlEncode(AppConfig.session.id)}&x-device-id=${AppCrypto.urlEncode(AppConfig.session.device)}` + (isRestart ? "&x-restart=" : ""));
+		this._websocket = new WebSocket(`${this._uri}v?x-session-id=${AppCrypto.encodeBase64Url(AppConfig.session.id)}&x-device-id=${AppCrypto.encodeBase64Url(AppConfig.session.device)}` + (isRestart ? "&x-restart=" : ""));
 		this._pingTime = new Date().getTime();
 
 		// assign 'on-open' event handler
@@ -247,15 +247,7 @@ export class AppRTU {
 					console.error("[AppRTU]: Error occurred while running the 'on-open' handler", error);
 				}
 			}
-			this._websocket.send(JSON.stringify({
-				ServiceName: "Session",
-				Verb: "AUTH",
-				Header: {
-					"x-session-id": AppCrypto.aesEncrypt(AppConfig.session.id),
-					"x-device-id": AppCrypto.aesEncrypt(AppConfig.session.device)
-				},
-				Body: AppConfig.getAuthenticatedHeaders()
-			}));
+			this._websocket.send(AppCrypto.stringify(AppConfig.authenticatingMessage));
 			PlatformUtility.invoke(() => {
 				if (this.isReady) {
 					this.sendRequests(true);
@@ -480,7 +472,7 @@ export class AppRTU {
 	*/
 	public static send(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		const id = `cmd-${this._requests.counter}`;
-		const request = JSON.stringify({
+		const request = AppCrypto.stringify({
 			ID: id,
 			ServiceName: requestInfo.ServiceName,
 			ObjectName: requestInfo.ObjectName || "",
@@ -489,7 +481,7 @@ export class AppRTU {
 			Body: requestInfo.Body || {},
 			Header: requestInfo.Header || {},
 			Extra: requestInfo.Extra || {}
-		}, (_, value) => typeof value === "undefined" ? null : value);
+		});
 		this._requests.counter++;
 		if (onSuccess !== undefined || onError !== undefined) {
 			this._requests.callbackableRequests[id] = request;

@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from "@ang
 import { registerLocaleData } from "@angular/common";
 import { IonInfiniteScroll, IonCheckbox } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { AppPagination, AppDataPagination } from "@app/components/app.pagination";
 import { AppFormsService } from "@app/components/forms.service";
@@ -217,7 +218,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 
 	async viewLogsAsync() {
 		if (this.selected.size > 0) {
-			await this.configSvc.navigateForwardAsync("/logs/view", { "x-request": AppUtility.toBase64Url({ ids: this.selected.toArray() }) });
+			await this.configSvc.navigateForwardAsync("/logs/view", { "x-request": AppCrypto.jsonEncode({ ids: this.selected.toArray() }) });
 		}
 	}
 

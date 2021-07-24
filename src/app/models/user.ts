@@ -116,7 +116,7 @@ export class UserProfileBase extends BaseModel {
 	}
 
 	public getEmail(hideEmail: boolean = true) {
-		return hideEmail ? AppUtility.getHiddenEmail(this.Email) : this.Email;
+		return hideEmail ? `${this.Email.substr(0, this.Email.indexOf("@") - 2)}**@**${this.Email.substr(this.Email.indexOf("@") + 3)}` : this.Email;
 	}
 
 }

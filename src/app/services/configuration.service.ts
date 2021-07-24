@@ -167,7 +167,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the URI for activating new account/password */
 	public get activateURI() {
-		return AppCrypto.urlEncode(PlatformUtility.getRedirectURI("home?prego=activate&mode={{mode}}&code={{code}}", false));
+		return AppCrypto.encodeBase64Url(PlatformUtility.getRedirectURI("home?prego=activate&mode={{mode}}&code={{code}}", false));
 	}
 
 	/** Sets the app title (means title of the browser) */
@@ -373,6 +373,7 @@ export class ConfigurationService extends BaseService {
 		if (AppUtility.isNotEmpty(session.Token)) {
 			try {
 				this.appConfig.session.token = AppCrypto.jwtDecode(session.Token, AppUtility.isObject(this.appConfig.session.keys, true) ? this.appConfig.session.keys.jwt : this.appConfig.app.name);
+				super.send(this.appConfig.authenticatingMessage);
 			}
 			catch (error) {
 				this.appConfig.session.token = undefined;
@@ -651,7 +652,7 @@ export class ConfigurationService extends BaseService {
 		}
 
 		await super.readAsync(
-			`statics/geo/provinces/${this.appConfig.geoMeta.country}.json`,
+			`statics/geo/provinces/${this.appConfig.geoMeta.country.toLowerCase()}.json`,
 			async provinces => await this.saveGeoMetaAsync(provinces, async () => {
 				if (this.appConfig.geoMeta.countries.length < 1) {
 					await super.readAsync(

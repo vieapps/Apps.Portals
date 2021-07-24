@@ -248,7 +248,7 @@ export class PlatformUtility {
 	/** Gets the redirect URI for working with external */
 	public static getRedirectURI(path: string, addAsRedirectParam: boolean = false) {
 		return (AppConfig.isWebApp ? this.parseURI(window.location.href).HostURI + AppConfig.url.base : AppConfig.URIs.apps)
-			+ (AppUtility.isTrue(addAsRedirectParam) ? `home?redirect=${AppCrypto.urlEncode(path)}` : AppUtility.isNotEmpty(path) && path[0] === "/" ? path.substring(1) : path || "");
+			+ (AppUtility.isTrue(addAsRedirectParam) ? `home?redirect=${AppCrypto.encodeBase64Url(path)}` : AppUtility.isNotEmpty(path) && path[0] === "/" ? path.substring(1) : path || "");
 	}
 
 	/** Gets the host name from an url */
@@ -296,7 +296,7 @@ export class PlatformUtility {
 				}
 			},
 			error => {
-				console.error(`Copy error => ${AppUtility.getErrorMessage(error)}`, JSON.stringify(error));
+				console.error(`Copy error => ${AppUtility.getErrorMessage(error)}`, AppCrypto.stringify(error));
 			}
 		);
 	}

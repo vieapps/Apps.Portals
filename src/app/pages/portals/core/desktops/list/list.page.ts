@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { PlatformUtility } from "@app/components/app.utility.platform";
@@ -330,7 +331,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 	async createAsync() {
 		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(`/portals/core/desktops/create${(this.parentID === undefined ? "" : "?x-request=" + AppUtility.toBase64Url({ ParentID: this.parentID }))}`);
+		await this.configSvc.navigateForwardAsync(`/portals/core/desktops/create${(this.parentID === undefined ? "" : "?x-request=" + AppCrypto.jsonEncode({ ParentID: this.parentID }))}`);
 	}
 
 	async openAsync(event: Event, desktop: Desktop) {

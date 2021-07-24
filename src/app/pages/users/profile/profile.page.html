@@ -56,15 +56,15 @@
 					{{ labels.header }}
 				</ion-label>
 			</ion-list-header>
-			<ion-item [color]="color">
+			<ion-item *ngIf="profile.Email && profile.Email !== ''" [color]="color">
 				<ion-icon icon="at" slot="start"></ion-icon>
 				{{ profile.Email }}
 			</ion-item>
-			<ion-item *ngIf="profile.Mobile !== ''" [color]="color">
+			<ion-item *ngIf="profile.Mobile && profile.Mobile !== ''" [color]="color">
 				<ion-icon icon="call" slot="start"></ion-icon>
 				{{ profile.Mobile }}
 			</ion-item>
-			<ion-item *ngIf="profile.fullAddress !== ''" [color]="color">
+			<ion-item *ngIf="profile.fullAddress && profile.fullAddress !== ''" [color]="color">
 				<ion-icon icon="pin" slot="start"></ion-icon>
 				{{ profile.fullAddress }}
 			</ion-item>

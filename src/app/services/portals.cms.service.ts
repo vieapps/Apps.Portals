@@ -3,6 +3,7 @@ import { DomSanitizer } from "@angular/platform-browser";
 import { Dictionary } from "@app/components/app.collections";
 import { AppRTU, AppXHR, AppMessage } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppCustomCompleter } from "@app/components/app.completer";
@@ -634,7 +635,7 @@ export class PortalsCmsService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("cms.category", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchURI("cms.category", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
 				const category = Category.get(obj.ID);
 				return category === undefined
@@ -923,7 +924,7 @@ export class PortalsCmsService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("cms.content", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchURI("cms.content", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => convertToCompleterItem(obj)),
 			convertToCompleterItem
 		);
@@ -1113,7 +1114,7 @@ export class PortalsCmsService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("cms.item", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchURI("cms.item", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => convertToCompleterItem(obj)),
 			convertToCompleterItem
 		);
@@ -1300,7 +1301,7 @@ export class PortalsCmsService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("cms.link", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchURI("cms.link", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
 				const link = Link.get(obj.ID);
 				return link === undefined

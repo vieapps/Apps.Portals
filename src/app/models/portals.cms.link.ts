@@ -1,4 +1,5 @@
 import { Dictionary } from "@app/components/app.collections";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { NestedObject } from "@app/models/portals.base";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
@@ -55,8 +56,8 @@ export class Link extends CmsBaseModel implements NestedObject {
 	}
 
 	/** Gets by identity */
-	public static get(id: string) {
-		return AppUtility.isNotEmpty(id)
+	public static get(id: string): Link {
+		return id !== undefined
 			? this.instances.get(id)
 			: undefined;
 	}
@@ -109,7 +110,7 @@ export class Link extends CmsBaseModel implements NestedObject {
 	}
 
 	public get listURI() {
-		return `${this.routerLink.replace("/view/", "/list/sub-")}?x-request=${AppUtility.toBase64Url({ ParentID: this.ID })}`;
+		return `${this.routerLink.replace("/view/", "/list/sub-")}?x-request=${AppCrypto.jsonEncode({ ParentID: this.ID })}`;
 	}
 
 }

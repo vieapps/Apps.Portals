@@ -1,3 +1,4 @@
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { Privileges } from "@app/models/privileges";
 import { CounterInfo } from "@app/models/counters";
@@ -23,7 +24,7 @@ export abstract class Base {
 	/** Gets the params for working with router */
 	public get routerParams() {
 		this._routerParams = this._routerParams || {
-			"x-request": AppUtility.toBase64Url({ ID: this.ID })
+			"x-request": AppCrypto.jsonEncode({ ID: this.ID })
 		};
 		return this._routerParams;
 	}
@@ -35,7 +36,7 @@ export abstract class Base {
 
 	/** Gets the URI (means link with 'x-request' param) for working with router */
 	public getRouterURI(params?: { [key: string]: any }) {
-		return `${this.routerLink}?x-request=${(params !== undefined ? AppUtility.toBase64Url(params) : this.routerParams["x-request"])}`;
+		return `${this.routerLink}?x-request=${(params !== undefined ? AppCrypto.jsonEncode(params) : this.routerParams["x-request"])}`;
 	}
 
 	/** Copies data from source (object or JSON) and fill into this objects' properties */

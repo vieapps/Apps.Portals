@@ -53,7 +53,7 @@ export class UsersService extends BaseService {
 				: { title: profile.Name, description: profile.getEmail(!this.authSvc.isSystemAdministrator()), image: profile.avatarURI, originalObject: profile };
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("profile", this.configSvc.relatedQuery), { request: AppUtility.toBase64Url(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchURI("profile", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => UserProfile.contains(obj.ID) ? convertToCompleterItem(UserProfile.get(obj.ID)) : convertToCompleterItem(UserProfile.update(UserProfile.deserialize(obj)))),
 			convertToCompleterItem
 		);
@@ -252,9 +252,9 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public async prepare2FAMethodAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async prepare2FAMethodAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void, query?: string) {
 		await super.readAsync(
-			super.getURI("otp", undefined, this.configSvc.relatedQuery),
+			super.getURI("otp", undefined, AppUtility.isNotEmpty(query) ? `${query}&${this.configSvc.relatedQuery}` : this.configSvc.relatedQuery),
 			onNext,
 			error => {
 				console.error(super.getErrorMessage("Error occurred while preparing an 2FA method", error));

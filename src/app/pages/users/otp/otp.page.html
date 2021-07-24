@@ -2,7 +2,7 @@
 	<ion-toolbar [color]="color">
 		<ion-buttons slot="end">
 			<ion-button color="primary" (click)="doneAsync()">
-				{{ labels.buttons.done }}
+				{{ buttons.done }}
 			</ion-button>
 		</ion-buttons>
 		<ion-title>
@@ -20,62 +20,93 @@
 					{{ status }}
 				</span>
 			</ion-label>
-			<ion-button *ngIf="!required && provision.uri === ''" fill="solid" color="primary" class="ion-item-right" (click)="provisonAsync()">
+			<ion-button *ngIf="state === 'show' && !required" fill="solid" color="primary" class="ion-item-right" (click)="provisonAsync()">
 				<ion-icon name="power" slot="start"></ion-icon>
-				{{ labels.buttons.on }}
+				{{ buttons.on }}
 			</ion-button>
 		</ion-item>
 		<ion-list-header *ngIf="required && providers.length > 0" [color]="color">
 			<ion-label>
-				{{ labels.providers }}
+				{{ labels.providers.title }}
 			</ion-label>
 		</ion-list-header>
-		<ion-item *ngFor="let provider of providers" [color]="color">
+		<ion-item *ngFor="let provider of providers" [color]="color" style="padding-left:15px">
 			<ion-label>
-				{{ provider.Label }} @ {{ provider.Time | time:locale:'dd/MM/yyyy hh:mm a' }}
+				{{ provider.Label }}
 			</ion-label>
 			<ion-button fill="clear" slot="end" (click)="deleteAsync(provider)">
 				<ion-icon name="trash" slot="start"></ion-icon>
-				{{ labels.buttons.delete }}
+				{{ buttons.delete }}
 			</ion-button>
 		</ion-item>
-		<ion-item *ngIf="provision.uri !== ''" [color]="color">
+		<ion-item *ngIf="phoneIsAllowed && state === 'show' && providers.length" [color]="color">
+			<ion-button fill="clear" color="secondary" slot="end" (click)="provisonAsync()">
+				<ion-icon name="add-circle" slot="start"></ion-icon>
+				{{ buttons.add }}
+			</ion-button>
+		</ion-item>
+		<ion-radio-group *ngIf="phoneIsAllowed && state === 'setup' && !gotAuthenticatorApp" [(ngModel)]="mode" (ionChange)="provisonAsync()">
+			<ion-list-header [color]="color">
+				<ion-label>
+					{{ labels.providers.select }}
+				</ion-label>
+			</ion-list-header>
+			<ion-item [color]="color">
+				<ion-label>
+					{{ labels.providers.app }}
+				</ion-label>
+				<ion-radio value="app"></ion-radio>
+			</ion-item>
+			<ion-item [color]="color">
+				<ion-label>{{ labels.providers.sms }}</ion-label>
+				<ion-radio value="sms"></ion-radio>
+			</ion-item>
+		</ion-radio-group>
+		<ion-item *ngIf="state === 'setup' && provision.uri !== ''" [color]="color">
 			<div class="ion-text-wrap">
 				<div>
-					{{ labels.qrcode.image }}
+					{{ controls.app.label }}
 				</div>
 				<div>
 					<img [src]="provision.uri" />
 				</div>
-				<div>
-					{{ labels.instruction.main }}
-				</div>
-				<div>
-					{{ labels.instruction.app }}
-				</div>
+				<div [innerHTML]="controls.app.description"></div>
 			</div>
 		</ion-item>
-		<ion-item *ngIf="provision.uri !== ''" [color]="color" [class.invalid]="!provision.value || provision.value.length < 5 || provision.value.length > 10">
+		<ion-item [hidden]="!phoneIsAllowed || state !== 'setup' || provision.uri !== ''" [color]="color">
 			<ion-label position="stacked">
-				{{ labels.qrcode.control }}
+				{{ controls.sms.label }}
 			</ion-label>
-			<ion-input required minlength="5" maxlength="10" [(ngModel)]="provision.value"></ion-input>
+			<ion-input minlength="10" maxlength="15" [(ngModel)]="provision.phone" #phone></ion-input>
+			<ion-button color="secondary" slot="end" (click)="provisonAsync()">
+				<ion-icon name="chatbox-ellipses" slot="start"></ion-icon>
+				{{ buttons.send }}
+			</ion-button>
 		</ion-item>
-		<ion-item *ngIf="provision.uri !== ''" [color]="color" [class.invalid]="!password">
+		<ion-item *ngIf="phoneIsAllowed && state === 'setup' && provision.uri === ''" [color]="color">
+			<div [innerHTML]="controls.sms.description" class="ion-text-wrap"></div>
+		</ion-item>
+		<ion-item *ngIf="state === 'setup'" [color]="color" [class.invalid]="!provision.value || provision.value.length < 5 || provision.value.length > 10">
 			<ion-label position="stacked">
-				{{ labels.password.label }}
+				{{ controls.provision }}
 			</ion-label>
-			<ion-input required [type]="labels.password.show ? 'text' : 'password'" maxlength="150" [(ngModel)]="password"></ion-input>
-			<ion-button fill="clear" color="medium" slot="end" tabindex="-1" (click)="labels.password.show = !labels.password.show">
-				<ion-icon name="eye" slot="icon-only" [hidden]="!labels.password.show"></ion-icon>
-				<ion-icon name="eye-off" slot="icon-only" [hidden]="labels.password.show"></ion-icon>
+			<ion-input required minlength="4" maxlength="12" [(ngModel)]="provision.value" #otp></ion-input>
+		</ion-item>
+		<ion-item *ngIf="state === 'setup'" [color]="color" [class.invalid]="!password">
+			<ion-label position="stacked">
+				{{ controls.password.label }}
+			</ion-label>
+			<ion-input required [type]="controls.password.show ? 'text' : 'password'" maxlength="150" [(ngModel)]="password"></ion-input>
+			<ion-button fill="clear" color="medium" slot="end" tabindex="-1" (click)="controls.password.show = !controls.password.show">
+				<ion-icon name="eye" slot="icon-only" [hidden]="!controls.password.show"></ion-icon>
+				<ion-icon name="eye-off" slot="icon-only" [hidden]="controls.password.show"></ion-icon>
 			</ion-button>
 		</ion-item>
 	</ion-list>
-	<ion-buttons *ngIf="provision.uri !== ''" class="ion-padding">
+	<ion-buttons *ngIf="state === 'setup'" class="ion-padding">
 		<ion-button fill="solid" color="primary" [disabled]="!password || !provision.value || provision.value.length < 5 || provision.value.length > 10" (click)="addAsync()">
 			<ion-icon name="checkmark-done" slot="start"></ion-icon>
-			{{ labels.buttons.verify }}
+			{{ buttons.verify }}
 		</ion-button>
 	</ion-buttons>
 </ion-content>
