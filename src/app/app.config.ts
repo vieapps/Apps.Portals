@@ -36,7 +36,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx-portals",
-		version: "3.7.0",
+		version: "3.8.0",
 		frameworks: "ionic 5.6 - angular 11.2 - cordova 10.0",
 		mode: "",
 		platform: "",
@@ -100,20 +100,21 @@ export class AppConfig {
 	/** Geographic meta */
 	public static geoMeta = {
 		country: "VN",
-		countries: new Array<{ name: string, code: string, code3: string }>(),
+		countries: new Array<{ name: string, code: string, code3: string, telcode: string }>(),
 		provinces: {} as {
 			[key: string]: {
-				code: string,
 				name: string,
 				title: string,
+				code: string,
+				telcode: string,
 				provinces: Array<{
-					code: string,
 					name: string,
 					title: string,
+					code: string,
 					counties: Array<{
-						code: string,
 						name: string,
 						type: string,
+						code: string,
 						title: string
 					}>
 				}>

@@ -652,7 +652,7 @@ export class ConfigurationService extends BaseService {
 		}
 
 		await super.readAsync(
-			`statics/geo/provinces/${this.appConfig.geoMeta.country.toLowerCase()}.json`,
+			`statics/geo/provinces/${this.appConfig.geoMeta.country}.json`,
 			async provinces => await this.saveGeoMetaAsync(provinces, async () => {
 				if (this.appConfig.geoMeta.countries.length < 1) {
 					await super.readAsync(
