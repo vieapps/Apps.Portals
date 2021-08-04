@@ -1,4 +1,4 @@
-import { Subject, EMPTY } from "rxjs";
+import { Subject, EMPTY as EmptyObservable } from "rxjs";
 import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
 import { AppConfig } from "@app/app.config";
 import { AppCrypto } from "@app/components/app.crypto";
@@ -98,12 +98,12 @@ export class AppAPIs {
 	}
 
 	/**
-		* Gets the URI to send a request to APIs
-		* @param uri The uri/path of the end-point API's uri to perform the request
+		* Gets the absolute URI to send a request to APIs
+		* @param url The uri/path of the end-point API's uri to perform the request
 		* @param endpoint The absolute URI of the end-point API to perform the request
 	*/
-	public static getURI(uri: string, endpoint?: string) {
-		return (uri.startsWith("http://") || uri.startsWith("https://") ? "" : endpoint || AppConfig.URIs.apis) + uri;
+	public static getURI(url: string, endpoint?: string) {
+		return (url.startsWith("http://") || url.startsWith("https://") ? "" : endpoint || AppConfig.URIs.apis) + url;
 	}
 
 	/**
@@ -558,7 +558,7 @@ export class AppAPIs {
 	}
 
 	/**
-		* Sends a request to APIs (using XMLHttpRequest - XHR)
+		* Sends a request to APIs using XMLHttpRequest
 		* @param verb HTTP verb to perform the request
 		* @param url Full URI of the end-point API's uri to perform the request
 		* @param headers Additional headers to perform the request
@@ -593,17 +593,13 @@ export class AppAPIs {
 				return http.patch(url, options);
 			case "DELETE":
 				return http.delete(url, options);
-			case "HEAD":
-				return http.head(url, options);
-			case "OPTIONS":
-				return http.options(url, options);
 			default:
 				return http.get(url, options);
 		}
 	}
 
 	/**
-		* Sends a request to APIs (using XMLHttpRequest - XHR)
+		* Sends a request to APIs using XMLHttpRequest
 		* @param verb HTTP verb to perform the request
 		* @param url Full URI of the end-point API's uri to perform the request
 		* @param headers Additional headers to perform the request
@@ -622,7 +618,7 @@ export class AppAPIs {
 	*/
 	public static send(request: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		if (this.canUseWebSocket(useXHR)) {
-			const info = typeof request.Path !== "undefined" ? this.parseRequestInfo(request.Path) : undefined;
+			const info = AppUtility.isNotEmpty(request.Path) ? this.parseRequestInfo(request.Path) : undefined;
 			const requestInfo = {
 				ServiceName: info !== undefined ? info.ServiceName : request.ServiceName,
 				ObjectName: info !== undefined ? info.ObjectName : request.ObjectName,
@@ -637,7 +633,7 @@ export class AppAPIs {
 				requestInfo.Query["object-identity"] = info.ObjectIdentity;
 			}
 			this.sendWebSocketMessage(requestInfo, onSuccess, onError);
-			return EMPTY;
+			return EmptyObservable;
 		}
 		else {
 			let path = request.Path;
@@ -646,7 +642,7 @@ export class AppAPIs {
 				const objectIdentity = query["object-identity"];
 				["service-name", "object-name", "object-identity"].forEach(name => delete query[name]);
 				query = `?${AppUtility.getQueryOfJson(query)}`;
-				path = `${request.ServiceName}${AppUtility.isNotEmpty(request.ObjectName) ? `/${request.ObjectName}${AppUtility.isNotEmpty(objectIdentity) ? `/${objectIdentity}` : ""}` : ""}${query === "?" ? query : ""}`;
+				path = `${request.ServiceName}${AppUtility.isNotEmpty(request.ObjectName) ? `/${request.ObjectName}${AppUtility.isNotEmpty(objectIdentity) ? `/${objectIdentity}` : ""}` : ""}${query === "?" ? "" : query}`;
 			}
 			path += request.Extra !== undefined ? (path.indexOf("?") > 0 ? "&" : "?") + `x-request-extra=${AppCrypto.jsonEncode(request.Extra)}` : "";
 			return this.sendXMLHttpRequest(request.Verb || "GET", this.getURI(path), { headers: request.Header }, request.Body);
@@ -683,7 +679,7 @@ export class AppAPIs {
 	}
 
 	/**
-		* Sends a request to APIs (using XMLHttpRequest - XHR) with GET verb to fetch data
+		* Sends a request to APIs using XMLHttpRequest with GET verb to fetch data
 		* @param url Full URI of the end-point API's uri to perform the request
 		* @param headers Additional headers to perform the request
 	*/
