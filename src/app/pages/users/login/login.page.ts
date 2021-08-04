@@ -299,7 +299,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 						OnClick: async () => {
 							const account = this.reset.form.value.Account;
 							if (AppUtility.isNotEmpty(account) && AppUtility.isPhone(account)) {
-								await this.requestOTPAsync(this.reset.controls.find(ctrl => ctrl.Name === "OTP"), account, account, `x-sms-account=${AppCrypto.encodeBase64Url(account)}`);
+								await this.requestOTPAsync(this.reset.controls.find(ctrl => ctrl.Name === "OTP"), account, account, `x-sms-account=${AppCrypto.base64urlEncode(account)}`);
 							}
 							else {
 								this.reset.controls.find(ctrl => ctrl.Name === "Account").focus();
@@ -342,7 +342,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 				if (control.Hidden) {
 					control.Hidden = false;
 					this.reset.button.label = await this.configSvc.getResourceAsync("users.login.reset.button");
-					await this.requestOTPAsync(control, account, account, `x-sms-account=${AppCrypto.encodeBase64Url(account)}`);
+					await this.requestOTPAsync(control, account, account, `x-sms-account=${AppCrypto.base64urlEncode(account)}`);
 				}
 				control.focus(123);
 			}
@@ -420,7 +420,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 	async closeAsync() {
 		if (AppUtility.isNotEmpty(this.configSvc.queryParams["next"])) {
 			try {
-				await this.configSvc.navigateHomeAsync(AppCrypto.decodeBase64Url(this.configSvc.queryParams["next"]));
+				await this.configSvc.navigateHomeAsync(AppCrypto.base64urlDecode(this.configSvc.queryParams["next"]));
 			}
 			catch (error) {
 				console.error("<Login>: Error occurred while redirecting", error);

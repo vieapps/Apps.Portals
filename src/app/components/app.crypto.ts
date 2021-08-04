@@ -59,33 +59,33 @@ export class AppCrypto {
 	}
 
 	/** Encodes the plain text to base64 */
-	public static encodeBase64(text: string) {
+	public static base64Encode(text: string) {
 		return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(text));
 	}
 
 	/** Decodes the base64 text */
-	public static decodeBase64(text: string) {
+	public static base64Decode(text: string) {
 		return CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Base64.parse(text));
 	}
 
 	/** Encodes the plain text to base64-url */
-	public static encodeBase64Url(text: string) {
-		return this.toBase64Url(this.encodeBase64(text));
+	public static base64urlEncode(text: string) {
+		return this.toBase64Url(this.base64Encode(text));
 	}
 
 	/** Decodes the base64-url text */
-	public static decodeBase64Url(base64url: string) {
-		return this.decodeBase64(this.toBase64(base64url));
+	public static base64urlDecode(base64url: string) {
+		return this.base64Decode(this.toBase64(base64url));
 	}
 
 	/** Encodes the object to base64-url */
 	public static jsonEncode(object: any) {
-		return this.encodeBase64Url(this.stringify(object || {}));
+		return this.base64urlEncode(this.stringify(object || {}));
 	}
 
 	/** Decodes the object from base64-url */
 	public static jsonDecode(base64url: string) {
-		return JSON.parse(this.decodeBase64Url(base64url));
+		return JSON.parse(this.base64urlDecode(base64url));
 	}
 
 	/** Encodes the JSON Web Token */

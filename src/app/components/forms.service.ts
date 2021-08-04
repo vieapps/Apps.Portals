@@ -5,7 +5,7 @@ import { LoadingController, AlertController, ActionSheetController, ModalControl
 import { TranslateService } from "@ngx-translate/core";
 import { CompleterData } from "ng2-completer";
 import { AppConfig } from "@app/app.config";
-import { AppXHR } from "@app/components/app.apis";
+import { AppAPIs } from "@app/components/app.apis";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppFormsControlComponent } from "@app/components/forms.control.component";
@@ -768,7 +768,7 @@ export class AppFormsService {
 			formControl.Options.PlaceHolder = await this.normalizeResourceAsync(formControl.Options.PlaceHolder);
 			if (formControl.Type === "Select") {
 				if (AppUtility.isNotEmpty(formControl.Options.SelectOptions.RemoteURI)) {
-					let uri = AppXHR.getURI(formControl.Options.SelectOptions.RemoteURI);
+					let uri = AppAPIs.getURI(formControl.Options.SelectOptions.RemoteURI);
 					uri += (uri.indexOf("?") < 0 ? "?" : "&") + AppConfig.getRelatedQuery();
 					try {
 						if (formControl.Options.SelectOptions.RemoteURIProcessor !== undefined) {
@@ -777,7 +777,7 @@ export class AppFormsService {
 						else {
 							const values = uri.indexOf("discovery/definitions?") > 0
 								? await this.configSvc.fetchDefinitionAsync(uri)
-								: await AppXHR.sendRequestAsync("GET", uri);
+								: await AppAPIs.sendXMLHttpRequestAsync("GET", uri);
 							formControl.Options.SelectOptions.Values = AppUtility.isArray(values, true)
 								? (values as Array<string>).length > 0 && typeof values[0] === "string"
 									? (values as Array<string>).map(value => {
