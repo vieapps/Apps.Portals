@@ -77,7 +77,7 @@ export class AppAPIs {
 	}
 
 	/** Sets the action to fire when the WebSocket connection got any error */
-	public static set OnWebSocketGotError(func: (event: Event) => void) {
+	public static set onWebSocketGotError(func: (event: Event) => void) {
 		this._onWebSocketGotError = func;
 	}
 
@@ -547,14 +547,14 @@ export class AppAPIs {
 	}
 
 	private static canUseWebSocket(useXHR: boolean = false, checkPeriod: boolean = true) {
-		let useWebSocket = this.isWebSocketReady && !useXHR;
-		if (useWebSocket && checkPeriod) {
+		let can = !useXHR && this.isWebSocketReady;
+		if (can && checkPeriod) {
 			if (+new Date() - this.pingTime > 300000) { // 5 minutes
-				useWebSocket = false;
+				can = false;
 				this.reopenWebSocket("[AppAPIs]: Ping period is too large...");
 			}
 		}
-		return useWebSocket;
+		return can;
 	}
 
 	/**
