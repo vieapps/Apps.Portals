@@ -212,7 +212,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 
 	private async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.prepareSortBy(), this.pagination);
-		const onNextAsync = async (data: any) => {
+		const onSuccess = async (data: any) => {
 			if (this.preProcess !== undefined) {
 				this.preProcess(data.Objects);
 			}
@@ -237,10 +237,10 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			}
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.lookup(this.objectName, this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error), { "x-children": `${this.nested}`, "x-lookup" : "true" });
+			this.subscription = this.portalsCmsSvc.lookup(this.objectName, this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error), { "x-children": `${this.nested}`, "x-lookup" : "true" });
 		}
 		else {
-			await this.portalsCmsSvc.lookupAsync(this.objectName, this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error), { "x-children": `${this.nested}`, "x-lookup" : "true" });
+			await this.portalsCmsSvc.lookupAsync(this.objectName, this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error), { "x-children": `${this.nested}`, "x-lookup" : "true" });
 		}
 	}
 

@@ -326,7 +326,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	private async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const onNextAsync = async (data: any) => {
+		const onSuccess = async (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
@@ -334,10 +334,10 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchCategory(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
+			this.subscription = this.portalsCmsSvc.searchCategory(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
 		}
 		else {
-			await this.portalsCmsSvc.searchCategoryAsync(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
+			await this.portalsCmsSvc.searchCategoryAsync(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
 		}
 	}
 

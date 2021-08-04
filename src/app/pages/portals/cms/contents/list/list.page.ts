@@ -282,7 +282,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 
 	private async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const onNextAsync = async (data: any) => {
+		const onSuccess = async (data: any) => {
 			try {
 				this.pageNumber++;
 				this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
@@ -295,10 +295,10 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 			}
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchContent(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
+			this.subscription = this.portalsCmsSvc.searchContent(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
 		}
 		else {
-			await this.portalsCmsSvc.searchContentAsync(this.request, onNextAsync, async error => await this.appFormsSvc.showErrorAsync(error));
+			await this.portalsCmsSvc.searchContentAsync(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
 		}
 	}
 

@@ -229,7 +229,7 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 
 	uploadFiles() {
 		if (this.files.length > 0) {
-			const onNext: (index: number, data?: any) => void = (index, data) => PlatformUtility.invoke(() => {
+			const onSuccess: (index: number, data?: any) => void = (index, data) => PlatformUtility.invoke(() => {
 				this.uploadedData.push(data);
 				if (this.subscriptions !== undefined && this.subscriptions.length > index && this.subscriptions[index] !== undefined) {
 					this.subscriptions[index].unsubscribe();
@@ -256,7 +256,7 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 				this.files.forEach((file, index) => this.subscriptions.push(this.filesSvc.uploadTemporaryFile(
 					this.filesSvc.getFormData(file.data),
 					this.fileOptions,
-					data => onNext(index, data),
+					data => onSuccess(index, data),
 					onError,
 					percentage => onProgress(index, percentage)
 				)));
@@ -265,7 +265,7 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 				this.files.forEach((file, index) => this.subscriptions.push(this.filesSvc.uploadFile(
 					this.filesSvc.getFormData(file.data),
 					this.fileOptions,
-					data => onNext(index, data),
+					data => onSuccess(index, data),
 					onError,
 					percentage => onProgress(index, percentage)
 				)));
