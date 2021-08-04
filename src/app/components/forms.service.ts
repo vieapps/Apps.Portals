@@ -777,7 +777,7 @@ export class AppFormsService {
 						else {
 							const values = uri.indexOf("discovery/definitions?") > 0
 								? await this.configSvc.fetchDefinitionAsync(uri)
-								: await AppAPIs.sendXMLHttpRequestAsync("GET", uri);
+								: await AppAPIs.fetchAsync(uri);
 							formControl.Options.SelectOptions.Values = AppUtility.isArray(values, true)
 								? (values as Array<string>).length > 0 && typeof values[0] === "string"
 									? (values as Array<string>).map(value => {

@@ -4,7 +4,7 @@ import { HttpClient } from "@angular/common/http";
 import { Platform } from "@ionic/angular";
 import { SplashScreen } from "@ionic-native/splash-screen/ngx";
 import { StatusBar } from "@ionic-native/status-bar/ngx";
-import { AppRTU, AppXHR } from "@app/components/app.apis";
+import { AppAPIs } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
@@ -40,7 +40,7 @@ export class AppComponent implements OnInit {
 		if (this.configSvc.isDebug) {
 			console.log("<AppComponent>: Initializing...");
 		}
-		AppXHR.initialize(http);
+		AppAPIs.initializeHttpClient(http);
 	}
 
 	sidebar: Sidebar = {
@@ -102,8 +102,8 @@ export class AppComponent implements OnInit {
 				this.configSvc.pushUrl((event as RoutesRecognized).url, (event as RoutesRecognized).state.root.queryParams);
 				const current = this.configSvc.getCurrentUrl();
 				AppEvents.broadcast("Navigating", { Url: current.url, Params: current.params });
-				if (new Date().getTime() - AppRTU.pingTime > 300000) { // 5 minutes
-					AppRTU.restart("[Router]: Ping period is too large...");
+				if (new Date().getTime() - AppAPIs.pingTime > 300000) { // 5 minutes
+					AppAPIs.reopenWebSocket("[Router]: Ping period is too large...");
 				}
 			}
 			else if (event instanceof NavigationEnd) {
@@ -476,7 +476,7 @@ export class AppComponent implements OnInit {
 			PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
 		}
 
-		AppRTU.start(() => {
+		AppAPIs.openWebSocket(() => {
 			AppEvents.broadcast("App", { Type: "Initialized" });
 			AppEvents.sendToElectron("App", { Type: "Initialized", Data: {
 				URIs: appConfig.URIs,
@@ -503,7 +503,7 @@ export class AppComponent implements OnInit {
 							params: {}
 						};
 						try {
-							redirect = AppCrypto.decodeBase64Url(redirect);
+							redirect = AppCrypto.base64urlDecode(redirect);
 							if (this.configSvc.isDebug) {
 								console.warn(`<AppComponent>: Redirect to the requested URI => ${redirect}`);
 							}

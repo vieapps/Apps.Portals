@@ -167,7 +167,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the URI for activating new account/password */
 	public get activateURI() {
-		return AppCrypto.encodeBase64Url(PlatformUtility.getRedirectURI("home?prego=activate&mode={{mode}}&code={{code}}", false));
+		return AppCrypto.base64urlEncode(PlatformUtility.getRedirectURI("home?prego=activate&mode={{mode}}&code={{code}}", false));
 	}
 
 	/** Sets the app title (means title of the browser) */
@@ -284,7 +284,7 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Initializes the configuration settings of the app */
-	public async initializeAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void, dontInitializeSession: boolean = false) {
+	public async initializeAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontInitializeSession: boolean = false) {
 		// prepare environment
 		if (this.appConfig.app.mode === "") {
 			this.prepare();
@@ -297,15 +297,15 @@ export class ConfigurationService extends BaseService {
 
 		// initialize session
 		if (!dontInitializeSession) {
-			await this.initializeSessionAsync(onNext, onError);
+			await this.initializeSessionAsync(onSuccess, onError);
 		}
-		else if (onNext !== undefined) {
-			onNext();
+		else if (onSuccess !== undefined) {
+			onSuccess();
 		}
 	}
 
 	/** Initializes the session with remote APIs */
-	public async initializeSessionAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async initializeSessionAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.fetchAsync(
 			"users/session",
 			async data => {
@@ -318,8 +318,8 @@ export class ConfigurationService extends BaseService {
 						this.appConfig.session.account.id = this.appConfig.session.token.uid;
 					}
 					AppEvents.broadcast("Session", { Type: this.isAuthenticated ? "Registered" : "Initialized" });
-					if (onNext !== undefined) {
-						onNext(data);
+					if (onSuccess !== undefined) {
+						onSuccess(data);
 					}
 				});
 			},
@@ -328,7 +328,7 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Registers the initialized session (anonymous) with remote APIs */
-	public async registerSessionAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async registerSessionAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.fetchAsync(
 			`users/session?register=${this.appConfig.session.id}`,
 			async _ => {
@@ -337,7 +337,7 @@ export class ConfigurationService extends BaseService {
 					console.log(super.getLogMessage("The session is registered by APIs"));
 				}
 				AppEvents.broadcast("Session", { Type: "Registered" });
-				await this.storeSessionAsync(onNext);
+				await this.storeSessionAsync(onSuccess);
 			},
 			error => super.showError("Error occurred while registering the session", error, onError)
 		);
@@ -840,8 +840,8 @@ export class ConfigurationService extends BaseService {
 		delete this._definitions[AppCrypto.md5(path.toLowerCase())];
 	}
 
-	public getInstructionsAsync(service: string, language?: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.fetchAsync(`/statics/instructions/${service}/${language || this.appConfig.language}.json`, onNext, onError);
+	public getInstructionsAsync(service: string, language?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return super.fetchAsync(`/statics/instructions/${service}/${language || this.appConfig.language}.json`, onSuccess, onError);
 	}
 
 	/** Gets top items for displaying at sidebar */
@@ -896,13 +896,13 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Gets logging items */
-	public async GetLogsAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async GetLogsAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
 			super.getSearchURI(undefined, undefined, "logs"),
 			request,
 			data => {
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {

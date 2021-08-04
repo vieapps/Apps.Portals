@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpEventType } from "@angular/common/http";
-import { AppRTU, AppXHR, AppMessage } from "@app/components/app.apis";
+import { AppAPIs, AppMessage } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
@@ -34,8 +34,12 @@ export class FilesService extends BaseService {
 		private appFormsSvc: AppFormsService
 	) {
 		super("Files");
-		AppXHR.initialize(http);
-		AppRTU.registerAsServiceScopeProcessor(this.name, message => AppEvents.broadcast(this.name, { Object: message.Type.Object, Event: message.Type.Event, ObjectID: message.Data.ObjectID, Data: message.Data }));
+		AppAPIs.initializeHttpClient(http);
+		AppAPIs.registerAsServiceScopeProcessor(this.name, message => AppEvents.broadcast(this.name, { Object: message.Type.Object, Event: message.Type.Event, ObjectID: message.Data.ObjectID, Data: message.Data }));
+	}
+
+	private get http() {
+		return AppAPIs.http;
 	}
 
 	public readAsDataURL(file: File, onRead: (data: string) => void, limitSize?: number, onLimitExceeded?: (fileSize?: number, limitSize?: number) => void) {
@@ -76,7 +80,7 @@ export class FilesService extends BaseService {
 			"x-repository-id": options.RepositoryID,
 			"x-entity": options.RepositoryEntityID,
 			"x-object-id": options.ObjectID,
-			"x-object-title": AppCrypto.encodeBase64Url(options.ObjectTitle || ""),
+			"x-object-title": AppCrypto.base64urlEncode(options.ObjectTitle || ""),
 			"x-shared": AppUtility.isTrue(options.IsShared) ? "true" : undefined,
 			"x-tracked": AppUtility.isTrue(options.IsTracked) ? "true" : undefined,
 			"x-temporary": AppUtility.isTrue(options.IsTemporary) ? "true" : undefined
@@ -86,10 +90,10 @@ export class FilesService extends BaseService {
 		return headers;
 	}
 
-	public upload(path: string, data: string | Array<string> | FormData, headers: { [key: string]: string }, onNext?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
+	public upload(path: string, data: string | Array<string> | FormData, headers: { [key: string]: string }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
 		const asBase64 = !(data instanceof FormData);
-		return AppXHR.http.post(
-			AppXHR.getURI(path, this.configSvc.appConfig.URIs.files),
+		return this.http.post(
+			AppAPIs.getURI(path, this.configSvc.appConfig.URIs.files),
 			asBase64 ? { Data: data } : data,
 			{
 				headers: this.getUploadHeaders(headers, asBase64),
@@ -101,8 +105,8 @@ export class FilesService extends BaseService {
 				if (event.type === HttpEventType.UploadProgress && onProgress !== undefined) {
 					onProgress(Math.round(event.loaded / event.total * 100) + "%");
 				}
-				else if (event.type === HttpEventType.Response && onNext !== undefined) {
-					onNext(event.body);
+				else if (event.type === HttpEventType.Response && onSuccess !== undefined) {
+					onSuccess(event.body);
 				}
 			},
 			error => {
@@ -114,19 +118,19 @@ export class FilesService extends BaseService {
 		);
 	}
 
-	public async uploadAsync(path: string, data: string | Array<string> | FormData, headers: { [key: string]: string }, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async uploadAsync(path: string, data: string | Array<string> | FormData, headers: { [key: string]: string }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		try {
 			const asBase64 = !(data instanceof FormData);
-			const response = await AppXHR.http.post(
-				AppXHR.getURI(path, this.configSvc.appConfig.URIs.files),
+			const response = await this.http.post(
+				AppAPIs.getURI(path, this.configSvc.appConfig.URIs.files),
 				asBase64 ? { Data: data } : data,
 				{
 					headers: this.getUploadHeaders(headers, asBase64),
 					observe: "body"
 				}
 			).toPromise();
-			if (onNext !== undefined) {
-				onNext(response);
+			if (onSuccess !== undefined) {
+				onSuccess(response);
 			}
 		}
 		catch (error) {
@@ -137,32 +141,32 @@ export class FilesService extends BaseService {
 		}
 	}
 
-	public async uploadAvatarAsync(data: string | Array<string> | FormData, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.uploadAsync("avatars", data, undefined, onNext, onError);
+	public async uploadAvatarAsync(data: string | Array<string> | FormData, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		await this.uploadAsync("avatars", data, undefined, onSuccess, onError);
 	}
 
-	public uploadThumbnail(data: string | Array<string> | FormData, options: FileOptions, onNext?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
-		return this.upload("thumbnails", data, this.getFileHeaders(options), onNext, onError, onProgress);
+	public uploadThumbnail(data: string | Array<string> | FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
+		return this.upload("thumbnails", data, this.getFileHeaders(options), onSuccess, onError, onProgress);
 	}
 
-	public async uploadThumbnailAsync(data: string | Array<string> | FormData, options: FileOptions, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.uploadAsync("thumbnails", data, this.getFileHeaders(options), onNext, onError);
+	public async uploadThumbnailAsync(data: string | Array<string> | FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		await this.uploadAsync("thumbnails", data, this.getFileHeaders(options), onSuccess, onError);
 	}
 
-	public uploadFile(data: FormData, options: FileOptions, onNext?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
-		return this.upload("files", data, this.getFileHeaders(options), onNext, onError, onProgress);
+	public uploadFile(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
+		return this.upload("files", data, this.getFileHeaders(options), onSuccess, onError, onProgress);
 	}
 
-	public async uploadFileAsync(data: FormData, options: FileOptions, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.uploadAsync("files", data, this.getFileHeaders(options), onNext, onError);
+	public async uploadFileAsync(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		await this.uploadAsync("files", data, this.getFileHeaders(options), onSuccess, onError);
 	}
 
-	public uploadTemporaryFile(data: FormData, options: FileOptions, onNext?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
-		return this.upload("temp.file", data, this.getFileHeaders(options), onNext, onError, onProgress);
+	public uploadTemporaryFile(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
+		return this.upload("temp.file", data, this.getFileHeaders(options), onSuccess, onError, onProgress);
 	}
 
-	public async uploadTemporaryFileAsync(data: FormData, options: FileOptions, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.uploadAsync("temp.file", data, this.getFileHeaders(options), onNext, onError);
+	public async uploadTemporaryFileAsync(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		await this.uploadAsync("temp.file", data, this.getFileHeaders(options), onSuccess, onError);
 	}
 
 	public getTemporaryFileURI(message: AppMessage) {
@@ -322,13 +326,13 @@ export class FilesService extends BaseService {
 		return controlConfig;
 	}
 
-	public async searchThumbnailsAsync(options: FileOptions, onNext?: (thumbnails: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public async searchThumbnailsAsync(options: FileOptions, onSuccess?: (thumbnails: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		await super.searchAsync(
 			super.getSearchURI("thumbnails", this.configSvc.relatedQuery),
 			undefined,
 			data => {
-				if (onNext !== undefined) {
-					onNext((data as Array<AttachmentInfo> || []).map(thumbnail => this.prepareAttachment(thumbnail)));
+				if (onSuccess !== undefined) {
+					onSuccess((data as Array<AttachmentInfo> || []).map(thumbnail => this.prepareAttachment(thumbnail)));
 				}
 			},
 			error => {
@@ -343,12 +347,12 @@ export class FilesService extends BaseService {
 		);
 	}
 
-	public async deleteThumbnailAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public async deleteThumbnailAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await super.deleteAsync(
 			super.getURI("thumbnail", id),
 			data => {
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -421,13 +425,13 @@ export class FilesService extends BaseService {
 		return controlConfig;
 	}
 
-	public async searchAttachmentsAsync(options: FileOptions, onNext?: (attachments: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public async searchAttachmentsAsync(options: FileOptions, onSuccess?: (attachments: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		await super.searchAsync(
 			super.getSearchURI("attachments", this.configSvc.relatedQuery),
 			undefined,
 			data => {
-				if (onNext !== undefined) {
-					onNext((data as Array<AttachmentInfo> || []).map(attachment => this.prepareAttachment(attachment)));
+				if (onSuccess !== undefined) {
+					onSuccess((data as Array<AttachmentInfo> || []).map(attachment => this.prepareAttachment(attachment)));
 				}
 			},
 			error => {
@@ -442,13 +446,13 @@ export class FilesService extends BaseService {
 		);
 	}
 
-	public async updateAttachmentAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async updateAttachmentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
 			super.getURI("attachment", body.ID),
 			body,
 			data => {
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -460,12 +464,12 @@ export class FilesService extends BaseService {
 		);
 	}
 
-	public async deleteAttachmentAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public async deleteAttachmentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await super.deleteAsync(
 			super.getURI("attachment", id),
 			data => {
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {

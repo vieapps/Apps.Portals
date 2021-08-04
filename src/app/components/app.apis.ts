@@ -1,4 +1,4 @@
-import { Subject } from "rxjs";
+import { Subject, EMPTY } from "rxjs";
 import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
 import { AppConfig } from "@app/app.config";
 import { AppCrypto } from "@app/components/app.crypto";
@@ -18,19 +18,20 @@ export interface AppMessage {
 	Data: any;
 }
 
-/** Presents the struct of a request */
+/** Presents the struct of a requesting information */
 export interface AppRequestInfo {
-	ServiceName: string;
+	ServiceName?: string;
 	ObjectName?: string;
 	Verb?: string;
-	Query?: { [key: string]: string };
-	Body?: any;
 	Header?: { [key: string]: string };
+	Query?: { [key: string]: string };
 	Extra?: { [key: string]: string };
+	Body?: any;
+	Path?: string;
 }
 
-/** Servicing component for working with the remote APIs via WebSocket */
-export class AppRTU {
+/** Servicing component for working with APIs */
+export class AppAPIs {
 
 	private static _status = "initializing";
 	private static _uri: string;
@@ -49,111 +50,102 @@ export class AppRTU {
 	};
 	private static _pingTime = new Date().getTime();
 	private static _attempt = 0;
-	private static _continuationMessage = "";
+	private static _http: HttpClient;
+	private static _onWebSocketOpened: (event: Event) => void;
+	private static _onWebSocketClosed: (event: CloseEvent) => void;
+	private static _onWebSocketGotError: (event: Event) => void;
+	private static _onWebSocketGotMessage: (event: MessageEvent) => void;
 
 	/** Gets the last time when got PING */
 	public static get pingTime() {
 		return this._pingTime;
 	}
 
-	private static _onOpen: (event: Event) => void;
-
-	/** Sets the action to fire when the RTU is opened */
-	public static set onOpen(func: (event: Event) => void) {
-		this._onOpen = func;
+	/** Gets the HttpClient instance for working with XMLHttpRequest (XHR) */
+	public static get http() {
+		return this._http;
 	}
 
-	private static _onClose: (event: CloseEvent) => void;
-
-	/** Sets the action to fire when the RTU is closed */
-	public static set onClose(func: (event: CloseEvent) => void) {
-		this._onClose = func;
+	/** Sets the action to fire when the WebSocket connection is opened */
+	public static set onWebSocketOpened(func: (event: Event) => void) {
+		this._onWebSocketOpened = func;
 	}
 
-	private static _onError: (event: Event) => void;
-
-	/** Sets the action to fire when the RTU got any error */
-	public static set OnError(func: (event: Event) => void) {
-		this._onError = func;
+	/** Sets the action to fire when the WebSocket connection is closed */
+	public static set onWebSocketClosed(func: (event: CloseEvent) => void) {
+		this._onWebSocketClosed = func;
 	}
 
-	private static _onMessage: (event: MessageEvent) => void;
-
-	/** Sets the action to fire when the RTU got any error */
-	public static set onMessage(func: (event: MessageEvent) => void) {
-		this._onMessage = func;
+	/** Sets the action to fire when the WebSocket connection got any error */
+	public static set OnWebSocketGotError(func: (event: Event) => void) {
+		this._onWebSocketGotError = func;
 	}
 
-	private static getServiceHandlers(service: string) {
-		this._serviceScopeHandlers[service] = this._serviceScopeHandlers[service] || [];
-		return this._serviceScopeHandlers[service];
+	/** Sets the action to fire when the WebSocket connection got any message */
+	public static set onWebSocketGotMessage(func: (event: MessageEvent) => void) {
+		this._onWebSocketGotMessage = func;
 	}
 
-	private static getObjectHandlers(service: string, object: string) {
-		const type = `${service}#${object || ""}`;
-		this._objectScopeHandlers[type] = this._objectScopeHandlers[type] || [];
-		return this._objectScopeHandlers[type];
-	}
-
-	/** Gets the state that determines weather WebSocket is ready for work */
-	public static get isReady() {
+	private static get isWebSocketReady() {
 		return this._websocket !== undefined && this._status === "ready";
 	}
 
+	/** Initializes the instance of the Angular HttpClient service for working with XMLHttpRequest (XHR) */
+	public static initializeHttpClient(http: HttpClient) {
+		if (this._http === undefined && AppUtility.isNotNull(http)) {
+			this._http = http;
+		}
+	}
+
 	/**
-	  * Registers a handler for processing RTU messages at scope of a service
-	  * @param service The string that presents name of a service
-	  * @param handler The function for processing when got a message from APIs
-	  * @param identity The string that presents identity of the handler for unregistering later
+		* Gets the URI to send a request to APIs
+		* @param uri The uri/path of the end-point API's uri to perform the request
+		* @param endpoint The absolute URI of the end-point API to perform the request
 	*/
-	public static registerAsServiceScopeProcessor(service: string, handler: (message: AppMessage) => void, identity?: string) {
-		if (AppUtility.isNotEmpty(service) && handler !== undefined) {
-			this.getServiceHandlers(service).push({
-				func: handler,
-				identity: AppUtility.isNotEmpty(identity) ? identity : ""
+	public static getURI(uri: string, endpoint?: string) {
+		return (uri.startsWith("http://") || uri.startsWith("https://") ? "" : endpoint || AppConfig.URIs.apis) + uri;
+	}
+
+	/**
+		* Gets the headers that include the authenticated headers
+		* @param data The initialize data, could be an object or an array of <name, value> key-value-pair
+	*/
+	public static getHeaders(data?: any) {
+		const headers = AppConfig.getAuthenticatedHeaders();
+		if (AppUtility.isArray(data, true)) {
+			(data as Array<any>).forEach(header => {
+				if (AppUtility.isObject(header, true) && AppUtility.isNotEmpty(header.name) && AppUtility.isNotEmpty(header.value)) {
+					headers[header.name as string] = header.value as string;
+				}
 			});
 		}
-	}
-
-	/**
-	  * Registers a handler for processing RTU messages at scope of a service
-	  * @param service The string that presents name of a service
-	  * @param object The string that presents name of an object in the service
-	  * @param handler The function for processing when got a message from APIs
-	  * @param identity The string that presents identity of the handler for unregistering later
-	*/
-	public static registerAsObjectScopeProcessor(service: string, object: string, handler: (message: AppMessage) => void, identity?: string) {
-		if (AppUtility.isNotEmpty(service) && handler !== undefined) {
-			this.getObjectHandlers(service, object).push({
-				func: handler,
-				identity: AppUtility.isNotEmpty(identity) ? identity : ""
+		else if (AppUtility.isObject(data, true)) {
+			Object.keys(data).forEach(name => {
+				const value = data[name];
+				if (AppUtility.isNotNull(value)) {
+					headers[name] = value.toString();
+				}
 			});
 		}
+		return headers;
 	}
 
-	/**
-	  * Unregisters a handler
-	  * @param identity The string that presents identity of the handler for unregistering
-	  * @param service The string that presents type of a message
-	  * @param object The string that presents name of an object in the service
-	*/
-	public static unregister(identity: string, service: string, object?: string) {
-		if (AppUtility.isNotEmpty(identity) && AppUtility.isNotEmpty(service)) {
-			let handlers = this.getServiceHandlers(service);
-			let index = handlers.findIndex(handler => AppUtility.isEquals(identity, handler.identity));
-			while (index > -1) {
-				index = handlers.removeAt(index).findIndex(handler => AppUtility.isEquals(identity, handler.identity));
-			}
-			handlers = this.getObjectHandlers(service, object);
-			index = handlers.findIndex(handler => AppUtility.isEquals(identity, handler.identity));
-			while (index > -1) {
-				index = handlers.removeAt(index).findIndex(handler => AppUtility.isEquals(identity, handler.identity));
-			}
+	/** Parses the requesting information */
+	public static parseRequestInfo(path: string) {
+		const uri = PlatformUtility.parseURI(path);
+		const requestedInfo = {
+			ServiceName: uri.Paths[0],
+			ObjectName: uri.Paths.length > 1 ? uri.Paths[1] : "",
+			ObjectIdentity: undefined as string,
+			Query: uri.QueryParams
+		};
+		if (uri.Paths.length > 2) {
+			requestedInfo.ObjectIdentity = requestedInfo.Query["object-identity"] = uri.Paths[2];
 		}
+		return requestedInfo;
 	}
 
-	/** Parses the message to get type */
-	public static parse(identity: string) {
+	private static parseMessageType(identity: string) {
 		let type = this._types[identity];
 		if (type === undefined) {
 			let pos = AppUtility.indexOf(identity, "#"), object = "", event = "";
@@ -176,20 +168,83 @@ export class AppRTU {
 		return type;
 	}
 
-	/** Starts the real-time updater */
-	public static start(onStarted?: () => void, isRestart: boolean = false) {
+	private static getServiceHandlers(service: string) {
+		this._serviceScopeHandlers[service] = this._serviceScopeHandlers[service] || [];
+		return this._serviceScopeHandlers[service];
+	}
+
+	private static getObjectHandlers(service: string, object: string) {
+		const type = `${service}#${object || ""}`;
+		this._objectScopeHandlers[type] = this._objectScopeHandlers[type] || [];
+		return this._objectScopeHandlers[type];
+	}
+
+	/**
+	  * Registers a handler for processing updating messages at scope of a service
+	  * @param service The string that presents name of a service
+	  * @param handler The function for processing when got a message from APIs
+	  * @param identity The string that presents identity of the handler for unregistering later
+	*/
+	public static registerAsServiceScopeProcessor(service: string, handler: (message: AppMessage) => void, identity?: string) {
+		if (AppUtility.isNotEmpty(service) && handler !== undefined) {
+			this.getServiceHandlers(service).push({
+				func: handler,
+				identity: AppUtility.isNotEmpty(identity) ? identity : ""
+			});
+		}
+	}
+
+	/**
+	  * Registers a handler for processing updating messages at scope of a service
+	  * @param service The string that presents name of a service
+	  * @param object The string that presents name of an object in the service
+	  * @param handler The function for processing when got a message from APIs
+	  * @param identity The string that presents identity of the handler for unregistering later
+	*/
+	public static registerAsObjectScopeProcessor(service: string, object: string, handler: (message: AppMessage) => void, identity?: string) {
+		if (AppUtility.isNotEmpty(service) && handler !== undefined) {
+			this.getObjectHandlers(service, object).push({
+				func: handler,
+				identity: AppUtility.isNotEmpty(identity) ? identity : ""
+			});
+		}
+	}
+
+	/**
+	  * Unregisters a handler that use to process the updating messages
+	  * @param identity The string that presents identity of the handler for unregistering
+	  * @param service The string that presents type of a message
+	  * @param object The string that presents name of an object in the service
+	*/
+	public static unregisterProcessor(identity: string, service: string, object?: string) {
+		if (AppUtility.isNotEmpty(identity) && AppUtility.isNotEmpty(service)) {
+			let handlers = this.getServiceHandlers(service);
+			let index = handlers.findIndex(handler => AppUtility.isEquals(identity, handler.identity));
+			while (index > -1) {
+				index = handlers.removeAt(index).findIndex(handler => AppUtility.isEquals(identity, handler.identity));
+			}
+			handlers = this.getObjectHandlers(service, object);
+			index = handlers.findIndex(handler => AppUtility.isEquals(identity, handler.identity));
+			while (index > -1) {
+				index = handlers.removeAt(index).findIndex(handler => AppUtility.isEquals(identity, handler.identity));
+			}
+		}
+	}
+
+	/** Opens the WebSocket connection */
+	public static openWebSocket(onOpened?: () => void, isRestart: boolean = false) {
 		// check
 		if (typeof WebSocket === "undefined") {
-			console.warn("[AppRTU]: Its requires a modern web component that supports WebSocket");
-			if (onStarted !== undefined) {
-				onStarted();
+			console.warn("[AppAPIs]: Its requires a modern component that supports WebSocket");
+			if (onOpened !== undefined) {
+				onOpened();
 			}
 			return;
 		}
 
 		if (this._websocket !== undefined) {
-			if (onStarted !== undefined) {
-				onStarted();
+			if (onOpened !== undefined) {
+				onOpened();
 			}
 			return;
 		}
@@ -204,11 +259,11 @@ export class AppRTU {
 							handler.func(message);
 						}
 						catch (error) {
-							console.error("[AppRTU]: Error occurred while running a handler", error);
+							console.error("[AppAPIs]: Error occurred while running a handler", error);
 						}
 					});
 				},
-				error => console.warn("[AppRTU]: Got an error", AppConfig.isNativeApp ? JSON.stringify(error) : error)
+				error => console.warn("[AppAPIs]: Got an error", AppConfig.isNativeApp ? JSON.stringify(error) : error)
 			);
 		}
 
@@ -221,67 +276,63 @@ export class AppRTU {
 							handler.func(message);
 						}
 						catch (error) {
-							console.error("[AppRTU]: Error occurred while running a handler", error);
+							console.error("[AppAPIs]: Error occurred while running a handler", error);
 						}
 					});
 				},
-				error => console.error(`[AppRTU]: Got an error => ${AppUtility.getErrorMessage(error)}`, error)
+				error => console.error(`[AppAPIs]: Got an error => ${AppUtility.getErrorMessage(error)}`, error)
 			);
 		}
 
 		// create new instance of WebSocket
 		this._status = "initializing";
 		this._uri = (AppUtility.isNotEmpty(AppConfig.URIs.updates) ? AppConfig.URIs.updates : AppConfig.URIs.apis).replace("http://", "ws://").replace("https://", "wss://");
-		this._websocket = new WebSocket(`${this._uri}v?x-session-id=${AppCrypto.encodeBase64Url(AppConfig.session.id)}&x-device-id=${AppCrypto.encodeBase64Url(AppConfig.session.device)}` + (isRestart ? "&x-restart=" : ""));
-		this._pingTime = new Date().getTime();
+		this._websocket = new WebSocket(`${this._uri}v?x-session-id=${AppCrypto.base64urlEncode(AppConfig.session.id)}&x-device-id=${AppCrypto.base64urlEncode(AppConfig.session.device)}` + (isRestart ? "&x-restart=" : ""));
+		this._pingTime = +new Date();
 
 		// assign 'on-open' event handler
 		this._websocket.onopen = event => {
 			this._status = "ready";
-			console.log(`[AppRTU]: Opened... (${PlatformUtility.parseURI(this._uri).HostURI})`, AppUtility.toIsoDateTime(new Date(), true));
-			if (this._onOpen !== undefined) {
+			this.sendWebSocketMessage(AppConfig.authenticatingMessage);
+			console.log(`[AppAPIs]: Opened... (${PlatformUtility.parseURI(this._uri).HostURI})`, AppUtility.toIsoDateTime(new Date(), true));
+			if (this._onWebSocketOpened !== undefined) {
 				try {
-					this._onOpen(event);
+					this._onWebSocketOpened(event);
 				}
 				catch (error) {
-					console.error("[AppRTU]: Error occurred while running the 'on-open' handler", error);
+					console.error("[AppAPIs]: Error occurred while running the 'on-open' handler", error);
 				}
 			}
-			this._websocket.send(AppCrypto.stringify(AppConfig.authenticatingMessage));
-			PlatformUtility.invoke(() => {
-				if (this.isReady) {
-					this.sendRequests(true);
-				}
-			}, 456);
+			this.sendWebSocketMessages(true);
 		};
 
 		// assign 'on-close' event handler
 		this._websocket.onclose = event => {
 			this._status = "close";
-			console.log(`[AppRTU]: Closed [${event.reason}]`, AppUtility.toIsoDateTime(new Date(), true));
-			if (this._onClose !== undefined) {
+			console.log(`[AppAPIs]: Closed [${event.reason}]`, AppUtility.toIsoDateTime(new Date(), true));
+			if (this._onWebSocketClosed !== undefined) {
 				try {
-					this._onClose(event);
+					this._onWebSocketClosed(event);
 				}
 				catch (error) {
-					console.error("[AppRTU]: Error occurred while running the 'on-close' handler", error);
+					console.error("[AppAPIs]: Error occurred while running the 'on-close' handler", error);
 				}
 			}
 			if (AppUtility.isNotEmpty(this._uri) && 1007 !== event.code) {
-				this.restart();
+				this.reopenWebSocket();
 			}
 		};
 
 		// assign 'on-error' event handler
 		this._websocket.onerror = event => {
 			this._status = "error";
-			console.warn("[AppRTU]: Got an error...", AppConfig.isDebug ? event : "");
-			if (this._onError !== undefined) {
+			console.warn("[AppAPIs]: Got an error...", AppConfig.isDebug ? event : "");
+			if (this._onWebSocketGotError !== undefined) {
 				try {
-					this._onError(event);
+					this._onWebSocketGotError(event);
 				}
 				catch (error) {
-					console.error("[AppRTU]: Error occurred while running the 'on-error' handler", error);
+					console.error("[AppAPIs]: Error occurred while running the 'on-error' handler", error);
 				}
 			}
 		};
@@ -289,12 +340,12 @@ export class AppRTU {
 		// assign 'on-message' event handler
 		this._websocket.onmessage = event => {
 			// run the dedicated handler first
-			if (this._onMessage !== undefined) {
+			if (this._onWebSocketGotMessage !== undefined) {
 				try {
-					this._onMessage(event);
+					this._onWebSocketGotMessage(event);
 				}
 				catch (error) {
-					console.error("[AppRTU]: Error occurred while running the 'on-message' handler", error);
+					console.error("[AppAPIs]: Error occurred while running the 'on-message' handler", error);
 				}
 			}
 
@@ -305,7 +356,7 @@ export class AppRTU {
 			}
 			catch (error) {
 				json = {};
-				console.error("[AppRTU]: Error occurred while parsing JSON", error);
+				console.error("[AppAPIs]: Error occurred while parsing JSON", error);
 			}
 
 			// prepare handlers
@@ -317,55 +368,55 @@ export class AppRTU {
 				try {
 					if ("Error" === json.Type) {
 						if (AppUtility.isGotSecurityException(json.Data)) {
-							console.warn(`[AppRTU]: Got a security issue: ${json.Data.Message} (${json.Data.Code})`, AppConfig.isDebug ? json.Data : "");
-							this.restartOnSecurityError(json.Data);
+							console.warn(`[AppAPIs]: Got a security issue: ${json.Data.Message} (${json.Data.Code})`, AppConfig.isDebug ? json.Data : "");
+							this.reopenWebSocketWhenGotSecurityError(json.Data);
 						}
 						if (errorCallback !== undefined) {
 							errorCallback(json);
 						}
 						else {
-							console.error("[AppRTU]: Got an error while processing", json);
+							console.error("[AppAPIs]: Got an error while processing", json);
 						}
 					}
 					else if (successCallback !== undefined) {
-						successCallback(json.Data || {});
+						successCallback(json.Data);
 					}
 				}
 				catch (error) {
-					console.error("[AppRTU]: Error occurred while running the callback handler", error, json);
+					console.error("[AppAPIs]: Error occurred while running the callback handler", error, json);
 				}
 			}
 
 			// got an error
 			else if ("Error" === json.Type) {
 				if (AppUtility.isGotSecurityException(json.Data)) {
-					console.warn(`[AppRTU]: Got a security issue: ${json.Data.Message} (${json.Data.Code})`, AppConfig.isDebug ? json.Data : "");
-					this.restartOnSecurityError(json.Data);
+					console.warn(`[AppAPIs]: Got a security issue: ${json.Data.Message} (${json.Data.Code})`, AppConfig.isDebug ? json.Data : "");
+					this.reopenWebSocketWhenGotSecurityError(json.Data);
 				}
 				else {
-					console.warn(`[AppRTU]: ${("InvalidRequestException" === json.Data.Type ? "Got an invalid requesting data" : "Got an error")}: ${json.Data.Message} (${json.Data.Code})`, AppConfig.isDebug ? json.Data : "");
+					console.warn(`[AppAPIs]: ${("InvalidRequestException" === json.Data.Type ? "Got an invalid requesting data" : "Got an error")}: ${json.Data.Message} (${json.Data.Code})`, AppConfig.isDebug ? json.Data : "");
 				}
 			}
 
-			// got a message
+			// got a special/broadcasting message
 			else {
 				// prepare
 				const message: AppMessage = {
-					Type: this.parse(json.Type),
+					Type: this.parseMessageType(json.Type),
 					Data: json.Data || {}
 				};
 
 				if (AppConfig.isDebug) {
-					console.log("[AppRTU]: Got a message", AppConfig.isNativeApp ? JSON.stringify(message) : message);
+					console.log("[AppAPIs]: Got a message", AppConfig.isNativeApp ? JSON.stringify(message) : message);
 				}
 
 				// send PONG
 				if (message.Type.Service === "Ping") {
 					if (AppConfig.isDebug) {
-						console.log("[AppRTU]: Got a heartbeat signal => response with PONG", AppUtility.toIsoDateTime(new Date(), true));
+						console.log("[AppAPIs]: Got a heartbeat signal => response with PONG", AppUtility.toIsoDateTime(new Date(), true));
 					}
 					this._pingTime = new Date().getTime();
-					this.send({
+					this.sendWebSocketMessage({
 						ServiceName: "Session",
 						Verb: "PONG"
 					});
@@ -374,7 +425,7 @@ export class AppRTU {
 				// run schedulers
 				else if (message.Type.Service === "Scheduler") {
 					if (AppConfig.isDebug) {
-						console.log("[AppRTU]: Got a signal to run scheduler", AppUtility.toIsoDateTime(new Date(), true));
+						console.log("[AppAPIs]: Got a signal to run scheduler", AppUtility.toIsoDateTime(new Date(), true));
 					}
 					this.broadcast({ Type: { Service: "Scheduler" }, Data: message.Data });
 				}
@@ -382,7 +433,7 @@ export class AppRTU {
 				// response to knocking message when re-start
 				else if (message.Type.Service === "Knock") {
 					if (AppConfig.isDebug) {
-						console.log("[AppRTU]: Knock, Knock, Knock ... => Yes, I'm right here", AppUtility.toIsoDateTime(new Date(), true));
+						console.log("[AppAPIs]: Knock, Knock, Knock ... => Yes, I'm right here", AppUtility.toIsoDateTime(new Date(), true));
 					}
 				}
 
@@ -400,38 +451,38 @@ export class AppRTU {
 		};
 
 		// callback when done
-		PlatformUtility.invoke(onStarted, this.isReady ? 13 : 567);
+		PlatformUtility.invoke(onOpened, this.isWebSocketReady ? 13 : 567);
 	}
 
-	private static close() {
+	private static destroyWebSocket() {
 		if (this._websocket !== undefined) {
 			this._websocket.close();
 			this._websocket = undefined;
 		}
 	}
 
-	/** Stops the real-time updater */
-	public static stop(onStopped?: () => void) {
+	/** Closes the WebSocket connection */
+	public static closeWebSocket(onClosed?: () => void) {
 		this._uri = undefined;
 		this._status = "close";
-		this.close();
-		if (onStopped !== undefined) {
-			onStopped();
+		this.destroyWebSocket();
+		if (onClosed !== undefined) {
+			onClosed();
 		}
 	}
 
-	/** Restarts the real-time updater */
-	public static restart(reason?: string, defer?: number) {
+	/** Reopens the WebSocket connection */
+	public static reopenWebSocket(reason?: string, defer?: number) {
 		if (this._status !== "restarting") {
-			this.close();
+			this.destroyWebSocket();
 			this._status = "restarting";
 			this._attempt++;
-			console.warn(`[AppRTU]: ${reason || "Re-start because the WebSocket connection is broken"}`);
+			console.warn(`[AppAPIs]: ${reason || "Re-open because the WebSocket connection is broken"}`);
 			PlatformUtility.invoke(() => {
-				console.log(`[AppRTU]: Re-starting... #${this._attempt}`);
-				this.start(() => {
-					if (this.isReady) {
-						console.log(`[AppRTU]: Re-started... #${this._attempt}`);
+				console.log(`[AppAPIs]: The WebSocket connection is re-opening... #${this._attempt}`);
+				this.openWebSocket(() => {
+					if (this.isWebSocketReady) {
+						console.log(`[AppAPIs]: The WebSocket connection was re-opened... #${this._attempt}`);
 						PlatformUtility.invoke(() => this._attempt = 0, 123);
 					}
 				}, true);
@@ -439,10 +490,10 @@ export class AppRTU {
 		}
 	}
 
-	/** Restarts the real-time updater when got an error */
-	public static restartOnSecurityError(error?: any) {
+	/** Reopens the WebSocket connection when got an error */
+	public static reopenWebSocketWhenGotSecurityError(error?: any) {
 		if ("TokenExpiredException" === error.Type) {
-			this.restart("Re-start because the JWT is expired");
+			this.reopenWebSocket("[AppAPIs]: Re-open WebSocket connection because the JWT was expired");
 		}
 		else {
 			this.broadcast({
@@ -451,9 +502,193 @@ export class AppRTU {
 					Object: "Session",
 					Event: "Revoke"
 				},
-				Data: error
+				Data: error.Data || {}
 			});
 		}
+	}
+
+	private static sendWebSocketMessages(sendCallbackables: boolean, additionalMessage?: string) {
+		Object.keys(this._requests.nocallbackRequests).sort().forEach(id => this._websocket.send(this._requests.nocallbackRequests[id]));
+		this._requests.nocallbackRequests = {};
+
+		if (sendCallbackables) {
+			Object.keys(this._requests.callbackableRequests).sort().forEach(id => this._websocket.send(this._requests.callbackableRequests[id]));
+		}
+
+		if (AppUtility.isNotEmpty(additionalMessage)) {
+			this._websocket.send(additionalMessage);
+		}
+	}
+
+	private static sendWebSocketMessage(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		const id = `cmd-${this._requests.counter}`;
+		const request = AppCrypto.stringify({
+			ID: id,
+			ServiceName: requestInfo.ServiceName,
+			ObjectName: requestInfo.ObjectName || "",
+			Verb: requestInfo.Verb || "GET",
+			Query: requestInfo.Query || {},
+			Header: requestInfo.Header || {},
+			Extra: requestInfo.Extra || {},
+			Body: requestInfo.Body || {}
+		});
+		this._requests.counter++;
+		if (onSuccess !== undefined || onError !== undefined) {
+			this._requests.callbackableRequests[id] = request;
+			this._requests.successCallbacks[id] = onSuccess;
+			this._requests.errorCallbacks[id] = onError;
+		}
+		if (this.isWebSocketReady) {
+			this.sendWebSocketMessages(false, request);
+		}
+		else if (onSuccess === undefined && onError === undefined) {
+			this._requests.nocallbackRequests[id] = request;
+		}
+	}
+
+	private static canUseWebSocket(useXHR: boolean = false, checkPeriod: boolean = true) {
+		let useWebSocket = this.isWebSocketReady && !useXHR;
+		if (useWebSocket && checkPeriod) {
+			if (+new Date() - this.pingTime > 300000) { // 5 minutes
+				useWebSocket = false;
+				this.reopenWebSocket("[AppAPIs]: Ping period is too large...");
+			}
+		}
+		return useWebSocket;
+	}
+
+	/**
+		* Sends a request to APIs (using XMLHttpRequest - XHR)
+		* @param verb HTTP verb to perform the request
+		* @param url Full URI of the end-point API's uri to perform the request
+		* @param headers Additional headers to perform the request
+		* @param body The JSON object that contains the body to perform the request
+		* @param options The options to perform the request
+	*/
+	public static sendXMLHttpRequest(
+		verb: string,
+		url: string,
+		options?: {
+			headers?: HttpHeaders | { [header: string]: string | string[] };
+			observe?: "body";
+			params?: HttpParams | { [param: string]: string | string[] };
+			reportProgress?: boolean;
+			responseType?: "json";
+			withCredentials?: boolean;
+		},
+		body?: any
+	) {
+		const http = this.http;
+		if (http === undefined) {
+			throw new Error("[AppAPIs]: Please call the 'initializeHttpClient' method to initialize the HttpClient instance before sending any request!");
+		}
+		switch ((verb || "GET").toUpperCase()) {
+			case "GET":
+				return http.get(url, options);
+			case "POST":
+				return http.post(url, body, options);
+			case "PUT":
+				return http.put(url, body, options);
+			case "PATCH":
+				return http.patch(url, options);
+			case "DELETE":
+				return http.delete(url, options);
+			case "HEAD":
+				return http.head(url, options);
+			case "OPTIONS":
+				return http.options(url, options);
+			default:
+				return http.get(url, options);
+		}
+	}
+
+	/**
+		* Sends a request to APIs (using XMLHttpRequest - XHR)
+		* @param verb HTTP verb to perform the request
+		* @param url Full URI of the end-point API's uri to perform the request
+		* @param headers Additional headers to perform the request
+		* @param body The JSON object that contains the body to perform the request
+	*/
+	public static sendXMLHttpRequestAsync(verb: string, url: string, headers?: any, body?: any) {
+		return this.sendXMLHttpRequest(verb, url, { headers: this.getHeaders(headers) }, body).toPromise();
+	}
+
+	/**
+		* Sends a request to APIs
+		* @param request The requesting information
+		* @param onSuccess The callback function to handle the returning data
+		* @param onError The callback function to handle the returning error
+		* @param useXHR Set to true to always use XHR, false to let system decides
+	*/
+	public static send(request: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		if (this.canUseWebSocket(useXHR)) {
+			const info = typeof request.Path !== "undefined" ? this.parseRequestInfo(request.Path) : undefined;
+			const requestInfo = {
+				ServiceName: info !== undefined ? info.ServiceName : request.ServiceName,
+				ObjectName: info !== undefined ? info.ObjectName : request.ObjectName,
+				Query: (info !== undefined ? info.Query : request.Query) || {},
+				Verb: request.Verb || "GET",
+				Header: request.Header,
+				Extra: request.Extra,
+				Body: request.Body
+			};
+			["service-name", "object-name"].forEach(name => delete requestInfo.Query[name]);
+			if (info !== undefined && AppUtility.isNotEmpty(info.ObjectIdentity)) {
+				requestInfo.Query["object-identity"] = info.ObjectIdentity;
+			}
+			this.sendWebSocketMessage(requestInfo, onSuccess, onError);
+			return EMPTY;
+		}
+		else {
+			let path = request.Path;
+			if (path === undefined) {
+				let query = AppUtility.clone(request.Query || {});
+				const objectIdentity = query["object-identity"];
+				["service-name", "object-name", "object-identity"].forEach(name => delete query[name]);
+				query = `?${AppUtility.getQueryOfJson(query)}`;
+				path = `${request.ServiceName}${AppUtility.isNotEmpty(request.ObjectName) ? `/${request.ObjectName}${AppUtility.isNotEmpty(objectIdentity) ? `/${objectIdentity}` : ""}` : ""}${query === "?" ? query : ""}`;
+			}
+			path += request.Extra !== undefined ? (path.indexOf("?") > 0 ? "&" : "?") + `x-request-extra=${AppCrypto.jsonEncode(request.Extra)}` : "";
+			return this.sendXMLHttpRequest(request.Verb || "GET", this.getURI(path), { headers: request.Header }, request.Body);
+		}
+	}
+
+	/**
+	 * Sends a request to APIs
+	 * @param request The requesting information
+	 * @param onSuccess The callback function to handle the returning data
+	 * @param onError The callback function to handle the returning error
+	 * @param useXHR Set to true to always use XHR, false to let system decides
+	*/
+	public static async sendAsync(request: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		if (this.canUseWebSocket(useXHR, false)) {
+			this.send(request, onSuccess, onError, false);
+		}
+		else {
+			try {
+				const data = await this.send(request, undefined, undefined, true).toPromise();
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			}
+			catch (error) {
+				if (onError !== undefined) {
+					onError(error);
+				}
+				else {
+					console.error("[AppAPIs]: Error occurred while sending a request to APIs", error);
+				}
+			}
+		}
+	}
+
+	/**
+		* Sends a request to APIs (using XMLHttpRequest - XHR) with GET verb to fetch data
+		* @param url Full URI of the end-point API's uri to perform the request
+		* @param headers Additional headers to perform the request
+	*/
+	public static fetchAsync(url: string, headers?: any) {
+		return this.sendXMLHttpRequestAsync("GET", url, headers);
 	}
 
 	/** Broadcasts a message to all subscribers */
@@ -462,252 +697,6 @@ export class AppRTU {
 		if (AppUtility.isNotEmpty(message.Type.Object)) {
 			this._objectScopeSubject.next({ "service": message.Type.Service, "object": message.Type.Object, "message": message });
 		}
-	}
-
-	/**
-	 * Sends a request to perform an action of a specified service
-	 * @param requestInfo The request to send to remote APIs
-	 * @param onSuccess The callback function to handle the returning data
-	 * @param onError The callback function to handle the returning error
-	*/
-	public static send(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		const id = `cmd-${this._requests.counter}`;
-		const request = AppCrypto.stringify({
-			ID: id,
-			ServiceName: requestInfo.ServiceName,
-			ObjectName: requestInfo.ObjectName || "",
-			Verb: requestInfo.Verb || "GET",
-			Query: requestInfo.Query || {},
-			Body: requestInfo.Body || {},
-			Header: requestInfo.Header || {},
-			Extra: requestInfo.Extra || {}
-		});
-		this._requests.counter++;
-		if (onSuccess !== undefined || onError !== undefined) {
-			this._requests.callbackableRequests[id] = request;
-			this._requests.successCallbacks[id] = onSuccess;
-			this._requests.errorCallbacks[id] = onError;
-		}
-		if (this.isReady) {
-			this.sendRequests(false, request);
-		}
-		else if (onSuccess === undefined && onError === undefined) {
-			this._requests.nocallbackRequests[id] = request;
-		}
-	}
-
-	private static sendRequests(sendCallbackables: boolean, additionalRequest?: string) {
-		Object.keys(this._requests.nocallbackRequests).sort().forEach(id => this._websocket.send(this._requests.nocallbackRequests[id]));
-		this._requests.nocallbackRequests = {};
-
-		if (sendCallbackables) {
-			Object.keys(this._requests.callbackableRequests).sort().forEach(id => this._websocket.send(this._requests.callbackableRequests[id]));
-		}
-
-		if (AppUtility.isNotEmpty(additionalRequest)) {
-			this._websocket.send(additionalRequest);
-		}
-	}
-
-}
-
-/** Servicing component for working with remote APIs via XMLHttpRequest (XHR) */
-export class AppXHR {
-
-	private static _http: HttpClient;
-
-	/** Gets the HttpClient instance */
-	public static get http() {
-		return this._http;
-	}
-
-	/** Initializes the instance of the Angular Http service */
-	public static initialize(http: HttpClient) {
-		if (this._http === undefined && AppUtility.isNotNull(http)) {
-			this._http = http;
-		}
-	}
-
-	/**
-		* Makes a request to an endpoint API
-		* @param verb HTTP verb to perform the request
-		* @param uri Full URI of the end-point API's uri to make the request
-		* @param body The JSON object that contains the body to make the request
-		* @param options The options to make the request
-	*/
-	public static makeRequest(
-		verb: string,
-		uri: string,
-		body?: any,
-		options?: {
-			headers?: HttpHeaders | { [header: string]: string | string[] };
-			observe?: "body";
-			params?: HttpParams | { [param: string]: string | string[] };
-			reportProgress?: boolean;
-			responseType?: "json";
-			withCredentials?: boolean;
-		}
-	) {
-		if (this._http === undefined) {
-			throw new Error("[AppXHR]: Call initialize first");
-		}
-		switch ((verb || "GET").toUpperCase()) {
-			case "POST":
-				return this._http.post(uri, body, options);
-			case "PUT":
-				return this._http.put(uri, body, options);
-			case "DELETE":
-				return this._http.delete(uri, options);
-			case "PATCH":
-				return this._http.patch(uri, options);
-			case "HEAD":
-				return this._http.head(uri, options);
-			case "OPTIONS":
-				return this._http.options(uri, options);
-			default:
-				return this._http.get(uri, options);
-		}
-	}
-
-	/**
-		* Sends a request to an endpoint API
-		* @param verb HTTP verb to perform the request
-		* @param uri Full URI of the end-point API's uri to perform the request
-		* @param headers Additional headers to perform the request
-		* @param body The JSON object that contains the body to perform the request
-	*/
-	public static sendRequest(verb: string, uri: string, headers?: any, body?: any) {
-		const httpHeaders = AppConfig.getAuthenticatedHeaders();
-		if (AppUtility.isArray(headers, true)) {
-			(headers as Array<any>).forEach(header => {
-				if (AppUtility.isObject(header, true) && AppUtility.isNotEmpty(header.name) && AppUtility.isNotEmpty(header.value)) {
-					httpHeaders[header.name as string] = header.value as string;
-				}
-			});
-		}
-		else if (AppUtility.isObject(headers, true)) {
-			Object.keys(headers).forEach(name => {
-				const value = headers[name];
-				httpHeaders[name] = value !== undefined ? value.toString() : undefined;
-			});
-		}
-		return this.makeRequest(verb, uri, body, { headers: httpHeaders });
-	}
-
-	/**
-		* Sends a request to an endpoint API
-		* @param verb HTTP verb to perform the request
-		* @param uri Full URI of the end-point API's uri to perform the request
-		* @param headers Additional headers to perform the request
-		* @param body The JSON object that contains the body to perform the request
-	*/
-	public static sendRequestAsync(verb: string, uri: string, headers?: any, body?: any) {
-		return this.sendRequest(verb, uri, headers, body).toPromise();
-	}
-
-	/**
-		* Gets the URI to send a request to APIs
-		* @param path Path of the end-point API's uri to perform the request
-		* @param endpoint URI of the end-point API's uri to perform the request
-	*/
-	public static getURI(path: string, endpoint?: string) {
-		return (path.startsWith("http://") || path.startsWith("https://") ? "" : endpoint || AppConfig.URIs.apis) + path;
-	}
-
-	/**
-		* Performs a request to APIs with "GET" verb
-		* @param path Path of the end-point API's uri to perform the request
-		* @param headers Additional headers to perform the request
-	*/
-	public static get(path: string, headers?: any) {
-		return this.sendRequest("GET", this.getURI(path), headers);
-	}
-
-	/**
-		* Performs a request to APIs with "GET" verb
-		* @param path Path of the end-point API's uri to perform the request
-		* @param headers Additional headers to perform the request
-	*/
-	public static getAsync(path: string, headers?: any) {
-		return this.get(path, headers).toPromise();
-	}
-
-	/**
-		* Performs a request to APIs with "POST" verb
-		* @param path Path of the end-point API's uri to perform the request
-		* @param body The JSON object that contains the body to perform the request
-		* @param headers Additional headers to perform the request
-	*/
-	public static post(path: string, body: any, headers?: any) {
-		return this.sendRequest("POST", this.getURI(path), headers, body);
-	}
-
-	/**
-		* Performs a request to APIs with "POST" verb
-		* @param path Path of the end-point API's uri to perform the request
-		* @param body The JSON object that contains the body to perform the request
-		* @param headers Additional headers to perform the request
-	*/
-	public static postAsync(path: string, body: any, headers?: any) {
-		return this.post(path, body, headers).toPromise();
-	}
-
-	/**
-		* Performs a request to APIs with "PUT" verb
-		* @param path Path of the end-point API's uri to perform the request
-		* @param body The JSON object that contains the body to perform the request
-		* @param headers Additional headers to perform the request
-	*/
-	public static put(path: string, body: any, headers?: any) {
-		return this.sendRequest("PUT", this.getURI(path), headers, body);
-	}
-
-	/**
-		* Performs a request to APIs with "PUT" verb
-		* @param path Path of the end-point API's uri to perform the request
-		* @param body The JSON object that contains the body to perform the request
-		* @param headers Additional headers to perform the request
-	*/
-	public static putAsync(path: string, body: any, headers?: any) {
-		return this.put(path, body, headers).toPromise();
-	}
-
-	/**
-		* Performs a request to APIs with "PATCH" verb
-		* @param path Path of the end-point API's uri to perform the request
-		* @param body The JSON object that contains the body to perform the request
-		* @param headers Additional headers to perform the request
-	*/
-	public static patch(path: string, body: any, headers?: any) {
-		return this.sendRequest("PATCH", this.getURI(path), headers, body);
-	}
-
-	/**
-		* Performs a request to APIs with "PATCH" verb
-		* @param path Path of the end-point API's uri to perform the request
-		* @param body The JSON object that contains the body to perform the request
-		* @param headers Additional headers to perform the request
-	*/
-	public static patchAsync(path: string, body: any, headers?: any) {
-		return this.patch(path, body, headers).toPromise();
-	}
-
-	/**
-		* Performs a request to APIs with "DELETE" verb
-		* @param path Path of the end-point API's uri to perform the request
-		* @param headers Additional headers to perform the request
-	*/
-	public static delete(path: string, headers?: any) {
-		return this.sendRequest("DELETE", this.getURI(path), headers);
-	}
-
-	/**
-		* Performs a request to APIs with "DELETE" verb
-		* @param path Path of the end-point API's uri to perform the request
-		* @param headers Additional headers to perform the request
-	*/
-	public static deleteAsync(path: string, headers?: any) {
-		return this.delete(path, headers).toPromise();
 	}
 
 }

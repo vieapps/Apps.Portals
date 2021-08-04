@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
 import { Dictionary } from "@app/components/app.collections";
-import { AppRTU, AppXHR, AppMessage } from "@app/components/app.apis";
+import { AppAPIs, AppMessage } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
@@ -47,7 +47,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	private initialize() {
-		AppRTU.registerAsServiceScopeProcessor(this.name, message => {
+		AppAPIs.registerAsServiceScopeProcessor(this.name, message => {
 			switch (message.Type.Object) {
 				case "Category":
 				case "CMS.Category":
@@ -82,7 +82,7 @@ export class PortalsCmsService extends BaseService {
 			}
 		});
 
-		AppRTU.registerAsServiceScopeProcessor(this.filesSvc.name, message => this.processAttachmentUpdateMessage(message));
+		AppAPIs.registerAsServiceScopeProcessor(this.filesSvc.name, message => this.processAttachmentUpdateMessage(message));
 
 		AppEvents.on(this.name, async info => {
 			if (AppUtility.isEquals(info.args.Mode, "UpdateSidebarWithContentTypes")) {
@@ -145,21 +145,29 @@ export class PortalsCmsService extends BaseService {
 
 	public async initializeAsync(onNext?: () => void) {
 		if (this._oembedProviders === undefined) {
-			const oembedProviders = await AppXHR.makeRequest("GET", this.configSvc.appConfig.URIs.apis + "statics/oembed.providers.json").toPromise() as Array<{ name: string; schemes: string[], pattern: { expression: string; position: number; html: string } }>;
-			this._oembedProviders = oembedProviders.map(oembedProvider => {
-				return {
-					name: oembedProvider.name,
-					schemes: oembedProvider.schemes.map(scheme => AppUtility.toRegExp(`/${scheme}/i`)),
-					pattern: {
-						expression: AppUtility.toRegExp(`/${oembedProvider.pattern.expression}/i`),
-						position: oembedProvider.pattern.position,
-						html: oembedProvider.pattern.html
+			await super.readAsync(
+				"statics/oembed.providers.json",
+				data => {
+					const oembedProviders = data as Array<{ name: string; schemes: string[], pattern: { expression: string; position: number; html: string } }>;
+					this._oembedProviders = oembedProviders.map(oembedProvider => {
+						return {
+							name: oembedProvider.name,
+							schemes: oembedProvider.schemes.map(scheme => AppUtility.toRegExp(`/${scheme}/i`)),
+							pattern: {
+								expression: AppUtility.toRegExp(`/${oembedProvider.pattern.expression}/i`),
+								position: oembedProvider.pattern.position,
+								html: oembedProvider.pattern.html
+							}
+						};
+					});
+					if (this.configSvc.isDebug) {
+						console.log("[CMS Portals]: The providers of OEmbed medias were initialized", this._oembedProviders);
 					}
-				};
-			});
-			if (this.configSvc.isDebug) {
-				console.log("[CMS Portals]: The providers of OEmbed medias were initialized", this._oembedProviders);
-			}
+				},
+				undefined,
+				undefined,
+				true
+			);
 		}
 
 		if (Module.active === undefined) {
@@ -263,16 +271,16 @@ export class PortalsCmsService extends BaseService {
 		return this.domSanitizer.bypassSecurityTrustHtml(html || "");
 	}
 
-	public lookup(objectName: string, request: any, onNext: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		return this.portalsCoreSvc.lookup(objectName, request, onNext, onError, headers);
+	public lookup(objectName: string, request: any, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		return this.portalsCoreSvc.lookup(objectName, request, onSuccess, onError, headers);
 	}
 
-	public async lookupAsync(objectName: string, request: any, onNext: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await this.portalsCoreSvc.lookupAsync(objectName, request, onNext, onError, headers);
+	public async lookupAsync(objectName: string, request: any, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		await this.portalsCoreSvc.lookupAsync(objectName, request, onSuccess, onError, headers);
 	}
 
-	public async getAsync(objectName: string, id: string, onNext: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await this.portalsCoreSvc.getAsync(objectName, id, onNext, onError, headers);
+	public async getAsync(objectName: string, id: string, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		await this.portalsCoreSvc.getAsync(objectName, id, onSuccess, onError, headers);
 	}
 
 	public getFileOptions(object: CmsBaseModel, onCompleted?: (fileOptions: FileOptions) => void) {
@@ -413,13 +421,13 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	private async updateSidebarAsync(onNext?: () => void) {
+	private async updateSidebarAsync(onSuccess?: () => void) {
 		const activeModule = this.portalsCoreSvc.activeModule;
 		if (this.getDefaultContentTypeOfCategory(activeModule) !== undefined) {
-			await this.updateSidebarWithCategoriesAsync(undefined, undefined, onNext);
+			await this.updateSidebarWithCategoriesAsync(undefined, undefined, onSuccess);
 		}
 		else if (activeModule !== undefined) {
-			await this.updateSidebarWithContentTypesAsync(undefined, onNext);
+			await this.updateSidebarWithContentTypesAsync(undefined, onSuccess);
 		}
 		AppEvents.broadcast("ActiveSidebar", { name: activeModule !== undefined && activeModule.contentTypes.length > 0 ? "cms" : this.configSvc.isAuthenticated ? "portals" : "cms" });
 	}
@@ -571,7 +579,7 @@ export class PortalsCmsService extends BaseService {
 				AppEvents.broadcast(this.name, { Type: "FeaturedContentsPrepared" });
 			}
 		};
-		const onNext: (data?: any) => void = data => {
+		const onSuccess: (data?: any) => void = data => {
 			if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 				if (isSimpleItem) {
 					(data.Objects as Array<any>).map(obj => Item.get(obj.ID)).filter(obj => obj !== undefined).forEach(obj => this._featuredContents.set(obj.ID, obj));
@@ -587,10 +595,10 @@ export class PortalsCmsService extends BaseService {
 			onCompleted();
 		};
 		if (isSimpleItem) {
-			await this.searchItemAsync(request, onNext, onError);
+			await this.searchItemAsync(request, onSuccess, onError);
 		}
 		else {
-			await this.searchContentAsync(request, onNext, onError);
+			await this.searchContentAsync(request, onSuccess, onError);
 		}
 	}
 
@@ -648,7 +656,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public searchCategory(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchCategory(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
 			super.getSearchURI("cms.category", this.configSvc.relatedQuery),
 			request,
@@ -656,8 +664,8 @@ export class PortalsCmsService extends BaseService {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 					this.processCategories(data.Objects as Array<any>);
 				}
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -669,7 +677,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async searchCategoryAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async searchCategoryAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
 			super.getSearchURI("cms.category", this.configSvc.relatedQuery),
 			request,
@@ -677,8 +685,8 @@ export class PortalsCmsService extends BaseService {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 					this.processCategories(data.Objects as Array<any>);
 				}
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -690,14 +698,14 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async createCategoryAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async createCategoryAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
 			super.getURI("cms.category"),
 			body,
 			data => {
 				this.updateCategory(data);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -709,11 +717,11 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async getCategoryAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public async getCategoryAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const category = Category.get(id);
 		if (category !== undefined && category.childrenIDs !== undefined) {
-			if (onNext !== undefined) {
-				onNext();
+			if (onSuccess !== undefined) {
+				onSuccess();
 			}
 		}
 		else {
@@ -727,8 +735,8 @@ export class PortalsCmsService extends BaseService {
 							this.updateSidebarWithCategoriesAsync(parentCategory);
 						}
 					}
-					if (onNext !== undefined) {
-						onNext(data);
+					if (onSuccess !== undefined) {
+						onSuccess(data);
 					}
 				},
 				error => {
@@ -743,15 +751,15 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	public async updateCategoryAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public async updateCategoryAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Category.contains(body.ID) ? Category.get(body.ID).ParentID : undefined;
 		await super.updateAsync(
 			super.getURI("cms.category", body.ID),
 			body,
 			data => {
 				this.updateCategory(data, parentID);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -764,14 +772,14 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async deleteCategoryAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public async deleteCategoryAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Category.contains(id) ? Category.get(id).ParentID : undefined;
 		await super.deleteAsync(
 			super.getURI("cms.category", id),
 			data => {
 				this.deleteCategory(data.ID, parentID);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -784,14 +792,14 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async refreshCategoryAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public async refreshCategoryAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await this.portalsCoreSvc.refreshAsync(
 			"cms.category",
 			id,
 			data => {
 				this.updateCategory(data);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			onError,
@@ -930,7 +938,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public searchContent(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchContent(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
 			super.getSearchURI("cms.content", this.configSvc.relatedQuery),
 			request,
@@ -938,8 +946,8 @@ export class PortalsCmsService extends BaseService {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 					(data.Objects as Array<any>).forEach(obj => Content.update(obj));
 				}
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -951,7 +959,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async searchContentAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async searchContentAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
 			super.getSearchURI("cms.content", this.configSvc.relatedQuery),
 			request,
@@ -959,8 +967,8 @@ export class PortalsCmsService extends BaseService {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 					(data.Objects as Array<any>).forEach(obj => Content.update(obj));
 				}
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -972,14 +980,14 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async createContentAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async createContentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
 			super.getURI("cms.content"),
 			body,
 			data => {
 				Content.update(data);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -991,10 +999,10 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async getContentAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public async getContentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		if (Content.contains(id)) {
-			if (onNext !== undefined) {
-				onNext();
+			if (onSuccess !== undefined) {
+				onSuccess();
 			}
 		}
 		else {
@@ -1002,8 +1010,8 @@ export class PortalsCmsService extends BaseService {
 				super.getURI("cms.content", id),
 				data => {
 					Content.update(data);
-					if (onNext !== undefined) {
-						onNext(data);
+					if (onSuccess !== undefined) {
+						onSuccess(data);
 					}
 				},
 				error => {
@@ -1018,14 +1026,14 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	public async updateContentAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async updateContentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
 			super.getURI("cms.content", body.ID),
 			body,
 			data => {
 				Content.update(data);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -1037,13 +1045,13 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async deleteContentAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public async deleteContentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await super.deleteAsync(
 			super.getURI("cms.content", id),
 			data => {
 				Content.instances.remove(data.ID);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -1056,14 +1064,14 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async refreshContentAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public async refreshContentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await this.portalsCoreSvc.refreshAsync(
 			"cms.content",
 			id,
 			data => {
 				Content.update(data);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			onError,
@@ -1120,7 +1128,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public searchItem(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchItem(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
 			super.getSearchURI("cms.item", this.configSvc.relatedQuery),
 			request,
@@ -1128,8 +1136,8 @@ export class PortalsCmsService extends BaseService {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 					(data.Objects as Array<any>).forEach(obj => Item.update(obj));
 				}
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -1141,7 +1149,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async searchItemAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async searchItemAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
 			super.getSearchURI("cms.item", this.configSvc.relatedQuery),
 			request,
@@ -1149,8 +1157,8 @@ export class PortalsCmsService extends BaseService {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 					(data.Objects as Array<any>).forEach(obj => Item.update(obj));
 				}
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -1162,14 +1170,14 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async createItemAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async createItemAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
 			super.getURI("cms.item"),
 			body,
 			data => {
 				Item.update(data);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -1181,10 +1189,10 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async getItemAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public async getItemAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		if (Item.contains(id)) {
-			if (onNext !== undefined) {
-				onNext();
+			if (onSuccess !== undefined) {
+				onSuccess();
 			}
 		}
 		else {
@@ -1192,8 +1200,8 @@ export class PortalsCmsService extends BaseService {
 				super.getURI("cms.item", id),
 				data => {
 					Item.update(data);
-					if (onNext !== undefined) {
-						onNext(data);
+					if (onSuccess !== undefined) {
+						onSuccess(data);
 					}
 				},
 				error => {
@@ -1208,14 +1216,14 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	public async updateItemAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async updateItemAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
 			super.getURI("cms.item", body.ID),
 			body,
 			data => {
 				Item.update(data);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -1227,13 +1235,13 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async deleteItemAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public async deleteItemAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await super.deleteAsync(
 			super.getURI("cms.item", id),
 			data => {
 				Item.instances.remove(data.ID);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -1246,14 +1254,14 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async refreshItemAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public async refreshItemAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await this.portalsCoreSvc.refreshAsync(
 			"cms.item",
 			id,
 			data => {
 				Item.update(data);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			onError,
@@ -1314,7 +1322,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public searchLink(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchLink(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
 			super.getSearchURI("cms.link", this.configSvc.relatedQuery),
 			request,
@@ -1322,8 +1330,8 @@ export class PortalsCmsService extends BaseService {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 					this.processLinks(data.Objects as Array<any>);
 				}
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -1335,7 +1343,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async searchLinkAsync(request: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async searchLinkAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
 			super.getSearchURI("cms.link", this.configSvc.relatedQuery),
 			request,
@@ -1343,8 +1351,8 @@ export class PortalsCmsService extends BaseService {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 					this.processLinks(data.Objects as Array<any>);
 				}
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -1356,14 +1364,14 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async createLinkAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async createLinkAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
 			super.getURI("cms.link"),
 			body,
 			data => {
 				this.updateLink(data);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -1375,11 +1383,11 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async getLinkAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public async getLinkAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const link = Link.get(id);
 		if (link !== undefined && link.childrenIDs !== undefined) {
-			if (onNext !== undefined) {
-				onNext();
+			if (onSuccess !== undefined) {
+				onSuccess();
 			}
 		}
 		else {
@@ -1387,8 +1395,8 @@ export class PortalsCmsService extends BaseService {
 				super.getURI("cms.link", id),
 				data => {
 					this.updateLink(data);
-					if (onNext !== undefined) {
-						onNext(data);
+					if (onSuccess !== undefined) {
+						onSuccess(data);
 					}
 				},
 				error => {
@@ -1403,15 +1411,15 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	public async updateLinkAsync(body: any, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public async updateLinkAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Link.contains(body.ID) ? Link.get(body.ID).ParentID : undefined;
 		await super.updateAsync(
 			super.getURI("cms.link", body.ID),
 			body,
 			data => {
 				this.updateLink(data, parentID);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -1424,14 +1432,14 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async deleteLinkAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public async deleteLinkAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Link.contains(id) ? Link.get(id).ParentID : undefined;
 		await super.deleteAsync(
 			super.getURI("cms.link", id),
 			data => {
 				this.deleteLink(data.ID, parentID);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -1444,14 +1452,14 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async refreshLinkAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public async refreshLinkAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await this.portalsCoreSvc.refreshAsync(
 			"cms.link",
 			id,
 			data => {
 				this.updateLink(data);
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			onError,

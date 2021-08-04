@@ -36,7 +36,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx-portals",
-		version: "3.8.0",
+		version: "3.9.0",
 		frameworks: "ionic 5.6 - angular 11.2 - cordova 10.0",
 		mode: "",
 		platform: "",
@@ -288,7 +288,7 @@ export class AppConfig {
 
 	/** Gets the authenticated headers (JSON) for making requests to APIs */
 	public static getAuthenticatedHeaders(addToken: boolean = true, addAppInfo: boolean = true, addDeviceID: boolean = true) {
-		const headers: { [header: string]: string } = {};
+		const headers: { [key: string]: string } = {};
 
 		if (addToken && AppUtility.isObject(this.session.token, true) && AppUtility.isObject(this.session.keys, true) && AppUtility.isNotEmpty(this.session.keys.jwt)) {
 			headers["x-app-token"] = AppCrypto.jwtEncode(this.session.token, this.session.keys.jwt);

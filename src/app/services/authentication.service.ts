@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { AppRTU } from "@app/components/app.apis";
+import { AppAPIs } from "@app/components/app.apis";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
@@ -146,7 +146,7 @@ export class AuthenticationService extends BaseService {
 		return this.configSvc.appConfig.accountRegistrations.setServicePrivilegs && this.canDo(this.configSvc.appConfig.accountRegistrations.setServicePrivilegsRole);
 	}
 
-	public async logInAsync(account: string, password: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async logInAsync(account: string, password: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
 			super.getURI("session", undefined, this.configSvc.relatedQuery, "users"),
 			{
@@ -156,13 +156,13 @@ export class AuthenticationService extends BaseService {
 			async data => {
 				if (AppUtility.isTrue(data.Require2FA)) {
 					console.warn(super.getLogMessage("Log in with static password successful, but need to verify with 2FA"), this.configSvc.isDebug ? data : "");
-					if (onNext !== undefined) {
-						onNext(data);
+					if (onSuccess !== undefined) {
+						onSuccess(data);
 					}
 				}
 				else {
 					console.log(super.getLogMessage("Log in successful"), this.configSvc.isDebug ? data : "");
-					await this.updateSessionWhenLogInAsync(data, onNext);
+					await this.updateSessionWhenLogInAsync(data, onSuccess);
 				}
 			},
 			async error => {
@@ -185,7 +185,7 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public async logInOTPAsync(id: string, info: string, otp: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async logInOTPAsync(id: string, info: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
 			super.getURI("session", undefined, this.configSvc.relatedQuery, "users"),
 			{
@@ -195,7 +195,7 @@ export class AuthenticationService extends BaseService {
 			},
 			async data => {
 				console.log(super.getLogMessage("Log in with OTP successful"));
-				await this.updateSessionWhenLogInAsync(data, onNext);
+				await this.updateSessionWhenLogInAsync(data, onSuccess);
 			},
 			error => {
 				if (onError !== undefined) {
@@ -210,7 +210,7 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public async logOutAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async logOutAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.deleteAsync(
 			super.getURI("session", undefined, this.configSvc.relatedQuery, "users"),
 			async data => await this.configSvc.updateSessionAsync(data, async () => await this.configSvc.registerSessionAsync(() => {
@@ -219,8 +219,8 @@ export class AuthenticationService extends BaseService {
 				AppEvents.broadcast("Profile", { Type: "Updated" });
 				AppEvents.broadcast("Session", { Type: "LogOut" });
 				AppEvents.sendToElectron("Users", { Type: "LogOut", Data: this.configSvc.appConfig.session });
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			}, onError), true),
 			error => {
@@ -236,13 +236,13 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public async resetPasswordAsync(account: string, captcha: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async resetPasswordAsync(account: string, captcha: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
 			super.getURI("account", "reset", `uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`, "users"),
 			{
 				Account: AppCrypto.rsaEncrypt(account)
 			},
-			onNext,
+			onSuccess,
 			error => {
 				if (onError !== undefined) {
 					onError(error);
@@ -255,14 +255,14 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public async renewPasswordAsync(account: string, otp: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async renewPasswordAsync(account: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
 			super.getURI("account", "renew", this.configSvc.relatedQuery, "users"),
 			{
 				Account: AppCrypto.rsaEncrypt(account),
 				OtpCode: AppCrypto.rsaEncrypt(otp)
 			},
-			onNext,
+			onSuccess,
 			error => {
 				if (onError !== undefined) {
 					onError(error);
@@ -274,7 +274,7 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public async registerCaptchaAsync(onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async registerCaptchaAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.readAsync(
 			super.getURI("captcha", undefined, `register=${this.configSvc.appConfig.session.id}&${this.configSvc.relatedQuery}`, "users"),
 			data => {
@@ -282,8 +282,8 @@ export class AuthenticationService extends BaseService {
 					code: data.Code,
 					uri: data.Uri
 				};
-				if (onNext !== undefined) {
-					onNext(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
 				}
 			},
 			error => {
@@ -298,7 +298,7 @@ export class AuthenticationService extends BaseService {
 	}
 
 	private async updateSessionWhenLogInAsync(data: any, onNext: (data?: any) => void) {
-		await this.configSvc.updateSessionAsync(data, () => AppRTU.start(() => {
+		await this.configSvc.updateSessionAsync(data, () => AppAPIs.openWebSocket(() => {
 			AppEvents.broadcast("Session", { Type: "LogIn" });
 			AppEvents.sendToElectron("Users", { Type: "LogIn", Data: this.configSvc.appConfig.session });
 			if (onNext !== undefined) {
