@@ -143,7 +143,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 	}
 
 	private async searchAsync(onNext?: (data: any) => void) {
-		await this.configSvc.GetLogsAsync(
+		await this.configSvc.GetServiceLogsAsync(
 			{
 				FilterBy: this.filterBy,
 				Pagination: this.pagination

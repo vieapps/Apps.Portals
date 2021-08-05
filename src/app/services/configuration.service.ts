@@ -895,25 +895,9 @@ export class ConfigurationService extends BaseService {
 		};
 	}
 
-	/** Gets logging items */
-	public async GetLogsAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.searchAsync(
-			super.getSearchURI(undefined, undefined, "logs"),
-			request,
-			data => {
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => {
-				console.error(super.getErrorMessage("Error occurred while searching logs", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
-			true,
-			true
-		);
+	/** Gets service logs */
+	public async GetServiceLogsAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = true) {
+		await super.searchAsync(super.getSearchURI(undefined, undefined, "logs"), request, onSuccess, onError, true, useXHR);
 	}
 
 }
