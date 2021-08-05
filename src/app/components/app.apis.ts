@@ -34,7 +34,7 @@ export interface AppRequestInfo {
 export class AppAPIs {
 
 	private static _status = "initializing";
-	private static _uri: string;
+	private static _url: string;
 	private static _websocket: WebSocket;
 	private static _types: { [key: string]: AppMessageType } = {};
 	private static _serviceScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
@@ -48,7 +48,7 @@ export class AppAPIs {
 		successCallbacks: {} as { [id: string]: (data?: any) => void },
 		errorCallbacks: {} as { [id: string]: (error?: any) => void }
 	};
-	private static _pingTime = new Date().getTime();
+	private static _ping = +new Date();
 	private static _attempt = 0;
 	private static _http: HttpClient;
 	private static _onWebSocketOpened: (event: Event) => void;
@@ -57,8 +57,8 @@ export class AppAPIs {
 	private static _onWebSocketGotMessage: (event: MessageEvent) => void;
 
 	/** Gets the last time when got PING */
-	public static get pingTime() {
-		return this._pingTime;
+	public static get ping() {
+		return this._ping;
 	}
 
 	/** Gets the HttpClient instance for working with XMLHttpRequest (XHR) */
@@ -282,15 +282,15 @@ export class AppAPIs {
 
 		// create new instance of WebSocket
 		this._status = "initializing";
-		this._uri = (AppUtility.isNotEmpty(AppConfig.URIs.updates) ? AppConfig.URIs.updates : AppConfig.URIs.apis).replace("http://", "ws://").replace("https://", "wss://");
-		this._websocket = new WebSocket(`${this._uri}v?x-session-id=${AppCrypto.base64urlEncode(AppConfig.session.id)}&x-device-id=${AppCrypto.base64urlEncode(AppConfig.session.device)}` + (isRestart ? "&x-restart=" : ""));
-		this._pingTime = +new Date();
+		this._url = (AppUtility.isNotEmpty(AppConfig.URIs.updates) ? AppConfig.URIs.updates : AppConfig.URIs.apis).replace("http://", "ws://").replace("https://", "wss://");
+		this._websocket = new WebSocket(`${this._url}v?x-session-id=${AppCrypto.base64urlEncode(AppConfig.session.id)}&x-device-id=${AppCrypto.base64urlEncode(AppConfig.session.device)}` + (isRestart ? "&x-restart=" : ""));
+		this._ping = +new Date();
 
 		// assign 'on-open' event handler
 		this._websocket.onopen = event => {
 			this._status = "ready";
 			this.sendWebSocketMessage(AppConfig.authenticatingMessage);
-			console.log(`[AppAPIs]: Opened... (${PlatformUtility.parseURI(this._uri).HostURI})`, AppUtility.toIsoDateTime(new Date(), true));
+			console.log(`[AppAPIs]: Opened... (${PlatformUtility.parseURI(this._url).HostURI})`, AppUtility.toIsoDateTime(new Date(), true));
 			if (this._onWebSocketOpened !== undefined) {
 				try {
 					this._onWebSocketOpened(event);
@@ -314,7 +314,7 @@ export class AppAPIs {
 					console.error("[AppAPIs]: Error occurred while running the 'on-close' handler", error);
 				}
 			}
-			if (AppUtility.isNotEmpty(this._uri) && 1007 !== event.code) {
+			if (AppUtility.isNotEmpty(this._url) && 1007 !== event.code) {
 				this.reopenWebSocket();
 			}
 		};
@@ -411,7 +411,7 @@ export class AppAPIs {
 					if (AppConfig.isDebug) {
 						console.log("[AppAPIs]: Got a heartbeat signal => response with PONG", AppUtility.toIsoDateTime(new Date(), true));
 					}
-					this._pingTime = new Date().getTime();
+					this._ping = +new Date();
 					this.sendWebSocketMessage({
 						ServiceName: "Session",
 						Verb: "PONG"
@@ -459,7 +459,7 @@ export class AppAPIs {
 
 	/** Closes the WebSocket connection */
 	public static closeWebSocket(onClosed?: () => void) {
-		this._uri = undefined;
+		this._url = undefined;
 		this._status = "close";
 		this.destroyWebSocket();
 		if (onClosed !== undefined) {
@@ -545,7 +545,8 @@ export class AppAPIs {
 	private static canUseWebSocket(useXHR: boolean = false, checkPeriod: boolean = true) {
 		let can = !useXHR && this.isWebSocketReady;
 		if (can && checkPeriod) {
-			if (+new Date() - this.pingTime > 300000) { // 5 minutes
+			// ping period - 5 minutes
+			if (+new Date() - this.ping > 300000) {
 				can = false;
 				this.reopenWebSocket("[AppAPIs]: Ping period is too large...");
 			}
@@ -555,8 +556,8 @@ export class AppAPIs {
 
 	/**
 		* Sends a request to APIs using XMLHttpRequest
-		* @param verb HTTP verb to perform the request
-		* @param url Full URI of the end-point API's uri to perform the request
+		* @param verb The HTTP verb to perform the request
+		* @param url The absolute URL of APIs to perform the request
 		* @param headers Additional headers to perform the request
 		* @param body The JSON object that contains the body to perform the request
 		* @param options The options to perform the request
@@ -596,8 +597,8 @@ export class AppAPIs {
 
 	/**
 		* Sends a request to APIs using XMLHttpRequest
-		* @param verb HTTP verb to perform the request
-		* @param url Full URI of the end-point API's uri to perform the request
+		* @param verb The HTTP verb to perform the request
+		* @param url The absolute URL of APIs to perform the request
 		* @param headers Additional headers to perform the request
 		* @param body The JSON object that contains the body to perform the request
 	*/
@@ -676,7 +677,7 @@ export class AppAPIs {
 
 	/**
 		* Sends a request to APIs using XMLHttpRequest with GET verb to fetch data
-		* @param url Full URI of the end-point API's uri to perform the request
+		* @param url The absolute URL of APIs to perform the request
 		* @param headers Additional headers to perform the request
 	*/
 	public static fetchAsync(url: string, headers?: any) {

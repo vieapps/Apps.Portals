@@ -768,16 +768,16 @@ export class AppFormsService {
 			formControl.Options.PlaceHolder = await this.normalizeResourceAsync(formControl.Options.PlaceHolder);
 			if (formControl.Type === "Select") {
 				if (AppUtility.isNotEmpty(formControl.Options.SelectOptions.RemoteURI)) {
-					let uri = AppAPIs.getURL(formControl.Options.SelectOptions.RemoteURI);
-					uri += (uri.indexOf("?") < 0 ? "?" : "&") + AppConfig.getRelatedQuery();
+					let url = AppAPIs.getURL(formControl.Options.SelectOptions.RemoteURI);
+					url += (url.indexOf("?") < 0 ? "?" : "&") + AppConfig.getRelatedQuery();
 					try {
 						if (formControl.Options.SelectOptions.RemoteURIProcessor !== undefined) {
-							formControl.Options.SelectOptions.Values = await formControl.Options.SelectOptions.RemoteURIProcessor(uri, formControl.Options.SelectOptions.RemoteURIConverter);
+							formControl.Options.SelectOptions.Values = await formControl.Options.SelectOptions.RemoteURIProcessor(url, formControl.Options.SelectOptions.RemoteURIConverter);
 						}
 						else {
-							const values = uri.indexOf("discovery/definitions?") > 0
-								? await this.configSvc.fetchDefinitionAsync(uri)
-								: await AppAPIs.fetchAsync(uri);
+							const values = url.indexOf("discovery/definitions?") > 0
+								? await this.configSvc.fetchDefinitionAsync(url)
+								: await AppAPIs.fetchAsync(url);
 							formControl.Options.SelectOptions.Values = AppUtility.isArray(values, true)
 								? (values as Array<string>).length > 0 && typeof values[0] === "string"
 									? (values as Array<string>).map(value => {
