@@ -608,11 +608,11 @@ export class AppAPIs {
 	/**
 		* Sends a request to APIs
 		* @param request The requesting information
+		* @param useXHR Set to true to always use XHR, false to let system decides
 		* @param onSuccess The callback function to handle the returning data
 		* @param onError The callback function to handle the returning error
-		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	public static send(request: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public static sendRequest(request: AppRequestInfo, useXHR: boolean = false, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		if (this.canUseWebSocket(useXHR)) {
 			const info = AppUtility.isNotEmpty(request.Path) ? this.parseRequestInfo(request.Path) : undefined;
 			const requestInfo = {
@@ -652,13 +652,13 @@ export class AppAPIs {
 	 * @param onError The callback function to handle the returning error
 	 * @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	public static async sendAsync(request: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public static async sendRequestAsync(request: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		if (this.canUseWebSocket(useXHR, false)) {
-			this.send(request, onSuccess, onError, false);
+			this.sendRequest(request, false, onSuccess, onError);
 		}
 		else {
 			try {
-				const data = await this.send(request, undefined, undefined, true).toPromise();
+				const data = await this.sendRequest(request, true).toPromise();
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}

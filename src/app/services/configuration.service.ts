@@ -373,7 +373,7 @@ export class ConfigurationService extends BaseService {
 		if (AppUtility.isNotEmpty(session.Token)) {
 			try {
 				this.appConfig.session.token = AppCrypto.jwtDecode(session.Token, AppUtility.isObject(this.appConfig.session.keys, true) ? this.appConfig.session.keys.jwt : this.appConfig.app.name);
-				super.send(this.appConfig.authenticatingMessage);
+				super.sendRequest(this.appConfig.authenticatingMessage);
 			}
 			catch (error) {
 				this.appConfig.session.token = undefined;
@@ -388,12 +388,12 @@ export class ConfigurationService extends BaseService {
 				AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Storage" });
 			}
 			if (fetch) {
-				super.send({
+				super.sendRequest({
 					ServiceName: "Users",
 					ObjectName: "Account",
 					Query: this.appConfig.getRelatedJson({ "x-status": "true" })
 				});
-				super.send({
+				super.sendRequest({
 					ServiceName: "Users",
 					ObjectName: "Profile",
 					Query: this.appConfig.getRelatedJson({ "object-identity": this.appConfig.session.account.id })

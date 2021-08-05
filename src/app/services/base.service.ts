@@ -69,9 +69,9 @@ export class Base {
 		* @param onError The callback function to handle the returning error
 		* @param useXHR Set to true to always use XHR
 	*/
-	protected send(request: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	protected sendRequest(request: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		request.Header = AppAPIs.getHeaders(request.Header);
-		return AppAPIs.send(request, onSuccess, onError, useXHR);
+		return AppAPIs.sendRequest(request, useXHR, onSuccess, onError);
 	}
 
 	/**
@@ -81,9 +81,9 @@ export class Base {
 		* @param onError The callback function to handle the returning error
 		* @param useXHR Set to true to always use XHR
 	*/
-	protected async sendAsync(request: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	protected async sendRequestAsync(request: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		request.Header = AppAPIs.getHeaders(request.Header);
-		await AppAPIs.sendAsync(request, onSuccess, onError, useXHR);
+		await AppAPIs.sendRequestAsync(request, onSuccess, onError, useXHR);
 	}
 
 	/**
@@ -135,7 +135,7 @@ export class Base {
 			if (request.Pagination !== undefined && request.Pagination.PageNumber !== undefined) {
 				request.Pagination.PageNumber++;
 			}
-			await this.sendAsync(
+			await this.sendRequestAsync(
 				{
 					Path: AppUtility.format(path, { request: AppCrypto.jsonEncode(request) }),
 					Verb: "GET",
@@ -165,7 +165,7 @@ export class Base {
 		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
 	protected async createAsync(path: string, body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
-		await this.sendAsync(
+		await this.sendRequestAsync(
 			{
 				Path: path,
 				Verb: "POST",
@@ -187,7 +187,7 @@ export class Base {
 		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
 	protected async readAsync(path: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
-		await this.sendAsync(
+		await this.sendRequestAsync(
 			{
 				Path: path,
 				Verb: "GET",
@@ -209,7 +209,7 @@ export class Base {
 		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
 	protected async updateAsync(path: string, body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
-		await this.sendAsync(
+		await this.sendRequestAsync(
 			{
 				Path: path,
 				Verb: "PUT",
@@ -231,7 +231,7 @@ export class Base {
 		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
 	protected async deleteAsync(path: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
-		await this.sendAsync(
+		await this.sendRequestAsync(
 			{
 				Path: path,
 				Verb: "DELETE",

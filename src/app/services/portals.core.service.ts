@@ -3026,7 +3026,7 @@ export class PortalsCoreService extends BaseService {
 			Pagination: pagination || {}
 		};
 		request.Pagination["MaxPages"] = maxPages !== undefined && maxPages > 0 ? maxPages : 0;
-		await super.sendAsync(
+		await super.sendRequestAsync(
 			{
 				Path: super.getPath("excel", "export", "x-request=" + AppCrypto.jsonEncode(request)),
 				Header: this.configSvc.appConfig.getAuthenticatedHeaders()
@@ -3134,7 +3134,7 @@ export class PortalsCoreService extends BaseService {
 						const info = uploadedData[0];
 						const nodeID = info["x-node"] as string;
 						const filename = info["x-filename"] as string;
-						await super.sendAsync(
+						await super.sendRequestAsync(
 							{
 								Path: super.getPath("excel", "import", "x-request=" + AppCrypto.jsonEncode({
 									SystemID: systemID,
