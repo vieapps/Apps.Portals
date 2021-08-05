@@ -135,7 +135,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		}
 		if (this.isAdvancedMode) {
 			formSegments.push(
-				new AppFormsSegment("xrequest", "Encode 'x-request'")
+				new AppFormsSegment("integrations", "Integrations")
 			);
 		}
 		if (onCompleted !== undefined) {
@@ -291,29 +291,94 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				{
 					Name: "JSONXRequest",
 					Type: "TextArea",
-					Segment: "xrequest",
+					Segment: "integrations",
 					Options: {
 						Label: "JSON of x-request (FilterBy, SortBy, Pagination)",
-						Rows: 20
+						Rows: 12
 					}
 				},
 				{
 					Name: "EncodedXRequest",
 					Type: "TextArea",
-					Segment: "xrequest",
+					Segment: "integrations",
 					Options: {
 						Label: "Url-Encoded of x-request",
-						Rows: 5
+						Rows: 4
 					}
 				},
 				this.appFormsSvc.getButtonControls(
-					"xrequest",
+					"integrations",
 					{
-						Name: "Encode",
-						Label: "Encode the JSON",
+						Name: "EncodeJson",
+						Label: "JSON > Base64Url",
 						OnClick: async () => {
 							try {
 								this.form.controls.EncodedXRequest.setValue(AppCrypto.jsonEncode(JSON.parse(this.form.controls.JSONXRequest.value)));
+							}
+							catch (error) {
+								await this.appFormsSvc.showErrorAsync(error);
+							}
+						},
+						Options: {
+							Fill: "clear",
+							Css: "ion-float-end"
+						}
+					}
+				),
+				{
+					Name: "PlainText",
+					Type: "TextArea",
+					Segment: "integrations",
+					Options: {
+						Label: "Plain text",
+						Rows: 2
+					}
+				},
+				{
+					Name: "Base64Encoded",
+					Type: "TextArea",
+					Segment: "integrations",
+					Options: {
+						Label: "Base64-Encoded",
+						Rows: 2
+					}
+				},
+				this.appFormsSvc.getButtonControls(
+					"integrations",
+					{
+						Name: "EncodeBase64",
+						Label: "Text > Base64",
+						OnClick: async () => {
+							try {
+								this.form.controls.Base64Encoded.setValue(AppCrypto.base64Encode(this.form.controls.PlainText.value));
+							}
+							catch (error) {
+								await this.appFormsSvc.showErrorAsync(error);
+							}
+						},
+						Options: {
+							Fill: "clear",
+							Css: "ion-float-end"
+						}
+					}
+				),
+				{
+					Name: "Base64UrlEncoded",
+					Type: "TextArea",
+					Segment: "integrations",
+					Options: {
+						Label: "Base64Url-Encoded",
+						Rows: 2
+					}
+				},
+				this.appFormsSvc.getButtonControls(
+					"integrations",
+					{
+						Name: "EncodeBase64Url",
+						Label: "Text > Base64Url",
+						OnClick: async () => {
+							try {
+								this.form.controls.Base64UrlEncoded.setValue(AppCrypto.base64urlEncode(this.form.controls.PlainText.value));
 							}
 							catch (error) {
 								await this.appFormsSvc.showErrorAsync(error);
