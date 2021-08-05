@@ -633,7 +633,7 @@ export class AppAPIs {
 		}
 		else {
 			let path = request.Path;
-			if (AppUtility.isNotEmpty(path)) {
+			if (AppUtility.isEmpty(path)) {
 				let query = AppUtility.clone(request.Query || {});
 				const objectIdentity = query["object-identity"];
 				["service-name", "object-name", "object-identity"].forEach(name => delete query[name]);
