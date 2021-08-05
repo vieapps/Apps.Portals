@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { HttpClient, HttpEventType } from "@angular/common/http";
+import { HttpEventType } from "@angular/common/http";
 import { AppAPIs, AppMessage } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
@@ -29,12 +29,10 @@ export interface FileOptions {
 export class FilesService extends BaseService {
 
 	constructor(
-		http: HttpClient,
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService
 	) {
 		super("Files");
-		AppAPIs.initializeHttpClient(http);
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => AppEvents.broadcast(this.name, { Object: message.Type.Object, Event: message.Type.Event, ObjectID: message.Data.ObjectID, Data: message.Data }));
 	}
 
