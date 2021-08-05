@@ -86,7 +86,8 @@ export class AppAPIs {
 		this._onWebSocketGotMessage = func;
 	}
 
-	private static get isWebSocketReady() {
+	/** Gets state that determines the WebSocket connection is ready or not */
+	public static get isWebSocketReady() {
 		return this._websocket !== undefined && this._status === "ready";
 	}
 
@@ -289,8 +290,8 @@ export class AppAPIs {
 		// assign 'on-open' event handler
 		this._websocket.onopen = event => {
 			this._status = "ready";
-			this.sendWebSocketMessage(AppConfig.authenticatingMessage);
-			console.log(`[AppAPIs]: Opened... (${PlatformUtility.parseURI(this._url).HostURI})`, AppUtility.toIsoDateTime(new Date(), true));
+			this.authenticateWebSocket();
+			console.log(`[AppAPIs]: The WebSocket connection was opened... (${PlatformUtility.parseURI(this._url).HostURI})`, AppUtility.toIsoDateTime(new Date(), true));
 			if (this._onWebSocketOpened !== undefined) {
 				try {
 					this._onWebSocketOpened(event);
@@ -299,13 +300,12 @@ export class AppAPIs {
 					console.error("[AppAPIs]: Error occurred while running the 'on-open' handler", error);
 				}
 			}
-			this.sendWebSocketMessages(true);
 		};
 
 		// assign 'on-close' event handler
 		this._websocket.onclose = event => {
 			this._status = "close";
-			console.log(`[AppAPIs]: Closed [${event.reason}]`, AppUtility.toIsoDateTime(new Date(), true));
+			console.log(`[AppAPIs]: The WebSocket connection was closed [${event.reason}]`, AppUtility.toIsoDateTime(new Date(), true));
 			if (this._onWebSocketClosed !== undefined) {
 				try {
 					this._onWebSocketClosed(event);
@@ -322,7 +322,7 @@ export class AppAPIs {
 		// assign 'on-error' event handler
 		this._websocket.onerror = event => {
 			this._status = "error";
-			console.warn("[AppAPIs]: Got an error...", AppConfig.isDebug ? event : "");
+			console.warn("[AppAPIs]: The WebSocket connection was got an error...", AppConfig.isDebug ? event : "");
 			if (this._onWebSocketGotError !== undefined) {
 				try {
 					this._onWebSocketGotError(event);
@@ -412,7 +412,7 @@ export class AppAPIs {
 						console.log("[AppAPIs]: Got a heartbeat signal => response with PONG", AppUtility.toIsoDateTime(new Date(), true));
 					}
 					this._ping = +new Date();
-					this.sendWebSocketMessage({
+					this.sendWebSocketRequest({
 						ServiceName: "Session",
 						Verb: "PONG"
 					});
@@ -516,7 +516,43 @@ export class AppAPIs {
 		}
 	}
 
-	private static sendWebSocketMessage(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	private static canUseWebSocket(useXHR: boolean = false, checkPeriod: boolean = true) {
+		let can = !useXHR && this.isWebSocketReady;
+		if (can && checkPeriod) {
+			// ping period - 5 minutes
+			if (+new Date() - this.ping > 300000) {
+				can = false;
+				this.reopenWebSocket("[AppAPIs]: Ping period is too large...");
+			}
+		}
+		return can;
+	}
+
+	/** Sends a message to APIs to authenticate the WebSocket connection */
+	public static authenticateWebSocket() {
+		this._requests.nocallbackRequests["cmd-0"] = AppCrypto.stringify({
+			ID: "cmd-0",
+			ServiceName: "Session",
+			Verb: "AUTH",
+			Header: {
+				"x-session-id": AppCrypto.aesEncrypt(AppConfig.session.id),
+				"x-device-id": AppCrypto.aesEncrypt(AppConfig.session.device)
+			},
+			Body: AppConfig.getAuthenticatedHeaders()
+		});
+		if (this.isWebSocketReady) {
+			this.sendWebSocketMessages(true);
+		}
+	}
+
+	/**
+		* Sends a request to APIs using WebSocket
+		* @param request The requesting information
+		* @param onSuccess The callback function to handle the returning data
+		* @param onError The callback function to handle the returning error
+	*/
+	public static sendWebSocketRequest(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		this._requests.counter++;
 		const id = `cmd-${this._requests.counter}`;
 		const request = AppCrypto.stringify({
 			ID: id,
@@ -528,7 +564,6 @@ export class AppAPIs {
 			Extra: requestInfo.Extra || {},
 			Body: requestInfo.Body || {}
 		});
-		this._requests.counter++;
 		if (onSuccess !== undefined || onError !== undefined) {
 			this._requests.callbackableRequests[id] = request;
 			this._requests.successCallbacks[id] = onSuccess;
@@ -540,18 +575,6 @@ export class AppAPIs {
 		else if (onSuccess === undefined && onError === undefined) {
 			this._requests.nocallbackRequests[id] = request;
 		}
-	}
-
-	private static canUseWebSocket(useXHR: boolean = false, checkPeriod: boolean = true) {
-		let can = !useXHR && this.isWebSocketReady;
-		if (can && checkPeriod) {
-			// ping period - 5 minutes
-			if (+new Date() - this.ping > 300000) {
-				can = false;
-				this.reopenWebSocket("[AppAPIs]: Ping period is too large...");
-			}
-		}
-		return can;
 	}
 
 	/**
@@ -629,7 +652,7 @@ export class AppAPIs {
 			if (info !== undefined && AppUtility.isNotEmpty(info.ObjectIdentity)) {
 				requestInfo.Query["object-identity"] = info.ObjectIdentity;
 			}
-			this.sendWebSocketMessage(requestInfo, onSuccess, onError);
+			this.sendWebSocketRequest(requestInfo, onSuccess, onError);
 			return EmptyObservable;
 		}
 		else {

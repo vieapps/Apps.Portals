@@ -357,14 +357,14 @@ export class UsersService extends BaseService {
 							console.warn(super.getLogMessage("Revoke the session and register new when got a security issue"), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 							await this.configSvc.resetSessionAsync(async () => await this.configSvc.initializeSessionAsync(async () =>
 								await this.configSvc.registerSessionAsync(() => {
-									AppAPIs.reopenWebSocket("Restart when got a security issue");
+									AppAPIs.reopenWebSocket("Reopens when got a security issue");
 								})
 							), false);
 						}
 						else {
 							await this.configSvc.updateSessionAsync(message.Data, async () => await this.configSvc.registerSessionAsync(() => {
 								console.warn(super.getLogMessage("The session was revoked by the APIs"), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
-								AppAPIs.reopenWebSocket("Restart when the session was revoked by the APIs");
+								AppAPIs.reopenWebSocket("Reopens when the session was revoked by the APIs");
 							}), false, false, false);
 						}
 						AppEvents.broadcast("Account", { Type: "Updated", Mode: "Session" });

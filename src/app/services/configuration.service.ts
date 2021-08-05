@@ -16,6 +16,7 @@ import { AppConfig } from "@app/app.config";
 import { AppStorage } from "@app/components/app.storage";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppEvents } from "@app/components/app.events";
+import { AppAPIs } from "@app/components/app.apis";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
@@ -310,7 +311,7 @@ export class ConfigurationService extends BaseService {
 			"users/session",
 			async data => {
 				if (this.isDebug) {
-					console.log(super.getLogMessage("The session is initialized by APIs"));
+					console.log(super.getLogMessage("The session was initialized by APIs"));
 				}
 				await this.updateSessionAsync(data, _ => {
 					this.appConfig.session.account = this.getAccount(!this.isAuthenticated);
@@ -334,7 +335,7 @@ export class ConfigurationService extends BaseService {
 			async _ => {
 				this.appConfig.session.account = this.getAccount(true);
 				if (this.isDebug) {
-					console.log(super.getLogMessage("The session is registered by APIs"));
+					console.log(super.getLogMessage("The session was registered by APIs"));
 				}
 				AppEvents.broadcast("Session", { Type: "Registered" });
 				await this.storeSessionAsync(onSuccess);
@@ -373,7 +374,7 @@ export class ConfigurationService extends BaseService {
 		if (AppUtility.isNotEmpty(session.Token)) {
 			try {
 				this.appConfig.session.token = AppCrypto.jwtDecode(session.Token, AppUtility.isObject(this.appConfig.session.keys, true) ? this.appConfig.session.keys.jwt : this.appConfig.app.name);
-				super.sendRequest(this.appConfig.authenticatingMessage);
+				AppAPIs.authenticateWebSocket();
 			}
 			catch (error) {
 				this.appConfig.session.token = undefined;
@@ -388,12 +389,12 @@ export class ConfigurationService extends BaseService {
 				AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Storage" });
 			}
 			if (fetch) {
-				super.sendRequest({
+				AppAPIs.sendWebSocketRequest({
 					ServiceName: "Users",
 					ObjectName: "Account",
 					Query: this.appConfig.getRelatedJson({ "x-status": "true" })
 				});
-				super.sendRequest({
+				AppAPIs.sendWebSocketRequest({
 					ServiceName: "Users",
 					ObjectName: "Profile",
 					Query: this.appConfig.getRelatedJson({ "object-identity": this.appConfig.session.account.id })
@@ -426,7 +427,7 @@ export class ConfigurationService extends BaseService {
 					}
 				}
 				if (this.isDebug) {
-					console.log(super.getLogMessage("The session is loaded from storage"), this.appConfig.session);
+					console.log(super.getLogMessage("The session was loaded from storage"), this.appConfig.session);
 				}
 			}
 		}
@@ -444,7 +445,7 @@ export class ConfigurationService extends BaseService {
 			try {
 				await AppStorage.setAsync("Session", AppUtility.clone(this.appConfig.session, ["jwt", "captcha"]));
 				if (this.isDebug) {
-					console.log(super.getLogMessage("The session is stored into storage"));
+					console.log(super.getLogMessage("The session was stored into storage"));
 				}
 			}
 			catch (error) {
