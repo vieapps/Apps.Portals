@@ -897,7 +897,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets service logs */
 	public async GetServiceLogsAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = true) {
-		await super.searchAsync(super.getSearchURI(undefined, undefined, "logs"), request, onSuccess, onError, true, useXHR);
+		await super.searchAsync(super.getSearchingPath(undefined, undefined, "logs"), request, onSuccess, onError, true, useXHR);
 	}
 
 }

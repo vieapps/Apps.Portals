@@ -643,7 +643,7 @@ export class PortalsCmsService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("cms.category", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchingPath("cms.category", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
 				const category = Category.get(obj.ID);
 				return category === undefined
@@ -658,7 +658,7 @@ export class PortalsCmsService extends BaseService {
 
 	public searchCategory(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
-			super.getSearchURI("cms.category", this.configSvc.relatedQuery),
+			super.getSearchingPath("cms.category", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -679,7 +679,7 @@ export class PortalsCmsService extends BaseService {
 
 	public async searchCategoryAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
-			super.getSearchURI("cms.category", this.configSvc.relatedQuery),
+			super.getSearchingPath("cms.category", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -700,7 +700,7 @@ export class PortalsCmsService extends BaseService {
 
 	public async createCategoryAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
-			super.getURI("cms.category"),
+			super.getPath("cms.category"),
 			body,
 			data => {
 				this.updateCategory(data);
@@ -726,7 +726,7 @@ export class PortalsCmsService extends BaseService {
 		}
 		else {
 			await super.readAsync(
-				super.getURI("cms.category", id),
+				super.getPath("cms.category", id),
 				data => {
 					this.updateCategory(data);
 					if (this._sidebarContentType !== undefined) {
@@ -754,7 +754,7 @@ export class PortalsCmsService extends BaseService {
 	public async updateCategoryAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Category.contains(body.ID) ? Category.get(body.ID).ParentID : undefined;
 		await super.updateAsync(
-			super.getURI("cms.category", body.ID),
+			super.getPath("cms.category", body.ID),
 			body,
 			data => {
 				this.updateCategory(data, parentID);
@@ -775,7 +775,7 @@ export class PortalsCmsService extends BaseService {
 	public async deleteCategoryAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Category.contains(id) ? Category.get(id).ParentID : undefined;
 		await super.deleteAsync(
-			super.getURI("cms.category", id),
+			super.getPath("cms.category", id),
 			data => {
 				this.deleteCategory(data.ID, parentID);
 				if (onSuccess !== undefined) {
@@ -932,7 +932,7 @@ export class PortalsCmsService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("cms.content", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchingPath("cms.content", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => convertToCompleterItem(obj)),
 			convertToCompleterItem
 		);
@@ -940,7 +940,7 @@ export class PortalsCmsService extends BaseService {
 
 	public searchContent(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
-			super.getSearchURI("cms.content", this.configSvc.relatedQuery),
+			super.getSearchingPath("cms.content", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -961,7 +961,7 @@ export class PortalsCmsService extends BaseService {
 
 	public async searchContentAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
-			super.getSearchURI("cms.content", this.configSvc.relatedQuery),
+			super.getSearchingPath("cms.content", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -982,7 +982,7 @@ export class PortalsCmsService extends BaseService {
 
 	public async createContentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
-			super.getURI("cms.content"),
+			super.getPath("cms.content"),
 			body,
 			data => {
 				Content.update(data);
@@ -1007,7 +1007,7 @@ export class PortalsCmsService extends BaseService {
 		}
 		else {
 			await super.readAsync(
-				super.getURI("cms.content", id),
+				super.getPath("cms.content", id),
 				data => {
 					Content.update(data);
 					if (onSuccess !== undefined) {
@@ -1028,7 +1028,7 @@ export class PortalsCmsService extends BaseService {
 
 	public async updateContentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
-			super.getURI("cms.content", body.ID),
+			super.getPath("cms.content", body.ID),
 			body,
 			data => {
 				Content.update(data);
@@ -1047,7 +1047,7 @@ export class PortalsCmsService extends BaseService {
 
 	public async deleteContentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await super.deleteAsync(
-			super.getURI("cms.content", id),
+			super.getPath("cms.content", id),
 			data => {
 				Content.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -1122,7 +1122,7 @@ export class PortalsCmsService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("cms.item", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchingPath("cms.item", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => convertToCompleterItem(obj)),
 			convertToCompleterItem
 		);
@@ -1130,7 +1130,7 @@ export class PortalsCmsService extends BaseService {
 
 	public searchItem(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
-			super.getSearchURI("cms.item", this.configSvc.relatedQuery),
+			super.getSearchingPath("cms.item", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -1151,7 +1151,7 @@ export class PortalsCmsService extends BaseService {
 
 	public async searchItemAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
-			super.getSearchURI("cms.item", this.configSvc.relatedQuery),
+			super.getSearchingPath("cms.item", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -1172,7 +1172,7 @@ export class PortalsCmsService extends BaseService {
 
 	public async createItemAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
-			super.getURI("cms.item"),
+			super.getPath("cms.item"),
 			body,
 			data => {
 				Item.update(data);
@@ -1197,7 +1197,7 @@ export class PortalsCmsService extends BaseService {
 		}
 		else {
 			await super.readAsync(
-				super.getURI("cms.item", id),
+				super.getPath("cms.item", id),
 				data => {
 					Item.update(data);
 					if (onSuccess !== undefined) {
@@ -1218,7 +1218,7 @@ export class PortalsCmsService extends BaseService {
 
 	public async updateItemAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
-			super.getURI("cms.item", body.ID),
+			super.getPath("cms.item", body.ID),
 			body,
 			data => {
 				Item.update(data);
@@ -1237,7 +1237,7 @@ export class PortalsCmsService extends BaseService {
 
 	public async deleteItemAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await super.deleteAsync(
-			super.getURI("cms.item", id),
+			super.getPath("cms.item", id),
 			data => {
 				Item.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -1309,7 +1309,7 @@ export class PortalsCmsService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("cms.link", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchingPath("cms.link", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
 				const link = Link.get(obj.ID);
 				return link === undefined
@@ -1324,7 +1324,7 @@ export class PortalsCmsService extends BaseService {
 
 	public searchLink(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
-			super.getSearchURI("cms.link", this.configSvc.relatedQuery),
+			super.getSearchingPath("cms.link", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -1345,7 +1345,7 @@ export class PortalsCmsService extends BaseService {
 
 	public async searchLinkAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
-			super.getSearchURI("cms.link", this.configSvc.relatedQuery),
+			super.getSearchingPath("cms.link", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -1366,7 +1366,7 @@ export class PortalsCmsService extends BaseService {
 
 	public async createLinkAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
-			super.getURI("cms.link"),
+			super.getPath("cms.link"),
 			body,
 			data => {
 				this.updateLink(data);
@@ -1392,7 +1392,7 @@ export class PortalsCmsService extends BaseService {
 		}
 		else {
 			await super.readAsync(
-				super.getURI("cms.link", id),
+				super.getPath("cms.link", id),
 				data => {
 					this.updateLink(data);
 					if (onSuccess !== undefined) {
@@ -1414,7 +1414,7 @@ export class PortalsCmsService extends BaseService {
 	public async updateLinkAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Link.contains(body.ID) ? Link.get(body.ID).ParentID : undefined;
 		await super.updateAsync(
-			super.getURI("cms.link", body.ID),
+			super.getPath("cms.link", body.ID),
 			body,
 			data => {
 				this.updateLink(data, parentID);
@@ -1435,7 +1435,7 @@ export class PortalsCmsService extends BaseService {
 	public async deleteLinkAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Link.contains(id) ? Link.get(id).ParentID : undefined;
 		await super.deleteAsync(
-			super.getURI("cms.link", id),
+			super.getPath("cms.link", id),
 			data => {
 				this.deleteLink(data.ID, parentID);
 				if (onSuccess !== undefined) {

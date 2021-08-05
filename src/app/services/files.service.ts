@@ -91,7 +91,7 @@ export class FilesService extends BaseService {
 	public upload(path: string, data: string | Array<string> | FormData, headers: { [key: string]: string }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
 		const asBase64 = !(data instanceof FormData);
 		return this.http.post(
-			AppAPIs.getURI(path, this.configSvc.appConfig.URIs.files),
+			AppAPIs.getURL(path, this.configSvc.appConfig.URIs.files),
 			asBase64 ? { Data: data } : data,
 			{
 				headers: this.getUploadHeaders(headers, asBase64),
@@ -120,7 +120,7 @@ export class FilesService extends BaseService {
 		try {
 			const asBase64 = !(data instanceof FormData);
 			const response = await this.http.post(
-				AppAPIs.getURI(path, this.configSvc.appConfig.URIs.files),
+				AppAPIs.getURL(path, this.configSvc.appConfig.URIs.files),
 				asBase64 ? { Data: data } : data,
 				{
 					headers: this.getUploadHeaders(headers, asBase64),
@@ -326,7 +326,7 @@ export class FilesService extends BaseService {
 
 	public async searchThumbnailsAsync(options: FileOptions, onSuccess?: (thumbnails: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		await super.searchAsync(
-			super.getSearchURI("thumbnails", this.configSvc.relatedQuery),
+			super.getSearchingPath("thumbnails", this.configSvc.relatedQuery),
 			undefined,
 			data => {
 				if (onSuccess !== undefined) {
@@ -347,7 +347,7 @@ export class FilesService extends BaseService {
 
 	public async deleteThumbnailAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await super.deleteAsync(
-			super.getURI("thumbnail", id),
+			super.getPath("thumbnail", id),
 			data => {
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -425,7 +425,7 @@ export class FilesService extends BaseService {
 
 	public async searchAttachmentsAsync(options: FileOptions, onSuccess?: (attachments: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		await super.searchAsync(
-			super.getSearchURI("attachments", this.configSvc.relatedQuery),
+			super.getSearchingPath("attachments", this.configSvc.relatedQuery),
 			undefined,
 			data => {
 				if (onSuccess !== undefined) {
@@ -446,7 +446,7 @@ export class FilesService extends BaseService {
 
 	public async updateAttachmentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
-			super.getURI("attachment", body.ID),
+			super.getPath("attachment", body.ID),
 			body,
 			data => {
 				if (onSuccess !== undefined) {
@@ -464,7 +464,7 @@ export class FilesService extends BaseService {
 
 	public async deleteAttachmentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await super.deleteAsync(
-			super.getURI("attachment", id),
+			super.getPath("attachment", id),
 			data => {
 				if (onSuccess !== undefined) {
 					onSuccess(data);

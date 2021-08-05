@@ -148,7 +148,7 @@ export class AuthenticationService extends BaseService {
 
 	public async logInAsync(account: string, password: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
-			super.getURI("session", undefined, this.configSvc.relatedQuery, "users"),
+			super.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			{
 				Account: AppCrypto.rsaEncrypt(account),
 				Password: AppCrypto.rsaEncrypt(password)
@@ -187,7 +187,7 @@ export class AuthenticationService extends BaseService {
 
 	public async logInOTPAsync(id: string, info: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
-			super.getURI("session", undefined, this.configSvc.relatedQuery, "users"),
+			super.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			{
 				ID: AppCrypto.rsaEncrypt(id),
 				Info: AppCrypto.rsaEncrypt(info),
@@ -212,7 +212,7 @@ export class AuthenticationService extends BaseService {
 
 	public async logOutAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.deleteAsync(
-			super.getURI("session", undefined, this.configSvc.relatedQuery, "users"),
+			super.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			async data => await this.configSvc.updateSessionAsync(data, async () => await this.configSvc.registerSessionAsync(() => {
 				console.log(super.getLogMessage("Log out successful"), this.configSvc.isDebug ? data : "");
 				AppEvents.broadcast("Account", { Type: "Updated" });
@@ -238,7 +238,7 @@ export class AuthenticationService extends BaseService {
 
 	public async resetPasswordAsync(account: string, captcha: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
-			super.getURI("account", "reset", `uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`, "users"),
+			super.getPath("account", "reset", `uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`, "users"),
 			{
 				Account: AppCrypto.rsaEncrypt(account)
 			},
@@ -257,7 +257,7 @@ export class AuthenticationService extends BaseService {
 
 	public async renewPasswordAsync(account: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
-			super.getURI("account", "renew", this.configSvc.relatedQuery, "users"),
+			super.getPath("account", "renew", this.configSvc.relatedQuery, "users"),
 			{
 				Account: AppCrypto.rsaEncrypt(account),
 				OtpCode: AppCrypto.rsaEncrypt(otp)
@@ -276,7 +276,7 @@ export class AuthenticationService extends BaseService {
 
 	public async registerCaptchaAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.readAsync(
-			super.getURI("captcha", undefined, `register=${this.configSvc.appConfig.session.id}&${this.configSvc.relatedQuery}`, "users"),
+			super.getPath("captcha", undefined, `register=${this.configSvc.appConfig.session.id}&${this.configSvc.relatedQuery}`, "users"),
 			data => {
 				this.configSvc.appConfig.session.captcha = {
 					code: data.Code,

@@ -24,24 +24,24 @@ export class Base {
 	}
 
 	/**
-		* Gets the URI for working with the remote API
+		* Gets the URI path for working with APIs
 		* @param objectName The name of the object
 		* @param objectIdentity The identity of the object
 		* @param query The additional query
 		* @param serviceName The name of the service
 	*/
-	protected getURI(objectName: string, objectIdentity?: string, query?: string, serviceName?: string) {
+	protected getPath(objectName: string, objectIdentity?: string, query?: string, serviceName?: string) {
 		return `${(serviceName || this.name).toLowerCase()}${AppUtility.isNotEmpty(objectName) ? `/${objectName.toLowerCase()}` : ""}` + (AppUtility.isNotEmpty(objectIdentity) ? `/${objectIdentity}` : "") + (AppUtility.isNotEmpty(query) ? `?${query}` : "");
 	}
 
 	/**
-		* Gets the URI for searching (with "x-request" parameter in the query string)
+		* Gets the URI path for searching ('x-request' parameter was included in the query) with APIs
 		* @param objectName The name of the object for searching
 		* @param query The additional query
 		* @param serviceName The name of the service
 	*/
-	protected getSearchURI(objectName: string, query?: string, serviceName?: string) {
-		return this.getURI(objectName, "search", "x-request={{request}}" + (AppUtility.isNotEmpty(query) ? `&${query}` : ""), serviceName);
+	protected getSearchingPath(objectName: string, query?: string, serviceName?: string) {
+		return this.getPath(objectName, "search", "x-request={{request}}" + (AppUtility.isNotEmpty(query) ? `&${query}` : ""), serviceName);
 	}
 
 	/** Gets the message for working with console/log file */
@@ -96,7 +96,7 @@ export class Base {
 		* @param headers The additional header
 	*/
 	protected search(path: string, request: any = {}, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }) {
-		return AppAPIs.sendXMLHttpRequest("GET", AppAPIs.getURI(AppUtility.format(path, { request: AppCrypto.jsonEncode(request) })), { headers: AppAPIs.getHeaders(headers) }).subscribe(
+		return AppAPIs.sendXMLHttpRequest("GET", AppAPIs.getURL(AppUtility.format(path, { request: AppCrypto.jsonEncode(request) })), { headers: AppAPIs.getHeaders(headers) }).subscribe(
 			data => {
 				if (AppUtility.isFalse(dontProcessPagination)) {
 					const requestInfo = AppAPIs.parseRequestInfo(path);

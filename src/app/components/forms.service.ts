@@ -768,7 +768,7 @@ export class AppFormsService {
 			formControl.Options.PlaceHolder = await this.normalizeResourceAsync(formControl.Options.PlaceHolder);
 			if (formControl.Type === "Select") {
 				if (AppUtility.isNotEmpty(formControl.Options.SelectOptions.RemoteURI)) {
-					let uri = AppAPIs.getURI(formControl.Options.SelectOptions.RemoteURI);
+					let uri = AppAPIs.getURL(formControl.Options.SelectOptions.RemoteURI);
 					uri += (uri.indexOf("?") < 0 ? "?" : "&") + AppConfig.getRelatedQuery();
 					try {
 						if (formControl.Options.SelectOptions.RemoteURIProcessor !== undefined) {

@@ -97,12 +97,8 @@ export class AppAPIs {
 		}
 	}
 
-	/**
-		* Gets the absolute URI to send a request to APIs
-		* @param url The uri/path of the end-point API's uri to perform the request
-		* @param endpoint The absolute URI of the end-point API to perform the request
-	*/
-	public static getURI(url: string, endpoint?: string) {
+	/** Gets the absolute URL to send a request to APIs */
+	public static getURL(url: string, endpoint?: string) {
 		return (url.startsWith("http://") || url.startsWith("https://") ? "" : endpoint || AppConfig.URIs.apis) + url;
 	}
 
@@ -642,10 +638,10 @@ export class AppAPIs {
 				const objectIdentity = query["object-identity"];
 				["service-name", "object-name", "object-identity"].forEach(name => delete query[name]);
 				query = `?${AppUtility.getQueryOfJson(query)}`;
-				path = `${request.ServiceName}${AppUtility.isNotEmpty(request.ObjectName) ? `/${request.ObjectName}${AppUtility.isNotEmpty(objectIdentity) ? `/${objectIdentity}` : ""}` : ""}${query === "?" ? "" : query}`;
+				path = `${request.ServiceName}${AppUtility.isNotEmpty(request.ObjectName) ? `/${request.ObjectName}` : ""}${AppUtility.isNotEmpty(objectIdentity) ? `/${objectIdentity}` : ""}${query === "?" ? "" : query}`;
 			}
 			path += request.Extra !== undefined ? (path.indexOf("?") > 0 ? "&" : "?") + `x-request-extra=${AppCrypto.jsonEncode(request.Extra)}` : "";
-			return this.sendXMLHttpRequest(request.Verb || "GET", this.getURI(path), { headers: request.Header }, request.Body);
+			return this.sendXMLHttpRequest(request.Verb || "GET", this.getURL(path), { headers: request.Header }, request.Body);
 		}
 	}
 

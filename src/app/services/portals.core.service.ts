@@ -480,13 +480,13 @@ export class PortalsCoreService extends BaseService {
 
 	public async getTemplateAsync(name: string, theme?: string, mainDirectory?: string, subDirectory?: string) {
 		let template: string;
-		await super.fetchAsync(super.getURI("definitions", "template", "x-request=" + AppCrypto.jsonEncode({ Name: name, Theme: theme, MainDirectory: mainDirectory, SubDirectory: subDirectory })), data => template = data.Template);
+		await super.fetchAsync(super.getPath("definitions", "template", "x-request=" + AppCrypto.jsonEncode({ Name: name, Theme: theme, MainDirectory: mainDirectory, SubDirectory: subDirectory })), data => template = data.Template);
 		return template || "";
 	}
 
 	public async getTemplateZonesAsync(dekstopID: string) {
 		let zones: Array<string>;
-		await super.fetchAsync(super.getURI("definitions", "template", "x-request=" + AppCrypto.jsonEncode({ Mode: "Zones", DesktopID: dekstopID })), data => zones = data);
+		await super.fetchAsync(super.getPath("definitions", "template", "x-request=" + AppCrypto.jsonEncode({ Mode: "Zones", DesktopID: dekstopID })), data => zones = data);
 		return zones || [];
 	}
 
@@ -1258,19 +1258,19 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public lookup(objectName: string, request: any, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		return super.search(super.getSearchURI(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, headers);
+		return super.search(super.getSearchingPath(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, headers);
 	}
 
 	public async lookupAsync(objectName: string, request: any, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await super.searchAsync(super.getSearchURI(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, false, headers);
+		await super.searchAsync(super.getSearchingPath(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, false, headers);
 	}
 
 	public async getAsync(objectName: string, id: string, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await super.readAsync(super.getURI(objectName, id), onSuccess, onError, headers, true);
+		await super.readAsync(super.getPath(objectName, id), onSuccess, onError, headers, true);
 	}
 
 	public async refreshAsync(objectName: string, id: string, onSuccess?: (data: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, headers?: { [header: string]: string }) {
-		await super.readAsync(super.getURI(objectName, "refresh", `object-id=${id}`), onSuccess, onError, headers, useXHR);
+		await super.readAsync(super.getPath(objectName, "refresh", `object-id=${id}`), onSuccess, onError, headers, useXHR);
 	}
 
 	public async getSidebarFooterButtonsAsync() {
@@ -1471,7 +1471,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("organization", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchingPath("organization", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Organization.contains(obj.ID) ? convertToCompleterItem(Organization.get(obj.ID)) : convertToCompleterItem(Organization.update(Organization.deserialize(obj)))),
 			convertToCompleterItem
 		);
@@ -1479,7 +1479,7 @@ export class PortalsCoreService extends BaseService {
 
 	public searchOrganization(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
-			super.getSearchURI("organization", this.configSvc.relatedQuery),
+			super.getSearchingPath("organization", this.configSvc.relatedQuery),
 			request,
 			data => this.processOrganizations(data, onSuccess),
 			error => {
@@ -1493,7 +1493,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async searchOrganizationAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
-			super.getSearchURI("organization", this.configSvc.relatedQuery),
+			super.getSearchingPath("organization", this.configSvc.relatedQuery),
 			request,
 			data => this.processOrganizations(data, onSuccess),
 			error => {
@@ -1507,7 +1507,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async createOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
-			super.getURI("organization"),
+			super.getPath("organization"),
 			body,
 			data => {
 				Organization.update(data);
@@ -1532,7 +1532,7 @@ export class PortalsCoreService extends BaseService {
 		}
 		else {
 			await super.readAsync(
-				super.getURI("organization", id),
+				super.getPath("organization", id),
 				data => {
 					Organization.update(data);
 					if (AppUtility.isArray(data.Modules, true)) {
@@ -1569,7 +1569,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async updateOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
-			super.getURI("organization", body.ID),
+			super.getPath("organization", body.ID),
 			body,
 			data => {
 				Organization.update(data);
@@ -1588,7 +1588,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async deleteOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.deleteAsync(
-			super.getURI("organization", id),
+			super.getPath("organization", id),
 			data => {
 				Organization.instances.remove(id);
 				if (onSuccess !== undefined) {
@@ -1647,7 +1647,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("role", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchingPath("role", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
 				const role = Role.get(obj.ID);
 				return role === undefined
@@ -1662,7 +1662,7 @@ export class PortalsCoreService extends BaseService {
 
 	public searchRole(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
-			super.getSearchURI("role", this.configSvc.relatedQuery),
+			super.getSearchingPath("role", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -1691,7 +1691,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async searchRoleAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
-			super.getSearchURI("role", this.configSvc.relatedQuery),
+			super.getSearchingPath("role", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -1720,7 +1720,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async createRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
-			super.getURI("role"),
+			super.getPath("role"),
 			body,
 			data => {
 				this.updateRole(data);
@@ -1746,7 +1746,7 @@ export class PortalsCoreService extends BaseService {
 		}
 		else {
 			await super.readAsync(
-				super.getURI("role", id),
+				super.getPath("role", id),
 				data => {
 					this.updateRole(data);
 					if (onSuccess !== undefined) {
@@ -1768,7 +1768,7 @@ export class PortalsCoreService extends BaseService {
 	public async updateRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		const parentID = Role.contains(body.ID) ? Role.get(body.ID).ParentID : undefined;
 		await super.updateAsync(
-			super.getURI("role", body.ID),
+			super.getPath("role", body.ID),
 			body,
 			data => {
 				this.updateRole(data, parentID);
@@ -1788,7 +1788,7 @@ export class PortalsCoreService extends BaseService {
 	public async deleteRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Role.contains(id) ? Role.get(id).ParentID : undefined;
 		await super.deleteAsync(
-			super.getURI("role", id),
+			super.getPath("role", id),
 			data => {
 				this.deleteRole(data.ID, parentID);
 				if (onSuccess !== undefined) {
@@ -1897,7 +1897,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("desktop", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchingPath("desktop", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
 				const desktop = Desktop.get(obj.ID);
 				return desktop === undefined
@@ -1912,7 +1912,7 @@ export class PortalsCoreService extends BaseService {
 
 	public searchDesktop(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
-			super.getSearchURI("desktop", this.configSvc.relatedQuery),
+			super.getSearchingPath("desktop", this.configSvc.relatedQuery),
 			request,
 			data => this.processDesktops(data, onSuccess),
 			error => {
@@ -1926,7 +1926,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async searchDesktopAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
-			super.getSearchURI("desktop", this.configSvc.relatedQuery),
+			super.getSearchingPath("desktop", this.configSvc.relatedQuery),
 			request,
 			data => this.processDesktops(data, onSuccess),
 			error => {
@@ -1940,7 +1940,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async createDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
-			super.getURI("desktop"),
+			super.getPath("desktop"),
 			body,
 			data => {
 				this.updateDesktop(data);
@@ -1966,7 +1966,7 @@ export class PortalsCoreService extends BaseService {
 		}
 		else {
 			await super.readAsync(
-				super.getURI("desktop", id),
+				super.getPath("desktop", id),
 				data => {
 					this.updateDesktop(data);
 					if (onSuccess !== undefined) {
@@ -1991,7 +1991,7 @@ export class PortalsCoreService extends BaseService {
 	public async updateDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Desktop.contains(body.ID) ? Desktop.get(body.ID).ParentID : undefined;
 		await super.updateAsync(
-			super.getURI("desktop", body.ID),
+			super.getPath("desktop", body.ID),
 			body,
 			data => {
 				this.updateDesktop(data, parentID);
@@ -2012,7 +2012,7 @@ export class PortalsCoreService extends BaseService {
 	public async deleteDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Desktop.contains(id) ? Desktop.get(id).ParentID : undefined;
 		await super.deleteAsync(
-			super.getURI("desktop", id),
+			super.getPath("desktop", id),
 			data => {
 				this.deleteDesktop(data.ID, parentID);
 				if (onSuccess !== undefined) {
@@ -2141,7 +2141,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("portlet", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchingPath("portlet", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Portlet.contains(obj.ID) ? convertToCompleterItem(Portlet.get(obj.ID)) : convertToCompleterItem(Portlet.update(Portlet.deserialize(obj)))),
 			convertToCompleterItem
 		);
@@ -2149,7 +2149,7 @@ export class PortalsCoreService extends BaseService {
 
 	public searchPortlet(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
-			super.getSearchURI("portlet", this.configSvc.relatedQuery),
+			super.getSearchingPath("portlet", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2174,7 +2174,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async searchPortletAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
 		await super.searchAsync(
-			super.getSearchURI("portlet", this.configSvc.relatedQuery),
+			super.getSearchingPath("portlet", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2201,7 +2201,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async createPortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
-			super.getURI("portlet"),
+			super.getPath("portlet"),
 			body,
 			data => {
 				Portlet.update(data);
@@ -2226,7 +2226,7 @@ export class PortalsCoreService extends BaseService {
 		}
 		else {
 			await super.readAsync(
-				super.getURI("portlet", id),
+				super.getPath("portlet", id),
 				data => {
 					Portlet.update(data);
 					if (onSuccess !== undefined) {
@@ -2247,7 +2247,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async updatePortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
 		await super.updateAsync(
-			super.getURI("portlet", body.ID),
+			super.getPath("portlet", body.ID),
 			body,
 			data => {
 				Portlet.update(data);
@@ -2268,7 +2268,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async deletePortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.deleteAsync(
-			super.getURI("portlet", id),
+			super.getPath("portlet", id),
 			data => {
 				Portlet.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -2335,7 +2335,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("site", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchingPath("site", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Site.contains(obj.ID) ? convertToCompleterItem(Site.get(obj.ID)) : convertToCompleterItem(Site.update(Site.deserialize(obj)))),
 			convertToCompleterItem
 		);
@@ -2343,7 +2343,7 @@ export class PortalsCoreService extends BaseService {
 
 	public searchSite(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
-			super.getSearchURI("site", this.configSvc.relatedQuery),
+			super.getSearchingPath("site", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2368,7 +2368,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async searchSiteAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
-			super.getSearchURI("site", this.configSvc.relatedQuery),
+			super.getSearchingPath("site", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2393,7 +2393,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async createSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
-			super.getURI("site"),
+			super.getPath("site"),
 			body,
 			data => {
 				Site.update(data);
@@ -2418,7 +2418,7 @@ export class PortalsCoreService extends BaseService {
 		}
 		else {
 			await super.readAsync(
-				super.getURI("site", id),
+				super.getPath("site", id),
 				data => {
 					Site.update(data);
 					if (onSuccess !== undefined) {
@@ -2439,7 +2439,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async updateSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
-			super.getURI("site", body.ID),
+			super.getPath("site", body.ID),
 			body,
 			data => {
 				Site.update(data);
@@ -2458,7 +2458,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async deleteSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.deleteAsync(
-			super.getURI("site", id),
+			super.getPath("site", id),
 			data => {
 				Site.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -2504,7 +2504,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("module", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchingPath("module", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Module.contains(obj.ID) ? convertToCompleterItem(Module.get(obj.ID)) : convertToCompleterItem(Module.update(Module.deserialize(obj)))),
 			convertToCompleterItem
 		);
@@ -2512,7 +2512,7 @@ export class PortalsCoreService extends BaseService {
 
 	public searchModule(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
-			super.getSearchURI("module", this.configSvc.relatedQuery),
+			super.getSearchingPath("module", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2537,7 +2537,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async searchModuleAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
 		await super.searchAsync(
-			super.getSearchURI("module", this.configSvc.relatedQuery),
+			super.getSearchingPath("module", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2565,7 +2565,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async createModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
-			super.getURI("module"),
+			super.getPath("module"),
 			body,
 			data => {
 				Module.update(data);
@@ -2597,7 +2597,7 @@ export class PortalsCoreService extends BaseService {
 		}
 		else {
 			await super.readAsync(
-				super.getURI("module", id),
+				super.getPath("module", id),
 				data => {
 					Module.update(data);
 					if (AppUtility.isArray(data.ContentTypes, true)) {
@@ -2621,7 +2621,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async updateModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
-			super.getURI("module", body.ID),
+			super.getPath("module", body.ID),
 			body,
 			data => {
 				Module.update(data);
@@ -2643,7 +2643,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async deleteModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.deleteAsync(
-			super.getURI("module", id),
+			super.getPath("module", id),
 			data => {
 				Module.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -2689,7 +2689,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("content.type", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchingPath("content.type", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => ContentType.contains(obj.ID) ? convertToCompleterItem(ContentType.get(obj.ID)) : convertToCompleterItem(ContentType.update(ContentType.deserialize(obj)))),
 			convertToCompleterItem
 		);
@@ -2697,7 +2697,7 @@ export class PortalsCoreService extends BaseService {
 
 	public searchContentType(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
-			super.getSearchURI("content.type", this.configSvc.relatedQuery),
+			super.getSearchingPath("content.type", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2722,7 +2722,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async searchContentTypeAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		await super.searchAsync(
-			super.getSearchURI("content.type", this.configSvc.relatedQuery),
+			super.getSearchingPath("content.type", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2749,7 +2749,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async createContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
-			super.getURI("content.type"),
+			super.getPath("content.type"),
 			body,
 			data => {
 				ContentType.update(data);
@@ -2774,7 +2774,7 @@ export class PortalsCoreService extends BaseService {
 		}
 		else {
 			await super.readAsync(
-				super.getURI("content.type", id),
+				super.getPath("content.type", id),
 				data => {
 					ContentType.update(data);
 					if (onSuccess !== undefined) {
@@ -2795,7 +2795,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async updateContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
-			super.getURI("content.type", body.ID),
+			super.getPath("content.type", body.ID),
 			body,
 			data => {
 				ContentType.update(data);
@@ -2814,7 +2814,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async deleteContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.deleteAsync(
-			super.getURI("content.type", id),
+			super.getPath("content.type", id),
 			data => {
 				ContentType.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -2863,7 +2863,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchURI("expression", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(super.getSearchingPath("expression", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Expression.contains(obj.ID) ? convertToCompleterItem(Expression.get(obj.ID)) : convertToCompleterItem(Expression.update(Expression.deserialize(obj)))),
 			convertToCompleterItem
 		);
@@ -2871,7 +2871,7 @@ export class PortalsCoreService extends BaseService {
 
 	public searchExpression(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
-			super.getSearchURI("expression", this.configSvc.relatedQuery),
+			super.getSearchingPath("expression", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2892,7 +2892,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async searchExpressionAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
-			super.getSearchURI("expression", this.configSvc.relatedQuery),
+			super.getSearchingPath("expression", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2913,7 +2913,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async createExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.createAsync(
-			super.getURI("expression"),
+			super.getPath("expression"),
 			body,
 			data => {
 				Expression.update(data);
@@ -2938,7 +2938,7 @@ export class PortalsCoreService extends BaseService {
 		}
 		else {
 			await super.readAsync(
-				super.getURI("expression", id),
+				super.getPath("expression", id),
 				data => {
 					Expression.update(data);
 					if (onSuccess !== undefined) {
@@ -2959,7 +2959,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async updateExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
-			super.getURI("expression", body.ID),
+			super.getPath("expression", body.ID),
 			body,
 			data => {
 				Expression.update(data);
@@ -2978,7 +2978,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async deleteExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.deleteAsync(
-			super.getURI("expression", id),
+			super.getPath("expression", id),
 			data => {
 				Expression.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -3028,7 +3028,7 @@ export class PortalsCoreService extends BaseService {
 		request.Pagination["MaxPages"] = maxPages !== undefined && maxPages > 0 ? maxPages : 0;
 		await super.sendAsync(
 			{
-				Path: super.getURI("excel", "export", "x-request=" + AppCrypto.jsonEncode(request)),
+				Path: super.getPath("excel", "export", "x-request=" + AppCrypto.jsonEncode(request)),
 				Header: this.configSvc.appConfig.getAuthenticatedHeaders()
 			},
 			async data => {
@@ -3136,7 +3136,7 @@ export class PortalsCoreService extends BaseService {
 						const filename = info["x-filename"] as string;
 						await super.sendAsync(
 							{
-								Path: super.getURI("excel", "import", "x-request=" + AppCrypto.jsonEncode({
+								Path: super.getPath("excel", "import", "x-request=" + AppCrypto.jsonEncode({
 									SystemID: systemID,
 									RepositoryID: repositoryID,
 									RepositoryEntityID: repositoryEntityID,
@@ -3243,7 +3243,7 @@ export class PortalsCoreService extends BaseService {
 			async () => {
 				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.common.cache.title"));
 				await super.readAsync(
-					super.getURI("caches", objectName, "object-id=" + objectID),
+					super.getPath("caches", objectName, "object-id=" + objectID),
 					async _ => await this.appFormsSvc.showAlertAsync("Cache", await this.configSvc.getResourceAsync("portals.common.cache.done")),
 					async error => await this.appFormsSvc.showErrorAsync(error),
 					undefined,
@@ -3274,7 +3274,7 @@ export class PortalsCoreService extends BaseService {
 			async status => {
 				await this.appFormsSvc.showLoadingAsync(title);
 				await super.readAsync(
-					super.getURI("approve", id),
+					super.getPath("approve", id),
 					async _ => {
 						await this.appFormsSvc.showAlertAsync(title, await this.configSvc.getResourceAsync("portals.common.approval.message", { status: await this.configSvc.getResourceAsync(`status.approval.${status}`) }));
 					},
@@ -3315,7 +3315,7 @@ export class PortalsCoreService extends BaseService {
 						if (validate(lastData, firstData)) {
 							await this.appFormsSvc.showLoadingAsync(move);
 							await super.readAsync(
-								super.getURI("move", objectName, "object-id=" + objectID),
+								super.getPath("move", objectName, "object-id=" + objectID),
 								async () => await this.appFormsSvc.showAlertAsync(move, resources.done),
 								async error => await this.appFormsSvc.showErrorAsync(error),
 								getHeaders(lastData),
