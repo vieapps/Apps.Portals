@@ -26,12 +26,12 @@ export class Base {
 	/**
 		* Gets the URI for working with the remote API
 		* @param objectName The name of the object
-		* @param objectID The identity of the object
+		* @param objectIdentity The identity of the object
 		* @param query The additional query
 		* @param serviceName The name of the service
 	*/
-	protected getURI(objectName: string, objectID?: string, query?: string, serviceName?: string) {
-		return `${(serviceName || this.name).toLowerCase()}${AppUtility.isNotEmpty(objectName) ? "/" + objectName.toLowerCase() : ""}` + (AppUtility.isNotEmpty(objectID) ? `/${objectID}` : "") + (AppUtility.isNotEmpty(query) ? `?${query}` : "");
+	protected getURI(objectName: string, objectIdentity?: string, query?: string, serviceName?: string) {
+		return `${(serviceName || this.name).toLowerCase()}${AppUtility.isNotEmpty(objectName) ? `/${objectName.toLowerCase()}` : ""}` + (AppUtility.isNotEmpty(objectIdentity) ? `/${objectIdentity}` : "") + (AppUtility.isNotEmpty(query) ? `?${query}` : "");
 	}
 
 	/**
@@ -41,7 +41,7 @@ export class Base {
 		* @param serviceName The name of the service
 	*/
 	protected getSearchURI(objectName: string, query?: string, serviceName?: string) {
-		return this.getURI(objectName, "search", "x-request={{request}}" + (query !== undefined ? `&${query}` : ""), serviceName);
+		return this.getURI(objectName, "search", "x-request={{request}}" + (AppUtility.isNotEmpty(query) ? `&${query}` : ""), serviceName);
 	}
 
 	/** Gets the message for working with console/log file */
