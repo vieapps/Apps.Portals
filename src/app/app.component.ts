@@ -327,35 +327,21 @@ export class AppComponent implements OnInit {
 			}
 		});
 
-		AppEvents.on("Profile", async info => {
+		AppEvents.on("Profile", info => {
 			if (AppUtility.isEquals(info.args.Type, "Updated")) {
-				const profile = this.configSvc.getAccount().profile;
-				if (profile !== undefined) {
-					this.sidebar.header.thumbnail = profile.avatarURI;
-					this.sidebar.header.onThumbnailClick = () => AppEvents.broadcast("Navigate", { Type: "Profile" });
-					if (this.portalsCoreSvc.activeOrganization !== undefined) {
-						this.sidebar.header.title = this.portalsCoreSvc.activeOrganization.Alias;
-						this.sidebar.header.onTitleClick = this.portalsCoreSvc.canManageOrganization()
-							? async () => await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.activeOrganization.routerURI)
-							: () => {};
-					}
-					else {
-						this.sidebar.header.onTitleClick = () => {};
-					}
-				}
-				else {
-					this.sidebar.header.title = this.configSvc.appConfig.app.name;
-					this.sidebar.header.thumbnail = this.sidebar.header.onTitleClick = undefined;
-				}
+				updateSidebarImage("when user profile was updated");
+			}
+		});
+
+		AppEvents.on("Account", info => {
+			if (AppUtility.isEquals(info.args.Type, "Updated")) {
+				updateSidebarTitle("when account was updated");
 			}
 		});
 
 		AppEvents.on(this.portalsCoreSvc.name, info => {
 			if (AppUtility.isEquals(info.args.Type, "Changed") && AppUtility.isEquals(info.args.Object, "Organization")) {
-				this.sidebar.header.title = this.portalsCoreSvc.activeOrganization.Alias;
-				this.sidebar.header.onTitleClick = this.portalsCoreSvc.canManageOrganization()
-					? async () => await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.activeOrganization.routerURI)
-					: () => {};
+				updateSidebarTitle("when organization was changed");
 			}
 		});
 
@@ -373,13 +359,52 @@ export class AppComponent implements OnInit {
 				await this.normalizeSidebarAsync();
 				this.sidebar.active = "cms";
 				if (AppUtility.isEquals(info.args.Type, "LogOut")) {
-					this.sidebar.header.thumbnail = undefined;
-					this.sidebar.header.onThumbnailClick = () => {};
+					updateSidebarImage("when logged out");
+					updateSidebarTitle("when logged out");
 					this.sidebar.header.title = this.configSvc.appConfig.app.name;
-					this.sidebar.header.onTitleClick = () => {};
 				}
 			}
 		});
+
+		const updateSidebarImage = (reason?: string) => {
+			if (this.configSvc.isDebug) {
+				console.log(`<AppComponent>: Update sidebar's image [${reason}]`);
+			}
+			const profile = this.configSvc.getAccount().profile;
+			if (profile !== undefined) {
+				this.sidebar.header.thumbnail = profile.avatarURI;
+				this.sidebar.header.onThumbnailClick = () => AppEvents.broadcast("Navigate", { Type: "Profile" });
+			}
+			else {
+				this.sidebar.header.thumbnail = this.sidebar.header.onTitleClick = undefined;
+			}
+		};
+
+		const updateSidebarTitle = (reason?: string) => {
+			const account = this.configSvc.getAccount();
+			const organization = this.portalsCoreSvc.activeOrganization;
+			if (this.configSvc.isDebug) {
+				console.log(`<AppComponent>: Update sidebar's title [${reason}]`);
+			}
+			if (organization !== undefined) {
+				this.sidebar.header.title = organization.Alias;
+				if (this.portalsCoreSvc.canManageOrganization(organization, account)) {
+					this.sidebar.header.onTitleClick = async () => await this.configSvc.navigateForwardAsync(organization.routerURI);
+				}
+				else {
+					if (AppUtility.isNotEmpty(account.id)) {
+						this.sidebar.header.onTitleClick = () => {
+							if (this.configSvc.isDebug) {
+								console.warn("<AppComponent>: User click on sidebar's title, but have no permission", account);
+							}
+						};
+					}
+					else {
+						this.sidebar.header.onTitleClick = () => {};
+					}
+				}
+			}
+		};
 	}
 
 	private async activateAsync() {
