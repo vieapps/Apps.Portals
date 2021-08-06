@@ -825,13 +825,20 @@ export class PortalsCmsService extends BaseService {
 				this.deleteCategory(message.Data.ID, message.Data.ParentID);
 				break;
 
+			case "Get":
+			case "Search":
+				break;
+
 			default:
 				console.warn(super.getLogMessage("Got an update message of a CMS category"), message);
 				break;
 		}
-		AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
-		if (AppUtility.isNotEmpty(message.Data.ParentID)) {
-			AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
+
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+			AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
+			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
+				AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
+			}
 		}
 	}
 
@@ -1091,15 +1098,22 @@ export class PortalsCmsService extends BaseService {
 				Content.instances.remove(message.Data.ID);
 				break;
 
+			case "Get":
+			case "Search":
+				break;
+
 			default:
 				console.warn(super.getLogMessage("Got an update message of a CMS content"), message);
 				break;
 		}
-		AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: message.Data.CategoryID });
-		if (AppUtility.isArray(message.Data.OtherCategories)) {
-			(message.Data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: categoryID }));
+
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+			AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: message.Data.CategoryID });
+			if (AppUtility.isArray(message.Data.OtherCategories)) {
+				(message.Data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: categoryID }));
+			}
+			this.prepareFeaturedContentsAsync();
 		}
-		this.prepareFeaturedContentsAsync();
 	}
 
 	public getContentTypesOfItem(module: Module) {
@@ -1281,12 +1295,19 @@ export class PortalsCmsService extends BaseService {
 				Item.instances.remove(message.Data.ID);
 				break;
 
+			case "Get":
+			case "Search":
+				break;
+
 			default:
 				console.warn(super.getLogMessage("Got an update message of a CMS item"), message);
 				break;
 		}
-		AppEvents.broadcast(this.name, { Object: "CMS.Item", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
-		this.prepareFeaturedContentsAsync();
+
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+			AppEvents.broadcast(this.name, { Object: "CMS.Item", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
+			this.prepareFeaturedContentsAsync();
+		}
 	}
 
 	public getContentTypesOfLink(module: Module) {
@@ -1479,13 +1500,20 @@ export class PortalsCmsService extends BaseService {
 				this.deleteLink(message.Data.ID, message.Data.ParentID);
 				break;
 
+			case "Get":
+			case "Search":
+				break;
+
 			default:
 				console.warn(super.getLogMessage("Got an update message of a CMS link"), message);
 				break;
 		}
-		AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
-		if (AppUtility.isNotEmpty(message.Data.ParentID)) {
-			AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+			AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
+			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
+				AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+			}
 		}
 	}
 

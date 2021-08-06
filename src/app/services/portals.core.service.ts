@@ -1615,11 +1615,18 @@ export class PortalsCoreService extends BaseService {
 				Organization.instances.remove(message.Data.ID);
 				break;
 
+			case "Get":
+			case "Search":
+				break;
+
 			default:
 				console.warn(super.getLogMessage("Got an update message of an organization"), message);
 				break;
 		}
-		AppEvents.broadcast(this.name, { Object: "Organization", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+			AppEvents.broadcast(this.name, { Object: "Organization", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		}
 	}
 
 	private processOrganizations(data: any, onNext?: (data?: any) => void) {
@@ -1832,13 +1839,20 @@ export class PortalsCoreService extends BaseService {
 				this.deleteRole(message.Data.ID, message.Data.ParentID);
 				break;
 
+			case "Get":
+			case "Search":
+				break;
+
 			default:
 				console.warn(super.getLogMessage("Got an update message of a role"), message);
 				break;
 		}
-		AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
-		if (AppUtility.isNotEmpty(message.Data.ParentID)) {
-			AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+			AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
+			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
+				AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+			}
 		}
 	}
 
@@ -2056,13 +2070,20 @@ export class PortalsCoreService extends BaseService {
 				this.deleteDesktop(message.Data.ID, message.Data.ParentID);
 				break;
 
+			case "Get":
+			case "Search":
+				break;
+
 			default:
 				console.warn(super.getLogMessage("Got an update message of a desktop"), message);
 				break;
 		}
-		AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
-		if (AppUtility.isNotEmpty(message.Data.ParentID)) {
-			AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+			AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
+			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
+				AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+			}
 		}
 	}
 
@@ -2316,11 +2337,18 @@ export class PortalsCoreService extends BaseService {
 				}
 				break;
 
+			case "Get":
+			case "Search":
+				break;
+
 			default:
 				console.warn(super.getLogMessage(`Got an update message of a portlet - Portlet ID: ${message.Data.ID} - Desktop ID: ${message.Data.DesktopID}`), message);
 				break;
 		}
-		AppEvents.broadcast(this.name, { Object: "Portlet", Type: `${message.Type.Event}d`, ID: message.Data.ID, DesktopID: message.Data.DesktopID });
+
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+			AppEvents.broadcast(this.name, { Object: "Portlet", Type: `${message.Type.Event}d`, ID: message.Data.ID, DesktopID: message.Data.DesktopID });
+		}
 	}
 
 	public get siteCompleterDataSource() {
@@ -2485,11 +2513,18 @@ export class PortalsCoreService extends BaseService {
 				Site.instances.remove(message.Data.ID);
 				break;
 
+			case "Get":
+			case "Search":
+				break;
+
 			default:
 				console.warn(super.getLogMessage("Got an update message of a site"), message);
 				break;
 		}
-		AppEvents.broadcast(this.name, { Object: "Site", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+			AppEvents.broadcast(this.name, { Object: "Site", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		}
 	}
 
 	public get moduleCompleterDataSource() {
@@ -2670,11 +2705,18 @@ export class PortalsCoreService extends BaseService {
 				Module.instances.remove(message.Data.ID);
 				break;
 
+			case "Get":
+			case "Search":
+				break;
+
 			default:
 				console.warn(super.getLogMessage("Got an update message of a module"), message);
 				break;
 		}
-		AppEvents.broadcast(this.name, { Object: "Module", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+			AppEvents.broadcast(this.name, { Object: "Module", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		}
 	}
 
 	public get contentTypeCompleterDataSource() {
@@ -2844,11 +2886,18 @@ export class PortalsCoreService extends BaseService {
 				}
 				break;
 
+			case "Get":
+			case "Search":
+				break;
+
 			default:
 				console.warn(super.getLogMessage("Got an update message of a content type"), message);
 				break;
 		}
-		AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+			AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		}
 	}
 
 	public get expressionCompleterDataSource() {
@@ -3007,11 +3056,18 @@ export class PortalsCoreService extends BaseService {
 				}
 				break;
 
+			case "Get":
+			case "Search":
+				break;
+
 			default:
 				console.warn(super.getLogMessage("Got an update message of an expression"), message);
 				break;
 		}
-		AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+			AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		}
 	}
 
 	public async exportToExcelAsync(objectName: string, systemID?: string, repositoryID?: string, repositoryEntityID?: string, filterBy?: any, sortBy?: any, pagination?: AppDataPagination, maxPages?: number, onCompleted?: (message: AppMessage) => void, onProgress?: (percentage: string) => void, onError?: (error?: any) => void) {
