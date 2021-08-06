@@ -36,7 +36,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx-portals",
-		version: "3.9.0",
+		version: "3.8.1",
 		frameworks: "ionic 5.6 - angular 11.2 - cordova 10.0",
 		mode: "",
 		platform: "",
@@ -94,7 +94,7 @@ export class AppConfig {
 		setServicePrivilegs: false,
 		setServicePrivilegsRole: "ServiceAdministrator",
 		setObjectPrivilegs: true,
-		phoneIsAllowed: false
+		phoneIsAllowed: true
 	};
 
 	/** Geographic meta */
@@ -312,20 +312,7 @@ export class AppConfig {
 			"x-captcha": "true",
 			"x-captcha-registered": AppCrypto.aesEncrypt(this.session.captcha.code),
 			"x-captcha-input": AppCrypto.aesEncrypt(captcha)
-		} as { [header: string]: string };
-	}
-
-	/** Gets the message for authenticating with APIs */
-	public static get authenticatingMessage() {
-		return {
-			ServiceName: "Session",
-			Verb: "AUTH",
-			Header: {
-				"x-session-id": AppCrypto.aesEncrypt(this.session.id),
-				"x-device-id": AppCrypto.aesEncrypt(this.session.device)
-			},
-			Body: this.getAuthenticatedHeaders()
-		};
+		} as { [key: string]: string };
 	}
 
 }
