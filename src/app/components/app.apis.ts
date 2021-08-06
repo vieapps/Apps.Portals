@@ -346,53 +346,47 @@ export class AppAPIs {
 			}
 
 			// prepare
-			let json: any;
-			try {
-				json = JSON.parse(event.data || "{}");
-			}
-			catch (error) {
-				json = {};
-				console.error("[AppAPIs]: Error occurred while parsing JSON", error);
-				this.reupdateWebSocket();
+			const result = this.parseWebSocket(event.data || "{}");
+			if (!result.status) {
 				return;
 			}
 
 			// prepare handlers
-			const successCallback = AppUtility.isNotEmpty(json.ID) ? this._requests.successCallbacks[json.ID] : undefined;
-			const errorCallback = AppUtility.isNotEmpty(json.ID) ? this._requests.errorCallbacks[json.ID] : undefined;
+			const successCallback = AppUtility.isNotEmpty(result.data.ID) ? this._requests.successCallbacks[result.data.ID] : undefined;
+			const errorCallback = AppUtility.isNotEmpty(result.data.ID) ? this._requests.errorCallbacks[result.data.ID] : undefined;
 
 			// got a callback
 			if (successCallback !== undefined || errorCallback !== undefined) {
 				try {
-					if ("Error" === json.Type) {
-						if (AppUtility.isGotSecurityException(json.Data)) {
-							console.warn(`[AppAPIs]: Got a security issue: ${json.Data.Message} (${json.Data.Code})`, AppConfig.isDebug ? json.Data : "");
-							this.reopenWebSocketWhenGotSecurityError(json.Data);
+					if ("Error" === result.data.Type) {
+						if (AppUtility.isGotSecurityException(result.data.Data)) {
+							console.warn(`[AppAPIs]: Got a security issue: ${result.data.Data.Message} (${result.data.Data.Code})`, AppConfig.isDebug ? result.data.Data : "");
+							this.reopenWebSocketWhenGotSecurityError(result.data.Data);
 						}
 						if (errorCallback !== undefined) {
-							errorCallback(json);
+							errorCallback(result.data);
 						}
 						else {
-							console.error("[AppAPIs]: Got an error while processing", json);
+							console.error("[AppAPIs]: Got an error while processing", result.data);
 						}
 					}
 					else if (successCallback !== undefined) {
-						successCallback(json.Data);
+						successCallback(result.data.Data);
 					}
 				}
 				catch (error) {
-					console.error("[AppAPIs]: Error occurred while running the callback handler", error, json);
+					console.error("[AppAPIs]: Error occurred while running the callback handler", error, result.data);
 				}
 			}
 
 			// got an error
-			else if ("Error" === json.Type) {
-				if (AppUtility.isGotSecurityException(json.Data)) {
-					console.warn(`[AppAPIs]: Got a security issue: ${json.Data.Message} (${json.Data.Code})`, AppConfig.isDebug ? json.Data : "");
-					this.reopenWebSocketWhenGotSecurityError(json.Data);
+			else if ("Error" === result.data.Type) {
+				if (AppUtility.isGotSecurityException(result.data.Data)) {
+					console.warn(`[AppAPIs]: Got a security issue: ${result.data.Data.Message} (${result.data.Data.Code})`, AppConfig.isDebug ? result.data.Data : "");
+					this.reopenWebSocketWhenGotSecurityError(result.data.Data);
 				}
 				else {
-					console.warn(`[AppAPIs]: ${("InvalidRequestException" === json.Data.Type ? "Got an invalid requesting data" : "Got an error")}: ${json.Data.Message} (${json.Data.Code})`, AppConfig.isDebug ? json.Data : "");
+					console.warn(`[AppAPIs]: ${("InvalidRequestException" === result.data.Data.Type ? "Got an invalid requesting data" : "Got an error")}: ${result.data.Data.Message} (${result.data.Data.Code})`, AppConfig.isDebug ? result.data.Data : "");
 				}
 			}
 
@@ -400,8 +394,8 @@ export class AppAPIs {
 			else {
 				// prepare
 				const message: AppMessage = {
-					Type: this.parseMessageType(json.Type),
-					Data: json.Data || {}
+					Type: this.parseMessageType(result.data.Type),
+					Data: result.data.Data || {}
 				};
 
 				if (AppConfig.isDebug && message.Type.Event !== "Get" && message.Type.Event !== "Search") {
@@ -441,10 +435,10 @@ export class AppAPIs {
 				}
 			}
 
-			if (AppUtility.isNotEmpty(json.ID)) {
-				delete this._requests.callbackableRequests[json.ID];
-				delete this._requests.successCallbacks[json.ID];
-				delete this._requests.errorCallbacks[json.ID];
+			if (AppUtility.isNotEmpty(result.data.ID)) {
+				delete this._requests.callbackableRequests[result.data.ID];
+				delete this._requests.successCallbacks[result.data.ID];
+				delete this._requests.errorCallbacks[result.data.ID];
 			}
 		};
 
@@ -502,6 +496,23 @@ export class AppAPIs {
 				},
 				Data: error.Data || {}
 			});
+		}
+	}
+
+	private static parseWebSocket(data: string) {
+		try {
+			return {
+				status: true,
+				data: JSON.parse(data)
+			};
+		}
+		catch (error) {
+			console.error("[AppAPIs]: Error occurred while parsing JSON data", error);
+			this.reupdateWebSocket();
+			return {
+				status: false,
+				data: {}
+			};
 		}
 	}
 
