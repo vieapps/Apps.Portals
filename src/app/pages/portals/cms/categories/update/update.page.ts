@@ -154,7 +154,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 			await this.portalsCmsSvc.getCategoryAsync(this.category.ParentID, _ => parentCategory = this.category.Parent, undefined, true);
 		}
 
-		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ParentID"));
+		let control = formConfig.find(ctrl => ctrl.Name === "ParentID");
 		control.Required = false;
 		control.Extras = { LookupDisplayValues: parentCategory !== undefined ? [{ Value: parentCategory.ID, Label: parentCategory.FullTitle }] : undefined };
 		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, this.contentType, false, true, options => {
@@ -181,7 +181,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 			await this.portalsCoreSvc.getDesktopAsync(this.category.DesktopID, _ => desktop = Desktop.get(this.category.DesktopID), undefined, true);
 		}
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "DesktopID"));
+		control = formConfig.find(ctrl => ctrl.Name === "DesktopID");
 		control.Type = "Lookup";
 		control.Extras = { LookupDisplayValues: desktop !== undefined ? [{ Value: desktop.ID, Label: desktop.FullTitle }] : undefined };
 		control.Options.LookupOptions = {
@@ -206,7 +206,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 			}
 		};
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OpenBy"));
+		control = formConfig.find(ctrl => ctrl.Name === "OpenBy");
 		control.Options.SelectOptions.AsBoxes = true;
 		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
 			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values, "#;") as Array<string>).map(value => {
@@ -224,9 +224,12 @@ export class CmsCategoriesUpdatePage implements OnInit {
 					Type: "object-privileges"
 				}
 			},
-			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, true, this.portalsCoreSvc.getNotificationInheritStates(this.category.Notifications)),
+			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, true, this.portalsCoreSvc.getNotificationInheritStates(this.category.Notifications)/*, notificationsControl => notificationsControl.SubControls.Controls.find(ctl => ctl.Name === "EmailsByApprovalStatus").SubControls.Controls.find(ctl => ctl.Name === "Status").Options.OnChanged = event => this.onStatusChanged(event.detail.value)*/),
 			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "notifications", true, AppUtility.isNull(this.category.EmailSettings))
 		);
+
+		control = formConfig.find(ctrl => ctrl.Name === "Notifications");
+		this.portalsCoreSvc.prepareNotificationsFormControl(control, this.emailsByApprovalStatus);
 
 		if (AppUtility.isNotEmpty(this.category.ID)) {
 			formConfig.insert(
@@ -234,7 +237,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 					formControl.setValue({ current: AppUtility.isObject(formControl.value, true) ? formControl.value.current : undefined, new: undefined, identity: AppUtility.isObject(formControl.value, true) ? formControl.value.identity : undefined }, { onlySelf: true });
 					this.hash = AppCrypto.hash(this.form.value);
 				}),
-				formConfig.findIndex(ctrl => AppUtility.isEquals(ctrl.Name, "OrderIndex"))
+				formConfig.findIndex(ctrl => ctrl.Name === "OrderIndex")
 			);
 			formConfig.push(
 				this.portalsCoreSvc.getAuditFormControl(this.category, "basic"),
@@ -262,13 +265,13 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		}
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
-		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title")).Options.AutoFocus = true;
-		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description")).Options.Rows = 2;
-		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Notes")).Options.Rows = 2;
+		formConfig.find(ctrl => ctrl.Name === "Title").Options.AutoFocus = true;
+		formConfig.find(ctrl => ctrl.Name === "Description").Options.Rows = 2;
+		formConfig.find(ctrl => ctrl.Name === "Notes").Options.Rows = 2;
 
 		if (AppUtility.isNotEmpty(this.category.ID)) {
-			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
-			control.Order = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Audits")).Order + 1;
+			control = formConfig.find(ctrl => ctrl.Name === "ID");
+			control.Order = formConfig.find(ctrl => ctrl.Name === "Audits").Order + 1;
 			control.Hidden = false;
 			control.Options.Label = "{{common.audits.identity}}";
 			control.Options.ReadOnly = true;
@@ -302,10 +305,6 @@ export class CmsCategoriesUpdatePage implements OnInit {
 						this.hash = AppCrypto.hash(this.form.value);
 					});
 				}
-			}
-			if (this.configSvc.isDebug) {
-				console.log("<CMS Portals>: Category (request info)", this.category, this.configSvc.requestParams);
-				console.log("<CMS Portals>: Category (management info)", `\n- Organization:`, this.organization, `\n- Module:`, this.module, `\n- Content Type:`, this.contentType);
 			}
 		});
 	}

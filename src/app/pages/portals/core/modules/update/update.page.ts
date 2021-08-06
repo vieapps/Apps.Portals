@@ -116,13 +116,13 @@ export class PortalsModulesUpdatePage implements OnInit {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "module");
 		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.modules.controls.Organization}}", this.organization);
 
-		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
+		let control = formConfig.find(ctrl => ctrl.Name === "Title");
 		control.Options.AutoFocus = true;
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
+		control = formConfig.find(ctrl => ctrl.Name === "Description");
 		control.Options.Rows = 2;
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ModuleDefinitionID"));
+		control = formConfig.find(ctrl => ctrl.Name === "ModuleDefinitionID");
 		if (AppUtility.isNotEmpty(this.module.ID)) {
 			control.Hidden = true;
 			formConfig.insert({
@@ -134,7 +134,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 					Label: control.Options.Label,
 					ReadOnly: true
 				}
-			}, formConfig.findIndex(ctrl => AppUtility.isEquals(ctrl.Name, "ModuleDefinitionID")));
+			}, formConfig.findIndex(ctrl => ctrl.Name === "ModuleDefinitionID"));
 		}
 		else {
 			control.Options.SelectOptions.Values = this.definitions.map(definition => {
@@ -155,7 +155,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 			await this.portalsCoreSvc.getDesktopAsync(this.module.DesktopID, _ => desktop = Desktop.get(this.module.DesktopID), undefined, true);
 		}
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "DesktopID"));
+		control = formConfig.find(ctrl => ctrl.Name === "DesktopID");
 		control.Type = "Lookup";
 		control.Extras = { LookupDisplayValues: desktop !== undefined ? [{ Value: desktop.ID, Label: desktop.FullTitle }] : undefined };
 		control.Options.LookupOptions = {
@@ -235,13 +235,13 @@ export class PortalsModulesUpdatePage implements OnInit {
 			);
 		}
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Notifications"));
+		control = formConfig.find(ctrl => ctrl.Name === "Notifications");
 		this.portalsCoreSvc.prepareNotificationsFormControl(control, this.emailsByApprovalStatus);
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (AppUtility.isNotEmpty(this.module.ID)) {
-			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
-			control.Order = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Audits")).Order + 1;
+			control = formConfig.find(ctrl => ctrl.Name === "ID");
+			control.Order = formConfig.find(ctrl => ctrl.Name === "Audits").Order + 1;
 			control.Hidden = false;
 			control.Options.Label = "{{common.audits.identity}}";
 			control.Options.ReadOnly = true;
@@ -265,14 +265,11 @@ export class PortalsModulesUpdatePage implements OnInit {
 
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (!AppUtility.isNotEmpty(this.module.ID)) {
-				const first = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ModuleDefinitionID")).Options.SelectOptions.Values[0];
+				const first = this.formControls.find(ctrl => ctrl.Name === "ModuleDefinitionID").Options.SelectOptions.Values[0];
 				this.form.controls.ModuleDefinitionID.setValue(first.Value, { onlySelf: true });
 				this.form.controls.Title.setValue(first.Label, { onlySelf: true });
 				this.form.controls.Description.setValue(first.Description, { onlySelf: true });
 				this.hash = AppCrypto.hash(this.form.value);
-			}
-			if (this.configSvc.isDebug) {
-				console.log("<Portals>: Module", this.module);
 			}
 		});
 	}

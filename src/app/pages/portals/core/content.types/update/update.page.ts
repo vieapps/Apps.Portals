@@ -181,13 +181,13 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "content.type");
 		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.contenttypes.controls.Organization}}", this.organization);
 
-		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
+		let control = formConfig.find(ctrl => ctrl.Name === "Title");
 		control.Options.AutoFocus = true;
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
+		control = formConfig.find(ctrl => ctrl.Name === "Description");
 		control.Options.Rows = 2;
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "RepositoryID"));
+		control = formConfig.find(ctrl => ctrl.Name === "RepositoryID");
 		if (AppUtility.isNotEmpty(this.contentType.ID)) {
 			control.Hidden = true;
 			formConfig.insert(
@@ -215,7 +215,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 			};
 		}
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ContentTypeDefinitionID"));
+		control = formConfig.find(ctrl => ctrl.Name === "ContentTypeDefinitionID");
 		if (AppUtility.isNotEmpty(this.contentType.ID)) {
 			control.Hidden = true;
 			formConfig.insert({
@@ -244,7 +244,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 			await this.portalsCoreSvc.getDesktopAsync(this.contentType.DesktopID, _ => desktop = Desktop.get(this.contentType.DesktopID), undefined, true);
 		}
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "DesktopID"));
+		control = formConfig.find(ctrl => ctrl.Name === "DesktopID");
 		control.Type = "Lookup";
 		control.Extras = { LookupDisplayValues: desktop !== undefined ? [{ Value: desktop.ID, Label: desktop.FullTitle }] : undefined };
 		control.Options.LookupOptions = {
@@ -271,7 +271,7 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 
 		["CreateNewVersionWhenUpdated", "AllowComments", "UseSocialNetworkComments"].forEach(name => formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, name)).Options.Type = "toggle");
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "DefaultCommentStatus"));
+		control = formConfig.find(ctrl => ctrl.Name === "DefaultCommentStatus");
 		this.portalsCoreSvc.prepareApprovalStatusControl(control, "popover");
 
 		formConfig.push(
@@ -305,6 +305,9 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 			},
 			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "emails", true, AppUtility.isNull(this.contentType.EmailSettings))
 		);
+
+		control = formConfig.find(ctrl => ctrl.Name === "Notifications");
+		this.portalsCoreSvc.prepareNotificationsFormControl(control, this.emailsByApprovalStatus);
 
 		if (AppUtility.isNotEmpty(this.contentType.ID)) {
 			if (this.extendable) {
@@ -368,8 +371,8 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (AppUtility.isNotEmpty(this.contentType.ID)) {
-			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
-			control.Order = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Audits")).Order + 1;
+			control = formConfig.find(ctrl => ctrl.Name === "ID");
+			control.Order = formConfig.find(ctrl => ctrl.Name === "Audits").Order + 1;
 			control.Hidden = false;
 			control.Options.Label = "{{common.audits.identity}}";
 			control.Options.ReadOnly = true;

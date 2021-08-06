@@ -425,7 +425,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			}
 		);
 
-		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
+		let control = formConfig.find(ctrl => ctrl.Name === "Title");
 		control.Options.AutoFocus = true;
 
 		if (!AppUtility.isNotEmpty(this.organization.ID)) {
@@ -435,11 +435,11 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			};
 		}
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Description"));
+		control = formConfig.find(ctrl => ctrl.Name === "Description");
 		control.Type = "TextArea";
 		control.Options.Rows = 2;
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Alias"));
+		control = formConfig.find(ctrl => ctrl.Name === "Alias");
 		control.Options.OnBlur = (_, formControl) => formControl.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
 		control.Options.Icon = {
 			Name: "globe",
@@ -449,7 +449,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			OnClick: (_, formControl) => PlatformUtility.openURI(`${this.configSvc.appConfig.URIs.portals}~${formControl.value}`)
 		};
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OwnerID"));
+		control = formConfig.find(ctrl => ctrl.Name === "OwnerID");
 		control.Required = true;
 		if (this.canModerateOrganization) {
 			let initialValue: any;
@@ -486,13 +486,13 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			control.Hidden = true;
 		}
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
+		control = formConfig.find(ctrl => ctrl.Name === "Status");
 		this.portalsCoreSvc.prepareApprovalStatusControl(control);
 		if (!this.canModerateOrganization) {
 			control.Options.Disabled = true;
 		}
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExpiredDate"));
+		control = formConfig.find(ctrl => ctrl.Name === "ExpiredDate");
 		control.Type = "DatePicker";
 		control.Required = false;
 		control.Options.DatePickerOptions = { AllowTimes: false };
@@ -500,7 +500,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			control.Options.Disabled = true;
 		}
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "FilesQuotes"));
+		control = formConfig.find(ctrl => ctrl.Name === "FilesQuotes");
 		control.Type = "Range";
 		control.Options.MinValue = 0;
 		control.Options.MaxValue = 100;
@@ -518,19 +518,19 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			control.Options.Disabled = true;
 		}
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Required2FA"));
+		control = formConfig.find(ctrl => ctrl.Name === "Required2FA");
 		control.Options.Type = "toggle";
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "TrackDownloadFiles"));
+		control = formConfig.find(ctrl => ctrl.Name === "TrackDownloadFiles");
 		control.Options.Type = "toggle";
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Theme"));
+		control = formConfig.find(ctrl => ctrl.Name === "Theme");
 		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => {
 			return { Value: theme.name, Label: theme.name };
 		});
 
-		const homeDesktopCtrl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "HomeDesktopID"));
-		const searchDesktopCtrl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SearchDesktopID"));
+		const homeDesktopCtrl = formConfig.find(ctrl => ctrl.Name === "HomeDesktopID");
+		const searchDesktopCtrl = formConfig.find(ctrl => ctrl.Name === "SearchDesktopID");
 		homeDesktopCtrl.Options.LookupOptions = searchDesktopCtrl.Options.LookupOptions = {
 			Multiple: false,
 			OnDelete: (_, formControl) => {
@@ -565,24 +565,24 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		}
 		searchDesktopCtrl.Extras = { LookupDisplayValues: searchDesktop !== undefined ? [{ Value: searchDesktop.ID, Label: searchDesktop.FullTitle }] : undefined };
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Notifications"));
+		control = formConfig.find(ctrl => ctrl.Name === "Notifications");
 		this.portalsCoreSvc.prepareNotificationsFormControl(control, this.emailsByApprovalStatus);
 
-		const instructionControls = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Instructions")).SubControls.Controls;
+		const instructionControls = formConfig.find(ctrl => ctrl.Name === "Instructions").SubControls.Controls;
 		Organization.instructionElements.forEach(type => {
 			const controls = instructionControls.find(ctrl => AppUtility.isEquals(ctrl.Name, type)).SubControls.Controls;
-			controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Language")).Options.OnChanged = (event, formControl) => {
+			controls.find(ctrl => ctrl.Name === "Language").Options.OnChanged = (event, formControl) => {
 				this.instructions[formControl.parentControl.Name] = this.instructions[formControl.parentControl.Name] || {};
 				const instruction = this.instructions[formControl.parentControl.Name][event.detail.value] || {};
 				formControl.formGroup.controls.Subject.setValue(instruction.Subject, { onlySelf: true });
 				formControl.formGroup.controls.Body.setValue(instruction.Body, { onlySelf: true });
-				formControl.parentControl.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Subject")).focus();
+				formControl.parentControl.SubControls.Controls.find(ctrl => ctrl.Name === "Subject").focus();
 			};
-			controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Subject")).Options.OnBlur = (_, formControl) => this.instructions[formControl.parentControl.Name][formControl.formGroup.controls.Language.value] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
-			controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Body")).Options.OnBlur = (_, formControl) => this.instructions[formControl.parentControl.Name][formControl.formGroup.controls.Language.value] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
+			controls.find(ctrl => ctrl.Name === "Subject").Options.OnBlur = (_, formControl) => this.instructions[formControl.parentControl.Name][formControl.formGroup.controls.Language.value] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
+			controls.find(ctrl => ctrl.Name === "Body").Options.OnBlur = (_, formControl) => this.instructions[formControl.parentControl.Name][formControl.formGroup.controls.Language.value] = { Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
 		});
 
-		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "HttpIndicators"));
+		control = formConfig.find(ctrl => ctrl.Name === "HttpIndicators");
 		if (AppUtility.isArray(this.organization.HttpIndicators, true) && this.organization.HttpIndicators.length > 1) {
 			while (control.SubControls.Controls.length <= this.organization.HttpIndicators.length) {
 				control.SubControls.Controls.push(this.appFormsSvc.cloneControl(control.SubControls.Controls[0], ctrl => {
@@ -593,12 +593,12 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		}
 		control.SubControls.Controls.forEach((ctrl, index) => ctrl.Options.Label = `#${index + 1}`);
 
-		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "FakeURIs")).Hidden = !this.isSystemAdministrator;
+		formConfig.find(ctrl => ctrl.Name === "FakeURIs").Hidden = !this.isSystemAdministrator;
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (AppUtility.isNotEmpty(this.organization.ID)) {
-			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
-			control.Order = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Audits")).Order + 1;
+			control = formConfig.find(ctrl => ctrl.Name === "ID");
+			control.Order = formConfig.find(ctrl => ctrl.Name === "Audits").Order + 1;
 			control.Hidden = false;
 			control.Options.Label = "{{common.audits.identity}}";
 			control.Options.ReadOnly = true;
@@ -662,10 +662,6 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true });
 			this.hash = AppCrypto.hash(this.form.value);
 		}, 234));
-
-		if (this.configSvc.isDebug) {
-			console.log("<Portals>: Organization", this.organization, this.form, organization);
-		}
 	}
 
 	async saveAsync() {

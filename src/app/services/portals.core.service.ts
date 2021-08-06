@@ -874,24 +874,24 @@ export class PortalsCoreService extends BaseService {
 		}
 
 		if (methods === undefined || methods.indexOf("Email") > -1) {
-			controlConfig.SubControls.Controls.push(this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmails));
-			const emailsByApprovalStatus = this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmailsByApprovalStatus, "EmailsByApprovalStatus", "emailsByApprovalStatus");
-			emailsByApprovalStatus.SubControls.Controls.insert({
-				Name: "Status",
-				Type: "Select",
-				Hidden: inheritEmailsByApprovalStatus,
-				Options: {
-					Label: "{{status.approval.label}}",
-					SelectOptions: {
-						Interface: "popover",
-						Values: BaseModel.approvalStatus.map(value => {
-							return { Value: value, Label: `{{status.approval.${value}}}` };
-						})
+			controlConfig.SubControls.Controls.push(
+				this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmails),
+				this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmailsByApprovalStatus, "EmailsByApprovalStatus", "emailsByApprovalStatus", emailsByApprovalStatus => emailsByApprovalStatus.SubControls.Controls.insert({
+					Name: "Status",
+					Type: "Select",
+					Hidden: inheritEmailsByApprovalStatus,
+					Options: {
+						Label: "{{status.approval.label}}",
+						SelectOptions: {
+							Interface: "popover",
+							Values: BaseModel.approvalStatus.map(value => {
+								return { Value: value, Label: `{{status.approval.${value}}}` };
+							})
+						}
 					}
-				}
-			}, allowInheritFromParent ? 1 : 0);
-			controlConfig.SubControls.Controls.push(emailsByApprovalStatus);
-			controlConfig.SubControls.Controls.push(this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmailsWhenPublish, "EmailsWhenPublish", "emailsWhenPublish"));
+				}, allowInheritFromParent ? 1 : 0)),
+				this.getEmailNotificationFormControl(allowInheritFromParent, inheritEmailsWhenPublish, "EmailsWhenPublish", "emailsWhenPublish")
+			);
 		}
 
 		if (methods === undefined || methods.indexOf("WebHook") > -1) {
@@ -905,7 +905,7 @@ export class PortalsCoreService extends BaseService {
 		return controlConfig;
 	}
 
-	public prepareNotificationsFormControl(notificationsControl: AppFormsControlConfig, emailsByApprovalStatus: EmailNotificationSettings, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	public prepareNotificationsFormControl(notificationsControl: AppFormsControlConfig, emailsByApprovalStatus: { [status: string]: EmailNotificationSettings }, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const emailsByApprovalStatusControls = notificationsControl.SubControls.Controls.find(ctrl => ctrl.Name === "EmailsByApprovalStatus").SubControls.Controls;
 		emailsByApprovalStatusControls.find(ctrl => ctrl.Name === "Status").Options.OnChanged = (event, formControl) => {
 			const approvalStatusEmail = emailsByApprovalStatus[event.detail.value] || {};
@@ -937,7 +937,7 @@ export class PortalsCoreService extends BaseService {
 		};
 	}
 
-	public getNotificationSettings(notificationSettings: NotificationSettings, emailsByApprovalStatus?: EmailNotificationSettings, allowInheritFromParent: boolean = true, onCompleted?: (notifications: any) => void) {
+	public getNotificationSettings(notificationSettings: NotificationSettings, emailsByApprovalStatus?: { [status: string]: EmailNotificationSettings }, allowInheritFromParent: boolean = true, onCompleted?: (notifications: any) => void) {
 		const notifications = AppUtility.clone(notificationSettings || {});
 		notifications.Events = notifications.Events || [];
 		notifications.Methods = notifications.Methods || [];
@@ -989,7 +989,7 @@ export class PortalsCoreService extends BaseService {
 		return notifications;
 	}
 
-	public normalizeNotificationSettings(notifications: any, emailsByApprovalStatus: EmailNotificationSettings, onCompleted?: (notifications: any) => void) {
+	public normalizeNotificationSettings(notifications: any, emailsByApprovalStatus: { [status: string]: EmailNotificationSettings }, onCompleted?: (notifications: any) => void) {
 		if (AppUtility.isNotNull(notifications)) {
 			if (notifications.InheritFromParent) {
 				notifications.Events = undefined;
