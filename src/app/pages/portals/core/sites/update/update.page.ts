@@ -341,9 +341,6 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 			await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments));
 			this.hash = AppCrypto.hash(this.form.value);
 		});
-		if (this.configSvc.isDebug) {
-			console.log("<Portals>: Site", this.site);
-		}
 	}
 
 	private async showErrorAsync(error: any) {

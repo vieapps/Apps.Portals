@@ -189,10 +189,6 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 				this.prepareResults();
 			}
 		}, identity);
-
-		if (this.configSvc.isDebug) {
-			console.log("<Portals>: ContentTypes", this.configSvc.requestParams, this.filterBy, this.sortBy);
-		}
 	}
 
 	track(index: number, contentType: ContentType) {

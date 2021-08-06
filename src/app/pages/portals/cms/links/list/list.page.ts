@@ -228,11 +228,6 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 				}, "CMS.Links:Refresh");
 			}
 		}
-
-		if (this.configSvc.isDebug) {
-			console.log("<CMS Portals>: Links (request info)", this.configSvc.requestParams, this.filterBy, this.sortBy);
-			console.log("<CMS Portals>: Links (management info)", `\n- Organization:`, this.organization, `\n- Module:`, this.module, `\n- Content Type:`, this.contentType);
-		}
 	}
 
 	private async prepareTitleAsync() {

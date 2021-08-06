@@ -153,9 +153,6 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 					this.prepareResults();
 				}
 			}, "Organizations:Refresh");
-			if (this.configSvc.isDebug) {
-				console.log("<Portals>: Organizations", this.configSvc.requestParams, this.filterBy, this.sortBy);
-			}
 		}
 		else {
 			await this.appFormsSvc.hideLoadingAsync();

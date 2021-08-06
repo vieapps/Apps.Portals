@@ -381,10 +381,6 @@ export class CmsLinksUpdatePage implements OnInit {
 					});
 				}
 			}
-			if (this.configSvc.isDebug) {
-				console.log("<CMS Portals>: Link (request info)", this.link, this.configSvc.requestParams);
-				console.log("<CMS Portals>: Link (management info)", `\n- Organization:`, this.organization, `\n- Module:`, this.module, `\n- Content Type:`, this.contentType);
-			}
 		});
 	}
 

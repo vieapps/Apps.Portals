@@ -444,10 +444,6 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 					});
 				}
 			}
-			if (this.configSvc.isDebug) {
-				console.log("<CMS Portals>: Content (request info)", this.content, this.configSvc.requestParams);
-				console.log("<CMS Portals>: Content (management info)", `\n- Organization:`, this.organization, `\n- Module:`, this.module, `\n- Content Type:`, this.contentType);
-			}
 		});
 	}
 

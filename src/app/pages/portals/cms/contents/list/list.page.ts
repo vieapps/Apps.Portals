@@ -202,11 +202,6 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 				}
 			}));
 		}
-
-		if (this.configSvc.isDebug) {
-			console.log("<CMS Portals>: Contents (request info)", this.configSvc.requestParams, this.filterBy, this.sortBy);
-			console.log("<CMS Portals>: Contents (management info)", `\n- Organization:`, this.organization, `\n- Module:`, this.module, `\n- Content Type:`, this.contentType, `\n- Category:`, this.category);
-		}
 	}
 
 	track(index: number, content: Content) {

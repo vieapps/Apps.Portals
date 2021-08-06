@@ -269,10 +269,6 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 					this.prepareAttachments("Attachments", attachments);
 				});
 			}
-			if (this.configSvc.isDebug) {
-				console.log("<CMS Portals>: Content (request info)", this.content, this.configSvc.requestParams);
-				console.log("<CMS Portals>: Content (management info)", `\n- Organization:`, this.content.organization, `\n- Module:`, this.content.module, `\n- Content Type:`, this.content.contentType);
-			}
 		});
 	}
 

@@ -190,11 +190,6 @@ export class CmsItemListPage implements OnInit, OnDestroy {
 				}
 			}, "CMS.Items:Refresh");
 		}
-
-		if (this.configSvc.isDebug) {
-			console.log("<CMS Portals>: Items (request info)", this.configSvc.requestParams, this.filterBy, this.sortBy);
-			console.log("<CMS Portals>: Items (management info)", `\n- Organization:`, this.organization, `\n- Module:`, this.module, `\n- Content Type:`, this.contentType);
-		}
 	}
 
 	track(index: number, item: Item) {

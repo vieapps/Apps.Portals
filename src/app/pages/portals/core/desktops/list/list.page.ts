@@ -195,10 +195,6 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 				}, "Desktops:Refresh");
 			}
 		}
-
-		if (this.configSvc.isDebug) {
-			console.log("<Portals>: Desktops", this.configSvc.requestParams, this.filterBy, this.sortBy);
-		}
 	}
 
 	track(index: number, desktop: Desktop) {

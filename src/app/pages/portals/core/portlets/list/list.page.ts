@@ -178,10 +178,6 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 				}
 			}
 		}, "Portlets:Refresh");
-
-		if (this.configSvc.isDebug) {
-			console.log("<Portals>: Portlets", this.configSvc.requestParams, this.filterBy, this.sortBy);
-		}
 	}
 
 	private async prepareTitleAsync() {

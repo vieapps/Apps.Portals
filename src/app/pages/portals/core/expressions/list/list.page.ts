@@ -183,10 +183,6 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 				}
 			}, "Expressions:Refresh");
 		}
-
-		if (this.configSvc.isDebug) {
-			console.log("<Portals>: Expressions", this.configSvc.requestParams, this.filterBy, this.sortBy);
-		}
 	}
 
 	track(index: number, expression: Expression) {

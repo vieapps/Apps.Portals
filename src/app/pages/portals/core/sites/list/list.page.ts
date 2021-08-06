@@ -161,10 +161,6 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 				}
 			}, "Sites:Refresh");
 		}
-
-		if (this.configSvc.isDebug) {
-			console.log("<Portals>: Sites", this.configSvc.requestParams, this.filterBy, this.sortBy);
-		}
 	}
 
 	track(index: number, site: Site) {

@@ -218,10 +218,6 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				this.prepareAttachments(undefined, info.args.Event === "Delete" ? undefined : this.filesSvc.prepareAttachment(info.args.Data), info.args.Event === "Delete" ? this.filesSvc.prepareAttachment(info.args.Data) : undefined);
 			}
 		}, "Portlet:Refresh");
-
-		if (this.configSvc.isDebug) {
-			console.log(`Update a portlet (${this.portlet.Title} - Mapping: ${this.originalPortlet !== undefined})`, this.portlet, this.originalPortlet);
-		}
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
@@ -727,9 +723,6 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments));
 			this.hash = AppCrypto.hash(this.form.value);
 		});
-		if (this.configSvc.isDebug) {
-			console.log("<Portals>: Portlet", this.portlet);
-		}
 	}
 
 	private async showErrorAsync(error: any) {

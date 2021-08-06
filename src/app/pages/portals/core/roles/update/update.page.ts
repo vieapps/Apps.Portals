@@ -245,9 +245,6 @@ export class PortalsRolesUpdatePage implements OnInit {
 		this.form.patchValue(this.role);
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync();
-		if (this.configSvc.isDebug) {
-			console.log("<Portals>: Role", this.role);
-		}
 	}
 
 	async saveAsync() {

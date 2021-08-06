@@ -424,9 +424,6 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		}
 		this.appFormsSvc.hideLoadingAsync(() => {
 			this.hash = AppCrypto.hash(this.form.value);
-			if (this.configSvc.isDebug) {
-				console.log("<Portals>: Expression", this.expression, this.form.value);
-			}
 			if (this.isAdvancedMode) {
 				this.form.controls.JSONXRequest.setValue(JSON.stringify({
 					FilterBy: {

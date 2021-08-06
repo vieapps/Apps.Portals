@@ -154,10 +154,6 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 				this.prepareResults();
 			}
 		}, this.definition !== undefined ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
-
-		if (this.configSvc.isDebug) {
-			console.log("<Portals>: Modules", this.configSvc.requestParams, this.filterBy, this.sortBy);
-		}
 	}
 
 	track(index: number, modul: Module) {

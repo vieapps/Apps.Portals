@@ -183,10 +183,6 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 				}, "Roles:Refresh");
 			}
 		}
-
-		if (this.configSvc.isDebug) {
-			console.log("<Portals>: Roles", this.configSvc.requestParams, this.filterBy, this.sortBy);
-		}
 	}
 
 	track(index: number, role: Role) {
