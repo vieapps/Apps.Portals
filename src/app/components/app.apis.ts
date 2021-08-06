@@ -353,6 +353,8 @@ export class AppAPIs {
 			catch (error) {
 				json = {};
 				console.error("[AppAPIs]: Error occurred while parsing JSON", error);
+				this.reupdateWebSocket();
+				return;
 			}
 
 			// prepare handlers
@@ -402,7 +404,7 @@ export class AppAPIs {
 					Data: json.Data || {}
 				};
 
-				if (AppConfig.isDebug) {
+				if (AppConfig.isDebug && message.Type.Event !== "Get" && message.Type.Event !== "Search") {
 					console.log("[AppAPIs]: Got a message", AppConfig.isNativeApp ? JSON.stringify(message) : message);
 				}
 
@@ -489,7 +491,7 @@ export class AppAPIs {
 	/** Reopens the WebSocket connection when got an error */
 	public static reopenWebSocketWhenGotSecurityError(error?: any) {
 		if ("TokenExpiredException" === error.Type) {
-			this.reopenWebSocket("[AppAPIs]: Re-open WebSocket connection because the JWT was expired");
+			this.reopenWebSocket("[AppAPIs]: Re-open WebSocket connection because the JWT is expired");
 		}
 		else {
 			this.broadcast({
@@ -503,16 +505,27 @@ export class AppAPIs {
 		}
 	}
 
-	private static sendWebSocketMessages(sendCallbackables: boolean, additionalMessage?: string) {
+	private static reupdateWebSocket() {
+		const id = Object.keys(this._requests.callbackableRequests).sort().firstOrDefault();
+		if (AppUtility.isNotEmpty(id)) {
+			this._websocket.send(this._requests.callbackableRequests[id]);
+			PlatformUtility.invoke(() => this.reupdateWebSocket(), 789);
+		}
+	}
+
+	private static updateWebSocket(options?: { message?: string; resendCallbackRequests?: boolean} ) {
+		// send all 'no callback' requests
 		Object.keys(this._requests.nocallbackRequests).sort().forEach(id => this._websocket.send(this._requests.nocallbackRequests[id]));
 		this._requests.nocallbackRequests = {};
 
-		if (sendCallbackables) {
-			Object.keys(this._requests.callbackableRequests).sort().forEach(id => this._websocket.send(this._requests.callbackableRequests[id]));
+		// send the message
+		if (options !== undefined && AppUtility.isNotEmpty(options.message)) {
+			this._websocket.send(options.message);
 		}
 
-		if (AppUtility.isNotEmpty(additionalMessage)) {
-			this._websocket.send(additionalMessage);
+		// resend all 'callback' requests
+		if (options !== undefined && !!options.resendCallbackRequests) {
+			this.reupdateWebSocket();
 		}
 	}
 
@@ -541,7 +554,7 @@ export class AppAPIs {
 			Body: AppConfig.getAuthenticatedHeaders()
 		});
 		if (this.isWebSocketReady) {
-			this.sendWebSocketMessages(true);
+			this.updateWebSocket({ resendCallbackRequests: true });
 		}
 	}
 
@@ -559,8 +572,8 @@ export class AppAPIs {
 			ServiceName: requestInfo.ServiceName,
 			ObjectName: requestInfo.ObjectName || "",
 			Verb: requestInfo.Verb || "GET",
-			Query: requestInfo.Query || {},
 			Header: requestInfo.Header || {},
+			Query: requestInfo.Query || {},
 			Extra: requestInfo.Extra || {},
 			Body: requestInfo.Body || {}
 		});
@@ -570,7 +583,7 @@ export class AppAPIs {
 			this._requests.errorCallbacks[id] = onError;
 		}
 		if (this.isWebSocketReady) {
-			this.sendWebSocketMessages(false, request);
+			this.updateWebSocket({ message: request });
 		}
 		else if (onSuccess === undefined && onError === undefined) {
 			this._requests.nocallbackRequests[id] = request;
@@ -642,9 +655,9 @@ export class AppAPIs {
 			const requestInfo = {
 				ServiceName: info !== undefined ? info.ServiceName : request.ServiceName,
 				ObjectName: info !== undefined ? info.ObjectName : request.ObjectName,
-				Query: (info !== undefined ? info.Query : request.Query) || {},
-				Verb: request.Verb || "GET",
+				Verb: request.Verb,
 				Header: request.Header,
+				Query: (info !== undefined ? info.Query : request.Query) || {},
 				Extra: request.Extra,
 				Body: request.Body
 			};
