@@ -616,11 +616,13 @@ export class PortalsCmsService extends BaseService {
 		if (this.configSvc.isAuthenticated) {
 			const activeOrganization = await this.portalsCoreSvc.getActiveOrganizationAsync();
 			let activeContentTypes = new Array<ContentType>();
-			activeOrganization.modules.forEach(module => {
-				const contentTypesOfCmsContent = this.getContentTypesOfContent(module);
-				const contentTypesOfCmsItem = this.getContentTypesOfItem(module);
-				activeContentTypes = activeContentTypes.concat(contentTypesOfCmsContent).concat(contentTypesOfCmsItem);
-			});
+			if (activeOrganization !== undefined) {
+				activeOrganization.modules.forEach(module => {
+					const contentTypesOfCmsContent = this.getContentTypesOfContent(module);
+					const contentTypesOfCmsItem = this.getContentTypesOfItem(module);
+					activeContentTypes = activeContentTypes.concat(contentTypesOfCmsContent).concat(contentTypesOfCmsItem);
+				});
+			}
 			if (activeContentTypes.length > 0) {
 				if (this.configSvc.isDebug) {
 					console.log("[CMS Portals]: Start to prepare featured contents of the active organization", `${activeOrganization.Title}`, activeContentTypes.map(contentType => ({ ID: contentType.ID, Title: contentType.Title })));
@@ -629,7 +631,9 @@ export class PortalsCmsService extends BaseService {
 			}
 
 			const availableOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync();
-			availableOrganizations.removeAt(availableOrganizations.findIndex(org => org.ID === activeOrganization.ID));
+			if (activeOrganization !== undefined) {
+				availableOrganizations.removeAt(availableOrganizations.findIndex(org => org.ID === activeOrganization.ID));
+			}
 			let availableContentTypes = new Array<ContentType>();
 			availableOrganizations.forEach(organization => organization.modules.forEach(module => {
 				const contentTypesOfCmsContent = this.getContentTypesOfContent(module);
