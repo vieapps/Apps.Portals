@@ -1,5 +1,4 @@
 import { Injectable } from "@angular/core";
-import { AppAPIs } from "@app/components/app.apis";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
@@ -146,6 +145,27 @@ export class AuthenticationService extends BaseService {
 		return this.configSvc.appConfig.accountRegistrations.setServicePrivilegs && this.canDo(this.configSvc.appConfig.accountRegistrations.setServicePrivilegsRole);
 	}
 
+	private async processErrorAsync(error: any, message: string, onNext?: (error?: any) => void) {
+		if (AppUtility.isGotSecurityException(error)) {
+			await this.configSvc.resetSessionAsync(async () =>
+				await this.configSvc.initializeSessionAsync(async () =>
+					await this.configSvc.registerSessionAsync(() => {
+						console.log(this.getLogMessage("The session is re-registered when got security issue"));
+						if (onNext !== undefined) {
+							onNext(error);
+						}
+					})
+				)
+			);
+		}
+		else if (onNext !== undefined) {
+			onNext(error);
+		}
+		else {
+			this.showError(message, error);
+		}
+	}
+
 	public async logInAsync(account: string, password: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await this.createAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
@@ -165,21 +185,7 @@ export class AuthenticationService extends BaseService {
 					await this.updateSessionWhenLogInAsync(data, onSuccess);
 				}
 			},
-			async error => {
-				if (AppUtility.isGotSecurityException(error)) {
-					await this.configSvc.resetSessionAsync(async () =>
-						await this.configSvc.initializeSessionAsync(async () =>
-							await this.configSvc.registerSessionAsync(() => console.log(this.getLogMessage("The session is re-registered (anonymous)")))
-						)
-					);
-				}
-				if (onError !== undefined) {
-					onError(error);
-				}
-				else {
-					this.showError("Error occurred while logging in", error);
-				}
-			},
+			async error => await this.processErrorAsync(error, "Error occurred while logging in", onError),
 			undefined,
 			true
 		);
@@ -197,14 +203,7 @@ export class AuthenticationService extends BaseService {
 				console.log(this.getLogMessage("Log in with OTP successful"));
 				await this.updateSessionWhenLogInAsync(data, onSuccess);
 			},
-			error => {
-				if (onError !== undefined) {
-					onError(error);
-				}
-				else {
-					this.showError("Error occurred while logging in with OTP", error);
-				}
-			},
+			async error => await this.processErrorAsync(error, "Error occurred while logging in with OTP", onError),
 			undefined,
 			true
 		);
@@ -223,14 +222,7 @@ export class AuthenticationService extends BaseService {
 					onSuccess(data);
 				}
 			}, onError), true),
-			error => {
-				if (onError !== undefined) {
-					onError(error);
-				}
-				else {
-					this.showError("Error occurred while logging out", error);
-				}
-			},
+			async error => await this.processErrorAsync(error, "Error occurred while logging out", onError),
 			undefined,
 			true
 		);
@@ -243,14 +235,7 @@ export class AuthenticationService extends BaseService {
 				Account: AppCrypto.rsaEncrypt(account)
 			},
 			onSuccess,
-			error => {
-				if (onError !== undefined) {
-					onError(error);
-				}
-				else {
-					this.showError("Error occurred while requesting new password", error);
-				}
-			},
+			async error => await this.processErrorAsync(error, "Error occurred while requesting new password", onError),
 			this.configSvc.appConfig.getCaptchaHeaders(captcha)
 		);
 	}
@@ -263,14 +248,7 @@ export class AuthenticationService extends BaseService {
 				OtpCode: AppCrypto.rsaEncrypt(otp)
 			},
 			onSuccess,
-			error => {
-				if (onError !== undefined) {
-					onError(error);
-				}
-				else {
-					this.showError("Error occurred while renewing password", error);
-				}
-			}
+			async error => await this.processErrorAsync(error, "Error occurred while renewing password", onError)
 		);
 	}
 
