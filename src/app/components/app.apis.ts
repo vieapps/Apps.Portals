@@ -192,7 +192,7 @@ export class AppAPIs {
 	}
 
 	/**
-	  * Registers a handler for processing updating messages at scope of a service
+	  * Registers a handler for processing updating messages at scope of an object
 	  * @param service The string that presents name of a service
 	  * @param object The string that presents name of an object in the service
 	  * @param handler The function for processing when got a message from APIs

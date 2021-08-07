@@ -41,6 +41,7 @@ export class PortalsCmsService extends BaseService {
 	private _sidebarCategory: Category;
 	private _sidebarContentType: ContentType;
 	private _featuredContents = new Dictionary<string, CmsBaseModel>();
+	private _featuredConnters = 0;
 
 	public get featuredContents() {
 		return this._featuredContents.toArray();
@@ -556,7 +557,10 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	private async getFeaturedContentsAsync(contentTypes: ContentType[], index: number) {
+		this._featuredConnters++;
+		const threadID = this._featuredConnters;
 		const contentType = contentTypes[index];
+		const organization = Organization.get(contentType.SystemID);
 		const isSimpleItem = contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000002";
 		const request = AppPagination.buildRequest(
 			{ And: [
@@ -574,13 +578,16 @@ export class PortalsCmsService extends BaseService {
 			}
 			else {
 				if (this.configSvc.isDebug) {
-					console.log("[CMS Portals]: featured contents are prepared");
+					console.log("[CMS Portals]: Featured contents are prepared", `\n${contentType.Title} @ ${organization.Title} (thread: ${threadID})`);
 				}
 				AppEvents.broadcast(this.name, { Type: "FeaturedContentsPrepared" });
 			}
 		};
-		const onSuccess: (data?: any) => void = data => {
+		const onSuccess = (data?: any) => {
 			if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+				if (this.configSvc.isDebug) {
+					console.log("[CMS Portals]: Featured contents are fetched", `\n${contentType.Title} @ ${organization.Title} (thread: ${threadID})`, data);
+				}
 				if (isSimpleItem) {
 					(data.Objects as Array<any>).map(obj => Item.get(obj.ID)).filter(obj => obj !== undefined).forEach(obj => this._featuredContents.set(obj.ID, obj));
 				}
@@ -590,10 +597,13 @@ export class PortalsCmsService extends BaseService {
 			}
 			onCompleted();
 		};
-		const onError: (error?: any) => void = error => {
-			console.error("[CMS Portals]: Error occurred while preparing featured contents", error);
+		const onError = (error?: any) => {
+			console.error("[CMS Portals]: Error occurred while preparing featured contents", `\n${contentType.Title} @ ${organization.Title} (thread: ${threadID})`, error);
 			onCompleted();
 		};
+		if (this.configSvc.isDebug) {
+			console.log("[CMS Portals]: Featured contents are preparing", `\n${contentType.Title} @ ${organization.Title} (thread: ${threadID})`, request);
+		}
 		if (isSimpleItem) {
 			await this.searchItemAsync(request, onSuccess, onError);
 		}
@@ -605,21 +615,33 @@ export class PortalsCmsService extends BaseService {
 	private async prepareFeaturedContentsAsync() {
 		if (this.configSvc.isAuthenticated) {
 			const activeOrganization = await this.portalsCoreSvc.getActiveOrganizationAsync();
+			let activeContentTypes = new Array<ContentType>();
+			activeOrganization.modules.forEach(module => {
+				const contentTypesOfCmsContent = this.getContentTypesOfContent(module);
+				const contentTypesOfCmsItem = this.getContentTypesOfItem(module);
+				activeContentTypes = activeContentTypes.concat(contentTypesOfCmsContent).concat(contentTypesOfCmsItem);
+			});
+			if (activeContentTypes.length > 0) {
+				if (this.configSvc.isDebug) {
+					console.log("[CMS Portals]: Start to prepare featured contents of the active organization", `${activeOrganization.Title}`, activeContentTypes.map(contentType => ({ ID: contentType.ID, Title: contentType.Title })));
+				}
+				PlatformUtility.invoke(async () => await this.getFeaturedContentsAsync(activeContentTypes, 0), 123);
+			}
+
 			const availableOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync();
 			availableOrganizations.removeAt(availableOrganizations.findIndex(org => org.ID === activeOrganization.ID));
-			PlatformUtility.invoke(async () => {
-				const activeContentTypes = this.getContentTypesOfContent(activeOrganization.defaultModule).concat(this.getContentTypesOfItem(activeOrganization.defaultModule));
-				if (activeContentTypes.length > 0) {
-					await this.getFeaturedContentsAsync(activeContentTypes, 0);
+			let availableContentTypes = new Array<ContentType>();
+			availableOrganizations.forEach(organization => organization.modules.forEach(module => {
+				const contentTypesOfCmsContent = this.getContentTypesOfContent(module);
+				const contentTypesOfCmsItem = this.getContentTypesOfItem(module);
+				availableContentTypes = availableContentTypes.concat(contentTypesOfCmsContent).concat(contentTypesOfCmsItem);
+			}));
+			if (availableContentTypes.length > 0) {
+				if (this.configSvc.isDebug) {
+					console.log("[CMS Portals]: Start to prepare featured contents of other available organizations", availableContentTypes.map(contentType => ({ ID: contentType.ID, Title: contentType.Title, Organization: Organization.get(contentType.SystemID).Title })));
 				}
-				let availableContentTypes = new Array<ContentType>();
-				availableOrganizations.forEach(organization => availableContentTypes = availableContentTypes.concat(this.getContentTypesOfContent(organization.defaultModule)).concat(this.getContentTypesOfItem(organization.defaultModule)));
-				if (availableContentTypes.length > 0) {
-					PlatformUtility.invoke(async () => {
-						await this.getFeaturedContentsAsync(availableContentTypes, 0);
-					}, 3456);
-				}
-			}, 456);
+				PlatformUtility.invoke(async () => await this.getFeaturedContentsAsync(availableContentTypes, 0), 3456);
+			}
 		}
 	}
 

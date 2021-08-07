@@ -73,7 +73,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 			if (AppUtility.isEquals(info.args.Type, "FeaturedContentsPrepared") || (AppUtility.isEquals(info.args.Type, "Changed") && (AppUtility.isEquals(info.args.Object, "Organization") || AppUtility.isEquals(info.args.Object, "Module")))) {
 				PlatformUtility.invoke(() => {
 					if (this.configSvc.isDebug) {
-						console.log(`<Featured Contents>: fire event to update featured contents - Published: ${this._isPublished}`, info.args);
+						console.log(`<Featured Contents>: Update featured contents - Published: ${this._isPublished}`, info.args);
 					}
 					this.prepareAsync(true);
 				}, 1234);
@@ -81,7 +81,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
 
 		if (this.configSvc.isDebug) {
-			console.log(`<Featured Contents>: control was initialized - Published: ${this._isPublished}`);
+			console.log(`<Featured Contents>: Control was initialized - Published: ${this._isPublished}`);
 		}
 	}
 
@@ -113,11 +113,12 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 	}
 
 	private prepareContents(force: boolean = false) {
-		if (!this.contents.length || force) {
-			const organizationID = this.portalsCoreSvc.activeOrganization !== undefined ? this.portalsCoreSvc.activeOrganization.ID : undefined;
+		if (this.contents.length < 1 || force) {
+			const organization = this.portalsCoreSvc.activeOrganization;
+			const organizationID = organization !== undefined ? organization.ID : undefined;
 			const filterBy: (content: FeaturedContent) => boolean = AppUtility.isNotEmpty(this.status)
-				? content => content.OriginalObject.SystemID === organizationID && content.Status === this.status
-				: content => content.OriginalObject.SystemID === organizationID;
+				? content => content.SystemID === organizationID && content.Status === this.status
+				: content => content.SystemID === organizationID;
 			const orderBy = this._isPublished
 				? [{ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }]
 				: [];
@@ -127,16 +128,20 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 				return {
 					ID: content.ID,
 					Title: content.Title,
-					Created: content.Created,
-					LastModified: content.LastModified,
-					PublishedTime: content["PublishedTime"] || content.Created,
 					Status: content.Status,
 					ThumbnailURI: content.thumbnailURI,
-					StartDate: content["StartDate"] || content.Created,
-					Category: category !== undefined && typeof category === "object" ? category : undefined,
+					Created: new Date(content.Created),
+					LastModified: new Date(content.LastModified),
+					PublishedTime: new Date(content["PublishedTime"] || content.Created),
+					SystemID: content.SystemID,
+					StartDate: AppUtility.toIsoDate(content["StartDate"] || content.Created),
+					Category: typeof category === "object" ? category : undefined,
 					OriginalObject: content
 				} as FeaturedContent;
 			}).filter(filterBy).orderBy(orderBy).take(this.amount);
+			if (this.configSvc.isDebug) {
+				console.log(`<Featured Contents>: Featured contents are prepared (${(organization || {}).Title}) - Published: ${this._isPublished}`);
+			}
 		}
 	}
 
@@ -165,6 +170,7 @@ export interface FeaturedContent {
 	Created: Date;
 	LastModified: Date;
 	PublishedTime: Date;
+	SystemID: string;
 	StartDate?: string;
 	Category?: Category;
 	OriginalObject: CmsBaseModel;
