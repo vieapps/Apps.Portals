@@ -834,6 +834,7 @@ export class PortalsCmsService extends BaseService {
 		switch (message.Type.Event) {
 			case "Create":
 			case "Update":
+			case "Get":
 				this.updateCategory(message.Data);
 				if (this._sidebarContentType !== undefined) {
 					const parentCategory = Category.get(message.Data.ParentID);
@@ -847,7 +848,6 @@ export class PortalsCmsService extends BaseService {
 				this.deleteCategory(message.Data.ID, message.Data.ParentID);
 				break;
 
-			case "Get":
 			case "Search":
 				break;
 
