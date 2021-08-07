@@ -510,7 +510,7 @@ export class AppAPIs {
 		}
 	}
 
-	private static updateWebSocket(options?: { message?: string; resendCallbackRequests?: boolean} ) {
+	private static updateWebSocket(options?: { message?: string; resendCallbackRequests?: boolean } ) {
 		// send all 'no callback' requests
 		Object.keys(this._requests.nocallbackRequests).sort().forEach(id => this._websocket.send(this._requests.nocallbackRequests[id]));
 		this._requests.nocallbackRequests = {};
