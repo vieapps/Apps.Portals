@@ -667,11 +667,12 @@ export class AppAPIs {
 				ServiceName: info !== undefined ? info.ServiceName : request.ServiceName,
 				ObjectName: info !== undefined ? info.ObjectName : request.ObjectName,
 				Verb: request.Verb,
-				Header: request.Header,
+				Header: request.Header || {},
 				Query: (info !== undefined ? info.Query : request.Query) || {},
 				Extra: request.Extra,
 				Body: request.Body
 			};
+			["x-app-token", "x-app-name", "x-app-platform", "x-device-id", "x-session-id"].forEach(name => delete requestInfo.Header[name]);
 			["service-name", "object-name"].forEach(name => delete requestInfo.Query[name]);
 			if (info !== undefined && AppUtility.isNotEmpty(info.ObjectIdentity)) {
 				requestInfo.Query["object-identity"] = info.ObjectIdentity;
