@@ -1,6 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { AppFormsService } from "@app/components/forms.service";
-import { ConfigurationService, Log } from "@app/services/configuration.service";
+import { ConfigurationService, ServiceLog } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 
 @Component({
@@ -19,7 +19,7 @@ export class LogsViewPage implements OnInit {
 	}
 
 	title = "View Logs";
-	logs = new Array<Log>();
+	logs = new Array<ServiceLog>();
 
 	get color() {
 		return this.configSvc.color;
@@ -42,7 +42,7 @@ export class LogsViewPage implements OnInit {
 		this.logs = this.configSvc.logs.filter(log => ids.contains(log.ID));
 	}
 
-	track(index: number, log: Log) {
+	track(index: number, log: ServiceLog) {
 		return `${log.ID}@${index}`;
 	}
 

@@ -6,7 +6,7 @@ import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { AppPagination, AppDataPagination } from "@app/components/app.pagination";
 import { AppFormsService } from "@app/components/forms.service";
-import { ConfigurationService, Log } from "@app/services/configuration.service";
+import { ConfigurationService, ServiceLog } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 
 @Component({
@@ -60,7 +60,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 		const correlationID = this.filterBy["CorrelationID"];
 		const serviceName = this.filterBy["ServiceName"];
 		if (AppUtility.isNotEmpty(correlationID) || AppUtility.isNotEmpty(serviceName)) {
-			const predicate: (log: Log) => boolean = AppUtility.isNotEmpty(correlationID) && AppUtility.isNotEmpty(serviceName)
+			const predicate: (log: ServiceLog) => boolean = AppUtility.isNotEmpty(correlationID) && AppUtility.isNotEmpty(serviceName)
 				? log => log.CorrelationID === correlationID && log.ServiceName === serviceName
 				: AppUtility.isNotEmpty(correlationID)
 					? log => log.CorrelationID === correlationID
@@ -104,11 +104,11 @@ export class LogsListPage implements OnInit, OnDestroy {
 		await this.initializeAsync();
 	}
 
-	track(index: number, log: Log) {
+	track(index: number, log: ServiceLog) {
 		return `${log.ID}@${index}`;
 	}
 
-	info(log: Log) {
+	info(log: ServiceLog) {
 		return log !== undefined ? log.Logs.substr(0, 100) + (log.Logs.length > 100 ? "..." : "") : "";
 	}
 
