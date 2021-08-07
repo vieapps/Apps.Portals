@@ -346,30 +346,57 @@ export class AppAPIs {
 			}
 
 			// prepare
-			const result = this.parseWebSocket(event.data || "{}");
-			if (!result.status) {
+			let msg: { ID: string; Type: string; Data: any; };
+			try {
+				msg = JSON.parse(event.data || "{}");
+			}
+			catch (error) {
+				console.error("[AppAPIs]: Error occurred while parsing the returning data", error);
+				this.reupdateWebSocket();
 				return;
 			}
 
 			// prepare
-			const data = result.data.Data || {};
-			const successCallback = AppUtility.isNotEmpty(result.data.ID) ? this._requests.successCallbacks[result.data.ID] : undefined;
-			const errorCallback = AppUtility.isNotEmpty(result.data.ID) ? this._requests.errorCallbacks[result.data.ID] : undefined;
-			if (AppUtility.isNotEmpty(result.data.ID)) {
-				delete this._requests.callbackableRequests[result.data.ID];
-				delete this._requests.successCallbacks[result.data.ID];
-				delete this._requests.errorCallbacks[result.data.ID];
+			const data = msg.Data || {};
+			const gotID = AppUtility.isNotEmpty(msg.ID);
+			const successCallback = gotID ? this._requests.successCallbacks[msg.ID] : undefined;
+			const errorCallback = gotID ? this._requests.errorCallbacks[msg.ID] : undefined;
+			if (gotID) {
+				delete this._requests.callbackableRequests[msg.ID];
+				delete this._requests.successCallbacks[msg.ID];
+				delete this._requests.errorCallbacks[msg.ID];
 			}
 
 			// got an error
-			if ("Error" === result.data.Type) {
+			if ("Error" === msg.Type) {
+				// security issues
 				if (AppUtility.isGotSecurityException(data) && "UnauthorizedException" !== data.Type && "AccessDeniedException" !== data.Type) {
 					console.warn(`[AppAPIs]: ${data.Message} [${data.Code}: ${data.Type}]`, AppConfig.isDebug ? data : "");
-					this.reopenWebSocketWhenGotSecurityError(data);
+
+					// the token is expired => re-open WebSocket to renew token and reauthenticate
+					if ("TokenExpiredException" === data.Type) {
+						this.reopenWebSocket("[AppAPIs]: Re-open WebSocket connection because the JWT is expired");
+					}
+
+					// need to terminate current session
+					else {
+						this.broadcast({
+							Type: {
+								Service: "Users",
+								Object: "Session",
+								Event: "Revoke"
+							},
+							Data: data
+						});
+					}
 				}
+
+				// got a callback on error
 				else if (errorCallback !== undefined) {
 					errorCallback(data);
 				}
+
+				// print the error when has no callback
 				else {
 					console.error(`[AppAPIs]: ${data.Message} [${data.Code}: ${data.Type}]`, AppConfig.isDebug ? data : "");
 				}
@@ -384,7 +411,7 @@ export class AppAPIs {
 			else {
 				// prepare
 				const message: AppMessage = {
-					Type: this.parseMessageType(result.data.Type),
+					Type: this.parseMessageType(msg.Type),
 					Data: data
 				};
 
@@ -463,40 +490,6 @@ export class AppAPIs {
 					}
 				}, true);
 			}, defer || 123 + (this._attempt * 13));
-		}
-	}
-
-	/** Reopens the WebSocket connection when got an error */
-	public static reopenWebSocketWhenGotSecurityError(error?: any) {
-		if ("TokenExpiredException" === error.Type) {
-			this.reopenWebSocket("[AppAPIs]: Re-open WebSocket connection because the JWT is expired");
-		}
-		else {
-			this.broadcast({
-				Type: {
-					Service: "Users",
-					Object: "Session",
-					Event: "Revoke"
-				},
-				Data: error.Data || {}
-			});
-		}
-	}
-
-	private static parseWebSocket(data: string) {
-		try {
-			return {
-				status: true,
-				data: JSON.parse(data)
-			};
-		}
-		catch (error) {
-			console.error("[AppAPIs]: Error occurred while parsing JSON data", error);
-			this.reupdateWebSocket();
-			return {
-				status: false,
-				data: {}
-			};
 		}
 	}
 
