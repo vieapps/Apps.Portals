@@ -298,13 +298,13 @@ export class AuthenticationService extends BaseService {
 	}
 
 	private async updateSessionWhenLogInAsync(data: any, onNext: (data?: any) => void) {
-		await this.configSvc.updateSessionAsync(data, () => AppAPIs.openWebSocket(() => {
+		await this.configSvc.updateSessionAsync(data, () => {
 			AppEvents.broadcast("Session", { Type: "LogIn" });
 			AppEvents.sendToElectron("Users", { Type: "LogIn", Data: this.configSvc.appConfig.session });
 			if (onNext !== undefined) {
 				onNext(data);
 			}
-		}));
+		});
 	}
 
 }

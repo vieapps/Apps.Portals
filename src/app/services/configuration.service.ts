@@ -54,7 +54,7 @@ export class ConfigurationService extends BaseService {
 
 	private _definitions: { [key: string]: any } = {};
 
-	public logs = new Array<Log>();
+	public logs = new Array<ServiceLog>();
 
 	/** Gets the configuration of the app */
 	public get appConfig() {
@@ -373,7 +373,7 @@ export class ConfigurationService extends BaseService {
 
 		if (AppUtility.isNotEmpty(session.Token)) {
 			try {
-				this.appConfig.session.token = AppCrypto.jwtDecode(session.Token, AppUtility.isObject(this.appConfig.session.keys, true) ? this.appConfig.session.keys.jwt : this.appConfig.app.name);
+				this.appConfig.session.token = AppCrypto.jwtDecode(session.Token);
 				AppAPIs.authenticateWebSocket();
 			}
 			catch (error) {
@@ -818,7 +818,7 @@ export class ConfigurationService extends BaseService {
 			path += `x-object-identity=${definitionName.toLowerCase()}&`;
 		}
 		if (AppUtility.isObject(query, true)) {
-			Object.keys(query).forEach(key => path += `${key}=${encodeURIComponent(query[key])}&`);
+			path += `${AppUtility.getQueryOfJson(query)}&`;
 		}
 		return path + this.appConfig.getRelatedQuery(serviceName, undefined, json => {
 			if (AppUtility.isNotEmpty(serviceName) && AppUtility.isEquals(serviceName, json["related-service"])) {
@@ -918,7 +918,7 @@ export interface Shortcut {
 	onRemove?: (event: Event, index: number, shortcut: Shortcut) => void;
 }
 
-export interface Log {
+export interface ServiceLog {
 	ID: string;
 	Time: Date;
 	CorrelationID: string;
