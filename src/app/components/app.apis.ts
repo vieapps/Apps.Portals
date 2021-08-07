@@ -352,9 +352,9 @@ export class AppAPIs {
 			}
 
 			// prepare
+			const data = result.data.Data || {};
 			const successCallback = AppUtility.isNotEmpty(result.data.ID) ? this._requests.successCallbacks[result.data.ID] : undefined;
 			const errorCallback = AppUtility.isNotEmpty(result.data.ID) ? this._requests.errorCallbacks[result.data.ID] : undefined;
-			const data = result.data.Data || {};
 			if (AppUtility.isNotEmpty(result.data.ID)) {
 				delete this._requests.callbackableRequests[result.data.ID];
 				delete this._requests.successCallbacks[result.data.ID];
@@ -363,17 +363,15 @@ export class AppAPIs {
 
 			// got an error
 			if ("Error" === result.data.Type) {
-				if (AppUtility.isGotSecurityException(data)) {
-					console.warn(`[AppAPIs]: Got a security issue [${data.Code}: ${data.Type}]\n${data.Message}`, AppConfig.isDebug ? data : "");
-					if ("UnauthorizedException" !== data.Type && "AccessDeniedException" !== data.Type) {
-						this.reopenWebSocketWhenGotSecurityError(data);
-					}
+				if (AppUtility.isGotSecurityException(data) && "UnauthorizedException" !== data.Type && "AccessDeniedException" !== data.Type) {
+					console.warn(`[AppAPIs]: ${data.Message} [${data.Code}: ${data.Type}]`, AppConfig.isDebug ? data : "");
+					this.reopenWebSocketWhenGotSecurityError(data);
 				}
 				else if (errorCallback !== undefined) {
 					errorCallback(data);
 				}
 				else {
-					console.warn(`[AppAPIs]: ${("InvalidRequestException" === data.Type ? "Invalid request" : "Got an error")}: [${data.Code}: ${data.Type}]\n${data.Message}`, AppConfig.isDebug ? data : "");
+					console.error(`[AppAPIs]: ${data.Message} [${data.Code}: ${data.Type}]`, AppConfig.isDebug ? data : "");
 				}
 			}
 
@@ -391,7 +389,7 @@ export class AppAPIs {
 				};
 
 				if (AppConfig.isDebug) {
-					console.log("[AppAPIs]: Got an updating message", AppConfig.isNativeApp ? JSON.stringify(message) : message);
+					console.log("[AppAPIs]: Got an updating message", AppConfig.isNativeApp ? AppCrypto.stringify(message) : message);
 				}
 
 				// send PONG
