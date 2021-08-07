@@ -256,7 +256,7 @@ export class UsersService extends BaseService {
 
 	public async prepare2FAMethodAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, query?: string) {
 		await this.readAsync(
-			this.getPath("otp", undefined, AppUtility.isNotEmpty(query) ? `${query}&${this.configSvc.relatedQuery}` : this.configSvc.relatedQuery),
+			this.getPath("otp", undefined, `${AppUtility.isNotEmpty(query) ? `${query}&` : ""}${this.configSvc.relatedQuery}`),
 			onSuccess,
 			error => {
 				console.error(this.getErrorMessage("Error occurred while preparing an 2FA method", error));

@@ -36,7 +36,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx-portals",
-		version: "3.8.3",
+		version: "3.8.4",
 		frameworks: "ionic 5.6 - angular 11.2 - cordova 10.0",
 		mode: "",
 		platform: "",
@@ -266,7 +266,7 @@ export class AppConfig {
 	}
 
 	/** Gets the related JSON with active/related service, culture language and host */
-	public static getRelatedJson(additional?: { [key: string]: string }, service?: string, activeID?: string, onPreCompleted?: (json: any) => void) {
+	public static getRelatedJson(additional?: { [key: string]: string }, service?: string, activeID?: string, onCompleted?: (json: any) => void) {
 		const json: { [key: string]: string } = {
 			"language": this.language,
 			"related-service": (AppUtility.isNotEmpty(service) ? service : this.services.active || "").trim().toLowerCase(),
@@ -275,15 +275,15 @@ export class AppConfig {
 		if (AppUtility.isObject(additional, true)) {
 			Object.keys(additional).forEach(key => json[key] = additional[key]);
 		}
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(json);
+		if (onCompleted !== undefined) {
+			onCompleted(json);
 		}
 		return json;
 	}
 
 	/** Gets the related query with active/related service, culture language and host */
-	public static getRelatedQuery(service?: string, activeID?: string, onPreCompleted?: (json: any) => void) {
-		return AppUtility.getQueryOfJson(this.getRelatedJson(undefined, service, activeID, onPreCompleted));
+	public static getRelatedQuery(service?: string, activeID?: string, onCompleted?: (json: any) => void) {
+		return AppUtility.getQueryOfJson(this.getRelatedJson(undefined, service, activeID, onCompleted));
 	}
 
 	/** Gets the authenticated headers (JSON) for making requests to APIs */
