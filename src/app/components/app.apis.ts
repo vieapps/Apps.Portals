@@ -653,8 +653,8 @@ export class AppAPIs {
 				ServiceName: info !== undefined ? info.ServiceName : request.ServiceName,
 				ObjectName: info !== undefined ? info.ObjectName : request.ObjectName,
 				Verb: request.Verb,
-				Header: request.Header || {},
-				Query: (info !== undefined ? info.Query : request.Query) || {},
+				Header: AppUtility.clone(request.Header || {}),
+				Query: AppUtility.clone((info !== undefined ? info.Query : request.Query) || {}),
 				Extra: request.Extra,
 				Body: request.Body
 			};
