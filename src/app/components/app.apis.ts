@@ -130,25 +130,25 @@ export class AppAPIs {
 	/** Parses the requesting information */
 	public static parseRequestInfo(path: string) {
 		const uri = PlatformUtility.parseURI(path);
-		const requestedInfo = {
+		const requestInfo = {
 			ServiceName: uri.Paths[0],
 			ObjectName: uri.Paths.length > 1 ? uri.Paths[1] : "",
 			ObjectIdentity: undefined as string,
 			Query: uri.QueryParams
 		};
 		if (uri.Paths.length > 2) {
-			requestedInfo.ObjectIdentity = requestedInfo.Query["object-identity"] = uri.Paths[2];
+			requestInfo.ObjectIdentity = requestInfo.Query["object-identity"] = uri.Paths[2];
 		}
-		return requestedInfo;
+		return requestInfo;
 	}
 
-	private static parseMessageType(identity: string) {
-		let type = this._types[identity];
+	private static parseMessageType(messageType: string) {
+		let type = this._types[messageType];
 		if (type === undefined) {
-			let pos = AppUtility.indexOf(identity, "#"), object = "", event = "";
-			const service = pos > 0 ? identity.substring(0, pos) : identity;
+			let pos = AppUtility.indexOf(messageType, "#"), object = "", event = "";
+			const service = pos > 0 ? messageType.substring(0, pos) : messageType;
 			if (pos > 0) {
-				object = identity.substring(pos + 1);
+				object = messageType.substring(pos + 1);
 				pos = AppUtility.indexOf(object, "#");
 				if (pos > 0) {
 					event = object.substring(pos + 1);
@@ -160,7 +160,7 @@ export class AppAPIs {
 				Object: object,
 				Event: event
 			};
-			this._types[identity] = type;
+			this._types[messageType] = type;
 		}
 		return type;
 	}
@@ -229,7 +229,7 @@ export class AppAPIs {
 	}
 
 	/** Opens the WebSocket connection */
-	public static openWebSocket(onOpened?: () => void, isRestart: boolean = false) {
+	public static openWebSocket(onOpened?: () => void, isReopenOrRestart: boolean = false) {
 		// check
 		if (typeof WebSocket === "undefined") {
 			console.warn("[AppAPIs]: Its requires a modern component that supports WebSocket");
@@ -284,7 +284,7 @@ export class AppAPIs {
 		// create new instance of WebSocket
 		this._status = "initializing";
 		this._url = (AppUtility.isNotEmpty(AppConfig.URIs.updates) ? AppConfig.URIs.updates : AppConfig.URIs.apis).replace("http://", "ws://").replace("https://", "wss://");
-		this._websocket = new WebSocket(`${this._url}v?x-session-id=${AppCrypto.base64urlEncode(AppConfig.session.id)}&x-device-id=${AppCrypto.base64urlEncode(AppConfig.session.device)}` + (isRestart ? "&x-restart=" : ""));
+		this._websocket = new WebSocket(`${this._url}v?x-session-id=${AppCrypto.base64urlEncode(AppConfig.session.id)}&x-device-id=${AppCrypto.base64urlEncode(AppConfig.session.device)}` + (isReopenOrRestart ? "&x-restart=" : ""));
 		this._ping = +new Date();
 
 		// assign 'on-open' event handler
@@ -535,7 +535,7 @@ export class AppAPIs {
 		}
 
 		// resend all 'callback' requests
-		if (options !== undefined && !!options.resendCallbackRequests) {
+		if (options !== undefined && options.resendCallbackRequests) {
 			this.reupdateWebSocket();
 		}
 	}

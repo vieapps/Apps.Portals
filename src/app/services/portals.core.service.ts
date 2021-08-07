@@ -909,18 +909,19 @@ export class PortalsCoreService extends BaseService {
 		const emailsByApprovalStatusControls = notificationsControl.SubControls.Controls.find(ctrl => ctrl.Name === "EmailsByApprovalStatus").SubControls.Controls;
 		emailsByApprovalStatusControls.find(ctrl => ctrl.Name === "Status").Options.OnChanged = (event, formControl) => {
 			const approvalStatusEmail = emailsByApprovalStatus[event.detail.value] || {};
-			formControl.formGroup.controls.ToAddresses.setValue(approvalStatusEmail.ToAddresses, { onlySelf: true });
-			formControl.formGroup.controls.CcAddresses.setValue(approvalStatusEmail.CcAddresses, { onlySelf: true });
-			formControl.formGroup.controls.BccAddresses.setValue(approvalStatusEmail.BccAddresses, { onlySelf: true });
-			formControl.formGroup.controls.Subject.setValue(approvalStatusEmail.Subject, { onlySelf: true });
-			formControl.formGroup.controls.Body.setValue(approvalStatusEmail.Body, { onlySelf: true });
-			formControl.parentControl.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ToAddresses")).focus();
+			const controls = formControl.formGroup.controls;
+			controls.ToAddresses.setValue(approvalStatusEmail.ToAddresses, { onlySelf: true });
+			controls.CcAddresses.setValue(approvalStatusEmail.CcAddresses, { onlySelf: true });
+			controls.BccAddresses.setValue(approvalStatusEmail.BccAddresses, { onlySelf: true });
+			controls.Subject.setValue(approvalStatusEmail.Subject, { onlySelf: true });
+			controls.Body.setValue(approvalStatusEmail.Body, { onlySelf: true });
+			formControl.parentControl.SubControls.Controls.find(ctrl => ctrl.Name === "ToAddresses").focus(345);
 		};
-		emailsByApprovalStatusControls.find(ctrl => ctrl.Name === "ToAddresses").Options.OnBlur = (_, formControl) => emailsByApprovalStatus[formControl.formGroup.controls.Status.value] = { ToAddresses: formControl.formGroup.controls.ToAddresses.value, CcAddresses: formControl.formGroup.controls.CcAddresses.value, BccAddresses: formControl.formGroup.controls.BccAddresses.value, Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
-		emailsByApprovalStatusControls.find(ctrl => ctrl.Name === "CcAddresses").Options.OnBlur = (_, formControl) => emailsByApprovalStatus[formControl.formGroup.controls.Status.value] = { ToAddresses: formControl.formGroup.controls.ToAddresses.value, CcAddresses: formControl.formGroup.controls.CcAddresses.value, BccAddresses: formControl.formGroup.controls.BccAddresses.value, Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
-		emailsByApprovalStatusControls.find(ctrl => ctrl.Name === "BccAddresses").Options.OnBlur = (_, formControl) => emailsByApprovalStatus[formControl.formGroup.controls.Status.value] = { ToAddresses: formControl.formGroup.controls.ToAddresses.value, CcAddresses: formControl.formGroup.controls.CcAddresses.value, BccAddresses: formControl.formGroup.controls.BccAddresses.value, Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
-		emailsByApprovalStatusControls.find(ctrl => ctrl.Name === "Subject").Options.OnBlur = (_, formControl) => emailsByApprovalStatus[formControl.formGroup.controls.Status.value] = { ToAddresses: formControl.formGroup.controls.ToAddresses.value, CcAddresses: formControl.formGroup.controls.CcAddresses.value, BccAddresses: formControl.formGroup.controls.BccAddresses.value, Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
-		emailsByApprovalStatusControls.find(ctrl => ctrl.Name === "Body").Options.OnBlur = (_, formControl) => emailsByApprovalStatus[formControl.formGroup.controls.Status.value] = { ToAddresses: formControl.formGroup.controls.ToAddresses.value, CcAddresses: formControl.formGroup.controls.CcAddresses.value, BccAddresses: formControl.formGroup.controls.BccAddresses.value, Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
+		emailsByApprovalStatusControls.find(ctrl => ctrl.Name === "ToAddresses").Options.OnBlur =
+			emailsByApprovalStatusControls.find(ctrl => ctrl.Name === "CcAddresses").Options.OnBlur =
+			emailsByApprovalStatusControls.find(ctrl => ctrl.Name === "BccAddresses").Options.OnBlur =
+			emailsByApprovalStatusControls.find(ctrl => ctrl.Name === "Subject").Options.OnBlur =
+			emailsByApprovalStatusControls.find(ctrl => ctrl.Name === "Body").Options.OnBlur = (_, formControl) => emailsByApprovalStatus[formControl.formGroup.controls.Status.value] = { ToAddresses: formControl.formGroup.controls.ToAddresses.value, CcAddresses: formControl.formGroup.controls.CcAddresses.value, BccAddresses: formControl.formGroup.controls.BccAddresses.value, Subject: formControl.formGroup.controls.Subject.value, Body: formControl.formGroup.controls.Body.value };
 		if (onCompleted !== undefined) {
 			onCompleted(notificationsControl);
 		}
