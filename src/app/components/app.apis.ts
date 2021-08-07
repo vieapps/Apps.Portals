@@ -145,11 +145,11 @@ export class AppAPIs {
 	private static parseMessageType(messageType: string) {
 		let type = this._types[messageType];
 		if (type === undefined) {
-			let pos = AppUtility.indexOf(messageType, "#"), object = "", event = "";
+			let pos = messageType.indexOf("#"), object = "", event = "";
 			const service = pos > 0 ? messageType.substring(0, pos) : messageType;
 			if (pos > 0) {
 				object = messageType.substring(pos + 1);
-				pos = AppUtility.indexOf(object, "#");
+				pos = object.indexOf("#");
 				if (pos > 0) {
 					event = object.substring(pos + 1);
 					object = object.substring(0, pos);
@@ -351,7 +351,7 @@ export class AppAPIs {
 				msg = JSON.parse(event.data || "{}");
 			}
 			catch (error) {
-				console.error("[AppAPIs]: Error occurred while parsing the returning data", error);
+				console.error("[AppAPIs]: Error occurred while parsing the message", error instanceof SyntaxError ? "" : error);
 				this.reupdateWebSocket();
 				return;
 			}
@@ -369,7 +369,7 @@ export class AppAPIs {
 
 			// got an error
 			if ("Error" === msg.Type) {
-				// security issues
+				// got a security issue
 				if (AppUtility.isGotSecurityException(data) && "UnauthorizedException" !== data.Type && "AccessDeniedException" !== data.Type) {
 					console.warn(`[AppAPIs]: ${data.Message} [${data.Code}: ${data.Type}]`, AppConfig.isDebug ? data : "");
 
@@ -415,7 +415,7 @@ export class AppAPIs {
 					Data: data
 				};
 
-				if (AppConfig.isDebug) {
+				if (AppConfig.isDebug && message.Type.Event !== "Get" && message.Type.Event !== "Search") {
 					console.log("[AppAPIs]: Got an updating message", AppConfig.isNativeApp ? AppCrypto.stringify(message) : message);
 				}
 
