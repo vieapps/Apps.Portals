@@ -53,7 +53,7 @@ export class UsersService extends BaseService {
 				: { title: profile.Name, description: profile.getEmail(!this.authSvc.isSystemAdministrator()), image: profile.avatarURI, originalObject: profile };
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchingPath("profile", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(this.getSearchingPath("profile", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => UserProfile.contains(obj.ID) ? convertToCompleterItem(UserProfile.get(obj.ID)) : convertToCompleterItem(UserProfile.update(UserProfile.deserialize(obj)))),
 			convertToCompleterItem
 		);
@@ -61,7 +61,7 @@ export class UsersService extends BaseService {
 
 	public search(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
-			super.getSearchingPath("profile", this.configSvc.relatedQuery),
+			this.getSearchingPath("profile", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -76,7 +76,7 @@ export class UsersService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching", error));
+				console.error(this.getErrorMessage("Error occurred while searching", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -86,7 +86,7 @@ export class UsersService extends BaseService {
 
 	public async searchAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
-			super.getSearchingPath("profile", this.configSvc.relatedQuery),
+			this.getSearchingPath("profile", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -101,7 +101,7 @@ export class UsersService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching", error));
+				console.error(this.getErrorMessage("Error occurred while searching", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -110,8 +110,8 @@ export class UsersService extends BaseService {
 	}
 
 	public async registerAsync(registerInfo: any, captcha: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.createAsync(
-			super.getPath("account", undefined, `uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`),
+		await this.createAsync(
+			this.getPath("account", undefined, `uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`),
 			AppUtility.clone(registerInfo, ["ConfirmEmail", "ConfirmPassword", "Captcha"], undefined, body => {
 				body.Email = AppCrypto.rsaEncrypt(body.Email);
 				body.Password = AppCrypto.rsaEncrypt(body.Password);
@@ -137,12 +137,12 @@ export class UsersService extends BaseService {
 		if (relatedInfo !== undefined) {
 			body["RelatedInfo"] = AppCrypto.aesEncrypt(JSON.stringify(relatedInfo));
 		}
-		await super.createAsync(
-			super.getPath("account", "invite", `uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`),
+		await this.createAsync(
+			this.getPath("account", "invite", `uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`),
 			body,
 			onSuccess,
 			error => {
-				console.error(super.getErrorMessage("Error occurred while sending an invitation", error));
+				console.error(this.getErrorMessage("Error occurred while sending an invitation", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -151,17 +151,17 @@ export class UsersService extends BaseService {
 	}
 
 	public async activateAsync(mode: string, code: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		const uri = this.configSvc.appConfig.URIs.apis + super.getPath("activate", undefined, `mode=${mode}&code=${code}&${this.configSvc.relatedQuery}`);
-		await super.readAsync(
+		const uri = this.configSvc.appConfig.URIs.apis + this.getPath("activate", undefined, `mode=${mode}&code=${code}&${this.configSvc.relatedQuery}`);
+		await this.readAsync(
 			uri,
 			async data => await this.configSvc.updateSessionAsync(data, () => {
-				console.log(super.getLogMessage("Activated..."), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+				console.log(this.getLogMessage("Activated..."), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
 			}),
 			error => {
-				console.error(super.getErrorMessage(`Error occurred while activating (${mode})`, error));
+				console.error(this.getErrorMessage(`Error occurred while activating (${mode})`, error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -179,8 +179,8 @@ export class UsersService extends BaseService {
 			}
 		}
 		else {
-			await super.readAsync(
-				super.getPath("profile", id, this.configSvc.relatedQuery),
+			await this.readAsync(
+				this.getPath("profile", id, this.configSvc.relatedQuery),
 				data => {
 					UserProfile.update(data);
 					if (onSuccess !== undefined) {
@@ -188,7 +188,7 @@ export class UsersService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while reading profile", error));
+					console.error(this.getErrorMessage("Error occurred while reading profile", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -202,8 +202,8 @@ export class UsersService extends BaseService {
 	}
 
 	public async updateProfileAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.updateAsync(
-			super.getPath("profile", body.ID || this.configSvc.getAccount().id, this.configSvc.relatedQuery),
+		await this.updateAsync(
+			this.getPath("profile", body.ID || this.configSvc.getAccount().id, this.configSvc.relatedQuery),
 			body,
 			data => {
 				UserProfile.update(data);
@@ -212,7 +212,7 @@ export class UsersService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating profile", error));
+				console.error(this.getErrorMessage("Error occurred while updating profile", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -221,15 +221,15 @@ export class UsersService extends BaseService {
 	}
 
 	public async updatePasswordAsync(password: string, newPassword: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.updateAsync(
-			super.getPath("account", "password", this.configSvc.relatedQuery),
+		await this.updateAsync(
+			this.getPath("account", "password", this.configSvc.relatedQuery),
 			{
 				OldPassword: AppCrypto.rsaEncrypt(password),
 				Password: AppCrypto.rsaEncrypt(newPassword)
 			},
 			onSuccess,
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating password", error));
+				console.error(this.getErrorMessage("Error occurred while updating password", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -238,15 +238,15 @@ export class UsersService extends BaseService {
 	}
 
 	public async updateEmailAsync(password: string, newEmail: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.updateAsync(
-			super.getPath("account", "email", this.configSvc.relatedQuery),
+		await this.updateAsync(
+			this.getPath("account", "email", this.configSvc.relatedQuery),
 			{
 				OldPassword: AppCrypto.rsaEncrypt(password),
 				Email: AppCrypto.rsaEncrypt(newEmail)
 			},
 			onSuccess,
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating email", error));
+				console.error(this.getErrorMessage("Error occurred while updating email", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -255,11 +255,11 @@ export class UsersService extends BaseService {
 	}
 
 	public async prepare2FAMethodAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, query?: string) {
-		await super.readAsync(
-			super.getPath("otp", undefined, AppUtility.isNotEmpty(query) ? `${query}&${this.configSvc.relatedQuery}` : this.configSvc.relatedQuery),
+		await this.readAsync(
+			this.getPath("otp", undefined, AppUtility.isNotEmpty(query) ? `${query}&${this.configSvc.relatedQuery}` : this.configSvc.relatedQuery),
 			onSuccess,
 			error => {
-				console.error(super.getErrorMessage("Error occurred while preparing an 2FA method", error));
+				console.error(this.getErrorMessage("Error occurred while preparing an 2FA method", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -268,15 +268,15 @@ export class UsersService extends BaseService {
 	}
 
 	public async add2FAMethodAsync(password: string, provisioning: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.updateAsync(
-			super.getPath("otp", undefined, this.configSvc.relatedQuery),
+		await this.updateAsync(
+			this.getPath("otp", undefined, this.configSvc.relatedQuery),
 			{
 				Provisioning: provisioning,
 				OTP: otp
 			},
 			data => this.configSvc.updateAccount(data, onSuccess),
 			error => {
-				console.error(super.getErrorMessage("Error occurred while adding an 2FA method", error));
+				console.error(this.getErrorMessage("Error occurred while adding an 2FA method", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -288,11 +288,11 @@ export class UsersService extends BaseService {
 	}
 
 	public async delete2FAMethodAsync(password: string, info: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.deleteAsync(
-			super.getPath("otp", undefined, `info=${info}&${this.configSvc.relatedQuery}`),
+		await this.deleteAsync(
+			this.getPath("otp", undefined, `info=${info}&${this.configSvc.relatedQuery}`),
 			data => this.configSvc.updateAccount(data, onSuccess),
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting an 2FA method", error));
+				console.error(this.getErrorMessage("Error occurred while deleting an 2FA method", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -310,11 +310,11 @@ export class UsersService extends BaseService {
 			}
 		}
 		else {
-			await super.readAsync(
-				super.getPath("account", id, this.configSvc.relatedQuery),
+			await this.readAsync(
+				this.getPath("account", id, this.configSvc.relatedQuery),
 				data => this.configSvc.updateAccount(data, onSuccess, true),
 				error => {
-					console.error(super.getErrorMessage("Error occurred while reading privileges", error));
+					console.error(this.getErrorMessage("Error occurred while reading privileges", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -324,14 +324,14 @@ export class UsersService extends BaseService {
 	}
 
 	public async updateServicePrivilegesAsync(id: string, privileges: { [key: string]: Array<Privilege> }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.updateAsync(
-			super.getPath("account", id, this.configSvc.relatedQuery),
+		await this.updateAsync(
+			this.getPath("account", id, this.configSvc.relatedQuery),
 			{
 				Privileges: AppCrypto.aesEncrypt(JSON.stringify(privileges))
 			},
 			data => this.configSvc.updateAccount(data, onSuccess, true),
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating privileges", error));
+				console.error(this.getErrorMessage("Error occurred while updating privileges", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -346,7 +346,7 @@ export class UsersService extends BaseService {
 				switch (message.Type.Event) {
 					case "Update":
 						await this.configSvc.updateSessionAsync(message.Data, () => {
-							console.warn(super.getLogMessage("The session was updated with new access token"), this.configSvc.appConfig.session);
+							console.warn(this.getLogMessage("The session was updated with new access token"), this.configSvc.appConfig.session);
 							AppEvents.sendToElectron(this.name, { Type: "Session", Data: this.configSvc.appConfig.session });
 						}, false, false, false);
 						AppEvents.broadcast("Account", { Type: "Updated", Mode: "Session" });
@@ -354,7 +354,7 @@ export class UsersService extends BaseService {
 
 					case "Revoke":
 						if (AppUtility.isGotSecurityException(message.Data)) {
-							console.warn(super.getLogMessage("Revoke the session and register new when got a security issue"), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+							console.warn(this.getLogMessage("Revoke the session and register new when got a security issue"), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 							await this.configSvc.resetSessionAsync(async () => await this.configSvc.initializeSessionAsync(async () =>
 								await this.configSvc.registerSessionAsync(() => {
 									AppAPIs.reopenWebSocket("Reopens when got a security issue");
@@ -363,7 +363,7 @@ export class UsersService extends BaseService {
 						}
 						else {
 							await this.configSvc.updateSessionAsync(message.Data, async () => await this.configSvc.registerSessionAsync(() => {
-								console.warn(super.getLogMessage("The session was revoked by the APIs"), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+								console.warn(this.getLogMessage("The session was revoked by the APIs"), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 								AppAPIs.reopenWebSocket("Reopens when the session was revoked by the APIs");
 							}), false, false, false);
 						}
@@ -382,7 +382,7 @@ export class UsersService extends BaseService {
 						break;
 
 					default:
-						console.warn(super.getLogMessage("Got an update of a session"), message);
+						console.warn(this.getLogMessage("Got an update of a session"), message);
 						break;
 				}
 				break;
@@ -408,7 +408,7 @@ export class UsersService extends BaseService {
 					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
 					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: account.profile });
 					if (this.configSvc.isDebug) {
-						console.log(super.getLogMessage("User profile was updated from APIs"), account.profile);
+						console.log(this.getLogMessage("User profile was updated from APIs"), account.profile);
 					}
 					if (this.configSvc.appConfig.facebook.token !== undefined && this.configSvc.appConfig.facebook.id !== undefined) {
 						this.configSvc.getFacebookProfile();
@@ -420,7 +420,7 @@ export class UsersService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update of an user"), message);
+				console.warn(this.getLogMessage("Got an update of an user"), message);
 				break;
 		}
 	}

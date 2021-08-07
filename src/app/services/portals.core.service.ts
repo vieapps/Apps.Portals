@@ -480,13 +480,13 @@ export class PortalsCoreService extends BaseService {
 
 	public async getTemplateAsync(name: string, theme?: string, mainDirectory?: string, subDirectory?: string) {
 		let template: string;
-		await super.fetchAsync(super.getPath("definitions", "template", "x-request=" + AppCrypto.jsonEncode({ Name: name, Theme: theme, MainDirectory: mainDirectory, SubDirectory: subDirectory })), data => template = data.Template);
+		await this.fetchAsync(this.getPath("definitions", "template", "x-request=" + AppCrypto.jsonEncode({ Name: name, Theme: theme, MainDirectory: mainDirectory, SubDirectory: subDirectory })), data => template = data.Template);
 		return template || "";
 	}
 
 	public async getTemplateZonesAsync(dekstopID: string) {
 		let zones: Array<string>;
-		await super.fetchAsync(super.getPath("definitions", "template", "x-request=" + AppCrypto.jsonEncode({ Mode: "Zones", DesktopID: dekstopID })), data => zones = data);
+		await this.fetchAsync(this.getPath("definitions", "template", "x-request=" + AppCrypto.jsonEncode({ Mode: "Zones", DesktopID: dekstopID })), data => zones = data);
 		return zones || [];
 	}
 
@@ -1259,19 +1259,19 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public lookup(objectName: string, request: any, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		return super.search(super.getSearchingPath(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, headers);
+		return this.search(this.getSearchingPath(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, headers);
 	}
 
 	public async lookupAsync(objectName: string, request: any, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await super.searchAsync(super.getSearchingPath(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, false, headers);
+		await this.searchAsync(this.getSearchingPath(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, false, headers);
 	}
 
 	public async getAsync(objectName: string, id: string, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await super.readAsync(super.getPath(objectName, id), onSuccess, onError, headers, true);
+		await this.readAsync(this.getPath(objectName, id), onSuccess, onError, headers, true);
 	}
 
 	public async refreshAsync(objectName: string, id: string, onSuccess?: (data: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, headers?: { [header: string]: string }) {
-		await super.readAsync(super.getPath(objectName, "refresh", `object-id=${id}`), onSuccess, onError, headers, useXHR);
+		await this.readAsync(this.getPath(objectName, "refresh", `object-id=${id}`), onSuccess, onError, headers, useXHR);
 	}
 
 	public async getSidebarFooterButtonsAsync() {
@@ -1472,19 +1472,19 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchingPath("organization", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(this.getSearchingPath("organization", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Organization.contains(obj.ID) ? convertToCompleterItem(Organization.get(obj.ID)) : convertToCompleterItem(Organization.update(Organization.deserialize(obj)))),
 			convertToCompleterItem
 		);
 	}
 
 	public searchOrganization(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.search(
-			super.getSearchingPath("organization", this.configSvc.relatedQuery),
+		return this.search(
+			this.getSearchingPath("organization", this.configSvc.relatedQuery),
 			request,
 			data => this.processOrganizations(data, onSuccess),
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching organization(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching organization(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1493,12 +1493,12 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async searchOrganizationAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.searchAsync(
-			super.getSearchingPath("organization", this.configSvc.relatedQuery),
+		await this.searchAsync(
+			this.getSearchingPath("organization", this.configSvc.relatedQuery),
 			request,
 			data => this.processOrganizations(data, onSuccess),
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching organization(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching organization(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1507,8 +1507,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async createOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.createAsync(
-			super.getPath("organization"),
+		await this.createAsync(
+			this.getPath("organization"),
 			body,
 			data => {
 				Organization.update(data);
@@ -1517,7 +1517,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new organization", error));
+				console.error(this.getErrorMessage("Error occurred while creating new organization", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1532,8 +1532,8 @@ export class PortalsCoreService extends BaseService {
 			}
 		}
 		else {
-			await super.readAsync(
-				super.getPath("organization", id),
+			await this.readAsync(
+				this.getPath("organization", id),
 				data => {
 					Organization.update(data);
 					if (AppUtility.isArray(data.Modules, true)) {
@@ -1549,7 +1549,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while getting an organization", error));
+					console.error(this.getErrorMessage("Error occurred while getting an organization", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -1569,8 +1569,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async updateOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.updateAsync(
-			super.getPath("organization", body.ID),
+		await this.updateAsync(
+			this.getPath("organization", body.ID),
 			body,
 			data => {
 				Organization.update(data);
@@ -1579,7 +1579,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating an organization", error));
+				console.error(this.getErrorMessage("Error occurred while updating an organization", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1588,8 +1588,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async deleteOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.deleteAsync(
-			super.getPath("organization", id),
+		await this.deleteAsync(
+			this.getPath("organization", id),
 			data => {
 				Organization.instances.remove(id);
 				if (onSuccess !== undefined) {
@@ -1597,7 +1597,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting an organization", error));
+				console.error(this.getErrorMessage("Error occurred while deleting an organization", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1621,7 +1621,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of an organization"), message);
+				console.warn(this.getLogMessage("Got an update message of an organization"), message);
 				break;
 		}
 
@@ -1655,7 +1655,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchingPath("role", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(this.getSearchingPath("role", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
 				const role = Role.get(obj.ID);
 				return role === undefined
@@ -1669,8 +1669,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public searchRole(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.search(
-			super.getSearchingPath("role", this.configSvc.relatedQuery),
+		return this.search(
+			this.getSearchingPath("role", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -1689,7 +1689,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching role(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching role(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1698,8 +1698,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async searchRoleAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.searchAsync(
-			super.getSearchingPath("role", this.configSvc.relatedQuery),
+		await this.searchAsync(
+			this.getSearchingPath("role", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -1718,7 +1718,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching role(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching role(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1727,8 +1727,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async createRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.createAsync(
-			super.getPath("role"),
+		await this.createAsync(
+			this.getPath("role"),
 			body,
 			data => {
 				this.updateRole(data);
@@ -1737,7 +1737,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new role", error));
+				console.error(this.getErrorMessage("Error occurred while creating new role", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1753,8 +1753,8 @@ export class PortalsCoreService extends BaseService {
 			}
 		}
 		else {
-			await super.readAsync(
-				super.getPath("role", id),
+			await this.readAsync(
+				this.getPath("role", id),
 				data => {
 					this.updateRole(data);
 					if (onSuccess !== undefined) {
@@ -1762,7 +1762,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while getting a role", error));
+					console.error(this.getErrorMessage("Error occurred while getting a role", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -1775,8 +1775,8 @@ export class PortalsCoreService extends BaseService {
 
 	public async updateRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		const parentID = Role.contains(body.ID) ? Role.get(body.ID).ParentID : undefined;
-		await super.updateAsync(
-			super.getPath("role", body.ID),
+		await this.updateAsync(
+			this.getPath("role", body.ID),
 			body,
 			data => {
 				this.updateRole(data, parentID);
@@ -1785,7 +1785,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating a role", error));
+				console.error(this.getErrorMessage("Error occurred while updating a role", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1795,8 +1795,8 @@ export class PortalsCoreService extends BaseService {
 
 	public async deleteRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Role.contains(id) ? Role.get(id).ParentID : undefined;
-		await super.deleteAsync(
-			super.getPath("role", id),
+		await this.deleteAsync(
+			this.getPath("role", id),
 			data => {
 				this.deleteRole(data.ID, parentID);
 				if (onSuccess !== undefined) {
@@ -1804,7 +1804,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting a role", error));
+				console.error(this.getErrorMessage("Error occurred while deleting a role", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1845,7 +1845,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a role"), message);
+				console.warn(this.getLogMessage("Got an update message of a role"), message);
 				break;
 		}
 
@@ -1912,7 +1912,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchingPath("desktop", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(this.getSearchingPath("desktop", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
 				const desktop = Desktop.get(obj.ID);
 				return desktop === undefined
@@ -1926,12 +1926,12 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public searchDesktop(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.search(
-			super.getSearchingPath("desktop", this.configSvc.relatedQuery),
+		return this.search(
+			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
 			request,
 			data => this.processDesktops(data, onSuccess),
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching desktop(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching desktop(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1940,12 +1940,12 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async searchDesktopAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.searchAsync(
-			super.getSearchingPath("desktop", this.configSvc.relatedQuery),
+		await this.searchAsync(
+			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
 			request,
 			data => this.processDesktops(data, onSuccess),
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching desktop(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching desktop(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1954,8 +1954,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async createDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.createAsync(
-			super.getPath("desktop"),
+		await this.createAsync(
+			this.getPath("desktop"),
 			body,
 			data => {
 				this.updateDesktop(data);
@@ -1964,7 +1964,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new desktop", error));
+				console.error(this.getErrorMessage("Error occurred while creating new desktop", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1980,8 +1980,8 @@ export class PortalsCoreService extends BaseService {
 			}
 		}
 		else {
-			await super.readAsync(
-				super.getPath("desktop", id),
+			await this.readAsync(
+				this.getPath("desktop", id),
 				data => {
 					this.updateDesktop(data);
 					if (onSuccess !== undefined) {
@@ -1992,7 +1992,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while getting a desktop", error));
+					console.error(this.getErrorMessage("Error occurred while getting a desktop", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -2005,8 +2005,8 @@ export class PortalsCoreService extends BaseService {
 
 	public async updateDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Desktop.contains(body.ID) ? Desktop.get(body.ID).ParentID : undefined;
-		await super.updateAsync(
-			super.getPath("desktop", body.ID),
+		await this.updateAsync(
+			this.getPath("desktop", body.ID),
 			body,
 			data => {
 				this.updateDesktop(data, parentID);
@@ -2015,7 +2015,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating a desktop", error));
+				console.error(this.getErrorMessage("Error occurred while updating a desktop", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2026,8 +2026,8 @@ export class PortalsCoreService extends BaseService {
 
 	public async deleteDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Desktop.contains(id) ? Desktop.get(id).ParentID : undefined;
-		await super.deleteAsync(
-			super.getPath("desktop", id),
+		await this.deleteAsync(
+			this.getPath("desktop", id),
 			data => {
 				this.deleteDesktop(data.ID, parentID);
 				if (onSuccess !== undefined) {
@@ -2035,7 +2035,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting a desktop", error));
+				console.error(this.getErrorMessage("Error occurred while deleting a desktop", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2076,7 +2076,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a desktop"), message);
+				console.warn(this.getLogMessage("Got an update message of a desktop"), message);
 				break;
 		}
 
@@ -2163,15 +2163,15 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchingPath("portlet", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(this.getSearchingPath("portlet", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Portlet.contains(obj.ID) ? convertToCompleterItem(Portlet.get(obj.ID)) : convertToCompleterItem(Portlet.update(Portlet.deserialize(obj)))),
 			convertToCompleterItem
 		);
 	}
 
 	public searchPortlet(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.search(
-			super.getSearchingPath("portlet", this.configSvc.relatedQuery),
+		return this.search(
+			this.getSearchingPath("portlet", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2186,7 +2186,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching portlet(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching portlet(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2195,8 +2195,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async searchPortletAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
-		await super.searchAsync(
-			super.getSearchingPath("portlet", this.configSvc.relatedQuery),
+		await this.searchAsync(
+			this.getSearchingPath("portlet", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2211,7 +2211,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching portlet(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching portlet(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2222,8 +2222,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async createPortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.createAsync(
-			super.getPath("portlet"),
+		await this.createAsync(
+			this.getPath("portlet"),
 			body,
 			data => {
 				Portlet.update(data);
@@ -2232,7 +2232,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new portlet", error));
+				console.error(this.getErrorMessage("Error occurred while creating new portlet", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2247,8 +2247,8 @@ export class PortalsCoreService extends BaseService {
 			}
 		}
 		else {
-			await super.readAsync(
-				super.getPath("portlet", id),
+			await this.readAsync(
+				this.getPath("portlet", id),
 				data => {
 					Portlet.update(data);
 					if (onSuccess !== undefined) {
@@ -2256,7 +2256,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while getting a portlet", error));
+					console.error(this.getErrorMessage("Error occurred while getting a portlet", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -2268,8 +2268,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async updatePortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
-		await super.updateAsync(
-			super.getPath("portlet", body.ID),
+		await this.updateAsync(
+			this.getPath("portlet", body.ID),
 			body,
 			data => {
 				Portlet.update(data);
@@ -2278,7 +2278,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating a portlet", error));
+				console.error(this.getErrorMessage("Error occurred while updating a portlet", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2289,8 +2289,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async deletePortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.deleteAsync(
-			super.getPath("portlet", id),
+		await this.deleteAsync(
+			this.getPath("portlet", id),
 			data => {
 				Portlet.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -2298,7 +2298,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting a portlet", error));
+				console.error(this.getErrorMessage("Error occurred while deleting a portlet", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2343,7 +2343,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage(`Got an update message of a portlet - Portlet ID: ${message.Data.ID} - Desktop ID: ${message.Data.DesktopID}`), message);
+				console.warn(this.getLogMessage(`Got an update message of a portlet - Portlet ID: ${message.Data.ID} - Desktop ID: ${message.Data.DesktopID}`), message);
 				break;
 		}
 
@@ -2364,15 +2364,15 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchingPath("site", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(this.getSearchingPath("site", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Site.contains(obj.ID) ? convertToCompleterItem(Site.get(obj.ID)) : convertToCompleterItem(Site.update(Site.deserialize(obj)))),
 			convertToCompleterItem
 		);
 	}
 
 	public searchSite(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.search(
-			super.getSearchingPath("site", this.configSvc.relatedQuery),
+		return this.search(
+			this.getSearchingPath("site", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2387,7 +2387,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching site(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching site(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2396,8 +2396,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async searchSiteAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.searchAsync(
-			super.getSearchingPath("site", this.configSvc.relatedQuery),
+		await this.searchAsync(
+			this.getSearchingPath("site", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2412,7 +2412,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching site(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching site(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2421,8 +2421,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async createSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.createAsync(
-			super.getPath("site"),
+		await this.createAsync(
+			this.getPath("site"),
 			body,
 			data => {
 				Site.update(data);
@@ -2431,7 +2431,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new site", error));
+				console.error(this.getErrorMessage("Error occurred while creating new site", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2446,8 +2446,8 @@ export class PortalsCoreService extends BaseService {
 			}
 		}
 		else {
-			await super.readAsync(
-				super.getPath("site", id),
+			await this.readAsync(
+				this.getPath("site", id),
 				data => {
 					Site.update(data);
 					if (onSuccess !== undefined) {
@@ -2455,7 +2455,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while getting a site", error));
+					console.error(this.getErrorMessage("Error occurred while getting a site", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -2467,8 +2467,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async updateSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.updateAsync(
-			super.getPath("site", body.ID),
+		await this.updateAsync(
+			this.getPath("site", body.ID),
 			body,
 			data => {
 				Site.update(data);
@@ -2477,7 +2477,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating a site", error));
+				console.error(this.getErrorMessage("Error occurred while updating a site", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2486,8 +2486,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async deleteSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.deleteAsync(
-			super.getPath("site", id),
+		await this.deleteAsync(
+			this.getPath("site", id),
 			data => {
 				Site.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -2495,7 +2495,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting a site", error));
+				console.error(this.getErrorMessage("Error occurred while deleting a site", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2519,7 +2519,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a site"), message);
+				console.warn(this.getLogMessage("Got an update message of a site"), message);
 				break;
 		}
 
@@ -2540,15 +2540,15 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchingPath("module", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(this.getSearchingPath("module", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Module.contains(obj.ID) ? convertToCompleterItem(Module.get(obj.ID)) : convertToCompleterItem(Module.update(Module.deserialize(obj)))),
 			convertToCompleterItem
 		);
 	}
 
 	public searchModule(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.search(
-			super.getSearchingPath("module", this.configSvc.relatedQuery),
+		return this.search(
+			this.getSearchingPath("module", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2563,7 +2563,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching module(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching module(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2572,8 +2572,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async searchModuleAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
-		await super.searchAsync(
-			super.getSearchingPath("module", this.configSvc.relatedQuery),
+		await this.searchAsync(
+			this.getSearchingPath("module", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2588,7 +2588,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching module(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching module(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2600,8 +2600,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async createModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.createAsync(
-			super.getPath("module"),
+		await this.createAsync(
+			this.getPath("module"),
 			body,
 			data => {
 				Module.update(data);
@@ -2613,7 +2613,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new module", error));
+				console.error(this.getErrorMessage("Error occurred while creating new module", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2632,8 +2632,8 @@ export class PortalsCoreService extends BaseService {
 			}
 		}
 		else {
-			await super.readAsync(
-				super.getPath("module", id),
+			await this.readAsync(
+				this.getPath("module", id),
 				data => {
 					Module.update(data);
 					if (AppUtility.isArray(data.ContentTypes, true)) {
@@ -2644,7 +2644,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while getting a module", error));
+					console.error(this.getErrorMessage("Error occurred while getting a module", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -2656,8 +2656,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async updateModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.updateAsync(
-			super.getPath("module", body.ID),
+		await this.updateAsync(
+			this.getPath("module", body.ID),
 			body,
 			data => {
 				Module.update(data);
@@ -2669,7 +2669,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating a module", error));
+				console.error(this.getErrorMessage("Error occurred while updating a module", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2678,8 +2678,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async deleteModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.deleteAsync(
-			super.getPath("module", id),
+		await this.deleteAsync(
+			this.getPath("module", id),
 			data => {
 				Module.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -2687,7 +2687,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting a module", error));
+				console.error(this.getErrorMessage("Error occurred while deleting a module", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2711,7 +2711,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a module"), message);
+				console.warn(this.getLogMessage("Got an update message of a module"), message);
 				break;
 		}
 
@@ -2732,15 +2732,15 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchingPath("content.type", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(this.getSearchingPath("content.type", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => ContentType.contains(obj.ID) ? convertToCompleterItem(ContentType.get(obj.ID)) : convertToCompleterItem(ContentType.update(ContentType.deserialize(obj)))),
 			convertToCompleterItem
 		);
 	}
 
 	public searchContentType(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.search(
-			super.getSearchingPath("content.type", this.configSvc.relatedQuery),
+		return this.search(
+			this.getSearchingPath("content.type", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2755,7 +2755,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching content type(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching content type(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2764,8 +2764,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async searchContentTypeAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		await super.searchAsync(
-			super.getSearchingPath("content.type", this.configSvc.relatedQuery),
+		await this.searchAsync(
+			this.getSearchingPath("content.type", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2780,7 +2780,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching content-type(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching content-type(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2791,8 +2791,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async createContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.createAsync(
-			super.getPath("content.type"),
+		await this.createAsync(
+			this.getPath("content.type"),
 			body,
 			data => {
 				ContentType.update(data);
@@ -2801,7 +2801,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new content type", error));
+				console.error(this.getErrorMessage("Error occurred while creating new content type", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2816,8 +2816,8 @@ export class PortalsCoreService extends BaseService {
 			}
 		}
 		else {
-			await super.readAsync(
-				super.getPath("content.type", id),
+			await this.readAsync(
+				this.getPath("content.type", id),
 				data => {
 					ContentType.update(data);
 					if (onSuccess !== undefined) {
@@ -2825,7 +2825,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while getting a content type", error));
+					console.error(this.getErrorMessage("Error occurred while getting a content type", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -2837,8 +2837,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async updateContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.updateAsync(
-			super.getPath("content.type", body.ID),
+		await this.updateAsync(
+			this.getPath("content.type", body.ID),
 			body,
 			data => {
 				ContentType.update(data);
@@ -2847,7 +2847,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating a content type", error));
+				console.error(this.getErrorMessage("Error occurred while updating a content type", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2856,8 +2856,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async deleteContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.deleteAsync(
-			super.getPath("content.type", id),
+		await this.deleteAsync(
+			this.getPath("content.type", id),
 			data => {
 				ContentType.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -2865,7 +2865,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting a content type", error));
+				console.error(this.getErrorMessage("Error occurred while deleting a content type", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2892,7 +2892,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a content type"), message);
+				console.warn(this.getLogMessage("Got an update message of a content type"), message);
 				break;
 		}
 
@@ -2913,15 +2913,15 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchingPath("expression", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(this.getSearchingPath("expression", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => Expression.contains(obj.ID) ? convertToCompleterItem(Expression.get(obj.ID)) : convertToCompleterItem(Expression.update(Expression.deserialize(obj)))),
 			convertToCompleterItem
 		);
 	}
 
 	public searchExpression(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.search(
-			super.getSearchingPath("expression", this.configSvc.relatedQuery),
+		return this.search(
+			this.getSearchingPath("expression", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2932,7 +2932,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching expression(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching expression(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2941,8 +2941,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async searchExpressionAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.searchAsync(
-			super.getSearchingPath("expression", this.configSvc.relatedQuery),
+		await this.searchAsync(
+			this.getSearchingPath("expression", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -2953,7 +2953,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching expression(s)", error));
+				console.error(this.getErrorMessage("Error occurred while searching expression(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2962,8 +2962,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async createExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.createAsync(
-			super.getPath("expression"),
+		await this.createAsync(
+			this.getPath("expression"),
 			body,
 			data => {
 				Expression.update(data);
@@ -2972,7 +2972,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new expression", error));
+				console.error(this.getErrorMessage("Error occurred while creating new expression", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2987,8 +2987,8 @@ export class PortalsCoreService extends BaseService {
 			}
 		}
 		else {
-			await super.readAsync(
-				super.getPath("expression", id),
+			await this.readAsync(
+				this.getPath("expression", id),
 				data => {
 					Expression.update(data);
 					if (onSuccess !== undefined) {
@@ -2996,7 +2996,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while getting an expression", error));
+					console.error(this.getErrorMessage("Error occurred while getting an expression", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -3008,8 +3008,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async updateExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.updateAsync(
-			super.getPath("expression", body.ID),
+		await this.updateAsync(
+			this.getPath("expression", body.ID),
 			body,
 			data => {
 				Expression.update(data);
@@ -3018,7 +3018,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating an expression", error));
+				console.error(this.getErrorMessage("Error occurred while updating an expression", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -3027,8 +3027,8 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async deleteExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.deleteAsync(
-			super.getPath("expression", id),
+		await this.deleteAsync(
+			this.getPath("expression", id),
 			data => {
 				Expression.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -3036,7 +3036,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting an expression", error));
+				console.error(this.getErrorMessage("Error occurred while deleting an expression", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -3062,7 +3062,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of an expression"), message);
+				console.warn(this.getLogMessage("Got an update message of an expression"), message);
 				break;
 		}
 
@@ -3083,9 +3083,9 @@ export class PortalsCoreService extends BaseService {
 			Pagination: pagination || {}
 		};
 		request.Pagination["MaxPages"] = maxPages !== undefined && maxPages > 0 ? maxPages : 0;
-		await super.sendRequestAsync(
+		await this.sendRequestAsync(
 			{
-				Path: super.getPath("excel", "export", "x-request=" + AppCrypto.jsonEncode(request)),
+				Path: this.getPath("excel", "export", "x-request=" + AppCrypto.jsonEncode(request)),
 				Header: this.configSvc.appConfig.getAuthenticatedHeaders()
 			},
 			async data => {
@@ -3191,9 +3191,9 @@ export class PortalsCoreService extends BaseService {
 						const info = uploadedData[0];
 						const nodeID = info["x-node"] as string;
 						const filename = info["x-filename"] as string;
-						await super.sendRequestAsync(
+						await this.sendRequestAsync(
 							{
-								Path: super.getPath("excel", "import", "x-request=" + AppCrypto.jsonEncode({
+								Path: this.getPath("excel", "import", "x-request=" + AppCrypto.jsonEncode({
 									SystemID: systemID,
 									RepositoryID: repositoryID,
 									RepositoryEntityID: repositoryEntityID,
@@ -3299,8 +3299,8 @@ export class PortalsCoreService extends BaseService {
 			undefined,
 			async () => {
 				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.common.cache.title"));
-				await super.readAsync(
-					super.getPath("caches", objectName, "object-id=" + objectID),
+				await this.readAsync(
+					this.getPath("caches", objectName, "object-id=" + objectID),
 					async _ => await this.appFormsSvc.showAlertAsync("Cache", await this.configSvc.getResourceAsync("portals.common.cache.done")),
 					async error => await this.appFormsSvc.showErrorAsync(error),
 					undefined,
@@ -3330,8 +3330,8 @@ export class PortalsCoreService extends BaseService {
 			await this.configSvc.getResourceAsync("portals.common.approval.label", { status: await this.configSvc.getResourceAsync(`status.approval.${currentStatus}`) }),
 			async status => {
 				await this.appFormsSvc.showLoadingAsync(title);
-				await super.readAsync(
-					super.getPath("approve", id),
+				await this.readAsync(
+					this.getPath("approve", id),
 					async _ => {
 						await this.appFormsSvc.showAlertAsync(title, await this.configSvc.getResourceAsync("portals.common.approval.message", { status: await this.configSvc.getResourceAsync(`status.approval.${status}`) }));
 					},
@@ -3371,8 +3371,8 @@ export class PortalsCoreService extends BaseService {
 					async lastData => {
 						if (validate(lastData, firstData)) {
 							await this.appFormsSvc.showLoadingAsync(move);
-							await super.readAsync(
-								super.getPath("move", objectName, "object-id=" + objectID),
+							await this.readAsync(
+								this.getPath("move", objectName, "object-id=" + objectID),
 								async () => await this.appFormsSvc.showAlertAsync(move, resources.done),
 								async error => await this.appFormsSvc.showErrorAsync(error),
 								getHeaders(lastData),

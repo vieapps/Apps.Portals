@@ -44,7 +44,7 @@ export class ConfigurationService extends BaseService {
 		private electronSvc: ElectronService
 	) {
 		super("Configuration");
-		AppStorage.initializeAsync(this.storage, () => console.log(super.getLogMessage("Storage is ready. Driver: " + this.storage.driver)));
+		AppStorage.initializeAsync(this.storage, () => console.log(this.getLogMessage("Storage is ready. Driver: " + this.storage.driver)));
 		AppEvents.on("App", info => {
 			if ("PlatformIsReady" === info.args.Type) {
 				this.loadGeoMetaAsync();
@@ -246,7 +246,7 @@ export class ConfigurationService extends BaseService {
 			if (isNativeApp) {
 				this.appVersion.getVersionCode()
 					.then(version => this.appConfig.app.version = isNativeApp && !this.isRunningOnIOS ? (version + "").replace(/0/g, ".") : version + "")
-					.catch(error => console.error(super.getErrorMessage("Error occurred while preparing the app version", error)));
+					.catch(error => console.error(this.getErrorMessage("Error occurred while preparing the app version", error)));
 				PlatformUtility.setInAppBrowser(this.inappBrowser);
 				PlatformUtility.setClipboard(this.clipboard);
 				if (!this.isRunningOnIOS) {
@@ -256,7 +256,7 @@ export class ConfigurationService extends BaseService {
 
 			TrackingUtility.initializeAsync(this.googleAnalytics);
 			if (this.isDebug) {
-				console.log(super.getLogMessage(`Device Info\n- UUID: ${this.device.uuid}\n- Manufacturer: ${this.device.manufacturer}\n- Model: ${this.device.model}\n- Serial: ${this.device.serial}\n- Platform: ${this.device.platform} ${this.device.platform !== "browser" ? this.device.version : "[" + this.device.model + " v" + this.device.version + "]"}`));
+				console.log(this.getLogMessage(`Device Info\n- UUID: ${this.device.uuid}\n- Manufacturer: ${this.device.manufacturer}\n- Model: ${this.device.model}\n- Serial: ${this.device.serial}\n- Platform: ${this.device.platform} ${this.device.platform !== "browser" ? this.device.version : "[" + this.device.model + " v" + this.device.version + "]"}`));
 			}
 		}
 
@@ -307,11 +307,11 @@ export class ConfigurationService extends BaseService {
 
 	/** Initializes the session with remote APIs */
 	public async initializeSessionAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.fetchAsync(
+		await this.fetchAsync(
 			"users/session",
 			async data => {
 				if (this.isDebug) {
-					console.log(super.getLogMessage("The session was initialized by APIs"));
+					console.log(this.getLogMessage("The session was initialized by APIs"));
 				}
 				await this.updateSessionAsync(data, _ => {
 					this.appConfig.session.account = this.getAccount(!this.isAuthenticated);
@@ -324,23 +324,23 @@ export class ConfigurationService extends BaseService {
 					}
 				});
 			},
-			error => super.showError("Error occurred while initializing the session", error, onError)
+			error => this.showError("Error occurred while initializing the session", error, onError)
 		);
 	}
 
 	/** Registers the initialized session (anonymous) with remote APIs */
 	public async registerSessionAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.fetchAsync(
+		await this.fetchAsync(
 			`users/session?register=${this.appConfig.session.id}`,
 			async _ => {
 				this.appConfig.session.account = this.getAccount(true);
 				if (this.isDebug) {
-					console.log(super.getLogMessage("The session was registered by APIs"));
+					console.log(this.getLogMessage("The session was registered by APIs"));
 				}
 				AppEvents.broadcast("Session", { Type: "Registered" });
 				await this.storeSessionAsync(onSuccess);
 			},
-			error => super.showError("Error occurred while registering the session", error, onError)
+			error => this.showError("Error occurred while registering the session", error, onError)
 		);
 	}
 
@@ -378,7 +378,7 @@ export class ConfigurationService extends BaseService {
 			}
 			catch (error) {
 				this.appConfig.session.token = undefined;
-				super.showError("Error occurred while decoding token =>" + session.Token, error);
+				this.showError("Error occurred while decoding token =>" + session.Token, error);
 			}
 		}
 
@@ -427,12 +427,12 @@ export class ConfigurationService extends BaseService {
 					}
 				}
 				if (this.isDebug) {
-					console.log(super.getLogMessage("The session was loaded from storage"), this.appConfig.session);
+					console.log(this.getLogMessage("The session was loaded from storage"), this.appConfig.session);
 				}
 			}
 		}
 		catch (error) {
-			super.showError("Error occurred while loading the session from storage", error);
+			this.showError("Error occurred while loading the session from storage", error);
 		}
 		if (onNext !== undefined) {
 			onNext(this.appConfig.session);
@@ -445,11 +445,11 @@ export class ConfigurationService extends BaseService {
 			try {
 				await AppStorage.setAsync("Session", AppUtility.clone(this.appConfig.session, ["jwt", "captcha"]));
 				if (this.isDebug) {
-					console.log(super.getLogMessage("The session was stored into storage"));
+					console.log(this.getLogMessage("The session was stored into storage"));
 				}
 			}
 			catch (error) {
-				super.showError("Error occurred while storing the session into storage", error);
+				this.showError("Error occurred while storing the session into storage", error);
 			}
 		}
 		AppEvents.broadcast("Session", { Type: "Updated" });
@@ -463,11 +463,11 @@ export class ConfigurationService extends BaseService {
 		try {
 			await AppStorage.removeAsync("Session");
 			if (this.isDebug) {
-				console.log(super.getLogMessage("The session is deleted from storage"));
+				console.log(this.getLogMessage("The session is deleted from storage"));
 			}
 		}
 		catch (error) {
-			super.showError("Error occurred while deleting the session from storage", error);
+			this.showError("Error occurred while deleting the session from storage", error);
 		}
 		if (onNext !== undefined) {
 			onNext(this.appConfig.session);
@@ -532,7 +532,7 @@ export class ConfigurationService extends BaseService {
 		if (this.isAuthenticated && this.getAccount().id === account.id) {
 			this.appConfig.session.account = account;
 			if (this.isDebug) {
-				console.log(super.getLogMessage("Account was updated"), this.appConfig.session.account);
+				console.log(this.getLogMessage("Account was updated"), this.appConfig.session.account);
 			}
 			Account.set(account);
 			if (this.appConfig.app.persistence) {
@@ -560,7 +560,7 @@ export class ConfigurationService extends BaseService {
 				if (response.status === "connected") {
 					this.appConfig.facebook.token = response.authResponse.accessToken;
 					this.appConfig.facebook.id = response.authResponse.userID;
-					console.log(super.getLogMessage("Facebook is connected"), this.appConfig.isDebug ? this.appConfig.facebook : "");
+					console.log(this.getLogMessage("Facebook is connected"), this.appConfig.isDebug ? this.appConfig.facebook : "");
 					if (this.appConfig.session.account.facebook !== undefined) {
 						this.getFacebookProfile();
 					}
@@ -583,7 +583,7 @@ export class ConfigurationService extends BaseService {
 					profileUrl: `https://www.facebook.com/app_scoped_user_id/${response.id}`,
 					pictureUrl: undefined
 				};
-				this.storeSessionAsync(() => console.log(super.getLogMessage("Account is updated with information of Facebook profile"), this.appConfig.isDebug ? this.appConfig.session.account : ""));
+				this.storeSessionAsync(() => console.log(this.getLogMessage("Account is updated with information of Facebook profile"), this.appConfig.isDebug ? this.appConfig.session.account : ""));
 				this.getFacebookAvatar();
 			}
 		);
@@ -597,7 +597,7 @@ export class ConfigurationService extends BaseService {
 				`/${this.appConfig.facebook.version}/${this.appConfig.session.account.facebook.id}/picture?type=large&redirect=false&access_token=${this.appConfig.facebook.token}`,
 				(response: any) => {
 					this.appConfig.session.account.facebook.pictureUrl = response.data.url;
-					this.storeSessionAsync(() => console.log(super.getLogMessage("Account is updated with information of Facebook profile (large profile picture)"), this.appConfig.isDebug ? response : ""));
+					this.storeSessionAsync(() => console.log(this.getLogMessage("Account is updated with information of Facebook profile (large profile picture)"), this.appConfig.isDebug ? response : ""));
 				}
 			);
 		}
@@ -652,18 +652,18 @@ export class ConfigurationService extends BaseService {
 			AppEvents.broadcast("App", { Type: "GeoMetaUpdated", Data: this.appConfig.geoMeta });
 		}
 
-		await super.readAsync(
+		await this.readAsync(
 			`statics/geo/provinces/${this.appConfig.geoMeta.country}.json`,
 			async provinces => await this.saveGeoMetaAsync(provinces, async () => {
 				if (this.appConfig.geoMeta.countries.length < 1) {
-					await super.readAsync(
+					await this.readAsync(
 						"statics/geo/countries.json",
 						async countries => await this.saveGeoMetaAsync(countries),
-						error => super.showError("Error occurred while fetching the meta countries", error)
+						error => this.showError("Error occurred while fetching the meta countries", error)
 					);
 				}
 			}),
-			error => super.showError("Error occurred while fetching the meta provinces", error)
+			error => this.showError("Error occurred while fetching the meta provinces", error)
 		);
 	}
 
@@ -703,7 +703,7 @@ export class ConfigurationService extends BaseService {
 		await AppStorage.setAsync("URIs", this.appConfig.URIs).then(() => {
 			AppEvents.broadcast("App", { Type: "URIsUpdated" });
 			if (this.isDebug) {
-				console.log(super.getLogMessage("URIs are updated"), this.appConfig.URIs);
+				console.log(this.getLogMessage("URIs are updated"), this.appConfig.URIs);
 			}
 			if (onNext !== undefined) {
 				onNext(this.appConfig.URIs);
@@ -736,7 +736,7 @@ export class ConfigurationService extends BaseService {
 		await this.saveOptionsAsync(() => {
 			AppEvents.broadcast("App", { Type: "OptionsUpdated" });
 			if (this.isDebug) {
-				console.log(super.getLogMessage("Options are updated"), this.appConfig.options);
+				console.log(this.getLogMessage("Options are updated"), this.appConfig.options);
 			}
 			if (onNext !== undefined) {
 				onNext(this.appConfig.options);
@@ -796,10 +796,10 @@ export class ConfigurationService extends BaseService {
 	public async fetchDefinitionAsync(path: string, doClone: boolean = true) {
 		let definition = this.getDefinition(path);
 		if (definition === undefined) {
-			await super.fetchAsync(
+			await this.fetchAsync(
 				path,
 				data => this.addDefinition(path, data),
-				error => super.showError("Error occurred while working with definitions", error)
+				error => this.showError("Error occurred while working with definitions", error)
 			);
 			definition = this.getDefinition(path);
 		}
@@ -842,7 +842,7 @@ export class ConfigurationService extends BaseService {
 	}
 
 	public getInstructionsAsync(service: string, language?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.fetchAsync(`/statics/instructions/${service}/${language || this.appConfig.language}.json`, onSuccess, onError);
+		return this.fetchAsync(`/statics/instructions/${service}/${language || this.appConfig.language}.json`, onSuccess, onError);
 	}
 
 	/** Gets top items for displaying at sidebar */
@@ -897,8 +897,8 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Gets service logs */
-	public async GetServiceLogsAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = true) {
-		await super.searchAsync(super.getSearchingPath(undefined, undefined, "logs"), request, onSuccess, onError, true, useXHR);
+	public async getServiceLogsAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = true) {
+		await this.searchAsync(this.getSearchingPath(undefined, undefined, "logs"), request, onSuccess, onError, true, useXHR);
 	}
 
 }

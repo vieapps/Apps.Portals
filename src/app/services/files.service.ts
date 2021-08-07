@@ -42,7 +42,7 @@ export class FilesService extends BaseService {
 
 	public readAsDataURL(file: File, onRead: (data: string) => void, limitSize?: number, onLimitExceeded?: (fileSize?: number, limitSize?: number) => void) {
 		if (limitSize !== undefined && file.size > limitSize) {
-			console.warn(super.getLogMessage(`Limit size exceeded - Max allowed size: ${limitSize} bytes - Actual size: ${file.size} bytes`));
+			console.warn(this.getLogMessage(`Limit size exceeded - Max allowed size: ${limitSize} bytes - Actual size: ${file.size} bytes`));
 			if (onLimitExceeded !== undefined) {
 				onLimitExceeded(file.size, limitSize);
 			}
@@ -108,7 +108,7 @@ export class FilesService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while uploading", error), error);
+				console.error(this.getErrorMessage("Error occurred while uploading", error), error);
 				if (onError !== undefined) {
 					onError(AppUtility.parseError(error));
 				}
@@ -132,7 +132,7 @@ export class FilesService extends BaseService {
 			}
 		}
 		catch (error) {
-			console.error(super.getErrorMessage("Error occurred while uploading", error), error);
+			console.error(this.getErrorMessage("Error occurred while uploading", error), error);
 			if (onError !== undefined) {
 				onError(AppUtility.parseError(error));
 			}
@@ -325,8 +325,8 @@ export class FilesService extends BaseService {
 	}
 
 	public async searchThumbnailsAsync(options: FileOptions, onSuccess?: (thumbnails: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		await super.searchAsync(
-			super.getSearchingPath("thumbnails", this.configSvc.relatedQuery),
+		await this.searchAsync(
+			this.getSearchingPath("thumbnails", this.configSvc.relatedQuery),
 			undefined,
 			data => {
 				if (onSuccess !== undefined) {
@@ -334,7 +334,7 @@ export class FilesService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching thumbnails", error));
+				console.error(this.getErrorMessage("Error occurred while searching thumbnails", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -346,15 +346,15 @@ export class FilesService extends BaseService {
 	}
 
 	public async deleteThumbnailAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await super.deleteAsync(
-			super.getPath("thumbnail", id),
+		await this.deleteAsync(
+			this.getPath("thumbnail", id),
 			data => {
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting a thumbnail", error));
+				console.error(this.getErrorMessage("Error occurred while deleting a thumbnail", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -424,8 +424,8 @@ export class FilesService extends BaseService {
 	}
 
 	public async searchAttachmentsAsync(options: FileOptions, onSuccess?: (attachments: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		await super.searchAsync(
-			super.getSearchingPath("attachments", this.configSvc.relatedQuery),
+		await this.searchAsync(
+			this.getSearchingPath("attachments", this.configSvc.relatedQuery),
 			undefined,
 			data => {
 				if (onSuccess !== undefined) {
@@ -433,7 +433,7 @@ export class FilesService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching attachments", error));
+				console.error(this.getErrorMessage("Error occurred while searching attachments", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -445,8 +445,8 @@ export class FilesService extends BaseService {
 	}
 
 	public async updateAttachmentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.updateAsync(
-			super.getPath("attachment", body.ID),
+		await this.updateAsync(
+			this.getPath("attachment", body.ID),
 			body,
 			data => {
 				if (onSuccess !== undefined) {
@@ -454,7 +454,7 @@ export class FilesService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating an attachment", error));
+				console.error(this.getErrorMessage("Error occurred while updating an attachment", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -463,15 +463,15 @@ export class FilesService extends BaseService {
 	}
 
 	public async deleteAttachmentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await super.deleteAsync(
-			super.getPath("attachment", id),
+		await this.deleteAsync(
+			this.getPath("attachment", id),
 			data => {
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting an attachment", error));
+				console.error(this.getErrorMessage("Error occurred while deleting an attachment", error));
 				if (onError !== undefined) {
 					onError(error);
 				}

@@ -41,7 +41,7 @@ export class PortalsCmsService extends BaseService {
 	private _sidebarCategory: Category;
 	private _sidebarContentType: ContentType;
 	private _featuredContents = new Dictionary<string, CmsBaseModel>();
-	private _featuredConnters = 0;
+	private _featuredCounters = 0;
 
 	public get featuredContents() {
 		return this._featuredContents.toArray();
@@ -146,7 +146,7 @@ export class PortalsCmsService extends BaseService {
 
 	public async initializeAsync(onNext?: () => void) {
 		if (this._oembedProviders === undefined) {
-			await super.readAsync(
+			await this.readAsync(
 				"statics/oembed.providers.json",
 				data => {
 					const oembedProviders = data as Array<{ name: string; schemes: string[], pattern: { expression: string; position: number; html: string } }>;
@@ -557,8 +557,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	private async getFeaturedContentsAsync(contentTypes: ContentType[], index: number) {
-		this._featuredConnters++;
-		const threadID = this._featuredConnters;
+		this._featuredCounters++;
+		const taskID = this._featuredCounters;
 		const contentType = contentTypes[index];
 		const organization = Organization.get(contentType.SystemID);
 		const isSimpleItem = contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000002";
@@ -578,7 +578,7 @@ export class PortalsCmsService extends BaseService {
 			}
 			else {
 				if (this.configSvc.isDebug) {
-					console.log("[CMS Portals]: Featured contents are prepared", `\n${contentType.Title} @ ${organization.Title} (thread: ${threadID})`);
+					console.log("[CMS Portals]: Featured contents are prepared", `\n${contentType.Title} @ ${organization.Title} (task: ${taskID})`);
 				}
 				AppEvents.broadcast(this.name, { Type: "FeaturedContentsPrepared" });
 			}
@@ -586,7 +586,7 @@ export class PortalsCmsService extends BaseService {
 		const onSuccess = (data?: any) => {
 			if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 				if (this.configSvc.isDebug) {
-					console.log("[CMS Portals]: Featured contents are fetched", `\n${contentType.Title} @ ${organization.Title} (thread: ${threadID})`, data);
+					console.log("[CMS Portals]: Featured contents are fetched", `\n${contentType.Title} @ ${organization.Title} (task: ${taskID})`, data);
 				}
 				if (isSimpleItem) {
 					(data.Objects as Array<any>).map(obj => Item.get(obj.ID)).filter(obj => obj !== undefined).forEach(obj => this._featuredContents.set(obj.ID, obj));
@@ -598,11 +598,11 @@ export class PortalsCmsService extends BaseService {
 			onCompleted();
 		};
 		const onError = (error?: any) => {
-			console.error("[CMS Portals]: Error occurred while preparing featured contents", `\n${contentType.Title} @ ${organization.Title} (thread: ${threadID})`, error);
+			console.error("[CMS Portals]: Error occurred while preparing featured contents", `\n${contentType.Title} @ ${organization.Title} (task: ${taskID})`, error);
 			onCompleted();
 		};
 		if (this.configSvc.isDebug) {
-			console.log("[CMS Portals]: Featured contents are preparing", `\n${contentType.Title} @ ${organization.Title} (thread: ${threadID})`, request);
+			console.log("[CMS Portals]: Featured contents are preparing", `\n${contentType.Title} @ ${organization.Title} (task: ${taskID})`, request);
 		}
 		if (isSimpleItem) {
 			await this.searchItemAsync(request, onSuccess, onError);
@@ -669,7 +669,7 @@ export class PortalsCmsService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchingPath("cms.category", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(this.getSearchingPath("cms.category", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
 				const category = Category.get(obj.ID);
 				return category === undefined
@@ -683,8 +683,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public searchCategory(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.search(
-			super.getSearchingPath("cms.category", this.configSvc.relatedQuery),
+		return this.search(
+			this.getSearchingPath("cms.category", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -695,7 +695,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching categories", error));
+				console.error(this.getErrorMessage("Error occurred while searching categories", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -704,8 +704,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async searchCategoryAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.searchAsync(
-			super.getSearchingPath("cms.category", this.configSvc.relatedQuery),
+		await this.searchAsync(
+			this.getSearchingPath("cms.category", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -716,7 +716,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching categories", error));
+				console.error(this.getErrorMessage("Error occurred while searching categories", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -725,8 +725,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async createCategoryAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.createAsync(
-			super.getPath("cms.category"),
+		await this.createAsync(
+			this.getPath("cms.category"),
 			body,
 			data => {
 				this.updateCategory(data);
@@ -735,7 +735,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new category", error));
+				console.error(this.getErrorMessage("Error occurred while creating new category", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -751,8 +751,8 @@ export class PortalsCmsService extends BaseService {
 			}
 		}
 		else {
-			await super.readAsync(
-				super.getPath("cms.category", id),
+			await this.readAsync(
+				this.getPath("cms.category", id),
 				data => {
 					this.updateCategory(data);
 					if (this._sidebarContentType !== undefined) {
@@ -766,7 +766,7 @@ export class PortalsCmsService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while getting a category", error));
+					console.error(this.getErrorMessage("Error occurred while getting a category", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -779,8 +779,8 @@ export class PortalsCmsService extends BaseService {
 
 	public async updateCategoryAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Category.contains(body.ID) ? Category.get(body.ID).ParentID : undefined;
-		await super.updateAsync(
-			super.getPath("cms.category", body.ID),
+		await this.updateAsync(
+			this.getPath("cms.category", body.ID),
 			body,
 			data => {
 				this.updateCategory(data, parentID);
@@ -789,7 +789,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating a category", error));
+				console.error(this.getErrorMessage("Error occurred while updating a category", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -800,8 +800,8 @@ export class PortalsCmsService extends BaseService {
 
 	public async deleteCategoryAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Category.contains(id) ? Category.get(id).ParentID : undefined;
-		await super.deleteAsync(
-			super.getPath("cms.category", id),
+		await this.deleteAsync(
+			this.getPath("cms.category", id),
 			data => {
 				this.deleteCategory(data.ID, parentID);
 				if (onSuccess !== undefined) {
@@ -809,7 +809,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting a category", error));
+				console.error(this.getErrorMessage("Error occurred while deleting a category", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -856,7 +856,7 @@ export class PortalsCmsService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a CMS category"), message);
+				console.warn(this.getLogMessage("Got an update message of a CMS category"), message);
 				break;
 		}
 
@@ -965,15 +965,15 @@ export class PortalsCmsService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchingPath("cms.content", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(this.getSearchingPath("cms.content", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => convertToCompleterItem(obj)),
 			convertToCompleterItem
 		);
 	}
 
 	public searchContent(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.search(
-			super.getSearchingPath("cms.content", this.configSvc.relatedQuery),
+		return this.search(
+			this.getSearchingPath("cms.content", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -984,7 +984,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching contents", error));
+				console.error(this.getErrorMessage("Error occurred while searching contents", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -993,8 +993,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async searchContentAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.searchAsync(
-			super.getSearchingPath("cms.content", this.configSvc.relatedQuery),
+		await this.searchAsync(
+			this.getSearchingPath("cms.content", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -1005,7 +1005,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching contents", error));
+				console.error(this.getErrorMessage("Error occurred while searching contents", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1014,8 +1014,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async createContentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.createAsync(
-			super.getPath("cms.content"),
+		await this.createAsync(
+			this.getPath("cms.content"),
 			body,
 			data => {
 				Content.update(data);
@@ -1024,7 +1024,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new content", error));
+				console.error(this.getErrorMessage("Error occurred while creating new content", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1039,8 +1039,8 @@ export class PortalsCmsService extends BaseService {
 			}
 		}
 		else {
-			await super.readAsync(
-				super.getPath("cms.content", id),
+			await this.readAsync(
+				this.getPath("cms.content", id),
 				data => {
 					Content.update(data);
 					if (onSuccess !== undefined) {
@@ -1048,7 +1048,7 @@ export class PortalsCmsService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while getting a content", error));
+					console.error(this.getErrorMessage("Error occurred while getting a content", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -1060,8 +1060,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async updateContentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.updateAsync(
-			super.getPath("cms.content", body.ID),
+		await this.updateAsync(
+			this.getPath("cms.content", body.ID),
 			body,
 			data => {
 				Content.update(data);
@@ -1070,7 +1070,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating a content", error));
+				console.error(this.getErrorMessage("Error occurred while updating a content", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1079,8 +1079,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async deleteContentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await super.deleteAsync(
-			super.getPath("cms.content", id),
+		await this.deleteAsync(
+			this.getPath("cms.content", id),
 			data => {
 				Content.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -1088,7 +1088,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting a content", error));
+				console.error(this.getErrorMessage("Error occurred while deleting a content", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1129,7 +1129,7 @@ export class PortalsCmsService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a CMS content"), message);
+				console.warn(this.getLogMessage("Got an update message of a CMS content"), message);
 				break;
 		}
 
@@ -1162,15 +1162,15 @@ export class PortalsCmsService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchingPath("cms.item", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(this.getSearchingPath("cms.item", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => convertToCompleterItem(obj)),
 			convertToCompleterItem
 		);
 	}
 
 	public searchItem(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.search(
-			super.getSearchingPath("cms.item", this.configSvc.relatedQuery),
+		return this.search(
+			this.getSearchingPath("cms.item", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -1181,7 +1181,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching items", error));
+				console.error(this.getErrorMessage("Error occurred while searching items", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1190,8 +1190,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async searchItemAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.searchAsync(
-			super.getSearchingPath("cms.item", this.configSvc.relatedQuery),
+		await this.searchAsync(
+			this.getSearchingPath("cms.item", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -1202,7 +1202,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching items", error));
+				console.error(this.getErrorMessage("Error occurred while searching items", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1211,8 +1211,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async createItemAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.createAsync(
-			super.getPath("cms.item"),
+		await this.createAsync(
+			this.getPath("cms.item"),
 			body,
 			data => {
 				Item.update(data);
@@ -1221,7 +1221,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new item", error));
+				console.error(this.getErrorMessage("Error occurred while creating new item", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1236,8 +1236,8 @@ export class PortalsCmsService extends BaseService {
 			}
 		}
 		else {
-			await super.readAsync(
-				super.getPath("cms.item", id),
+			await this.readAsync(
+				this.getPath("cms.item", id),
 				data => {
 					Item.update(data);
 					if (onSuccess !== undefined) {
@@ -1245,7 +1245,7 @@ export class PortalsCmsService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while getting an item", error));
+					console.error(this.getErrorMessage("Error occurred while getting an item", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -1257,8 +1257,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async updateItemAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.updateAsync(
-			super.getPath("cms.item", body.ID),
+		await this.updateAsync(
+			this.getPath("cms.item", body.ID),
 			body,
 			data => {
 				Item.update(data);
@@ -1267,7 +1267,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating an item", error));
+				console.error(this.getErrorMessage("Error occurred while updating an item", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1276,8 +1276,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async deleteItemAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await super.deleteAsync(
-			super.getPath("cms.item", id),
+		await this.deleteAsync(
+			this.getPath("cms.item", id),
 			data => {
 				Item.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -1285,7 +1285,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting an item", error));
+				console.error(this.getErrorMessage("Error occurred while deleting an item", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1326,7 +1326,7 @@ export class PortalsCmsService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a CMS item"), message);
+				console.warn(this.getLogMessage("Got an update message of a CMS item"), message);
 				break;
 		}
 
@@ -1356,7 +1356,7 @@ export class PortalsCmsService extends BaseService {
 				: undefined;
 		};
 		return new AppCustomCompleter(
-			term => AppUtility.format(super.getSearchingPath("cms.link", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			term => AppUtility.format(this.getSearchingPath("cms.link", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
 			data => (data.Objects as Array<any> || []).map(obj => {
 				const link = Link.get(obj.ID);
 				return link === undefined
@@ -1370,8 +1370,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public searchLink(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.search(
-			super.getSearchingPath("cms.link", this.configSvc.relatedQuery),
+		return this.search(
+			this.getSearchingPath("cms.link", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -1382,7 +1382,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching links", error));
+				console.error(this.getErrorMessage("Error occurred while searching links", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1391,8 +1391,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async searchLinkAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.searchAsync(
-			super.getSearchingPath("cms.link", this.configSvc.relatedQuery),
+		await this.searchAsync(
+			this.getSearchingPath("cms.link", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
@@ -1403,7 +1403,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while searching links", error));
+				console.error(this.getErrorMessage("Error occurred while searching links", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1412,8 +1412,8 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	public async createLinkAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.createAsync(
-			super.getPath("cms.link"),
+		await this.createAsync(
+			this.getPath("cms.link"),
 			body,
 			data => {
 				this.updateLink(data);
@@ -1422,7 +1422,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while creating new link", error));
+				console.error(this.getErrorMessage("Error occurred while creating new link", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1438,8 +1438,8 @@ export class PortalsCmsService extends BaseService {
 			}
 		}
 		else {
-			await super.readAsync(
-				super.getPath("cms.link", id),
+			await this.readAsync(
+				this.getPath("cms.link", id),
 				data => {
 					this.updateLink(data);
 					if (onSuccess !== undefined) {
@@ -1447,7 +1447,7 @@ export class PortalsCmsService extends BaseService {
 					}
 				},
 				error => {
-					console.error(super.getErrorMessage("Error occurred while getting a link", error));
+					console.error(this.getErrorMessage("Error occurred while getting a link", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -1460,8 +1460,8 @@ export class PortalsCmsService extends BaseService {
 
 	public async updateLinkAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Link.contains(body.ID) ? Link.get(body.ID).ParentID : undefined;
-		await super.updateAsync(
-			super.getPath("cms.link", body.ID),
+		await this.updateAsync(
+			this.getPath("cms.link", body.ID),
 			body,
 			data => {
 				this.updateLink(data, parentID);
@@ -1470,7 +1470,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while updating a link", error));
+				console.error(this.getErrorMessage("Error occurred while updating a link", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1481,8 +1481,8 @@ export class PortalsCmsService extends BaseService {
 
 	public async deleteLinkAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Link.contains(id) ? Link.get(id).ParentID : undefined;
-		await super.deleteAsync(
-			super.getPath("cms.link", id),
+		await this.deleteAsync(
+			this.getPath("cms.link", id),
 			data => {
 				this.deleteLink(data.ID, parentID);
 				if (onSuccess !== undefined) {
@@ -1490,7 +1490,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(super.getErrorMessage("Error occurred while deleting a link", error));
+				console.error(this.getErrorMessage("Error occurred while deleting a link", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1531,7 +1531,7 @@ export class PortalsCmsService extends BaseService {
 				break;
 
 			default:
-				console.warn(super.getLogMessage("Got an update message of a CMS link"), message);
+				console.warn(this.getLogMessage("Got an update message of a CMS link"), message);
 				break;
 		}
 
