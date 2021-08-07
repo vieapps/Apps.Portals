@@ -351,55 +351,47 @@ export class AppAPIs {
 				return;
 			}
 
-			// prepare handlers
+			// prepare
 			const successCallback = AppUtility.isNotEmpty(result.data.ID) ? this._requests.successCallbacks[result.data.ID] : undefined;
 			const errorCallback = AppUtility.isNotEmpty(result.data.ID) ? this._requests.errorCallbacks[result.data.ID] : undefined;
-
-			// got a callback
-			if (successCallback !== undefined || errorCallback !== undefined) {
-				try {
-					if ("Error" === result.data.Type) {
-						if (AppUtility.isGotSecurityException(result.data.Data)) {
-							console.warn(`[AppAPIs]: Got a security issue: ${result.data.Data.Message} (${result.data.Data.Code})`, AppConfig.isDebug ? result.data.Data : "");
-							this.reopenWebSocketWhenGotSecurityError(result.data.Data);
-						}
-						if (errorCallback !== undefined) {
-							errorCallback(result.data);
-						}
-						else {
-							console.error("[AppAPIs]: Got an error while processing", result.data);
-						}
-					}
-					else if (successCallback !== undefined) {
-						successCallback(result.data.Data);
-					}
-				}
-				catch (error) {
-					console.error("[AppAPIs]: Error occurred while running the callback handler", error, result.data);
-				}
+			const data = result.data.Data || {};
+			if (AppUtility.isNotEmpty(result.data.ID)) {
+				delete this._requests.callbackableRequests[result.data.ID];
+				delete this._requests.successCallbacks[result.data.ID];
+				delete this._requests.errorCallbacks[result.data.ID];
 			}
 
 			// got an error
-			else if ("Error" === result.data.Type) {
-				if (AppUtility.isGotSecurityException(result.data.Data)) {
-					console.warn(`[AppAPIs]: Got a security issue: ${result.data.Data.Message} (${result.data.Data.Code})`, AppConfig.isDebug ? result.data.Data : "");
-					this.reopenWebSocketWhenGotSecurityError(result.data.Data);
+			if ("Error" === result.data.Type) {
+				if (AppUtility.isGotSecurityException(data)) {
+					console.warn(`[AppAPIs]: Got a security issue [${data.Code}: ${data.Type}]\n${data.Message}`, AppConfig.isDebug ? data : "");
+					if ("UnauthorizedException" !== data.Type && "AccessDeniedException" !== data.Type) {
+						this.reopenWebSocketWhenGotSecurityError(data);
+					}
+				}
+				else if (errorCallback !== undefined) {
+					errorCallback(data);
 				}
 				else {
-					console.warn(`[AppAPIs]: ${("InvalidRequestException" === result.data.Data.Type ? "Got an invalid requesting data" : "Got an error")}: ${result.data.Data.Message} (${result.data.Data.Code})`, AppConfig.isDebug ? result.data.Data : "");
+					console.warn(`[AppAPIs]: ${("InvalidRequestException" === data.Type ? "Invalid request" : "Got an error")}: [${data.Code}: ${data.Type}]\n${data.Message}`, AppConfig.isDebug ? data : "");
 				}
 			}
 
-			// got a special/broadcasting message
+			// got a callback on success
+			else if (successCallback !== undefined) {
+				successCallback(data);
+			}
+
+			// got a special message => broadcast or do a special action
 			else {
 				// prepare
 				const message: AppMessage = {
 					Type: this.parseMessageType(result.data.Type),
-					Data: result.data.Data || {}
+					Data: data
 				};
 
-				if (AppConfig.isDebug && message.Type.Event !== "Get" && message.Type.Event !== "Search") {
-					console.log("[AppAPIs]: Got a message", AppConfig.isNativeApp ? JSON.stringify(message) : message);
+				if (AppConfig.isDebug) {
+					console.log("[AppAPIs]: Got an updating message", AppConfig.isNativeApp ? JSON.stringify(message) : message);
 				}
 
 				// send PONG
@@ -433,12 +425,6 @@ export class AppAPIs {
 				else {
 					this.broadcast(message);
 				}
-			}
-
-			if (AppUtility.isNotEmpty(result.data.ID)) {
-				delete this._requests.callbackableRequests[result.data.ID];
-				delete this._requests.successCallbacks[result.data.ID];
-				delete this._requests.errorCallbacks[result.data.ID];
 			}
 		};
 
