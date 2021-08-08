@@ -16,6 +16,7 @@ export interface AppMessage {
 
 /** Presents the struct of a requesting information */
 export interface AppRequestInfo {
+	Path?: string;
 	ServiceName?: string;
 	ObjectName?: string;
 	Verb?: string;
@@ -23,7 +24,6 @@ export interface AppRequestInfo {
 	Query?: { [key: string]: string };
 	Extra?: { [key: string]: string };
 	Body?: any;
-	Path?: string;
 }
 
 /** Servicing component for working with APIs */
@@ -32,6 +32,10 @@ export class AppAPIs {
 	private static _websocket: WebSocket;
 	private static _websocketStatus: string;
 	private static _websocketURL: string;
+	private static _onWebSocketOpened: (event: Event) => void;
+	private static _onWebSocketClosed: (event: CloseEvent) => void;
+	private static _onWebSocketGotError: (event: Event) => void;
+	private static _onWebSocketGotMessage: (event: MessageEvent) => void;
 	private static _messageTypes: { [key: string]: { Service: string; Object?: string; Event?: string; } } = {};
 	private static _serviceScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
 	private static _objectScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
@@ -45,20 +49,6 @@ export class AppAPIs {
 	private static _counter = 0;
 	private static _attempt = 0;
 	private static _http: HttpClient;
-	private static _onWebSocketOpened: (event: Event) => void;
-	private static _onWebSocketClosed: (event: CloseEvent) => void;
-	private static _onWebSocketGotError: (event: Event) => void;
-	private static _onWebSocketGotMessage: (event: MessageEvent) => void;
-
-	/** Gets the last time when got PING */
-	public static get ping() {
-		return this._ping;
-	}
-
-	/** Gets the HttpClient instance for working with XMLHttpRequest (XHR) */
-	public static get http() {
-		return this._http;
-	}
 
 	/** Sets the action to fire when the WebSocket connection is opened */
 	public static set onWebSocketOpened(func: (event: Event) => void) {
@@ -83,6 +73,16 @@ export class AppAPIs {
 	/** Gets state that determines the WebSocket connection is ready or not */
 	public static get isWebSocketReady() {
 		return this._websocket !== undefined && this._websocketStatus === "ready";
+	}
+
+	/** Gets the last time when got PING */
+	public static get ping() {
+		return this._ping;
+	}
+
+	/** Gets the HttpClient instance for working with XMLHttpRequest (XHR) */
+	public static get http() {
+		return this._http;
 	}
 
 	/** Initializes the instance of the Angular HttpClient service for working with XMLHttpRequest (XHR) */
@@ -536,6 +536,13 @@ export class AppAPIs {
 		}
 	}
 
+	/** Sends a message to APIs using WebSocket */
+	public static sendWebSocketMessage(message: string) {
+		if (this.isWebSocketReady && AppUtility.isNotEmpty(message)) {
+			this._websocket.send(message);
+		}
+	}
+
 	/**
 		* Sends a request to APIs using WebSocket
 		* @param request The requesting information
@@ -626,59 +633,59 @@ export class AppAPIs {
 
 	/**
 		* Sends a request to APIs
-		* @param request The requesting information
+		* @param requestInfo The requesting information
 		* @param useXHR Set to true to always use XHR, false to let system decides
 		* @param onSuccess The callback function to handle the returning data
 		* @param onError The callback function to handle the returning error
 	*/
-	public static sendRequest(request: AppRequestInfo, useXHR: boolean = true, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public static sendRequest(requestInfo: AppRequestInfo, useXHR: boolean = true, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		if (this.canUseWebSocket(useXHR)) {
-			const info = AppUtility.isNotEmpty(request.Path) ? this.parseRequestInfo(request.Path) : undefined;
-			const requestInfo = {
-				ServiceName: info !== undefined ? info.ServiceName : request.ServiceName,
-				ObjectName: info !== undefined ? info.ObjectName : request.ObjectName,
-				Verb: request.Verb,
-				Header: AppUtility.clone(request.Header || {}),
-				Query: AppUtility.clone((info !== undefined ? info.Query : request.Query) || {}),
-				Extra: request.Extra,
-				Body: request.Body
+			const request = AppUtility.isNotEmpty(requestInfo.Path) ? this.parseRequestInfo(requestInfo.Path) : undefined;
+			const requestMsg = {
+				ServiceName: request !== undefined ? request.ServiceName : requestInfo.ServiceName,
+				ObjectName: request !== undefined ? request.ObjectName : requestInfo.ObjectName,
+				Verb: requestInfo.Verb,
+				Header: AppUtility.clone(requestInfo.Header || {}),
+				Query: AppUtility.clone((request !== undefined ? request.Query : requestInfo.Query) || {}),
+				Extra: requestInfo.Extra,
+				Body: requestInfo.Body
 			};
-			["x-app-token", "x-app-name", "x-app-platform", "x-device-id", "x-session-id"].forEach(name => delete requestInfo.Header[name]);
-			["service-name", "object-name"].forEach(name => delete requestInfo.Query[name]);
-			if (info !== undefined && AppUtility.isNotEmpty(info.ObjectIdentity)) {
-				requestInfo.Query["object-identity"] = info.ObjectIdentity;
+			["x-app-token", "x-app-name", "x-app-platform", "x-device-id", "x-session-id"].forEach(name => delete requestMsg.Header[name]);
+			["service-name", "object-name"].forEach(name => delete requestMsg.Query[name]);
+			if (request !== undefined && AppUtility.isNotEmpty(request.ObjectIdentity)) {
+				requestMsg.Query["object-identity"] = request.ObjectIdentity;
 			}
-			this.sendWebSocketRequest(requestInfo, onSuccess, onError);
+			this.sendWebSocketRequest(requestMsg, onSuccess, onError);
 			return EmptyObservable;
 		}
 		else {
-			let path = request.Path;
+			let path = requestInfo.Path;
 			if (AppUtility.isEmpty(path)) {
-				let query = AppUtility.clone(request.Query || {});
+				let query = AppUtility.clone(requestInfo.Query || {});
 				const objectIdentity = query["object-identity"];
 				["service-name", "object-name", "object-identity"].forEach(name => delete query[name]);
 				query = `?${AppUtility.toQuery(query)}`;
-				path = `${request.ServiceName}${AppUtility.isNotEmpty(request.ObjectName) ? `/${request.ObjectName}` : ""}${AppUtility.isNotEmpty(objectIdentity) ? `/${objectIdentity}` : ""}${query === "?" ? "" : query}`;
+				path = `${requestInfo.ServiceName}${AppUtility.isNotEmpty(requestInfo.ObjectName) ? `/${requestInfo.ObjectName}` : ""}${AppUtility.isNotEmpty(objectIdentity) ? `/${objectIdentity}` : ""}${query === "?" ? "" : query}`;
 			}
-			path += request.Extra !== undefined ? (path.indexOf("?") > 0 ? "&" : "?") + `x-request-extra=${AppCrypto.jsonEncode(request.Extra)}` : "";
-			return this.sendXMLHttpRequest(request.Verb || "GET", this.getURL(path), { headers: request.Header }, request.Body);
+			path += requestInfo.Extra !== undefined ? (path.indexOf("?") > 0 ? "&" : "?") + `x-request-extra=${AppCrypto.jsonEncode(requestInfo.Extra)}` : "";
+			return this.sendXMLHttpRequest(requestInfo.Verb, this.getURL(path), { headers: requestInfo.Header }, requestInfo.Body);
 		}
 	}
 
 	/**
 	 * Sends a request to APIs
-	 * @param request The requesting information
+	 * @param requestInfo The requesting information
 	 * @param onSuccess The callback function to handle the returning data
 	 * @param onError The callback function to handle the returning error
 	 * @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	public static async sendRequestAsync(request: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public static async sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		if (this.canUseWebSocket(useXHR, false)) {
-			this.sendRequest(request, false, onSuccess, onError);
+			this.sendRequest(requestInfo, false, onSuccess, onError);
 		}
 		else {
 			try {
-				const data = await AppUtility.toAsync(this.sendRequest(request));
+				const data = await AppUtility.toAsync(this.sendRequest(requestInfo));
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -692,15 +699,6 @@ export class AppAPIs {
 				}
 			}
 		}
-	}
-
-	/**
-		* Sends a request to APIs using XMLHttpRequest with GET verb to fetch data
-		* @param url The absolute URL of APIs to perform the request
-		* @param headers Additional headers to perform the request
-	*/
-	public static fetchAsync(url: string, headers?: any) {
-		return this.sendXMLHttpRequestAsync("GET", url, headers);
 	}
 
 	/** Broadcasts a message to all subscribers */
