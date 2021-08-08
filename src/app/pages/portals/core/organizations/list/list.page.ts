@@ -204,7 +204,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			await this.configSvc.navigateBackAsync();
 		}
 		else {
-			PlatformUtility.invoke(() => {
+			AppUtility.invoke(() => {
 				this.onClear();
 				this.filtering = false;
 			}, 123);

@@ -446,7 +446,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			Fill: "clear",
 			Color: "medium",
 			Slot: "end",
-			OnClick: (_, formControl) => PlatformUtility.openURI(`${this.configSvc.appConfig.URIs.portals}~${formControl.value}`)
+			OnClick: (_, formControl) => PlatformUtility.openURL(`${this.configSvc.appConfig.URIs.portals}~${formControl.value}`)
 		};
 
 		control = formConfig.find(ctrl => ctrl.Name === "OwnerID");
@@ -658,7 +658,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		this.hash = AppCrypto.hash(this.form.value);
 
 		// hack the Completer component to update correct form value & validity status
-		this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.invoke(() => {
+		this.appFormsSvc.hideLoadingAsync(() => AppUtility.invoke(() => {
 			this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true });
 			this.hash = AppCrypto.hash(this.form.value);
 		}, 234));

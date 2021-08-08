@@ -283,7 +283,7 @@ export class AppConfig {
 
 	/** Gets the related query with active/related service, culture language and host */
 	public static getRelatedQuery(service?: string, activeID?: string, onCompleted?: (json: any) => void) {
-		return AppUtility.getQueryOfJson(this.getRelatedJson(undefined, service, activeID, onCompleted));
+		return AppUtility.toQuery(this.getRelatedJson(undefined, service, activeID, onCompleted));
 	}
 
 	/** Gets the authenticated headers (JSON) for making requests to APIs */

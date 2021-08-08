@@ -384,7 +384,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 			undefined,
 			await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.confirm.delete"),
 			undefined,
-			() => PlatformUtility.invoke(async () => await this.removeAsync(), 123),
+			() => AppUtility.invoke(async () => await this.removeAsync(), 123),
 			await this.configSvc.getResourceAsync("common.buttons.delete"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);

@@ -299,7 +299,7 @@ export class CmsLinksUpdatePage implements OnInit {
 			Fill: "clear",
 			Color: "medium",
 			Slot: "end",
-			OnClick: (_, formControl) => PlatformUtility.openURI(AppUtility.isNotEmpty(formControl.value) ? formControl.value.replace("~/", `${this.configSvc.appConfig.URIs.portals}~${this.organization.Alias}/`) : undefined)
+			OnClick: (_, formControl) => PlatformUtility.openURL(AppUtility.isNotEmpty(formControl.value) ? formControl.value.replace("~/", `${this.configSvc.appConfig.URIs.portals}~${this.organization.Alias}/`) : undefined)
 		};
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
@@ -483,7 +483,7 @@ export class CmsLinksUpdatePage implements OnInit {
 			undefined,
 			await this.configSvc.getResourceAsync("portals.cms.links.update.messages.confirm.delete"),
 			undefined,
-			() => PlatformUtility.invoke(async () => await this.removeAsync(), 123),
+			() => AppUtility.invoke(async () => await this.removeAsync(), 123),
 			await this.configSvc.getResourceAsync("common.buttons.delete"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);

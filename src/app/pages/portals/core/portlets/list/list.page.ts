@@ -214,7 +214,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	}
 
 	async onCancel() {
-		PlatformUtility.invoke(() => {
+		AppUtility.invoke(() => {
 			this.onClear();
 			this.filtering = false;
 		}, 123);

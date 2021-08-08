@@ -207,7 +207,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 			await this.configSvc.navigateBackAsync();
 		}
 		else {
-			PlatformUtility.invoke(() => {
+			AppUtility.invoke(() => {
 				this.onClear();
 				this.filtering = false;
 			}, 123);
@@ -315,7 +315,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		await this.listCtrl.closeSlidingItems();
 		const domain = `${site.SubDomain}.${site.PrimaryDomain}`.replace("*.", "www.").replace("www.www.", "www.");
 		const protocol = site.AlwaysUseHTTPs ? "https" : "http";
-		PlatformUtility.openURI(`${protocol}://${domain}`);
+		PlatformUtility.openURL(`${protocol}://${domain}`);
 	}
 
 	async clearCacheAsync(event: Event, site: Site) {

@@ -59,19 +59,19 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		this.amount = this.amount !== undefined ? this.amount : (this._isPublished ? amounts.published : amounts.updated) || 5;
 
 		if (this.configSvc.isReady) {
-			PlatformUtility.invoke(() => this.prepareAsync(), 1234);
+			AppUtility.invoke(() => this.prepareAsync(), 1234);
 		}
 		else {
 			AppEvents.on("App", info => {
 				if (AppUtility.isEquals(info.args.Type, "Initialized")) {
-					PlatformUtility.invoke(async () =>  await this.prepareAsync(), 1234);
+					AppUtility.invoke(async () =>  await this.prepareAsync(), 1234);
 				}
 			}, `FeaturedContents:AppInitialized:${this._isPublished}`);
 		}
 
 		AppEvents.on(this.portalsCmsSvc.name, info => {
 			if (AppUtility.isEquals(info.args.Type, "FeaturedContentsPrepared") || (AppUtility.isEquals(info.args.Type, "Changed") && (AppUtility.isEquals(info.args.Object, "Organization") || AppUtility.isEquals(info.args.Object, "Module")))) {
-				PlatformUtility.invoke(async () =>  await this.prepareAsync(true), 1234);
+				AppUtility.invoke(async () =>  await this.prepareAsync(true), 1234);
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
 

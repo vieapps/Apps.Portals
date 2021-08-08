@@ -123,7 +123,7 @@ export class FilesSelectorControl implements OnInit {
 	}
 
 	open(uri: string) {
-		PlatformUtility.openURI(uri);
+		PlatformUtility.openURL(uri);
 	}
 
 	onSelect(event: any, attachment: AttachmentInfo) {

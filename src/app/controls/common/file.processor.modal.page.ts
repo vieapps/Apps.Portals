@@ -229,7 +229,7 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 
 	uploadFiles() {
 		if (this.files.length > 0) {
-			const onSuccess: (index: number, data?: any) => void = (index, data) => PlatformUtility.invoke(() => {
+			const onSuccess: (index: number, data?: any) => void = (index, data) => AppUtility.invoke(() => {
 				this.uploadedData.push(data);
 				if (this.subscriptions !== undefined && this.subscriptions.length > index && this.subscriptions[index] !== undefined) {
 					this.subscriptions[index].unsubscribe();

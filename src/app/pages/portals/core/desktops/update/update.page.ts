@@ -281,7 +281,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 			Fill: "clear",
 			Color: "medium",
 			Slot: "end",
-			OnClick: (_, formControl) => PlatformUtility.openURI(`${this.configSvc.appConfig.URIs.portals}~${this.organization.Alias}/${formControl.value}`)
+			OnClick: (_, formControl) => PlatformUtility.openURL(`${this.configSvc.appConfig.URIs.portals}~${this.organization.Alias}/${formControl.value}`)
 		};
 
 		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Aliases")).Options.OnBlur = (_, formControl) => {

@@ -250,7 +250,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 			Fill: "clear",
 			Color: "medium",
 			Slot: "end",
-			OnClick: (_, formControl) => PlatformUtility.openURI(formControl.value)
+			OnClick: (_, formControl) => PlatformUtility.openURL(formControl.value)
 		};
 
 		const linkSelectorOptions = {
@@ -343,7 +343,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 			Fill: "clear",
 			Color: "medium",
 			Slot: "end",
-			OnClick: (_, formControl) => PlatformUtility.openURI(formControl.value)
+			OnClick: (_, formControl) => PlatformUtility.openURL(formControl.value)
 		};
 
 		if (AppUtility.isArray(this.content.ExternalRelateds, true) && this.content.ExternalRelateds.length > 1) {
