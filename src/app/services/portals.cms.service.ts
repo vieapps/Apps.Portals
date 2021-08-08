@@ -394,7 +394,7 @@ export class PortalsCmsService extends BaseService {
 					Fill: "clear",
 					Color: "medium",
 					Slot: "end",
-					OnClick: (_, formControl) => PlatformUtility.openURI(formControl instanceof AppFormsControlComponent ? (formControl as AppFormsControlComponent).text : formControl.value)
+					OnClick: (_, formControl) => PlatformUtility.openURL(formControl instanceof AppFormsControlComponent ? (formControl as AppFormsControlComponent).text : formControl.value)
 				}
 			}
 		};
@@ -569,7 +569,7 @@ export class PortalsCmsService extends BaseService {
 		);
 		const onCompleted = () => {
 			if (index < contentTypes.length - 1) {
-				PlatformUtility.invoke(async () => await this.getFeaturedContentsAsync(contentTypes, index + 1), 13);
+				AppUtility.invoke(async () => await this.getFeaturedContentsAsync(contentTypes, index + 1), 13);
 			}
 			else {
 				AppEvents.broadcast(this.name, { Type: "FeaturedContentsPrepared" });
@@ -611,7 +611,7 @@ export class PortalsCmsService extends BaseService {
 				if (this.configSvc.isDebug) {
 					this.showLog("Start to prepare featured contents of the active organization", `${activeOrganization.Title}`, activeContentTypes.map(contentType => ({ ID: contentType.ID, Title: contentType.Title })));
 				}
-				PlatformUtility.invoke(async () => await this.getFeaturedContentsAsync(activeContentTypes, 0), 123);
+				AppUtility.invoke(async () => await this.getFeaturedContentsAsync(activeContentTypes, 0), 123);
 			}
 
 			const availableOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync();
@@ -628,7 +628,7 @@ export class PortalsCmsService extends BaseService {
 				if (this.configSvc.isDebug) {
 					this.showLog("Start to prepare featured contents of another available organizations", availableContentTypes.map(contentType => ({ ID: contentType.ID, Title: contentType.Title, Organization: Organization.get(contentType.SystemID).Title })));
 				}
-				PlatformUtility.invoke(async () => await this.getFeaturedContentsAsync(availableContentTypes, 0), 3456);
+				AppUtility.invoke(async () => await this.getFeaturedContentsAsync(availableContentTypes, 0), 3456);
 			}
 		}
 	}
@@ -840,7 +840,7 @@ export class PortalsCmsService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getMessage("Got an update message of a CMS category"), message);
+				this.showLog("Got an update message of a CMS category", message);
 				break;
 		}
 
@@ -1113,7 +1113,7 @@ export class PortalsCmsService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getMessage("Got an update message of a CMS content"), message);
+				this.showLog("Got an update message of a CMS content", message);
 				break;
 		}
 
@@ -1310,7 +1310,7 @@ export class PortalsCmsService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getMessage("Got an update message of a CMS item"), message);
+				this.showLog("Got an update message of a CMS item", message);
 				break;
 		}
 
@@ -1515,7 +1515,7 @@ export class PortalsCmsService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getMessage("Got an update message of a CMS link"), message);
+				this.showLog("Got an update message of a CMS link", message);
 				break;
 		}
 

@@ -150,7 +150,7 @@ export class AuthenticationService extends BaseService {
 			await this.configSvc.resetSessionAsync(async () =>
 				await this.configSvc.initializeSessionAsync(async () =>
 					await this.configSvc.registerSessionAsync(() => {
-						console.warn(this.getMessage("Reregistered the session when got security issue"));
+						this.showLog("Reregistered the session when got security issue");
 						if (onNext !== undefined) {
 							onNext(error);
 						}
@@ -172,13 +172,13 @@ export class AuthenticationService extends BaseService {
 			},
 			async data => {
 				if (AppUtility.isTrue(data.Require2FA)) {
-					console.warn(this.getMessage("Log in with static password successful, but need to verify with 2FA"), this.configSvc.isDebug ? data : "");
+					this.showLog("Log in with static password successful, but need to verify with 2FA", this.configSvc.isDebug ? data : "");
 					if (onSuccess !== undefined) {
 						onSuccess(data);
 					}
 				}
 				else {
-					console.log(this.getMessage("Log in successful"), this.configSvc.isDebug ? data : "");
+					this.showLog("Log in successful", this.configSvc.isDebug ? data : "");
 					await this.updateSessionWhenLogInAsync(data, onSuccess);
 				}
 			},
@@ -197,7 +197,7 @@ export class AuthenticationService extends BaseService {
 				OTP: AppCrypto.rsaEncrypt(otp)
 			},
 			async data => {
-				console.log(this.getMessage("Log in with OTP successful"));
+				this.showLog("Log in with OTP successful");
 				await this.updateSessionWhenLogInAsync(data, onSuccess);
 			},
 			async error => await this.processErrorAsync(error, "Error occurred while logging in with OTP", onError),
@@ -210,7 +210,7 @@ export class AuthenticationService extends BaseService {
 		await this.deleteAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			async data => await this.configSvc.updateSessionAsync(data, async () => await this.configSvc.registerSessionAsync(() => {
-				console.log(this.getMessage("Log out successful"), this.configSvc.isDebug ? data : "");
+				this.showLog("Log out successful", this.configSvc.isDebug ? data : "");
 				AppEvents.broadcast("Account", { Type: "Updated" });
 				AppEvents.broadcast("Profile", { Type: "Updated" });
 				AppEvents.broadcast("Session", { Type: "LogOut" });
@@ -227,7 +227,7 @@ export class AuthenticationService extends BaseService {
 
 	public async resetPasswordAsync(account: string, captcha: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await this.updateAsync(
-			this.getPath("account", "reset", `uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`, "users"),
+			this.getPath("account", "reset", `uri=${this.configSvc.activateURL}&${this.configSvc.relatedQuery}`, "users"),
 			{
 				Account: AppCrypto.rsaEncrypt(account)
 			},

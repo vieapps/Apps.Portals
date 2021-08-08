@@ -44,7 +44,7 @@ export class ConfigurationService extends BaseService {
 		private electronSvc: ElectronService
 	) {
 		super("Configuration");
-		AppStorage.initializeAsync(this.storage, () => console.log(this.getMessage("Storage is ready. Driver: " + this.storage.driver)));
+		AppStorage.initializeAsync(this.storage, () => this.showLog("Storage is ready. Driver: " + this.storage.driver));
 		AppEvents.on("App", info => {
 			if ("PlatformIsReady" === info.args.Type) {
 				this.loadGeoMetaAsync();
@@ -152,9 +152,13 @@ export class ConfigurationService extends BaseService {
 	}
 
 	private getURL(info: { url: string, params: { [key: string]: any } }, alternativeUrl?: string) {
-		return info !== undefined
-			? PlatformUtility.getURI(info.url, info.params)
-			: alternativeUrl || this.appConfig.url.home;
+		if (info === undefined) {
+			return alternativeUrl || this.appConfig.url.home;
+		}
+		else {
+			const query = AppUtility.toQuery(info.params);
+			return info.url + (query !== "" ? (info.url.indexOf("?") > 0 ? "&" : "?") + query : "");
+		}
 	}
 
 	/** Gets the current working URL */
@@ -167,9 +171,9 @@ export class ConfigurationService extends BaseService {
 		return this.getURL(this.getPreviousURL());
 	}
 
-	/** Gets the URI for activating new account/password */
-	public get activateURI() {
-		return AppCrypto.base64urlEncode(PlatformUtility.getRedirectURI("home?prego=activate&mode={{mode}}&code={{code}}", false));
+	/** Gets the URL for activating new account/password */
+	public get activateURL() {
+		return AppCrypto.base64urlEncode((this.appConfig.isWebApp ? AppUtility.parseURI().HostURI + this.appConfig.url.base : this.appConfig.URIs.apps) + "home?prego=activate&mode={{mode}}&code={{code}}");
 	}
 
 	/** Sets the app title (means title of the browser) */
@@ -195,7 +199,8 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the request params of the current page/view (means decoded JSON of 'x-request' query parameter) */
 	public get requestParams() {
-		return AppUtility.getJsonOfQuery(this.queryParams["x-request"]);
+		const params = this.queryParams["x-request"];
+		return AppUtility.isNotEmpty(params) ? AppCrypto.jsonDecode(params) : {};
 	}
 
 	/** Gets the width (pixels) of the screen */
@@ -227,10 +232,47 @@ export class ConfigurationService extends BaseService {
 	public prepare() {
 		const isCordova = this.platform.is("cordova");
 		const isNativeApp = isCordova && (this.device.platform === "iOS" || this.device.platform === "Android");
-
 		this.appConfig.app.mode = isNativeApp ? "NTA" : "PWA";
-		this.appConfig.app.os = PlatformUtility.getOSPlatform();
-		this.appConfig.url.host = PlatformUtility.getHost();
+
+		const userAgent = navigator ? navigator.userAgent : "";
+		const platform = isNativeApp
+			? this.device.platform
+			: /iPhone|iPad|iPod|Windows Phone|Android|BlackBerry|BB10|IEMobile|webOS|Opera Mini/i.test(userAgent)
+				? /iPhone|iPad|iPod/i.test(userAgent)
+					? "iOS"
+					: /Android/i.test(userAgent)
+						? "Android"
+						: /Windows Phone/i.test(userAgent)
+							? "Windows Phone"
+							: /BlackBerry|BB10/i.test(userAgent)
+								? "BlackBerry"
+								: "Mobile"
+				: "Desktop";
+
+		this.appConfig.app.os = platform !== "Desktop"
+			? platform
+			: /Windows/i.test(userAgent)
+				? "Windows"
+				: /Linux/i.test(userAgent)
+					? "Linux"
+					: /Macintosh/i.test(userAgent)
+						? "macOS"
+						: "Generic OS";
+
+		const uri = AppUtility.parseURI();
+		if (uri.Host.indexOf(".") < 0) {
+			this.appConfig.url.host = uri.Host;
+		}
+		else {
+			let host = uri.HostNames[uri.HostNames.length - 2] + "." + uri.HostNames[uri.HostNames.length - 1];
+			if (uri.HostNames.length > 2 && uri.HostNames[uri.HostNames.length - 3] !== "www") {
+				host = uri.HostNames[uri.HostNames.length - 3] + "." + host;
+			}
+			if (uri.HostNames.length > 3 && uri.HostNames[uri.HostNames.length - 4] !== "www") {
+				host = uri.HostNames[uri.HostNames.length - 4] + "." + host;
+			}
+			this.appConfig.url.host = host;
+		}
 
 		if (isNativeApp) {
 			this.appConfig.url.base = "";
@@ -240,7 +282,7 @@ export class ConfigurationService extends BaseService {
 
 		else {
 			this.appConfig.url.base = this.platformLocation.getBaseHrefFromDOM();
-			this.appConfig.app.platform = `${PlatformUtility.getAppPlatform()} ${this.appConfig.app.mode}`;
+			this.appConfig.app.platform = `${platform} ${this.appConfig.app.mode}`;
 		}
 
 		if (isCordova) {
@@ -737,7 +779,7 @@ export class ConfigurationService extends BaseService {
 		await this.saveOptionsAsync(() => {
 			AppEvents.broadcast("App", { Type: "OptionsUpdated" });
 			if (this.isDebug) {
-				console.log(this.getMessage("Options are updated"), this.appConfig.options);
+				this.showLog("Options are updated", this.appConfig.options);
 			}
 			if (onNext !== undefined) {
 				onNext(this.appConfig.options);
@@ -819,7 +861,7 @@ export class ConfigurationService extends BaseService {
 			path += `x-object-identity=${definitionName.toLowerCase()}&`;
 		}
 		if (AppUtility.isObject(query, true)) {
-			path += `${AppUtility.getQueryOfJson(query)}&`;
+			path += `${AppUtility.toQuery(query)}&`;
 		}
 		return path + this.appConfig.getRelatedQuery(serviceName, undefined, json => {
 			if (AppUtility.isNotEmpty(serviceName) && AppUtility.isEquals(serviceName, json["related-service"])) {

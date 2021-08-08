@@ -42,7 +42,7 @@ export class FilesService extends BaseService {
 
 	public readAsDataURL(file: File, onRead: (data: string) => void, limitSize?: number, onLimitExceeded?: (fileSize?: number, limitSize?: number) => void) {
 		if (limitSize !== undefined && file.size > limitSize) {
-			console.warn(this.getMessage(`Limit size exceeded - Max allowed size: ${limitSize} bytes - Actual size: ${file.size} bytes`));
+			this.showLog(`Limit size exceeded - Max allowed size: ${limitSize} bytes - Actual size: ${file.size} bytes`);
 			if (onLimitExceeded !== undefined) {
 				onLimitExceeded(file.size, limitSize);
 			}
@@ -171,7 +171,7 @@ export class FilesService extends BaseService {
 		const query = this.configSvc.appConfig.getAuthenticatedHeaders();
 		query["x-node"] = message.Data.NodeID;
 		query["x-filename"] = message.Data.Filename;
-		return `${this.configSvc.appConfig.URIs.apis}temp.download?${AppUtility.getQueryOfJson(query)}`;
+		return `${this.configSvc.appConfig.URIs.apis}temp.download?${AppUtility.toQuery(query)}`;
 	}
 
 	public prepareAttachment(attachment: AttachmentInfo) {

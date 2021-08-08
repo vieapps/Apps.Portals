@@ -111,7 +111,7 @@ export class UsersService extends BaseService {
 
 	public async registerAsync(registerInfo: any, captcha: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await this.createAsync(
-			this.getPath("account", undefined, `uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`),
+			this.getPath("account", undefined, `uri=${this.configSvc.activateURL}&${this.configSvc.relatedQuery}`),
 			AppUtility.clone(registerInfo, ["ConfirmEmail", "ConfirmPassword", "Captcha"], undefined, body => {
 				body.Email = AppCrypto.rsaEncrypt(body.Email);
 				body.Password = AppCrypto.rsaEncrypt(body.Password);
@@ -138,7 +138,7 @@ export class UsersService extends BaseService {
 			body["RelatedInfo"] = AppCrypto.aesEncrypt(JSON.stringify(relatedInfo));
 		}
 		await this.createAsync(
-			this.getPath("account", "invite", `uri=${this.configSvc.activateURI}&${this.configSvc.relatedQuery}`),
+			this.getPath("account", "invite", `uri=${this.configSvc.activateURL}&${this.configSvc.relatedQuery}`),
 			body,
 			onSuccess,
 			error => {
@@ -155,7 +155,7 @@ export class UsersService extends BaseService {
 		await this.readAsync(
 			uri,
 			async data => await this.configSvc.updateSessionAsync(data, () => {
-				console.log(this.getMessage("Activated..."), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+				this.showLog("Activated...", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -346,7 +346,7 @@ export class UsersService extends BaseService {
 				switch (message.Type.Event) {
 					case "Update":
 						await this.configSvc.updateSessionAsync(message.Data, () => {
-							console.warn(this.getMessage("The session was updated with new access token"), this.configSvc.appConfig.session);
+							this.showLog("The session was updated with new access token", this.configSvc.appConfig.session);
 							AppEvents.sendToElectron(this.name, { Type: "Session", Data: this.configSvc.appConfig.session });
 						}, false, false, false);
 						AppEvents.broadcast("Account", { Type: "Updated", Mode: "Session" });
@@ -354,7 +354,7 @@ export class UsersService extends BaseService {
 
 					case "Revoke":
 						if (AppUtility.isGotSecurityException(message.Data)) {
-							console.warn(this.getMessage("Revoke the session and register new when got a security issue"), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+							this.showLog("Revoke the session and register new when got a security issue", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 							await this.configSvc.resetSessionAsync(async () => await this.configSvc.initializeSessionAsync(async () =>
 								await this.configSvc.registerSessionAsync(() => {
 									AppAPIs.reopenWebSocket("Reopens when got a security issue");
@@ -363,7 +363,7 @@ export class UsersService extends BaseService {
 						}
 						else {
 							await this.configSvc.updateSessionAsync(message.Data, async () => await this.configSvc.registerSessionAsync(() => {
-								console.warn(this.getMessage("The session was revoked by the APIs"), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+								this.showLog("The session was revoked by the APIs", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 								AppAPIs.reopenWebSocket("Reopens when the session was revoked by the APIs");
 							}), false, false, false);
 						}
@@ -382,7 +382,7 @@ export class UsersService extends BaseService {
 						break;
 
 					default:
-						console.warn(this.getMessage("Got an update of a session"), message);
+						this.showLog("Got an update of a session", message);
 						break;
 				}
 				break;
@@ -408,7 +408,7 @@ export class UsersService extends BaseService {
 					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
 					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: account.profile });
 					if (this.configSvc.isDebug) {
-						console.log(this.getMessage("User profile was updated from APIs"), account.profile);
+						this.showLog("User profile was updated from APIs", account.profile);
 					}
 					if (this.configSvc.appConfig.facebook.token !== undefined && this.configSvc.appConfig.facebook.id !== undefined) {
 						this.configSvc.getFacebookProfile();
@@ -420,7 +420,7 @@ export class UsersService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getMessage("Got an update of an user"), message);
+				this.showLog("Got an update of an user", message);
 				break;
 		}
 	}
@@ -460,6 +460,21 @@ export class UsersService extends BaseService {
 			modified: this.datePipe.transform(lastModified, "h:mm a @ d/M/y")
 		};
 		return AppUtility.format(await this.configSvc.getResourceAsync("common.audits.info"), params);
+	}
+
+	public getAvatarURL(profile: UserProfile, noAvatar?: string) {
+		const avatar: string = AppUtility.isNotEmpty(profile.Avatar)
+			? profile.Avatar
+			: AppUtility.isNotEmpty(profile.Gravatar)
+				? profile.Gravatar
+				: "";
+		if (avatar === "") {
+			noAvatar = noAvatar || `${this.configSvc.appConfig.URIs.files}avatars/${this.configSvc.appConfig.url.host}-no-avatar.png`;
+			return AppUtility.isNotEmpty(profile.Email)
+				? `https://secure.gravatar.com/avatar/${AppCrypto.md5(profile.Email.toLowerCase().trim())}?s=300&d=${encodeURIComponent(noAvatar)}`
+				: noAvatar;
+		}
+		return avatar;
 	}
 
 }

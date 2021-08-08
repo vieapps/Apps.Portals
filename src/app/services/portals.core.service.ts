@@ -1621,7 +1621,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getMessage("Got an update message of an organization"), message);
+				this.showLog("Got an update message of an organization", message);
 				break;
 		}
 
@@ -1845,7 +1845,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getMessage("Got an update message of a role"), message);
+				this.showLog("Got an update message of a role", message);
 				break;
 		}
 
@@ -2076,7 +2076,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getMessage("Got an update message of a desktop"), message);
+				this.showLog("Got an update message of a desktop", message);
 				break;
 		}
 
@@ -2343,7 +2343,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getMessage(`Got an update message of a portlet - Portlet ID: ${message.Data.ID} - Desktop ID: ${message.Data.DesktopID}`), message);
+				this.showLog(`Got an update message of a portlet - Portlet ID: ${message.Data.ID} - Desktop ID: ${message.Data.DesktopID}`, message);
 				break;
 		}
 
@@ -2519,7 +2519,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getMessage("Got an update message of a site"), message);
+				this.showLog("Got an update message of a site", message);
 				break;
 		}
 
@@ -2711,7 +2711,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getMessage("Got an update message of a module"), message);
+				this.showLog("Got an update message of a module", message);
 				break;
 		}
 
@@ -2892,7 +2892,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getMessage("Got an update message of a content type"), message);
+				this.showLog("Got an update message of a content type", message);
 				break;
 		}
 
@@ -3062,7 +3062,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getMessage("Got an update message of an expression"), message);
+				this.showLog("Got an update message of an expression", message);
 				break;
 		}
 
@@ -3116,7 +3116,7 @@ export class PortalsCoreService extends BaseService {
 											"Excel",
 											await this.configSvc.getResourceAsync("portals.common.excel.message.export"),
 											undefined,
-											() => PlatformUtility.openURI(this.filesSvc.getTemporaryFileURI(message)),
+											() => PlatformUtility.openURL(this.filesSvc.getTemporaryFileURI(message)),
 											await this.configSvc.getResourceAsync("common.buttons.download"),
 											await this.configSvc.getResourceAsync("common.buttons.cancel")
 										);
