@@ -37,17 +37,6 @@ export class PlatformUtility {
 	}
 
 	/**
-	 * Invokes an action when time out
-	 * @param action The action to invoke
-	 * @param defer The defer times (in miliseconds)
-	 */
-	public static invoke(action: () => void, defer?: number) {
-		if (AppUtility.isNotNull(action)) {
-			setTimeout(() => action(), defer || 0);
-		}
-	}
-
-	/**
 	 * Sets focus into the control
 	 * @param control The control to focus into
 	 * @param defer The defer times (in miliseconds)
@@ -58,7 +47,7 @@ export class PlatformUtility {
 				? (control as ElementRef).nativeElement
 				: control;
 			if (ctrl !== undefined) {
-				this.invoke(() => {
+				AppUtility.invoke(() => {
 					if (typeof ctrl.setFocus === "function") {
 						ctrl.setFocus();
 					}
@@ -73,205 +62,27 @@ export class PlatformUtility {
 		}
 	}
 
-	/** Gets the running platform of the app */
-	public static getAppPlatform(userAgent?: string) {
-		userAgent = userAgent || window.navigator.userAgent;
-		return /iPhone|iPad|iPod|Windows Phone|Android|BlackBerry|BB10|IEMobile|webOS|Opera Mini/i.test(userAgent)
-			? /iPhone|iPad|iPod/i.test(userAgent)
-				? "iOS"
-				: /Windows Phone/i.test(userAgent)
-					? "Windows Phone"
-					: /Android/i.test(userAgent)
-						? "Android"
-						: /BlackBerry|BB10/i.test(userAgent)
-							? "BlackBerry"
-							: "Mobile"
-			: "Desktop";
-	}
-
-	/** Gets the running OS platform of the app */
-	public static getOSPlatform(userAgent?: string) {
-		userAgent = userAgent || window.navigator.userAgent;
-		const platform = this.getAppPlatform(userAgent);
-		return platform !== "Desktop"
-			? platform
-			: /Windows/i.test(userAgent)
-				? "Windows"
-				: /Linux/i.test(userAgent)
-					? "Linux"
-					: /Macintosh/i.test(userAgent)
-						? "macOS"
-						: "Generic OS";
-	}
-
-	/** Getst the state to determines that is Apple Safari */
-	public static isSafari(userAgent?: string) {
-		userAgent = userAgent || window.navigator.userAgent;
-		return userAgent.indexOf("Macintosh") > 0 && userAgent.indexOf("AppleWebKit") > 0 && userAgent.indexOf("Chrome") < 0 && userAgent.indexOf("Edge") < 0 && userAgent.indexOf("Edg") < 0;
-	}
-
-	/** Gets the avatar image */
-	public static getAvatarImage(data?: any, noAvatar?: string) {
-		const avatar: string = AppUtility.isObject(data, true) && AppUtility.isNotEmpty(data.Avatar)
-			? data.Avatar
-			: AppUtility.isObject(data, true) && AppUtility.isNotEmpty(data.Gravatar)
-				? data.Gravatar
-				: "";
-		if (avatar === "" && AppUtility.isObject(data, true)) {
-			noAvatar = AppUtility.isNotEmpty(noAvatar)
-				? noAvatar
-				: `${AppConfig.URIs.files}avatars/${AppConfig.url.host}-no-avatar.png`;
-			const email = AppUtility.isObject(data.Contact, true)
-				? data.Contact.Email
-				: data.Email;
-			return AppUtility.isNotEmpty(email)
-				? `https://secure.gravatar.com/avatar/${AppCrypto.md5(email.toLowerCase().trim())}?s=300&d=${encodeURIComponent(noAvatar)}`
-				: noAvatar;
-		}
-		return avatar;
-	}
-
-	/** Opens an URI in browser */
-	public static openURI(uri?: string, target?: string) {
-		if (AppUtility.isNotEmpty(uri)) {
+	/** Opens an URL in browser */
+	public static openURL(url?: string, target?: string) {
+		if (AppUtility.isNotEmpty(url)) {
 			if (this._electronService !== undefined) {
-				this._electronService.shell.openExternal(uri);
+				this._electronService.shell.openExternal(url);
 			}
 			else if (AppConfig.isNativeApp && this._inappBrowser !== undefined) {
-				this._inappBrowser.create(uri, target || "_blank", {
+				this._inappBrowser.create(url, target || "_blank", {
 					allowInlineMediaPlayback: "yes",
 					location: "yes"
 				});
 			}
 			else {
-				window.open(uri, target || "_blank");
+				window.open(url, target || "_blank");
 			}
-		}
-	}
-
-	/** Parses an URI */
-	public static parseURI(uri?: string) {
-		uri = uri || (window && window.location ? window.location.href : "scheme://service.as.host/path?query=#?hash=");
-
-		let scheme = "http", host = "local", relativeURI = "";
-
-		let pos = uri.indexOf("://");
-		if (pos > -1 ) {
-			scheme = uri.substr(0, pos);
-			pos += 3;
-			const end = uri.indexOf("/", pos);
-			relativeURI = uri.substr(end);
-			if (scheme !== "file") {
-				host = uri.substr(pos, end - pos);
-			}
-		}
-		else {
-			relativeURI = uri;
-		}
-
-		let port = "";
-		pos = host.indexOf(":");
-		if (pos > 0) {
-			port = host.substr(pos + 1);
-			host = host.substr(0, pos);
-		}
-
-		let path = "", query = "", hash = "";
-		pos = relativeURI.indexOf("?");
-		if (pos > 0) {
-			path = relativeURI.substr(0, pos);
-			query = relativeURI.substr(pos + 1);
-			let end = relativeURI.indexOf("#");
-			if (end > 0 && end < pos) {
-				hash = query;
-				query = "";
-			}
-			else if (end > 0 && end > pos) {
-				end = query.indexOf("#");
-				hash = query.substr(end + 1);
-				query = query.substr(0, end);
-			}
-		}
-		else {
-			path = relativeURI;
-		}
-
-		while (path.endsWith("?") || path.endsWith("&") || path.endsWith("#")) {
-			path = path.substr(0, path.length - 1);
-		}
-
-		const queryParams = {} as { [key: string]: string };
-		while (query.startsWith("?") || query.startsWith("&")) {
-			query = query.substr(1);
-		}
-		if (query !== "") {
-			query.split("&").forEach(param => {
-				const params = param.split("=");
-				queryParams[params[0]] = decodeURIComponent(params[1]);
-			});
-		}
-
-		const hashParams = {} as { [key: string]: string };
-		while (hash.startsWith("?") || hash.startsWith("&") || hash.startsWith("#")) {
-			hash = hash.substr(1);
-		}
-		if (hash !== "") {
-			hash.split("&").forEach(param => {
-				const params = param.split("=");
-				hashParams[params[0]] = decodeURIComponent(params[1]);
-			});
-		}
-
-		return {
-			AbsoluteURI: uri,
-			RelativeURI: relativeURI,
-			HostURI: scheme + "://" + host + (port !== "" ? ":" + port : ""),
-			Scheme: scheme,
-			Host: host,
-			HostNames: AppUtility.toArray(host, ".") as Array<string>,
-			Port: port,
-			Path: path,
-			Paths: AppUtility.toArray(path, "/") as Array<string>,
-			Query: query,
-			QueryParams: queryParams,
-			Hash: hash,
-			HashParams: hashParams
-		};
-	}
-
-	/** Gets the URI for navigating */
-	public static getURI(path: string, queryParams?: { [key: string]: any }) {
-		const query = AppUtility.getQueryOfJson(queryParams);
-		return path + (query !== "" ? (path.indexOf("?") > 0 ? "&" : "?") + query : "");
-	}
-
-	/** Gets the redirect URI for working with external */
-	public static getRedirectURI(path: string, addAsRedirectParam: boolean = false) {
-		return (AppConfig.isWebApp ? this.parseURI(window.location.href).HostURI + AppConfig.url.base : AppConfig.URIs.apps)
-			+ (AppUtility.isTrue(addAsRedirectParam) ? `home?redirect=${AppCrypto.base64urlEncode(path)}` : AppUtility.isNotEmpty(path) && path[0] === "/" ? path.substring(1) : path || "");
-	}
-
-	/** Gets the host name from an url */
-	public static getHost(url?: string) {
-		const uri = this.parseURI(url);
-		if (uri.Host.indexOf(".") < 0) {
-			return uri.Host;
-		}
-		else {
-			let host = uri.HostNames[uri.HostNames.length - 2] + "." + uri.HostNames[uri.HostNames.length - 1];
-			if (uri.HostNames.length > 2 && uri.HostNames[uri.HostNames.length - 3] !== "www") {
-				host = uri.HostNames[uri.HostNames.length - 3] + "." + host;
-			}
-			if (uri.HostNames.length > 3 && uri.HostNames[uri.HostNames.length - 4] !== "www") {
-				host = uri.HostNames[uri.HostNames.length - 4] + "." + host;
-			}
-			return host;
 		}
 	}
 
 	/** Opens Google Maps by address or location via query */
 	public static openGoogleMaps(info: string) {
-		this.openURI(`https://www.google.com/maps?q=${encodeURIComponent(info)}`);
+		this.openURL(`https://www.google.com/maps?q=${encodeURIComponent(info)}`);
 	}
 
 	/** Copies the value into clipboard */
@@ -321,7 +132,7 @@ export class PlatformUtility {
 	/** Prepares environments of the PWA */
 	public static preparePWAEnvironment(onFacebookInit?: () => void) {
 		// Facebook SDKs
-		if (AppUtility.isNotEmpty(AppConfig.facebook.id) && this.parseURI().Scheme !== "file") {
+		if (AppUtility.isNotEmpty(AppConfig.facebook.id) && AppUtility.parseURI().Scheme !== "file") {
 			this.appendElement({
 				id: "facebook-jssdk",
 				async: "true",
@@ -343,7 +154,7 @@ export class PlatformUtility {
 		}
 
 		// scrollbars (on Windows & Linux)
-		if (this.getOSPlatform() !== "macOS") {
+		if (AppConfig.app.os !== "macOS") {
 			this.appendElement({
 				type: "text/css",
 				innerText: "::-webkit-scrollbar,.hydrated::-webkit-scrollbar{background:#eee}"

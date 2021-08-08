@@ -883,7 +883,7 @@ export class AppFormsService {
 			formControl.Order = order;
 			formControls.push(formControl);
 		});
-		this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.indexOf("Desktop") > -1 && !PlatformUtility.isSafari());
+		this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.indexOf("Desktop") > -1 && !AppUtility.isAppleSafari());
 		return formControls;
 	}
 
@@ -929,11 +929,11 @@ export class AppFormsService {
 		this.getFormGroup(formControls, form, validators, asyncValidators);
 		if (value !== undefined) {
 			this.updateControls(formControls, value);
-			this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.indexOf("Desktop") > -1 && !PlatformUtility.isSafari());
+			this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.indexOf("Desktop") > -1 && !AppUtility.isAppleSafari());
 			form.patchValue(value);
 		}
 		else {
-			this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.indexOf("Desktop") > -1 && !PlatformUtility.isSafari());
+			this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.indexOf("Desktop") > -1 && !AppUtility.isAppleSafari());
 		}
 	}
 

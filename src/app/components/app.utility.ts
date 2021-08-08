@@ -1,5 +1,4 @@
 import { HttpErrorResponse } from "@angular/common/http";
-import { AppCrypto } from "@app/components/app.crypto";
 
 /** Servicing component for working with app */
 export class AppUtility {
@@ -72,35 +71,6 @@ export class AppUtility {
 		return this.isNotNull(str1) && this.isNotNull(str2) && str1.toLowerCase() === str2.toLowerCase();
 	}
 
-	/** Gets the position of the sub-string in the string */
-	public static indexOf(str: string, substr: string, start?: number) {
-		return this.isNotEmpty(str) && this.isNotEmpty(substr)
-			? str.indexOf(substr, start)
-			: -1;
-	}
-
-	/** Parses the error */
-	public static parseError(error: any) {
-		try {
-			return error instanceof HttpErrorResponse
-				? error.error
-				: "Error" === error.Type && error.Data !== undefined ? error.Data : error;
-		}
-		catch (e) {
-			return error;
-		}
-	}
-
-	/** Gets the error message */
-	public static getErrorMessage(error: any) {
-		error = this.parseError(error);
-		return this.isObject(error, true) && error.Type !== undefined && error.Message !== undefined
-			? `Error: ${error.Message}\nType: ${error.Type}\nCorrelation ID: ${error.CorrelationID}`
-			: error instanceof Error
-				? error.message
-				: `Unexpected error: ${error}`;
-	}
-
 	/** Checks the error to see that is security exception or not */
 	public static isGotSecurityException(error?: any) {
 		error = this.parseError(error);
@@ -111,9 +81,7 @@ export class AppUtility {
 
 	/** Checks the error to see that is wrong account or password exception or not */
 	public static isGotWrongAccountOrPasswordException(error?: any) {
-		return this.isObject(error, true) && this.isNotEmpty(error.Type)
-			? error.Type === "WrongAccountException"
-			: false;
+		return this.isObject(error, true) && "WrongAccountException" === error.Type;
 	}
 
 	/** Checks the error to see that is captcha exception or not */
@@ -130,6 +98,22 @@ export class AppUtility {
 			: false;
 	}
 
+	/** Gets the state to determines the working browser is Apple Safari */
+	public static isAppleSafari(userAgent?: string) {
+		userAgent = userAgent || navigator.userAgent;
+		return userAgent.indexOf("Macintosh") > 0 && userAgent.indexOf("AppleWebKit") > 0 && userAgent.indexOf("Chrome") < 0 && userAgent.indexOf("Edge") < 0 && userAgent.indexOf("Edg") < 0;
+	}
+
+	/** Gets the error message */
+	public static getErrorMessage(error: any) {
+		error = this.parseError(error);
+		return this.isObject(error, true) && error.Type !== undefined && error.Message !== undefined
+			? `Error: ${error.Message}\nType: ${error.Type}\nCorrelation ID: ${error.CorrelationID}`
+			: error instanceof Error
+				? error.message
+				: `Unexpected error: ${error}`;
+	}
+
 	/** Gets their own properties of an object */
 	public static getProperties<T>(obj: T, onlyWritable: boolean = false) {
 		const properties = new Array<{ name: string; info: PropertyDescriptor }>();
@@ -141,6 +125,132 @@ export class AppUtility {
 		return onlyWritable
 			? properties.filter(property => property.info.writable)
 			: properties;
+	}
+
+	/** Gets the sub-sequence the sequence that ordering by the random scoring number */
+	public static getTopScores<T>(sequence: Array<any>, amount?: number, converter?: (element: any) => T): T[] | any[] {
+		const results = sequence.map(element => this.clone(element, undefined, undefined, obj => obj["Score"] = Math.random())).sortBy({ name: "Score", reverse: true }).take(amount);
+		return converter === undefined
+			? results
+			: results.map(element => converter(element));
+	}
+
+	/** Gets all the available characters (0 and A-Z) */
+	public static getChars() {
+		const chars = new Array<string>("0");
+		for (let code = 65; code < 91; code++) {
+			chars.push(String.fromCharCode(code));
+		}
+		return chars;
+	}
+
+	/** Parses the error */
+	public static parseError(error: any) {
+		try {
+			return error instanceof HttpErrorResponse
+				? error.error
+				: "Error" === error.Type && error.Data !== undefined ? error.Data : error;
+		}
+		catch (e) {
+			return error;
+		}
+	}
+
+	/** Parses an URI */
+	public static parseURI(uri?: string) {
+		uri = uri || (location ? location.href : "scheme://service.as.host/path?query=#?hash=");
+
+		let scheme = "http", host = "local", relativeURI = "";
+
+		let pos = uri.indexOf("://");
+		if (pos > -1 ) {
+			scheme = uri.substr(0, pos);
+			pos += 3;
+			const end = uri.indexOf("/", pos);
+			relativeURI = uri.substr(end);
+			if (scheme !== "file") {
+				host = uri.substr(pos, end - pos);
+			}
+		}
+		else {
+			relativeURI = uri;
+		}
+
+		let port = "";
+		pos = host.indexOf(":");
+		if (pos > 0) {
+			port = host.substr(pos + 1);
+			host = host.substr(0, pos);
+		}
+
+		let path = "", query = "", hash = "";
+		pos = relativeURI.indexOf("?");
+		if (pos > 0) {
+			path = relativeURI.substr(0, pos);
+			query = relativeURI.substr(pos + 1);
+			let end = relativeURI.indexOf("#");
+			if (end > 0 && end < pos) {
+				hash = query;
+				query = "";
+			}
+			else if (end > 0 && end > pos) {
+				end = query.indexOf("#");
+				hash = query.substr(end + 1);
+				query = query.substr(0, end);
+			}
+		}
+		else {
+			path = relativeURI;
+		}
+
+		while (path.endsWith("?") || path.endsWith("&") || path.endsWith("#")) {
+			path = path.substr(0, path.length - 1);
+		}
+
+		const queryParams = {} as { [key: string]: string };
+		while (query.startsWith("?") || query.startsWith("&")) {
+			query = query.substr(1);
+		}
+		if (query !== "") {
+			query.split("&").forEach(param => {
+				const params = param.split("=");
+				queryParams[params[0]] = decodeURIComponent(params[1]);
+			});
+		}
+
+		const hashParams = {} as { [key: string]: string };
+		while (hash.startsWith("?") || hash.startsWith("&") || hash.startsWith("#")) {
+			hash = hash.substr(1);
+		}
+		if (hash !== "") {
+			hash.split("&").forEach(param => {
+				const params = param.split("=");
+				hashParams[params[0]] = decodeURIComponent(params[1]);
+			});
+		}
+
+		return {
+			AbsoluteURI: uri,
+			RelativeURI: relativeURI,
+			HostURI: scheme + "://" + host + (port !== "" ? ":" + port : ""),
+			Scheme: scheme,
+			Host: host,
+			HostNames: AppUtility.toArray(host, ".") as Array<string>,
+			Port: port,
+			Path: path,
+			Paths: AppUtility.toArray(path, "/") as Array<string>,
+			Query: query,
+			QueryParams: queryParams,
+			Hash: hash,
+			HashParams: hashParams
+		};
+	}
+
+	/** Gets the position of the sub-string in the string */
+	public static indexOf(str: string, substr: string, start?: number) {
+		return this.isNotEmpty(str) && this.isNotEmpty(substr)
+			? str.indexOf(substr, start)
+			: -1;
 	}
 
 	/**
@@ -242,38 +352,6 @@ export class AppUtility {
 		return obj;
 	}
 
-	/** Gets the query of JSON */
-	public static getQueryOfJson(json: { [key: string]: any }) {
-		try {
-			return this.isObject(json, true)
-				? this.toStr(Object.keys(json).map(name => `${name}=${encodeURIComponent(json[name])}`), "&")
-				: "";
-		}
-		catch (error) {
-			return "";
-		}
-	}
-
-	/** Gets the JSON of a query param (means decode by Base64Url and parse to JSON) */
-	public static getJsonOfQuery(value: string): { [key: string]: any } {
-		try {
-			return this.isNotEmpty(value)
-				? AppCrypto.jsonDecode(value)
-				: {};
-		}
-		catch (error) {
-			return {};
-		}
-	}
-
-	/** Gets the sub-sequence the sequence that ordering by the random scoring number */
-	public static getTopScores<T>(sequence: Array<any>, amount?: number, converter?: (element: any) => T): T[] | any[] {
-		const results = sequence.map(element => this.clone(element, undefined, undefined, obj => obj["Score"] = Math.random())).sortBy({ name: "Score", reverse: true }).take(amount);
-		return converter === undefined
-			? results
-			: results.map(element => converter(element));
-	}
-
 	/** Removes tags from the HTML content */
 	public static removeTags(html: string, keepTags?: string[]) {
 		if (this.isNotEmpty(html)) {
@@ -302,33 +380,19 @@ export class AppUtility {
 			: "";
 	}
 
-	/** Gets all the available characters (0 and A-Z) */
-	public static getChars() {
-		const chars = new Array<string>("0");
-		for (let code = 65; code < 91; code++) {
-			chars.push(String.fromCharCode(code));
-		}
-		return chars;
-	}
-
-	/** Parses the mustache-style (double braces) template to get the collection of params */
-	public static parse(template: string) {
-		return (template.match(/{{([^{}]*)}}/g) || []).map(param => {
-			return {
-				token: param,
-				name: param.match(/[\w\.]+/)[0]
-			};
-		});
-	}
-
 	/** Formats the mustache-style (double braces) template with params */
 	public static format(template: string, params: { [key: string]: any }) {
-		const tokenParams = this.parse(template);
+		const parameters = (template.match(/{{([^{}]*)}}/g) || []).map(param => ({ token: param, name: param.match(/[\w\.]+/)[0] }));
 		Object.keys(params).forEach(key => {
-			const value = (params[key] || "").toString() as string;
-			tokenParams.filter(param => param.name === key).forEach(param => template = template.replace(this.toRegExp(`/${param.token}/g`), value));
+			const value: string = (params[key] || "").toString();
+			parameters.filter(parameter => parameter.name === key).forEach(parameter => template = template.replace(this.toRegExp(`/${parameter.token}/g`), value));
 		});
 		return template;
+	}
+
+	/** Invokes an action by 'setTimeout' */
+	public static invoke(action: () => void, defer?: number) {
+		setTimeout(() => action(), defer || 0);
 	}
 
 	/** Converts the string/object to an array of strings/key-value pair/value of objects' properties */
@@ -374,6 +438,18 @@ export class AppUtility {
 		let string = "";
 		array.forEach(item => string += (string !== "" ? (separator || "") : "") + item.toString());
 		return string;
+	}
+
+	/** Converts the object/json to query string */
+	public static toQuery(json: { [key: string]: any }) {
+		try {
+			return this.isObject(json, true)
+				? this.toStr(Object.keys(json).map(name => `${name}=${encodeURIComponent(json[name])}`), "&")
+				: "";
+		}
+		catch (error) {
+			return "";
+		}
 	}
 
 	/** Converts object to integer */

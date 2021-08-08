@@ -3,7 +3,6 @@ import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
 import { AppConfig } from "@app/app.config";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
-import { PlatformUtility } from "@app/components/app.utility.platform";
 
 /** Presents the struct of a message */
 export interface AppMessage {
@@ -126,7 +125,7 @@ export class AppAPIs {
 
 	/** Parses the requesting information */
 	public static parseRequestInfo(path: string) {
-		const uri = PlatformUtility.parseURI(path);
+		const uri = AppUtility.parseURI(path);
 		const requestInfo = {
 			ServiceName: uri.Paths[0],
 			ObjectName: uri.Paths.length > 1 ? uri.Paths[1] : "",
@@ -288,7 +287,7 @@ export class AppAPIs {
 		this._websocket.onopen = event => {
 			this._status = "ready";
 			this.authenticateWebSocket();
-			console.log(`[AppAPIs]: The WebSocket connection was opened... (${PlatformUtility.parseURI(this._url).HostURI})`, AppUtility.toIsoDateTime(new Date(), true));
+			console.log(`[AppAPIs]: The WebSocket connection was opened... (${AppUtility.parseURI(this._url).HostURI})`, AppUtility.toIsoDateTime(new Date(), true));
 			if (this._onWebSocketOpened !== undefined) {
 				try {
 					this._onWebSocketOpened(event);
@@ -451,7 +450,7 @@ export class AppAPIs {
 		};
 
 		// callback when done
-		PlatformUtility.invoke(onOpened, this.isWebSocketReady ? 13 : 567);
+		AppUtility.invoke(onOpened, this.isWebSocketReady ? 13 : 567);
 	}
 
 	private static destroyWebSocket() {
@@ -478,12 +477,12 @@ export class AppAPIs {
 			this._status = "restarting";
 			this._attempt++;
 			console.warn(`[AppAPIs]: ${reason || "Re-open because the WebSocket connection is broken"}`);
-			PlatformUtility.invoke(() => {
+			AppUtility.invoke(() => {
 				console.log(`[AppAPIs]: The WebSocket connection is re-opening... #${this._attempt}`);
 				this.openWebSocket(() => {
 					if (this.isWebSocketReady) {
 						console.log(`[AppAPIs]: The WebSocket connection was re-opened... #${this._attempt}`);
-						PlatformUtility.invoke(() => this._attempt = 0, 123);
+						AppUtility.invoke(() => this._attempt = 0, 123);
 					}
 				}, true);
 			}, defer || 123 + (this._attempt * 13));
@@ -494,7 +493,7 @@ export class AppAPIs {
 		const id = Object.keys(this._requests.callbackableRequests).sort().firstOrDefault();
 		if (AppUtility.isNotEmpty(id)) {
 			this._websocket.send(this._requests.callbackableRequests[id]);
-			PlatformUtility.invoke(() => this.reupdateWebSocket(), 789);
+			AppUtility.invoke(() => this.reupdateWebSocket(), 789);
 		}
 	}
 
@@ -659,7 +658,7 @@ export class AppAPIs {
 				let query = AppUtility.clone(request.Query || {});
 				const objectIdentity = query["object-identity"];
 				["service-name", "object-name", "object-identity"].forEach(name => delete query[name]);
-				query = `?${AppUtility.getQueryOfJson(query)}`;
+				query = `?${AppUtility.toQuery(query)}`;
 				path = `${request.ServiceName}${AppUtility.isNotEmpty(request.ObjectName) ? `/${request.ObjectName}` : ""}${AppUtility.isNotEmpty(objectIdentity) ? `/${objectIdentity}` : ""}${query === "?" ? "" : query}`;
 			}
 			path += request.Extra !== undefined ? (path.indexOf("?") > 0 ? "&" : "?") + `x-request-extra=${AppCrypto.jsonEncode(request.Extra)}` : "";

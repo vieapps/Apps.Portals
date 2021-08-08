@@ -1011,7 +1011,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				mediaEmbed: {
 					extraProviders: [{
 						name: this.configSvc.appConfig.app.name,
-						url: AppUtility.toRegExp(`/^${PlatformUtility.parseURI(this.configSvc.appConfig.URIs.files).Host}/`)
+						url: AppUtility.toRegExp(`/^${AppUtility.parseURI(this.configSvc.appConfig.URIs.files).Host}/`)
 					}]
 				}
 			};

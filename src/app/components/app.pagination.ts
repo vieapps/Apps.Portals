@@ -1,6 +1,6 @@
 import { Dictionary } from "@app/components/app.collections";
-import { AppUtility } from "@app/components/app.utility";
 import { AppCrypto } from "@app/components/app.crypto";
+import { AppUtility } from "@app/components/app.utility";
 
 /** Presents a data pagination */
 export interface AppDataPagination {
