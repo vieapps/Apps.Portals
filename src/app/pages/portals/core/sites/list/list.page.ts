@@ -134,7 +134,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 			cache: await this.configSvc.getResourceAsync("portals.common.cache.title")
 		};
 
-		this.searching = this.configSvc.currentUrl.endsWith("/search");
+		this.searching = this.configSvc.currentURL.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.sites.title.${(this.searching ? "search" : "list")}`);
 		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: this.isSystemAdministrator ? "" : `[${this.organization.Title}]` });
 
@@ -245,7 +245,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
+			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
 		};
 		if (this.searching) {
 			this.subscription = this.portalsCoreSvc.searchSite(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));

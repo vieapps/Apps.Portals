@@ -419,7 +419,7 @@ export class CmsLinksUpdatePage implements OnInit {
 							);
 						}
 						await Promise.all([
-							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+							TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 							this.appFormsSvc.hideLoadingAsync()
 						]);
@@ -439,7 +439,7 @@ export class CmsLinksUpdatePage implements OnInit {
 									AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Updated", ID: oldParentID });
 								}
 								await Promise.all([
-									TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+									TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
 									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.update")),
 									this.appFormsSvc.hideLoadingAsync()
 								]);
@@ -462,7 +462,7 @@ export class CmsLinksUpdatePage implements OnInit {
 							}
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							await Promise.all([
-								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+								TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.new")),
 								this.appFormsSvc.hideLoadingAsync()
 							]);
@@ -511,7 +511,7 @@ export class CmsLinksUpdatePage implements OnInit {
 					async data => {
 						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 						await Promise.all([
-							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.delete"), this.configSvc.currentUrl),
+							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.delete"), this.configSvc.currentURL),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync()
 						]);

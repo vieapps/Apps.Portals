@@ -258,7 +258,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
+			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
 		};
 		await this.portalsCoreSvc.searchContentTypeAsync(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
 	}

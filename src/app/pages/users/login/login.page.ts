@@ -428,7 +428,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 			}
 		}
 		else {
-			await (this.configSvc.previousUrl.startsWith(this.configSvc.appConfig.url.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync());
+			await (this.configSvc.previousURL.startsWith(this.configSvc.appConfig.url.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync());
 		}
 	}
 

@@ -317,7 +317,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 							);
 						}
 						await Promise.all([
-							TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+							TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
@@ -332,7 +332,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 								}
 								AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Item", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 								await Promise.all([
-									TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+									TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
 									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 									this.appFormsSvc.hideLoadingAsync()
 								]);
@@ -356,7 +356,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 							}
 							AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Item", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 							await Promise.all([
-								TrackingUtility.trackAsync(this.title, this.configSvc.currentUrl),
+								TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new")),
 								this.appFormsSvc.hideLoadingAsync()
 							]);
@@ -384,7 +384,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 					async data => {
 						AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Item", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 						await Promise.all([
-							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"), this.configSvc.currentUrl),
+							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"), this.configSvc.currentURL),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync()
 						]);

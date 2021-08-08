@@ -80,7 +80,7 @@ export class UsersProfilePage implements OnInit {
 	}
 
 	get canManageUsers() {
-		return this.isSystemAdministrator && !this.configSvc.previousUrl.startsWith(this.configSvc.appConfig.url.users.list) && !this.configSvc.previousUrl.startsWith(this.configSvc.appConfig.url.users.search);
+		return this.isSystemAdministrator && !this.configSvc.previousURL.startsWith(this.configSvc.appConfig.url.users.list) && !this.configSvc.previousURL.startsWith(this.configSvc.appConfig.url.users.search);
 	}
 
 	get canSetServicePrivileges() {
@@ -276,7 +276,7 @@ export class UsersProfilePage implements OnInit {
 				async () => await Promise.all([
 					TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("users.profile.buttons.logout"), `${this.configSvc.appConfig.url.users.root}/logout`),
 					this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.logout.success")),
-					this.configSvc.previousUrl.startsWith(this.configSvc.appConfig.url.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync()
+					this.configSvc.previousURL.startsWith(this.configSvc.appConfig.url.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync()
 				]),
 				async error => await this.appFormsSvc.showErrorAsync(error)
 			),

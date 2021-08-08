@@ -78,7 +78,7 @@ export class UsersListPage implements OnInit, OnDestroy {
 	}
 
 	async initializeAsync() {
-		this.searching = this.configSvc.currentUrl.startsWith(this.configSvc.appConfig.url.users.search);
+		this.searching = this.configSvc.currentURL.startsWith(this.configSvc.appConfig.url.users.search);
 		this.configSvc.appTitle = this.title = this.searching
 			? await this.configSvc.getResourceAsync("users.list.title.search")
 			: await this.configSvc.getResourceAsync("users.list.title.list");
@@ -156,7 +156,7 @@ export class UsersListPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
+			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
 		};
 		if (this.searching) {
 			this.subscription = this.usersSvc.search(this.request, onSuccess);

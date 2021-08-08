@@ -178,7 +178,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
-		this.searching = this.configSvc.currentUrl.endsWith("/search");
+		this.searching = this.configSvc.currentURL.endsWith("/search");
 		this.children = await this.configSvc.getResourceAsync("portals.cms.links.list.children");
 		await this.prepareTitleAsync();
 
@@ -323,7 +323,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentUrl);
+			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
 		};
 		if (this.searching) {
 			this.subscription = this.portalsCmsSvc.searchLink(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));

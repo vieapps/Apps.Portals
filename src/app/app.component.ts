@@ -99,8 +99,8 @@ export class AppComponent implements OnInit {
 		this.router.events.subscribe(event => {
 			if (event instanceof RoutesRecognized) {
 				this.configSvc.appConfig.url.routerParams = (event as RoutesRecognized).state.root.params;
-				this.configSvc.pushUrl((event as RoutesRecognized).url, (event as RoutesRecognized).state.root.queryParams);
-				const current = this.configSvc.getCurrentUrl();
+				this.configSvc.pushURL((event as RoutesRecognized).url, (event as RoutesRecognized).state.root.queryParams);
+				const current = this.configSvc.getCurrentURL();
 				AppEvents.broadcast("Navigating", { Url: current.url, Params: current.params });
 				// ping period - 5 minutes
 				if (+new Date() - AppAPIs.ping > 300000) {
@@ -108,7 +108,7 @@ export class AppComponent implements OnInit {
 				}
 			}
 			else if (event instanceof NavigationEnd) {
-				const current = this.configSvc.getCurrentUrl();
+				const current = this.configSvc.getCurrentURL();
 				AppEvents.broadcast("Navigated", { Url: current.url, Params: current.params });
 			}
 		});

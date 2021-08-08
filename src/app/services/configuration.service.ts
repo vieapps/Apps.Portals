@@ -121,12 +121,12 @@ export class ConfigurationService extends BaseService {
 		return this.appConfig.url.stack.length > 0 ? this.appConfig.url.stack[this.appConfig.url.stack.length - 1] : undefined;
 	}
 
-	/** Gets the previous url */
+	/** Gets the previous URL */
 	public getPreviousURL() {
 		return this.appConfig.url.stack.length > 1 ? this.appConfig.url.stack[this.appConfig.url.stack.length - 2] : undefined;
 	}
 
-	/** Pushs/Adds an url into stack of routes */
+	/** Pushs/Adds an URL into stack of routes */
 	public pushURL(url: string, params: { [key: string]: any }) {
 		url = url.indexOf("?") > 0 ? url.substr(0, url.indexOf("?")) : url;
 		this.appConfig.url.stack = url !== this.appConfig.url.home ? this.appConfig.url.stack : [];
@@ -146,7 +146,7 @@ export class ConfigurationService extends BaseService {
 		}
 	}
 
-	/** Removes the current url from the stack, also pop the current view */
+	/** Removes the current working URL from the stack, also pop the current view */
 	public popURL() {
 		this.navController.pop().then(() => this.appConfig.url.stack.pop());
 	}
@@ -157,12 +157,12 @@ export class ConfigurationService extends BaseService {
 			: alternativeUrl || this.appConfig.url.home;
 	}
 
-	/** Gets the current url */
+	/** Gets the current working URL */
 	public get currentURL() {
 		return this.getURL(this.getCurrentURL());
 	}
 
-	/** Gets the previous url */
+	/** Gets the previous URL */
 	public get previousURL() {
 		return this.getURL(this.getPreviousURL());
 	}
@@ -834,7 +834,7 @@ export class ConfigurationService extends BaseService {
 	}
 
 	public async getDefinitionAsync(serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {
-		await this.fetchDefinitionAsync(this.getDefinitionPath(serviceName, objectName, definitionName, query));
+		return await this.fetchDefinitionAsync(this.getDefinitionPath(serviceName, objectName, definitionName, query));
 	}
 
 	public removeDefinition(serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {
