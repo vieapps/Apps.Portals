@@ -1246,7 +1246,7 @@ export class AppFormsService {
 
 	/** Gets the resource of current language by a key */
 	public getResourceAsync(key: string, interpolateParams?: object) {
-		return this.translateSvc.get(key, interpolateParams).toPromise<string>();
+		return AppUtility.toAsync<string>(this.translateSvc.get(key, interpolateParams));
 	}
 
 	/** Shows the loading */

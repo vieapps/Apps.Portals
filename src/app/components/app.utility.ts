@@ -1,3 +1,4 @@
+import { Observable } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
 
 /** Servicing component for working with app */
@@ -253,6 +254,20 @@ export class AppUtility {
 			: -1;
 	}
 
+	/** Copies 'left' string */
+	public static left(str: string, length: number) {
+		return this.isNotEmpty(str) && str.length > length
+			? str.substring(0, str.length - length)
+			: str;
+	}
+
+	/** Copies 'right' string */
+	public static right(str: string, length: number) {
+		return this.isNotEmpty(str) && str.length > length
+			? str.substring(str.length - length)
+			: str;
+	}
+
 	/**
 	 * Copys data from the source (object or JSON) into the objects" properties
 	 * @param source The source to copy data from
@@ -393,6 +408,11 @@ export class AppUtility {
 	/** Invokes an action by 'setTimeout' */
 	public static invoke(action: () => void, defer?: number) {
 		setTimeout(() => action(), defer || 0);
+	}
+
+	/** Converts an observable object to promise object for working with async/await */
+	public static toAsync<T>(observable: Observable<T>) {
+		return observable.toPromise();
 	}
 
 	/** Converts the string/object to an array of strings/key-value pair/value of objects' properties */

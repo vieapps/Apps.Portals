@@ -814,17 +814,17 @@ export class ConfigurationService extends BaseService {
 
 	/** Sets the language & locale of resources to use in the app */
 	public async setResourceLanguageAsync(language: string) {
-		await this.translateSvc.use(language).toPromise<void>();
+		await AppUtility.toAsync(this.translateSvc.use(language));
 	}
 
 	/** Gets the resource (of the current language) by a key */
 	public async getResourceAsync(key: string, interpolateParams?: object) {
-		return await this.translateSvc.get(key, interpolateParams).toPromise<string>();
+		return await AppUtility.toAsync<string>(this.translateSvc.get(key, interpolateParams));
 	}
 
 	/** Gets the resources (of the current language) by a key */
 	public async getResourcesAsync(key: string) {
-		return await this.translateSvc.get(key).toPromise<{ [key: string]: string }>();
+		return await AppUtility.toAsync<{ [key: string]: string }>(this.translateSvc.get(key));
 	}
 
 	/** Definitions (forms, views, resources, ...) */

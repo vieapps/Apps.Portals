@@ -119,14 +119,14 @@ export class FilesService extends BaseService {
 	public async uploadAsync(path: string, data: string | Array<string> | FormData, headers: { [key: string]: string }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		try {
 			const asBase64 = !(data instanceof FormData);
-			const response = await this.http.post(
+			const response = await AppUtility.toAsync(this.http.post(
 				AppAPIs.getURL(path, this.configSvc.appConfig.URIs.files),
 				asBase64 ? { Data: data } : data,
 				{
 					headers: this.getUploadHeaders(headers, asBase64),
 					observe: "body"
 				}
-			).toPromise();
+			));
 			if (onSuccess !== undefined) {
 				onSuccess(response);
 			}

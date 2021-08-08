@@ -29,22 +29,20 @@ export interface AppRequestInfo {
 /** Servicing component for working with APIs */
 export class AppAPIs {
 
-	private static _status = "initializing";
-	private static _url: string;
 	private static _websocket: WebSocket;
-	private static _types: { [key: string]: { Service: string; Object?: string; Event?: string; } } = {};
+	private static _websocketStatus: string;
+	private static _websocketURL: string;
+	private static _messageTypes: { [key: string]: { Service: string; Object?: string; Event?: string; } } = {};
 	private static _serviceScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
 	private static _objectScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
 	private static _serviceScopeSubject: Subject<{ service: string, message: AppMessage }>;
 	private static _objectScopeSubject: Subject<{ service: string, object: string, message: AppMessage }>;
-	private static _requests = {
-		counter: 0,
-		nocallbackRequests: {} as { [id: string]: string },
-		callbackableRequests: {} as { [id: string]: string },
-		successCallbacks: {} as { [id: string]: (data?: any) => void },
-		errorCallbacks: {} as { [id: string]: (error?: any) => void }
-	};
-	private static _ping = +new Date();
+	private static _nocallbackMessages: { [id: string]: string } = {};
+	private static _callbackableMessages: { [id: string]: string } = {};
+	private static _successCallbacks: { [id: string]: (data?: any) => void } = {};
+	private static _errorCallbacks: { [id: string]: (error?: any) => void } = {};
+	private static _ping: number;
+	private static _counter = 0;
 	private static _attempt = 0;
 	private static _http: HttpClient;
 	private static _onWebSocketOpened: (event: Event) => void;
@@ -84,7 +82,7 @@ export class AppAPIs {
 
 	/** Gets state that determines the WebSocket connection is ready or not */
 	public static get isWebSocketReady() {
-		return this._websocket !== undefined && this._status === "ready";
+		return this._websocket !== undefined && this._websocketStatus === "ready";
 	}
 
 	/** Initializes the instance of the Angular HttpClient service for working with XMLHttpRequest (XHR) */
@@ -139,7 +137,7 @@ export class AppAPIs {
 	}
 
 	private static parseMessageType(messageType: string) {
-		let type = this._types[messageType];
+		let type = this._messageTypes[messageType];
 		if (type === undefined) {
 			let pos = messageType.indexOf("#"), object = "", event = "";
 			const service = pos > 0 ? messageType.substring(0, pos) : messageType;
@@ -156,7 +154,7 @@ export class AppAPIs {
 				Object: object,
 				Event: event
 			};
-			this._types[messageType] = type;
+			this._messageTypes[messageType] = type;
 		}
 		return type;
 	}
@@ -252,11 +250,11 @@ export class AppAPIs {
 							handler.func(message);
 						}
 						catch (error) {
-							console.error("[AppAPIs]: Error occurred while running a handler", error);
+							console.error(`[AppAPIs]: Error occurred while running a handler (${handler.identity})`, error);
 						}
 					});
 				},
-				error => console.warn("[AppAPIs]: Got an error", AppConfig.isNativeApp ? AppCrypto.stringify(error) : error)
+				error => console.error(`[AppAPIs]: Got an error while processing data with handlers => ${AppUtility.getErrorMessage(error)}`, error)
 			);
 		}
 
@@ -269,25 +267,25 @@ export class AppAPIs {
 							handler.func(message);
 						}
 						catch (error) {
-							console.error("[AppAPIs]: Error occurred while running a handler", error);
+							console.error(`[AppAPIs]: Error occurred while running a handler (${handler.identity})`, error);
 						}
 					});
 				},
-				error => console.error(`[AppAPIs]: Got an error => ${AppUtility.getErrorMessage(error)}`, error)
+				error => console.error(`[AppAPIs]: Got an error while processing data with handlers => ${AppUtility.getErrorMessage(error)}`, error)
 			);
 		}
 
 		// create new instance of WebSocket
-		this._status = "initializing";
-		this._url = (AppUtility.isNotEmpty(AppConfig.URIs.updates) ? AppConfig.URIs.updates : AppConfig.URIs.apis).replace("http://", "ws://").replace("https://", "wss://");
-		this._websocket = new WebSocket(`${this._url}v?x-session-id=${AppCrypto.base64urlEncode(AppConfig.session.id)}&x-device-id=${AppCrypto.base64urlEncode(AppConfig.session.device)}` + (isReopenOrRestart ? "&x-restart=" : ""));
+		this._websocketStatus = "initializing";
+		this._websocketURL = (AppUtility.isNotEmpty(AppConfig.URIs.updates) ? AppConfig.URIs.updates : AppConfig.URIs.apis).replace("http://", "ws://").replace("https://", "wss://");
+		this._websocket = new WebSocket(`${this._websocketURL}v?x-session-id=${AppCrypto.base64urlEncode(AppConfig.session.id)}&x-device-id=${AppCrypto.base64urlEncode(AppConfig.session.device)}` + (isReopenOrRestart ? "&x-restart=" : ""));
 		this._ping = +new Date();
 
 		// assign 'on-open' event handler
 		this._websocket.onopen = event => {
-			this._status = "ready";
+			this._websocketStatus = "ready";
 			this.authenticateWebSocket();
-			console.log(`[AppAPIs]: The WebSocket connection was opened... (${AppUtility.parseURI(this._url).HostURI})`, AppUtility.toIsoDateTime(new Date(), true));
+			console.log(`[AppAPIs]: The WebSocket connection was opened... (${AppUtility.parseURI(this._websocketURL).HostURI})`, AppUtility.toIsoDateTime(new Date(), true));
 			if (this._onWebSocketOpened !== undefined) {
 				try {
 					this._onWebSocketOpened(event);
@@ -300,7 +298,7 @@ export class AppAPIs {
 
 		// assign 'on-close' event handler
 		this._websocket.onclose = event => {
-			this._status = "close";
+			this._websocketStatus = "close";
 			console.log(`[AppAPIs]: The WebSocket connection was closed [${event.reason}]`, AppUtility.toIsoDateTime(new Date(), true));
 			if (this._onWebSocketClosed !== undefined) {
 				try {
@@ -310,14 +308,14 @@ export class AppAPIs {
 					console.error("[AppAPIs]: Error occurred while running the 'on-close' handler", error);
 				}
 			}
-			if (AppUtility.isNotEmpty(this._url) && 1007 !== event.code) {
+			if (AppUtility.isNotEmpty(this._websocketURL) && 1007 !== event.code) {
 				this.reopenWebSocket();
 			}
 		};
 
 		// assign 'on-error' event handler
 		this._websocket.onerror = event => {
-			this._status = "error";
+			this._websocketStatus = "error";
 			console.warn("[AppAPIs]: The WebSocket connection was got an error...", AppConfig.isDebug ? event : "");
 			if (this._onWebSocketGotError !== undefined) {
 				try {
@@ -355,12 +353,12 @@ export class AppAPIs {
 			// prepare
 			const data = msg.Data || {};
 			const gotID = AppUtility.isNotEmpty(msg.ID);
-			const successCallback = gotID ? this._requests.successCallbacks[msg.ID] : undefined;
-			const errorCallback = gotID ? this._requests.errorCallbacks[msg.ID] : undefined;
+			const successCallback = gotID ? this._successCallbacks[msg.ID] : undefined;
+			const errorCallback = gotID ? this._errorCallbacks[msg.ID] : undefined;
 			if (gotID) {
-				delete this._requests.callbackableRequests[msg.ID];
-				delete this._requests.successCallbacks[msg.ID];
-				delete this._requests.errorCallbacks[msg.ID];
+				delete this._callbackableMessages[msg.ID];
+				delete this._successCallbacks[msg.ID];
+				delete this._errorCallbacks[msg.ID];
 			}
 
 			// got an error
@@ -406,17 +404,10 @@ export class AppAPIs {
 			// got a special message => broadcast or do a special action
 			else {
 				// prepare
-				const message: AppMessage = {
-					Type: this.parseMessageType(msg.Type),
-					Data: data
-				};
-
-				if (AppConfig.isDebug && message.Type.Event !== "Get" && message.Type.Event !== "Search") {
-					console.log("[AppAPIs]: Got an updating message", AppConfig.isNativeApp ? AppCrypto.stringify(message) : message);
-				}
+				const messageType = this.parseMessageType(msg.Type);
 
 				// send PONG
-				if (message.Type.Service === "Ping") {
+				if (messageType.Service === "Ping") {
 					if (AppConfig.isDebug) {
 						console.log("[AppAPIs]: Got a heartbeat signal => response with PONG", AppUtility.toIsoDateTime(new Date(), true));
 					}
@@ -428,22 +419,26 @@ export class AppAPIs {
 				}
 
 				// run schedulers
-				else if (message.Type.Service === "Scheduler") {
+				else if (messageType.Service === "Scheduler") {
 					if (AppConfig.isDebug) {
 						console.log("[AppAPIs]: Got a signal to run scheduler", AppUtility.toIsoDateTime(new Date(), true));
 					}
-					this.broadcast({ Type: { Service: "Scheduler" }, Data: message.Data });
+					this.broadcast({ Type: { Service: "Scheduler" }, Data: data });
 				}
 
 				// response to knocking message when re-start
-				else if (message.Type.Service === "Knock") {
+				else if (messageType.Service === "Knock") {
 					if (AppConfig.isDebug) {
 						console.log("[AppAPIs]: Knock, Knock, Knock ... => Yes, I'm right here", AppUtility.toIsoDateTime(new Date(), true));
 					}
 				}
 
 				// broadcast the messags to all subscribers
-				else {
+				else if (!gotID) {
+					const message: AppMessage = { Type: messageType, Data: data };
+					if (AppConfig.isDebug) {
+						console.log("[AppAPIs]: Got an updating message", AppConfig.isNativeApp ? AppCrypto.stringify(message) : message);
+					}
 					this.broadcast(message);
 				}
 			}
@@ -462,8 +457,8 @@ export class AppAPIs {
 
 	/** Closes the WebSocket connection */
 	public static closeWebSocket(onClosed?: () => void) {
-		this._url = undefined;
-		this._status = "close";
+		this._websocketURL = undefined;
+		this._websocketStatus = "close";
 		this.destroyWebSocket();
 		if (onClosed !== undefined) {
 			onClosed();
@@ -472,9 +467,9 @@ export class AppAPIs {
 
 	/** Reopens the WebSocket connection */
 	public static reopenWebSocket(reason?: string, defer?: number) {
-		if (this._status !== "restarting") {
+		if (this._websocketStatus !== "restarting") {
 			this.destroyWebSocket();
-			this._status = "restarting";
+			this._websocketStatus = "restarting";
 			this._attempt++;
 			console.warn(`[AppAPIs]: ${reason || "Re-open because the WebSocket connection is broken"}`);
 			AppUtility.invoke(() => {
@@ -490,17 +485,17 @@ export class AppAPIs {
 	}
 
 	private static reupdateWebSocket() {
-		const id = Object.keys(this._requests.callbackableRequests).sort().firstOrDefault();
+		const id = Object.keys(this._callbackableMessages).sort().firstOrDefault();
 		if (AppUtility.isNotEmpty(id)) {
-			this._websocket.send(this._requests.callbackableRequests[id]);
+			this._websocket.send(this._callbackableMessages[id]);
 			AppUtility.invoke(() => this.reupdateWebSocket(), 789);
 		}
 	}
 
-	private static updateWebSocket(options?: { message?: string; resendCallbackRequests?: boolean } ) {
+	private static updateWebSocket(options?: { message?: string; resendCallbackMessages?: boolean } ) {
 		// send all 'no callback' requests
-		Object.keys(this._requests.nocallbackRequests).sort().forEach(id => this._websocket.send(this._requests.nocallbackRequests[id]));
-		this._requests.nocallbackRequests = {};
+		Object.keys(this._nocallbackMessages).sort().forEach(id => this._websocket.send(this._nocallbackMessages[id]));
+		this._nocallbackMessages = {};
 
 		// send the message
 		if (options !== undefined && AppUtility.isNotEmpty(options.message)) {
@@ -508,7 +503,7 @@ export class AppAPIs {
 		}
 
 		// resend all 'callback' requests
-		if (options !== undefined && options.resendCallbackRequests) {
+		if (options !== undefined && options.resendCallbackMessages) {
 			this.reupdateWebSocket();
 		}
 	}
@@ -527,7 +522,7 @@ export class AppAPIs {
 
 	/** Sends a message to APIs to authenticate the WebSocket connection */
 	public static authenticateWebSocket() {
-		this._requests.nocallbackRequests["cmd-0"] = AppCrypto.stringify({
+		this._nocallbackMessages["0"] = AppCrypto.stringify({
 			ServiceName: "Session",
 			Verb: "AUTH",
 			Header: {
@@ -537,7 +532,7 @@ export class AppAPIs {
 			Body: AppConfig.getAuthenticatedHeaders()
 		});
 		if (this.isWebSocketReady) {
-			this.updateWebSocket({ resendCallbackRequests: true });
+			this.updateWebSocket({ resendCallbackMessages: true });
 		}
 	}
 
@@ -548,10 +543,9 @@ export class AppAPIs {
 		* @param onError The callback function to handle the returning error
 	*/
 	public static sendWebSocketRequest(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		this._requests.counter++;
-		const id = `cmd-${this._requests.counter}`;
-		const request = AppCrypto.stringify({
-			ID: id,
+		this._counter++;
+		const id = AppUtility.right(`000000000${this._counter}`, 10);
+		const request = {
 			ServiceName: requestInfo.ServiceName,
 			ObjectName: requestInfo.ObjectName || "",
 			Verb: requestInfo.Verb || "GET",
@@ -559,17 +553,22 @@ export class AppAPIs {
 			Query: requestInfo.Query || {},
 			Extra: requestInfo.Extra || {},
 			Body: requestInfo.Body || {}
-		});
-		if (onSuccess !== undefined || onError !== undefined) {
-			this._requests.callbackableRequests[id] = request;
-			this._requests.successCallbacks[id] = onSuccess;
-			this._requests.errorCallbacks[id] = onError;
+		};
+		const gotCallback = onSuccess !== undefined || onError !== undefined;
+		if (gotCallback) {
+			request["ID"] = id;
+		}
+		const message = AppCrypto.stringify(request);
+		if (gotCallback) {
+			this._callbackableMessages[id] = message;
+			this._successCallbacks[id] = onSuccess;
+			this._errorCallbacks[id] = onError;
 		}
 		if (this.isWebSocketReady) {
-			this.updateWebSocket({ message: request });
+			this.updateWebSocket({ message: message });
 		}
-		else if (onSuccess === undefined && onError === undefined) {
-			this._requests.nocallbackRequests[id] = request;
+		else if (!gotCallback) {
+			this._nocallbackMessages[id] = message;
 		}
 	}
 
@@ -622,7 +621,7 @@ export class AppAPIs {
 		* @param body The JSON object that contains the body to perform the request
 	*/
 	public static sendXMLHttpRequestAsync(verb: string, url: string, headers?: any, body?: any) {
-		return this.sendXMLHttpRequest(verb, url, { headers: this.getHeaders(headers) }, body).toPromise();
+		return AppUtility.toAsync(this.sendXMLHttpRequest(verb, url, { headers: this.getHeaders(headers) }, body));
 	}
 
 	/**
@@ -632,7 +631,7 @@ export class AppAPIs {
 		* @param onSuccess The callback function to handle the returning data
 		* @param onError The callback function to handle the returning error
 	*/
-	public static sendRequest(request: AppRequestInfo, useXHR: boolean = false, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public static sendRequest(request: AppRequestInfo, useXHR: boolean = true, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		if (this.canUseWebSocket(useXHR)) {
 			const info = AppUtility.isNotEmpty(request.Path) ? this.parseRequestInfo(request.Path) : undefined;
 			const requestInfo = {
@@ -679,7 +678,7 @@ export class AppAPIs {
 		}
 		else {
 			try {
-				const data = await this.sendRequest(request, true).toPromise();
+				const data = await AppUtility.toAsync(this.sendRequest(request));
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}

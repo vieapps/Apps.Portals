@@ -4,8 +4,8 @@ import { Router, CanActivate } from "@angular/router";
 import { AppConfig } from "@app/app.config";
 import { AppAPIs, AppRequestInfo, AppMessage } from "@app/components/app.apis";
 import { AppCrypto } from "@app/components/app.crypto";
-import { AppPagination } from "@app/components/app.pagination";
 import { AppUtility } from "@app/components/app.utility";
+import { AppPagination } from "@app/components/app.pagination";
 
 /** Base class of all services */
 export class Base {
