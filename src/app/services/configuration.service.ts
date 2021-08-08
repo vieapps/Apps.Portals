@@ -116,21 +116,22 @@ export class ConfigurationService extends BaseService {
 		return this.appConfig.getLocaleData(locale);
 	}
 
-	public getCurrentUrl() {
+	/** Gets the current working URL */
+	public getCurrentURL() {
 		return this.appConfig.url.stack.length > 0 ? this.appConfig.url.stack[this.appConfig.url.stack.length - 1] : undefined;
 	}
 
 	/** Gets the previous url */
-	public getPreviousUrl() {
+	public getPreviousURL() {
 		return this.appConfig.url.stack.length > 1 ? this.appConfig.url.stack[this.appConfig.url.stack.length - 2] : undefined;
 	}
 
 	/** Pushs/Adds an url into stack of routes */
-	public pushUrl(url: string, params: { [key: string]: any }) {
+	public pushURL(url: string, params: { [key: string]: any }) {
 		url = url.indexOf("?") > 0 ? url.substr(0, url.indexOf("?")) : url;
 		this.appConfig.url.stack = url !== this.appConfig.url.home ? this.appConfig.url.stack : [];
-		const previous = this.getPreviousUrl();
-		const current = this.getCurrentUrl();
+		const previous = this.getPreviousURL();
+		const current = this.getCurrentURL();
 		if (previous !== undefined && previous.url.startsWith(url)) {
 			this.appConfig.url.stack.pop();
 		}
@@ -146,24 +147,24 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Removes the current url from the stack, also pop the current view */
-	public popUrl() {
+	public popURL() {
 		this.navController.pop().then(() => this.appConfig.url.stack.pop());
 	}
 
-	private getUrl(info: { url: string, params: { [key: string]: any } }, alternativeUrl?: string) {
+	private getURL(info: { url: string, params: { [key: string]: any } }, alternativeUrl?: string) {
 		return info !== undefined
 			? PlatformUtility.getURI(info.url, info.params)
 			: alternativeUrl || this.appConfig.url.home;
 	}
 
 	/** Gets the current url */
-	public get currentUrl() {
-		return this.getUrl(this.getCurrentUrl());
+	public get currentURL() {
+		return this.getURL(this.getCurrentURL());
 	}
 
 	/** Gets the previous url */
-	public get previousUrl() {
-		return this.getUrl(this.getPreviousUrl());
+	public get previousURL() {
+		return this.getURL(this.getPreviousURL());
 	}
 
 	/** Gets the URI for activating new account/password */
@@ -188,7 +189,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the query params of the current page/view */
 	public get queryParams() {
-		const current = this.getCurrentUrl();
+		const current = this.getCurrentURL();
 		return current !== undefined ? current.params : {} as { [key: string]: any };
 	}
 
@@ -246,7 +247,7 @@ export class ConfigurationService extends BaseService {
 			if (isNativeApp) {
 				this.appVersion.getVersionCode()
 					.then(version => this.appConfig.app.version = isNativeApp && !this.isRunningOnIOS ? (version + "").replace(/0/g, ".") : version + "")
-					.catch(error => console.error(this.getError("Error occurred while preparing the app version", error)));
+					.catch(error => this.showError("Error occurred while preparing the app version", error));
 				PlatformUtility.setInAppBrowser(this.inappBrowser);
 				PlatformUtility.setClipboard(this.clipboard);
 				if (!this.isRunningOnIOS) {
@@ -256,7 +257,7 @@ export class ConfigurationService extends BaseService {
 
 			TrackingUtility.initializeAsync(this.googleAnalytics);
 			if (this.isDebug) {
-				console.log(this.getMessage(`Device Info\n- UUID: ${this.device.uuid}\n- Manufacturer: ${this.device.manufacturer}\n- Model: ${this.device.model}\n- Serial: ${this.device.serial}\n- Platform: ${this.device.platform} ${this.device.platform !== "browser" ? this.device.version : "[" + this.device.model + " v" + this.device.version + "]"}`));
+				this.showLog(`Device Info\n- UUID: ${this.device.uuid}\n- Manufacturer: ${this.device.manufacturer}\n- Model: ${this.device.model}\n- Serial: ${this.device.serial}\n- Platform: ${this.device.platform} ${this.device.platform !== "browser" ? this.device.version : "[" + this.device.model + " v" + this.device.version + "]"}`);
 			}
 		}
 
@@ -311,7 +312,7 @@ export class ConfigurationService extends BaseService {
 			"users/session",
 			async data => {
 				if (this.isDebug) {
-					console.log(this.getMessage("The session was initialized by APIs"));
+					this.showLog("The session was initialized by APIs");
 				}
 				await this.updateSessionAsync(data, _ => {
 					this.appConfig.session.account = this.getAccount(!this.isAuthenticated);
@@ -335,7 +336,7 @@ export class ConfigurationService extends BaseService {
 			async _ => {
 				this.appConfig.session.account = this.getAccount(true);
 				if (this.isDebug) {
-					console.log(this.getMessage("The session was registered by APIs"));
+					this.showLog("The session was registered by APIs");
 				}
 				AppEvents.broadcast("Session", { Type: "Registered" });
 				await this.storeSessionAsync(onSuccess);
@@ -427,7 +428,7 @@ export class ConfigurationService extends BaseService {
 					}
 				}
 				if (this.isDebug) {
-					console.log(this.getMessage("The session was loaded from storage"), this.appConfig.session);
+					this.showLog("The session was loaded from storage", this.appConfig.session);
 				}
 			}
 		}
@@ -445,7 +446,7 @@ export class ConfigurationService extends BaseService {
 			try {
 				await AppStorage.setAsync("Session", AppUtility.clone(this.appConfig.session, ["jwt", "captcha"]));
 				if (this.isDebug) {
-					console.log(this.getMessage("The session was stored into storage"));
+					this.showLog("The session was stored into storage");
 				}
 			}
 			catch (error) {
@@ -463,7 +464,7 @@ export class ConfigurationService extends BaseService {
 		try {
 			await AppStorage.removeAsync("Session");
 			if (this.isDebug) {
-				console.log(this.getMessage("The session is deleted from storage"));
+				this.showLog("The session is deleted from storage");
 			}
 		}
 		catch (error) {
@@ -532,7 +533,7 @@ export class ConfigurationService extends BaseService {
 		if (this.isAuthenticated && this.getAccount().id === account.id) {
 			this.appConfig.session.account = account;
 			if (this.isDebug) {
-				console.log(this.getMessage("Account was updated"), this.appConfig.session.account);
+				this.showLog("Account was updated", this.appConfig.session.account);
 			}
 			Account.set(account);
 			if (this.appConfig.app.persistence) {
@@ -560,7 +561,7 @@ export class ConfigurationService extends BaseService {
 				if (response.status === "connected") {
 					this.appConfig.facebook.token = response.authResponse.accessToken;
 					this.appConfig.facebook.id = response.authResponse.userID;
-					console.log(this.getMessage("Facebook is connected"), this.appConfig.isDebug ? this.appConfig.facebook : "");
+					this.showLog("Facebook is connected", this.appConfig.isDebug ? this.appConfig.facebook : "");
 					if (this.appConfig.session.account.facebook !== undefined) {
 						this.getFacebookProfile();
 					}
@@ -583,7 +584,7 @@ export class ConfigurationService extends BaseService {
 					profileUrl: `https://www.facebook.com/app_scoped_user_id/${response.id}`,
 					pictureUrl: undefined
 				};
-				this.storeSessionAsync(() => console.log(this.getMessage("Account is updated with information of Facebook profile"), this.appConfig.isDebug ? this.appConfig.session.account : ""));
+				this.storeSessionAsync(() => this.showLog("Account is updated with information of Facebook profile", this.appConfig.isDebug ? this.appConfig.session.account : ""));
 				this.getFacebookAvatar();
 			}
 		);
@@ -597,7 +598,7 @@ export class ConfigurationService extends BaseService {
 				`/${this.appConfig.facebook.version}/${this.appConfig.session.account.facebook.id}/picture?type=large&redirect=false&access_token=${this.appConfig.facebook.token}`,
 				(response: any) => {
 					this.appConfig.session.account.facebook.pictureUrl = response.data.url;
-					this.storeSessionAsync(() => console.log(this.getMessage("Account is updated with information of Facebook profile (large profile picture)"), this.appConfig.isDebug ? response : ""));
+					this.storeSessionAsync(() => this.showLog("Account is updated with information of Facebook profile (large profile picture)", this.appConfig.isDebug ? response : ""));
 				}
 			);
 		}
@@ -619,7 +620,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Sends a request to navigates back one step */
 	public async navigateBackAsync(url?: string, params?: { [key: string]: any }) {
-		await this.navController.navigateBack(this.getNavigatingURL(url || this.previousUrl, params));
+		await this.navController.navigateBack(this.getNavigatingURL(url || this.previousURL, params));
 	}
 
 	/** Sends a request to navigates forward one step */
@@ -703,7 +704,7 @@ export class ConfigurationService extends BaseService {
 		await AppStorage.setAsync("URIs", this.appConfig.URIs).then(() => {
 			AppEvents.broadcast("App", { Type: "URIsUpdated" });
 			if (this.isDebug) {
-				console.log(this.getMessage("URIs are updated"), this.appConfig.URIs);
+				this.showLog("URIs are updated", this.appConfig.URIs);
 			}
 			if (onNext !== undefined) {
 				onNext(this.appConfig.URIs);
@@ -833,7 +834,7 @@ export class ConfigurationService extends BaseService {
 	}
 
 	public async getDefinitionAsync(serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {
-		return await this.fetchDefinitionAsync(this.getDefinitionPath(serviceName, objectName, definitionName, query));
+		await this.fetchDefinitionAsync(this.getDefinitionPath(serviceName, objectName, definitionName, query));
 	}
 
 	public removeDefinition(serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {
@@ -841,8 +842,8 @@ export class ConfigurationService extends BaseService {
 		delete this._definitions[AppCrypto.md5(path.toLowerCase())];
 	}
 
-	public getInstructionsAsync(service: string, language?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.fetchAsync(`/statics/instructions/${service}/${language || this.appConfig.language}.json`, onSuccess, onError);
+	public async getInstructionsAsync(service: string, language?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		await this.fetchAsync(`/statics/instructions/${service}/${language || this.appConfig.language}.json`, onSuccess, onError);
 	}
 
 	/** Gets top items for displaying at sidebar */
