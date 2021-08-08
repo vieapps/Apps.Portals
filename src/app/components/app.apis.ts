@@ -406,8 +406,13 @@ export class AppAPIs {
 				// prepare
 				const messageType = this.parseMessageType(msg.Type);
 
+				// knocking on heaven door
+				if (messageType.Service === "Knock") {
+					console.log("[AppAPIs]: Knock, Knock, Knock ... => Yes, I'm right here", AppUtility.toIsoDateTime(new Date(), true));
+				}
+
 				// send PONG
-				if (messageType.Service === "Ping") {
+				else if (messageType.Service === "Ping") {
 					if (AppConfig.isDebug) {
 						console.log("[AppAPIs]: Got a heartbeat signal => response with PONG", AppUtility.toIsoDateTime(new Date(), true));
 					}
@@ -426,11 +431,12 @@ export class AppAPIs {
 					this.broadcast({ Type: { Service: "Scheduler" }, Data: data });
 				}
 
-				// response to knocking message when re-start
-				else if (messageType.Service === "Knock") {
+				// refresh some data
+				else if (messageType.Service === "Refresher") {
 					if (AppConfig.isDebug) {
-						console.log("[AppAPIs]: Knock, Knock, Knock ... => Yes, I'm right here", AppUtility.toIsoDateTime(new Date(), true));
+						console.log("[AppAPIs]: Got a signal to refresh data", AppUtility.toIsoDateTime(new Date(), true));
 					}
+					this.broadcast({ Type: { Service: "Refresher" }, Data: data });
 				}
 
 				// broadcast the messags to all subscribers

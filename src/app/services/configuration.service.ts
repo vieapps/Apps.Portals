@@ -44,10 +44,11 @@ export class ConfigurationService extends BaseService {
 		private electronSvc: ElectronService
 	) {
 		super("Configuration");
-		AppStorage.initializeAsync(this.storage, () => this.showLog("Storage is ready. Driver: " + this.storage.driver));
-		AppEvents.on("App", info => {
+		AppStorage.initializeAsync(this.storage, () => this.showLog(`Storage is ready. Driver: ${this.storage.driver}`));
+		AppAPIs.registerAsServiceScopeProcessor("Refresher", async () => await this.reloadGeoMetaAsync());
+		AppEvents.on("App", async info => {
 			if ("PlatformIsReady" === info.args.Type) {
-				this.loadGeoMetaAsync();
+				await this.loadGeoMetaAsync();
 			}
 		});
 	}
@@ -727,6 +728,14 @@ export class ConfigurationService extends BaseService {
 				onNext(data);
 			}
 		});
+	}
+
+	private async reloadGeoMetaAsync() {
+		this.appConfig.geoMeta.countries = [];
+		this.appConfig.geoMeta.provinces = {};
+		await AppStorage.removeAsync("GeoMeta-Countries");
+		await AppStorage.removeAsync("GeoMeta-Provinces");
+		await this.loadGeoMetaAsync();
 	}
 
 	/** Loads the URI settings of the app */

@@ -24,6 +24,15 @@ export class UsersService extends BaseService {
 	) {
 		super("Users");
 		AppAPIs.registerAsServiceScopeProcessor(this.name, async message => await this.processUpdateMessageAsync(message));
+		AppAPIs.registerAsServiceScopeProcessor("Refresher", () => {
+			if (this.configSvc.isAuthenticated) {
+				AppAPIs.sendWebSocketRequest({
+					ServiceName: "Users",
+					ObjectName: "Profile",
+					Query: this.configSvc.appConfig.getRelatedJson({ "object-identity": this.configSvc.appConfig.session.account.id })
+				});
+			}
+		});
 		AppEvents.on("App", async info => {
 			if (AppUtility.isEquals(info.args.Type, "OptionsUpdated") && this.configSvc.isAuthenticated) {
 				const profile = this.configSvc.getAccount().profile;

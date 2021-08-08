@@ -1,10 +1,9 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@app/components/app.crypto";
 import { HashSet } from "@app/components/app.collections";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
-import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppPagination } from "@app/components/app.pagination";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService, AppFormsLookupValue } from "@app/components/forms.service";
@@ -23,7 +22,7 @@ import { RolesSelectorModalPage } from "@app/controls/portals/role.selector.moda
 	styleUrls: ["./update.page.scss"]
 })
 
-export class PortalsContentTypesUpdatePage implements OnInit {
+export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 	constructor(
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
@@ -62,6 +61,15 @@ export class PortalsContentTypesUpdatePage implements OnInit {
 
 	ngOnInit() {
 		this.initializeAsync();
+		AppEvents.on(this.portalsCoreSvc.name, async info => {
+			if (info.args.Object === "Content.Type" && info.args.Type === "Deleted" && info.args.ID === this.contentType.ID) {
+				await this.configSvc.navigateBackAsync();
+			}
+		}, "ContentTypes:Edit");
+	}
+
+	ngOnDestroy() {
+		AppEvents.off(this.portalsCoreSvc.name, "ContentTypes:Edit");
 	}
 
 	private async initializeAsync() {
