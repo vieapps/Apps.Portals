@@ -67,13 +67,17 @@
 						<ion-icon name="radio" slot="icon-only"></ion-icon>
 					</span>
 					<div>
-						<span *ngIf="content.Status === 'Published'">
-							<ion-icon name="alarm" slot="icon-only" color="medium"></ion-icon>
-							{{ content.PublishedTime | date:'h:mm a @ d/M/y' }}
-						</span>
 						<span>
 							<ion-icon name="time" slot="icon-only" color="medium"></ion-icon>
 							{{ content.StartDate | date:'d/M/y' }}
+						</span>
+						<span *ngIf="content.EndDate">
+							<ion-icon name="time" slot="icon-only" color="danger"></ion-icon>
+							{{ content.EndDate | date:'d/M/y' }}
+						</span>
+						<span *ngIf="content.Status === 'Published'">
+							<ion-icon name="alarm" slot="icon-only" color="medium"></ion-icon>
+							{{ content.PublishedTime | date:'h:mm a @ d/M/y' }}
 						</span>
 						<span *ngIf="content.category">
 							<ion-icon name="color-filter" slot="icon-only" color="medium"></ion-icon>
