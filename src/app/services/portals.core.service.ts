@@ -156,7 +156,7 @@ export class PortalsCoreService extends BaseService {
 		AppEvents.on("Account", info => {
 			if (AppUtility.isEquals(info.args.Type, "Updated")) {
 				if (this.configSvc.isDebug) {
-					console.log("[Portals]: Update sidebar when account was updated");
+					this.showLog("Update sidebar when account was updated");
 				}
 				this.prepareSidebar();
 			}
@@ -166,26 +166,26 @@ export class PortalsCoreService extends BaseService {
 	public async initializeAysnc(onNext?: () => void) {
 		await this.getDefinitionsAsync(() => {
 			if (this.configSvc.isDebug) {
-				console.log("[Portals]: The definitions were fetched", BaseModel.moduleDefinitions);
+				this.showLog("The definitions were fetched", BaseModel.moduleDefinitions);
 			}
 		});
 		if (Organization.active === undefined) {
 			await this.getActiveOrganizationAsync(undefined, true, () => {
 				if (this.configSvc.isDebug) {
-					console.log("[Portals]: The active organization was fetched", Organization.active);
+					this.showLog("The active organization was fetched", Organization.active);
 				}
 			});
 		}
 		if (Organization.active !== undefined && Organization.active.modules.length < 1) {
 			await this.getActiveOrganizationAsync(undefined, true, () => {
 				if (this.configSvc.isDebug) {
-					console.log("[Portals]: The active organization and modules were fetched", Organization.active, Organization.active.modules);
+					this.showLog("The active organization and modules were fetched", Organization.active, Organization.active.modules);
 				}
 			});
 		}
 		this.prepareSidebar(() => {
 			if (this.configSvc.isDebug) {
-				console.log("[Portals]: The portal management sidebar has been prepared");
+				this.showLog("The portal management sidebar has been prepared");
 			}
 			AppEvents.broadcast(this.name, { Type: "PortalsInitialized" });
 			if (onNext !== undefined) {
@@ -299,7 +299,7 @@ export class PortalsCoreService extends BaseService {
 	public async setActiveOrganizationAsync(organization: Organization, onNext?: () => void) {
 		if (organization !== undefined) {
 			if (this.configSvc.isDebug) {
-				console.log("[Portals]: Active organization", organization);
+				this.showLog("Active organization", organization);
 			}
 			this.configSvc.appConfig.services.activeID = organization.ID;
 			this.configSvc.appConfig.options.extras["organization"] = organization.ID;
@@ -345,7 +345,7 @@ export class PortalsCoreService extends BaseService {
 				: AppUtility.isNotEmpty(systemID) ? this.activeModules[systemID] : undefined;
 			if (AppUtility.isNotEmpty(preferID)) {
 				if (this.configSvc.isDebug) {
-					console.log("[Portals]: prepare active module with a specified identity => " + preferID);
+					this.showLog("prepare active module with a specified identity => " + preferID);
 				}
 				if (Module.contains(preferID)) {
 					Module.active = Module.get(preferID);
@@ -362,13 +362,13 @@ export class PortalsCoreService extends BaseService {
 			else if (activeOrganization !== undefined) {
 				if (activeOrganization.modules.length > 0) {
 					if (this.configSvc.isDebug) {
-						console.log("[Portals]: prepare active module with default module of the organization", activeOrganization.defaultModule);
+						this.showLog("prepare active module with default module of the organization", activeOrganization.defaultModule);
 					}
 					await this.setActiveModuleAsync(activeOrganization.defaultModule);
 				}
 				else {
 					if (this.configSvc.isDebug) {
-						console.log("[Portals]: re-fetch the organization & related modules/content-types");
+						this.showLog("re-fetch the organization & related modules/content-types");
 					}
 					await this.getOrganizationAsync(
 						activeOrganization.ID,
@@ -401,7 +401,7 @@ export class PortalsCoreService extends BaseService {
 		}
 
 		if (this.configSvc.isDebug) {
-			console.log("[Portals]: Active module", Module.active);
+			this.showLog("Active module", Module.active);
 		}
 		if (onNext !== undefined) {
 			onNext();

@@ -49,6 +49,11 @@ export class Base {
 		return `[${this.name}]: ${message}`;
 	}
 
+	/** Prints the log message to console/log file */
+	protected showLog(message: string, ...optionalParams: any[]) {
+		console.log(this.getMessage(message), optionalParams);
+	}
+
 	/** Gets the error message to print to console/log file */
 	protected getError(message: string, error?: any) {
 		return this.getMessage(`${message}\n${AppUtility.getErrorMessage(error)}`);

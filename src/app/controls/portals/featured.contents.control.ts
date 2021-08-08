@@ -64,19 +64,14 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		else {
 			AppEvents.on("App", info => {
 				if (AppUtility.isEquals(info.args.Type, "Initialized")) {
-					PlatformUtility.invoke(() => this.prepareAsync(), 1234);
+					PlatformUtility.invoke(async () =>  await this.prepareAsync(), 1234);
 				}
 			}, `FeaturedContents:AppInitialized:${this._isPublished}`);
 		}
 
 		AppEvents.on(this.portalsCmsSvc.name, info => {
 			if (AppUtility.isEquals(info.args.Type, "FeaturedContentsPrepared") || (AppUtility.isEquals(info.args.Type, "Changed") && (AppUtility.isEquals(info.args.Object, "Organization") || AppUtility.isEquals(info.args.Object, "Module")))) {
-				PlatformUtility.invoke(() => {
-					if (this.configSvc.isDebug) {
-						console.log(`<Featured Contents>: Update featured contents - Published: ${this._isPublished}`, info.args);
-					}
-					this.prepareAsync(true);
-				}, 1234);
+				PlatformUtility.invoke(async () =>  await this.prepareAsync(true), 1234);
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
 

@@ -41,7 +41,6 @@ export class PortalsCmsService extends BaseService {
 	private _sidebarCategory: Category;
 	private _sidebarContentType: ContentType;
 	private _featuredContents = new Dictionary<string, CmsBaseModel>();
-	private _featuredCounters = 0;
 
 	public get featuredContents() {
 		return this._featuredContents.toArray();
@@ -109,7 +108,7 @@ export class PortalsCmsService extends BaseService {
 			}
 			else if (AppUtility.isEquals(info.args.Type, "Changed") && (AppUtility.isEquals(info.args.Object, "Organization") || AppUtility.isEquals(info.args.Object, "Module"))) {
 				if (this.configSvc.isDebug) {
-					console.log("[CMS Portals]: Update sidebar when organization/module was changed");
+					this.showLog("Update sidebar when organization/module was changed");
 				}
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
@@ -120,7 +119,7 @@ export class PortalsCmsService extends BaseService {
 		AppEvents.on("Session", async info => {
 			if (AppUtility.isEquals(info.args.Type, "LogIn") || AppUtility.isEquals(info.args.Type, "LogOut")) {
 				if (this.configSvc.isDebug) {
-					console.log("[CMS Portals]: Update sidebar when the user was logged (" + info.args.Type.toLowerCase() + ")");
+					this.showLog("Update sidebar when the user was logged (" + info.args.Type.toLowerCase() + ")");
 				}
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
@@ -131,7 +130,7 @@ export class PortalsCmsService extends BaseService {
 		AppEvents.on("Profile", async info => {
 			if (AppUtility.isEquals(info.args.Type, "Updated") && !AppUtility.isEquals(info.args.Mode, "Storage")) {
 				if (this.configSvc.isDebug) {
-					console.log("[CMS Portals]: Update sidebar when profiles' options was updated", this.getDefaultContentTypeOfCategory(this.portalsCoreSvc.activeModule));
+					this.showLog("Update sidebar when profiles' options was updated", this.getDefaultContentTypeOfCategory(this.portalsCoreSvc.activeModule));
 				}
 				if (Organization.active !== undefined && this.portalsCoreSvc.activeOrganizations.indexOf(Organization.active.ID) < 0) {
 					await this.portalsCoreSvc.removeActiveOrganizationAsync(Organization.active.ID);
@@ -162,7 +161,7 @@ export class PortalsCmsService extends BaseService {
 						};
 					});
 					if (this.configSvc.isDebug) {
-						console.log("[CMS Portals]: The providers of OEmbed medias were initialized", this._oembedProviders);
+						this.showLog("The providers of OEmbed medias were initialized", this._oembedProviders);
 					}
 				},
 				undefined,
@@ -174,7 +173,7 @@ export class PortalsCmsService extends BaseService {
 		if (Module.active === undefined) {
 			await this.portalsCoreSvc.getActiveModuleAsync(undefined, true, () => {
 				if (this.configSvc.isDebug) {
-					console.log("[CMS Portals]: The active module was fetched", Module.active);
+					this.showLog("The active module was fetched", Module.active);
 				}
 			});
 		}
@@ -182,7 +181,7 @@ export class PortalsCmsService extends BaseService {
 		if (Module.active !== undefined && Module.active.contentTypes.length < 1) {
 			await this.portalsCoreSvc.getActiveModuleAsync(undefined, true, () => {
 				if (this.configSvc.isDebug) {
-					console.log("[CMS Portals]: The active module and content-types were fetched", Module.active);
+					this.showLog("The active module and content-types were fetched", Module.active);
 				}
 			});
 		}
@@ -190,7 +189,7 @@ export class PortalsCmsService extends BaseService {
 		// await this.prepareFeaturedContentsAsync();
 		await this.updateSidebarAsync(() => {
 			if (this.configSvc.isDebug) {
-				console.log("[CMS Portals]: The CMS sidebar has been prepared");
+				this.showLog("The CMS sidebar has been prepared");
 			}
 			AppEvents.broadcast(this.name, { Type: "CMSPortalsInitialized" });
 			if (onNext !== undefined) {
@@ -557,8 +556,6 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	private async getFeaturedContentsAsync(contentTypes: ContentType[], index: number) {
-		this._featuredCounters++;
-		const taskID = this._featuredCounters;
 		const contentType = contentTypes[index];
 		const organization = Organization.get(contentType.SystemID);
 		const isSimpleItem = contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000002";
@@ -572,38 +569,25 @@ export class PortalsCmsService extends BaseService {
 		);
 		const onCompleted = () => {
 			if (index < contentTypes.length - 1) {
-				PlatformUtility.invoke(async () => {
-					await this.getFeaturedContentsAsync(contentTypes, index + 1);
-				}, 13);
+				PlatformUtility.invoke(async () => await this.getFeaturedContentsAsync(contentTypes, index + 1), 13);
 			}
 			else {
-				if (this.configSvc.isDebug) {
-					console.log("[CMS Portals]: Featured contents are prepared", `\n${contentType.Title} @ ${organization.Title} (task: ${taskID})`);
-				}
 				AppEvents.broadcast(this.name, { Type: "FeaturedContentsPrepared" });
 			}
 		};
 		const onSuccess = (data?: any) => {
 			if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-				if (this.configSvc.isDebug) {
-					console.log("[CMS Portals]: Featured contents are fetched", `\n${contentType.Title} @ ${organization.Title} (task: ${taskID})`, data);
-				}
-				if (isSimpleItem) {
-					(data.Objects as Array<any>).map(obj => Item.get(obj.ID)).filter(obj => obj !== undefined).forEach(obj => this._featuredContents.set(obj.ID, obj));
-				}
-				else {
-					(data.Objects as Array<any>).map(obj => Content.get(obj.ID)).filter(obj => obj !== undefined).forEach(obj => this._featuredContents.set(obj.ID, obj));
-				}
+				const objects = isSimpleItem
+					? (data.Objects as Array<any>).map(obj => Item.get(obj.ID))
+					: (data.Objects as Array<any>).map(obj => Content.get(obj.ID));
+				objects.filter(obj => obj !== undefined).forEach(obj => this._featuredContents.set(obj.ID, obj));
 			}
 			onCompleted();
 		};
 		const onError = (error?: any) => {
-			console.error("[CMS Portals]: Error occurred while preparing featured contents", `\n${contentType.Title} @ ${organization.Title} (task: ${taskID})`, error);
+			this.showError("Error occurred while preparing featured contents", `\n${contentType.Title} @ ${organization.Title}`, error);
 			onCompleted();
 		};
-		if (this.configSvc.isDebug) {
-			console.log("[CMS Portals]: Featured contents are preparing", `\n${contentType.Title} @ ${organization.Title} (task: ${taskID})`, request);
-		}
 		if (isSimpleItem) {
 			await this.searchItemAsync(request, onSuccess, onError);
 		}
@@ -625,7 +609,7 @@ export class PortalsCmsService extends BaseService {
 			}
 			if (activeContentTypes.length > 0) {
 				if (this.configSvc.isDebug) {
-					console.log("[CMS Portals]: Start to prepare featured contents of the active organization", `${activeOrganization.Title}`, activeContentTypes.map(contentType => ({ ID: contentType.ID, Title: contentType.Title })));
+					this.showLog("Start to prepare featured contents of the active organization", `${activeOrganization.Title}`, activeContentTypes.map(contentType => ({ ID: contentType.ID, Title: contentType.Title })));
 				}
 				PlatformUtility.invoke(async () => await this.getFeaturedContentsAsync(activeContentTypes, 0), 123);
 			}
@@ -642,7 +626,7 @@ export class PortalsCmsService extends BaseService {
 			}));
 			if (availableContentTypes.length > 0) {
 				if (this.configSvc.isDebug) {
-					console.log("[CMS Portals]: Start to prepare featured contents of other available organizations", availableContentTypes.map(contentType => ({ ID: contentType.ID, Title: contentType.Title, Organization: Organization.get(contentType.SystemID).Title })));
+					this.showLog("Start to prepare featured contents of another available organizations", availableContentTypes.map(contentType => ({ ID: contentType.ID, Title: contentType.Title, Organization: Organization.get(contentType.SystemID).Title })));
 				}
 				PlatformUtility.invoke(async () => await this.getFeaturedContentsAsync(availableContentTypes, 0), 3456);
 			}
@@ -838,7 +822,6 @@ export class PortalsCmsService extends BaseService {
 		switch (message.Type.Event) {
 			case "Create":
 			case "Update":
-			case "Get":
 				this.updateCategory(message.Data);
 				if (this._sidebarContentType !== undefined) {
 					const parentCategory = Category.get(message.Data.ParentID);
@@ -852,6 +835,7 @@ export class PortalsCmsService extends BaseService {
 				this.deleteCategory(message.Data.ID, message.Data.ParentID);
 				break;
 
+			case "Get":
 			case "Search":
 				break;
 
