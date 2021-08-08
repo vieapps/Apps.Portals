@@ -42,7 +42,7 @@ export class FilesService extends BaseService {
 
 	public readAsDataURL(file: File, onRead: (data: string) => void, limitSize?: number, onLimitExceeded?: (fileSize?: number, limitSize?: number) => void) {
 		if (limitSize !== undefined && file.size > limitSize) {
-			console.warn(this.getLogMessage(`Limit size exceeded - Max allowed size: ${limitSize} bytes - Actual size: ${file.size} bytes`));
+			console.warn(this.getMessage(`Limit size exceeded - Max allowed size: ${limitSize} bytes - Actual size: ${file.size} bytes`));
 			if (onLimitExceeded !== undefined) {
 				onLimitExceeded(file.size, limitSize);
 			}
@@ -108,7 +108,7 @@ export class FilesService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while uploading", error), error);
+				console.error(this.getError("Error occurred while uploading", error), error);
 				if (onError !== undefined) {
 					onError(AppUtility.parseError(error));
 				}
@@ -132,7 +132,7 @@ export class FilesService extends BaseService {
 			}
 		}
 		catch (error) {
-			console.error(this.getErrorMessage("Error occurred while uploading", error), error);
+			console.error(this.getError("Error occurred while uploading", error), error);
 			if (onError !== undefined) {
 				onError(AppUtility.parseError(error));
 			}
@@ -334,7 +334,7 @@ export class FilesService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching thumbnails", error));
+				console.error(this.getError("Error occurred while searching thumbnails", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -354,7 +354,7 @@ export class FilesService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting a thumbnail", error));
+				console.error(this.getError("Error occurred while deleting a thumbnail", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -433,7 +433,7 @@ export class FilesService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching attachments", error));
+				console.error(this.getError("Error occurred while searching attachments", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -454,7 +454,7 @@ export class FilesService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating an attachment", error));
+				console.error(this.getError("Error occurred while updating an attachment", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -471,7 +471,7 @@ export class FilesService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting an attachment", error));
+				console.error(this.getError("Error occurred while deleting an attachment", error));
 				if (onError !== undefined) {
 					onError(error);
 				}

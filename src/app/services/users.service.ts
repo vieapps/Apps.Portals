@@ -76,7 +76,7 @@ export class UsersService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching", error));
+				console.error(this.getError("Error occurred while searching", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -101,7 +101,7 @@ export class UsersService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching", error));
+				console.error(this.getError("Error occurred while searching", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -142,7 +142,7 @@ export class UsersService extends BaseService {
 			body,
 			onSuccess,
 			error => {
-				console.error(this.getErrorMessage("Error occurred while sending an invitation", error));
+				console.error(this.getError("Error occurred while sending an invitation", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -155,13 +155,13 @@ export class UsersService extends BaseService {
 		await this.readAsync(
 			uri,
 			async data => await this.configSvc.updateSessionAsync(data, () => {
-				console.log(this.getLogMessage("Activated..."), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+				console.log(this.getMessage("Activated..."), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
 			}),
 			error => {
-				console.error(this.getErrorMessage(`Error occurred while activating (${mode})`, error));
+				console.error(this.getError(`Error occurred while activating (${mode})`, error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -188,7 +188,7 @@ export class UsersService extends BaseService {
 					}
 				},
 				error => {
-					console.error(this.getErrorMessage("Error occurred while reading profile", error));
+					console.error(this.getError("Error occurred while reading profile", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -212,7 +212,7 @@ export class UsersService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating profile", error));
+				console.error(this.getError("Error occurred while updating profile", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -229,7 +229,7 @@ export class UsersService extends BaseService {
 			},
 			onSuccess,
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating password", error));
+				console.error(this.getError("Error occurred while updating password", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -246,7 +246,7 @@ export class UsersService extends BaseService {
 			},
 			onSuccess,
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating email", error));
+				console.error(this.getError("Error occurred while updating email", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -259,7 +259,7 @@ export class UsersService extends BaseService {
 			this.getPath("otp", undefined, `${AppUtility.isNotEmpty(query) ? `${query}&` : ""}${this.configSvc.relatedQuery}`),
 			onSuccess,
 			error => {
-				console.error(this.getErrorMessage("Error occurred while preparing an 2FA method", error));
+				console.error(this.getError("Error occurred while preparing an 2FA method", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -276,7 +276,7 @@ export class UsersService extends BaseService {
 			},
 			data => this.configSvc.updateAccount(data, onSuccess),
 			error => {
-				console.error(this.getErrorMessage("Error occurred while adding an 2FA method", error));
+				console.error(this.getError("Error occurred while adding an 2FA method", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -292,7 +292,7 @@ export class UsersService extends BaseService {
 			this.getPath("otp", undefined, `info=${info}&${this.configSvc.relatedQuery}`),
 			data => this.configSvc.updateAccount(data, onSuccess),
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting an 2FA method", error));
+				console.error(this.getError("Error occurred while deleting an 2FA method", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -314,7 +314,7 @@ export class UsersService extends BaseService {
 				this.getPath("account", id, this.configSvc.relatedQuery),
 				data => this.configSvc.updateAccount(data, onSuccess, true),
 				error => {
-					console.error(this.getErrorMessage("Error occurred while reading privileges", error));
+					console.error(this.getError("Error occurred while reading privileges", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -331,7 +331,7 @@ export class UsersService extends BaseService {
 			},
 			data => this.configSvc.updateAccount(data, onSuccess, true),
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating privileges", error));
+				console.error(this.getError("Error occurred while updating privileges", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -346,7 +346,7 @@ export class UsersService extends BaseService {
 				switch (message.Type.Event) {
 					case "Update":
 						await this.configSvc.updateSessionAsync(message.Data, () => {
-							console.warn(this.getLogMessage("The session was updated with new access token"), this.configSvc.appConfig.session);
+							console.warn(this.getMessage("The session was updated with new access token"), this.configSvc.appConfig.session);
 							AppEvents.sendToElectron(this.name, { Type: "Session", Data: this.configSvc.appConfig.session });
 						}, false, false, false);
 						AppEvents.broadcast("Account", { Type: "Updated", Mode: "Session" });
@@ -354,7 +354,7 @@ export class UsersService extends BaseService {
 
 					case "Revoke":
 						if (AppUtility.isGotSecurityException(message.Data)) {
-							console.warn(this.getLogMessage("Revoke the session and register new when got a security issue"), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+							console.warn(this.getMessage("Revoke the session and register new when got a security issue"), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 							await this.configSvc.resetSessionAsync(async () => await this.configSvc.initializeSessionAsync(async () =>
 								await this.configSvc.registerSessionAsync(() => {
 									AppAPIs.reopenWebSocket("Reopens when got a security issue");
@@ -363,7 +363,7 @@ export class UsersService extends BaseService {
 						}
 						else {
 							await this.configSvc.updateSessionAsync(message.Data, async () => await this.configSvc.registerSessionAsync(() => {
-								console.warn(this.getLogMessage("The session was revoked by the APIs"), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+								console.warn(this.getMessage("The session was revoked by the APIs"), this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 								AppAPIs.reopenWebSocket("Reopens when the session was revoked by the APIs");
 							}), false, false, false);
 						}
@@ -382,7 +382,7 @@ export class UsersService extends BaseService {
 						break;
 
 					default:
-						console.warn(this.getLogMessage("Got an update of a session"), message);
+						console.warn(this.getMessage("Got an update of a session"), message);
 						break;
 				}
 				break;
@@ -408,7 +408,7 @@ export class UsersService extends BaseService {
 					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
 					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: account.profile });
 					if (this.configSvc.isDebug) {
-						console.log(this.getLogMessage("User profile was updated from APIs"), account.profile);
+						console.log(this.getMessage("User profile was updated from APIs"), account.profile);
 					}
 					if (this.configSvc.appConfig.facebook.token !== undefined && this.configSvc.appConfig.facebook.id !== undefined) {
 						this.configSvc.getFacebookProfile();
@@ -420,7 +420,7 @@ export class UsersService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getLogMessage("Got an update of an user"), message);
+				console.warn(this.getMessage("Got an update of an user"), message);
 				break;
 		}
 	}

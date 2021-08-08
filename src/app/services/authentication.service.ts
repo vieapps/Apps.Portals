@@ -150,7 +150,7 @@ export class AuthenticationService extends BaseService {
 			await this.configSvc.resetSessionAsync(async () =>
 				await this.configSvc.initializeSessionAsync(async () =>
 					await this.configSvc.registerSessionAsync(() => {
-						console.log(this.getLogMessage("The session is re-registered when got security issue"));
+						console.warn(this.getMessage("Reregistered the session when got security issue"));
 						if (onNext !== undefined) {
 							onNext(error);
 						}
@@ -158,11 +158,8 @@ export class AuthenticationService extends BaseService {
 				)
 			);
 		}
-		else if (onNext !== undefined) {
-			onNext(error);
-		}
 		else {
-			this.showError(message, error);
+			this.processError(message, error, onNext);
 		}
 	}
 
@@ -175,13 +172,13 @@ export class AuthenticationService extends BaseService {
 			},
 			async data => {
 				if (AppUtility.isTrue(data.Require2FA)) {
-					console.warn(this.getLogMessage("Log in with static password successful, but need to verify with 2FA"), this.configSvc.isDebug ? data : "");
+					console.warn(this.getMessage("Log in with static password successful, but need to verify with 2FA"), this.configSvc.isDebug ? data : "");
 					if (onSuccess !== undefined) {
 						onSuccess(data);
 					}
 				}
 				else {
-					console.log(this.getLogMessage("Log in successful"), this.configSvc.isDebug ? data : "");
+					console.log(this.getMessage("Log in successful"), this.configSvc.isDebug ? data : "");
 					await this.updateSessionWhenLogInAsync(data, onSuccess);
 				}
 			},
@@ -200,7 +197,7 @@ export class AuthenticationService extends BaseService {
 				OTP: AppCrypto.rsaEncrypt(otp)
 			},
 			async data => {
-				console.log(this.getLogMessage("Log in with OTP successful"));
+				console.log(this.getMessage("Log in with OTP successful"));
 				await this.updateSessionWhenLogInAsync(data, onSuccess);
 			},
 			async error => await this.processErrorAsync(error, "Error occurred while logging in with OTP", onError),
@@ -213,7 +210,7 @@ export class AuthenticationService extends BaseService {
 		await this.deleteAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			async data => await this.configSvc.updateSessionAsync(data, async () => await this.configSvc.registerSessionAsync(() => {
-				console.log(this.getLogMessage("Log out successful"), this.configSvc.isDebug ? data : "");
+				console.log(this.getMessage("Log out successful"), this.configSvc.isDebug ? data : "");
 				AppEvents.broadcast("Account", { Type: "Updated" });
 				AppEvents.broadcast("Profile", { Type: "Updated" });
 				AppEvents.broadcast("Session", { Type: "LogOut" });
@@ -264,14 +261,7 @@ export class AuthenticationService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				if (onError !== undefined) {
-					onError(error);
-				}
-				else {
-					this.showError("Error occurred while registering session captcha", error);
-				}
-			}
+			error => this.processError("Error occurred while registering session captcha", error, onError)
 		);
 	}
 

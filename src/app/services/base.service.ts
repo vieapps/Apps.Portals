@@ -2,7 +2,7 @@ import { Injectable } from "@angular/core";
 import { Location } from "@angular/common";
 import { Router, CanActivate } from "@angular/router";
 import { AppConfig } from "@app/app.config";
-import { AppAPIs, AppMessage, AppRequestInfo } from "@app/components/app.apis";
+import { AppAPIs, AppRequestInfo, AppMessage } from "@app/components/app.apis";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppPagination } from "@app/components/app.pagination";
 import { AppUtility } from "@app/components/app.utility";
@@ -45,20 +45,30 @@ export class Base {
 	}
 
 	/** Gets the message for working with console/log file */
-	protected getLogMessage(message: string) {
+	protected getMessage(message: string) {
 		return `[${this.name}]: ${message}`;
 	}
 
-	/** Prints the error message to console/log file and run the next action */
-	protected getErrorMessage(message: string, error?: any) {
-		return this.getLogMessage(`${message}\n${AppUtility.getErrorMessage(error)}`);
+	/** Gets the error message to print to console/log file */
+	protected getError(message: string, error?: any) {
+		return this.getMessage(`${message}\n${AppUtility.getErrorMessage(error)}`);
 	}
 
 	/** Prints the error message to console/log file and run the next action */
 	protected showError(message: string, error?: any, onNext?: (error?: any) => void) {
-		console.error(this.getErrorMessage(message, error), error);
+		console.error(this.getError(message, error), error);
 		if (onNext !== undefined) {
 			onNext(AppUtility.parseError(error));
+		}
+	}
+
+	/** Process the error */
+	protected processError(message: string, error?: any, onNext?: (error?: any) => void) {
+		if (onNext !== undefined) {
+			onNext(AppUtility.parseError(error));
+		}
+		else {
+			this.showError(message, error);
 		}
 	}
 
@@ -106,7 +116,7 @@ export class Base {
 					onSuccess(data);
 				}
 			},
-			error => this.showError("Error occurred while searching", error, onError)
+			error => this.processError("Error occurred while searching", error, onError)
 		);
 	}
 
@@ -149,7 +159,7 @@ export class Base {
 						onSuccess(data);
 					}
 				},
-				error => this.showError("Error occurred while searching", error, onError),
+				error => this.processError("Error occurred while searching", error, onError),
 				useXHR
 			);
 		}
@@ -169,11 +179,11 @@ export class Base {
 			{
 				Path: path,
 				Verb: "POST",
-				Body: body,
-				Header: headers
+				Header: headers,
+				Body: body
 			},
 			onSuccess,
-			error => this.showError("Error occurred while creating", error, onError),
+			error => this.processError("Error occurred while creating", error, onError),
 			useXHR
 		);
 	}
@@ -194,7 +204,7 @@ export class Base {
 				Header: headers
 			},
 			onSuccess,
-			error => this.showError("Error occurred while reading", error, onError),
+			error => this.processError("Error occurred while reading", error, onError),
 			useXHR
 		);
 	}
@@ -213,11 +223,11 @@ export class Base {
 			{
 				Path: path,
 				Verb: "PUT",
-				Body: body,
-				Header: headers
+				Header: headers,
+				Body: body
 			},
 			onSuccess,
-			error => this.showError("Error occurred while updating", error, onError),
+			error => this.processError("Error occurred while updating", error, onError),
 			useXHR
 		);
 	}
@@ -238,7 +248,7 @@ export class Base {
 				Header: headers
 			},
 			onSuccess,
-			error => this.showError("Error occurred while deleting", error, onError),
+			error => this.processError("Error occurred while deleting", error, onError),
 			useXHR
 		);
 	}

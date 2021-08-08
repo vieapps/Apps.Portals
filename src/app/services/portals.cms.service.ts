@@ -695,7 +695,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching categories", error));
+				console.error(this.getError("Error occurred while searching categories", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -716,7 +716,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching categories", error));
+				console.error(this.getError("Error occurred while searching categories", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -735,7 +735,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while creating new category", error));
+				console.error(this.getError("Error occurred while creating new category", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -766,7 +766,7 @@ export class PortalsCmsService extends BaseService {
 					}
 				},
 				error => {
-					console.error(this.getErrorMessage("Error occurred while getting a category", error));
+					console.error(this.getError("Error occurred while getting a category", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -789,7 +789,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating a category", error));
+				console.error(this.getError("Error occurred while updating a category", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -809,7 +809,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting a category", error));
+				console.error(this.getError("Error occurred while deleting a category", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -856,7 +856,7 @@ export class PortalsCmsService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getLogMessage("Got an update message of a CMS category"), message);
+				console.warn(this.getMessage("Got an update message of a CMS category"), message);
 				break;
 		}
 
@@ -984,7 +984,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching contents", error));
+				console.error(this.getError("Error occurred while searching contents", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1005,7 +1005,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching contents", error));
+				console.error(this.getError("Error occurred while searching contents", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1024,7 +1024,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while creating new content", error));
+				console.error(this.getError("Error occurred while creating new content", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1048,7 +1048,7 @@ export class PortalsCmsService extends BaseService {
 					}
 				},
 				error => {
-					console.error(this.getErrorMessage("Error occurred while getting a content", error));
+					console.error(this.getError("Error occurred while getting a content", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -1070,7 +1070,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating a content", error));
+				console.error(this.getError("Error occurred while updating a content", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1088,7 +1088,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting a content", error));
+				console.error(this.getError("Error occurred while deleting a content", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1129,7 +1129,7 @@ export class PortalsCmsService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getLogMessage("Got an update message of a CMS content"), message);
+				console.warn(this.getMessage("Got an update message of a CMS content"), message);
 				break;
 		}
 
@@ -1181,7 +1181,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching items", error));
+				console.error(this.getError("Error occurred while searching items", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1202,7 +1202,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching items", error));
+				console.error(this.getError("Error occurred while searching items", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1221,7 +1221,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while creating new item", error));
+				console.error(this.getError("Error occurred while creating new item", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1245,7 +1245,7 @@ export class PortalsCmsService extends BaseService {
 					}
 				},
 				error => {
-					console.error(this.getErrorMessage("Error occurred while getting an item", error));
+					console.error(this.getError("Error occurred while getting an item", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -1267,7 +1267,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating an item", error));
+				console.error(this.getError("Error occurred while updating an item", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1285,7 +1285,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting an item", error));
+				console.error(this.getError("Error occurred while deleting an item", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1326,7 +1326,7 @@ export class PortalsCmsService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getLogMessage("Got an update message of a CMS item"), message);
+				console.warn(this.getMessage("Got an update message of a CMS item"), message);
 				break;
 		}
 
@@ -1382,7 +1382,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching links", error));
+				console.error(this.getError("Error occurred while searching links", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1403,7 +1403,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching links", error));
+				console.error(this.getError("Error occurred while searching links", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1422,7 +1422,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while creating new link", error));
+				console.error(this.getError("Error occurred while creating new link", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1447,7 +1447,7 @@ export class PortalsCmsService extends BaseService {
 					}
 				},
 				error => {
-					console.error(this.getErrorMessage("Error occurred while getting a link", error));
+					console.error(this.getError("Error occurred while getting a link", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -1470,7 +1470,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating a link", error));
+				console.error(this.getError("Error occurred while updating a link", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1490,7 +1490,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting a link", error));
+				console.error(this.getError("Error occurred while deleting a link", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1531,7 +1531,7 @@ export class PortalsCmsService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getLogMessage("Got an update message of a CMS link"), message);
+				console.warn(this.getMessage("Got an update message of a CMS link"), message);
 				break;
 		}
 

@@ -94,7 +94,7 @@ export class AppConfig {
 		setServicePrivilegs: false,
 		setServicePrivilegsRole: "ServiceAdministrator",
 		setObjectPrivilegs: true,
-		phoneIsAllowed: true
+		phoneIsAllowed: false
 	};
 
 	/** Geographic meta */

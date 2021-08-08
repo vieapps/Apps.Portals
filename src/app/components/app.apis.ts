@@ -5,16 +5,13 @@ import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 
-/** Presents the struct of a message type */
-export interface AppMessageType {
-	Service: string;
-	Object?: string;
-	Event?: string;
-}
-
 /** Presents the struct of a message */
 export interface AppMessage {
-	Type: AppMessageType;
+	Type: {
+		Service: string;
+		Object?: string;
+		Event?: string;
+	};
 	Data: any;
 }
 
@@ -36,7 +33,7 @@ export class AppAPIs {
 	private static _status = "initializing";
 	private static _url: string;
 	private static _websocket: WebSocket;
-	private static _types: { [key: string]: AppMessageType } = {};
+	private static _types: { [key: string]: { Service: string; Object?: string; Event?: string; } } = {};
 	private static _serviceScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
 	private static _objectScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
 	private static _serviceScopeSubject: Subject<{ service: string, message: AppMessage }>;
@@ -260,7 +257,7 @@ export class AppAPIs {
 						}
 					});
 				},
-				error => console.warn("[AppAPIs]: Got an error", AppConfig.isNativeApp ? JSON.stringify(error) : error)
+				error => console.warn("[AppAPIs]: Got an error", AppConfig.isNativeApp ? AppCrypto.stringify(error) : error)
 			);
 		}
 
@@ -371,11 +368,11 @@ export class AppAPIs {
 			if ("Error" === msg.Type) {
 				// got a security issue
 				if (AppUtility.isGotSecurityException(data) && "UnauthorizedException" !== data.Type && "AccessDeniedException" !== data.Type) {
-					console.warn(`[AppAPIs]: ${data.Message} [${data.Code}: ${data.Type}]`, AppConfig.isDebug ? data : "");
+					console.warn(`[AppAPIs]: ${data.Type} (${data.Code}): ${data.Message}`, data);
 
 					// the token is expired => re-open WebSocket to renew token and reauthenticate
 					if ("TokenExpiredException" === data.Type) {
-						this.reopenWebSocket("[AppAPIs]: Re-open WebSocket connection because the JWT is expired");
+						this.reopenWebSocket("[AppAPIs]: Re-open WebSocket connection because the token is expired");
 					}
 
 					// need to terminate current session
@@ -398,7 +395,7 @@ export class AppAPIs {
 
 				// print the error when has no callback
 				else {
-					console.error(`[AppAPIs]: ${data.Message} [${data.Code}: ${data.Type}]`, AppConfig.isDebug ? data : "");
+					console.error(`[AppAPIs]: ${data.Type} (${data.Code}): ${data.Message}`, AppConfig.isDebug ? data : "");
 				}
 			}
 
@@ -532,7 +529,6 @@ export class AppAPIs {
 	/** Sends a message to APIs to authenticate the WebSocket connection */
 	public static authenticateWebSocket() {
 		this._requests.nocallbackRequests["cmd-0"] = AppCrypto.stringify({
-			ID: "cmd-0",
 			ServiceName: "Session",
 			Verb: "AUTH",
 			Header: {

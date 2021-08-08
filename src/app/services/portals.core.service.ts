@@ -1484,7 +1484,7 @@ export class PortalsCoreService extends BaseService {
 			request,
 			data => this.processOrganizations(data, onSuccess),
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching organization(s)", error));
+				console.error(this.getError("Error occurred while searching organization(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1498,7 +1498,7 @@ export class PortalsCoreService extends BaseService {
 			request,
 			data => this.processOrganizations(data, onSuccess),
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching organization(s)", error));
+				console.error(this.getError("Error occurred while searching organization(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1517,7 +1517,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while creating new organization", error));
+				console.error(this.getError("Error occurred while creating new organization", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1549,7 +1549,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(this.getErrorMessage("Error occurred while getting an organization", error));
+					console.error(this.getError("Error occurred while getting an organization", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -1579,7 +1579,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating an organization", error));
+				console.error(this.getError("Error occurred while updating an organization", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1597,7 +1597,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting an organization", error));
+				console.error(this.getError("Error occurred while deleting an organization", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1621,7 +1621,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getLogMessage("Got an update message of an organization"), message);
+				console.warn(this.getMessage("Got an update message of an organization"), message);
 				break;
 		}
 
@@ -1689,7 +1689,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching role(s)", error));
+				console.error(this.getError("Error occurred while searching role(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1718,7 +1718,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching role(s)", error));
+				console.error(this.getError("Error occurred while searching role(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1737,7 +1737,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while creating new role", error));
+				console.error(this.getError("Error occurred while creating new role", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1762,7 +1762,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(this.getErrorMessage("Error occurred while getting a role", error));
+					console.error(this.getError("Error occurred while getting a role", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -1785,7 +1785,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating a role", error));
+				console.error(this.getError("Error occurred while updating a role", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1804,7 +1804,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting a role", error));
+				console.error(this.getError("Error occurred while deleting a role", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1845,7 +1845,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getLogMessage("Got an update message of a role"), message);
+				console.warn(this.getMessage("Got an update message of a role"), message);
 				break;
 		}
 
@@ -1931,7 +1931,7 @@ export class PortalsCoreService extends BaseService {
 			request,
 			data => this.processDesktops(data, onSuccess),
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching desktop(s)", error));
+				console.error(this.getError("Error occurred while searching desktop(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1945,7 +1945,7 @@ export class PortalsCoreService extends BaseService {
 			request,
 			data => this.processDesktops(data, onSuccess),
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching desktop(s)", error));
+				console.error(this.getError("Error occurred while searching desktop(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1964,7 +1964,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while creating new desktop", error));
+				console.error(this.getError("Error occurred while creating new desktop", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -1992,7 +1992,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(this.getErrorMessage("Error occurred while getting a desktop", error));
+					console.error(this.getError("Error occurred while getting a desktop", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -2015,7 +2015,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating a desktop", error));
+				console.error(this.getError("Error occurred while updating a desktop", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2035,7 +2035,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting a desktop", error));
+				console.error(this.getError("Error occurred while deleting a desktop", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2076,7 +2076,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getLogMessage("Got an update message of a desktop"), message);
+				console.warn(this.getMessage("Got an update message of a desktop"), message);
 				break;
 		}
 
@@ -2186,7 +2186,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching portlet(s)", error));
+				console.error(this.getError("Error occurred while searching portlet(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2211,7 +2211,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching portlet(s)", error));
+				console.error(this.getError("Error occurred while searching portlet(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2232,7 +2232,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while creating new portlet", error));
+				console.error(this.getError("Error occurred while creating new portlet", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2256,7 +2256,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(this.getErrorMessage("Error occurred while getting a portlet", error));
+					console.error(this.getError("Error occurred while getting a portlet", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -2278,7 +2278,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating a portlet", error));
+				console.error(this.getError("Error occurred while updating a portlet", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2298,7 +2298,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting a portlet", error));
+				console.error(this.getError("Error occurred while deleting a portlet", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2343,7 +2343,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getLogMessage(`Got an update message of a portlet - Portlet ID: ${message.Data.ID} - Desktop ID: ${message.Data.DesktopID}`), message);
+				console.warn(this.getMessage(`Got an update message of a portlet - Portlet ID: ${message.Data.ID} - Desktop ID: ${message.Data.DesktopID}`), message);
 				break;
 		}
 
@@ -2387,7 +2387,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching site(s)", error));
+				console.error(this.getError("Error occurred while searching site(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2412,7 +2412,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching site(s)", error));
+				console.error(this.getError("Error occurred while searching site(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2431,7 +2431,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while creating new site", error));
+				console.error(this.getError("Error occurred while creating new site", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2455,7 +2455,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(this.getErrorMessage("Error occurred while getting a site", error));
+					console.error(this.getError("Error occurred while getting a site", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -2477,7 +2477,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating a site", error));
+				console.error(this.getError("Error occurred while updating a site", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2495,7 +2495,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting a site", error));
+				console.error(this.getError("Error occurred while deleting a site", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2519,7 +2519,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getLogMessage("Got an update message of a site"), message);
+				console.warn(this.getMessage("Got an update message of a site"), message);
 				break;
 		}
 
@@ -2563,7 +2563,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching module(s)", error));
+				console.error(this.getError("Error occurred while searching module(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2588,7 +2588,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching module(s)", error));
+				console.error(this.getError("Error occurred while searching module(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2613,7 +2613,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while creating new module", error));
+				console.error(this.getError("Error occurred while creating new module", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2644,7 +2644,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(this.getErrorMessage("Error occurred while getting a module", error));
+					console.error(this.getError("Error occurred while getting a module", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -2669,7 +2669,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating a module", error));
+				console.error(this.getError("Error occurred while updating a module", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2687,7 +2687,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting a module", error));
+				console.error(this.getError("Error occurred while deleting a module", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2711,7 +2711,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getLogMessage("Got an update message of a module"), message);
+				console.warn(this.getMessage("Got an update message of a module"), message);
 				break;
 		}
 
@@ -2755,7 +2755,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching content type(s)", error));
+				console.error(this.getError("Error occurred while searching content type(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2780,7 +2780,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching content-type(s)", error));
+				console.error(this.getError("Error occurred while searching content-type(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2801,7 +2801,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while creating new content type", error));
+				console.error(this.getError("Error occurred while creating new content type", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2825,7 +2825,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(this.getErrorMessage("Error occurred while getting a content type", error));
+					console.error(this.getError("Error occurred while getting a content type", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -2847,7 +2847,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating a content type", error));
+				console.error(this.getError("Error occurred while updating a content type", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2865,7 +2865,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting a content type", error));
+				console.error(this.getError("Error occurred while deleting a content type", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2892,7 +2892,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getLogMessage("Got an update message of a content type"), message);
+				console.warn(this.getMessage("Got an update message of a content type"), message);
 				break;
 		}
 
@@ -2932,7 +2932,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching expression(s)", error));
+				console.error(this.getError("Error occurred while searching expression(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2953,7 +2953,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while searching expression(s)", error));
+				console.error(this.getError("Error occurred while searching expression(s)", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2972,7 +2972,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while creating new expression", error));
+				console.error(this.getError("Error occurred while creating new expression", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -2996,7 +2996,7 @@ export class PortalsCoreService extends BaseService {
 					}
 				},
 				error => {
-					console.error(this.getErrorMessage("Error occurred while getting an expression", error));
+					console.error(this.getError("Error occurred while getting an expression", error));
 					if (onError !== undefined) {
 						onError(error);
 					}
@@ -3018,7 +3018,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while updating an expression", error));
+				console.error(this.getError("Error occurred while updating an expression", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -3036,7 +3036,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getErrorMessage("Error occurred while deleting an expression", error));
+				console.error(this.getError("Error occurred while deleting an expression", error));
 				if (onError !== undefined) {
 					onError(error);
 				}
@@ -3062,7 +3062,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 
 			default:
-				console.warn(this.getLogMessage("Got an update message of an expression"), message);
+				console.warn(this.getMessage("Got an update message of an expression"), message);
 				break;
 		}
 
