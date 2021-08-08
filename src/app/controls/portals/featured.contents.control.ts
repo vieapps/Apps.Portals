@@ -118,22 +118,19 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 				? [{ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }]
 				: [];
 			orderBy.push({ name: "LastModified", reverse: true });
-			this.contents = this.portalsCmsSvc.featuredContents.map(content => {
-				const category = content["category"];
-				return {
-					ID: content.ID,
-					Title: content.Title,
-					Status: content.Status,
-					ThumbnailURI: content.thumbnailURI,
-					Created: new Date(content.Created),
-					LastModified: new Date(content.LastModified),
-					PublishedTime: new Date(content["PublishedTime"] || content.Created),
-					SystemID: content.SystemID,
-					StartDate: AppUtility.toIsoDate(content["StartDate"] || content.Created),
-					Category: typeof category === "object" ? category : undefined,
-					OriginalObject: content
-				} as FeaturedContent;
-			}).filter(filterBy).orderBy(orderBy).take(this.amount);
+			this.contents = this.portalsCmsSvc.featuredContents.map(content => ({
+				ID: content.ID,
+				Title: content.Title,
+				Status: content.Status,
+				ThumbnailURI: content.thumbnailURI,
+				Created: new Date(content.Created),
+				LastModified: new Date(content.LastModified),
+				StartDate: new Date(content["StartDate"] || content.Created),
+				PublishedTime: new Date(content["PublishedTime"] || content.Created),
+				SystemID: content.SystemID,
+				Category: content["category"],
+				OriginalObject: content
+			} as FeaturedContent)).filter(filterBy).orderBy(orderBy).take(this.amount);
 			if (this.configSvc.isDebug) {
 				console.log(`<Featured Contents>: Featured contents are prepared (${(organization || {}).Title}) - Published: ${this._isPublished}`);
 			}
@@ -157,16 +154,16 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 
 }
 
-export interface FeaturedContent {
+interface FeaturedContent {
 	ID: string;
 	Title: string;
 	Status: string;
 	ThumbnailURI: string;
 	Created: Date;
 	LastModified: Date;
+	StartDate: Date;
 	PublishedTime: Date;
 	SystemID: string;
-	StartDate?: string;
-	Category?: Category;
+	Category: Category;
 	OriginalObject: CmsBaseModel;
 }

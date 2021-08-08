@@ -16,16 +16,16 @@
 				{{ content.Title }}
 				<ion-icon name="radio" slot="icon-only"></ion-icon>
 			</span>
-			<div *ngIf="content.Category">
-				<span *ngIf="content.Status === 'Published'">
-					<ion-icon name="alarm" slot="icon-only" color="medium"></ion-icon>
-					{{ content.PublishedTime | date:'h:mm a @ d/M/y' }}
-				</span>
+			<div>
 				<span>
 					<ion-icon name="time" slot="icon-only" color="medium"></ion-icon>
 					{{ content.StartDate | date:'d/M/y' }}
 				</span>
-				<span>
+				<span *ngIf="content.Category && content.Status === 'Published'">
+					<ion-icon name="alarm" slot="icon-only" color="medium"></ion-icon>
+					{{ content.PublishedTime | date:'h:mm a @ d/M/y' }}
+				</span>
+				<span *ngIf="content.Category">
 					<ion-icon name="color-filter" slot="icon-only" color="medium"></ion-icon>
 					{{ content.Category.FullTitle }}
 				</span>
