@@ -4,8 +4,6 @@ import { HttpClient, HttpClientModule } from "@angular/common/http";
 import { RouteReuseStrategy } from "@angular/router";
 
 import { IonicModule, IonicRouteStrategy } from "@ionic/angular";
-// import { Drivers } from "@ionic/storage";
-// import { IonicStorageModule } from "@ionic/storage-angular";
 import { IonicStorageModule } from "@ionic/storage";
 import { TranslateModule, TranslateLoader } from "@ngx-translate/core";
 import { MultiTranslateHttpLoader } from "ngx-translate-multi-http-loader";
