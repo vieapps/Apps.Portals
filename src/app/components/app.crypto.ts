@@ -125,7 +125,7 @@ export class AppCrypto {
 		return this._rsa.decrypt(text) as string;
 	}
 
-	/** Initializes all keys for encrypting/decryptig/signing */
+	/** Initializes all keys for encrypting/decrypting/signing */
 	public static init(keys: { aes: { key: string; iv: string }; rsa: { encryptionExponent?: string; decryptionExponent?: string; exponent: string; modulus: string }; jwt: string; }) {
 		if (keys.aes !== undefined) {
 			this._aes.key = CryptoJS.enc.Hex.parse(keys.aes.key);
