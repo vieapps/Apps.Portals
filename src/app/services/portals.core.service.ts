@@ -262,9 +262,7 @@ export class PortalsCoreService extends BaseService {
 		await Promise.all((organizationIDs || []).filter(id => AppUtility.isNotEmpty(id)).map(async id => {
 			let organization = Organization.get(id);
 			if (organization === undefined) {
-				await this.getOrganizationAsync(id, _ => {
-					organization = Organization.get(id);
-				}, undefined, true);
+				await this.getOrganizationAsync(id, _ => organization = Organization.get(id), undefined, true);
 			}
 			if (organization !== undefined) {
 				organizations.push(organization);
@@ -835,12 +833,7 @@ export class PortalsCoreService extends BaseService {
 							SelectOptions: {
 								Multiple: true,
 								AsBoxes: true,
-								Values: (events || ["Create", "Update", "Delete"]).map(value => {
-									return {
-										Value: value,
-										Label: `{{events.${value}}}`
-									};
-								})
+								Values: (events || ["Create", "Update", "Delete"]).map(value => ({ Value: value, Label: `{{events.${value}}}` }))
 							}
 						}
 					},
@@ -884,9 +877,7 @@ export class PortalsCoreService extends BaseService {
 						Label: "{{status.approval.label}}",
 						SelectOptions: {
 							Interface: "popover",
-							Values: BaseModel.approvalStatus.map(value => {
-								return { Value: value, Label: `{{status.approval.${value}}}` };
-							})
+							Values: BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{status.approval.${value}}}` }))
 						}
 					}
 				}, allowInheritFromParent ? 1 : 0)),
@@ -1429,21 +1420,15 @@ export class PortalsCoreService extends BaseService {
 	public prepareApprovalStatusControl(controlConfig: AppFormsControlConfig, selectInterface?: string) {
 		controlConfig.Options.SelectOptions.Interface = selectInterface || "popover";
 		controlConfig.Options.SelectOptions.Values = AppUtility.isNotEmpty(controlConfig.Options.SelectOptions.Values)
-			? (AppUtility.toArray(controlConfig.Options.SelectOptions.Values, "#;") as Array<string>).map(value => {
-					return { Value: value, Label: `{{status.approval.${value}}}` };
-				})
-			: BaseModel.approvalStatus.map(value => {
-					return { Value: value, Label: `{{status.approval.${value}}}` };
-				});
+			? (AppUtility.toArray(controlConfig.Options.SelectOptions.Values, "#;") as Array<string>).map(value => ({ Value: value, Label: `{{status.approval.${value}}}` }))
+			: BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{status.approval.${value}}}` }));
 		return controlConfig;
 	}
 
 	public async prepareLanguageControlAsync(controlConfig: AppFormsControlConfig, required: boolean = false, addUnspecified: boolean = true, selectInterface?: string) {
 		controlConfig.Required = required;
 		controlConfig.Options.SelectOptions.Interface = selectInterface || "popover";
-		controlConfig.Options.SelectOptions.Values = this.configSvc.languages.map(language => {
-			return { Value: language.Value, Label: language.Label };
-		});
+		controlConfig.Options.SelectOptions.Values = this.configSvc.languages.map(language => ({ Value: language.Value, Label: language.Label }));
 		if (addUnspecified) {
 			controlConfig.Options.SelectOptions.Values.insert({ Value: "-", Label: await this.configSvc.getResourceAsync("portals.common.unspecified") }, 0);
 		}
@@ -1453,9 +1438,7 @@ export class PortalsCoreService extends BaseService {
 	public async prepareThemeControlAsync(controlConfig: AppFormsControlConfig, selectInterface?: string) {
 		const themes = await this.getThemesAsync();
 		controlConfig.Options.SelectOptions.Interface = selectInterface || "alert";
-		controlConfig.Options.SelectOptions.Values = themes.map(theme => {
-			return { Value: theme.name, Label: theme.name };
-		});
+		controlConfig.Options.SelectOptions.Values = themes.map(theme => ({ Value: theme.name, Label: theme.name }));
 		controlConfig.Options.SelectOptions.Values.insert({ Value: "-", Label: await this.configSvc.getResourceAsync("portals.common.unspecified") }, 0);
 		return controlConfig;
 	}
@@ -1614,10 +1597,6 @@ export class PortalsCoreService extends BaseService {
 
 			case "Delete":
 				Organization.instances.remove(message.Data.ID);
-				break;
-
-			case "Get":
-			case "Search":
 				break;
 
 			default:
@@ -1838,10 +1817,6 @@ export class PortalsCoreService extends BaseService {
 
 			case "Delete":
 				this.deleteRole(message.Data.ID, message.Data.ParentID);
-				break;
-
-			case "Get":
-			case "Search":
 				break;
 
 			default:
@@ -2069,10 +2044,6 @@ export class PortalsCoreService extends BaseService {
 
 			case "Delete":
 				this.deleteDesktop(message.Data.ID, message.Data.ParentID);
-				break;
-
-			case "Get":
-			case "Search":
 				break;
 
 			default:
@@ -2338,10 +2309,6 @@ export class PortalsCoreService extends BaseService {
 				}
 				break;
 
-			case "Get":
-			case "Search":
-				break;
-
 			default:
 				this.showLog(`Got an update message of a portlet - Portlet ID: ${message.Data.ID} - Desktop ID: ${message.Data.DesktopID}`, message);
 				break;
@@ -2512,10 +2479,6 @@ export class PortalsCoreService extends BaseService {
 
 			case "Delete":
 				Site.instances.remove(message.Data.ID);
-				break;
-
-			case "Get":
-			case "Search":
 				break;
 
 			default:
@@ -2706,10 +2669,6 @@ export class PortalsCoreService extends BaseService {
 				Module.instances.remove(message.Data.ID);
 				break;
 
-			case "Get":
-			case "Search":
-				break;
-
 			default:
 				this.showLog("Got an update message of a module", message);
 				break;
@@ -2887,10 +2846,6 @@ export class PortalsCoreService extends BaseService {
 				}
 				break;
 
-			case "Get":
-			case "Search":
-				break;
-
 			default:
 				this.showLog("Got an update message of a content type", message);
 				break;
@@ -3055,10 +3010,6 @@ export class PortalsCoreService extends BaseService {
 				if (Expression.contains(message.Data.ID)) {
 					Expression.instances.remove(message.Data.ID);
 				}
-				break;
-
-			case "Get":
-			case "Search":
 				break;
 
 			default:
