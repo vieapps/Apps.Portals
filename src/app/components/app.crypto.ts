@@ -12,11 +12,11 @@ export class AppCrypto {
 	private static _jwt: string;
 
 	/** Stringifies an object to JSON string */
-	public static stringify(obj: any, preProcess?: (obj: any) => void) {
-		if (preProcess !== undefined) {
-			preProcess(obj);
+	public static stringify(object: any, preparer?: (object: any) => void) {
+		if (preparer !== undefined) {
+			preparer(object);
 		}
-		return JSON.stringify(obj || {}, (_, value) => typeof value === "undefined" ? null : value instanceof Set || value instanceof Map ? Array.from(value.entries()) : value);
+		return JSON.stringify(object || {}, (_, value) => typeof value === "undefined" ? null : value instanceof Set || value instanceof Map ? Array.from(value.entries()) : value);
 	}
 
 	/** Gets MD5 hash of the string */
@@ -25,8 +25,8 @@ export class AppCrypto {
 	}
 
 	/** Gets MD5 hash of the object */
-	public static hash(obj: any, preProcess?: (obj: any) => void) {
-		return this.md5(this.stringify(obj, preProcess));
+	public static hash(object: any, preparer?: (object: any) => void) {
+		return this.md5(this.stringify(object, preparer));
 	}
 
 	/** Signs the string with the specified key using HMAC SHA256 */
@@ -89,11 +89,11 @@ export class AppCrypto {
 	}
 
 	/** Encodes the JSON Web Token */
-	public static jwtEncode(jwt: any, key?: string, updateIssuedAt: boolean = true) {
+	public static jwtEncode(payload: any, key?: string, updateIssuedAt: boolean = true) {
 		if (updateIssuedAt) {
-			jwt.iat = Math.round(+new Date() / 1000);
+			payload.iat = Math.round(+new Date() / 1000);
 		}
-		const encoded = `${this.jsonEncode({ typ: "JWT", alg: "HS256" })}.${this.jsonEncode(jwt)}`;
+		const encoded = `${this.jsonEncode({ typ: "JWT", alg: "HS256" })}.${this.jsonEncode(payload)}`;
 		return `${encoded}.${this.sign(encoded, key || this._jwt)}`;
 	}
 

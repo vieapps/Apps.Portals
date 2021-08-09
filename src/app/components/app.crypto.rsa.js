@@ -1,4 +1,7 @@
-/* RSAjs - by David Shapiro & Eric Wilde (http://www.ohdave.com/rsa) */
+/** 
+ * RSAjs - Encrypts and Decrypts text data using RSA
+ * by David Shapiro & Eric Wilde (http://www.ohdave.com/rsa)
+*/
 export var RSA = function () {
 	var biRadixBase = 2;
 	var biRadixBits = 16;
