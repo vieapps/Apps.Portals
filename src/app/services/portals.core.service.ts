@@ -556,7 +556,12 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public getPermanentURL(object: CmsBaseModel) {
-		return `${this.configSvc.appConfig.URIs.portals}_permanentlink/${object.RepositoryEntityID}/${object.ID}`;
+		const organization = object.organization;
+		const site = (organization !== undefined ? Site.instances.toArray(s => s.SystemID === organization.ID).sortBy("Title") : []).firstOrDefault();
+		const url = site !== undefined
+			? `http${site.AlwaysUseHTTPs ? "s" : ""}://${site.SubDomain.replace("*", "www")}.${site.PrimaryDomain}/`
+			: this.configSvc.appConfig.URIs.portals;
+		return `${url}_permanentlink/${object.RepositoryEntityID}/${object.ID}`;
 	}
 
 	public getPaginationPrefix(objectName: string) {
@@ -1311,23 +1316,17 @@ export class PortalsCoreService extends BaseService {
 
 		if (this.configSvc.isAuthenticated) {
 			const account = this.configSvc.getAccount();
-			const isSystemAdministrator = this.authSvc.isSystemAdministrator(account);
-			const canManageOrganization = isSystemAdministrator || this.canManageOrganization(this.activeOrganization, account);
+			const canManageOrganization = this.authSvc.isSystemAdministrator(account) || this.canManageOrganization(this.activeOrganization, account);
 			const canModerateOrganization = canManageOrganization || this.canModerateOrganization(this.activeOrganization, account);
 
-			if (isSystemAdministrator) {
+			if (canManageOrganization) {
 				items.push(
 					{
 						title: "{{portals.sidebar.logs}}",
 						link: "/logs",
 						direction: "root",
 						icon: { name: "file-tray-full" }
-					}
-				);
-			}
-
-			if (canManageOrganization) {
-				items.push(
+					},
 					{
 						title: "{{portals.sidebar.organizations}}",
 						link: this.getRouterLink(undefined, "list", "all", "organization", "core"),
@@ -1466,12 +1465,7 @@ export class PortalsCoreService extends BaseService {
 			this.getSearchingPath("organization", this.configSvc.relatedQuery),
 			request,
 			data => this.processOrganizations(data, onSuccess),
-			error => {
-				console.error(this.getError("Error occurred while searching organization(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching organizations", error, onError)
 		);
 	}
 
@@ -1480,12 +1474,7 @@ export class PortalsCoreService extends BaseService {
 			this.getSearchingPath("organization", this.configSvc.relatedQuery),
 			request,
 			data => this.processOrganizations(data, onSuccess),
-			error => {
-				console.error(this.getError("Error occurred while searching organization(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching organizations", error, onError)
 		);
 	}
 
@@ -1499,12 +1488,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while creating new organization", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while creating new an organization", error, onError)
 		);
 	}
 
@@ -1531,12 +1515,7 @@ export class PortalsCoreService extends BaseService {
 						onSuccess(data);
 					}
 				},
-				error => {
-					console.error(this.getError("Error occurred while getting an organization", error));
-					if (onError !== undefined) {
-						onError(error);
-					}
-				},
+				error => this.processError("Error occurred while getting an organization", error, onError),
 				undefined,
 				useXHR
 			);
@@ -1561,12 +1540,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while updating an organization", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while updating an organization", error, onError)
 		);
 	}
 
@@ -1579,12 +1553,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while deleting an organization", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while deleting an organization", error, onError)
 		);
 	}
 
@@ -1667,12 +1636,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching role(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching roles", error, onError)
 		);
 	}
 
@@ -1696,12 +1660,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching role(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching roles", error, onError)
 		);
 	}
 
@@ -1715,12 +1674,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while creating new role", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while creating new a role", error, onError)
 		);
 	}
 
@@ -1740,12 +1694,7 @@ export class PortalsCoreService extends BaseService {
 						onSuccess(data);
 					}
 				},
-				error => {
-					console.error(this.getError("Error occurred while getting a role", error));
-					if (onError !== undefined) {
-						onError(error);
-					}
-				},
+				error => this.processError("Error occurred while getting a role", error, onError),
 				undefined,
 				useXHR
 			);
@@ -1763,12 +1712,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while updating a role", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while updating a role", error, onError)
 		);
 	}
 
@@ -1782,12 +1726,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while deleting a role", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
+			error => this.processError("Error occurred while deleting a role", error, onError),
 			headers
 		);
 	}
@@ -1905,12 +1844,7 @@ export class PortalsCoreService extends BaseService {
 			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
 			request,
 			data => this.processDesktops(data, onSuccess),
-			error => {
-				console.error(this.getError("Error occurred while searching desktop(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching desktops", error, onError)
 		);
 	}
 
@@ -1919,12 +1853,7 @@ export class PortalsCoreService extends BaseService {
 			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
 			request,
 			data => this.processDesktops(data, onSuccess),
-			error => {
-				console.error(this.getError("Error occurred while searching desktop(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching desktops", error, onError)
 		);
 	}
 
@@ -1938,12 +1867,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while creating new desktop", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while creating new a desktop", error, onError)
 		);
 	}
 
@@ -1966,12 +1890,7 @@ export class PortalsCoreService extends BaseService {
 						onSuccess(data);
 					}
 				},
-				error => {
-					console.error(this.getError("Error occurred while getting a desktop", error));
-					if (onError !== undefined) {
-						onError(error);
-					}
-				},
+				error => this.processError("Error occurred while getting a desktop", error, onError),
 				undefined,
 				useXHR
 			);
@@ -1989,12 +1908,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while updating a desktop", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
+			error => this.processError("Error occurred while updating a desktop", error, onError),
 			headers
 		);
 	}
@@ -2009,12 +1923,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while deleting a desktop", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
+			error => this.processError("Error occurred while deleting a desktop", error, onError),
 			headers
 		);
 	}
@@ -2156,12 +2065,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching portlet(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching portlets", error, onError)
 		);
 	}
 
@@ -2181,12 +2085,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching portlet(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
+			error => this.processError("Error occurred while searching portlets", error, onError),
 			dontProcessPagination,
 			useXHR
 		);
@@ -2202,12 +2101,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while creating new portlet", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while creating new a portlet", error, onError)
 		);
 	}
 
@@ -2226,12 +2120,7 @@ export class PortalsCoreService extends BaseService {
 						onSuccess(data);
 					}
 				},
-				error => {
-					console.error(this.getError("Error occurred while getting a portlet", error));
-					if (onError !== undefined) {
-						onError(error);
-					}
-				},
+				error => this.processError("Error occurred while getting a portlet", error, onError),
 				undefined,
 				useXHR
 			);
@@ -2248,12 +2137,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while updating a portlet", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
+			error => this.processError("Error occurred while updating a portlet", error, onError),
 			headers,
 			useXHR
 		);
@@ -2268,12 +2152,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while deleting a portlet", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while deleting a portlet", error, onError)
 		);
 	}
 
@@ -2353,12 +2232,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching site(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching sites", error, onError)
 		);
 	}
 
@@ -2378,12 +2252,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching site(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching sites", error, onError)
 		);
 	}
 
@@ -2397,12 +2266,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while creating new site", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while creating new a site", error, onError)
 		);
 	}
 
@@ -2421,12 +2285,7 @@ export class PortalsCoreService extends BaseService {
 						onSuccess(data);
 					}
 				},
-				error => {
-					console.error(this.getError("Error occurred while getting a site", error));
-					if (onError !== undefined) {
-						onError(error);
-					}
-				},
+				error => this.processError("Error occurred while getting a site", error, onError),
 				undefined,
 				useXHR
 			);
@@ -2443,12 +2302,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while updating a site", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while updating a site", error, onError)
 		);
 	}
 
@@ -2461,12 +2315,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while deleting a site", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while deleting a site", error, onError)
 		);
 	}
 
@@ -2525,12 +2374,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching module(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching modules", error, onError)
 		);
 	}
 
@@ -2550,12 +2394,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching module(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
+			error => this.processError("Error occurred while searching modules", error, onError),
 			dontProcessPagination,
 			useXHR,
 			headers
@@ -2575,12 +2414,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while creating new module", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while creating new a module", error, onError)
 		);
 	}
 
@@ -2606,12 +2440,7 @@ export class PortalsCoreService extends BaseService {
 						onSuccess(data);
 					}
 				},
-				error => {
-					console.error(this.getError("Error occurred while getting a module", error));
-					if (onError !== undefined) {
-						onError(error);
-					}
-				},
+				error => this.processError("Error occurred while getting a module", error, onError),
 				undefined,
 				useXHR
 			);
@@ -2631,12 +2460,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while updating a module", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while updating a module", error, onError)
 		);
 	}
 
@@ -2649,12 +2473,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while deleting a module", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while deleting a module", error, onError)
 		);
 	}
 
@@ -2713,12 +2532,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching content type(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching content-types", error, onError)
 		);
 	}
 
@@ -2738,12 +2552,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching content-type(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
+			error => this.processError("Error occurred while searching content-types", error, onError),
 			false,
 			useXHR
 		);
@@ -2759,12 +2568,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while creating new content type", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while creating new a content type", error, onError)
 		);
 	}
 
@@ -2783,12 +2587,7 @@ export class PortalsCoreService extends BaseService {
 						onSuccess(data);
 					}
 				},
-				error => {
-					console.error(this.getError("Error occurred while getting a content type", error));
-					if (onError !== undefined) {
-						onError(error);
-					}
-				},
+				error => this.processError("Error occurred while getting a content type", error, onError),
 				undefined,
 				useXHR
 			);
@@ -2805,12 +2604,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while updating a content type", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while updating a content type", error, onError)
 		);
 	}
 
@@ -2823,12 +2617,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while deleting a content type", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while deleting a content type", error, onError)
 		);
 	}
 
@@ -2886,12 +2675,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching expression(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching expressions", error, onError)
 		);
 	}
 
@@ -2907,12 +2691,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching expression(s)", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching expressions", error, onError)
 		);
 	}
 
@@ -2926,12 +2705,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while creating new expression", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while creating new an expression", error, onError)
 		);
 	}
 
@@ -2950,12 +2724,7 @@ export class PortalsCoreService extends BaseService {
 						onSuccess(data);
 					}
 				},
-				error => {
-					console.error(this.getError("Error occurred while getting an expression", error));
-					if (onError !== undefined) {
-						onError(error);
-					}
-				},
+				error => this.processError("Error occurred while getting an expression", error, onError),
 				undefined,
 				useXHR
 			);
@@ -2972,12 +2741,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while updating an expression", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while updating an expression", error, onError)
 		);
 	}
 
@@ -2990,12 +2754,7 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while deleting an expression", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while deleting an expression", error, onError)
 		);
 	}
 
@@ -3265,12 +3024,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async approveAsync(entityInfo: string, id: string, currentStatus: string, availableStatuses: string[], useXHR: boolean = false) {
 		const title = await this.configSvc.getResourceAsync("common.buttons.moderate");
-		const statuses = availableStatuses.map(status => {
-			return {
-				label: "",
-				value: status
-			};
-		});
+		const statuses = availableStatuses.map(status => ({ label: "", value: status }));
 		await Promise.all(statuses.map(async status => status.label = await this.configSvc.getResourceAsync(`portals.common.approval.${status.value}`)));
 		if (statuses.findIndex(status => status.value === "Published") > 0) {
 			statuses.find(status => status.value === "Pending").label = await this.configSvc.getResourceAsync("portals.common.approval.Pending2");
@@ -3283,9 +3037,7 @@ export class PortalsCoreService extends BaseService {
 				await this.appFormsSvc.showLoadingAsync(title);
 				await this.readAsync(
 					this.getPath("approve", id),
-					async _ => {
-						await this.appFormsSvc.showAlertAsync(title, await this.configSvc.getResourceAsync("portals.common.approval.message", { status: await this.configSvc.getResourceAsync(`status.approval.${status}`) }));
-					},
+					async _ => await this.appFormsSvc.showAlertAsync(title, await this.configSvc.getResourceAsync("portals.common.approval.message", { status: await this.configSvc.getResourceAsync(`status.approval.${status}`) })),
 					async error => await this.appFormsSvc.showErrorAsync(error),
 					{
 						"x-entity": entityInfo,
@@ -3296,14 +3048,12 @@ export class PortalsCoreService extends BaseService {
 			},
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel"),
-			statuses.map(status => {
-				return {
-					type: "radio",
-					label: status.label,
-					value: status.value,
-					checked: status.value === currentStatus
-				};
-			})
+			statuses.map(status => ({
+				type: "radio",
+				label: status.label,
+				value: status.value,
+				checked: status.value === currentStatus
+			}))
 		);
 	}
 
