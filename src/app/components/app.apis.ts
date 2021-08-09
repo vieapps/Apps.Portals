@@ -101,24 +101,15 @@ export class AppAPIs {
 
 	/**
 		* Gets the headers that include the authenticated headers
-		* @param data The initialize data, could be an object or an array of <name, value> key-value-pair
+		* @param data The initialize data, could be an object or an array of key-value pair
 	*/
 	public static getHeaders(data?: any) {
 		const headers = AppConfig.getAuthenticatedHeaders();
 		if (AppUtility.isArray(data, true)) {
-			(data as Array<any>).forEach(header => {
-				if (AppUtility.isObject(header, true) && AppUtility.isNotEmpty(header.name) && AppUtility.isNotEmpty(header.value)) {
-					headers[header.name as string] = header.value as string;
-				}
-			});
+			(data as Array<{ key: any; value: any; }>).filter(kvp => AppUtility.isObject(kvp, true) && AppUtility.isNotNull(kvp.key) && AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
 		}
 		else if (AppUtility.isObject(data, true)) {
-			AppUtility.getAttributes(data).forEach(name => {
-				const value = data[name];
-				if (AppUtility.isNotNull(value)) {
-					headers[name] = value.toString();
-				}
-			});
+			AppUtility.toKeyValuePair(data, kvp => AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key] = kvp.value.toString());
 		}
 		return headers;
 	}

@@ -425,13 +425,9 @@ export class AppUtility {
 	}
 
 	/** Converts the objects' properties to array of key-value pair */
-	public static toKeyValuePair(object: any) {
-		return this.getAttributes(object).map(attribute => {
-			return {
-				key: attribute,
-				value: object[attribute]
-			};
-		});
+	public static toKeyValuePair(object: any, predicate?: (kvp: { key: string; value: any; }) => boolean) {
+		const keyvaluePairs = this.getAttributes(object).map(attribute => ({ key: attribute, value: object[attribute] }));
+		return predicate !== undefined ? keyvaluePairs.filter(predicate) : keyvaluePairs;
 	}
 
 	/** Converts the string/object to an array of strings/key-value pair/value of objects' properties */
