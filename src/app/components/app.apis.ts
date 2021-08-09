@@ -237,16 +237,14 @@ export class AppAPIs {
 		if (this._serviceScopeSubject === undefined) {
 			this._serviceScopeSubject = new Subject<{ service: string, message: AppMessage }>();
 			this._serviceScopeSubject.subscribe(
-				({ service, message }) => {
-					this.getServiceHandlers(service).forEach(handler => {
-						try {
-							handler.func(message);
-						}
-						catch (error) {
-							console.error(`[AppAPIs]: Error occurred while running a handler (${handler.identity})`, error);
-						}
-					});
-				},
+				({ service, message }) => this.getServiceHandlers(service).forEach(handler => {
+					try {
+						handler.func(message);
+					}
+					catch (error) {
+						console.error(`[AppAPIs]: Error occurred while running a handler (${handler.identity})`, error);
+					}
+				}),
 				error => console.error(`[AppAPIs]: Got an error while processing data with handlers => ${AppUtility.getErrorMessage(error)}`, error)
 			);
 		}
@@ -254,16 +252,14 @@ export class AppAPIs {
 		if (this._objectScopeSubject === undefined) {
 			this._objectScopeSubject = new Subject<{ service: string, object: string, message: AppMessage }>();
 			this._objectScopeSubject.subscribe(
-				({ service, object, message }) => {
-					this.getObjectHandlers(service, object).forEach(handler => {
-						try {
-							handler.func(message);
-						}
-						catch (error) {
-							console.error(`[AppAPIs]: Error occurred while running a handler (${handler.identity})`, error);
-						}
-					});
-				},
+				({ service, object, message }) => this.getObjectHandlers(service, object).forEach(handler => {
+					try {
+						handler.func(message);
+					}
+					catch (error) {
+						console.error(`[AppAPIs]: Error occurred while running a handler (${handler.identity})`, error);
+					}
+				}),
 				error => console.error(`[AppAPIs]: Got an error while processing data with handlers => ${AppUtility.getErrorMessage(error)}`, error)
 			);
 		}
