@@ -155,12 +155,10 @@ if (!Array.prototype.intersect) {
 if (!Array.prototype.compareFn) {
 	Array.prototype.compareFn = function<T>(this: T[], sorts: Array<{ name: string, reverse?: boolean, transformer?: (value: any) => any }>): (a: T, b: T) => number {
 		const compareFn = (a: any, b: any): number => a === b ? 0 : a < b ? -1 : 1;
-		const sortBy = sorts.map(sort => {
-			return {
-				name: sort.name,
-				compare: (a: any, b: any) => (sort.reverse ? -1 : 1) * (sort.transformer !== undefined ? compareFn(sort.transformer(a), sort.transformer(b)) : compareFn(a, b))
-			};
-		});
+		const sortBy = sorts.map(sort => ({
+			name: sort.name,
+			compare: (a: any, b: any) => (sort.reverse ? -1 : 1) * (sort.transformer !== undefined ? compareFn(sort.transformer(a), sort.transformer(b)) : compareFn(a, b))
+		}));
 		return (a: T, b: T) => {
 			let result = 0;
 			for (let index = 0; index < sortBy.length; index++) {
@@ -184,19 +182,18 @@ if (!Array.prototype.orderBy) {
 if (!Array.prototype.sortBy) {
 	Array.prototype.sortBy = function<T>(this: T[], ...sorts: Array<string | { name: string, reverse?: boolean, transformer?: (value: any) => any }>): T[] {
 		return this.orderBy(sorts !== undefined && sorts.length > 0
-			? (sorts as Array<any>).filter(sort => sort !== undefined && sort !== null).map(sort => {
-					return typeof sort === "string"
-						? {
-								name: sort as string,
-								reverse: false,
-								transformer: undefined as (value: any) => any
-							}
-						: {
-								name: sort.name as string,
-								reverse: true === sort.reverse,
-								transformer: sort.transformer as (value: any) => any
-							};
-				})
+			? (sorts as Array<any>).filter(sort => sort !== undefined && sort !== null).map(sort => typeof sort === "string"
+					? ({
+							name: sort as string,
+							reverse: false,
+							transformer: undefined as (value: any) => any
+						})
+					: ({
+							name: sort.name as string,
+							reverse: true === sort.reverse,
+							transformer: sort.transformer as (value: any) => any
+						})
+				)
 			: undefined
 		);
 	};
