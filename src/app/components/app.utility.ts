@@ -311,28 +311,28 @@ export class AppUtility {
 
 	/**
 	 * Cleans undefined properties from the object
-	 * @param obj The instance of an object to process
+	 * @param object The instance of an object to process
 	 * @param excluded The collection of excluded properties are not be deleted event value is undefined
 	 * @param onCompleted The handler to run when cleaning process is completed
 	*/
-	public static clean<T>(obj: T, excluded?: Array<string>, onCompleted?: (obj: T) => void) {
-		this.getProperties(obj).forEach(info => {
-			if (this.isNull(obj[info.name])) {
+	public static clean<T>(object: T, excluded?: Array<string>, onCompleted?: (obj: T) => void) {
+		this.getProperties(object).forEach(info => {
+			if (this.isNull(object[info.name])) {
 				if (excluded === undefined || excluded.indexOf(info.name) < 0) {
-					delete obj[info.name];
+					delete object[info.name];
 				}
 			}
-			else if (this.isObject(obj[info.name])) {
-				this.clean(obj[info.name], excluded);
-				if (this.getProperties(obj[info.name]).length < 1) {
-					delete obj[info.name];
+			else if (this.isObject(object[info.name])) {
+				this.clean(object[info.name], excluded);
+				if (this.getProperties(object[info.name]).length < 1) {
+					delete object[info.name];
 				}
 			}
 		});
 		if (onCompleted !== undefined) {
-			onCompleted(obj);
+			onCompleted(object);
 		}
-		return obj;
+		return object;
 	}
 
 	/**
@@ -439,11 +439,8 @@ export class AppUtility {
 		if (this.isArray(object)) {
 			return object as Array<any>;
 		}
-		else if (object instanceof Set) {
-			return Array.from((object as Set<any>).values());
-		}
-		else if (object instanceof Map) {
-			return Array.from((object as Map<any, any>).values());
+		else if (object instanceof Set || object instanceof Map) {
+			return Array.from(object.values());
 		}
 		else if (this.isNotEmpty(object)) {
 			const array = this.indexOf(object as string, this.isNotEmpty(separator) ? separator : ",") > 0
