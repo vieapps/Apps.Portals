@@ -613,16 +613,14 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	/** Sets the values for displaying of this lookup control */
 	set lookupDisplayValues(values: Array<AppFormsLookupValue>) {
 		this.control.Extras["LookupDisplayValues"] = AppUtility.isArray(values, true)
-			? values.map(value => {
-					return {
-						Value: value["Value"],
-						Label: value["Label"],
-						Description: value["Description"] || value["Summary"],
-						Image: value["Image"],
-						Extras: value["Extras"],
-						Children: value["Children"]
-					};
-				})
+			? values.map(value => ({
+					Value: value["Value"],
+					Label: value["Label"],
+					Description: value["Description"] || value["Summary"],
+					Image: value["Image"],
+					Extras: value["Extras"],
+					Children: value["Children"]
+				}))
 			: AppUtility.isObject(values, true)
 				? [{
 						Value: values["Value"],
@@ -1016,12 +1014,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			};
 			const hosts = this.control.Extras["ckEditorTrustedHosts"];
 			if (AppUtility.isArray(hosts, true)) {
-				(hosts as Array<string>).filter(host => AppUtility.isNotEmpty(host)).forEach(host => {
-					this._ckEditorConfig.mediaEmbed.extraProviders.push({
-						name: host,
-						url: AppUtility.toRegExp(`/^${host}/`)
-					});
-				});
+				(hosts as Array<string>).filter(host => AppUtility.isNotEmpty(host)).forEach(host => this._ckEditorConfig.mediaEmbed.extraProviders.push({
+					name: host,
+					url: AppUtility.toRegExp(`/^${host}/`)
+				}));
 			}
 			const linkSelector = this.control.Extras["ckEditorLinkSelector"];
 			if (AppUtility.isObject(linkSelector, true) && (AppUtility.isObject(linkSelector.content, true) || AppUtility.isObject(linkSelector.file, true))) {
