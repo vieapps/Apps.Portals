@@ -36,6 +36,7 @@ export class AppAPIs {
 	private static _onWebSocketClosed: (event: CloseEvent) => void;
 	private static _onWebSocketGotError: (event: Event) => void;
 	private static _onWebSocketGotMessage: (event: MessageEvent) => void;
+	private static _onResendWebSocketMessages: () => void;
 	private static _messageTypes: { [key: string]: { Service: string; Object?: string; Event?: string; } } = {};
 	private static _serviceScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
 	private static _objectScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
@@ -48,6 +49,7 @@ export class AppAPIs {
 	private static _ping: number;
 	private static _counter = 0;
 	private static _attempt = 0;
+	private static _resendID: string;
 	private static _http: HttpClient;
 
 	/** Sets the action to fire when the WebSocket connection is opened */
@@ -111,7 +113,7 @@ export class AppAPIs {
 			});
 		}
 		else if (AppUtility.isObject(data, true)) {
-			Object.keys(data).forEach(name => {
+			AppUtility.getAttributes(data).forEach(name => {
 				const value = data[name];
 				if (AppUtility.isNotNull(value)) {
 					headers[name] = value.toString();
@@ -346,7 +348,14 @@ export class AppAPIs {
 			}
 			catch (error) {
 				console.error("[AppAPIs]: Error occurred while parsing the message", error instanceof SyntaxError ? "" : error);
-				this.reupdateWebSocket();
+				const totalQueuedMessages = AppUtility.getAttributes(this._callbackableMessages).length;
+				if (totalQueuedMessages > 0) {
+					const defer = Math.round(1234 + totalQueuedMessages + (345 * totalQueuedMessages * Math.random()));
+					if (AppConfig.isDebug) {
+						console.log(`[AppAPIs]: Callbackable queue still got ${totalQueuedMessages} message(s) - resend in ${defer}ms`);
+					}
+					AppUtility.invoke(() => this.resendWebSocketMessages(), defer);
+				}
 				return;
 			}
 
@@ -448,10 +457,23 @@ export class AppAPIs {
 					this.broadcast(message);
 				}
 			}
+
+			// resend queued callbackable messages
+			if (this._onResendWebSocketMessages !== undefined) {
+				if (AppUtility.isGotData(this._callbackableMessages)) {
+					AppUtility.invoke(() => (this._onResendWebSocketMessages || (() => {}))(), Math.round(1234 + (123 * Math.random())));
+				}
+				else {
+					this._resendID = undefined;
+					this._onResendWebSocketMessages = undefined;
+				}
+			}
 		};
 
 		// callback when done
-		AppUtility.invoke(onOpened, this.isWebSocketReady ? 13 : 567);
+		if (onOpened !== undefined) {
+			AppUtility.invoke(onOpened, this.isWebSocketReady ? 13 : 567);
+		}
 	}
 
 	private static destroyWebSocket() {
@@ -490,17 +512,9 @@ export class AppAPIs {
 		}
 	}
 
-	private static reupdateWebSocket() {
-		const id = Object.keys(this._callbackableMessages).sort().firstOrDefault();
-		if (AppUtility.isNotEmpty(id)) {
-			this._websocket.send(this._callbackableMessages[id]);
-			AppUtility.invoke(() => this.reupdateWebSocket(), 789);
-		}
-	}
-
 	private static updateWebSocket(options?: { message?: string; resendCallbackMessages?: boolean } ) {
 		// send all 'no callback' requests
-		Object.keys(this._nocallbackMessages).sort().forEach(id => this._websocket.send(this._nocallbackMessages[id]));
+		AppUtility.getAttributes(this._nocallbackMessages).sort().forEach(id => this._websocket.send(this._nocallbackMessages[id]));
 		this._nocallbackMessages = {};
 
 		// send the message
@@ -510,7 +524,7 @@ export class AppAPIs {
 
 		// resend all 'callback' requests
 		if (options !== undefined && options.resendCallbackMessages) {
-			this.reupdateWebSocket();
+			this.resendWebSocketMessages();
 		}
 	}
 
@@ -539,6 +553,30 @@ export class AppAPIs {
 		});
 		if (this.isWebSocketReady) {
 			this.updateWebSocket({ resendCallbackMessages: true });
+		}
+	}
+
+	private static resendWebSocketMessages() {
+		this._onResendWebSocketMessages = undefined;
+		const ids = AppUtility.getAttributes(this._callbackableMessages);
+		const id = ids.sort().firstOrDefault();
+		if (id !== undefined) {
+			this._resendID = id;
+			this._websocket.send(this._callbackableMessages[id]);
+			if (ids.length > 1) {
+				this._onResendWebSocketMessages = () => {
+					if (this._resendID !== AppUtility.getAttributes(this._callbackableMessages).sort().firstOrDefault()) {
+						this.resendWebSocketMessages();
+					}
+					else {
+						this._resendID = undefined;
+						this._onResendWebSocketMessages = undefined;
+					}
+				};
+			}
+		}
+		else {
+			this._resendID = undefined;
 		}
 	}
 
