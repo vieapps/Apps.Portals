@@ -341,7 +341,7 @@ export class AppAPIs {
 				console.error("[AppAPIs]: Error occurred while parsing the message", error instanceof SyntaxError ? "" : error);
 				const totalQueuedMessages = AppUtility.getAttributes(this._callbackableMessages).length;
 				if (totalQueuedMessages > 0) {
-					const defer = Math.round(1234 + totalQueuedMessages + (345 * totalQueuedMessages * Math.random()));
+					const defer = Math.round(789 + totalQueuedMessages + (123 * totalQueuedMessages * Math.random()));
 					if (AppConfig.isDebug) {
 						console.log(`[AppAPIs]: Callbackable queue still got ${totalQueuedMessages} message(s) - resend in ${defer}ms`);
 					}
@@ -452,7 +452,7 @@ export class AppAPIs {
 			// resend queued callbackable messages
 			if (this._onResendWebSocketMessages !== undefined) {
 				if (AppUtility.isGotData(this._callbackableMessages)) {
-					AppUtility.invoke(() => (this._onResendWebSocketMessages || (() => {}))(), Math.round(1234 + (123 * Math.random())));
+					AppUtility.invoke(() => (this._onResendWebSocketMessages || (() => {}))(), Math.round(789 + (123 * Math.random())));
 				}
 				else {
 					this._resendID = undefined;
@@ -549,8 +549,10 @@ export class AppAPIs {
 		const ids = AppUtility.getAttributes(this._callbackableMessages);
 		const id = ids.sort().firstOrDefault();
 		if (id !== undefined) {
-			this._resendID = id;
-			this._websocket.send(this._callbackableMessages[id]);
+			if (id !== this._resendID) {
+				this._resendID = id;
+				this._websocket.send(this._callbackableMessages[id]);
+			}
 			if (ids.length > 1) {
 				this._onResendWebSocketMessages = () => {
 					if (this._resendID !== AppUtility.getAttributes(this._callbackableMessages).sort().firstOrDefault()) {
