@@ -485,9 +485,9 @@ export class AppAPIs {
 
 	/** Closes the WebSocket connection */
 	public static closeWebSocket(onClosed?: () => void) {
+		this.destroyWebSocket();
 		this._websocketURL = undefined;
 		this._websocketStatus = "close";
-		this.destroyWebSocket();
 		if (onClosed !== undefined) {
 			onClosed();
 		}
@@ -513,7 +513,7 @@ export class AppAPIs {
 	}
 
 	private static updateWebSocket(options?: { message?: string; resendCallbackMessages?: boolean } ) {
-		// send all 'no callback' requests
+		// send all 'no callback' messages
 		AppUtility.getAttributes(this._nocallbackMessages).sort().forEach(id => this._websocket.send(this._nocallbackMessages[id]));
 		this._nocallbackMessages = {};
 
@@ -522,7 +522,7 @@ export class AppAPIs {
 			this._websocket.send(options.message);
 		}
 
-		// resend all 'callback' requests
+		// resend all 'callback' messages
 		if (options !== undefined && options.resendCallbackMessages) {
 			this.resendWebSocketMessages();
 		}
