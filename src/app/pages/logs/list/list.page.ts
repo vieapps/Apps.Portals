@@ -8,6 +8,7 @@ import { AppPagination, AppDataPagination } from "@app/components/app.pagination
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService, ServiceLog } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
 
 @Component({
 	selector: "page-logs-list",
@@ -21,6 +22,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
+		private portalsCoreSvc: PortalsCoreService,
 		private changeDetector: ChangeDetectorRef
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
@@ -76,7 +78,8 @@ export class LogsListPage implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		if (this.authSvc.isSystemAdministrator()) {
+		const account = this.configSvc.getAccount();
+		if (this.authSvc.isSystemAdministrator(account) || this.portalsCoreSvc.canManageOrganization(this.portalsCoreSvc.activeOrganization, account)) {
 			this.initializeAsync();
 		}
 		else {

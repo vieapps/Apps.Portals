@@ -2,6 +2,7 @@ import { Component, OnInit } from "@angular/core";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService, ServiceLog } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
 
 @Component({
 	selector: "page-logs-view",
@@ -14,7 +15,8 @@ export class LogsViewPage implements OnInit {
 	constructor(
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
-		private appFormsSvc: AppFormsService
+		private appFormsSvc: AppFormsService,
+		private portalsCoreSvc: PortalsCoreService
 	) {
 	}
 
@@ -26,7 +28,8 @@ export class LogsViewPage implements OnInit {
 	}
 
 	ngOnInit() {
-		if (this.authSvc.isSystemAdministrator()) {
+		const account = this.configSvc.getAccount();
+		if (this.authSvc.isSystemAdministrator(account) || this.portalsCoreSvc.canManageOrganization(this.portalsCoreSvc.activeOrganization, account)) {
 			this.prepareAsync();
 		}
 		else {
