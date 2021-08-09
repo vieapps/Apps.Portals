@@ -121,21 +121,20 @@ export class AppUtility {
 	}
 
 	/** Gets the collection of objects' attributes */
-	public static getAttributes(object: any) {
-		return Object.keys(object || {});
+	public static getAttributes(object: any, predicate?: (name: string) => boolean) {
+		return predicate !== undefined ? Object.keys(object || {}).filter(predicate) : Object.keys(object || {});
 	}
 
 	/** Gets their own properties of an object */
 	public static getProperties<T>(object: T, onlyWritable: boolean = false) {
-		const properties = new Array<{ name: string; info: PropertyDescriptor }>();
 		const ownProperties = Object.getOwnPropertyDescriptors(object);
-		this.getAttributes(ownProperties).forEach(name => properties.push({
+		const objProperties = this.getAttributes(ownProperties).map(name => ({
 			name: name,
 			info: ownProperties[name]
 		}));
 		return onlyWritable
-			? properties.filter(property => property.info.writable)
-			: properties;
+			? objProperties.filter(property => property.info.writable)
+			: objProperties;
 	}
 
 	/** Gets the sub-sequence the sequence that ordering by the random scoring number */
