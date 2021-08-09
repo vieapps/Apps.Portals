@@ -285,7 +285,7 @@ export class PortalsCmsService extends BaseService {
 
 	public getFileOptions(object: CmsBaseModel, onCompleted?: (fileOptions: FileOptions) => void) {
 		if (object !== undefined) {
-			const fileOptions = {
+			const fileOptions: FileOptions = {
 				ServiceName: this.name,
 				ObjectName: object.contentType.getObjectName(false),
 				SystemID: object.SystemID,
@@ -297,7 +297,7 @@ export class PortalsCmsService extends BaseService {
 				IsTracked: object.organization !== undefined && object.organization.TrackDownloadFiles,
 				IsTemporary: AppUtility.isNotEmpty(object.ID) ? false : true,
 				Extras: {}
-			} as FileOptions;
+			};
 			if (onCompleted !== undefined) {
 				onCompleted(fileOptions);
 			}
@@ -835,10 +835,6 @@ export class PortalsCmsService extends BaseService {
 				this.deleteCategory(message.Data.ID, message.Data.ParentID);
 				break;
 
-			case "Get":
-			case "Search":
-				break;
-
 			default:
 				this.showLog("Got an update message of a CMS category", message);
 				break;
@@ -1108,10 +1104,6 @@ export class PortalsCmsService extends BaseService {
 				Content.instances.remove(message.Data.ID);
 				break;
 
-			case "Get":
-			case "Search":
-				break;
-
 			default:
 				this.showLog("Got an update message of a CMS content", message);
 				break;
@@ -1303,10 +1295,6 @@ export class PortalsCmsService extends BaseService {
 
 			case "Delete":
 				Item.instances.remove(message.Data.ID);
-				break;
-
-			case "Get":
-			case "Search":
 				break;
 
 			default:
@@ -1508,10 +1496,6 @@ export class PortalsCmsService extends BaseService {
 
 			case "Delete":
 				this.deleteLink(message.Data.ID, message.Data.ParentID);
-				break;
-
-			case "Get":
-			case "Search":
 				break;
 
 			default:
