@@ -11,28 +11,28 @@ export class AppUtility {
 	];
 
 	/** Checks to see the object is boolean and equals to true */
-	public static isTrue(obj?: any) {
-		return obj !== undefined && typeof obj === "boolean" && obj === true;
+	public static isTrue(object?: any) {
+		return object !== undefined && typeof object === "boolean" && object === true;
 	}
 
 	/** Checks to see the object is boolean (or not defined) and equals to false */
-	public static isFalse(obj?: any) {
-		return obj === undefined || (typeof obj === "boolean" && obj === false);
+	public static isFalse(object?: any) {
+		return object === undefined || (typeof object === "boolean" && object === false);
 	}
 
 	/** Checks to see the object is really object or not */
-	public static isObject(obj?: any, notNull?: boolean) {
-		return obj !== undefined && typeof obj === "object" && (this.isTrue(notNull) ? obj !== null : true);
+	public static isObject(object?: any, notNull?: boolean) {
+		return object !== undefined && typeof object === "object" && (this.isTrue(notNull) ? object !== null : true);
 	}
 
 	/** Checks to see the object is array or not */
-	public static isArray(obj?: any, notNull?: boolean) {
-		return obj !== undefined && Array.isArray(obj) && (this.isTrue(notNull) ? obj !== null : true);
+	public static isArray(object?: any, notNull?: boolean) {
+		return object !== undefined && Array.isArray(object) && (this.isTrue(notNull) ? object !== null : true);
 	}
 
 	/** Checks to see the object is date or not */
-	public static isDate(obj?: any) {
-		return obj !== undefined && obj instanceof Date;
+	public static isDate(object?: any) {
+		return object !== undefined && object instanceof Date;
 	}
 
 	/** Gets the state that determines the email address is valid or not */
@@ -48,28 +48,34 @@ export class AppUtility {
 	}
 
 	/** Checks to see the object is null or not */
-	public static isNull(obj?: any) {
-		return obj === undefined || obj === null;
+	public static isNull(object?: any) {
+		return object === undefined || object === null;
 	}
 
 	/** Checks to see the object is defined and null or not */
-	public static isNotNull(obj?: any) {
-		return obj !== undefined && obj !== null;
+	public static isNotNull(object?: any) {
+		return object !== undefined && object !== null;
 	}
 
 	/** Checks to see the string is undefined or empty */
-	public static isEmpty(obj?: any) {
-		return this.isNull(obj) || (typeof obj === "string" && (obj as string).trim() === "");
+	public static isEmpty(object?: any) {
+		return this.isNull(object) || (typeof object === "string" && (object as string).trim() === "");
 	}
 
 	/** Checks to see the string is defined and not empty */
-	public static isNotEmpty(obj?: any) {
-		return this.isNotNull(obj) && typeof obj === "string" && (obj as string).trim() !== "";
+	public static isNotEmpty(object?: any) {
+		return this.isNotNull(object) && typeof object === "string" && (object as string).trim() !== "";
 	}
 
 	/** Compares two strings to see is equals or not */
 	public static isEquals(str1: string, str2: string) {
 		return this.isNotNull(str1) && this.isNotNull(str2) && str1.toLowerCase() === str2.toLowerCase();
+	}
+
+	/** Gets the state to determines the working browser is Apple Safari */
+	public static isAppleSafari(userAgent?: string) {
+		userAgent = userAgent || navigator.userAgent;
+		return userAgent.indexOf("Macintosh") > 0 && userAgent.indexOf("AppleWebKit") > 0 && userAgent.indexOf("Chrome") < 0 && userAgent.indexOf("Edge") < 0 && userAgent.indexOf("Edg") < 0;
 	}
 
 	/** Checks the error to see that is security exception or not */
@@ -99,10 +105,9 @@ export class AppUtility {
 			: false;
 	}
 
-	/** Gets the state to determines the working browser is Apple Safari */
-	public static isAppleSafari(userAgent?: string) {
-		userAgent = userAgent || navigator.userAgent;
-		return userAgent.indexOf("Macintosh") > 0 && userAgent.indexOf("AppleWebKit") > 0 && userAgent.indexOf("Chrome") < 0 && userAgent.indexOf("Edge") < 0 && userAgent.indexOf("Edg") < 0;
+	/** Gets the state to determines the object is got data or not (means the object has any attribute or not) */
+	public static isGotData(object: any, length: number = 1) {
+		return (this.isArray(object, true) ? object.length : this.getAttributes(object).length) >= length;
 	}
 
 	/** Gets the error message */
@@ -115,11 +120,16 @@ export class AppUtility {
 				: `Unexpected error: ${error}`;
 	}
 
+	/** Gets the collection of objects' attributes */
+	public static getAttributes(object: any) {
+		return Object.keys(object || {});
+	}
+
 	/** Gets their own properties of an object */
-	public static getProperties<T>(obj: T, onlyWritable: boolean = false) {
+	public static getProperties<T>(object: T, onlyWritable: boolean = false) {
 		const properties = new Array<{ name: string; info: PropertyDescriptor }>();
-		const ownProperties = Object.getOwnPropertyDescriptors(obj);
-		Object.keys(ownProperties).forEach(name => properties.push({
+		const ownProperties = Object.getOwnPropertyDescriptors(object);
+		this.getAttributes(ownProperties).forEach(name => properties.push({
 			name: name,
 			info: ownProperties[name]
 		}));
@@ -398,7 +408,7 @@ export class AppUtility {
 	/** Formats the mustache-style (double braces) template with params */
 	public static format(template: string, params: { [key: string]: any }) {
 		const parameters = (template.match(/{{([^{}]*)}}/g) || []).map(param => ({ token: param, name: param.match(/[\w\.]+/)[0] }));
-		Object.keys(params).forEach(key => {
+		this.getAttributes(params).forEach(key => {
 			const value: string = (params[key] || "").toString();
 			parameters.filter(parameter => parameter.name === key).forEach(parameter => template = template.replace(this.toRegExp(`/${parameter.token}/g`), value));
 		});
@@ -415,38 +425,40 @@ export class AppUtility {
 		return observable.toPromise();
 	}
 
+	/** Converts the objects' properties to array of key-value pair */
+	public static toKeyValuePair(object: any) {
+		return this.getAttributes(object).map(attribute => {
+			return {
+				key: attribute,
+				value: object[attribute]
+			};
+		});
+	}
+
 	/** Converts the string/object to an array of strings/key-value pair/value of objects' properties */
-	public static toArray(obj: any, separator?: any): Array<string> | Array<any> | Array<{ key: string, value: any }> {
-		if (this.isArray(obj)) {
-			return obj as Array<any>;
+	public static toArray(object: any, separator?: any): Array<string> | Array<any> | Array<{ key: string, value: any }> {
+		if (this.isArray(object)) {
+			return object as Array<any>;
 		}
-		else if (obj instanceof Set) {
-			return Array.from((obj as Set<any>).values());
+		else if (object instanceof Set) {
+			return Array.from((object as Set<any>).values());
 		}
-		else if (obj instanceof Map) {
-			return Array.from((obj as Map<any, any>).values());
+		else if (object instanceof Map) {
+			return Array.from((object as Map<any, any>).values());
 		}
-		else if (this.isNotEmpty(obj)) {
-			const array = this.indexOf(obj as string, this.isNotEmpty(separator) ? separator : ",") > 0
-				? (obj as string).split(this.isNotEmpty(separator) ? separator : ",")
-				: [obj as string];
+		else if (this.isNotEmpty(object)) {
+			const array = this.indexOf(object as string, this.isNotEmpty(separator) ? separator : ",") > 0
+				? (object as string).split(this.isNotEmpty(separator) ? separator : ",")
+				: [object as string];
 			return array.map(element => this.isNotEmpty(element) ? element.trim() : "");
 		}
-		else if (this.isObject(obj, true)) {
-			if (this.isTrue(separator)) {
-				return Object.keys(obj).map(name => {
-					return {
-						key: name,
-						value: obj[name]
-					};
-				});
-			}
-			else {
-				return Object.keys(obj).map(name => obj[name]);
-			}
+		else if (this.isObject(object, true)) {
+			return this.isTrue(separator)
+				? this.toKeyValuePair(object)
+				: this.getAttributes(object).map(name => object[name]);
 		}
 		else {
-			return [obj];
+			return [object];
 		}
 	}
 
@@ -460,11 +472,11 @@ export class AppUtility {
 		return string;
 	}
 
-	/** Converts the object/json to query string */
-	public static toQuery(json: { [key: string]: any }) {
+	/** Converts the object to query string */
+	public static toQuery(object: { [key: string]: any }) {
 		try {
-			return this.isObject(json, true)
-				? this.toStr(Object.keys(json).map(name => `${name}=${encodeURIComponent(json[name])}`), "&")
+			return this.isObject(object, true)
+				? this.toStr(this.getAttributes(object).map(name => `${name}=${encodeURIComponent(object[name])}`), "&")
 				: "";
 		}
 		catch (error) {
