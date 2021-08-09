@@ -34,17 +34,16 @@ export class UsersService extends BaseService {
 			}
 		});
 		AppEvents.on("App", async info => {
-			if (AppUtility.isEquals(info.args.Type, "OptionsUpdated") && this.configSvc.isAuthenticated) {
+			if (info.args.Type === "OptionsUpdated" && this.configSvc.isAuthenticated) {
 				const profile = this.configSvc.getAccount().profile;
 				if (profile !== undefined) {
 					profile.Language = this.configSvc.appConfig.options.i18n;
 					profile.Options = this.configSvc.appConfig.options;
-					await this.updateProfileAsync(profile, async _ => {
-						await this.configSvc.storeSessionAsync();
+					await this.updateProfileAsync(profile, async _ => await this.configSvc.storeSessionAsync(() => {
 						if (this.configSvc.isDebug) {
 							console.log("[Users]: The account profiles' options are updated to APIs", profile);
 						}
-					});
+					}));
 				}
 			}
 		});
@@ -84,12 +83,7 @@ export class UsersService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching", error, onError)
 		);
 	}
 
@@ -109,12 +103,7 @@ export class UsersService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while searching", error, onError)
 		);
 	}
 
@@ -150,12 +139,7 @@ export class UsersService extends BaseService {
 			this.getPath("account", "invite", `uri=${this.configSvc.activateURL}&${this.configSvc.relatedQuery}`),
 			body,
 			onSuccess,
-			error => {
-				console.error(this.getError("Error occurred while sending an invitation", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while sending an invitation", error, onError)
 		);
 	}
 
@@ -169,12 +153,7 @@ export class UsersService extends BaseService {
 					onSuccess(data);
 				}
 			}),
-			error => {
-				console.error(this.getError(`Error occurred while activating (${mode})`, error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
+			error => this.showError(`Error occurred while activating (${mode})`, error, onError),
 			undefined,
 			true
 		);
@@ -196,15 +175,8 @@ export class UsersService extends BaseService {
 						onSuccess(data);
 					}
 				},
-				error => {
-					console.error(this.getError("Error occurred while reading profile", error));
-					if (onError !== undefined) {
-						onError(error);
-					}
-				},
-				{
-					"x-app": this.configSvc.appConfig.app.id
-				},
+				error => this.processError("Error occurred while reading profile", error, onError),
+				{ "x-app-id": this.configSvc.appConfig.app.id },
 				useXHR
 			);
 		}
@@ -220,12 +192,7 @@ export class UsersService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while updating profile", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while updating profile", error, onError)
 		);
 	}
 
@@ -237,12 +204,7 @@ export class UsersService extends BaseService {
 				Password: AppCrypto.rsaEncrypt(newPassword)
 			},
 			onSuccess,
-			error => {
-				console.error(this.getError("Error occurred while updating password", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while updating password", error, onError)
 		);
 	}
 
@@ -254,12 +216,7 @@ export class UsersService extends BaseService {
 				Email: AppCrypto.rsaEncrypt(newEmail)
 			},
 			onSuccess,
-			error => {
-				console.error(this.getError("Error occurred while updating email", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while updating email", error, onError)
 		);
 	}
 
@@ -267,12 +224,7 @@ export class UsersService extends BaseService {
 		await this.readAsync(
 			this.getPath("otp", undefined, `${AppUtility.isNotEmpty(query) ? `${query}&` : ""}${this.configSvc.relatedQuery}`),
 			onSuccess,
-			error => {
-				console.error(this.getError("Error occurred while preparing an 2FA method", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while preparing an 2FA method", error, onError)
 		);
 	}
 
@@ -284,15 +236,8 @@ export class UsersService extends BaseService {
 				OTP: otp
 			},
 			data => this.configSvc.updateAccount(data, onSuccess),
-			error => {
-				console.error(this.getError("Error occurred while adding an 2FA method", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
-			{
-				"x-password": AppCrypto.rsaEncrypt(password),
-			}
+			error => this.processError("Error occurred while adding an 2FA method", error, onError),
+			{ "x-password": AppCrypto.rsaEncrypt(password) }
 		);
 	}
 
@@ -300,15 +245,8 @@ export class UsersService extends BaseService {
 		await this.deleteAsync(
 			this.getPath("otp", undefined, `info=${info}&${this.configSvc.relatedQuery}`),
 			data => this.configSvc.updateAccount(data, onSuccess),
-			error => {
-				console.error(this.getError("Error occurred while deleting an 2FA method", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
-			{
-				"x-password": AppCrypto.rsaEncrypt(password),
-			}
+			error => this.processError("Error occurred while deleting an 2FA method", error, onError),
+			{ "x-password": AppCrypto.rsaEncrypt(password) }
 		);
 	}
 
@@ -322,12 +260,7 @@ export class UsersService extends BaseService {
 			await this.readAsync(
 				this.getPath("account", id, this.configSvc.relatedQuery),
 				data => this.configSvc.updateAccount(data, onSuccess, true),
-				error => {
-					console.error(this.getError("Error occurred while reading privileges", error));
-					if (onError !== undefined) {
-						onError(error);
-					}
-				}
+				error => this.processError("Error occurred while reading privileges", error, onError)
 			);
 		}
 	}
@@ -339,12 +272,7 @@ export class UsersService extends BaseService {
 				Privileges: AppCrypto.aesEncrypt(JSON.stringify(privileges))
 			},
 			data => this.configSvc.updateAccount(data, onSuccess, true),
-			error => {
-				console.error(this.getError("Error occurred while updating privileges", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			error => this.processError("Error occurred while updating privileges", error, onError)
 		);
 	}
 
@@ -365,9 +293,7 @@ export class UsersService extends BaseService {
 						if (AppUtility.isGotSecurityException(message.Data)) {
 							this.showLog("Revoke the session and register new when got a security issue", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 							await this.configSvc.resetSessionAsync(async () => await this.configSvc.initializeSessionAsync(async () =>
-								await this.configSvc.registerSessionAsync(() => {
-									AppAPIs.reopenWebSocket("Reopens when got a security issue");
-								})
+								await this.configSvc.registerSessionAsync(() => AppAPIs.reopenWebSocket("Reopens when got a security issue"))
 							), false);
 						}
 						else {
@@ -469,21 +395,6 @@ export class UsersService extends BaseService {
 			modified: this.datePipe.transform(lastModified, "h:mm a @ d/M/y")
 		};
 		return AppUtility.format(await this.configSvc.getResourceAsync("common.audits.info"), params);
-	}
-
-	public getAvatarURL(profile: UserProfile, noAvatar?: string) {
-		const avatar: string = AppUtility.isNotEmpty(profile.Avatar)
-			? profile.Avatar
-			: AppUtility.isNotEmpty(profile.Gravatar)
-				? profile.Gravatar
-				: "";
-		if (avatar === "") {
-			noAvatar = noAvatar || `${this.configSvc.appConfig.URIs.files}avatars/${this.configSvc.appConfig.url.host}-no-avatar.png`;
-			return AppUtility.isNotEmpty(profile.Email)
-				? `https://secure.gravatar.com/avatar/${AppCrypto.md5(profile.Email.toLowerCase().trim())}?s=300&d=${encodeURIComponent(noAvatar)}`
-				: noAvatar;
-		}
-		return avatar;
 	}
 
 }
