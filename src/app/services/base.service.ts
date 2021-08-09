@@ -79,26 +79,32 @@ export class Base {
 
 	/**
 		* Sends a request to APIs to perform an action of a specified service
-		* @param request The requesting information
+		* @param requestInfo The requesting information
 		* @param onSuccess The callback function to handle the returning data
 		* @param onError The callback function to handle the returning error
 		* @param useXHR Set to true to always use XHR
 	*/
-	protected sendRequest(request: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		request.Header = AppAPIs.getHeaders(request.Header);
-		return AppAPIs.sendRequest(request, useXHR, onSuccess, onError);
+	protected sendRequest(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		requestInfo.Header = AppAPIs.getHeaders(requestInfo.Header);
+		const subscription = useXHR
+			? AppAPIs.sendRequest(requestInfo).subscribe(onSuccess, onError)
+			: AppAPIs.sendRequest(requestInfo, false, onSuccess, onError).subscribe();
+		if (!useXHR) {
+			subscription.unsubscribe();
+		}
+		return subscription;
 	}
 
 	/**
 		* Sends a request to APIs to perform an action of a specified service
-		* @param request The requesting information
+		* @param requestInfo The requesting information
 		* @param onSuccess The callback function to handle the returning data
 		* @param onError The callback function to handle the returning error
 		* @param useXHR Set to true to always use XHR
 	*/
-	protected async sendRequestAsync(request: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		request.Header = AppAPIs.getHeaders(request.Header);
-		await AppAPIs.sendRequestAsync(request, onSuccess, onError, useXHR);
+	protected sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		requestInfo.Header = AppAPIs.getHeaders(requestInfo.Header);
+		return AppAPIs.sendRequestAsync(requestInfo, onSuccess, onError, useXHR);
 	}
 
 	/**
@@ -111,7 +117,12 @@ export class Base {
 		* @param headers The additional header
 	*/
 	protected search(path: string, request: any = {}, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }) {
-		return AppAPIs.sendXMLHttpRequest("GET", AppAPIs.getURL(AppUtility.format(path, { request: AppCrypto.jsonEncode(request) })), { headers: AppAPIs.getHeaders(headers) }).subscribe(
+		return this.sendRequest(
+			{
+				Path: AppUtility.format(path, { request: AppCrypto.jsonEncode(request) }),
+				Verb: "GET",
+				Header: headers
+			},
 			data => {
 				if (AppUtility.isFalse(dontProcessPagination)) {
 					const requestInfo = AppAPIs.parseRequestInfo(path);
@@ -121,7 +132,8 @@ export class Base {
 					onSuccess(data);
 				}
 			},
-			error => this.processError("Error occurred while searching", error, onError)
+			error => this.processError("Error occurred while searching", error, onError),
+			true
 		);
 	}
 
@@ -135,7 +147,7 @@ export class Base {
 		* @param useXHR Set to true to always use XHR, false to let system decides
 		* @param headers The additional header
 	*/
-	protected async searchAsync(path: string, request: any = {}, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false, headers?: { [header: string]: string }) {
+	protected searchAsync(path: string, request: any = {}, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false, headers?: { [header: string]: string }) {
 		const processPagination = AppUtility.isFalse(dontProcessPagination);
 		const requestInfo = processPagination ? AppAPIs.parseRequestInfo(path) : undefined;
 		const paginationPrefix = processPagination ? `${requestInfo.ObjectName}@${requestInfo.ServiceName}`.toLowerCase() : undefined;
@@ -150,7 +162,7 @@ export class Base {
 			if (request.Pagination !== undefined && request.Pagination.PageNumber !== undefined) {
 				request.Pagination.PageNumber++;
 			}
-			await this.sendRequestAsync(
+			return this.sendRequestAsync(
 				{
 					Path: AppUtility.format(path, { request: AppCrypto.jsonEncode(request) }),
 					Verb: "GET",
@@ -179,8 +191,8 @@ export class Base {
 		* @param headers The additional headers to send the request
 		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	protected async createAsync(path: string, body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
-		await this.sendRequestAsync(
+	protected createAsync(path: string, body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+		return this.sendRequestAsync(
 			{
 				Path: path,
 				Verb: "POST",
@@ -201,8 +213,8 @@ export class Base {
 		* @param headers The additional headers to send the request
 		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	protected async readAsync(path: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
-		await this.sendRequestAsync(
+	protected readAsync(path: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+		return this.sendRequestAsync(
 			{
 				Path: path,
 				Verb: "GET",
@@ -223,8 +235,8 @@ export class Base {
 		* @param headers The additional headers to send the request
 		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	protected async updateAsync(path: string, body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
-		await this.sendRequestAsync(
+	protected updateAsync(path: string, body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+		return this.sendRequestAsync(
 			{
 				Path: path,
 				Verb: "PUT",
@@ -245,8 +257,8 @@ export class Base {
 		* @param headers The additional headers to send the request
 		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	protected async deleteAsync(path: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
-		await this.sendRequestAsync(
+	protected deleteAsync(path: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+		return this.sendRequestAsync(
 			{
 				Path: path,
 				Verb: "DELETE",
@@ -265,8 +277,8 @@ export class Base {
 		* @param onError The callback function to handle the returning error
 		* @param headers The additional headers to send the request
 	*/
-	protected async fetchAsync(path: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await this.readAsync(path, onSuccess, onError, headers, true);
+	protected fetchAsync(path: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		return this.readAsync(path, onSuccess, onError, headers, true);
 	}
 
 	/** Broadcasts a message to all subscribers */
