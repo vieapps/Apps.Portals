@@ -528,14 +528,11 @@ export class AppAPIs {
 		}
 	}
 
-	private static canUseWebSocket(useXHR: boolean = false, checkPeriod: boolean = true) {
+	private static canUseWebSocket(useXHR: boolean = false) {
 		let can = !useXHR && this.isWebSocketReady;
-		if (can && checkPeriod) {
-			// ping period - 5 minutes
-			if (+new Date() - this.ping > 300000) {
-				can = false;
-				this.reopenWebSocket("[AppAPIs]: Ping period is too large...");
-			}
+		if (can && +new Date() - this.ping > 300000) {
+			can = false;
+			this.reopenWebSocket("[AppAPIs]: Ping period is too large...");
 		}
 		return can;
 	}
@@ -724,7 +721,7 @@ export class AppAPIs {
 	 * @param useXHR Set to true to always use XHR, false to let system decides
 	*/
 	public static async sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		if (this.canUseWebSocket(useXHR, false)) {
+		if (this.canUseWebSocket(useXHR)) {
 			this.sendRequest(requestInfo, false, onSuccess, onError);
 		}
 		else {
