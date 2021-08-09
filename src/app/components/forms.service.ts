@@ -563,17 +563,11 @@ export class AppFormsControl {
 				const selectValues = selectOptions.Values || selectOptions.values;
 				control.Options.SelectOptions = {
 					Values: AppUtility.isNotEmpty(selectValues)
-						? (AppUtility.toArray(selectValues, "#;") as Array<string>).map(value => {
-								return { Value: value, Label: value };
-							})
+						? (AppUtility.toArray(selectValues, "#;") as Array<string>).map(value => ({ Value: value, Label: value }))
 						: AppUtility.isArray(selectValues, true)
 							? selectValues.length > 0 && typeof selectValues[0] === "string"
-								? (selectValues as Array<string>).map(value => {
-										return { Value: value, Label: value };
-									})
-								: (selectValues as Array<any>).map(data => {
-										return { Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value, Description: data.Description || data.description };
-									})
+								? (selectValues as Array<string>).map(value => ({ Value: value, Label: value }))
+								: (selectValues as Array<any>).map(data => ({ Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value, Description: data.Description || data.description }))
 							: [],
 					RemoteURI: selectOptions.RemoteURI || selectOptions.remoteURI || selectOptions.remoteuri,
 					RemoteURIConverter: selectOptions.RemoteURIConverter || selectOptions.remoteURIConverter || selectOptions.remoteuriconverter,
@@ -780,18 +774,10 @@ export class AppFormsService {
 								: await AppAPIs.sendXMLHttpRequestAsync("GET", url);
 							formControl.Options.SelectOptions.Values = AppUtility.isArray(values, true)
 								? (values as Array<string>).length > 0 && typeof values[0] === "string"
-									? (values as Array<string>).map(value => {
-											return { Value: value, Label: value };
-										})
-									: (values as Array<any>).map(data => {
-											return formControl.Options.SelectOptions.RemoteURIConverter !== undefined
-												? formControl.Options.SelectOptions.RemoteURIConverter(data)
-												: { Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value, Description: data.Description || data.description };
-										})
+									? (values as Array<string>).map(value => ({ Value: value, Label: value }))
+									: (values as Array<any>).map(data => formControl.Options.SelectOptions.RemoteURIConverter !== undefined ? formControl.Options.SelectOptions.RemoteURIConverter(data) : ({ Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value, Description: data.Description || data.description }))
 								: AppUtility.isNotEmpty(values)
-									? (AppUtility.toArray(values, "#;") as Array<string>).map(value => {
-											return { Value: value, Label: value };
-										})
+									? (AppUtility.toArray(values, "#;") as Array<string>).map(value => ({ Value: value, Label: value }))
 									: AppUtility.isNotNull(values)
 										? [values.toString()]
 										: [];
@@ -1053,25 +1039,23 @@ export class AppFormsService {
 			Type: "Buttons",
 			Segment: segment,
 			SubControls: {
-				Controls: buttons.map(button => {
-					return {
-						Name: button.Name,
-						Type: "Button",
-						Options: {
-							Label: button.Label,
-							Css: (button.Options !== undefined ? button.Options.Css : undefined) || "",
-							ButtonOptions: {
-								OnClick: button.OnClick,
-								Fill: (button.Options !== undefined ? button.Options.Fill : undefined) || "solid",
-								Color: (button.Options !== undefined ? button.Options.Color : undefined) || "primary",
-								Icon: {
-									Name: button.Options !== undefined && button.Options.Icon !== undefined ? button.Options.Icon.Name : undefined,
-									Slot: (button.Options !== undefined && button.Options.Icon !== undefined ? button.Options.Icon.Slot : undefined) || "start"
-								}
+				Controls: buttons.map(button => ({
+					Name: button.Name,
+					Type: "Button",
+					Options: {
+						Label: button.Label,
+						Css: (button.Options !== undefined ? button.Options.Css : undefined) || "",
+						ButtonOptions: {
+							OnClick: button.OnClick,
+							Fill: (button.Options !== undefined ? button.Options.Fill : undefined) || "solid",
+							Color: (button.Options !== undefined ? button.Options.Color : undefined) || "primary",
+							Icon: {
+								Name: button.Options !== undefined && button.Options.Icon !== undefined ? button.Options.Icon.Name : undefined,
+								Slot: (button.Options !== undefined && button.Options.Icon !== undefined ? button.Options.Icon.Slot : undefined) || "start"
 							}
 						}
-					};
-				})
+					}
+				}))
 			}
 		} as AppFormsControlConfig;
 	}
