@@ -62,8 +62,8 @@ export class FilesService extends BaseService {
 
 	public getUploadHeaders(additional?: { [header: string]: string }, asBase64?: boolean) {
 		const headers = this.configSvc.appConfig.getAuthenticatedHeaders();
-		Object.keys(additional || {}).forEach(name => headers[name] = additional[name]);
-		Object.keys(headers).filter(name => !AppUtility.isNotEmpty(headers[name])).forEach(name => delete headers[name]);
+		AppUtility.getAttributes(additional).forEach(name => headers[name] = additional[name]);
+		AppUtility.getAttributes(headers, name => AppUtility.isEmpty(headers[name])).forEach(name => delete headers[name]);
 		if (AppUtility.isTrue(asBase64)) {
 			headers["x-as-base64"] = "true";
 		}
@@ -83,8 +83,8 @@ export class FilesService extends BaseService {
 			"x-tracked": AppUtility.isTrue(options.IsTracked) ? "true" : undefined,
 			"x-temporary": AppUtility.isTrue(options.IsTemporary) ? "true" : undefined
 		};
-		Object.keys(options.Extras || {}).forEach(name => headers[name] = options.Extras[name]);
-		Object.keys(additional || {}).forEach(name => headers[name] = additional[name]);
+		AppUtility.getAttributes(options.Extras).forEach(name => headers[name] = options.Extras[name]);
+		AppUtility.getAttributes(additional).forEach(name => headers[name] = additional[name]);
 		return headers;
 	}
 
@@ -250,7 +250,7 @@ export class FilesService extends BaseService {
 	}
 
 	public getThumbnailFormControl(name: string, segment: string, allowSelectNew: boolean = false, useDefaultHandlers: boolean = true, onCompleted?: (controlConfig: AppFormsControlConfig) => void, showCopyToClipboard: boolean = true) {
-		const controlConfig = {
+		const controlConfig: AppFormsControlConfig = {
 			Name: name || "Thumbnails",
 			Segment: segment || "attachments",
 			Type: "FilePicker",
@@ -264,7 +264,7 @@ export class FilesService extends BaseService {
 					AllowDelete: allowSelectNew
 				}
 			}
-		} as AppFormsControlConfig;
+		};
 
 		if (allowSelectNew && useDefaultHandlers) {
 			controlConfig.Options.OnChanged = (event, formControl) => {
@@ -333,12 +333,7 @@ export class FilesService extends BaseService {
 					onSuccess((data as Array<AttachmentInfo> || []).map(thumbnail => this.prepareAttachment(thumbnail)));
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching thumbnails", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
+			error => this.processError("Error occurred while searching thumbnails", error, onError),
 			true,
 			useXHR,
 			this.getFileHeaders(options, { "x-as-attachments": "true" })
@@ -348,23 +343,14 @@ export class FilesService extends BaseService {
 	public async deleteThumbnailAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await this.deleteAsync(
 			this.getPath("thumbnail", id),
-			data => {
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => {
-				console.error(this.getError("Error occurred while deleting a thumbnail", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
+			onSuccess,
+			error => this.processError("Error occurred while deleting a thumbnail", error, onError),
 			headers
 		);
 	}
 
 	public getAttachmentsFormControl(name: string, segment: string, label: string, allowSelect: boolean = false, allowDelete: boolean = false, allowEdit: boolean = false, editAttachmentModalPage?: any, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
-		const controlConfig = {
+		const controlConfig: AppFormsControlConfig = {
 			Name: name || "Attachments",
 			Segment: segment || "attachments",
 			Type: "Custom",
@@ -380,7 +366,7 @@ export class FilesService extends BaseService {
 			Options: {
 				Type: "files-selector"
 			}
-		} as AppFormsControlConfig;
+		};
 
 		if (allowDelete) {
 			controlConfig.Extras.settings.handlers.onDelete = async (attachment: AttachmentInfo) => await this.appFormsSvc.showAlertAsync(
@@ -432,12 +418,7 @@ export class FilesService extends BaseService {
 					onSuccess((data as Array<AttachmentInfo> || []).map(attachment => this.prepareAttachment(attachment)));
 				}
 			},
-			error => {
-				console.error(this.getError("Error occurred while searching attachments", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
+			error => this.processError("Error occurred while searching attachments", error, onError),
 			true,
 			useXHR,
 			this.getFileHeaders(options)
@@ -448,34 +429,16 @@ export class FilesService extends BaseService {
 		await this.updateAsync(
 			this.getPath("attachment", body.ID),
 			body,
-			data => {
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => {
-				console.error(this.getError("Error occurred while updating an attachment", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			}
+			onSuccess,
+			error => this.processError("Error occurred while updating an attachment", error, onError)
 		);
 	}
 
 	public async deleteAttachmentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await this.deleteAsync(
 			this.getPath("attachment", id),
-			data => {
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => {
-				console.error(this.getError("Error occurred while deleting an attachment", error));
-				if (onError !== undefined) {
-					onError(error);
-				}
-			},
+			onSuccess,
+			error => this.processError("Error occurred while deleting an attachment", error, onError),
 			headers
 		);
 	}
