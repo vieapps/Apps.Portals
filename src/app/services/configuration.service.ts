@@ -461,7 +461,7 @@ export class ConfigurationService extends BaseService {
 		try {
 			const session = await AppStorage.getAsync("Session");
 			if (AppUtility.isObject(session, true)) {
-				this.appConfig.session = JSON.parse(JSON.stringify(session));
+				this.appConfig.session = JSON.parse(AppCrypto.stringify(session));
 				AppEvents.broadcast("Session", { Type: "Loaded", Mode: "Storage" });
 				this.appConfig.session.account = Account.deserialize(this.appConfig.session.account);
 				if (this.appConfig.session.account.id !== undefined) {
@@ -894,7 +894,7 @@ export class ConfigurationService extends BaseService {
 	}
 
 	public async getInstructionsAsync(service: string, language?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.fetchAsync(`/statics/instructions/${service}/${language || this.appConfig.language}.json`, onSuccess, onError);
+		await this.fetchAsync(`statics/instructions/${service}/${language || this.appConfig.language}.json`, onSuccess, onError);
 	}
 
 	/** Gets top items for displaying at sidebar */
