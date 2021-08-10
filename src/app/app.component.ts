@@ -102,9 +102,8 @@ export class AppComponent implements OnInit {
 				this.configSvc.pushURL((event as RoutesRecognized).url, (event as RoutesRecognized).state.root.queryParams);
 				const current = this.configSvc.getCurrentURL();
 				AppEvents.broadcast("Navigating", { Url: current.url, Params: current.params });
-				// ping period - 5 minutes
-				if (+new Date() - AppAPIs.ping > 300000) {
-					AppAPIs.reopenWebSocket("[Router]: Ping period is too large...");
+				if (AppAPIs.isPingPeriodTtooLarge) {
+					AppAPIs.reopenWebSocket("<AppComponent>: Ping period is too large...");
 				}
 			}
 			else if (event instanceof NavigationEnd) {

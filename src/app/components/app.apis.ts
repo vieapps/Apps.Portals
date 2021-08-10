@@ -77,9 +77,9 @@ export class AppAPIs {
 		return this._websocket !== undefined && this._websocketStatus === "ready";
 	}
 
-	/** Gets the last time when got PING */
-	public static get ping() {
-		return this._ping;
+	/** Gets state that determines the WebSocket connection is got too large ping period */
+	public static get isPingPeriodTtooLarge() {
+		return +new Date() - this._ping > 300000;
 	}
 
 	/** Gets the HttpClient instance for working with XMLHttpRequest (XHR) */
@@ -512,7 +512,7 @@ export class AppAPIs {
 
 	private static canUseWebSocket(useXHR: boolean = false) {
 		let can = !useXHR && this.isWebSocketReady;
-		if (can && +new Date() - this.ping > 300000) {
+		if (can && this.isPingPeriodTtooLarge) {
 			can = false;
 			this.reopenWebSocket("[AppAPIs]: Ping period is too large...");
 		}

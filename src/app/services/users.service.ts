@@ -47,6 +47,11 @@ export class UsersService extends BaseService {
 				}
 			}
 		});
+		AppEvents.on("Navigated", _ => {
+			if (this.configSvc.isAuthenticated) {
+				this.configSvc.appConfig.session.account.profile.LastAccess = new Date();
+			}
+		});
 	}
 
 	public get completerDataSource() {
