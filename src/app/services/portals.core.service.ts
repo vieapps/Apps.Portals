@@ -315,7 +315,7 @@ export class PortalsCoreService extends BaseService {
 				await this.getActiveModuleAsync();
 				AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
 				await this.configSvc.storeOptionsAsync(async () => {
-					if (this.configSvc.isAuthenticated && Site.instances.firstOrDefault(site => site.SystemID === organization.ID) === undefined) {
+					if (this.configSvc.isAuthenticated && Site.instances.first(site => site.SystemID === organization.ID) === undefined) {
 						await this.searchSiteAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }), undefined, undefined, true);
 					}
 				});
@@ -567,7 +567,7 @@ export class PortalsCoreService extends BaseService {
 
 	public getPermanentURL(object: CmsBaseModel) {
 		const organization = object.organization;
-		const site = organization !== undefined ? Site.instances.firstOrDefault(s => s.SystemID === organization.ID) : undefined;
+		const site = organization !== undefined ? Site.instances.first(s => s.SystemID === organization.ID) : undefined;
 		const url = site !== undefined
 			? `http${site.AlwaysUseHTTPs ? "s" : ""}://${site.SubDomain.replace("*", "www")}.${site.PrimaryDomain}/`
 			: this.configSvc.appConfig.URIs.portals;
