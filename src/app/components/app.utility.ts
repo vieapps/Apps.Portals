@@ -293,7 +293,7 @@ export class AppUtility {
 			json || "{}",
 			(key, value) => reviver !== undefined
 				? reviver(key, value)
-				: value === null || undefined === null ? undefined : value
+				: value === null || ? undefined : value
 		);
 	}
 
