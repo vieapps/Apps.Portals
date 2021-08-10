@@ -4,7 +4,7 @@ import { HttpErrorResponse } from "@angular/common/http";
 /** Servicing component for working with app */
 export class AppUtility {
 
-	private static _exceptions: Array<string> = [
+	private static _exceptions = [
 		"UnauthorizedException", "AccessDeniedException",
 		"SessionNotFoundException", "SessionExpiredException", "SessionInformationRequiredException", "InvalidSessionException",
 		"TokenNotFoundException", "TokenExpiredException", "TokenRevokedException", "InvalidTokenException", "InvalidTokenSignatureException"
@@ -82,7 +82,7 @@ export class AppUtility {
 	public static isGotSecurityException(error?: any) {
 		error = this.parseError(error);
 		return this.isObject(error, true) && this.isNotEmpty(error.Type)
-			? this._exceptions.find(e => e === error.Type) !== undefined
+			? this._exceptions.find(exception => exception === error.Type) !== undefined
 			: false;
 	}
 
@@ -107,7 +107,7 @@ export class AppUtility {
 
 	/** Gets the state to determines the object is got data or not (means the object has any attribute or not) */
 	public static isGotData(object: any, length: number = 1) {
-		return (this.isArray(object, true) ? object.length : this.getAttributes(object).length) >= length;
+		return (this.isArray(object, true) ? object.length : object instanceof Set || object instanceof Map ? object.size : this.getAttributes(object).length) >= length;
 	}
 
 	/** Gets the error message */
