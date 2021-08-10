@@ -434,17 +434,17 @@ export class AppUtility {
 	}
 
 	/** Converts the objects' properties to array of key-value pair */
-	public static toKeyValuePair(object: any, predicate?: (kvp: { key: string; value: any; }) => boolean) {
-		let keyvaluePairs = new Array<{ key: string; value: any; }>();
+	public static toKeyValuePair(object: any, predicate?: (kvp: { key: any; value: any; }) => boolean) {
+		let keyvaluePairs = new Array<{ key: any; value: any; }>();
 		if (this.isArray(object, true)) {
-			keyvaluePairs = (object as Array<{ key: any; value: any; }>).filter(kvp => AppUtility.isObject(kvp, true) && AppUtility.isNotNull(kvp.key)).map(kvp => ({ key: kvp.key.toString(), value: kvp.value}));
+			keyvaluePairs = (object as Array<{ key: any; value: any; }>).filter(kvp => AppUtility.isObject(kvp, true) && AppUtility.isNotNull(kvp.key)).map(kvp => ({ key: kvp.key, value: kvp.value}));
 		}
 		else if (object instanceof Set) {
 			object.forEach(kvp => keyvaluePairs.push({ key: kvp !== undefined ? kvp.key : undefined, value: kvp !== undefined ? kvp.value : undefined }));
-			keyvaluePairs = keyvaluePairs.filter(kvp => kvp.key !== undefined).map(kvp => ({ key: kvp.key.toString(), value: kvp.value }));
+			keyvaluePairs = keyvaluePairs.filter(kvp => kvp.key !== undefined).map(kvp => ({ key: kvp.key, value: kvp.value }));
 		}
 		else if (object instanceof Map) {
-			object.forEach((value, key) => keyvaluePairs.push({ key: key.toString(), value: value }));
+			object.forEach((value, key) => keyvaluePairs.push({ key: key, value: value }));
 		}
 		else if (this.isObject(object, true)) {
 			keyvaluePairs = this.getAttributes(object).map(attribute => ({ key: attribute, value: object[attribute] }));
