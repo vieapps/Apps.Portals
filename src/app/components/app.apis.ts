@@ -4,7 +4,7 @@ import { AppConfig } from "@app/app.config";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 
-/** Presents the struct of a message */
+/** Presents the struct of an updating message */
 export interface AppMessage {
 	Type: {
 		Service: string;
@@ -78,7 +78,7 @@ export class AppAPIs {
 	}
 
 	/** Gets state that determines the WebSocket connection is got too large ping period */
-	public static get isPingPeriodTtooLarge() {
+	public static get isPingPeriodTooLarge() {
 		return +new Date() - this._ping > 300000;
 	}
 
@@ -512,7 +512,7 @@ export class AppAPIs {
 
 	private static canUseWebSocket(useXHR: boolean = false) {
 		let can = !useXHR && this.isWebSocketReady;
-		if (can && this.isPingPeriodTtooLarge) {
+		if (can && this.isPingPeriodTooLarge) {
 			can = false;
 			this.reopenWebSocket("[AppAPIs]: Ping period is too large...");
 		}
