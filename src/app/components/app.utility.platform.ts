@@ -5,7 +5,6 @@ import { Clipboard } from "@ionic-native/clipboard/ngx";
 import { InAppBrowser } from "@ionic-native/in-app-browser/ngx";
 import { ElectronService } from "ngx-electron";
 import { AppConfig } from "@app/app.config";
-import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 
 /** Servicing component for working with app on a specific platform */
@@ -107,7 +106,7 @@ export class PlatformUtility {
 				}
 			},
 			error => {
-				console.error(`Copy error => ${AppUtility.getErrorMessage(error)}`, AppCrypto.stringify(error));
+				console.error(`Copy error => ${AppUtility.getErrorMessage(error)}`, AppUtility.stringify(error));
 			}
 		);
 	}

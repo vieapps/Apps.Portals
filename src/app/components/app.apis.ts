@@ -439,7 +439,7 @@ export class AppAPIs {
 				else if (!gotID) {
 					const message: AppMessage = { Type: messageType, Data: data };
 					if (AppConfig.isDebug) {
-						console.log("[AppAPIs]: Got an updating message", AppConfig.isNativeApp ? AppCrypto.stringify(message) : message);
+						console.log("[AppAPIs]: Got an updating message", AppConfig.isNativeApp ? AppUtility.stringify(message) : message);
 					}
 					this.broadcast(message);
 				}
@@ -526,7 +526,7 @@ export class AppAPIs {
 
 	/** Sends a message to APIs to authenticate the WebSocket connection */
 	public static authenticateWebSocket() {
-		this._nocallbackMessages["0"] = AppCrypto.stringify({
+		this._nocallbackMessages["0"] = AppUtility.stringify({
 			ServiceName: "Session",
 			Verb: "AUTH",
 			Header: {
@@ -595,7 +595,7 @@ export class AppAPIs {
 		if (gotCallback) {
 			request["ID"] = id;
 		}
-		const message = AppCrypto.stringify(request);
+		const message = AppUtility.stringify(request);
 		if (gotCallback) {
 			this._callbackableMessages[id] = message;
 			this._successCallbacks[id] = onSuccess;

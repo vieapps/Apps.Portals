@@ -46,11 +46,7 @@ export class ConfigurationService extends BaseService {
 		super("Configuration");
 		AppStorage.initializeAsync(this.storage, () => this.showLog(`Storage is ready. Driver: ${this.storage.driver}`));
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", async () => await this.reloadGeoMetaAsync());
-		AppEvents.on("App", async info => {
-			if ("PlatformIsReady" === info.args.Type) {
-				await this.loadGeoMetaAsync();
-			}
-		});
+		AppEvents.on("App", async info => await ("PlatformIsReady" === info.args.Type ? this.loadGeoMetaAsync() : new Promise<void>(() => {})));
 	}
 
 	private _definitions: { [key: string]: any } = {};
@@ -461,7 +457,7 @@ export class ConfigurationService extends BaseService {
 		try {
 			const session = await AppStorage.getAsync("Session");
 			if (AppUtility.isObject(session, true)) {
-				this.appConfig.session = JSON.parse(AppCrypto.stringify(session));
+				this.appConfig.session = JSON.parse(AppUtility.stringify(session));
 				AppEvents.broadcast("Session", { Type: "Loaded", Mode: "Storage" });
 				this.appConfig.session.account = Account.deserialize(this.appConfig.session.account);
 				if (this.appConfig.session.account.id !== undefined) {
@@ -557,14 +553,12 @@ export class ConfigurationService extends BaseService {
 			account.twoFactors = {
 				required: AppUtility.isTrue(data.TwoFactorsAuthentication.Required),
 				providers: AppUtility.isArray(data.TwoFactorsAuthentication.Providers, true)
-					? (data.TwoFactorsAuthentication.Providers as Array<any>).map(provider => {
-							return {
-								Label: provider.Label,
-								Type: provider.Type,
-								Time: new Date(provider.Time),
-								Info: provider.Info
-							};
-						})
+					? (data.TwoFactorsAuthentication.Providers as Array<any>).map(provider => ({
+							Label: provider.Label,
+							Type: provider.Type,
+							Time: new Date(provider.Time),
+							Info: provider.Info
+						}))
 					: []
 			};
 		}
@@ -650,10 +644,7 @@ export class ConfigurationService extends BaseService {
 	/** Gets the navigating URL */
 	public getNavigatingURL(url?: string, params?: { [key: string]: any }) {
 		url = url || this.appConfig.url.home;
-		if (params !== undefined) {
-			Object.keys(params).forEach(name => url += (url.indexOf("?") > 0 ? "&" : "?") + name + "=" + params[name]);
-		}
-		return url;
+		return url + (AppUtility.isGotData(params) ? `${url.indexOf("?") > 0 ? "&" : "?"}${AppUtility.toQuery(params)}` : "");
 	}
 
 	/** Sends a request to navigates to home screen */
@@ -778,8 +769,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Updates the options of the app */
 	public async updateOptionsAsync(options: any, onNext?: (data?: any) => void) {
-		options = options || {};
-		Object.keys(options).forEach(name => this.appConfig.options[name] = options[name]);
+		AppUtility.toKeyValuePair(options).forEach(kvp => this.appConfig.options[kvp.key] = kvp.value);
 		await this.saveOptionsAsync(onNext);
 	}
 
