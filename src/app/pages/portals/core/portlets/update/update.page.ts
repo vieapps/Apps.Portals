@@ -427,7 +427,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 						let name = "list.xsl";
 						if (this.contentType !== undefined && this.contentType.contentTypeDefinition !== undefined && this.contentType.contentTypeDefinition.NestedObject) {
 							let options = settingsControl.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Options")).value;
-							options = typeof options === "string" ? JSON.parse(options) : options || {};
+							options = typeof options === "string" ? AppUtility.parse(options) : options || {};
 							if (AppUtility.isEquals("Menu", options.DisplayMode) || AppUtility.isTrue(options.AsMenu) || AppUtility.isTrue(options.ShowAsMenu) || AppUtility.isTrue(options.GenerateAsMenu)) {
 								name = "menu.xsl";
 							}
@@ -782,7 +782,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 					: undefined;
 				if (AppUtility.isNotEmpty(options)) {
 					try {
-						portlet.ListSettings.Options = JSON.stringify(JSON.parse(options));
+						portlet.ListSettings.Options = JSON.stringify(AppUtility.parse(options));
 					}
 					catch (error) {
 						this.processing = false;
@@ -805,7 +805,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 					: undefined;
 				if (AppUtility.isNotEmpty(options)) {
 					try {
-						portlet.ViewSettings.Options = JSON.stringify(JSON.parse(options));
+						portlet.ViewSettings.Options = JSON.stringify(AppUtility.parse(options));
 					}
 					catch (error) {
 						this.processing = false;

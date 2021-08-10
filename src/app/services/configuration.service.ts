@@ -457,7 +457,7 @@ export class ConfigurationService extends BaseService {
 		try {
 			const session = await AppStorage.getAsync("Session");
 			if (AppUtility.isObject(session, true)) {
-				this.appConfig.session = JSON.parse(AppUtility.stringify(session));
+				this.appConfig.session = AppUtility.parse(AppUtility.stringify(session));
 				AppEvents.broadcast("Session", { Type: "Loaded", Mode: "Storage" });
 				this.appConfig.session.account = Account.deserialize(this.appConfig.session.account);
 				if (this.appConfig.session.account.id !== undefined) {

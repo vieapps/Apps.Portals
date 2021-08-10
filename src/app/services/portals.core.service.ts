@@ -152,9 +152,16 @@ export class PortalsCoreService extends BaseService {
 					await this.getContentTypeAsync(info.args.ID);
 				}
 			}
+			else if (info.args.Object === "Organization" && info.args.Type === "Changed") {
+				if (this.configSvc.isDebug) {
+					this.showLog("Update sidebar when organization was changed");
+				}
+				this.prepareSidebar();
+			}
 		});
 		AppEvents.on("Account", info => {
 			if (AppUtility.isEquals(info.args.Type, "Updated")) {
+				console.warn("Active ORGS", this.activeOrganizations);
 				if (this.configSvc.isDebug) {
 					this.showLog("Update sidebar when account was updated");
 				}
@@ -309,7 +316,7 @@ export class PortalsCoreService extends BaseService {
 				await this.getActiveModuleAsync();
 				AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
 				await this.configSvc.storeOptionsAsync(async () => {
-					if (Site.instances.firstOrDefault(site => site.SystemID === organization.ID) === undefined) {
+					if (this.configSvc.isAuthenticated && Site.instances.firstOrDefault(site => site.SystemID === organization.ID) === undefined) {
 						await this.searchSiteAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }), undefined, undefined, true);
 					}
 				});

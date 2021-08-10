@@ -277,13 +277,23 @@ export class AppUtility {
 			: str;
 	}
 
-	/** Stringifies an object to JSON string */
+	/** Converts an object into a JSON string */
 	public static stringify(object: any, replacer?: (key: string, value: any) => any) {
 		return JSON.stringify(
 			object || {},
 			(key, value) => replacer !== undefined
 				? replacer(key, value)
 				: typeof value === "undefined" ? null : value instanceof Set || value instanceof Map ? Array.from(value.entries()) : value
+		);
+	}
+
+	/** Converts a JSON string into an object */
+	public static parse(json: string, reviver?: (key: string, value: any) => any) {
+		return JSON.parse(
+			json || "{}",
+			(key, value) => reviver !== undefined
+				? reviver(key, value)
+				: value === null || undefined === null ? undefined : value
 		);
 	}
 
@@ -296,7 +306,7 @@ export class AppUtility {
 	public static copy<T>(source: any, target: T, onCompleted?: (data: any) => void) {
 		try {
 			const data = this.isNotEmpty(source)
-				? JSON.parse(source)
+				? this.parse(source)
 				: this.isObject(source, true)
 					? source
 					: {};
@@ -354,7 +364,7 @@ export class AppUtility {
 	*/
 	public static clone<T>(source: T, beRemovedOrCleanUndefined?: Array<string> | boolean, excluded?: Array<string>, onCompleted?: (object: any) => void) {
 		// clone
-		const object = JSON.parse(this.stringify(source));
+		const object = this.parse(this.stringify(source));
 
 		// remove the specified properties
 		if (this.isArray(beRemovedOrCleanUndefined, true)) {

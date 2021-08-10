@@ -110,13 +110,13 @@ export class Portlet extends CoreBaseModel {
 				if (data.ListSettings !== undefined && data.ListSettings.Options !== undefined) {
 					portlet.ListSettings = portlet.ListSettings || {};
 					portlet.ListSettings.Options = typeof data.ListSettings.Options === "string"
-						? JSON.parse(data.ListSettings.Options)
+						? AppUtility.parse(data.ListSettings.Options)
 						: data.ListSettings.Options;
 				}
 				if (data.ViewSettings !== undefined && data.ViewSettings.Options !== undefined) {
 					portlet.ViewSettings = portlet.ViewSettings || {};
 					portlet.ViewSettings.Options = typeof data.ViewSettings.Options === "string"
-						? JSON.parse(data.ViewSettings.Options)
+						? AppUtility.parse(data.ViewSettings.Options)
 						: data.ViewSettings.Options;
 				}
 				if (data.PaginationSettings !== undefined) {

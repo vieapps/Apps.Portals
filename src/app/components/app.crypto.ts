@@ -75,7 +75,7 @@ export class AppCrypto {
 
 	/** Decodes the object from base64-url */
 	public static jsonDecode(base64url: string) {
-		return JSON.parse(this.base64urlDecode(base64url));
+		return AppUtility.parse(this.base64urlDecode(base64url));
 	}
 
 	/** Encodes the JSON Web Token */

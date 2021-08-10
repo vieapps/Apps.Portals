@@ -440,7 +440,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 				if (this.extendable && this.isAdvancedMode) {
 					if (AppUtility.isNotEmpty(contentType.ExtendedPropertyDefinitions)) {
 						try {
-							contentType.ExtendedPropertyDefinitions = JSON.parse(contentType.ExtendedPropertyDefinitions);
+							contentType.ExtendedPropertyDefinitions = AppUtility.parse(contentType.ExtendedPropertyDefinitions);
 							if (!AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
 								throw new Error("JSON is not array");
 							}
@@ -462,7 +462,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 
 					if (AppUtility.isNotEmpty(contentType.ExtendedControlDefinitions)) {
 						try {
-							contentType.ExtendedControlDefinitions = JSON.parse(contentType.ExtendedControlDefinitions);
+							contentType.ExtendedControlDefinitions = AppUtility.parse(contentType.ExtendedControlDefinitions);
 							if (!AppUtility.isArray(contentType.ExtendedControlDefinitions, true)) {
 								throw new Error("JSON is not array");
 							}
@@ -514,7 +514,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 
 					if (AppUtility.isNotEmpty(contentType.StandardControlDefinitions)) {
 						try {
-							contentType.StandardControlDefinitions = JSON.parse(contentType.StandardControlDefinitions);
+							contentType.StandardControlDefinitions = AppUtility.parse(contentType.StandardControlDefinitions);
 							if (!AppUtility.isArray(contentType.StandardControlDefinitions, true)) {
 								throw new Error("JSON is not array");
 							}

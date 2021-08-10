@@ -57,7 +57,7 @@ export class UserProfileBase extends BaseModel {
 		profile.copy(json, data => {
 			profile.Status = data.Status || "Activated";
 			if (AppUtility.isNotEmpty(data.Options)) {
-				profile.Options = JSON.parse(data.Options);
+				profile.Options = AppUtility.parse(data.Options);
 			}
 			delete profile["Privileges"];
 			delete profile["OriginalPrivileges"];
@@ -147,7 +147,7 @@ export class UserProfile extends UserProfileBase {
 		profile.copy(json, data => {
 			profile.Status = data.Status || "Activated";
 			if (AppUtility.isNotEmpty(data.Options)) {
-				profile.Options = JSON.parse(data.Options);
+				profile.Options = AppUtility.parse(data.Options);
 			}
 			delete profile["Privileges"];
 			delete profile["OriginalPrivileges"];

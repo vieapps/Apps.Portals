@@ -313,7 +313,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 						Label: "JSON > Base64Url",
 						OnClick: async () => {
 							try {
-								this.form.controls.EncodedXRequest.setValue(AppCrypto.jsonEncode(JSON.parse(this.form.controls.JSONXRequest.value)));
+								this.form.controls.EncodedXRequest.setValue(AppCrypto.jsonEncode(AppUtility.parse(this.form.controls.JSONXRequest.value)));
 							}
 							catch (error) {
 								await this.appFormsSvc.showErrorAsync(error);
@@ -466,10 +466,10 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				if (AppUtility.isNotEmpty(this.expression.ID)) {
 					try {
 						expression.Filter = AppUtility.isNotEmpty(expression.Filter)
-							? JSON.parse(expression.Filter)
+							? AppUtility.parse(expression.Filter)
 							: undefined;
 						expression.Sorts = AppUtility.isNotEmpty(expression.Sorts)
-							? JSON.parse(expression.Sorts)
+							? AppUtility.parse(expression.Sorts)
 							: undefined;
 					}
 					catch (error) {

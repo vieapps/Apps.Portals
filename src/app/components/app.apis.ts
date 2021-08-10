@@ -326,7 +326,7 @@ export class AppAPIs {
 			// prepare
 			let msg: { ID: string; Type: string; Data: any; };
 			try {
-				msg = JSON.parse(event.data || "{}");
+				msg = AppUtility.parse(event.data || "{}");
 			}
 			catch (error) {
 				console.error("[AppAPIs]: Error occurred while parsing the message", error instanceof SyntaxError ? "" : error);

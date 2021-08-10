@@ -48,7 +48,7 @@ export class UsersService extends BaseService {
 			}
 		});
 		AppEvents.on("Navigated", _ => {
-			if (this.configSvc.isAuthenticated) {
+			if (this.configSvc.isAuthenticated && AppUtility.isObject(this.configSvc.appConfig.session.account, true) && AppUtility.isObject(this.configSvc.appConfig.session.account.profile, true)) {
 				this.configSvc.appConfig.session.account.profile.LastAccess = new Date();
 			}
 		});
