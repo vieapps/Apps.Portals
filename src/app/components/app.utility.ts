@@ -277,6 +277,16 @@ export class AppUtility {
 			: str;
 	}
 
+	/** Stringifies an object to JSON string */
+	public static stringify(object: any, replacer?: (key: string, value: any) => any) {
+		return JSON.stringify(
+			object || {},
+			(key, value) => replacer !== undefined
+				? replacer(key, value)
+				: typeof value === "undefined" ? null : value instanceof Set || value instanceof Map ? Array.from(value.entries()) : value
+		);
+	}
+
 	/**
 	 * Copys data from the source (object or JSON) into the objects" properties
 	 * @param source The source to copy data from
@@ -315,7 +325,7 @@ export class AppUtility {
 	 * @param excluded The collection of excluded properties are not be deleted event value is undefined
 	 * @param onCompleted The handler to run when cleaning process is completed
 	*/
-	public static clean<T>(object: T, excluded?: Array<string>, onCompleted?: (obj: T) => void) {
+	public static clean<T>(object: T, excluded?: Array<string>, onCompleted?: (object: T) => void) {
 		this.getProperties(object).forEach(info => {
 			if (this.isNull(object[info.name])) {
 				if (excluded === undefined || excluded.indexOf(info.name) < 0) {
@@ -342,38 +352,29 @@ export class AppUtility {
 	 * @param excluded The collection of excluded properties are not be deleted event value is undefined
 	 * @param onCompleted The handler to run when process is completed
 	*/
-	public static clone<T>(source: T, beRemovedOrCleanUndefined?: Array<string> | boolean, excluded?: Array<string>, onCompleted?: (obj: any) => void) {
+	public static clone<T>(source: T, beRemovedOrCleanUndefined?: Array<string> | boolean, excluded?: Array<string>, onCompleted?: (object: any) => void) {
 		// clone
-		const exists = [];
-		const obj = JSON.parse(JSON.stringify(source, (_, value) => {
-			if (this.isObject(value, true)) {
-				if (exists.indexOf(value) !== -1) {
-					return;
-				}
-				exists.push(value);
-			}
-			return value;
-		}));
+		const object = JSON.parse(this.stringify(source));
 
 		// remove the specified properties
 		if (this.isArray(beRemovedOrCleanUndefined, true)) {
-			(beRemovedOrCleanUndefined as Array<string>).forEach(name => delete obj[name]);
+			(beRemovedOrCleanUndefined as Array<string>).forEach(name => delete object[name]);
 			if (onCompleted !== undefined) {
-				onCompleted(obj);
+				onCompleted(object);
 			}
 		}
 
 		// clean undefined
 		else if (this.isTrue(beRemovedOrCleanUndefined)) {
-			this.clean(obj, excluded, onCompleted);
+			this.clean(object, excluded, onCompleted);
 		}
 
 		else if (onCompleted !== undefined) {
-			onCompleted(obj);
+			onCompleted(object);
 		}
 
 		// return clone object
-		return obj;
+		return object;
 	}
 
 	/** Removes tags from the HTML content */
@@ -426,7 +427,20 @@ export class AppUtility {
 
 	/** Converts the objects' properties to array of key-value pair */
 	public static toKeyValuePair(object: any, predicate?: (kvp: { key: string; value: any; }) => boolean) {
-		const keyvaluePairs = this.getAttributes(object).map(attribute => ({ key: attribute, value: object[attribute] }));
+		let keyvaluePairs = new Array<{ key: string; value: any; }>();
+		if (this.isArray(object, true)) {
+			keyvaluePairs = (object as Array<{ key: any; value: any; }>).filter(kvp => AppUtility.isObject(kvp, true) && AppUtility.isNotNull(kvp.key)).map(kvp => ({ key: kvp.key.toString(), value: kvp.value}));
+		}
+		else if (object instanceof Set) {
+			object.forEach(kvp => keyvaluePairs.push({ key: kvp !== undefined ? kvp.key : undefined, value: kvp !== undefined ? kvp.value : undefined }));
+			keyvaluePairs = keyvaluePairs.filter(kvp => kvp.key !== undefined).map(kvp => ({ key: kvp.key.toString(), value: kvp.value }));
+		}
+		else if (object instanceof Map) {
+			object.forEach((value, key) => keyvaluePairs.push({ key: key.toString(), value: value }));
+		}
+		else if (this.isObject(object, true)) {
+			keyvaluePairs = this.getAttributes(object).map(attribute => ({ key: attribute, value: object[attribute] }));
+		}
 		return predicate !== undefined ? keyvaluePairs.filter(predicate) : keyvaluePairs;
 	}
 
@@ -456,20 +470,18 @@ export class AppUtility {
 
 	/** Converts and joins the array of objects to a string */
 	public static toStr(array: Array<any>, separator?: string) {
-		if (!this.isArray(array, true)) {
-			return "";
-		}
 		let string = "";
-		array.forEach(item => string += (string !== "" ? (separator || "") : "") + item.toString());
+		if (this.isArray(array, true)) {
+			separator = separator || "";
+			array.forEach(item => string += (string !== "" ? separator : "") + (item || "").toString());
+		}
 		return string;
 	}
 
 	/** Converts the object to query string */
-	public static toQuery(object: { [key: string]: any }) {
+	public static toQuery(object: any) {
 		try {
-			return this.isObject(object, true)
-				? this.toStr(this.getAttributes(object).map(name => `${name}=${encodeURIComponent(object[name])}`), "&")
-				: "";
+			return this.toStr(this.toKeyValuePair(object).map(kvp => `${kvp.key}=${encodeURIComponent((kvp.value || "").toString())}`), "&");
 		}
 		catch (error) {
 			return "";
@@ -715,13 +727,4 @@ export class AppUtility {
 			: result.trim();
 	}
 
-}
-
-/** Decorator of an extension method */
-export function Extension(object: any) {
-	let originalFunction: Function;
-	return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
-		originalFunction = descriptor.value;
-		object.prototype[propertyKey] = (...args) => originalFunction(this, ...args);
-	};
 }

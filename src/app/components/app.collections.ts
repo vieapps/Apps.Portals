@@ -57,6 +57,7 @@ declare global {
 		/** Converts to Dictionary object */
 		toDictionary<K>(keySelector: (value: T) => K, predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): Dictionary<K, T>;
 	}
+
 }
 
 if (!Array.prototype.insert) {

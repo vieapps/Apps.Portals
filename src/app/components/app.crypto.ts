@@ -1,23 +1,13 @@
 import * as CryptoJS from "crypto-js";
 import { RSA } from "@app/components/app.crypto.rsa";
+import { AppUtility } from "@app/components/app.utility";
 
 /** Servicing component for working with cryptography */
 export class AppCrypto {
 
-	private static _aes = {
-		key: undefined,
-		iv: undefined
-	};
+	private static _aes = { key: undefined as CryptoJS.lib.WordArray, iv: undefined as CryptoJS.lib.WordArray };
 	private static _rsa = new RSA();
 	private static _jwt: string;
-
-	/** Stringifies an object to JSON string */
-	public static stringify(object: any, preparer?: (object: any) => void) {
-		if (preparer !== undefined) {
-			preparer(object);
-		}
-		return JSON.stringify(object || {}, (_, value) => typeof value === "undefined" ? null : value instanceof Set || value instanceof Map ? Array.from(value.entries()) : value);
-	}
 
 	/** Gets MD5 hash of the string */
 	public static md5(text: string) {
@@ -25,8 +15,8 @@ export class AppCrypto {
 	}
 
 	/** Gets MD5 hash of the object */
-	public static hash(object: any, preparer?: (object: any) => void) {
-		return this.md5(this.stringify(object, preparer));
+	public static hash(object: any) {
+		return this.md5(AppUtility.stringify(object || {}));
 	}
 
 	/** Signs the string with the specified key using HMAC SHA256 */
@@ -80,7 +70,7 @@ export class AppCrypto {
 
 	/** Encodes the object to base64-url */
 	public static jsonEncode(object: any) {
-		return this.base64urlEncode(this.stringify(object || {}));
+		return this.base64urlEncode(AppUtility.stringify(object || {}));
 	}
 
 	/** Decodes the object from base64-url */
@@ -106,23 +96,23 @@ export class AppCrypto {
 	}
 
 	/** Encrypts the string - using AES */
-	public static aesEncrypt(text: string, key?: any, iv?: any) {
+	public static aesEncrypt(text: string, key?: CryptoJS.lib.WordArray, iv?: CryptoJS.lib.WordArray) {
 		return CryptoJS.AES.encrypt(text, key || this._aes.key, { iv: iv || this._aes.iv }).toString();
 	}
 
 	/** Decrypts the string - using AES */
-	public static aesDecrypt(text: string, key?: any, iv?: any) {
+	public static aesDecrypt(text: string, key?: CryptoJS.lib.WordArray, iv?: CryptoJS.lib.WordArray) {
 		return CryptoJS.AES.decrypt(text, key || this._aes.key, { iv: iv || this._aes.iv }).toString(CryptoJS.enc.Utf8);
 	}
 
 	/** Encrypts the string - using RSA */
 	public static rsaEncrypt(text: string) {
-		return this._rsa.encrypt(text) as string;
+		return this._rsa.encrypt(text);
 	}
 
 	/** Decrypts the string - using RSA */
 	public static rsaDecrypt(text: string) {
-		return this._rsa.decrypt(text) as string;
+		return this._rsa.decrypt(text);
 	}
 
 	/** Initializes all keys for encrypting/decrypting/signing */
