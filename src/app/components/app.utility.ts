@@ -283,7 +283,13 @@ export class AppUtility {
 			object || {},
 			(key, value) => replacer !== undefined
 				? replacer(key, value)
-				: typeof value === "undefined" ? null : value instanceof Set || value instanceof Map ? Array.from(value.entries()) : value
+				: typeof value === "undefined"
+					? null
+					: value instanceof Set
+						? Array.from(value.entries())
+						: value instanceof Map
+							? this.toKeyValuePair(value)
+							: value
 		);
 	}
 
@@ -310,14 +316,14 @@ export class AppUtility {
 				: this.isObject(source, true)
 					? source
 					: {};
-
 			this.getProperties(target, true).map(info => info.name).filter(name => typeof target[name] !== "function").forEach(name => {
 				const value = data[name];
 				target[name] = value === undefined || value === null
 					? undefined
-					: this.isDate(target[name]) ? new Date(value) : value;
+					: this.isDate(target[name])
+						? new Date(value)
+						: value;
 			});
-
 			if (onCompleted !== undefined) {
 				onCompleted(data);
 			}
@@ -344,7 +350,7 @@ export class AppUtility {
 			}
 			else if (this.isObject(object[info.name])) {
 				this.clean(object[info.name], excluded);
-				if (this.getProperties(object[info.name]).length < 1) {
+				if (!this.isGotData(object[info.name])) {
 					delete object[info.name];
 				}
 			}
@@ -363,27 +369,19 @@ export class AppUtility {
 	 * @param onCompleted The handler to run when process is completed
 	*/
 	public static clone<T>(source: T, beRemovedOrCleanUndefined?: Array<string> | boolean, excluded?: Array<string>, onCompleted?: (object: any) => void) {
-		// clone
 		const object = this.parse(this.stringify(source));
-
-		// remove the specified properties
 		if (this.isArray(beRemovedOrCleanUndefined, true)) {
 			(beRemovedOrCleanUndefined as Array<string>).forEach(name => delete object[name]);
 			if (onCompleted !== undefined) {
 				onCompleted(object);
 			}
 		}
-
-		// clean undefined
 		else if (this.isTrue(beRemovedOrCleanUndefined)) {
 			this.clean(object, excluded, onCompleted);
 		}
-
 		else if (onCompleted !== undefined) {
 			onCompleted(object);
 		}
-
-		// return clone object
 		return object;
 	}
 
