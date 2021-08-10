@@ -308,7 +308,11 @@ export class PortalsCoreService extends BaseService {
 				Organization.active = organization;
 				await this.getActiveModuleAsync();
 				AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
-				await this.configSvc.storeOptionsAsync();
+				await this.configSvc.storeOptionsAsync(async () => {
+					if (Site.instances.firstOrDefault(site => site.SystemID === organization.ID) === undefined) {
+						await this.searchSiteAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }), undefined, undefined, true);
+					}
+				});
 			}
 		}
 		if (onNext !== undefined) {
@@ -557,7 +561,7 @@ export class PortalsCoreService extends BaseService {
 
 	public getPermanentURL(object: CmsBaseModel) {
 		const organization = object.organization;
-		const site = (organization !== undefined ? Site.instances.toArray(s => s.SystemID === organization.ID).sortBy("Title") : []).firstOrDefault();
+		const site = organization !== undefined ? Site.instances.firstOrDefault(s => s.SystemID === organization.ID) : undefined;
 		const url = site !== undefined
 			? `http${site.AlwaysUseHTTPs ? "s" : ""}://${site.SubDomain.replace("*", "www")}.${site.PrimaryDomain}/`
 			: this.configSvc.appConfig.URIs.portals;
@@ -2236,7 +2240,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async searchSiteAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async searchSiteAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false) {
 		await this.searchAsync(
 			this.getSearchingPath("site", this.configSvc.relatedQuery),
 			request,
@@ -2252,7 +2256,9 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError("Error occurred while searching sites", error, onError)
+			error => this.processError("Error occurred while searching sites", error, onError),
+			dontProcessPagination,
+			useXHR
 		);
 	}
 
