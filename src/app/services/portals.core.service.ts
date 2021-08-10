@@ -161,7 +161,6 @@ export class PortalsCoreService extends BaseService {
 		});
 		AppEvents.on("Account", info => {
 			if (AppUtility.isEquals(info.args.Type, "Updated")) {
-				console.warn("Active ORGS", this.activeOrganizations);
 				if (this.configSvc.isDebug) {
 					this.showLog("Update sidebar when account was updated");
 				}
