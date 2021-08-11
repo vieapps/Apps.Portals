@@ -1,5 +1,6 @@
 import { Observable } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
+import { HashSet, Dictionary } from "@app/components/app.collections";
 
 /** Servicing component for working with app */
 export class AppUtility {
@@ -336,7 +337,7 @@ export class AppUtility {
 				}
 				else if (this.isSet(target[name])) {
 					if (this.isArray(value)) {
-						value = new Set<any>(value);
+						value = new HashSet<any>(value);
 					}
 					else {
 						value = undefined;
@@ -344,7 +345,7 @@ export class AppUtility {
 				}
 				else if (this.isMap(target[name])) {
 					if (this.isArray(value)) {
-						const map = new Map<any, any>();
+						const map = new Dictionary<any, any>();
 						(value as Array<{ key: any; value: any }>).forEach(kvp => map.set(kvp.key, kvp.value));
 						value = map;
 					}
