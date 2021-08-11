@@ -428,10 +428,10 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		let control = formConfig.find(ctrl => ctrl.Name === "Title");
 		control.Options.AutoFocus = true;
 
-		if (!AppUtility.isNotEmpty(this.organization.ID)) {
+		if (AppUtility.isEmpty(this.organization.ID)) {
 			control.Options.OnBlur = (_, formControl) => {
 				this.form.controls.Alias.setValue(AppUtility.toANSI(formControl.value, true).replace(/\-/g, ""), { onlySelf: true });
-				((this.form.controls.Notifications as FormGroup).controls.WebHooks as FormGroup).controls.SignKey.setValue(AppCrypto.md5(formControl.value), { onlySelf: true });
+				((this.form.controls.Notifications as FormGroup).controls.WebHooks as FormGroup).controls.SignKey.setValue(AppCrypto.md5(formControl.value + "@" + Math.random()), { onlySelf: true });
 			};
 		}
 
