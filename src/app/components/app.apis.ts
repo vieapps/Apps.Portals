@@ -113,13 +113,13 @@ export class AppAPIs {
 	public static parseRequestInfo(path: string) {
 		const uri = AppUtility.parseURI(path);
 		const requestInfo = {
-			ServiceName: uri.Paths[0],
-			ObjectName: uri.Paths.length > 1 ? uri.Paths[1] : "",
+			ServiceName: uri.PathSegments[0],
+			ObjectName: uri.PathSegments.length > 1 ? uri.PathSegments[1] : "",
 			ObjectIdentity: undefined as string,
 			Query: uri.QueryParams
 		};
-		if (uri.Paths.length > 2) {
-			requestInfo.ObjectIdentity = requestInfo.Query["object-identity"] = uri.Paths[2];
+		if (uri.PathSegments.length > 2) {
+			requestInfo.ObjectIdentity = requestInfo.Query["object-identity"] = uri.PathSegments[2];
 		}
 		return requestInfo;
 	}

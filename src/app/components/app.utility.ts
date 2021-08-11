@@ -248,7 +248,7 @@ export class AppUtility {
 			HostNames: AppUtility.toArray(host, ".") as Array<string>,
 			Port: port,
 			Path: path,
-			Paths: AppUtility.toArray(path, "/") as Array<string>,
+			PathSegments: AppUtility.toArray(path, "/") as Array<string>,
 			Query: query,
 			QueryParams: queryParams,
 			Hash: hash,
