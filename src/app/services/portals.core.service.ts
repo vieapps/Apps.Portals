@@ -153,18 +153,34 @@ export class PortalsCoreService extends BaseService {
 				}
 			}
 			else if (info.args.Object === "Organization" && info.args.Type === "Changed") {
+				this.prepareSidebar();
 				if (this.configSvc.isDebug) {
 					this.showLog("Update sidebar when organization was changed");
+				}
+			}
+		});
+
+		AppEvents.on("Account", info => {
+			if (AppUtility.isEquals(info.args.Type, "Updated") && AppUtility.isEquals(info.args.Mode, "APIs")) {
+				if (this.configSvc.isDebug) {
+					this.showLog("Update sidebar when user account was updated with data from APIs");
 				}
 				this.prepareSidebar();
 			}
 		});
-		AppEvents.on("Account", info => {
-			if (AppUtility.isEquals(info.args.Type, "Updated")) {
-				if (this.configSvc.isDebug) {
-					this.showLog("Update sidebar when account was updated");
+
+		AppEvents.on("Profile", async info => {
+			if (AppUtility.isEquals(info.args.Type, "Updated") && AppUtility.isEquals(info.args.Mode, "APIs")) {
+				const organizations = this.activeOrganizations;
+				const organization = this.activeOrganization;
+				if (organization === undefined || organizations.findIndex(id => id === organization.ID) < 0) {
+					await this.getOrganizationAsync(organizations.first(), async _ => {
+						if (this.configSvc.isDebug) {
+							this.showLog("Set active organization when user profile was updated with data from APIs");
+						}
+						await this.setActiveOrganizationAsync(Organization.get(organizations.first()));
+					});
 				}
-				this.prepareSidebar();
 			}
 		});
 	}

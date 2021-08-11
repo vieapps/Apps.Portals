@@ -581,7 +581,7 @@ export class PortalsCmsService extends BaseService {
 			onCompleted();
 		};
 		const onError = (error?: any) => {
-			this.showError("Error occurred while preparing featured contents", `\n${contentType.Title} @ ${organization.Title}`, error);
+			this.showError(`Error occurred while preparing featured contents\n${contentType.Title} @ ${organization.Title}`, error);
 			onCompleted();
 		};
 		if (isSimpleItem) {

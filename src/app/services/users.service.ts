@@ -289,9 +289,9 @@ export class UsersService extends BaseService {
 					case "Update":
 						await this.configSvc.updateSessionAsync(message.Data, () => {
 							this.showLog("The session was updated with new access token", this.configSvc.appConfig.session);
+							AppEvents.broadcast("Account", { Type: "Updated", Mode: "Session" });
 							AppEvents.sendToElectron(this.name, { Type: "Session", Data: this.configSvc.appConfig.session });
 						}, false, false, false);
-						AppEvents.broadcast("Account", { Type: "Updated", Mode: "Session" });
 						break;
 
 					case "Revoke":
@@ -330,6 +330,9 @@ export class UsersService extends BaseService {
 			case "Account":
 				this.configSvc.updateAccount(message.Data);
 				if (this.configSvc.isAuthenticated && account.id === message.Data.ID) {
+					if (this.configSvc.isDebug) {
+						this.showLog("User account was updated from APIs", account.profile);
+					}
 					AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
 					AppEvents.sendToElectron(this.name, message);
 				}
@@ -345,11 +348,11 @@ export class UsersService extends BaseService {
 						await this.configSvc.changeLanguageAsync(account.profile.Language);
 					}
 					await this.configSvc.updateOptionsAsync(account.profile.Options);
-					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
-					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: account.profile });
 					if (this.configSvc.isDebug) {
 						this.showLog("User profile was updated from APIs", account.profile);
 					}
+					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
+					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: account.profile });
 					if (this.configSvc.appConfig.facebook.token !== undefined && this.configSvc.appConfig.facebook.id !== undefined) {
 						this.configSvc.getFacebookProfile();
 					}
