@@ -2823,7 +2823,7 @@ export class PortalsCoreService extends BaseService {
 		await this.sendRequestAsync(
 			{
 				Path: this.getPath("excel", "export", "x-request=" + AppCrypto.jsonEncode(request)),
-				Header: this.configSvc.appConfig.getAuthenticatedHeaders()
+				Header: this.configSvc.appConfig.getAuthenticatedInfo()
 			},
 			async data => {
 				const processID = data !== undefined ? data.ProcessID as string : undefined;
@@ -2938,7 +2938,7 @@ export class PortalsCoreService extends BaseService {
 									NodeID: nodeID,
 									Filename: filename
 								})),
-								Header: this.configSvc.appConfig.getAuthenticatedHeaders()
+								Header: this.configSvc.appConfig.getAuthenticatedInfo()
 							},
 							async data => {
 								const processID = data !== undefined ? data.ProcessID as string : undefined;

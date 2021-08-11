@@ -61,7 +61,7 @@ export class FilesService extends BaseService {
 	}
 
 	public getUploadHeaders(additional?: { [header: string]: string }, asBase64?: boolean) {
-		const headers = this.configSvc.appConfig.getAuthenticatedHeaders();
+		const headers = this.configSvc.appConfig.getAuthenticatedInfo();
 		AppUtility.getAttributes(additional).forEach(name => headers[name] = additional[name]);
 		AppUtility.getAttributes(headers, name => AppUtility.isEmpty(headers[name])).forEach(name => delete headers[name]);
 		if (AppUtility.isTrue(asBase64)) {
@@ -168,7 +168,7 @@ export class FilesService extends BaseService {
 	}
 
 	public getTemporaryFileURI(message: AppMessage) {
-		const query = this.configSvc.appConfig.getAuthenticatedHeaders();
+		const query = this.configSvc.appConfig.getAuthenticatedInfo();
 		query["x-node"] = message.Data.NodeID;
 		query["x-filename"] = message.Data.Filename;
 		return `${this.configSvc.appConfig.URIs.apis}temp.download?${AppUtility.toQuery(query)}`;

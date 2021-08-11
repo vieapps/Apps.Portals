@@ -123,7 +123,7 @@ export class UsersService extends BaseService {
 			}),
 			onSuccess,
 			onError,
-			this.configSvc.appConfig.getCaptchaHeaders(captcha)
+			this.configSvc.appConfig.getCaptchaInfo(captcha)
 		);
 	}
 

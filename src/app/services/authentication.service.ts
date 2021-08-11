@@ -233,7 +233,7 @@ export class AuthenticationService extends BaseService {
 			},
 			onSuccess,
 			async error => await this.processErrorAsync(error, "Error occurred while requesting new password", onError),
-			this.configSvc.appConfig.getCaptchaHeaders(captcha)
+			this.configSvc.appConfig.getCaptchaInfo(captcha)
 		);
 	}
 

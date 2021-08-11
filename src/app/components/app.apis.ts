@@ -104,7 +104,7 @@ export class AppAPIs {
 		* @param data The initialize data, could be an object or an array of key-value pair
 	*/
 	public static getHeaders(data?: any) {
-		const headers = AppConfig.getAuthenticatedHeaders();
+		const headers = AppConfig.getAuthenticatedInfo();
 		AppUtility.toKeyValuePair(data, kvp => AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
 		return headers;
 	}
@@ -528,7 +528,7 @@ export class AppAPIs {
 				"x-session-id": AppCrypto.aesEncrypt(AppConfig.session.id),
 				"x-device-id": AppCrypto.aesEncrypt(AppConfig.session.device)
 			},
-			Body: AppConfig.getAuthenticatedHeaders()
+			Body: AppConfig.getAuthenticatedInfo()
 		});
 		if (this.isWebSocketReady) {
 			this.updateWebSocket({ resendCallbackMessages: true });

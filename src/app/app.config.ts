@@ -252,7 +252,7 @@ export class AppConfig {
 
 	/** Gets the available locales for working with the app */
 	public static get locales() {
-		return this.languages.map(language => language.Value).map(language => language.replace("-", "_"));
+		return this.languages.map(language => language.Value.replace("-", "_"));
 	}
 
 	/** Gets the locale data for working with i18n globalization */
@@ -266,15 +266,13 @@ export class AppConfig {
 	}
 
 	/** Gets the related JSON with active/related service, culture language and host */
-	public static getRelatedJson(additional?: { [key: string]: string }, service?: string, activeID?: string, onCompleted?: (json: any) => void) {
+	public static getRelatedJson(additional?: { [key: string]: string }, service?: string, activeID?: string, onCompleted?: (json: { [key: string]: string }) => void) {
 		const json: { [key: string]: string } = {
 			"language": this.language,
 			"related-service": (AppUtility.isNotEmpty(service) ? service : this.services.active || "").trim().toLowerCase(),
 			"active-id": (AppUtility.isNotEmpty(activeID) ? activeID : this.services.activeID || "").trim().toLowerCase()
 		};
-		if (AppUtility.isObject(additional, true)) {
-			Object.keys(additional).forEach(key => json[key] = additional[key]);
-		}
+		AppUtility.toKeyValuePair(additional, kvp => AppUtility.isNotNull(kvp.value)).forEach(kvp => json[kvp.key.toString()] = additional[kvp.value.toString()]);
 		if (onCompleted !== undefined) {
 			onCompleted(json);
 		}
@@ -286,28 +284,24 @@ export class AppConfig {
 		return AppUtility.toQuery(this.getRelatedJson(undefined, service, activeID, onCompleted));
 	}
 
-	/** Gets the authenticated headers (JSON) for making requests to APIs */
-	public static getAuthenticatedHeaders(addToken: boolean = true, addAppInfo: boolean = true, addDeviceID: boolean = true) {
-		const headers: { [key: string]: string } = {};
-
+	/** Gets the authenticated information for making requests to APIs */
+	public static getAuthenticatedInfo(addToken: boolean = true, addAppInfo: boolean = true, addDeviceID: boolean = true) {
+		const info: { [key: string]: string } = {};
 		if (addToken && AppUtility.isObject(this.session.token, true) && AppUtility.isObject(this.session.keys, true) && AppUtility.isNotEmpty(this.session.keys.jwt)) {
-			headers["x-app-token"] = AppCrypto.jwtEncode(this.session.token, this.session.keys.jwt);
+			info["x-app-token"] = AppCrypto.jwtEncode(this.session.token, this.session.keys.jwt);
 		}
-
 		if (addAppInfo) {
-			headers["x-app-name"] = this.app.name;
-			headers["x-app-platform"] = this.app.platform;
+			info["x-app-name"] = this.app.name;
+			info["x-app-platform"] = this.app.platform;
 		}
-
 		if (addDeviceID && AppUtility.isNotEmpty(this.session.device)) {
-			headers["x-device-id"] = this.session.device;
+			info["x-device-id"] = this.session.device;
 		}
-
-		return headers;
+		return info;
 	}
 
-	/** Gets the captcha headers (JSON) for making requests to APIs */
-	public static getCaptchaHeaders(captcha: string) {
+	/** Gets the captcha information for making requests to APIs */
+	public static getCaptchaInfo(captcha: string) {
 		return {
 			"x-captcha": "true",
 			"x-captcha-registered": AppCrypto.aesEncrypt(this.session.captcha.code),
