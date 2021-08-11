@@ -20,33 +20,6 @@ export class AppUtility {
 		return object === undefined || (typeof object === "boolean" && object === false);
 	}
 
-	/** Checks to see the object is really object or not */
-	public static isObject(object?: any, notNull?: boolean) {
-		return object !== undefined && typeof object === "object" && (this.isTrue(notNull) ? object !== null : true);
-	}
-
-	/** Checks to see the object is array or not */
-	public static isArray(object?: any, notNull?: boolean) {
-		return object !== undefined && Array.isArray(object) && (this.isTrue(notNull) ? object !== null : true);
-	}
-
-	/** Checks to see the object is date or not */
-	public static isDate(object?: any) {
-		return object !== undefined && object instanceof Date;
-	}
-
-	/** Gets the state that determines the email address is valid or not */
-	public static isEmail(email?: string) {
-		const regex = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
-		return regex.test(String(email).trim().replace(/\s+/g, "").replace(/#/g, ""));
-	}
-
-	/** Gets the state that determines the phone number is valid or not */
-	public static isPhone(phone?: string) {
-		const regex = /^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$/i;
-		return regex.test(String(phone).trim().replace(/\s+/g, "").replace(/-/g, "").replace(/\./g, ""));
-	}
-
 	/** Checks to see the object is null or not */
 	public static isNull(object?: any) {
 		return object === undefined || object === null;
@@ -70,6 +43,43 @@ export class AppUtility {
 	/** Compares two strings to see is equals or not */
 	public static isEquals(str1: string, str2: string) {
 		return this.isNotNull(str1) && this.isNotNull(str2) && str1.toLowerCase() === str2.toLowerCase();
+	}
+
+	/** Checks to see the object is really object or not */
+	public static isObject(object?: any, notNull?: boolean) {
+		return object !== undefined && typeof object === "object" && (this.isTrue(notNull) ? object !== null : true);
+	}
+
+	/** Checks to see the object is array or not */
+	public static isArray(object?: any, notNull?: boolean) {
+		return object !== undefined && Array.isArray(object) && (this.isTrue(notNull) ? object !== null : true);
+	}
+
+	/** Checks to see the object is date or not */
+	public static isDate(object?: any) {
+		return object !== undefined && object instanceof Date;
+	}
+
+	/** Checks to see the object is set/hashset or not */
+	public static isSet(object?: any) {
+		return object !== undefined && object instanceof Set;
+	}
+
+	/** Checks to see the object is map/dictionary or not */
+	public static isMap(object?: any) {
+		return object !== undefined && object instanceof Map;
+	}
+
+	/** Gets the state that determines the email address is valid or not */
+	public static isEmail(email?: string) {
+		const regex = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+		return regex.test(String(email).trim().replace(/\s+/g, "").replace(/#/g, ""));
+	}
+
+	/** Gets the state that determines the phone number is valid or not */
+	public static isPhone(phone?: string) {
+		const regex = /^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$/i;
+		return regex.test(String(phone).trim().replace(/\s+/g, "").replace(/-/g, "").replace(/\./g, ""));
 	}
 
 	/** Gets the state to determines the working browser is Apple Safari */
@@ -317,12 +327,32 @@ export class AppUtility {
 					? source
 					: {};
 			this.getProperties(target, true).map(info => info.name).filter(name => typeof target[name] !== "function").forEach(name => {
-				const value = data[name];
-				target[name] = value === undefined || value === null
-					? undefined
-					: this.isDate(target[name])
-						? new Date(value)
-						: value;
+				let value = data[name];
+				if (this.isNull(value)) {
+					value = undefined;
+				}
+				else if (this.isDate(target[name])) {
+					value = new Date(value);
+				}
+				else if (this.isSet(target[name])) {
+					if (this.isArray(value)) {
+						value = new Set<any>(value);
+					}
+					else {
+						value = undefined;
+					}
+				}
+				else if (this.isMap(target[name])) {
+					if (this.isArray(value)) {
+						const map = new Map<any, any>();
+						(value as Array<{ key: any; value: any }>).forEach(kvp => map.set(kvp.key, kvp.value));
+						value = map;
+					}
+					else {
+						value = undefined;
+					}
+				}
+				target[name] = value;
 			});
 			if (onCompleted !== undefined) {
 				onCompleted(data);
