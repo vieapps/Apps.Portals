@@ -433,15 +433,11 @@ export class AppUtility {
 		return observable.toPromise();
 	}
 
-	/** Converts the objects' properties to array of key-value pair */
+	/** Converts an object into array of key-value pair */
 	public static toKeyValuePair(object: any, predicate?: (kvp: { key: any; value: any; }) => boolean) {
 		let keyvaluePairs = new Array<{ key: any; value: any; }>();
-		if (this.isArray(object, true)) {
-			keyvaluePairs = (object as Array<{ key: any; value: any; }>).filter(kvp => AppUtility.isObject(kvp, true) && AppUtility.isNotNull(kvp.key)).map(kvp => ({ key: kvp.key, value: kvp.value}));
-		}
-		else if (object instanceof Set) {
-			object.forEach(kvp => keyvaluePairs.push({ key: kvp !== undefined ? kvp.key : undefined, value: kvp !== undefined ? kvp.value : undefined }));
-			keyvaluePairs = keyvaluePairs.filter(kvp => kvp.key !== undefined).map(kvp => ({ key: kvp.key, value: kvp.value }));
+		if (this.isArray(object, true) || object instanceof Set) {
+			keyvaluePairs = (object instanceof Set ? Array.from(object.values()) : object as Array<any>).filter(element => AppUtility.isNotNull(element)).map((element, index) => ({ key: this.isNotNull(element.key) ? element.key : index, value: this.isNotNull(element.value) ? element.value : element }));
 		}
 		else if (object instanceof Map) {
 			object.forEach((value, key) => keyvaluePairs.push({ key: key, value: value }));
@@ -452,7 +448,7 @@ export class AppUtility {
 		return predicate !== undefined ? keyvaluePairs.filter(predicate) : keyvaluePairs;
 	}
 
-	/** Converts the string/object to an array of strings/key-value pair/value of objects' properties */
+	/** Converts the string/object into an array of strings/key-value pair/value of objects' properties */
 	public static toArray(object: any, separator?: any): Array<string> | Array<any> | Array<{ key: string, value: any }> {
 		if (this.isArray(object)) {
 			return object as Array<any>;
@@ -476,7 +472,7 @@ export class AppUtility {
 		}
 	}
 
-	/** Converts and joins the array of objects to a string */
+	/** Converts and joins the array into a string */
 	public static toStr(array: Array<any>, separator?: string) {
 		let string = "";
 		if (this.isArray(array, true)) {
@@ -486,24 +482,24 @@ export class AppUtility {
 		return string;
 	}
 
-	/** Converts the object to query string */
+	/** Converts the object into a 'query' string */
 	public static toQuery(object: any) {
 		try {
-			return this.toStr(this.toKeyValuePair(object).map(kvp => `${kvp.key}=${encodeURIComponent((kvp.value || "").toString())}`), "&");
+			return this.toStr(this.toKeyValuePair(object).map(kvp => `${kvp.key.toString()}=${encodeURIComponent((kvp.value || "").toString())}`), "&");
 		}
 		catch (error) {
 			return "";
 		}
 	}
 
-	/** Converts object to integer */
+	/** Converts object into an integer number */
 	public static toInt(value: any) {
 		return this.isNotEmpty(value)
 			? parseInt(value, 0)
 			: 0;
 	}
 
-	/** Converts the regular expression string to RegExp object */
+	/** Converts the regular expression string into an RegExp object */
 	public static toRegExp(regex: string) {
 		const flags = regex.replace(/.*\/([gimy]*)$/, "$1");
 		const pattern = regex.replace(new RegExp("^/(.*?)/" + flags + "$"), "$1");
@@ -511,7 +507,7 @@ export class AppUtility {
 	}
 
 	/**
-	 * Converts date-time object to ISO 8601 date time string to use with date-picker
+	 * Converts date-time object into a ISO 8601 date time string to use with date-picker
 	 * @param date the date value to convert
 	 * @param seconds true to include the value of seconds
 	 * @param miliseconds true to include the value of mili-seconds
@@ -537,7 +533,7 @@ export class AppUtility {
 		return seconds ? isoDateTime : isoDateTime.substr(0, 16);
 	}
 
-	/** Converts date-time object to ISO 8601 date string to use with date-picker */
+	/** Converts date-time object into a ISO 8601 date string to use with date-picker */
 	public static toIsoDate(date: string | number | Date) {
 		const isoDateTime = date === undefined || "-" === date
 			? undefined
@@ -545,7 +541,7 @@ export class AppUtility {
 		return isoDateTime !== undefined ? isoDateTime.substr(0, 10) : undefined;
 	}
 
-	/** Converts the ANSI string to a string that can use in an URI */
+	/** Converts the ANSI string into a string that can use in an URI */
 	public static toURI(input?: string): string {
 		if (!this.isNotEmpty(input) || input.trim() === "") {
 			return "";
@@ -564,7 +560,7 @@ export class AppUtility {
 		return result.toLowerCase();
 	}
 
-	/** Converts the Vietnamese string to ANSI string */
+	/** Converts the Vietnamese string into an ANSI string */
 	public static toANSI(input?: string, asURI?: boolean): string {
 		if (!this.isNotEmpty(input) || input.trim() === "") {
 			return "";

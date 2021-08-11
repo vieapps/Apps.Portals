@@ -105,7 +105,7 @@ export class AppAPIs {
 	*/
 	public static getHeaders(data?: any) {
 		const headers = AppConfig.getAuthenticatedHeaders();
-		AppUtility.toKeyValuePair(data, kvp => AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key] = kvp.value.toString());
+		AppUtility.toKeyValuePair(data, kvp => AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
 		return headers;
 	}
 
