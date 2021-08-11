@@ -53,14 +53,8 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 				const contentType = this.portalsCmsSvc.getDefaultContentTypeOfLink(module) || this.portalsCmsSvc.getDefaultContentTypeOfItem(module);
 				if (AppUtility.isEquals(info.args.Object, "Organization")) {
 					this.shortcuts[0].title = AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.organization"), { organization: organization !== undefined ? this.portalsCoreSvc.activeOrganization.Title : "N/A" });
-					if (this.configSvc.isDebug) {
-						console.log("<Portals Shortcuts>: Update active organization", organization);
-					}
 				}
 				this.shortcuts[1].title = AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.module"), { module: module !== undefined ? module.Title : "N/A" });
-				if (this.configSvc.isDebug) {
-					console.log("<Portals Shortcuts>: Update active module", module);
-				}
 				this.shortcuts[3].url = this.portalsCoreSvc.getAppURL(contentType);
 			}
 		}, "Shortcuts:ActiveOrganizationModule");

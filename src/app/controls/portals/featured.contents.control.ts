@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, Input } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
-import { PlatformUtility } from "@app/components/app.utility.platform";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
@@ -74,10 +73,6 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 				AppUtility.invoke(async () =>  await this.prepareAsync(true), 1234);
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
-
-		if (this.configSvc.isDebug) {
-			console.log(`<Featured Contents>: Control was initialized - Published: ${this._isPublished}`);
-		}
 	}
 
 	ngOnDestroy() {
@@ -131,9 +126,6 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 				Category: content["category"],
 				OriginalObject: content
 			} as FeaturedContent)).filter(filterBy).orderBy(orderBy).take(this.amount);
-			if (this.configSvc.isDebug) {
-				console.log(`<Featured Contents>: Featured contents are prepared (${(organization || {}).Title}) - Published: ${this._isPublished}`);
-			}
 		}
 	}
 

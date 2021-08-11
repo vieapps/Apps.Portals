@@ -152,34 +152,25 @@ export class PortalsCoreService extends BaseService {
 					await this.getContentTypeAsync(info.args.ID);
 				}
 			}
-			else if (info.args.Object === "Organization" && info.args.Type === "Changed") {
+			else if (info.args.Object === "Organization" && info.args.Type === "Changed" && this.configSvc.appConfig.services.active === this.name) {
 				this.prepareSidebar();
-				if (this.configSvc.isDebug) {
-					this.showLog("Update sidebar when organization was changed");
-				}
+				this.updateSidebarTitle();
 			}
 		});
 
 		AppEvents.on("Account", info => {
-			if (AppUtility.isEquals(info.args.Type, "Updated") && AppUtility.isEquals(info.args.Mode, "APIs")) {
-				if (this.configSvc.isDebug) {
-					this.showLog("Update sidebar when user account was updated with data from APIs");
-				}
+			if (AppUtility.isEquals(info.args.Type, "Updated") && AppUtility.isEquals(info.args.Mode, "APIs") && this.configSvc.appConfig.services.active === this.name) {
 				this.prepareSidebar();
+				this.updateSidebarTitle();
 			}
 		});
 
 		AppEvents.on("Profile", async info => {
-			if (AppUtility.isEquals(info.args.Type, "Updated") && AppUtility.isEquals(info.args.Mode, "APIs")) {
+			if (AppUtility.isEquals(info.args.Type, "Updated") && AppUtility.isEquals(info.args.Mode, "APIs") && this.configSvc.appConfig.services.active === this.name) {
 				const organizations = this.activeOrganizations;
 				const organization = this.activeOrganization;
 				if (organization === undefined || organizations.findIndex(id => id === organization.ID) < 0) {
-					await this.getOrganizationAsync(organizations.first(), async _ => {
-						if (this.configSvc.isDebug) {
-							this.showLog("Set active organization when user profile was updated with data from APIs");
-						}
-						await this.setActiveOrganizationAsync(Organization.get(organizations.first()));
-					});
+					await this.getOrganizationAsync(organizations.first(), async _ => await this.setActiveOrganizationAsync(Organization.get(organizations.first())));
 				}
 			}
 		});
@@ -318,9 +309,6 @@ export class PortalsCoreService extends BaseService {
 
 	public async setActiveOrganizationAsync(organization: Organization, onNext?: () => void) {
 		if (organization !== undefined) {
-			if (this.configSvc.isDebug) {
-				this.showLog("Active organization", organization);
-			}
 			this.configSvc.appConfig.services.activeID = organization.ID;
 			this.configSvc.appConfig.options.extras["organization"] = organization.ID;
 			if (this.activeOrganizations.indexOf(organization.ID) < 0) {
@@ -368,9 +356,6 @@ export class PortalsCoreService extends BaseService {
 				? preferID
 				: AppUtility.isNotEmpty(systemID) ? this.activeModules[systemID] : undefined;
 			if (AppUtility.isNotEmpty(preferID)) {
-				if (this.configSvc.isDebug) {
-					this.showLog("prepare active module with a specified identity => " + preferID);
-				}
 				if (Module.contains(preferID)) {
 					Module.active = Module.get(preferID);
 				}
@@ -385,15 +370,9 @@ export class PortalsCoreService extends BaseService {
 			}
 			else if (activeOrganization !== undefined) {
 				if (activeOrganization.modules.length > 0) {
-					if (this.configSvc.isDebug) {
-						this.showLog("prepare active module with default module of the organization", activeOrganization.defaultModule);
-					}
 					await this.setActiveModuleAsync(activeOrganization.defaultModule);
 				}
 				else {
-					if (this.configSvc.isDebug) {
-						this.showLog("re-fetch the organization & related modules/content-types");
-					}
 					await this.getOrganizationAsync(
 						activeOrganization.ID,
 						async _ => await this.setActiveModuleAsync(activeOrganization.defaultModule),
@@ -1294,6 +1273,14 @@ export class PortalsCoreService extends BaseService {
 
 	public async refreshAsync(objectName: string, id: string, onSuccess?: (data: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, headers?: { [header: string]: string }) {
 		await this.readAsync(this.getPath(objectName, "refresh", `object-id=${id}`), onSuccess, onError, headers, useXHR);
+	}
+
+	private updateSidebarTitle() {
+		const organization = this.activeOrganization;
+		AppEvents.broadcast("UpdateSidebarTitle", {
+			title: organization !== undefined ? organization.Alias : this.configSvc.appConfig.app.name,
+			onClick: organization !== undefined && this.canManageOrganization(organization) ? async () => await this.configSvc.navigateForwardAsync(organization.routerURI) : () => {}
+		});
 	}
 
 	public async getSidebarFooterButtonsAsync() {

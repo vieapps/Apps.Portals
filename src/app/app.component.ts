@@ -37,9 +37,7 @@ export class AppComponent implements OnInit {
 		private portalsCmsSvc: PortalsCmsService,
 		http: HttpClient
 	) {
-		if (this.configSvc.isDebug) {
-			console.log("<AppComponent>: Initializing...");
-		}
+		console.log("<AppComponent>: Initializing...");
 		AppAPIs.initializeHttpClient(http);
 	}
 
@@ -296,14 +294,27 @@ export class AppComponent implements OnInit {
 		}
 	}
 
+	private updateSidebarImage() {
+		const profile = this.configSvc.getAccount().profile;
+		if (profile !== undefined) {
+			this.sidebar.header.thumbnail = profile.avatarURI;
+			this.sidebar.header.onThumbnailClick = () => AppEvents.broadcast("Navigate", { Type: "Profile" });
+		}
+		else {
+			this.sidebar.header.thumbnail = this.sidebar.header.onThumbnailClick = undefined;
+		}
+	}
+
 	private setupEventHandlers() {
 		AppEvents.on("OpenSidebar", _ => this.sidebar.visible = true);
 		AppEvents.on("CloseSidebar", _ => this.sidebar.visible = false);
 		AppEvents.on("ToggleSidebar", _ => this.toggleSidebar());
 		AppEvents.on("ActiveSidebar", info => this.sidebar.active = info.args.name || "cms");
-
 		AppEvents.on("UpdateSidebar", async info => await this.updateSidebarAsync(info.args));
-		AppEvents.on("UpdateSidebarTitle", info => this.sidebar.header.title = AppUtility.isNotEmpty(info.args.Title) ? info.args.Title : this.sidebar.header.title);
+		AppEvents.on("UpdateSidebarTitle", info => {
+			this.sidebar.header.title = AppUtility.isNotEmpty(info.args.title) ? info.args.title : this.sidebar.header.title;
+			this.sidebar.header.onTitleClick = typeof info.args.onClick === "function" ? info.args.onClick : () => {};
+		});
 
 		AppEvents.on("Navigate", async info => {
 			const url = AppUtility.isEquals(info.args.Type, "LogIn")
@@ -326,24 +337,6 @@ export class AppComponent implements OnInit {
 			}
 		});
 
-		AppEvents.on("Profile", info => {
-			if (AppUtility.isEquals(info.args.Type, "Updated")) {
-				updateSidebarImage("when user profile was updated");
-			}
-		});
-
-		AppEvents.on("Account", info => {
-			if (AppUtility.isEquals(info.args.Type, "Updated")) {
-				updateSidebarTitle("when account was updated");
-			}
-		});
-
-		AppEvents.on(this.portalsCoreSvc.name, info => {
-			if (AppUtility.isEquals(info.args.Type, "Changed") && AppUtility.isEquals(info.args.Object, "Organization")) {
-				updateSidebarTitle("when organization was changed");
-			}
-		});
-
 		AppEvents.on("App", async info => {
 			if (AppUtility.isEquals(info.args.Type, "LanguageChanged")) {
 				await this.updateSidebarAsync({}, true);
@@ -356,54 +349,25 @@ export class AppComponent implements OnInit {
 			if (AppUtility.isEquals(info.args.Type, "LogIn") || AppUtility.isEquals(info.args.Type, "LogOut")) {
 				await this.updateSidebarAsync({}, true);
 				await this.normalizeSidebarAsync();
-				this.sidebar.active = "cms";
 				if (AppUtility.isEquals(info.args.Type, "LogOut")) {
-					updateSidebarImage("when logged out");
-					updateSidebarTitle("when logged out");
 					this.sidebar.header.title = this.configSvc.appConfig.app.name;
+					this.sidebar.header.onTitleClick = () => {};
+					this.updateSidebarImage();
 				}
 			}
 		});
 
-		const updateSidebarImage = (reason?: string) => {
-			if (this.configSvc.isDebug) {
-				console.log(`<AppComponent>: Update sidebar's image [${reason}]`);
+		AppEvents.on("Profile", info => {
+			if (AppUtility.isEquals(info.args.Type, "Updated")) {
+				this.updateSidebarImage();
 			}
-			const profile = this.configSvc.getAccount().profile;
-			if (profile !== undefined) {
-				this.sidebar.header.thumbnail = profile.avatarURI;
-				this.sidebar.header.onThumbnailClick = () => AppEvents.broadcast("Navigate", { Type: "Profile" });
-			}
-			else {
-				this.sidebar.header.thumbnail = this.sidebar.header.onTitleClick = undefined;
-			}
-		};
+		});
 
-		const updateSidebarTitle = (reason?: string) => {
-			const account = this.configSvc.getAccount();
-			const organization = this.portalsCoreSvc.activeOrganization;
-			if (this.configSvc.isDebug) {
-				console.log(`<AppComponent>: Update sidebar's title [${reason}]`);
+		AppEvents.on("Account", info => {
+			if (AppUtility.isEquals(info.args.Type, "Updated")) {
+				this.updateSidebarImage();
 			}
-			if (organization !== undefined) {
-				this.sidebar.header.title = organization.Alias;
-				if (this.portalsCoreSvc.canManageOrganization(organization, account)) {
-					this.sidebar.header.onTitleClick = async () => await this.configSvc.navigateForwardAsync(organization.routerURI);
-				}
-				else {
-					if (AppUtility.isNotEmpty(account.id)) {
-						this.sidebar.header.onTitleClick = () => {
-							if (this.configSvc.isDebug) {
-								console.warn("<AppComponent>: User click on sidebar's title, but have no permission", account);
-							}
-						};
-					}
-					else {
-						this.sidebar.header.onTitleClick = () => {};
-					}
-				}
-			}
-		};
+		});
 	}
 
 	private async activateAsync() {
@@ -496,7 +460,7 @@ export class AppComponent implements OnInit {
 
 	private finalize(onNext?: () => void) {
 		const appConfig = this.configSvc.appConfig;
-		console.log("<AppComponent>: The app was initialized", this.configSvc.isNativeApp ? JSON.stringify(appConfig.app) : appConfig.app);
+		console.log("<AppComponent>: The app was initialized", this.configSvc.isNativeApp ? AppUtility.stringify(appConfig.app) : appConfig.app);
 		if (this.configSvc.isWebApp) {
 			PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
 		}

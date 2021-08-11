@@ -466,9 +466,6 @@ export class ConfigurationService extends BaseService {
 						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Storage" });
 					}
 				}
-				if (this.isDebug) {
-					this.showLog("The session was loaded from storage", this.appConfig.session);
-				}
 			}
 		}
 		catch (error) {
@@ -484,9 +481,6 @@ export class ConfigurationService extends BaseService {
 		if (this.appConfig.app.persistence) {
 			try {
 				await AppStorage.setAsync("Session", AppUtility.clone(this.appConfig.session, ["jwt", "captcha"]));
-				if (this.isDebug) {
-					this.showLog("The session was stored into storage");
-				}
 			}
 			catch (error) {
 				this.showError("Error occurred while storing the session into storage", error);
@@ -502,9 +496,6 @@ export class ConfigurationService extends BaseService {
 	public async deleteSessionAsync(onNext?: (data?: any) => void) {
 		try {
 			await AppStorage.removeAsync("Session");
-			if (this.isDebug) {
-				this.showLog("The session is deleted from storage");
-			}
 		}
 		catch (error) {
 			this.showError("Error occurred while deleting the session from storage", error);
@@ -569,9 +560,6 @@ export class ConfigurationService extends BaseService {
 
 		if (this.isAuthenticated && this.getAccount().id === account.id) {
 			this.appConfig.session.account = account;
-			if (this.isDebug) {
-				this.showLog("Account was updated", this.appConfig.session.account);
-			}
 			Account.set(account);
 			if (this.appConfig.app.persistence) {
 				this.storeSessionAsync(onNext);
@@ -777,9 +765,6 @@ export class ConfigurationService extends BaseService {
 	public async storeOptionsAsync(onNext?: (data?: any) => void) {
 		await this.saveOptionsAsync(() => {
 			AppEvents.broadcast("App", { Type: "OptionsUpdated" });
-			if (this.isDebug) {
-				this.showLog("Options are updated", this.appConfig.options);
-			}
 			if (onNext !== undefined) {
 				onNext(this.appConfig.options);
 			}
@@ -928,12 +913,12 @@ export class ConfigurationService extends BaseService {
 			},
 			search: {
 				title: await this.getResourceAsync("common.sidebar.search"),
-				link: this.appConfig.url.search,
+				link: undefined,
 				params: undefined as { [key: string]: string },
 				direction: "forward",
 				icon: "search",
 				thumbnail: undefined as string,
-				onClick: () => {}
+				onClick: async () => await this.navigateForwardAsync(this.appConfig.url.search)
 			}
 		};
 	}

@@ -134,7 +134,7 @@ export class AppConfig {
 	public static url = {
 		stack: [] as Array<{ url: string, params: { [key: string]: any } }>,
 		home: "/home",
-		search: "/portals/cms/contents/search",
+		search: "/search",
 		base: undefined as string,
 		host: undefined as string,
 		routerParams: undefined as { [key: string]: any },

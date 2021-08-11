@@ -82,6 +82,8 @@ export class PortalsCmsService extends BaseService {
 			}
 		});
 
+		this.configSvc.appConfig.url.search = "/portals/cms/contents/search";
+
 		AppAPIs.registerAsServiceScopeProcessor(this.filesSvc.name, message => this.processAttachmentUpdateMessage(message));
 
 		AppEvents.on(this.name, async info => {
@@ -107,9 +109,6 @@ export class PortalsCmsService extends BaseService {
 				}
 			}
 			else if (AppUtility.isEquals(info.args.Type, "Changed") && (AppUtility.isEquals(info.args.Object, "Organization") || AppUtility.isEquals(info.args.Object, "Module"))) {
-				if (this.configSvc.isDebug) {
-					this.showLog("Update sidebar when organization/module was changed");
-				}
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				await this.updateSidebarAsync();
@@ -117,85 +116,66 @@ export class PortalsCmsService extends BaseService {
 		});
 
 		AppEvents.on("Session", async info => {
-			if (AppUtility.isEquals(info.args.Type, "LogIn") || AppUtility.isEquals(info.args.Type, "LogOut")) {
-				if (this.configSvc.isDebug) {
-					this.showLog("Update sidebar when the user was logged (" + info.args.Type.toLowerCase() + ")");
-				}
+			if ((AppUtility.isEquals(info.args.Type, "LogIn") || AppUtility.isEquals(info.args.Type, "LogOut")) && this.configSvc.appConfig.services.active === this.name) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				await this.updateSidebarAsync();
+				AppEvents.broadcast("ActiveSidebar", { name: "cms" });
 			}
 		});
 
 		AppEvents.on("Profile", async info => {
-			if (AppUtility.isEquals(info.args.Type, "Updated") && !AppUtility.isEquals(info.args.Mode, "Storage")) {
-				if (this.configSvc.isDebug) {
-					this.showLog("Update sidebar when profiles' options was updated", this.getDefaultContentTypeOfCategory(this.portalsCoreSvc.activeModule));
-				}
+			if (AppUtility.isEquals(info.args.Type, "Updated") && AppUtility.isEquals(info.args.Mode, "APIs") && this.configSvc.appConfig.services.active === this.name) {
 				if (Organization.active !== undefined && this.portalsCoreSvc.activeOrganizations.indexOf(Organization.active.ID) < 0) {
 					await this.portalsCoreSvc.removeActiveOrganizationAsync(Organization.active.ID);
 				}
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
-				await this.prepareFeaturedContentsAsync();
-				await this.updateSidebarAsync();
+				await Promise.all([
+					this.prepareFeaturedContentsAsync(),
+					this.updateSidebarAsync()
+				]);
 			}
 		});
 	}
 
 	public async initializeAsync(onNext?: () => void) {
+		const tasks = new Array<Promise<any>>();
+
 		if (this._oembedProviders === undefined) {
-			await this.readAsync(
+			tasks.push(this.fetchAsync(
 				"statics/oembed.providers.json",
 				data => {
 					const oembedProviders = data as Array<{ name: string; schemes: string[], pattern: { expression: string; position: number; html: string } }>;
-					this._oembedProviders = oembedProviders.map(oembedProvider => {
-						return {
-							name: oembedProvider.name,
-							schemes: oembedProvider.schemes.map(scheme => AppUtility.toRegExp(`/${scheme}/i`)),
-							pattern: {
-								expression: AppUtility.toRegExp(`/${oembedProvider.pattern.expression}/i`),
-								position: oembedProvider.pattern.position,
-								html: oembedProvider.pattern.html
-							}
-						};
-					});
-					if (this.configSvc.isDebug) {
-						this.showLog("The providers of OEmbed medias were initialized", this._oembedProviders);
-					}
-				},
-				undefined,
-				undefined,
-				true
-			);
+					this._oembedProviders = oembedProviders.map(oembedProvider => ({
+						name: oembedProvider.name,
+						schemes: oembedProvider.schemes.map(scheme => AppUtility.toRegExp(`/${scheme}/i`)),
+						pattern: {
+							expression: AppUtility.toRegExp(`/${oembedProvider.pattern.expression}/i`),
+							position: oembedProvider.pattern.position,
+							html: oembedProvider.pattern.html
+						}
+					}));
+				}
+			));
 		}
 
 		if (Module.active === undefined) {
-			await this.portalsCoreSvc.getActiveModuleAsync(undefined, true, () => {
-				if (this.configSvc.isDebug) {
-					this.showLog("The active module was fetched", Module.active);
-				}
-			});
+			tasks.push(this.portalsCoreSvc.getActiveModuleAsync(undefined, true));
 		}
 
 		if (Module.active !== undefined && Module.active.contentTypes.length < 1) {
-			await this.portalsCoreSvc.getActiveModuleAsync(undefined, true, () => {
-				if (this.configSvc.isDebug) {
-					this.showLog("The active module and content-types were fetched", Module.active);
-				}
-			});
+			tasks.push(this.portalsCoreSvc.getActiveModuleAsync(undefined, true));
 		}
 
-		// await this.prepareFeaturedContentsAsync();
-		await this.updateSidebarAsync(() => {
-			if (this.configSvc.isDebug) {
-				this.showLog("The CMS sidebar has been prepared");
-			}
-			AppEvents.broadcast(this.name, { Type: "CMSPortalsInitialized" });
-			if (onNext !== undefined) {
-				onNext();
-			}
-		});
+		if (this.configSvc.appConfig.services.active === this.name) {
+			tasks.push(this.updateSidebarAsync(() => AppEvents.broadcast(this.name, { Type: "CMSPortalsInitialized" })));
+		}
+
+		await Promise.all(tasks);
+		if (onNext !== undefined) {
+			onNext();
+		}
 	}
 
 	public canManage(object: CmsBaseModel, account?: Account) {
@@ -604,9 +584,6 @@ export class PortalsCmsService extends BaseService {
 				});
 			}
 			if (activeContentTypes.length > 0) {
-				if (this.configSvc.isDebug) {
-					this.showLog("Start to prepare featured contents of the active organization", `${activeOrganization.Title}`, activeContentTypes.map(contentType => ({ ID: contentType.ID, Title: contentType.Title })));
-				}
 				AppUtility.invoke(async () => await this.getFeaturedContentsAsync(activeContentTypes, 0), 123);
 			}
 
@@ -621,9 +598,6 @@ export class PortalsCmsService extends BaseService {
 				availableContentTypes = availableContentTypes.concat(contentTypesOfCmsContent).concat(contentTypesOfCmsItem);
 			}));
 			if (availableContentTypes.length > 0) {
-				if (this.configSvc.isDebug) {
-					this.showLog("Start to prepare featured contents of another available organizations", availableContentTypes.map(contentType => ({ ID: contentType.ID, Title: contentType.Title, Organization: Organization.get(contentType.SystemID).Title })));
-				}
 				AppUtility.invoke(async () => await this.getFeaturedContentsAsync(availableContentTypes, 0), 3456);
 			}
 		}

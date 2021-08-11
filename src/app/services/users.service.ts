@@ -39,11 +39,7 @@ export class UsersService extends BaseService {
 				if (profile !== undefined) {
 					profile.Language = this.configSvc.appConfig.options.i18n;
 					profile.Options = this.configSvc.appConfig.options;
-					await this.updateProfileAsync(profile, async _ => await this.configSvc.storeSessionAsync(() => {
-						if (this.configSvc.isDebug) {
-							console.log("[Users]: The account profiles' options are updated to APIs", profile);
-						}
-					}));
+					await this.updateProfileAsync(profile, async _ => await this.configSvc.storeSessionAsync());
 				}
 			}
 		});
@@ -330,9 +326,6 @@ export class UsersService extends BaseService {
 			case "Account":
 				this.configSvc.updateAccount(message.Data);
 				if (this.configSvc.isAuthenticated && account.id === message.Data.ID) {
-					if (this.configSvc.isDebug) {
-						this.showLog("User account was updated from APIs", account.profile);
-					}
 					AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
 					AppEvents.sendToElectron(this.name, message);
 				}
@@ -348,9 +341,6 @@ export class UsersService extends BaseService {
 						await this.configSvc.changeLanguageAsync(account.profile.Language);
 					}
 					await this.configSvc.updateOptionsAsync(account.profile.Options);
-					if (this.configSvc.isDebug) {
-						this.showLog("User profile was updated from APIs", account.profile);
-					}
 					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
 					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: account.profile });
 					if (this.configSvc.appConfig.facebook.token !== undefined && this.configSvc.appConfig.facebook.id !== undefined) {
