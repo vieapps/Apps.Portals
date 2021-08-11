@@ -113,7 +113,7 @@ export class AppAPIs {
 	public static parseRequestInfo(path: string) {
 		const uri = AppUtility.parseURI(path);
 		const requestInfo = {
-			ServiceName: uri.PathSegments[0],
+			ServiceName: uri.PathSegments.length > 0 ? uri.PathSegments[0] : "",
 			ObjectName: uri.PathSegments.length > 1 ? uri.PathSegments[1] : "",
 			ObjectIdentity: undefined as string,
 			Query: uri.QueryParams
