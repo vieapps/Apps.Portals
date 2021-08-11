@@ -732,3 +732,77 @@ export class AppUtility {
 	}
 
 }
+
+/** Presents the side bar of the app */
+export interface AppSidebar {
+	visible: boolean;
+	profile: boolean;
+	search: boolean;
+	children: boolean;
+	active: string;
+	header: {
+		thumbnail: string;
+		onThumbnailClick: (event: Event, sidebar: AppSidebar) => void;
+		title: string;
+		onTitleClick: (event: Event, sidebar: AppSidebar) => void;
+	};
+	footer: Array<{
+		name: string;
+		icon: string;
+		title?: string;
+		onClick?: (event: Event, name: string, sidebar: AppSidebar) => void;
+	}>;
+	top: Array<{
+		title: string;
+		link: string;
+		params?: { [key: string]: string };
+		direction?: string;
+		icon?: string;
+		onClick?: (event: Event, info: any, sidebar: AppSidebar) => void;
+	}>;
+	menu: Array<{
+		name: string;
+		parent?: {
+			title: string;
+			link: string;
+			params?: { [key: string]: string };
+			expandable: boolean;
+			onClick?: (event: Event, info: any, sidebar: AppSidebar) => void;
+			id?: string;
+		};
+		items: Array<AppSidebarMenuItem>
+	}>;
+}
+
+/** Presents a menu item in the side bar of the app */
+export interface AppSidebarMenuItem {
+	title: string;
+	link: string;
+	params?: { [key: string]: string };
+	direction?: string;
+	onClick?: (event: Event, info: any, sidebar: AppSidebar) => void;
+	children?: Array<AppSidebarMenuItem>;
+	expanded: boolean;
+	id?: string;
+	icon?: {
+		name: string;
+		color?: string;
+		slot?: string;
+	};
+}
+
+/** Presents a short-cut of the app */
+export interface AppShortcut {
+	title: string;
+	url?: string;
+	direction?: string;
+	icon?: {
+		name?: string;
+		color?: string;
+	};
+	order?: number;
+	editable?: boolean;
+	removable?: boolean;
+	onClick?: (event: Event, index: number, shortcut: AppShortcut) => void;
+	onRemove?: (event: Event, index: number, shortcut: AppShortcut) => void;
+}

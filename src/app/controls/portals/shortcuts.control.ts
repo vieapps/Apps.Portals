@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy, Input } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
-import { AppUtility } from "@app/components/app.utility";
+import { AppUtility, AppShortcut } from "@app/components/app.utility";
 import { AppFormsService } from "@app/components/forms.service";
-import { ConfigurationService, Shortcut } from "@app/services/configuration.service";
+import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
@@ -25,7 +25,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 	}
 
 	label = "Shortcuts";
-	shortcuts = new Array<Shortcut>();
+	shortcuts = new Array<AppShortcut>();
 
 	get color() {
 		return this.configSvc.color;
@@ -75,7 +75,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		this.label = await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.labels.shortcuts");
 
 		const shortcuts = this.configSvc.appConfig.options.extras["shortcuts"] || {};
-		this.shortcuts = (shortcuts.items as Array<Shortcut> || []).map(shortcut => shortcut);
+		this.shortcuts = (shortcuts.items as Array<AppShortcut> || []).map(shortcut => shortcut);
 
 		const organization = await this.portalsCoreSvc.getActiveOrganizationAsync();
 		this.shortcuts.insert({
@@ -133,11 +133,11 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		});
 	}
 
-	track(index: number, shortcut: Shortcut) {
+	track(index: number, shortcut: AppShortcut) {
 		return `${shortcut.title}@${index}`;
 	}
 
-	async navigateAsync(event: Event, index: number, shortcut: Shortcut) {
+	async navigateAsync(event: Event, index: number, shortcut: AppShortcut) {
 		event.stopPropagation();
 		if (shortcut.onClick !== undefined) {
 			shortcut.onClick(event, index, shortcut);
@@ -161,15 +161,13 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 				async organizationID => await this.portalsCoreSvc.setActiveOrganizationAsync(this.portalsCoreSvc.getOrganization(organizationID, false)),
 				await this.configSvc.getResourceAsync("common.buttons.select"),
 				await this.configSvc.getResourceAsync("common.buttons.cancel"),
-				activeOrganizations.map(organization => {
-					return {
-						name: "organizationID",
-						type: "radio",
-						label: organization.Alias + " - " + organization.Title,
-						value: organization.ID,
-						checked: organization.ID === activeOrganizationID
-					};
-				}),
+				activeOrganizations.sortBy("Alias").map(organization => ({
+					name: "organizationID",
+					type: "radio",
+					label: organization.Alias + " - " + organization.Title,
+					value: organization.ID,
+					checked: organization.ID === activeOrganizationID
+				})),
 				true
 			);
 		}
@@ -198,15 +196,13 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 					async moduleID => await this.portalsCoreSvc.setActiveModuleAsync(this.portalsCoreSvc.getModule(moduleID, false)),
 					await this.configSvc.getResourceAsync("common.buttons.select"),
 					await this.configSvc.getResourceAsync("common.buttons.cancel"),
-					activeOrganization.modules.map(module => {
-						return {
-							name: "moduleID",
-							type: "radio",
-							label: module.Title,
-							value: module.ID,
-							checked: module.ID === activeModuleID
-						};
-					}),
+					activeOrganization.modules.sortBy("Title").map(module => ({
+						name: "moduleID",
+						type: "radio",
+						label: module.Title,
+						value: module.ID,
+						checked: module.ID === activeModuleID
+					})),
 					true
 				);
 			}
@@ -221,12 +217,12 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		console.log("Request to create shortcut");
 	}
 
-	async updateAsync(event: Event, index: number, shortcut: Shortcut) {
+	async updateAsync(event: Event, index: number, shortcut: AppShortcut) {
 		event.stopPropagation();
 		console.log("Request to update shortcut");
 	}
 
-	async removeAsync(event: Event, index: number, shortcut: Shortcut) {
+	async removeAsync(event: Event, index: number, shortcut: AppShortcut) {
 		event.stopPropagation();
 		if (shortcut.onRemove !== undefined) {
 			shortcut.onRemove(event, index, shortcut);

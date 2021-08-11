@@ -7,7 +7,7 @@ import { StatusBar } from "@ionic-native/status-bar/ngx";
 import { AppAPIs } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
-import { AppUtility } from "@app/components/app.utility";
+import { AppUtility, AppSidebar, AppSidebarMenuItem } from "@app/components/app.utility";
 import { AppFormsService } from "@app/components/forms.service";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
@@ -43,7 +43,7 @@ export class AppComponent implements OnInit {
 		AppAPIs.initializeHttpClient(http);
 	}
 
-	sidebar: Sidebar = {
+	sidebar: AppSidebar = {
 		visible: true,
 		profile: false,
 		search: true,
@@ -51,15 +51,15 @@ export class AppComponent implements OnInit {
 		active: "cms",
 		header: {
 			thumbnail: undefined as string,
-			onThumbnailClick: (_: Event, __: Sidebar) => {},
+			onThumbnailClick: (_: Event, __: AppSidebar) => {},
 			title: undefined as string,
-			onTitleClick: (_: Event, __: Sidebar) => {}
+			onTitleClick: (_: Event, __: AppSidebar) => {}
 		},
 		footer: new Array<{
 			name: string,
 			icon: string,
 			title?: string,
-			onClick?: (event: Event, name: string, sidebar: Sidebar) => void
+			onClick?: (event: Event, name: string, sidebar: AppSidebar) => void
 		}>(),
 		top: new Array<{
 			title: string,
@@ -67,7 +67,7 @@ export class AppComponent implements OnInit {
 			params?: { [key: string]: string },
 			direction?: string,
 			icon?: string,
-			onClick?: (event: Event, info: any, sidebar: Sidebar) => void
+			onClick?: (event: Event, info: any, sidebar: AppSidebar) => void
 		}>(),
 		menu: new Array<{
 			name: string,
@@ -76,10 +76,10 @@ export class AppComponent implements OnInit {
 				link: string,
 				params?: { [key: string]: string },
 				expandable: boolean,
-				onClick?: (event: Event, info: any, sidebar: Sidebar) => void,
+				onClick?: (event: Event, info: any, sidebar: AppSidebar) => void,
 				id?: string
 			},
-			items: Array<SidebarMenuItem>
+			items: Array<AppSidebarMenuItem>
 		}>()
 	};
 
@@ -147,7 +147,7 @@ export class AppComponent implements OnInit {
 		this.sidebar.visible = !this.sidebar.visible;
 	}
 
-	private getSidebarItem(itemInfo: any = {}, oldItem: any = {}, onCompleted?: (item: SidebarMenuItem) => void) {
+	private getSidebarItem(itemInfo: any = {}, oldItem: any = {}, onCompleted?: (item: AppSidebarMenuItem) => void) {
 		const gotChildren = AppUtility.isArray(itemInfo.children, true) && (itemInfo.children as Array<any>).length > 0;
 		const isExpanded = gotChildren && !!itemInfo.expanded;
 		const icon = itemInfo.icon || {};
@@ -156,7 +156,7 @@ export class AppComponent implements OnInit {
 			icon.color = "medium";
 			icon.slot = "end";
 		}
-		const sidebarItem: SidebarMenuItem = {
+		const sidebarItem: AppSidebarMenuItem = {
 			title: itemInfo.title || oldItem.title,
 			link: itemInfo.link || oldItem.link,
 			params: itemInfo.params as { [key: string]: string } || oldItem.params,
@@ -248,7 +248,7 @@ export class AppComponent implements OnInit {
 					params: info.parent.params,
 					expandable: !!info.parent.expandable,
 					onClick: typeof info.parent.onClick === "function"
-						? info.parent.onClick as (event: Event, info: any, sidebar: Sidebar) => void
+						? info.parent.onClick as (event: Event, info: any, sidebar: AppSidebar) => void
 						: () => {}
 				}
 			: this.sidebar.menu[index].parent;
@@ -553,60 +553,4 @@ export class AppComponent implements OnInit {
 		});
 	}
 
-}
-
-export interface Sidebar {
-	visible: boolean;
-	profile: boolean;
-	search: boolean;
-	children: boolean;
-	active: string;
-	header: {
-		thumbnail: string;
-		onThumbnailClick: (event: Event, sidebar: Sidebar) => void;
-		title: string;
-		onTitleClick: (event: Event, sidebar: Sidebar) => void;
-	};
-	footer: Array<{
-		name: string;
-		icon: string;
-		title?: string;
-		onClick?: (event: Event, name: string, sidebar: Sidebar) => void;
-	}>;
-	top: Array<{
-		title: string;
-		link: string;
-		params?: { [key: string]: string };
-		direction?: string;
-		icon?: string;
-		onClick?: (event: Event, info: any, sidebar: Sidebar) => void;
-	}>;
-	menu: Array<{
-		name: string;
-		parent?: {
-			title: string;
-			link: string;
-			params?: { [key: string]: string };
-			expandable: boolean;
-			onClick?: (event: Event, info: any, sidebar: Sidebar) => void;
-			id?: string;
-		};
-		items: Array<SidebarMenuItem>
-	}>;
-}
-
-export interface SidebarMenuItem {
-	title: string;
-	link: string;
-	params?: { [key: string]: string };
-	direction?: string;
-	onClick?: (event: Event, info: any, sidebar: Sidebar) => void;
-	children?: Array<SidebarMenuItem>;
-	expanded: boolean;
-	id?: string;
-	icon?: {
-		name: string;
-		color?: string;
-		slot?: string;
-	};
 }
