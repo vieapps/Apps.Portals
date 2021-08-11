@@ -9,29 +9,11 @@ export class AppCrypto {
 	private static _rsa = new RSA();
 	private static _jwt: string;
 
-	/** Gets MD5 hash of the string */
-	public static md5(text: string) {
-		return CryptoJS.MD5(text).toString();
-	}
-
-	/** Gets MD5 hash of the object */
-	public static hash(object: any) {
-		return this.md5(AppUtility.stringify(object || {}));
-	}
-
-	/** Signs the string with the specified key using HMAC SHA256 */
-	public static sign(text: string, key: string, toBase64Url: boolean = true) {
-		const signature = CryptoJS.enc.Base64.stringify(CryptoJS.HmacSHA256(text, key));
-		return toBase64Url ? this.toBase64Url(signature) : signature;
-	}
-
-	/** Convert base64 text to base64-url */
-	public static toBase64Url(base64: string) {
+	private static toBase64Url(base64: string) {
 		return base64.replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 	}
 
-	/** Converts the base64-url text to base64 */
-	public static toBase64(base64url: string) {
+	private static toBase64(base64url: string) {
 		let base64 = base64url.replace(/\-/g, "+").replace(/\_/g, "/");
 		switch (base64.length % 4) {
 			case 0:
@@ -43,9 +25,25 @@ export class AppCrypto {
 				base64 += "=";
 				break;
 			default:
-				throw new Error("Base64-url string is not well-form");
+				throw new Error("base64url string is not well-form");
 		}
 		return base64;
+	}
+
+	/** Gets MD5 hash of the string */
+	public static md5(text: string) {
+		return CryptoJS.MD5(text).toString();
+	}
+
+	/** Gets MD5 hash of the object */
+	public static hash(object: any) {
+		return this.md5(AppUtility.stringify(object));
+	}
+
+	/** Signs the string with the specified key using HMAC SHA256 */
+	public static sign(text: string, key?: string | CryptoJS.lib.WordArray, asBase64Url: boolean = true) {
+		const signature = CryptoJS.enc.Base64.stringify(CryptoJS.HmacSHA256(text, key || this._jwt));
+		return asBase64Url ? this.toBase64Url(signature) : signature;
 	}
 
 	/** Encodes the plain text to base64 */
@@ -70,7 +68,7 @@ export class AppCrypto {
 
 	/** Encodes the object to base64-url */
 	public static jsonEncode(object: any) {
-		return this.base64urlEncode(AppUtility.stringify(object || {}));
+		return this.base64urlEncode(AppUtility.stringify(object));
 	}
 
 	/** Decodes the object from base64-url */
@@ -79,30 +77,30 @@ export class AppCrypto {
 	}
 
 	/** Encodes the JSON Web Token */
-	public static jwtEncode(payload: any, key?: string, updateIssuedAt: boolean = true) {
+	public static jwtEncode(payload: any, key?: string | CryptoJS.lib.WordArray, updateIssuedAt: boolean = true) {
 		if (updateIssuedAt) {
 			payload.iat = Math.round(+new Date() / 1000);
 		}
 		const encoded = `${this.jsonEncode({ typ: "JWT", alg: "HS256" })}.${this.jsonEncode(payload)}`;
-		return `${encoded}.${this.sign(encoded, key || this._jwt)}`;
+		return `${encoded}.${this.sign(encoded, key)}`;
 	}
 
 	/** Decodes the JSON Web Token */
-	public static jwtDecode(jwt: string, key?: string, verify: boolean = true) {
+	public static jwtDecode(jwt: string, key?: string | CryptoJS.lib.WordArray, verify: boolean = true) {
 		const elements = jwt.split(".");
-		return !verify || (elements.length > 2 && this.sign(`${elements[0]}.${elements[1]}`, key || this._jwt) === elements[2])
+		return !verify || (elements.length > 2 && this.sign(`${elements[0]}.${elements[1]}`, key) === elements[2])
 			? this.jsonDecode(elements[1])
 			: undefined;
 	}
 
 	/** Encrypts the string - using AES */
-	public static aesEncrypt(text: string, key?: CryptoJS.lib.WordArray, iv?: CryptoJS.lib.WordArray) {
-		return CryptoJS.AES.encrypt(text, key || this._aes.key, { iv: iv || this._aes.iv }).toString();
+	public static aesEncrypt(text: string) {
+		return CryptoJS.AES.encrypt(text, this._aes.key, { iv: this._aes.iv }).toString();
 	}
 
 	/** Decrypts the string - using AES */
-	public static aesDecrypt(text: string, key?: CryptoJS.lib.WordArray, iv?: CryptoJS.lib.WordArray) {
-		return CryptoJS.AES.decrypt(text, key || this._aes.key, { iv: iv || this._aes.iv }).toString(CryptoJS.enc.Utf8);
+	public static aesDecrypt(text: string) {
+		return CryptoJS.AES.decrypt(text, this._aes.key, { iv: this._aes.iv }).toString(CryptoJS.enc.Utf8);
 	}
 
 	/** Encrypts the string - using RSA */
