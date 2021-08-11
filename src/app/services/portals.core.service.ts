@@ -1321,7 +1321,6 @@ export class PortalsCoreService extends BaseService {
 			link: string;
 			direction?: string;
 			icon?: { name: string };
-			onClick?: (event: Event, info: any, sidebar: any) => void
 		}>();
 
 		if (this.configSvc.isAuthenticated) {

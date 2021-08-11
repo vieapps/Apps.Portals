@@ -4,7 +4,7 @@ import { Dictionary } from "@app/components/app.collections";
 import { AppAPIs, AppMessage } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
-import { AppUtility } from "@app/components/app.utility";
+import { AppUtility, AppSidebar } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppCustomCompleter } from "@app/components/app.completer";
 import { AppPagination } from "@app/components/app.pagination";
@@ -498,29 +498,27 @@ export class PortalsCmsService extends BaseService {
 			}
 		};
 
-		const getItem: (category: Category) => any = category => {
-			return {
-				title: category.Title,
-				link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", category.ansiTitle),
-				params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: category.ID }),
-				id: category.ID,
-				onClick: async (event: Event, info: any, sidebar: any) => {
-					const menuItem = info.childIndex !== undefined
-						? sidebar.menu[info.menuIndex].items[info.itemIndex].children[info.childIndex]
-						: sidebar.menu[info.menuIndex].items[info.itemIndex];
-					if (AppUtility.isTrue(info.expand)) {
-						event.stopPropagation();
-						expand(menuItem, info.childIndex === undefined ? undefined : sidebar.menu[info.menuIndex].items[info.itemIndex].id);
-					}
-					else {
-						await this.configSvc.navigateAsync(menuItem.direction, menuItem.link, menuItem.params);
-						if (menuItem.children !== undefined && menuItem.children.length > 0) {
-							expand(menuItem, info.childIndex === undefined ? undefined : sidebar.menu[info.menuIndex].items[info.itemIndex].id, menuItem.expanded);
-						}
+		const getItem: (category: Category) => any = category => ({
+			title: category.Title,
+			link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", category.ansiTitle),
+			params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: category.ID }),
+			id: category.ID,
+			onClick: async (event: Event, info: any, sidebar: AppSidebar) => {
+				const menuItem = info.childIndex !== undefined
+					? sidebar.menu[info.menuIndex].items[info.itemIndex].children[info.childIndex]
+					: sidebar.menu[info.menuIndex].items[info.itemIndex];
+				if (AppUtility.isTrue(info.expand)) {
+					event.stopPropagation();
+					expand(menuItem, info.childIndex === undefined ? undefined : sidebar.menu[info.menuIndex].items[info.itemIndex].id);
+				}
+				else {
+					await this.configSvc.navigateAsync(menuItem.direction, menuItem.link, menuItem.params);
+					if (menuItem.children !== undefined && menuItem.children.length > 0) {
+						expand(menuItem, info.childIndex === undefined ? undefined : sidebar.menu[info.menuIndex].items[info.itemIndex].id, menuItem.expanded);
 					}
 				}
-			};
-		};
+			}
+		});
 
 		const getChildren: (childrenCategories: Category[]) => any[] = childrenCategories => {
 			return childrenCategories.map(category => {
