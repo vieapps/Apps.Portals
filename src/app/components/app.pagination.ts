@@ -10,9 +10,16 @@ export interface AppDataPagination {
 	PageNumber: number;
 }
 
-/** Presents a data request */
+/** Presents a filtering expression for requesting data */
+export interface AppDataFilter {
+	Query?: string;
+	And?: Array<{ [key: string]: any }>;
+	Or?: Array<{ [key: string]: any }>;
+}
+
+/** Presents a information for requesting data */
 export interface AppDataRequest {
-	FilterBy?: { [key: string]: any };
+	FilterBy?: AppDataFilter;
 	SortBy?: { [key: string]: any };
 	Pagination?: AppDataPagination;
 }
@@ -23,8 +30,8 @@ export class AppPagination {
 	/** All pagination instances */
 	public static instances = new Dictionary<string, AppDataPagination>();
 
-	private static cloneFilterBy(filterBy: { [key: string]: any }) {
-		const filter = AppUtility.clone(
+	private static cloneFilterBy(filterBy: AppDataFilter) {
+		const filter: AppDataFilter = AppUtility.clone(
 			filterBy || {},
 			true,
 			["IsNull", "IsNotNull", "IsEmpty", "IsNotEmpty"],
@@ -117,7 +124,7 @@ export class AppPagination {
 	}
 
 	/** Builds the well-formed request (contains filter, sort and pagination) for working with remote APIs */
-	public static buildRequest(filterBy?: { [key: string]: any }, sortBy?: { [key: string]: any }, pagination?: AppDataPagination, onCompleted?: (request: AppDataRequest) => void) {
+	public static buildRequest(filterBy?: AppDataFilter, sortBy?: { [key: string]: any }, pagination?: AppDataPagination, onCompleted?: (request: AppDataRequest) => void) {
 		const request: AppDataRequest = {
 			FilterBy: this.cloneFilterBy(filterBy),
 			SortBy: AppUtility.clone(sortBy || {}, true) as { [key: string]: any },
