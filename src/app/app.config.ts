@@ -12,9 +12,6 @@ export class AppConfig {
 		/** APIs */
 		apis: "https://apis.vieapps.net/",
 
-		/** Real-time Updater (if not provided, the uri of the APIs will be used) */
-		updates: undefined as string,
-
 		/** Files HTTP service */
 		files: "https://fs.vieapps.net/",
 
@@ -130,7 +127,7 @@ export class AppConfig {
 		extras: {} as { [key: string]: any }
 	};
 
-	/** Information for working with url (stack, host, ...) */
+	/** Information for working with URLs (stack, host, ...) */
 	public static url = {
 		stack: [] as Array<{ url: string, params: { [key: string]: any } }>,
 		home: "/home",

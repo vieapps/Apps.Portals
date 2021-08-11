@@ -261,7 +261,7 @@ export class AppAPIs {
 
 		// create new instance of WebSocket
 		this._websocketStatus = "initializing";
-		this._websocketURL = (AppUtility.isNotEmpty(AppConfig.URIs.updates) ? AppConfig.URIs.updates : AppConfig.URIs.apis).replace("http://", "ws://").replace("https://", "wss://");
+		this._websocketURL = AppConfig.URIs.apis.replace("http://", "ws://").replace("https://", "wss://");
 		this._websocket = new WebSocket(`${this._websocketURL}v?x-session-id=${AppCrypto.base64urlEncode(AppConfig.session.id)}&x-device-id=${AppCrypto.base64urlEncode(AppConfig.session.device)}` + (isReopenOrRestart ? "&x-restart=" : ""));
 		this._ping = +new Date();
 
