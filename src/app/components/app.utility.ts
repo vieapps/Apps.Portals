@@ -458,9 +458,9 @@ export class AppUtility {
 		setTimeout(() => action(), defer || 0);
 	}
 
-	/** Converts an observable object to promise object for working with async/await */
+	/** Converts an observable object into promise object for working with async/await */
 	public static toAsync<T>(observable: Observable<T>) {
-		return observable.toPromise();
+		return observable.toPromise<T>();
 	}
 
 	/** Converts an object into array of key-value pair */
