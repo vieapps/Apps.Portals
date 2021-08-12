@@ -478,8 +478,10 @@ export class AppComponent implements OnInit {
 			}});
 			this.appFormsSvc.hideLoadingAsync(async () => {
 				await this.normalizeSidebarAsync();
-				await this.portalsCoreSvc.initializeAysnc();
-				await this.portalsCmsSvc.initializeAsync();
+				if (this.configSvc.appConfig.services.all.first(service => service.name === this.portalsCoreSvc.name) !== undefined) {
+					await this.portalsCoreSvc.initializeAysnc();
+					await this.portalsCmsSvc.initializeAsync();
+				}
 				if (onNext !== undefined) {
 					onNext();
 				}
