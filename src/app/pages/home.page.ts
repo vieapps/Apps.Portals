@@ -29,6 +29,10 @@ export class HomePage implements OnInit, OnDestroy {
 		return this.configSvc.isAuthenticated;
 	}
 
+	get activeService() {
+		return this.configSvc.appConfig.services.active;
+	}
+
 	ngOnInit() {
 		if (this.configSvc.isReady) {
 			this.prepareAsync();
