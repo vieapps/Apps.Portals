@@ -9,10 +9,6 @@ export class AppCrypto {
 	private static _rsa = new RSA();
 	private static _jwt: string;
 
-	private static toBase64Url(base64: string) {
-		return base64.replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
-	}
-
 	private static toBase64(base64url: string) {
 		let base64 = base64url.replace(/\-/g, "+").replace(/\_/g, "/");
 		switch (base64.length % 4) {
@@ -28,6 +24,10 @@ export class AppCrypto {
 				throw new Error("base64url string is not well-form");
 		}
 		return base64;
+	}
+
+	private static toBase64Url(base64: string) {
+		return base64.replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 	}
 
 	private static toHex(base64: string) {
