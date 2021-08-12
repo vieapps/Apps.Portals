@@ -91,6 +91,10 @@ export class UsersProfilePage implements OnInit {
 		return this.configSvc.appConfig.URLs.users.list;
 	}
 
+	get isAuthenticated() {
+		return this.configSvc.isAuthenticated;
+	}
+
 	get activeService() {
 		return this.configSvc.appConfig.services.active;
 	}

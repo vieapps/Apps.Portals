@@ -15,5 +15,6 @@
 		<control-cms-portals-featured-contents name="updated"></control-cms-portals-featured-contents>
 		<control-cms-portals-featured-contents name="published" status="Published" orderBy="Date"></control-cms-portals-featured-contents>
 	</div>
-	<control-app-preferences *ngIf="!isAuthenticated"></control-app-preferences>
+	<control-app-preferences *ngIf="!isAuthenticated && activeService === 'Portals'"></control-app-preferences>
+	<control-books-featured *ngIf="activeService === 'Books'" [changes]="changes"></control-books-featured>
 </ion-content>

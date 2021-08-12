@@ -82,8 +82,6 @@ export class PortalsCmsService extends BaseService {
 			}
 		});
 
-		this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
-
 		AppAPIs.registerAsServiceScopeProcessor(this.filesSvc.name, message => this.processAttachmentUpdateMessage(message));
 
 		AppEvents.on(this.name, async info => {
@@ -108,7 +106,7 @@ export class PortalsCmsService extends BaseService {
 					await this.updateSidebarWithCategoriesAsync(undefined, undefined, () => AppEvents.broadcast("ActiveSidebar", { name: "cms" }));
 				}
 			}
-			else if (AppUtility.isEquals(info.args.Type, "Changed") && (AppUtility.isEquals(info.args.Object, "Organization") || AppUtility.isEquals(info.args.Object, "Module"))) {
+			else if (AppUtility.isEquals(info.args.Type, "Changed") && (AppUtility.isEquals(info.args.Object, "Organization") || AppUtility.isEquals(info.args.Object, "Module")) && this.configSvc.appConfig.services.active === this.name) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				await this.updateSidebarAsync();
@@ -137,6 +135,9 @@ export class PortalsCmsService extends BaseService {
 				]);
 			}
 		});
+
+		AppEvents.on("ActiveSidebar", _ => this.setSearchURL());
+		this.setSearchURL();
 	}
 
 	public async initializeAsync(onNext?: () => void) {
@@ -169,10 +170,11 @@ export class PortalsCmsService extends BaseService {
 		}
 
 		if (this.configSvc.appConfig.services.active === this.name) {
-			tasks.push(this.updateSidebarAsync(() => AppEvents.broadcast(this.name, { Type: "CMSPortalsInitialized" })));
+			tasks.push(this.updateSidebarAsync());
 		}
 
 		await Promise.all(tasks);
+		AppEvents.broadcast(this.name, { Type: "CMSPortalsInitialized" });
 		if (onNext !== undefined) {
 			onNext();
 		}
@@ -386,6 +388,12 @@ export class PortalsCmsService extends BaseService {
 
 	public setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onPreCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {
 		this.portalsCoreSvc.setLookupOptions(lookupOptions, lookupModalPage, contentType, multiple, nested, onPreCompleted);
+	}
+
+	private setSearchURL() {
+		if (this.configSvc.appConfig.services.active === this.name) {
+			this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
+		}
 	}
 
 	private updateSidebar(items: Array<any>, parent?: any, onNext?: () => void) {

@@ -34,6 +34,7 @@ import { UsersService } from "@app/services/users.service";
 import { FilesService } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
+import { BooksService } from "@app/services/books.service";
 
 import { AppPreferencesControlModule } from "@app/controls/common/app.preferences.module";
 import { FilesProcessorModalPageModule } from "@app/controls/common/file.processor.modal.module";
@@ -46,6 +47,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		{ prefix: "./assets/i18n/users/", suffix: ".json" },
 		{ prefix: "./assets/i18n/portals/", suffix: ".json" },
 		{ prefix: "./assets/i18n/portals.cms/", suffix: ".json" },
+		{ prefix: "./assets/i18n/books/", suffix: ".json" },
 	]);
 }
 
@@ -81,6 +83,7 @@ export class HammerConfig extends HammerGestureConfig {
 		FilesService,
 		PortalsCoreService,
 		PortalsCmsService,
+		BooksService,
 		{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
 		{ provide: HAMMER_GESTURE_CONFIG, useClass: HammerConfig }
 	],

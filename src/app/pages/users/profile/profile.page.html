@@ -76,6 +76,9 @@
 				</span>
 			</ion-item>
 		</ion-list>
+
+		<control-books-bookmarks *ngIf="activeService === 'Books' && !id"></control-books-bookmarks>
+
 	</div>
 
 	<div *ngIf="mode === 'invitation'" class="ion-padding">

@@ -25,6 +25,11 @@ export const routes: Routes = [
 		loadChildren: "@app/pages/portals/portals.module#PortalsModule"
 	},
 	{
+		path: "books",
+		canActivate: [AppReadyGuardService],
+		loadChildren: "@app/pages/books/books.module#BooksModule"
+	},
+	{
 		path: "**",
 		redirectTo: "/home",
 		pathMatch: "full"

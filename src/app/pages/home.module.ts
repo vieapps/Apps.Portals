@@ -4,6 +4,7 @@ import { RouterModule } from "@angular/router";
 import { IonicModule } from "@ionic/angular";
 import { HomePage } from "@app/pages/home.page";
 import { PortalsControlsModule } from "@app/controls/portals.controls.module";
+import { BookControlsModule } from "@app/controls/books.controls.module";
 import { AppPreferencesControlModule } from "@app/controls/common/app.preferences.module";
 
 @NgModule({
@@ -12,6 +13,7 @@ import { AppPreferencesControlModule } from "@app/controls/common/app.preference
 		CommonModule,
 		IonicModule,
 		PortalsControlsModule,
+		BookControlsModule,
 		AppPreferencesControlModule,
 		RouterModule.forChild([{ path: "", component: HomePage }])
 	],

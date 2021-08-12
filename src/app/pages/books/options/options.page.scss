@@ -1,0 +1,92 @@
+@import url("https://fonts.googleapis.com/css?family=Maitree|Pridi|Roboto+Slab|Rokkitt&subset=latin,latin-ext,vietnamese");
+.white
+{
+	color: #000;
+	background-color: #fff;
+}
+.black
+{
+	color: #fff;
+	background-color: #222;
+}
+.sepia
+{
+	color: #643b0f;
+	background-color: #efe0b9;
+}
+.default,
+.pridi
+{
+	font-family: Pridi, serif;
+}
+.like-default
+{
+	font-family: Rokkitt, serif;
+}
+.plump
+{
+	font-family: Maitree, serif;
+}
+.fat
+{
+	font-family: "Roboto Slab", serif;
+}
+.fancy
+{
+	font-family: Roboto, sans-serif;
+}
+.smallest
+{
+	font-size: 14px;
+}
+.smaller
+{
+	font-size: 16px;
+}
+.small
+{
+	font-size: 18px;
+}
+.normal
+{
+	font-size: 22px;
+}
+.big
+{
+	font-size: 26px;
+}
+.bigger
+{
+	font-size: 30px;
+}
+.huge
+{
+	font-size: 44px;
+}
+.one > p
+{
+	margin: 10px 0;
+	line-height: 1.6;
+}
+.two > p
+{
+	margin: 15px 0;
+	line-height: 1.8;
+}
+.three > p
+{
+	margin: 20px 0;
+	line-height: 2;
+}
+.align-left > p
+{
+	text-align: left;
+}
+.align-justify > p
+{
+	text-align: justify;
+}
+.align-right > p
+{
+	text-align: right;
+}

@@ -158,6 +158,11 @@ export class ConfigurationService extends BaseService {
 		}
 	}
 
+	/** Gets the URL for opening the app on web-browser */
+	public getAppURL(path?: string) {
+		return (this.appConfig.isWebApp ? AppUtility.parseURI().HostURI + this.appConfig.URLs.base : this.appConfig.URIs.apps) + (AppUtility.isEmpty(path) ? "" : path[0] === "/" ? AppUtility.right(path, path.length - 1) : path);
+	}
+
 	/** Gets the current working URL */
 	public get currentURL() {
 		return this.getURL(this.getCurrentURL());
@@ -170,7 +175,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the URL for activating new account/password */
 	public get activateURL() {
-		return AppCrypto.base64urlEncode((this.appConfig.isWebApp ? AppUtility.parseURI().HostURI + this.appConfig.URLs.base : this.appConfig.URIs.apps) + "home?prego=activate&mode={{mode}}&code={{code}}");
+		return AppCrypto.base64urlEncode(this.getAppURL("home?prego=activate&mode={{mode}}&code={{code}}"));
 	}
 
 	/** Sets the app title (means title of the browser) */
@@ -869,7 +874,7 @@ export class ConfigurationService extends BaseService {
 	}
 
 	public async getInstructionsAsync(service: string, language?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.fetchAsync(`statics/instructions/${service}/${language || this.appConfig.language}.json`, onSuccess, onError);
+		await this.fetchAsync(`statics/instructions/${service.toLowerCase()}/${language || this.appConfig.language}.json`, onSuccess, onError);
 	}
 
 	/** Gets top items for displaying at sidebar */

@@ -176,35 +176,21 @@ export class PortalsCoreService extends BaseService {
 		});
 	}
 
-	public async initializeAysnc(onNext?: () => void) {
-		await this.getDefinitionsAsync(() => {
-			if (this.configSvc.isDebug) {
-				this.showLog("The definitions were fetched", BaseModel.moduleDefinitions);
-			}
-		});
+	public async initializeAsync(onNext?: () => void) {
+		await this.getDefinitionsAsync();
 		if (Organization.active === undefined) {
-			await this.getActiveOrganizationAsync(undefined, true, () => {
-				if (this.configSvc.isDebug) {
-					this.showLog("The active organization was fetched", Organization.active);
-				}
-			});
+			await this.getActiveOrganizationAsync(undefined, true);
 		}
 		if (Organization.active !== undefined && Organization.active.modules.length < 1) {
-			await this.getActiveOrganizationAsync(undefined, true, () => {
-				if (this.configSvc.isDebug) {
-					this.showLog("The active organization and modules were fetched", Organization.active, Organization.active.modules);
-				}
-			});
+			await this.getActiveOrganizationAsync(undefined, true);
 		}
-		this.prepareSidebar(() => {
-			if (this.configSvc.isDebug) {
-				this.showLog("The portal management sidebar has been prepared");
-			}
-			AppEvents.broadcast(this.name, { Type: "PortalsInitialized" });
-			if (onNext !== undefined) {
-				onNext();
-			}
-		});
+		if (this.configSvc.appConfig.services.active === this.name) {
+			this.prepareSidebar();
+		}
+		AppEvents.broadcast(this.name, { Type: "PortalsInitialized" });
+		if (onNext !== undefined) {
+			onNext();
+		}
 	}
 
 	public canManageOrganization(organization?: Organization, account?: Account) {

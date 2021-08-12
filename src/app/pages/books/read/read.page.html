@@ -1,0 +1,120 @@
+<ion-header>
+	<ion-toolbar [color]="configSvc.color">
+		<ion-buttons slot="start">
+			<ion-back-button text="" (click)="onClose()"></ion-back-button>
+		</ion-buttons>
+		<ion-buttons slot="end">
+			<ion-button *ngIf="book && book.TotalChapters > 1 && screen > 767 && screen < 992" (click)="openTOCs()">
+				<ion-icon name="list" slot="icon-only"></ion-icon>
+			</ion-button>
+			<ion-button *ngIf="screen > 767" (click)="openOptionsAsync()">
+				<ion-icon name="options" slot="icon-only"></ion-icon>
+			</ion-button>
+			<ion-button (click)="openInfoAsync()">
+				<ion-icon name="information-circle" slot="icon-only"></ion-icon>
+			</ion-button>
+		</ion-buttons>
+		<ion-title>
+			{{ title }}
+		</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-footer>
+	<ion-toolbar [color]="configSvc.color">
+		<div *ngIf="book && book.TotalChapters > 1" slot="start">
+			<ion-icon name="bookmark" color="primary" slot="start"></ion-icon>
+			{{ chapter | number:'':locale }} / {{ book.TotalChapters | number:'':locale : '?' }}	
+		</div>
+		<ion-buttons *ngIf="actions" slot="end">
+			<ion-button color="primary" (click)="showActionsAsync()">
+				<ion-icon name="ellipsis-horizontal" slot="icon-only"></ion-icon>
+			</ion-button>
+		</ion-buttons>
+		<div *ngIf="book">
+			<span>
+				<ion-buttons>
+					<ion-button fill="clear" color="primary" (click)="goPreviousAsync()">
+						<ion-icon name="play-back" slot="start"></ion-icon>
+						{{ labels.previous }}
+					</ion-button>
+					<ion-button fill="clear" color="primary" (click)="goNextAsync()">
+						<ion-icon name="play-forward" slot="end"></ion-icon>
+						{{ labels.next }}
+					</ion-button>
+				</ion-buttons>
+			</span>
+		</div>
+	</ion-toolbar>
+</ion-footer>
+
+<ion-content [color]="configSvc.color" [scrollEvents]="true" (ionScrollEnd)="onScrollEnd()" (swipeleft)="onSwipeLeft()" (swiperight)="onSwipeRight()">
+	<div *ngIf="book" class="ion-padding {{options.color}}">
+		<div *ngIf="chapter === 0" class="cover">
+			<figure [hidden]="book.Cover.indexOf('/no/cover/image.png') > 0">
+				<img [src]="book.Cover" />
+			</figure>
+			<h1>
+				{{ book.Title }}
+			</h1>
+			<div *ngIf="book.Original !== ''">
+				<span>
+					{{ labels.original }}:
+				</span>
+				<label>
+					{{ book.Original }}
+				</label>
+			</div>
+			<div>
+				<span>
+					{{ labels.author }}:
+				</span>
+				<label>
+					{{ book.Author }}
+				</label>
+				<span *ngIf="book.Translator !== ''">
+					{{ labels.translator }}:
+				</span>
+				<label *ngIf="book.Translator !== ''">
+					{{ book.Translator }}
+				</label>
+			</div>
+			<div *ngIf="book.Publisher !== '' || book.Producer !== ''">
+				<span [hidden]="book.Publisher === ''">
+					{{ labels.publisher }}:
+				</span>
+				<label [hidden]="book.Publisher === ''">
+					{{ book.Publisher }}
+				</label>
+				<span [hidden]="book.Producer === ''">
+					{{ labels.producer }}:
+				</span>
+				<label [hidden]="book.Producer === ''">
+					{{ book.Producer }}
+				</label>
+			</div>
+			<div>
+				<span>
+					{{ labels.category }}:
+				</span>
+				<label>
+					{{ book.Category }}
+				</label>
+				<span *ngIf="book.TotalChapters > 1">
+					{{ labels.chapters }}:
+				</span>
+				<label *ngIf="book.TotalChapters > 1">
+					{{ book.TotalChapters | number:'':locale }}
+				</label>
+				<span *ngIf="book.Source !== ''">
+					{{ labels.source }}:
+				</span>
+				<label *ngIf="book.Source !== ''">
+					{{ book.Source }}
+				</label>
+			</div>
+		</div>
+		<div *ngIf="chapter === 0 && book.Body !== ''" class="body {{ options.style }}" [innerHTML]="book.Body"></div>
+		<div *ngIf="chapter > 0" class="body {{ options.style }}" [innerHTML]="book.Chapters[chapter - 1]"></div>
+	</div>
+</ion-content>
