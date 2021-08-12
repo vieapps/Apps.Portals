@@ -16,6 +16,7 @@ import { AuthenticationService } from "@app/services/authentication.service";
 import { UsersService } from "@app/services/users.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
+import { BooksService } from "@app/services/books.service";
 
 @Component({
 	selector: "app-root",
@@ -35,6 +36,7 @@ export class AppComponent implements OnInit {
 		private usersSvc: UsersService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService,
+		private booksSvc: BooksService,
 		http: HttpClient
 	) {
 		console.log("<AppComponent>: Initializing...");
@@ -71,6 +73,7 @@ export class AppComponent implements OnInit {
 			name: string,
 			parent?: {
 				title: string,
+				thumbnail?: string,
 				link: string,
 				params?: { [key: string]: string },
 				expandable: boolean,
@@ -148,9 +151,10 @@ export class AppComponent implements OnInit {
 	private getSidebarItem(itemInfo: any = {}, oldItem: any = {}, onCompleted?: (item: AppSidebarMenuItem) => void) {
 		const gotChildren = AppUtility.isArray(itemInfo.children, true) && (itemInfo.children as Array<any>).length > 0;
 		const isExpanded = gotChildren && !!itemInfo.expanded;
+		const isDetail = !gotChildren && !!itemInfo.detail;
 		const icon = itemInfo.icon || {};
-		if (icon.name === undefined && gotChildren) {
-			icon.name = isExpanded ? "chevron-down" : "chevron-forward",
+		if (icon.name === undefined && (gotChildren || isDetail)) {
+			icon.name = isDetail ? "chevron-down" : isExpanded ? "chevron-down" : "chevron-forward",
 			icon.color = "medium";
 			icon.slot = "end";
 		}
@@ -169,6 +173,7 @@ export class AppComponent implements OnInit {
 				},
 			children: gotChildren ? (itemInfo.children as Array<any>).map(item => this.getSidebarItem(item)) : [],
 			expanded: isExpanded,
+			detail: isDetail,
 			id: itemInfo.id,
 			icon: icon
 		};
@@ -242,6 +247,7 @@ export class AppComponent implements OnInit {
 		this.sidebar.menu[index].parent = info.parent !== undefined
 			? {
 					title: info.parent.title,
+					thumbnail: info.parent.thumbnail,
 					link: info.parent.link,
 					params: info.parent.params,
 					expandable: !!info.parent.expandable,
@@ -266,6 +272,7 @@ export class AppComponent implements OnInit {
 				onClick: item.onClick,
 				children: item.children,
 				expanded: item.expanded,
+				detail: item.detail,
 				id: item.id,
 				icon: icon
 			};
@@ -477,8 +484,11 @@ export class AppComponent implements OnInit {
 			}});
 			await this.normalizeSidebarAsync();
 			if (this.configSvc.appConfig.services.all.first(service => service.name === this.portalsCoreSvc.name) !== undefined) {
-				await this.portalsCoreSvc.initializeAysnc();
+				await this.portalsCoreSvc.initializeAsync();
 				await this.portalsCmsSvc.initializeAsync();
+			}
+			if (this.configSvc.appConfig.services.all.first(service => service.name === this.booksSvc.name) !== undefined) {
+				await this.booksSvc.initializeAsync();
 			}
 			await this.appFormsSvc.hideLoadingAsync(async () => {
 				AppEvents.broadcast("App", { Type: "FullyInitialized" });

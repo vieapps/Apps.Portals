@@ -795,6 +795,7 @@ export interface AppSidebar {
 		name: string;
 		parent?: {
 			title: string;
+			thumbnail?: string,
 			link: string;
 			params?: { [key: string]: string };
 			expandable: boolean;
@@ -814,6 +815,7 @@ export interface AppSidebarMenuItem {
 	onClick?: (event: Event, info: any, sidebar: AppSidebar) => void;
 	children?: Array<AppSidebarMenuItem>;
 	expanded: boolean;
+	detail: boolean;
 	id?: string;
 	icon?: {
 		name: string;
