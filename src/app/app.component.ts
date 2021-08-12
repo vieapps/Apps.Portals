@@ -118,7 +118,6 @@ export class AppComponent implements OnInit {
 			]);
 			await this.configSvc.prepareLanguagesAsync();
 			this.setupEventHandlers();
-			AppEvents.broadcast("App", { Type: "PlatformIsReady" });
 
 			if (this.platform.is("cordova")) {
 				this.splashScreen.hide();
@@ -128,6 +127,7 @@ export class AppComponent implements OnInit {
 				}
 			}
 
+			AppEvents.broadcast("App", { Type: "PlatformIsReady" });
 			this.sidebar.header.title = this.configSvc.appConfig.app.name;
 			await this.updateSidebarAsync({}, true);
 
@@ -423,14 +423,14 @@ export class AppComponent implements OnInit {
 		return this.configSvc.initializeAsync(
 			async _ => {
 				if (this.configSvc.isReady && this.configSvc.isAuthenticated) {
-					console.log("<AppComponent>: The session is initialized & registered (user)", this.configSvc.isDebug ? this.configSvc.isNativeApp ? JSON.stringify(this.configSvc.appConfig.session) : this.configSvc.appConfig.session : "");
+					console.log("<AppComponent>: The session is initialized & registered (user)", this.configSvc.isDebug ? this.configSvc.isNativeApp ? AppUtility.stringify(this.configSvc.appConfig.session) : this.configSvc.appConfig.session : "");
 					this.finalize(onNext);
 				}
 				else {
-					console.log("<AppComponent>: Register the initialized session (anonymous)", this.configSvc.isDebug ? this.configSvc.isNativeApp ? JSON.stringify(this.configSvc.appConfig.session) : this.configSvc.appConfig.session : "");
+					console.log("<AppComponent>: Register the initialized session (anonymous)", this.configSvc.isDebug ? this.configSvc.isNativeApp ? AppUtility.stringify(this.configSvc.appConfig.session) : this.configSvc.appConfig.session : "");
 					await this.configSvc.registerSessionAsync(
 						() => {
-							console.log("<AppComponent>: The session is registered (anonymous)", this.configSvc.isDebug ? this.configSvc.isNativeApp ? JSON.stringify(this.configSvc.appConfig.session) : this.configSvc.appConfig.session : "");
+							console.log("<AppComponent>: The session is registered (anonymous)", this.configSvc.isDebug ? this.configSvc.isNativeApp ? AppUtility.stringify(this.configSvc.appConfig.session) : this.configSvc.appConfig.session : "");
 							this.finalize(onNext);
 						},
 						async error => {
@@ -464,8 +464,7 @@ export class AppComponent implements OnInit {
 		if (this.configSvc.isWebApp) {
 			PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
 		}
-
-		AppAPIs.openWebSocket(() => {
+		AppAPIs.openWebSocket(async () => {
 			AppEvents.broadcast("App", { Type: "Initialized" });
 			AppEvents.sendToElectron("App", { Type: "Initialized", Data: {
 				URIs: appConfig.URIs,
@@ -476,12 +475,22 @@ export class AppComponent implements OnInit {
 				options: appConfig.options,
 				languages: appConfig.languages
 			}});
-			this.appFormsSvc.hideLoadingAsync(async () => {
-				await this.normalizeSidebarAsync();
-				if (this.configSvc.appConfig.services.all.first(service => service.name === this.portalsCoreSvc.name) !== undefined) {
-					await this.portalsCoreSvc.initializeAysnc();
-					await this.portalsCmsSvc.initializeAsync();
-				}
+			await this.normalizeSidebarAsync();
+			if (this.configSvc.appConfig.services.all.first(service => service.name === this.portalsCoreSvc.name) !== undefined) {
+				await this.portalsCoreSvc.initializeAysnc();
+				await this.portalsCmsSvc.initializeAsync();
+			}
+			await this.appFormsSvc.hideLoadingAsync(async () => {
+				AppEvents.broadcast("App", { Type: "FullyInitialized" });
+				AppEvents.sendToElectron("App", { Type: "FullyInitialized", Data: {
+					URIs: appConfig.URIs,
+					app: appConfig.app,
+					session: appConfig.session,
+					services: appConfig.services,
+					accountRegistrations: appConfig.accountRegistrations,
+					options: appConfig.options,
+					languages: appConfig.languages
+				}});
 				if (onNext !== undefined) {
 					onNext();
 				}
@@ -505,16 +514,6 @@ export class AppComponent implements OnInit {
 						}
 					}
 				}
-				AppEvents.broadcast("App", { Type: "FullyInitialized" });
-				AppEvents.sendToElectron("App", { Type: "FullyInitialized", Data: {
-					URIs: appConfig.URIs,
-					app: appConfig.app,
-					session: appConfig.session,
-					services: appConfig.services,
-					accountRegistrations: appConfig.accountRegistrations,
-					options: appConfig.options,
-					languages: appConfig.languages
-				}});
 			});
 		});
 	}
