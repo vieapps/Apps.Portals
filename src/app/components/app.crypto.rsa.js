@@ -2,7 +2,7 @@
  * RSAjs - Encrypts and Decrypts text data using RSA
  * by David Shapiro & Eric Wilde (http://www.ohdave.com/rsa)
 */
-export var RSA = function () {
+export var RSA = function() {
 	var biRadixBase = 2;
 	var biRadixBits = 16;
 	var bitsPerDigit = biRadixBits;
@@ -24,7 +24,8 @@ export var RSA = function () {
 		bigOne.digits[0] = 1;
 	}
 
-	setMaxDigits(20);
+	// important tricks: need an array with length is 262 bytes to hold 2048 bits of the key
+	setMaxDigits(262);
 
 	var dpl10 = 15;
 	var lr10 = biFromNumber(1000000000000000);
@@ -37,6 +38,7 @@ export var RSA = function () {
 			this.digits = ZERO_ARRAY.slice(0);
 		}
 		this.isNeg = false;
+		return this;
 	}
 
 	function biFromDecimal(s) {
@@ -91,16 +93,9 @@ export var RSA = function () {
 		return result;
 	}
 
-	var hexatrigesimalToChar = new Array(
-		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-		'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-		'u', 'v', 'w', 'x', 'y', 'z'
-	);
+	var hexatrigesimalToChar = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
 
-	function biToString(x, radix)
-	// 2 <= radix <= 36
-	{
+	function biToString(x, radix) {
 		var b = new BigInt();
 		b.digits[0] = radix;
 		var qr = biDivideModulo(x, b);
@@ -125,8 +120,7 @@ export var RSA = function () {
 		return (x.isNeg ? "-" : "") + reverseStr(result);
 	}
 
-	var hexToChar = new Array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-		'a', 'b', 'c', 'd', 'e', 'f');
+	var hexToChar = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
 
 	function digitToHex(n) {
 		var mask = 0xf;
@@ -158,11 +152,14 @@ export var RSA = function () {
 
 		if (c >= ZERO && c <= NINE) {
 			result = c - ZERO;
-		} else if (c >= bigA && c <= bigZ) {
+		}
+		else if (c >= bigA && c <= bigZ) {
 			result = 10 + c - bigA;
-		} else if (c >= littleA && c <= littleZ) {
+		}
+		else if (c >= littleA && c <= littleZ) {
 			result = 10 + c - littleA;
-		} else {
+		}
+		else {
 			result = 0;
 		}
 		return result;
@@ -204,9 +201,7 @@ export var RSA = function () {
 		return result;
 	}
 
-	function biToBytes(x)
-	// Returns a string containing raw bytes.
-	{
+	function biToBytes(x) {
 		var result = "";
 		for (var i = biHighIndex(x); i > -1; --i) {
 			result += digitToBytes(x.digits[i]);
@@ -214,9 +209,7 @@ export var RSA = function () {
 		return result;
 	}
 
-	function digitToBytes(n)
-	// Convert two-byte digit to string containing both bytes.
-	{
+	function digitToBytes(n) {
 		var c1 = String.fromCharCode(n & 0xff);
 		n >>>= 8;
 		var c2 = String.fromCharCode(n & 0xff);
@@ -255,31 +248,27 @@ export var RSA = function () {
 			y.isNeg = !y.isNeg;
 			result = biAdd(x, y);
 			y.isNeg = !y.isNeg;
-		} else {
+		}
+		else {
 			result = new BigInt();
 			var n, c;
 			c = 0;
 			for (var i = 0; i < x.digits.length; ++i) {
 				n = x.digits[i] - y.digits[i] + c;
 				result.digits[i] = n & 0xffff;
-				// Stupid non-conforming modulus operation.
 				if (result.digits[i] < 0) result.digits[i] += biRadix;
 				c = 0 - Number(n < 0);
 			}
-			// Fix up the negative sign, if any.
 			if (c == -1) {
 				c = 0;
 				for (var i = 0; i < x.digits.length; ++i) {
 					n = 0 - result.digits[i] + c;
 					result.digits[i] = n & 0xffff;
-					// Stupid non-conforming modulus operation.
 					if (result.digits[i] < 0) result.digits[i] += biRadix;
 					c = 0 - Number(n < 0);
 				}
-				// Result is opposite sign of arguments.
 				result.isNeg = !x.isNeg;
 			} else {
-				// Result is same sign.
 				result.isNeg = x.isNeg;
 			}
 		}
@@ -321,7 +310,6 @@ export var RSA = function () {
 			}
 			result.digits[i + n + 1] = c;
 		}
-		// Someone give me a logical xor, please.
 		result.isNeg = x.isNeg != y.isNeg;
 		return result;
 	}
@@ -354,8 +342,7 @@ export var RSA = function () {
 	function biShiftLeft(x, n) {
 		var digitCount = Math.floor(n / bitsPerDigit);
 		var result = new BigInt();
-		arrayCopy(x.digits, 0, result.digits, digitCount,
-			result.digits.length - digitCount);
+		arrayCopy(x.digits, 0, result.digits, digitCount, result.digits.length - digitCount);
 		var bits = n % bitsPerDigit;
 		var rightBits = bitsPerDigit - bits;
 		for (var i = result.digits.length - 1, i1 = i - 1; i > 0; --i, --i1) {
@@ -375,8 +362,7 @@ export var RSA = function () {
 	function biShiftRight(x, n) {
 		var digitCount = Math.floor(n / bitsPerDigit);
 		var result = new BigInt();
-		arrayCopy(x.digits, digitCount, result.digits, 0,
-			x.digits.length - digitCount);
+		arrayCopy(x.digits, digitCount, result.digits, 0, x.digits.length - digitCount);
 		var bits = n % bitsPerDigit;
 		var leftBits = bitsPerDigit - bits;
 		for (var i = 0, i1 = i + 1; i < result.digits.length - 1; ++i, ++i1) {
@@ -414,7 +400,8 @@ export var RSA = function () {
 			if (x.digits[i] != y.digits[i]) {
 				if (x.isNeg) {
 					return 1 - 2 * Number(x.digits[i] > y.digits[i]);
-				} else {
+				}
+				else {
 					return 1 - 2 * Number(x.digits[i] < y.digits[i]);
 				}
 			}
@@ -428,17 +415,16 @@ export var RSA = function () {
 		var origYIsNeg = y.isNeg;
 		var q, r;
 		if (nb < tb) {
-			// |x| < |y|
 			if (x.isNeg) {
 				q = biCopy(bigOne);
 				q.isNeg = !y.isNeg;
 				x.isNeg = false;
 				y.isNeg = false;
 				r = biSubtract(y, x);
-				// Restore signs, 'cause they're references.
 				x.isNeg = true;
 				y.isNeg = origYIsNeg;
-			} else {
+			}
+			else {
 				q = new BigInt();
 				r = biCopy(x);
 			}
@@ -448,7 +434,6 @@ export var RSA = function () {
 		q = new BigInt();
 		r = x;
 
-		// Normalize Y.
 		var t = Math.ceil(tb / bitsPerDigit) - 1;
 		var lambda = 0;
 		while (y.digits[t] < biHalfRadix) {
@@ -457,10 +442,9 @@ export var RSA = function () {
 			++tb;
 			t = Math.ceil(tb / bitsPerDigit) - 1;
 		}
-		// Shift r over to keep the quotient constant. We'll shift the
-		// remainder back at the end.
+
 		r = biShiftLeft(r, lambda);
-		nb += lambda; // Update the bit count for x.
+		nb += lambda;
 		var n = Math.ceil(nb / bitsPerDigit) - 1;
 
 		var b = biMultiplyByRadixPower(y, n - t);
@@ -476,7 +460,8 @@ export var RSA = function () {
 			var yt1 = (t - 1 >= y.digits.length) ? 0 : y.digits[t - 1];
 			if (ri == yt) {
 				q.digits[i - t - 1] = maxDigitVal;
-			} else {
+			}
+			else {
 				q.digits[i - t - 1] = Math.floor((ri * biRadix + ri1) / yt);
 			}
 
@@ -496,7 +481,6 @@ export var RSA = function () {
 			}
 		}
 		r = biShiftRight(r, lambda);
-		// Fiddle with the signs and stuff to make sure that 0 <= r < y.
 		q.isNeg = x.isNeg != origYIsNeg;
 		if (x.isNeg) {
 			if (origYIsNeg) {
@@ -507,7 +491,6 @@ export var RSA = function () {
 			y = biShiftRight(y, lambda);
 			r = biSubtract(y, r);
 		}
-		// Check for the unbelievably stupid degenerate case of r == -0.
 		if (r.digits[0] == 0 && biHighIndex(r) == 0) r.isNeg = false;
 
 		return new Array(q, r);
@@ -554,13 +537,14 @@ export var RSA = function () {
 		this.modulus = biCopy(m);
 		this.k = biHighIndex(this.modulus) + 1;
 		var b2k = new BigInt();
-		b2k.digits[2 * this.k] = 1; // b2k = b^(2k)
+		b2k.digits[2 * this.k] = 1;
 		this.mu = biDivide(b2k, this.modulus);
 		this.bkplus1 = new BigInt();
-		this.bkplus1.digits[this.k + 1] = 1; // bkplus1 = b^(k+1)
+		this.bkplus1.digits[this.k + 1] = 1;
 		this.modulo = BarrettMu_modulo;
 		this.multiplyMod = BarrettMu_multiplyMod;
 		this.powMod = BarrettMu_powMod;
+		return this;
 	}
 
 	function BarrettMu_modulo(x) {
@@ -583,10 +567,6 @@ export var RSA = function () {
 	}
 
 	function BarrettMu_multiplyMod(x, y) {
-		/*
-		x = this.modulo(x);
-		y = this.modulo(y);
-		*/
 		var xy = biMultiply(x, y);
 		return this.modulo(xy);
 	}
@@ -616,125 +596,110 @@ export var RSA = function () {
 		this.e = biFromHex(encryptionExponent);
 		this.d = biFromHex(decryptionExponent);
 		this.m = biFromHex(modulus);
-		if (typeof (keylen) != 'number') { this.chunkSize = 2 * biHighIndex(this.m); }
-		else { this.chunkSize = keylen / 8; }
+		if (typeof (keylen) != 'number') {
+			this.chunkSize = 2 * biHighIndex(this.m);
+		}
+		else {
+			this.chunkSize = keylen / 8;
+		}
 		this.radix = 16;
 		this.barrett = new BarrettMu(this.m);
+		return this;
 	}
 
 	function encryptString(key, s, pad, encoding) {
-		var a = new Array();                    // The usual Alice and Bob stuff
-		var sl = s.length;                      // Plaintext string length
-		var i, j, k;                            // The usual Fortran index stuff
-		var padtype;                            // Type of padding to do
-		var encodingtype;                       // Type of output encoding
-		var rpad;                               // Random pad
-		var al;                                 // Array length
-		var result = "";                        // Cypthertext result
-		var block;                              // Big integer block to encrypt
-		var crypt;                              // Big integer result
-		var text;                               // Text result
-		/*
-		* Figure out the padding type.
-		*/
+		var a = new Array();
+		var sl = s.length;
+		var i, j, k;
+		var padtype;
+		var encodingtype;
+		var rpad;
+		var al;
+		var result = "";
+		var block;
+		var crypt;
+		var text;
+
 		if (typeof (pad) == 'string') {
-			if (pad == RSAAPP.NoPadding) { padtype = 1; }
-			else if (pad == RSAAPP.PKCS1Padding) { padtype = 2; }
-			else { padtype = 0; }
+			if (pad == RSAAPP.NoPadding) {
+				padtype = 1;
+			}
+			else if (pad == RSAAPP.PKCS1Padding) {
+				padtype = 2;
+			}
+			else {
+				padtype = 0;
+			}
 		}
-		else { padtype = 0; }
-		/*
-		* Determine encoding type.
-		*/
+		else {
+			padtype = 0;
+		}
 		if (typeof (encoding) == 'string' && encoding == RSAAPP.RawEncoding) {
 			encodingtype = 1;
 		}
-		else { encodingtype = 0; }
+		else {
+			encodingtype = 0;
+		}
 
-		/*
-		* If we're not using Dave's padding method, we need to truncate long
-		* plaintext blocks to the correct length for the padding method used:
-		*
-		*       NoPadding    - key length
-		*       PKCS1Padding - key length - 11
-		*/
 		if (padtype == 1) {
 			if (sl > key.chunkSize) { sl = key.chunkSize; }
 		}
 		else if (padtype == 2) {
 			if (sl > (key.chunkSize - 11)) { sl = key.chunkSize - 11; }
 		}
-		/*
-		* Convert the plaintext string to an array of characters so that we can work
-		* with individual characters.
-		*
-		* Note that, if we're talking to a real crypto library at the other end, we
-		* reverse the plaintext order to preserve big-endian order.
-		*/
-		i = 0;
 
-		if (padtype == 2) { j = sl - 1; }
-		else { j = key.chunkSize - 1; }
+		i = 0;
+		if (padtype == 2) {
+			j = sl - 1;
+		}
+		else {
+			j = key.chunkSize - 1;
+		}
 
 		while (i < sl) {
-			if (padtype) { a[j] = s.charCodeAt(i); }
-			else { a[i] = s.charCodeAt(i); }
-
+			if (padtype) {
+				a[j] = s.charCodeAt(i);
+			}
+			else {
+				a[i] = s.charCodeAt(i);
+			}
 			i++; j--;
 		}
-		/*
-		* Now is the time to add the padding.
-		*
-		* If we're doing PKCS1v1.5 padding, we pick up padding where we left off and
-		* pad the remainder of the block.  Otherwise, we pad at the front of the
-		* block.  This gives us the correct padding for big-endian blocks.
-		*
-		* The padding is either a zero byte or a randomly-generated non-zero byte.
-		*/
-		if (padtype == 1) { i = 0; }
+
+		if (padtype == 1) {
+			i = 0;
+		}
 
 		j = key.chunkSize - (sl % key.chunkSize);
-
 		while (j > 0) {
 			if (padtype == 2) {
 				rpad = Math.floor(Math.random() * 256);
-
-				while (!rpad) { rpad = Math.floor(Math.random() * 256); }
-
+				while (!rpad) {
+					rpad = Math.floor(Math.random() * 256);
+				}
 				a[i] = rpad;
 			}
-			else { a[i] = 0; }
-
+			else {
+				a[i] = 0;
+			}
 			i++; j--;
 		}
-		/*
-		* For PKCS1v1.5 padding, we need to fill in the block header.
-		*/
+
 		if (padtype == 2) {
 			a[sl] = 0;
 			a[key.chunkSize - 2] = 2;
 			a[key.chunkSize - 1] = 0;
 		}
-		/*
-		* Carve up the plaintext and encrypt each of the resultant blocks.
-		*/
+
 		al = a.length;
-
 		for (i = 0; i < al; i += key.chunkSize) {
-			/*
-			* Get a block.
-			*/
 			block = new BigInt();
-
 			j = 0;
-
 			for (k = i; k < (i + key.chunkSize); ++j) {
 				block.digits[j] = a[k++];
 				block.digits[j] += a[k++] << 8;
 			}
-			/*
-			* Encrypt it, convert it to text, and append it to the result.
-			*/
+
 			crypt = key.barrett.powMod(block, key.e);
 			if (encodingtype == 1) {
 				text = biToBytes(crypt);
@@ -744,60 +709,38 @@ export var RSA = function () {
 			}
 			result += text;
 		}
-		/*
-		* Return the result, removing the last space.
-		*/
-		//result = (result.substring(0, result.length - 1));
+
 		return result;
 	}
 
-	/*****************************************************************************/
-
 	function decryptString(key, c) {
-		var blocks = c.split(" ");              // Multiple blocks of cyphertext
-		var b;                                  // The usual Alice and Bob stuff
-		var i, j;                               // The usual Fortran index stuff
-		var bi;                                 // Cyphertext as a big integer
-		var result = "";                        // Plaintext result
-		/*
-		* Carve up the cyphertext into blocks.
-		*/
+		var blocks = c.split(" ");
+		var b;
+		var i, j;
+		var bi;
+		var result = "";
+
 		for (i = 0; i < blocks.length; ++i) {
-			/*
-			* Depending on the radix being used for the key, convert this cyphertext
-			* block into a big integer.
-			*/
-			if (key.radix == 16) { bi = biFromHex(blocks[i]); }
-			else { bi = biFromString(blocks[i], key.radix); }
-			/*
-			* Decrypt the cyphertext.
-			*/
+			if (key.radix == 16) {
+				bi = biFromHex(blocks[i]);
+			}
+			else {
+				bi = biFromString(blocks[i], key.radix);
+			}
 			b = key.barrett.powMod(bi, key.d);
-			/*
-			* Convert the decrypted big integer back to the plaintext string.  Since
-			* we are using big integers, each element thereof represents two bytes of
-			* plaintext.
-			*/
 			for (j = 0; j <= biHighIndex(b); ++j) {
 				result += String.fromCharCode(b.digits[j] & 255, b.digits[j] >> 8);
 			}
 		}
-		/*
-		* Remove trailing null, if any.
-		*/
 		if (result.charCodeAt(result.length - 1) == 0) {
 			result = result.substring(0, result.length - 1);
 		}
-		/*
-		* Return the plaintext.
-		*/
-		return (result);
+		return result;
 	}
 
 	this.key = null;
 
 	this.init = function (encryptionExponent, decryptionExponent, modulus) {
-		setMaxDigits(262);
 		this.key = new RSAKeyPair(encryptionExponent, decryptionExponent, modulus, 2048);
 	};
 
@@ -817,7 +760,7 @@ export var RSA = function () {
 
 	if (typeof global !== "undefined" && typeof global.atob === "undefined") {
 		global.atob = function (text) {
-			return new Buffer(text, "base64").toString("binary");
+			return Buffer.from(text, "base64").toString("binary");
 		}
 	}
 

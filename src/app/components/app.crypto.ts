@@ -30,6 +30,10 @@ export class AppCrypto {
 		return base64;
 	}
 
+	private static toHex(base64: string) {
+		return CryptoJS.enc.Hex.stringify(CryptoJS.enc.Base64.parse(base64));
+	}
+
 	/** Gets MD5 hash of the string */
 	public static md5(text: string) {
 		return CryptoJS.MD5(text).toString();
@@ -94,8 +98,9 @@ export class AppCrypto {
 	}
 
 	/** Encrypts the string - using AES */
-	public static aesEncrypt(text: string) {
-		return CryptoJS.AES.encrypt(text, this._aes.key, { iv: this._aes.iv }).toString();
+	public static aesEncrypt(text: string, toHex: boolean = false) {
+		const encrypted = CryptoJS.AES.encrypt(text, this._aes.key, { iv: this._aes.iv }).toString();
+		return toHex ? this.toHex(encrypted) : encrypted;
 	}
 
 	/** Decrypts the string - using AES */
@@ -104,8 +109,9 @@ export class AppCrypto {
 	}
 
 	/** Encrypts the string - using RSA */
-	public static rsaEncrypt(text: string) {
-		return this._rsa.encrypt(text);
+	public static rsaEncrypt(text: string, toHex: boolean = false) {
+		const encrypted = this._rsa.encrypt(text);
+		return toHex ? this.toHex(encrypted) : encrypted;
 	}
 
 	/** Decrypts the string - using RSA */
@@ -124,9 +130,9 @@ export class AppCrypto {
 			let decryptionExponent = keys.rsa.decryptionExponent || keys.rsa.exponent;
 			let modulus = keys.rsa.modulus;
 			if (AppUtility.isTrue(keys.rsa.isBase64)) {
-				encryptionExponent = CryptoJS.enc.Hex.stringify(CryptoJS.enc.Base64.parse(encryptionExponent));
-				decryptionExponent = CryptoJS.enc.Hex.stringify(CryptoJS.enc.Base64.parse(decryptionExponent));
-				modulus = CryptoJS.enc.Hex.stringify(CryptoJS.enc.Base64.parse(modulus));
+				encryptionExponent = this.toHex(encryptionExponent);
+				decryptionExponent = this.toHex(decryptionExponent);
+				modulus = this.toHex(modulus);
 			}
 			this._rsa.init(encryptionExponent, decryptionExponent, modulus);
 		}
