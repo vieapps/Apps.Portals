@@ -154,7 +154,7 @@ export class AppComponent implements OnInit {
 		const isDetail = !gotChildren && !!itemInfo.detail;
 		const icon = itemInfo.icon || {};
 		if (icon.name === undefined && (gotChildren || isDetail)) {
-			icon.name = isDetail ? "chevron-down" : isExpanded ? "chevron-down" : "chevron-forward",
+			icon.name = isDetail ? "chevron-forward" : isExpanded ? "chevron-down" : "chevron-forward",
 			icon.color = "medium";
 			icon.slot = "end";
 		}
@@ -212,7 +212,9 @@ export class AppComponent implements OnInit {
 			onTitleClick: header.onTitleClick || this.sidebar.header.onTitleClick
 		},
 
-		this.sidebar.footer = await this.portalsCoreSvc.getSidebarFooterButtonsAsync();
+		this.sidebar.footer = this.configSvc.appConfig.services.active === this.portalsCoreSvc.name
+			? await this.portalsCoreSvc.getSidebarFooterButtonsAsync()
+			: [];
 		if (this.sidebar.footer.length > 0 && this.configSvc.isAuthenticated) {
 			this.sidebar.footer.push({
 				name: "preferences",
