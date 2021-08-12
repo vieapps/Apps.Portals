@@ -78,7 +78,7 @@ export class UsersListPage implements OnInit, OnDestroy {
 	}
 
 	async initializeAsync() {
-		this.searching = this.configSvc.currentURL.startsWith(this.configSvc.appConfig.url.users.search);
+		this.searching = this.configSvc.currentURL.startsWith(this.configSvc.appConfig.URLs.users.search);
 		this.configSvc.appTitle = this.title = this.searching
 			? await this.configSvc.getResourceAsync("users.list.title.search")
 			: await this.configSvc.getResourceAsync("users.list.title.list");
@@ -97,7 +97,7 @@ export class UsersListPage implements OnInit, OnDestroy {
 	}
 
 	openSearchAsync() {
-		return this.configSvc.navigateForwardAsync(this.configSvc.appConfig.url.users.search);
+		return this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.users.search);
 	}
 
 	onStartSearch(event: any) {

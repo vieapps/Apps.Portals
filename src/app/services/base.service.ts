@@ -311,8 +311,8 @@ export class AppReadyGuardService implements CanActivate {
 
 	canActivate() {
 		if (!AppConfig.isReady) {
-			AppConfig.url.redirectToWhenReady = AppCrypto.base64urlEncode(this.location.path());
-			this.router.navigateByUrl(AppConfig.url.home);
+			AppConfig.URLs.redirectToWhenReady = AppCrypto.base64urlEncode(this.location.path());
+			this.router.navigateByUrl(AppConfig.URLs.home);
 		}
 		return AppConfig.isReady;
 	}
@@ -330,7 +330,7 @@ export class AuthenticatedGuardService implements CanActivate {
 
 	canActivate() {
 		if (!AppConfig.isAuthenticated) {
-			this.router.navigateByUrl(AppConfig.url.users.login + "?next=" + AppCrypto.base64urlEncode(this.location.path()));
+			this.router.navigateByUrl(AppConfig.URLs.users.login + "?next=" + AppCrypto.base64urlEncode(this.location.path()));
 		}
 		return AppConfig.isAuthenticated;
 	}
@@ -347,7 +347,7 @@ export class NotAuthenticatedGuardService implements CanActivate {
 
 	canActivate() {
 		if (AppConfig.isAuthenticated) {
-			this.router.navigateByUrl(AppConfig.url.home);
+			this.router.navigateByUrl(AppConfig.URLs.home);
 		}
 		return !AppConfig.isAuthenticated;
 	}
@@ -364,7 +364,7 @@ export class RegisterGuardService implements CanActivate {
 
 	canActivate() {
 		if (!AppConfig.accountRegistrations.registrable) {
-			this.router.navigateByUrl(AppConfig.url.home);
+			this.router.navigateByUrl(AppConfig.URLs.home);
 		}
 		return AppConfig.accountRegistrations.registrable;
 	}

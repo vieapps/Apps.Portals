@@ -128,7 +128,7 @@ export class AppConfig {
 	};
 
 	/** Information for working with URLs (stack, host, ...) */
-	public static url = {
+	public static URLs = {
 		stack: [] as Array<{ url: string, params: { [key: string]: any } }>,
 		home: "/home",
 		search: "/search",

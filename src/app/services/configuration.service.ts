@@ -115,42 +115,42 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the current working URL */
 	public getCurrentURL() {
-		return this.appConfig.url.stack.length > 0 ? this.appConfig.url.stack[this.appConfig.url.stack.length - 1] : undefined;
+		return this.appConfig.URLs.stack.length > 0 ? this.appConfig.URLs.stack[this.appConfig.URLs.stack.length - 1] : undefined;
 	}
 
 	/** Gets the previous URL */
 	public getPreviousURL() {
-		return this.appConfig.url.stack.length > 1 ? this.appConfig.url.stack[this.appConfig.url.stack.length - 2] : undefined;
+		return this.appConfig.URLs.stack.length > 1 ? this.appConfig.URLs.stack[this.appConfig.URLs.stack.length - 2] : undefined;
 	}
 
 	/** Pushs/Adds an URL into stack of routes */
 	public pushURL(url: string, params: { [key: string]: any }) {
 		url = url.indexOf("?") > 0 ? url.substr(0, url.indexOf("?")) : url;
-		this.appConfig.url.stack = url !== this.appConfig.url.home ? this.appConfig.url.stack : [];
+		this.appConfig.URLs.stack = url !== this.appConfig.URLs.home ? this.appConfig.URLs.stack : [];
 		const previous = this.getPreviousURL();
 		const current = this.getCurrentURL();
 		if (previous !== undefined && previous.url.startsWith(url)) {
-			this.appConfig.url.stack.pop();
+			this.appConfig.URLs.stack.pop();
 		}
 		else if (current === undefined || !current.url.startsWith(url)) {
-			this.appConfig.url.stack.push({
+			this.appConfig.URLs.stack.push({
 				url: url,
 				params: params
 			});
 		}
-		if (this.appConfig.url.stack.length > 30) {
-			this.appConfig.url.stack.splice(0, this.appConfig.url.stack.length - 30);
+		if (this.appConfig.URLs.stack.length > 30) {
+			this.appConfig.URLs.stack.splice(0, this.appConfig.URLs.stack.length - 30);
 		}
 	}
 
 	/** Removes the current working URL from the stack, also pop the current view */
 	public popURL() {
-		this.navController.pop().then(() => this.appConfig.url.stack.pop());
+		this.navController.pop().then(() => this.appConfig.URLs.stack.pop());
 	}
 
 	private getURL(info: { url: string, params: { [key: string]: any } }, alternativeUrl?: string) {
 		if (info === undefined) {
-			return alternativeUrl || this.appConfig.url.home;
+			return alternativeUrl || this.appConfig.URLs.home;
 		}
 		else {
 			const query = AppUtility.toQuery(info.params);
@@ -170,7 +170,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the URL for activating new account/password */
 	public get activateURL() {
-		return AppCrypto.base64urlEncode((this.appConfig.isWebApp ? AppUtility.parseURI().HostURI + this.appConfig.url.base : this.appConfig.URIs.apps) + "home?prego=activate&mode={{mode}}&code={{code}}");
+		return AppCrypto.base64urlEncode((this.appConfig.isWebApp ? AppUtility.parseURI().HostURI + this.appConfig.URLs.base : this.appConfig.URIs.apps) + "home?prego=activate&mode={{mode}}&code={{code}}");
 	}
 
 	/** Sets the app title (means title of the browser) */
@@ -185,7 +185,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the router params of the current page/view */
 	public get routerParams() {
-		return this.appConfig.url.routerParams;
+		return this.appConfig.URLs.routerParams;
 	}
 
 	/** Gets the query params of the current page/view */
@@ -258,7 +258,7 @@ export class ConfigurationService extends BaseService {
 
 		const uri = AppUtility.parseURI();
 		if (uri.Host.indexOf(".") < 0) {
-			this.appConfig.url.host = uri.Host;
+			this.appConfig.URLs.host = uri.Host;
 		}
 		else {
 			let host = uri.HostNames[uri.HostNames.length - 2] + "." + uri.HostNames[uri.HostNames.length - 1];
@@ -268,17 +268,17 @@ export class ConfigurationService extends BaseService {
 			if (uri.HostNames.length > 3 && uri.HostNames[uri.HostNames.length - 4] !== "www") {
 				host = uri.HostNames[uri.HostNames.length - 4] + "." + host;
 			}
-			this.appConfig.url.host = host;
+			this.appConfig.URLs.host = host;
 		}
 
 		if (isNativeApp) {
-			this.appConfig.url.base = "";
+			this.appConfig.URLs.base = "";
 			this.appConfig.app.platform = this.device.platform;
 			this.appConfig.session.device = this.device.uuid + "@" + this.appConfig.app.id;
 		}
 
 		else {
-			this.appConfig.url.base = this.platformLocation.getBaseHrefFromDOM();
+			this.appConfig.URLs.base = this.platformLocation.getBaseHrefFromDOM();
 			this.appConfig.app.platform = `${platform} ${this.appConfig.app.mode}`;
 		}
 
@@ -305,7 +305,7 @@ export class ConfigurationService extends BaseService {
 			PlatformUtility.setElectronService(this.electronSvc);
 			this.appConfig.app.shell = "Electron";
 			this.appConfig.app.mode = "Desktop";
-			this.appConfig.url.base = "";
+			this.appConfig.URLs.base = "";
 			this.appConfig.app.platform = `${this.appConfig.app.os} Desktop`;
 			if (this.electronSvc.ipcRenderer) {
 				this.electronSvc.ipcRenderer.on("electron.ipc2app", ($event: any, $info: any) => {
@@ -631,13 +631,13 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the navigating URL */
 	public getNavigatingURL(url?: string, params?: { [key: string]: any }) {
-		url = url || this.appConfig.url.home;
+		url = url || this.appConfig.URLs.home;
 		return url + (AppUtility.isGotData(params) ? `${url.indexOf("?") > 0 ? "&" : "?"}${AppUtility.toQuery(params)}` : "");
 	}
 
 	/** Sends a request to navigates to home screen */
 	public async navigateHomeAsync(url?: string, params?: { [key: string]: any }) {
-		await this.navController.navigateRoot(this.getNavigatingURL(url || this.appConfig.url.home, params));
+		await this.navController.navigateRoot(this.getNavigatingURL(url || this.appConfig.URLs.home, params));
 	}
 
 	/** Sends a request to navigates back one step */
@@ -647,7 +647,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Sends a request to navigates forward one step */
 	public async navigateForwardAsync(url: string, params?: { [key: string]: any }) {
-		await this.navController.navigateForward(this.getNavigatingURL(url || this.appConfig.url.home, params));
+		await this.navController.navigateForward(this.getNavigatingURL(url || this.appConfig.URLs.home, params));
 	}
 
 	/** Sends a request to navigates */
@@ -877,7 +877,7 @@ export class ConfigurationService extends BaseService {
 		return {
 			home: {
 				title: await this.getResourceAsync("common.sidebar.home"),
-				link: this.appConfig.url.home,
+				link: this.appConfig.URLs.home,
 				params: undefined as { [key: string]: string },
 				direction: "root",
 				icon: "home",
@@ -886,7 +886,7 @@ export class ConfigurationService extends BaseService {
 			},
 			login: {
 				title: await this.getResourceAsync("common.sidebar.login"),
-				link: this.appConfig.url.users.login,
+				link: this.appConfig.URLs.users.login,
 				params: undefined as { [key: string]: string },
 				direction: "forward",
 				icon: "log-in",
@@ -895,7 +895,7 @@ export class ConfigurationService extends BaseService {
 			},
 			register: {
 				title: await this.getResourceAsync("common.sidebar.register"),
-				link: this.appConfig.url.users.register,
+				link: this.appConfig.URLs.users.register,
 				params: undefined as { [key: string]: string },
 				direction: "forward",
 				icon: "person-add",
@@ -904,7 +904,7 @@ export class ConfigurationService extends BaseService {
 			},
 			profile: {
 				title: await this.getResourceAsync("common.sidebar.profile"),
-				link: `${this.appConfig.url.users.profile}/my`,
+				link: `${this.appConfig.URLs.users.profile}/my`,
 				params: undefined as { [key: string]: string },
 				direction: "forward",
 				icon: "person",
@@ -918,7 +918,7 @@ export class ConfigurationService extends BaseService {
 				direction: "forward",
 				icon: "search",
 				thumbnail: undefined as string,
-				onClick: async () => await this.navigateForwardAsync(this.appConfig.url.search)
+				onClick: async () => await this.navigateForwardAsync(this.appConfig.URLs.search)
 			}
 		};
 	}

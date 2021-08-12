@@ -97,7 +97,7 @@ export class UserProfileBase extends BaseModel {
 	}
 
 	public get routerLink() {
-		return `${AppConfig.url.users.profile}/${AppUtility.toANSI(this.Name, true)}`;
+		return `${AppConfig.URLs.users.profile}/${AppUtility.toANSI(this.Name, true)}`;
 	}
 
 	public copy(source: any, onCompleted?: (data: any) => void) {

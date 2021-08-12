@@ -198,12 +198,12 @@ export class UsersRegisterPage implements OnInit {
 				this.register.form.value,
 				this.register.form.value.Captcha,
 				async () => await Promise.all([
-					TrackingUtility.trackAsync(this.title, this.configSvc.appConfig.url.users.register),
+					TrackingUtility.trackAsync(this.title, this.configSvc.appConfig.URLs.users.register),
 					this.appFormsSvc.showAlertAsync(
 						await this.configSvc.getResourceAsync("users.register.alert.header"),
 						undefined,
 						await this.configSvc.getResourceAsync("users.register.alert.message", { email: this.register.form.value.Email }),
-						async () => await (this.configSvc.previousURL.startsWith(this.configSvc.appConfig.url.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync())
+						async () => await (this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync())
 					)
 				]),
 				async error => await Promise.all([

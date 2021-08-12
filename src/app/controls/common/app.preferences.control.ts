@@ -133,7 +133,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 	}
 
 	async openProfileAsync() {
-		await this.configSvc.navigateForwardAsync(this.configSvc.appConfig.url.users.profile + "/my");
+		await this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.users.profile + "/my");
 	}
 
 }

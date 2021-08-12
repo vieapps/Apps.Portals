@@ -82,7 +82,7 @@ export class PortalsCmsService extends BaseService {
 			}
 		});
 
-		this.configSvc.appConfig.url.search = "/portals/cms/contents/search";
+		this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 
 		AppAPIs.registerAsServiceScopeProcessor(this.filesSvc.name, message => this.processAttachmentUpdateMessage(message));
 

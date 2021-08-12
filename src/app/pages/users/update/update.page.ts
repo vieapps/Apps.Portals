@@ -304,7 +304,7 @@ export class UsersUpdatePage implements OnInit {
 						AppEvents.broadcast("Profile", { Type: "Updated" });
 					}
 					await Promise.all([
-						TrackingUtility.trackAsync(`${this.title} [${this.profile.Name}]`, `${this.configSvc.appConfig.url.users.update}/profile`),
+						TrackingUtility.trackAsync(`${this.title} [${this.profile.Name}]`, `${this.configSvc.appConfig.URLs.users.update}/profile`),
 						this.showProfileAsync(async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.update.messages.success")))
 					]);
 				},
@@ -359,7 +359,7 @@ export class UsersUpdatePage implements OnInit {
 				this.password.form.value.OldPassword,
 				this.password.form.value.Password,
 				async () => await Promise.all([
-					TrackingUtility.trackAsync(`${this.title} [${this.profile.Name}]`, `${this.configSvc.appConfig.url.users.update}/password`),
+					TrackingUtility.trackAsync(`${this.title} [${this.profile.Name}]`, `${this.configSvc.appConfig.URLs.users.update}/password`),
 					this.showProfileAsync(async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.password.message")))
 				]),
 				async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => this.password.controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "OldPassword")).focus())
@@ -413,7 +413,7 @@ export class UsersUpdatePage implements OnInit {
 				this.email.form.value.OldPassword,
 				this.email.form.value.Email,
 				async () => await Promise.all([
-					TrackingUtility.trackAsync(`${this.title} [${this.profile.Name}]`, `${this.configSvc.appConfig.url.users.update}/email`),
+					TrackingUtility.trackAsync(`${this.title} [${this.profile.Name}]`, `${this.configSvc.appConfig.URLs.users.update}/email`),
 					this.showProfileAsync(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.email.message")))
 				]),
 				async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => this.password.controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "OldPassword")).focus())
@@ -451,7 +451,7 @@ export class UsersUpdatePage implements OnInit {
 				this.profile.ID,
 				this.servicePrivileges.privileges,
 				async () => await Promise.all([
-					TrackingUtility.trackAsync(`${this.title} [${this.profile.Name}]`, `${this.configSvc.appConfig.url.users.update}/privileges`),
+					TrackingUtility.trackAsync(`${this.title} [${this.profile.Name}]`, `${this.configSvc.appConfig.URLs.users.update}/privileges`),
 					this.showProfileAsync(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.privileges.message", { name: this.profile.Name })))
 				]),
 				async error => await this.appFormsSvc.showErrorAsync(error)
@@ -467,7 +467,7 @@ export class UsersUpdatePage implements OnInit {
 			if (preProcess !== undefined) {
 				preProcess();
 			}
-			await this.configSvc.navigateBackAsync(!this.configSvc.previousURL.startsWith(this.configSvc.appConfig.url.users.profile) ? `${this.configSvc.appConfig.url.users.profile}/my` : undefined);
+			await this.configSvc.navigateBackAsync(!this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.profile) ? `${this.configSvc.appConfig.URLs.users.profile}/my` : undefined);
 		});
 	}
 

@@ -148,7 +148,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 				this.login.form.value.Account,
 				this.login.form.value.Password,
 				async data => await Promise.all([
-					TrackingUtility.trackAsync(this.title, this.configSvc.appConfig.url.users.login),
+					TrackingUtility.trackAsync(this.title, this.configSvc.appConfig.URLs.users.login),
 					this.appFormsSvc.hideLoadingAsync(async () => await (data.Require2FA ? this.openLoginOTPAsync(data) : this.closeAsync()))
 				]),
 				async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => this.login.controls.find(ctrl => ctrl.Name === "Account").focus())
@@ -256,7 +256,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 				this.otp.form.value.Provider,
 				this.otp.form.value.OTP,
 				async () => await Promise.all([
-					TrackingUtility.trackAsync(this.title, this.configSvc.appConfig.url.users.otp),
+					TrackingUtility.trackAsync(this.title, this.configSvc.appConfig.URLs.users.otp),
 					this.appFormsSvc.hideLoadingAsync(async () => await this.closeAsync())
 				]),
 				async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => {
@@ -352,7 +352,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 					account,
 					otp,
 					async () => await Promise.all([
-						TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.url.users.root}/reset`),
+						TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.URLs.users.root}/reset`),
 						this.appFormsSvc.showAlertAsync(
 							await this.configSvc.getResourceAsync("users.login.reset.title"),
 							undefined,
@@ -385,7 +385,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 					account,
 					captcha,
 					async () => await Promise.all([
-						TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.url.users.root}/reset`),
+						TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.URLs.users.root}/reset`),
 						this.appFormsSvc.showAlertAsync(
 							await this.configSvc.getResourceAsync("users.login.reset.title"),
 							undefined,
@@ -428,12 +428,12 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 			}
 		}
 		else {
-			await (this.configSvc.previousURL.startsWith(this.configSvc.appConfig.url.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync());
+			await (this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync());
 		}
 	}
 
 	async registerAsync() {
-		await this.configSvc.navigateForwardAsync(this.configSvc.appConfig.url.users.register);
+		await this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.users.register);
 	}
 
 }

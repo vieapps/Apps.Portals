@@ -48,7 +48,7 @@ export class HomePage implements OnInit, OnDestroy {
 		}, "Home:LanguageChanged");
 
 		AppEvents.on("Navigated", info => {
-			if (this.configSvc.appConfig.url.home === info.args.Url) {
+			if (this.configSvc.appConfig.URLs.home === info.args.Url) {
 				this.prepareAsync("return").then(() => {
 					AppEvents.broadcast("App", { Type: "HomePageIsOpened" });
 					this.changes = new Date();
@@ -78,7 +78,7 @@ export class HomePage implements OnInit, OnDestroy {
 	}
 
 	private trackAsync(section?: string) {
-		return TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.url.home}/${section || "initialize"}`);
+		return TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.URLs.home}/${section || "initialize"}`);
 	}
 
 }

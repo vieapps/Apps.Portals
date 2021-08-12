@@ -96,7 +96,7 @@ export class AppComponent implements OnInit {
 	ngOnInit() {
 		this.router.events.subscribe(event => {
 			if (event instanceof RoutesRecognized) {
-				this.configSvc.appConfig.url.routerParams = (event as RoutesRecognized).state.root.params;
+				this.configSvc.appConfig.URLs.routerParams = (event as RoutesRecognized).state.root.params;
 				this.configSvc.pushURL((event as RoutesRecognized).url, (event as RoutesRecognized).state.root.queryParams);
 				const current = this.configSvc.getCurrentURL();
 				AppEvents.broadcast("Navigating", { Url: current.url, Params: current.params });
@@ -318,11 +318,11 @@ export class AppComponent implements OnInit {
 
 		AppEvents.on("Navigate", async info => {
 			const url = AppUtility.isEquals(info.args.Type, "LogIn")
-				? this.configSvc.appConfig.url.users.login
+				? this.configSvc.appConfig.URLs.users.login
 				: AppUtility.isEquals(info.args.Type, "Profile")
-					? this.configSvc.appConfig.url.users.profile + "/my"
+					? this.configSvc.appConfig.URLs.users.profile + "/my"
 					: AppUtility.isEquals(info.args.Type, "Accounts")
-						? this.configSvc.appConfig.url.users.list
+						? this.configSvc.appConfig.URLs.users.list
 						: info.args.Url;
 			switch ((info.args.Direction as string || "Forward").toLowerCase()) {
 				case "home":
@@ -410,11 +410,11 @@ export class AppComponent implements OnInit {
 				? await this.configSvc.getResourceAsync(`users.activate.messages.success.${("account" === data.Mode ? "account" : "password")}`)
 				: await this.configSvc.getResourceAsync("users.activate.messages.error.general", { error: (data.Error ? ` (${data.Error.Message})` : "") }),
 			async () => {
-				this.configSvc.appConfig.url.stack[this.configSvc.appConfig.url.stack.length - 1] = {
-					url: this.configSvc.appConfig.url.home,
+				this.configSvc.appConfig.URLs.stack[this.configSvc.appConfig.URLs.stack.length - 1] = {
+					url: this.configSvc.appConfig.URLs.home,
 					params: {}
 				};
-				await this.router.navigateByUrl(this.configSvc.appConfig.url.home);
+				await this.router.navigateByUrl(this.configSvc.appConfig.URLs.home);
 			}
 		);
 	}
@@ -484,11 +484,11 @@ export class AppComponent implements OnInit {
 					onNext();
 				}
 				else {
-					let redirect = this.configSvc.queryParams["redirect"] as string || this.configSvc.appConfig.url.redirectToWhenReady;
+					let redirect = this.configSvc.queryParams["redirect"] as string || this.configSvc.appConfig.URLs.redirectToWhenReady;
 					if (redirect !== undefined) {
-						this.configSvc.appConfig.url.redirectToWhenReady = undefined;
-						this.configSvc.appConfig.url.stack[this.configSvc.appConfig.url.stack.length - 1] = {
-							url: this.configSvc.appConfig.url.home,
+						this.configSvc.appConfig.URLs.redirectToWhenReady = undefined;
+						this.configSvc.appConfig.URLs.stack[this.configSvc.appConfig.URLs.stack.length - 1] = {
+							url: this.configSvc.appConfig.URLs.home,
 							params: {}
 						};
 						try {

@@ -218,7 +218,7 @@ export class UsersOtpPage implements OnInit {
 				this.provision.phone = "";
 				await this.prepareAsync();
 				await Promise.all([
-					TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.url.users.update}/otp`),
+					TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.URLs.users.update}/otp`),
 					this.appFormsSvc.hideLoadingAsync()
 				]);
 			},
@@ -239,7 +239,7 @@ export class UsersOtpPage implements OnInit {
 				data.password + "",
 				provider.Info,
 				async () => await this.prepareAsync(async () => await Promise.all([
-					TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.url.users.update}/otp`),
+					TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.URLs.users.update}/otp`),
 					this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.otp.messages.success", { label: provider.Label }))
 				])),
 				async error => await this.appFormsSvc.showErrorAsync(error)
@@ -261,7 +261,7 @@ export class UsersOtpPage implements OnInit {
 			if (onNext !== undefined) {
 				onNext();
 			}
-			await this.configSvc.navigateBackAsync(!this.configSvc.previousURL.startsWith(this.configSvc.appConfig.url.users.profile) ? `${this.configSvc.appConfig.url.users.profile}/my` : undefined);
+			await this.configSvc.navigateBackAsync(!this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.profile) ? `${this.configSvc.appConfig.URLs.users.profile}/my` : undefined);
 		});
 	}
 
