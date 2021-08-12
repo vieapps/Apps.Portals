@@ -114,13 +114,21 @@ export class AppCrypto {
 	}
 
 	/** Initializes all keys for encrypting/decrypting/signing */
-	public static init(keys: { aes: { key: string; iv: string }; rsa: { encryptionExponent?: string; decryptionExponent?: string; exponent: string; modulus: string }; jwt: string; }) {
+	public static init(keys: { aes: { key: string; iv: string }; rsa: { encryptionExponent?: string; decryptionExponent?: string; exponent: string; modulus: string; isBase64?: boolean }; jwt: string; }) {
 		if (keys.aes !== undefined) {
 			this._aes.key = CryptoJS.enc.Hex.parse(keys.aes.key);
 			this._aes.iv = CryptoJS.enc.Hex.parse(keys.aes.iv);
 		}
 		if (keys.rsa !== undefined) {
-			this._rsa.init(keys.rsa.encryptionExponent || keys.rsa.exponent, keys.rsa.decryptionExponent || keys.rsa.exponent, keys.rsa.modulus);
+			let encryptionExponent = keys.rsa.encryptionExponent || keys.rsa.exponent;
+			let decryptionExponent = keys.rsa.decryptionExponent || keys.rsa.exponent;
+			let modulus = keys.rsa.modulus;
+			if (AppUtility.isTrue(keys.rsa.isBase64)) {
+				encryptionExponent = CryptoJS.enc.Hex.stringify(CryptoJS.enc.Base64.parse(encryptionExponent));
+				decryptionExponent = CryptoJS.enc.Hex.stringify(CryptoJS.enc.Base64.parse(decryptionExponent));
+				modulus = CryptoJS.enc.Hex.stringify(CryptoJS.enc.Base64.parse(modulus));
+			}
+			this._rsa.init(encryptionExponent, decryptionExponent, modulus);
 		}
 		if (keys.jwt !== undefined) {
 			this._jwt = keys.jwt = keys.aes !== undefined ? this.aesDecrypt(keys.jwt) : keys.jwt;
