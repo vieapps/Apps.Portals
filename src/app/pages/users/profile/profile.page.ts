@@ -276,14 +276,17 @@ export class UsersProfilePage implements OnInit {
 			await this.configSvc.getResourceAsync("users.profile.buttons.logout"),
 			undefined,
 			await this.configSvc.getResourceAsync("users.profile.logout.confirm"),
-			async () => await this.authSvc.logOutAsync(
-				async () => await Promise.all([
-					TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("users.profile.buttons.logout"), `${this.configSvc.appConfig.URLs.users.root}/logout`),
-					this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.logout.success")),
-					this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync()
-				]),
-				async error => await this.appFormsSvc.showErrorAsync(error)
-			),
+			async () => {
+				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("users.profile.buttons.logout"));
+				await this.authSvc.logOutAsync(
+					async () => await Promise.all([
+						TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("users.profile.buttons.logout"), `${this.configSvc.appConfig.URLs.users.root}/logout`),
+						this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.logout.success"))),
+						this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync()
+					]),
+					async error => await this.appFormsSvc.showErrorAsync(error)
+				);
+			},
 			await this.configSvc.getResourceAsync("users.profile.buttons.logout"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);

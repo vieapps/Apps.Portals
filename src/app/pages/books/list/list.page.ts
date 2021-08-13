@@ -55,7 +55,8 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 	sorts = [
 		{
 			label: "Last updated",
-			value: "LastUpdated"
+			value: "LastUpdated",
+			expression: { LastUpdated: "Descending" } as { [key: string]: any }
 		},
 		{
 			label: "Title (A - Z)",
@@ -90,12 +91,12 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 	routerSubscription: Subscription;
 	searchSubscription: Subscription;
 
-	@ViewChild(IonContent, { static: true }) contentCtrl: IonContent;
-	@ViewChild(IonSearchbar, { static: true }) searchCtrl: IonSearchbar;
-	@ViewChild(IonInfiniteScroll, { static: true }) infiniteScrollCtrl: IonInfiniteScroll;
+	@ViewChild(IonContent, { static: true }) private contentCtrl: IonContent;
+	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
+	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
 	get sortBy() {
-		return { LastUpdated: "Descending" };
+		return this.sorts.first().expression;
 	}
 
 	getFilterElement(name: string) {
@@ -428,11 +429,11 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 			},
 			await this.configSvc.getResourceAsync("books.list.sort.button"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel"),
-			this.sorts.map(s => ({
+			this.sorts.map(sort => ({
 				type: "radio",
-				label: s.label,
-				value: s.value,
-				checked: this.sort === s.value
+				label: sort.label,
+				value: sort.value,
+				checked: this.sort === sort.value
 			}))
 		);
 	}

@@ -55,6 +55,7 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 		this.initializeAsync();
 		AppEvents.on("App", async info => {
 			if ("Initialized" === info.args.Type) {
+				await this.prepareResourcesAsync();
 				await this.prepareBooksAsync();
 			}
 			else if ("LanguageChanged" === info.args.Type) {
@@ -67,12 +68,9 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 				}
 			}
 		}, "BookFeaturedEventHandlers");
-		AppEvents.on("Books", async info => {
+		AppEvents.on("Books", info => {
 			if ("InstructionsUpdated" === info.args.Type) {
 				this.updateIntroduction();
-			}
-			else if ("OpenSidebar" === info.args.Type) {
-				await this.prepareBooksAsync();
 			}
 		}, "BookFeaturedEventHandlers");
 	}
@@ -114,8 +112,8 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 	}
 
 	private async prepareBooksAsync() {
-		if (this.books === undefined || this.books.length < 1) {
-			await this.booksSvc.searchAsync({ FilterBy: {}, SortBy: {} }, () => this.updateBooks());
+		if (this.books === undefined || this.books.length < 12) {
+			await this.booksSvc.searchAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => this.updateBooks());
 		}
 		else {
 			this.updateBooks();
