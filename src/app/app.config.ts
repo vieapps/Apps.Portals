@@ -32,7 +32,7 @@ export class AppConfig {
 		copyright: "© VIEApps.net",
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
-		id: "vieapps-ngx-portals",
+		id: "vieapps-ngx",
 		version: "4.0.0",
 		frameworks: "ionic 5.6 - angular 11.2 - cordova 10.0",
 		mode: "",

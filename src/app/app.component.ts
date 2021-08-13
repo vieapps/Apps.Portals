@@ -92,6 +92,10 @@ export class AppComponent implements OnInit {
 		return this.sidebar.visible && this.configSvc.screenWidth >= 1200;
 	}
 
+	get isSidebarTopMenuShown() {
+		return !(this.sidebar.active === "portals" || this.sidebar.active === "notifications" || this.sidebar.active === "chat" || this.sidebar.active === "preferences");
+	}
+
 	get sidebarSignColor() {
 		return this.isSidebarShown ? "medium" : "light";
 	}
@@ -155,7 +159,6 @@ export class AppComponent implements OnInit {
 		const icon = itemInfo.icon || {};
 		if (icon.name === undefined && (gotChildren || isDetail)) {
 			icon.name = isDetail ? "chevron-forward" : isExpanded ? "chevron-down" : "chevron-forward",
-			icon.color = "medium";
 			icon.slot = "end";
 		}
 		const sidebarItem: AppSidebarMenuItem = {
@@ -315,7 +318,15 @@ export class AppComponent implements OnInit {
 		AppEvents.on("AddSidebarItem", async info => await this.updateSidebarItemAsync(info.args.MenuIndex !== undefined ? info.args.MenuIndex : -1, -1, info.args.ItemInfo));
 		AppEvents.on("UpdateSidebarItem", async info => await this.updateSidebarItemAsync(info.args.MenuIndex !== undefined ? info.args.MenuIndex : -1, info.args.ItemIndex !== undefined ? info.args.ItemIndex : -1, info.args.ItemInfo));
 		AppEvents.on("UpdateSidebarFooter", info => {
-			this.sidebar.footer.insert(info.args.button, info.args.index !== undefined ? info.args.index : 0);
+			if (!!info.args.reset) {
+				this.sidebar.footer = [];
+			}
+			if (typeof info.args.predicate === "function" ? info.args.predicate(this.sidebar) : true) {
+				this.sidebar.footer.insert(info.args.button, info.args.index !== undefined ? info.args.index : 0);
+				if (typeof info.args.onCompleted === "function") {
+					info.args.onCompleted(this.sidebar);
+				}
+			}
 			if (this.configSvc.isAuthenticated) {
 				AppUtility.invoke(async () => {
 					if (this.sidebar.footer.length > 0 && this.sidebar.footer.first(button => button.name === "preferences") === undefined) {
@@ -352,7 +363,7 @@ export class AppComponent implements OnInit {
 		});
 
 		AppEvents.on("App", async info => {
-			if (AppUtility.isEquals(info.args.Type, "LanguageChanged")) {
+			if ("LanguageChanged" === info.args.Type) {
 				await this.updateSidebarAsync({}, true);
 				await this.normalizeSidebarAsync();
 				AppEvents.sendToElectron("App", { Type: "LanguageChanged", Language: this.configSvc.appConfig.language });
@@ -360,10 +371,10 @@ export class AppComponent implements OnInit {
 		});
 
 		AppEvents.on("Session", async info => {
-			if (AppUtility.isEquals(info.args.Type, "LogIn") || AppUtility.isEquals(info.args.Type, "LogOut")) {
+			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
 				await this.updateSidebarAsync({}, true);
 				await this.normalizeSidebarAsync();
-				if (AppUtility.isEquals(info.args.Type, "LogOut")) {
+				if ("LogOut" === info.args.Type) {
 					this.sidebar.header.title = this.configSvc.appConfig.app.name;
 					this.sidebar.header.onTitleClick = () => {};
 					this.updateSidebarImage();
@@ -372,13 +383,13 @@ export class AppComponent implements OnInit {
 		});
 
 		AppEvents.on("Profile", info => {
-			if (AppUtility.isEquals(info.args.Type, "Updated")) {
+			if ("Updated" === info.args.Type) {
 				this.updateSidebarImage();
 			}
 		});
 
 		AppEvents.on("Account", info => {
-			if (AppUtility.isEquals(info.args.Type, "Updated")) {
+			if ("Updated" === info.args.Type) {
 				this.updateSidebarImage();
 			}
 		});
@@ -490,14 +501,14 @@ export class AppComponent implements OnInit {
 				languages: appConfig.languages
 			}});
 			await this.normalizeSidebarAsync();
-			if (this.configSvc.appConfig.services.all.first(service => service.name === this.portalsCoreSvc.name) !== undefined) {
-				await this.portalsCoreSvc.initializeAsync();
-				await this.portalsCmsSvc.initializeAsync();
-			}
-			if (this.configSvc.appConfig.services.all.first(service => service.name === this.booksSvc.name) !== undefined) {
-				await this.booksSvc.initializeAsync();
-			}
 			await this.appFormsSvc.hideLoadingAsync(async () => {
+				if (this.configSvc.appConfig.services.all.map(svc => svc.name).indexOf(this.portalsCoreSvc.name) > -1) {
+					await this.portalsCoreSvc.initializeAsync();
+					await this.portalsCmsSvc.initializeAsync();
+				}
+				if (this.configSvc.appConfig.services.all.map(svc => svc.name).indexOf(this.booksSvc.name) > -1) {
+					await this.booksSvc.initializeAsync();
+				}
 				AppEvents.broadcast("App", { Type: "FullyInitialized" });
 				AppEvents.sendToElectron("App", { Type: "FullyInitialized", Data: {
 					URIs: appConfig.URIs,
@@ -513,7 +524,7 @@ export class AppComponent implements OnInit {
 				}
 				else {
 					let redirect = this.configSvc.queryParams["redirect"] as string || this.configSvc.appConfig.URLs.redirectToWhenReady;
-					if (redirect !== undefined) {
+					if (AppUtility.isNotEmpty(redirect)) {
 						this.configSvc.appConfig.URLs.redirectToWhenReady = undefined;
 						this.configSvc.appConfig.URLs.stack[this.configSvc.appConfig.URLs.stack.length - 1] = {
 							url: this.configSvc.appConfig.URLs.home,

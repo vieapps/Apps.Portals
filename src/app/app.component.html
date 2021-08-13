@@ -34,9 +34,9 @@
 
 			<ion-content [color]="color">
 
-				<ion-list [hidden]="sidebar.active === 'notifications' || sidebar.active === 'preferences'" class="ion-margin-vertical" lines="full">
+				<ion-list class="ion-margin-vertical" lines="full">
 
-					<ion-menu-toggle auto-hide="false" [hidden]="sidebar.active === 'portals'">
+					<ion-menu-toggle auto-hide="false" [hidden]="!isSidebarTopMenuShown">
 						<ion-item *ngFor="let item of sidebar.top; trackBy: trackSidebarItem" [routerLink]="item.link" [queryParams]="item.params" [routerDirection]="item.direction" [color]="color" (click)="item.onClick($event, item, sidebar)" detail="false">
 							<ion-icon *ngIf="item.icon" [name]="item.icon" slot="start"></ion-icon>
 							<ion-label>
