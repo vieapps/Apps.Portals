@@ -85,12 +85,12 @@ export class PortalsCmsService extends BaseService {
 		AppAPIs.registerAsServiceScopeProcessor(this.filesSvc.name, message => this.processAttachmentUpdateMessage(message));
 
 		AppEvents.on(this.name, async info => {
-			if (AppUtility.isEquals(info.args.Mode, "UpdateSidebarWithContentTypes")) {
+			if ("UpdateSidebarWithContentTypes" === info.args.Mode) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				await this.updateSidebarWithContentTypesAsync(undefined, () => AppEvents.broadcast("ActiveSidebar", { name: "cms" }));
 			}
-			else if (AppUtility.isEquals(info.args.Mode, "UpdateSidebarWithCategories")) {
+			else if ("UpdateSidebarWithCategories" === info.args.Mode) {
 				if (AppUtility.isNotEmpty(info.args.ContentTypeID)) {
 					if (this._sidebarContentType === undefined || this._sidebarContentType.ID !== info.args.ContentTypeID) {
 						this._sidebarContentType = ContentType.get(info.args.ContentTypeID);
@@ -106,7 +106,7 @@ export class PortalsCmsService extends BaseService {
 					await this.updateSidebarWithCategoriesAsync(undefined, undefined, () => AppEvents.broadcast("ActiveSidebar", { name: "cms" }));
 				}
 			}
-			else if (AppUtility.isEquals(info.args.Type, "Changed") && (AppUtility.isEquals(info.args.Object, "Organization") || AppUtility.isEquals(info.args.Object, "Module")) && this.configSvc.appConfig.services.active === this.name) {
+			else if ("Changed" === info.args.Type && ("Organization" === info.args.Object || "Module" === info.args.Object) && this.configSvc.appConfig.services.active === this.name) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				await this.updateSidebarAsync();
@@ -114,7 +114,7 @@ export class PortalsCmsService extends BaseService {
 		});
 
 		AppEvents.on("Session", async info => {
-			if ((AppUtility.isEquals(info.args.Type, "LogIn") || AppUtility.isEquals(info.args.Type, "LogOut")) && this.configSvc.appConfig.services.active === this.name) {
+			if (("LogIn" === info.args.Type || "LogOut" === info.args.Type) && this.configSvc.appConfig.services.active === this.name) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				await this.updateSidebarAsync();
@@ -123,7 +123,7 @@ export class PortalsCmsService extends BaseService {
 		});
 
 		AppEvents.on("Profile", async info => {
-			if (AppUtility.isEquals(info.args.Type, "Updated") && AppUtility.isEquals(info.args.Mode, "APIs") && this.configSvc.appConfig.services.active === this.name) {
+			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.active === this.name) {
 				if (Organization.active !== undefined && this.portalsCoreSvc.activeOrganizations.indexOf(Organization.active.ID) < 0) {
 					await this.portalsCoreSvc.removeActiveOrganizationAsync(Organization.active.ID);
 				}
@@ -401,14 +401,16 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	private async updateSidebarAsync(onSuccess?: () => void) {
-		const activeModule = this.portalsCoreSvc.activeModule;
-		if (this.getDefaultContentTypeOfCategory(activeModule) !== undefined) {
-			await this.updateSidebarWithCategoriesAsync(undefined, undefined, onSuccess);
+		if (this.configSvc.isAuthenticated) {
+			const activeModule = this.portalsCoreSvc.activeModule;
+			if (this.getDefaultContentTypeOfCategory(activeModule) !== undefined) {
+				await this.updateSidebarWithCategoriesAsync(undefined, undefined, onSuccess);
+			}
+			else if (activeModule !== undefined) {
+				await this.updateSidebarWithContentTypesAsync(undefined, onSuccess);
+			}
+			AppEvents.broadcast("ActiveSidebar", { name: activeModule !== undefined && activeModule.contentTypes.length > 0 ? "cms" : this.configSvc.isAuthenticated ? "portals" : "cms" });
 		}
-		else if (activeModule !== undefined) {
-			await this.updateSidebarWithContentTypesAsync(undefined, onSuccess);
-		}
-		AppEvents.broadcast("ActiveSidebar", { name: activeModule !== undefined && activeModule.contentTypes.length > 0 ? "cms" : this.configSvc.isAuthenticated ? "portals" : "cms" });
 	}
 
 	private async updateSidebarWithContentTypesAsync(definitionID?: string, onNext?: () => void) {

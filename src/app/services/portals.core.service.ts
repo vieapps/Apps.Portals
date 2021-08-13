@@ -141,32 +141,38 @@ export class PortalsCoreService extends BaseService {
 		});
 
 		AppEvents.on(this.name, async info => {
-			if (info.args.Type === "RequestInfo" && AppUtility.isNotEmpty(info.args.ID)) {
-				if (info.args.Object === "Organization") {
+			if ("RequestInfo" === info.args.Type && AppUtility.isNotEmpty(info.args.ID)) {
+				if ("Organization" === info.args.Object) {
 					await this.getOrganizationAsync(info.args.ID);
 				}
-				else if (info.args.Object === "Module") {
+				else if ("Module" === info.args.Object) {
 					await this.getModuleAsync(info.args.ID);
 				}
-				else if (info.args.Object === "ContentType") {
+				else if ("ContentType" === info.args.Object) {
 					await this.getContentTypeAsync(info.args.ID);
 				}
 			}
-			else if (info.args.Object === "Organization" && info.args.Type === "Changed" && this.configSvc.appConfig.services.active === this.name) {
+			else if ("Changed" === info.args.Type && "Organization" === info.args.Object && this.configSvc.appConfig.services.active === this.name) {
 				this.prepareSidebar();
 				this.updateSidebarTitle();
 			}
 		});
 
 		AppEvents.on("Account", info => {
-			if (AppUtility.isEquals(info.args.Type, "Updated") && AppUtility.isEquals(info.args.Mode, "APIs") && this.configSvc.appConfig.services.active === this.name) {
-				this.prepareSidebar();
+			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.active === this.name) {
 				this.updateSidebarTitle();
+				this.prepareSidebar(async () => await this.prepareSidebarFooterButtonsAsync());
+			}
+		});
+
+		AppEvents.on("Session", async info => {
+			if ("LogOut" === info.args.Type && this.configSvc.appConfig.services.active === this.name) {
+				await this.prepareSidebarFooterButtonsAsync();
 			}
 		});
 
 		AppEvents.on("Profile", async info => {
-			if (AppUtility.isEquals(info.args.Type, "Updated") && AppUtility.isEquals(info.args.Mode, "APIs") && this.configSvc.appConfig.services.active === this.name) {
+			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.active === this.name) {
 				const organizations = this.activeOrganizations;
 				const organization = this.activeOrganization;
 				if (organization === undefined || organizations.findIndex(id => id === organization.ID) < 0) {
@@ -186,6 +192,7 @@ export class PortalsCoreService extends BaseService {
 		}
 		if (this.configSvc.appConfig.services.active === this.name) {
 			this.prepareSidebar();
+			this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 		}
 		await this.prepareSidebarFooterButtonsAsync(onNext);
 		AppEvents.broadcast(this.name, { Type: "PortalsInitialized" });
@@ -1260,7 +1267,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	private updateSidebarTitle() {
-		const organization = this.activeOrganization;
+		const organization = this.configSvc.isAuthenticated ? this.activeOrganization : undefined;
 		AppEvents.broadcast("UpdateSidebarTitle", {
 			title: organization !== undefined ? organization.Alias : this.configSvc.appConfig.app.name,
 			onClick: organization !== undefined && this.canManageOrganization(organization) ? async () => await this.configSvc.navigateForwardAsync(organization.routerURI) : () => {}
@@ -1271,9 +1278,12 @@ export class PortalsCoreService extends BaseService {
 		if (sidebar.active !== name) {
 			sidebar.active = name;
 			AppEvents.broadcast(event || this.name, { mode: "OpenSidebar", name: name });
-			this.configSvc.appConfig.services.active = this.name;
-			this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
+			if (name === "cms" || name === "portals") {
+				this.updateSidebarTitle();
+			}
 		}
+		this.configSvc.appConfig.services.active = this.name;
+		this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 	}
 
 	private prepareSidebar(onNext?: () => void) {
@@ -1373,14 +1383,12 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	private async prepareSidebarFooterButtonsAsync(onNext?: () => void) {
-		const buttons = [
-			{
-				name: "cms",
-				icon: "logo-firebase",
-				title: await this.configSvc.getResourceAsync("portals.preferences.cms"),
-				onClick: (_: Event, name: string, sidebar: any) => this.openSidebar(name, sidebar)
-			}
-		];
+		const buttons = [{
+			name: "cms",
+			icon: "logo-firebase",
+			title: await this.configSvc.getResourceAsync("portals.preferences.cms"),
+			onClick: (_: Event, name: string, sidebar: any) => this.openSidebar(name, sidebar)
+		}];
 
 		if (this.configSvc.isAuthenticated) {
 			buttons.push(
@@ -1389,17 +1397,28 @@ export class PortalsCoreService extends BaseService {
 					icon: "cog",
 					title: await this.configSvc.getResourceAsync("portals.preferences.portals"),
 					onClick: (_: Event, name, sidebar) => this.openSidebar(name, sidebar)
-				// },
-				// {
-				// 	name: "notifications",
-				// 	icon: "notifications",
-				// 	title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
-				// 	onClick: (event: Event, name, sidebar) => this.openSidebar(name, sidebar, "Notifications")
+				},
+				{
+					name: "chat",
+					icon: "chatbox",
+					title: await this.configSvc.getResourceAsync("portals.preferences.chatbox"),
+					onClick: (_: Event, name, sidebar) => this.openSidebar(name, sidebar, "Chat")
+				},
+				{
+					name: "notifications",
+					icon: "notifications",
+					title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
+					onClick: (_: Event, name, sidebar) => this.openSidebar(name, sidebar, "Notifications")
 				}
 			);
 		}
 
-		buttons.forEach((button, index) => AppEvents.broadcast("UpdateSidebarFooter", { button: button, index: index }));
+		buttons.forEach((button, index) => AppEvents.broadcast("UpdateSidebarFooter", {
+			button: button,
+			index: index,
+			reset: index === 0
+		}));
+
 		if (onNext !== undefined) {
 			onNext();
 		}

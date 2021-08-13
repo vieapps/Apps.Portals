@@ -7,7 +7,7 @@ import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { PlatformUtility } from "@app/components/app.utility.platform";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppPagination, AppDataPagination, AppDataRequest, AppDataFilter } from "@app/components/app.pagination";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
@@ -58,11 +58,11 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
-	filterBy = {
+	filterBy: AppDataFilter = {
 		Query: undefined as string,
 		And: new Array<{ [key: string]: any }>()
 	};
-	sortBy = { OrderIndex: "Ascending", Title: "Ascending" };
+	sortBy: { [key: string]: string } = { OrderIndex: "Ascending", Title: "Ascending" };
 	actions: Array<{
 		text: string,
 		role?: string,
