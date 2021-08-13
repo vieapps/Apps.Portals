@@ -136,13 +136,15 @@ export class AppComponent implements OnInit {
 
 			if (this.configSvc.isWebApp) {
 				const host = AppUtility.parseURI().Host;
-				this.configSvc.appConfig.services.all.map((svc, index) => ({ hosts: svc.availableHosts, index: index })).forEach(info => {
+				this.configSvc.appConfig.services.all.map((svc, index) => ({ hosts: svc.availableHosts || [], index: index })).forEach(info => {
 					if (info.hosts.length > 0 && info.hosts.indexOf(host) < 0) {
 						this.configSvc.appConfig.services.all.removeAt(info.index);
 					}
 				});
 				if (this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.configSvc.appConfig.services.active) < 0) {
-					this.configSvc.appConfig.services.active = this.configSvc.appConfig.services.all.first().name;
+					const service = this.configSvc.appConfig.services.all.first();
+					this.configSvc.appConfig.app.name = service.appName || this.configSvc.appConfig.app.name;
+					this.configSvc.appConfig.services.active = service.name;
 				}
 			}
 

@@ -77,14 +77,14 @@ export class AppConfig {
 			{
 				name: "Portals",
 				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Item", "Link", "Contact"],
-				availableHosts: []
+				availableHosts: ["cms.vieapps.net"]
 			},
 			{
 				name: "Books",
 				objects: ["Book", "Category", "Statistic"],
-				availableHosts: []
+				appName: "NGX Books"
 			}
-		] as Array<{ name: string, objects: Array<string>, availableHosts: Array<string> }>
+		] as Array<{ name: string; objects: Array<string>; availableHosts?: Array<string>; appName?: string }>
 	};
 
 	/** User account registrations */
