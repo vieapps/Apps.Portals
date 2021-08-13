@@ -175,7 +175,7 @@ export class PortalsCoreService extends BaseService {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.active === this.name) {
 				const organizations = this.activeOrganizations;
 				const organization = this.activeOrganization;
-				if (organization === undefined || organizations.findIndex(id => id === organization.ID) < 0) {
+				if (organization === undefined || organizations.indexOf(organization.ID) < 0) {
 					await this.getOrganizationAsync(organizations.first(), async _ => await this.setActiveOrganizationAsync(Organization.get(organizations.first())));
 				}
 			}
@@ -1397,18 +1397,18 @@ export class PortalsCoreService extends BaseService {
 					icon: "cog",
 					title: await this.configSvc.getResourceAsync("portals.preferences.portals"),
 					onClick: (_: Event, name, sidebar) => this.openSidebar(name, sidebar)
-				},
-				{
-					name: "chat",
-					icon: "chatbox",
-					title: await this.configSvc.getResourceAsync("portals.preferences.chatbox"),
-					onClick: (_: Event, name, sidebar) => this.openSidebar(name, sidebar, "Chat")
-				},
-				{
-					name: "notifications",
-					icon: "notifications",
-					title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
-					onClick: (_: Event, name, sidebar) => this.openSidebar(name, sidebar, "Notifications")
+				// },
+				// {
+				// 	name: "chat",
+				// 	icon: "chatbox",
+				// 	title: await this.configSvc.getResourceAsync("portals.preferences.chatbox"),
+				// 	onClick: (_: Event, name, sidebar) => this.openSidebar(name, sidebar, "Chat")
+				// },
+				// {
+				// 	name: "notifications",
+				// 	icon: "notifications",
+				// 	title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
+				// 	onClick: (_: Event, name, sidebar) => this.openSidebar(name, sidebar, "Notifications")
 				}
 			);
 		}

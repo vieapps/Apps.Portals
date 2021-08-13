@@ -58,19 +58,19 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		this.amount = this.amount !== undefined ? this.amount : (this._isPublished ? amounts.published : amounts.updated) || 5;
 
 		if (this.configSvc.isReady) {
-			AppUtility.invoke(() => this.prepareAsync(), 1234);
+			AppUtility.invoke(() => this.prepareAsync(), 456);
 		}
 		else {
 			AppEvents.on("App", info => {
-				if (AppUtility.isEquals(info.args.Type, "Initialized")) {
-					AppUtility.invoke(async () =>  await this.prepareAsync(), 1234);
+				if ("Initialized" === info.args.Type) {
+					AppUtility.invoke(async () =>  await this.prepareAsync(), 456);
 				}
 			}, `FeaturedContents:AppInitialized:${this._isPublished}`);
 		}
 
 		AppEvents.on(this.portalsCmsSvc.name, info => {
-			if (AppUtility.isEquals(info.args.Type, "FeaturedContentsPrepared") || (AppUtility.isEquals(info.args.Type, "Changed") && (AppUtility.isEquals(info.args.Object, "Organization") || AppUtility.isEquals(info.args.Object, "Module")))) {
-				AppUtility.invoke(async () =>  await this.prepareAsync(true), 1234);
+			if ("FeaturedContentsPrepared" === info.args.Type || ("Changed" === info.args.Type && ("Organization" === info.args.Object || "Module" === info.args.Object))) {
+				AppUtility.invoke(async () =>  await this.prepareAsync(true), 123);
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
 	}

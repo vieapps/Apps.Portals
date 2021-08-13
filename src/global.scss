@@ -31,8 +31,8 @@ ion-list {
 
 /* side menu */
 @media (min-width: 1200px) {
-	.split-pane-md > .split-pane-side,
-	.split-pane-ios > .split-pane-side {
+	.split-pane-md.split-pane-visible > .split-pane-side,
+	.split-pane-ios.split-pane-visible > .split-pane-side {
 		max-width: 350px;
 	}
 }
@@ -69,7 +69,7 @@ ion-menu > ion-content > ion-list > ion-menu-toggle img {
 	margin-right: 16px;
 }
 ion-menu > ion-content > control-app-preferences img.logo {
-	width: 90px !important;
+	width: 70px !important;
 }
 
 /* footer toolbars */
