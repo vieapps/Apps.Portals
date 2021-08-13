@@ -479,6 +479,16 @@ export class AppUtility {
 		return predicate !== undefined ? keyvaluePairs.filter(predicate) : keyvaluePairs;
 	}
 
+	/** Converts an array of key-value pair into an object */
+	public static toObject(array: Array<{ key: string; value: any; }>, onCompleted?: (object: { [key: string]: any }) => void) {
+		const object: { [key: string]: any } = {};
+		array.filter(kvp => this.isNotEmpty(kvp.key)).forEach(kvp => object[kvp.key] = kvp.value);
+		if (onCompleted !== undefined) {
+			onCompleted(object);
+		}
+		return object;
+	}
+
 	/** Converts the string/object into an array of strings/key-value pair/value of objects' properties */
 	public static toArray(object: any, separator?: any): Array<string> | Array<any> | Array<{ key: string, value: any }> {
 		if (this.isArray(object)) {
@@ -814,8 +824,8 @@ export interface AppSidebarMenuItem {
 	direction?: string;
 	onClick?: (event: Event, info: any, sidebar: AppSidebar) => void;
 	children?: Array<AppSidebarMenuItem>;
-	expanded: boolean;
-	detail: boolean;
+	expanded?: boolean;
+	detail?: boolean;
 	id?: string;
 	icon?: {
 		name: string;
