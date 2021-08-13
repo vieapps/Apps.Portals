@@ -559,10 +559,6 @@ export class ConfigurationService extends BaseService {
 			};
 		}
 
-		if (account.id !== undefined && UserProfile.contains(account.id)) {
-			account.profile = UserProfile.get(account.id);
-		}
-
 		if (this.isAuthenticated && this.getAccount().id === account.id) {
 			this.appConfig.session.account = account;
 			Account.set(account);
