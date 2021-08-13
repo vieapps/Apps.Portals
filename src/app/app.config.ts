@@ -229,8 +229,9 @@ export class AppConfig {
 
 	/** Gets the language for working with the app */
 	public static get language() {
-		return this.session.account !== undefined && this.session.account.profile !== undefined
-			? this.session.account.profile.Language || this.options.i18n
+		const profile = this.session.account !== undefined ? this.session.account.profile : undefined;
+		return profile !== undefined
+			? profile.Language || this.options.i18n
 			: this.options.i18n;
 	}
 

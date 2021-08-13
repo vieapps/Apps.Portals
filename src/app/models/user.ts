@@ -1,5 +1,5 @@
-import { AppConfig } from "@app/app.config";
 import { Dictionary } from "@app/components/app.collections";
+import { AppConfig } from "@app/app.config";
 import { AppUtility } from "@app/components/app.utility";
 import { Base as BaseModel } from "@app/models/base";
 import { RatingPoint } from "@app/models/rating.point";
@@ -67,9 +67,7 @@ export class UserProfileBase extends BaseModel {
 
 	/** Gets by identity */
 	public static get(id: string) {
-		return id !== undefined
-			? this.instances.get(id)
-			: undefined;
+		return id !== undefined ? this.instances.get(id) : undefined;
 	}
 
 	/** Sets by identity */

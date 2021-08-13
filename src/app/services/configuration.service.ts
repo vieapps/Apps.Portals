@@ -22,7 +22,6 @@ import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { Account } from "@app/models/account";
 import { Privilege } from "@app/models/privileges";
-import { UserProfile } from "@app/models/user";
 import { Base as BaseService } from "@app/services/base.service";
 
 @Injectable()
@@ -390,7 +389,7 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Updates the session and stores into storage */
-	public async updateSessionAsync(session: any, onNext?: (data?: any) => void, dontStore: boolean = false, broadcast: boolean = true, fetch: boolean = true) {
+	public async updateSessionAsync(session: any, onNext?: (data?: any) => void, dontStore: boolean = false, fetch: boolean = true, broadcast: boolean = true) {
 		if (AppUtility.isNotEmpty(session.ID)) {
 			this.appConfig.session.id = session.ID;
 		}
@@ -430,9 +429,6 @@ export class ConfigurationService extends BaseService {
 		this.appConfig.session.account = this.getAccount(!this.isAuthenticated);
 		if (this.isAuthenticated) {
 			this.appConfig.session.account.id = this.appConfig.session.token.uid;
-			if (broadcast && this.appConfig.session.account.profile !== undefined) {
-				AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Storage" });
-			}
 			if (fetch) {
 				AppAPIs.sendWebSocketRequest({
 					ServiceName: "Users",
@@ -443,7 +439,10 @@ export class ConfigurationService extends BaseService {
 					ServiceName: "Users",
 					ObjectName: "Profile",
 					Query: this.appConfig.getRelatedJson({ "object-identity": this.appConfig.session.account.id })
-				});
+				}, broadcast ? () => AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" }) : undefined);
+			}
+			else if (broadcast && this.appConfig.session.account.profile !== undefined) {
+				AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Storage" });
 			}
 		}
 
@@ -467,9 +466,6 @@ export class ConfigurationService extends BaseService {
 				this.appConfig.session.account = Account.deserialize(this.appConfig.session.account);
 				if (this.appConfig.session.account.id !== undefined) {
 					Account.set(this.appConfig.session.account);
-					if (this.appConfig.session.account.profile !== undefined) {
-						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Storage" });
-					}
 				}
 			}
 		}

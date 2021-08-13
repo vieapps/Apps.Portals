@@ -1,5 +1,6 @@
 import { HashSet, Dictionary } from "@app/components/app.collections";
 import { AppAPIs } from "@app/components/app.apis";
+import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { Privilege, Privileges } from "@app/models/privileges";
 import { UserProfile } from "@app/models/user";
@@ -70,11 +71,15 @@ export class Account {
 	public get profile() {
 		const profile = UserProfile.get(this.id);
 		if (profile === undefined) {
-			AppAPIs.sendWebSocketRequest({
-				ServiceName: "Users",
-				ObjectName: "Profile",
-				Query: { "object-identity": this.id }
-			});
+			AppUtility.invoke(() => {
+				if (!UserProfile.instances.contains(this.id)) {
+					AppAPIs.sendWebSocketRequest({
+						ServiceName: "Users",
+						ObjectName: "Profile",
+						Query: { "object-identity": this.id }
+					});
+				}
+			}, 1234);
 		}
 		return profile;
 	}

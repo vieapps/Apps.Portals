@@ -111,8 +111,9 @@ export class BooksService extends BaseService {
 	}
 
 	private updateSidebarTitle() {
+		const profile = this.configSvc.isAuthenticated ? this.configSvc.getAccount().profile : undefined;
 		AppEvents.broadcast("UpdateSidebarTitle", {
-			title: this.configSvc.isAuthenticated ? this.configSvc.getAccount().profile.Name : this.configSvc.appConfig.app.name,
+			title: profile !== undefined ? profile.Name : this.configSvc.appConfig.app.name,
 			onClick: this.configSvc.isAuthenticated ? () => AppEvents.broadcast("Navigate", { Type: "Profile" }) : () => {}
 		});
 	}
@@ -692,8 +693,9 @@ export class BooksService extends BaseService {
 	private async processUpdateBookmarkMessageAsync(message: AppMessage) {
 		const account = this.configSvc.getAccount();
 		if (this.configSvc.isAuthenticated && account.id === message.Data.ID) {
-			if (this.configSvc.getAccount().profile !== undefined) {
-				this.configSvc.getAccount().profile.LastSync = new Date();
+			const profile = this.configSvc.getAccount().profile;
+			if (profile !== undefined) {
+				profile.LastSync = new Date();
 			}
 			if ("Delete" === message.Type.Event) {
 				this.bookmarks.remove(message.Data.ID);

@@ -26,11 +26,7 @@ export class UsersService extends BaseService {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, async message => await this.processUpdateMessageAsync(message));
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", () => {
 			if (this.configSvc.isAuthenticated) {
-				AppAPIs.sendRequest({
-					ServiceName: "Users",
-					ObjectName: "Profile",
-					Query: this.configSvc.appConfig.getRelatedJson({ "object-identity": this.configSvc.appConfig.session.account.id })
-				});
+				AppUtility.invoke(async () => await this.getProfileAsync(this.configSvc.appConfig.session.account.id, () => AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" }), undefined, false, true), 123);
 			}
 		});
 		AppEvents.on("App", async info => {
@@ -180,7 +176,7 @@ export class UsersService extends BaseService {
 					}
 				},
 				error => this.processError("Error occurred while reading profile", error, onError),
-				{ "x-app-id": this.configSvc.appConfig.app.id },
+				{ "x-app-idetity": this.configSvc.appConfig.app.id, "x-app-name": this.configSvc.appConfig.app.name },
 				useXHR
 			);
 		}
@@ -335,14 +331,15 @@ export class UsersService extends BaseService {
 			case "Profile":
 				UserProfile.update(message.Data);
 				if (this.configSvc.isAuthenticated && account.id === message.Data.ID) {
-					account.profile.IsOnline = true;
-					account.profile.LastAccess = new Date();
-					if (this.configSvc.appConfig.options.i18n !== account.profile.Language) {
-						await this.configSvc.changeLanguageAsync(account.profile.Language);
+					const profile = account.profile;
+					profile.IsOnline = true;
+					profile.LastAccess = new Date();
+					if (this.configSvc.appConfig.options.i18n !== profile.Language) {
+						await this.configSvc.changeLanguageAsync(profile.Language);
 					}
-					await this.configSvc.updateOptionsAsync(account.profile.Options);
+					await this.configSvc.updateOptionsAsync(profile.Options);
 					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
-					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: account.profile });
+					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: profile });
 					if (this.configSvc.appConfig.facebook.token !== undefined && this.configSvc.appConfig.facebook.id !== undefined) {
 						this.configSvc.getFacebookProfile();
 					}
