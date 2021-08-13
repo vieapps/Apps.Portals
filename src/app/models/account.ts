@@ -1,4 +1,5 @@
 import { HashSet, Dictionary } from "@app/components/app.collections";
+import { AppAPIs } from "@app/components/app.apis";
 import { AppUtility } from "@app/components/app.utility";
 import { Privilege, Privileges } from "@app/models/privileges";
 import { UserProfile } from "@app/models/user";
@@ -17,7 +18,7 @@ export class Account {
 		required: boolean,
 		providers: Array<{ Label: string, Type: string, Time: Date, Info: string }>
 	};
-	profile = undefined as UserProfile;
+	// profile = undefined as UserProfile;
 	facebook = undefined as {
 		id: string,
 		name: string,
@@ -33,9 +34,6 @@ export class Account {
 			account.privileges = AppUtility.isArray(data.privileges, true)
 				? (data.privileges as Array<any>).map(o => Privilege.deserialize(o))
 				: new Array<Privilege>();
-			account.profile = AppUtility.isObject(data.profile, true)
-				? UserProfile.deserialize(data.profile, UserProfile.get(data.profile.ID))
-				: undefined;
 			if (onCompleted !== undefined) {
 				onCompleted(account, data);
 			}
@@ -67,6 +65,18 @@ export class Account {
 	/** Checks to see the dictionary is contains the object by identity or not */
 	public static contains(id: string) {
 		return id !== undefined && this.instances.contains(id);
+	}
+
+	public get profile() {
+		const profile = UserProfile.get(this.id);
+		if (profile === undefined) {
+			AppAPIs.sendWebSocketRequest({
+				ServiceName: "Users",
+				ObjectName: "Profile",
+				Query: { "object-identity": this.id }
+			});
+		}
+		return profile;
 	}
 
 	/**

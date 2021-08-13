@@ -39,7 +39,7 @@ export class BooksService extends BaseService {
 		AppAPIs.registerAsObjectScopeProcessor(this.name, "Bookmarks", async message => await this.processUpdateBookmarkMessageAsync(message));
 		AppAPIs.registerAsServiceScopeProcessor("Scheduler", async () => {
 			if (this.configSvc.isAuthenticated) {
-				await this.sendBookmarksAsync();
+				await this.sendBookmarksAsync(() => this.configSvc.getAccount().profile.LastSync = new Date());
 			}
 		});
 

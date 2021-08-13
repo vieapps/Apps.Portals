@@ -26,7 +26,7 @@ export class UsersService extends BaseService {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, async message => await this.processUpdateMessageAsync(message));
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", () => {
 			if (this.configSvc.isAuthenticated) {
-				AppAPIs.sendWebSocketRequest({
+				AppAPIs.sendRequest({
 					ServiceName: "Users",
 					ObjectName: "Profile",
 					Query: this.configSvc.appConfig.getRelatedJson({ "object-identity": this.configSvc.appConfig.session.account.id })
@@ -44,8 +44,11 @@ export class UsersService extends BaseService {
 			}
 		});
 		AppEvents.on("Navigated", _ => {
-			if (this.configSvc.isAuthenticated && AppUtility.isObject(this.configSvc.appConfig.session.account, true) && AppUtility.isObject(this.configSvc.appConfig.session.account.profile, true)) {
-				this.configSvc.appConfig.session.account.profile.LastAccess = new Date();
+			const profile = this.configSvc.isAuthenticated && AppUtility.isObject(this.configSvc.appConfig.session.account, true)
+				? this.configSvc.appConfig.session.account.profile
+				: undefined;
+			if (profile !== undefined) {
+				profile.LastAccess = new Date();
 			}
 		});
 	}
@@ -160,9 +163,9 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public async getProfileAsync(id?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public async getProfileAsync(id?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, force: boolean = false) {
 		id = id || this.configSvc.getAccount().id;
-		if (UserProfile.contains(id)) {
+		if (!force && UserProfile.contains(id)) {
 			if (onSuccess !== undefined) {
 				onSuccess();
 			}
@@ -293,9 +296,7 @@ export class UsersService extends BaseService {
 					case "Revoke":
 						if (AppUtility.isGotSecurityException(message.Data)) {
 							this.showLog("Revoke the session and register new when got a security issue", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
-							await this.configSvc.resetSessionAsync(async () => await this.configSvc.initializeSessionAsync(async () =>
-								await this.configSvc.registerSessionAsync(() => AppAPIs.reopenWebSocket("Reopens when got a security issue"))
-							), false);
+							await this.configSvc.resetSessionAsync(async () => await this.configSvc.initializeSessionAsync(async () => await this.configSvc.registerSessionAsync(() => AppAPIs.reopenWebSocket("Reopens when got a security issue"))), false);
 						}
 						else {
 							await this.configSvc.updateSessionAsync(message.Data, async () => await this.configSvc.registerSessionAsync(() => {
@@ -334,7 +335,6 @@ export class UsersService extends BaseService {
 			case "Profile":
 				UserProfile.update(message.Data);
 				if (this.configSvc.isAuthenticated && account.id === message.Data.ID) {
-					account.profile = UserProfile.get(message.Data.ID);
 					account.profile.IsOnline = true;
 					account.profile.LastAccess = new Date();
 					if (this.configSvc.appConfig.options.i18n !== account.profile.Language) {

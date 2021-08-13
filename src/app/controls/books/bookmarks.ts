@@ -148,7 +148,10 @@ export class BookmarksControl implements OnInit, OnDestroy {
 	}
 
 	async sendAsync() {
-		await this.booksSvc.sendBookmarksAsync(async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.update.messages.sync")));
+		await this.booksSvc.sendBookmarksAsync(async () => {
+			this.configSvc.getAccount().profile.LastSync = new Date();
+			await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.update.messages.sync"));
+		});
 	}
 
 }

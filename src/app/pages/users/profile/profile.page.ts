@@ -161,7 +161,7 @@ export class UsersProfilePage implements OnInit {
 	}
 
 	async showProfileAsync(onNext?: () => void) {
-		const onNextAsync = async () => {
+		const onSuccess = async () => {
 			this.profile = this.profile || UserProfile.get(this.id || this.configSvc.getAccount().id);
 			this.labels.header = await this.configSvc.getResourceAsync("users.profile.labels.header");
 			this.labels.lastAccess = await this.configSvc.getResourceAsync("users.profile.labels.lastAccess");
@@ -170,12 +170,19 @@ export class UsersProfilePage implements OnInit {
 				TrackingUtility.trackAsync(`${await this.configSvc.getResourceAsync("users.profile.title")} [${this.profile.Name}]`, this.configSvc.appConfig.URLs.users.profile)
 			]).then(async () => await this.appFormsSvc.hideLoadingAsync(onNext));
 		};
-		if (this.profile === undefined) {
+		const force = this.configSvc.appConfig.services.active === "Books" && this.profile.LastSync === undefined;
+		if (this.profile === undefined || force) {
 			await this.appFormsSvc.showLoadingAsync();
-			await this.usersSvc.getProfileAsync(this.id, async () => await onNextAsync(), async error => await this.appFormsSvc.showErrorAsync(error));
+			await this.usersSvc.getProfileAsync(
+				this.id || this.configSvc.getAccount().id,
+				async () => await onSuccess(),
+				async error => await this.appFormsSvc.showErrorAsync(error),
+				false,
+				force
+			);
 		}
 		else {
-			await onNextAsync();
+			await onSuccess();
 		}
 	}
 

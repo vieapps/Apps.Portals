@@ -290,7 +290,6 @@ export class UsersUpdatePage implements OnInit {
 				profile,
 				async () => {
 					if (this.profile.ID === this.configSvc.getAccount().id) {
-						this.configSvc.getAccount().profile = UserProfile.get(this.profile.ID);
 						await this.configSvc.storeSessionAsync();
 						if (this.update.form.value.Language !== undefined && this.update.form.value.DarkTheme !== undefined && (this.update.language !== this.update.form.value.Language || this.update.darkTheme !== this.update.form.value.DarkTheme)) {
 							this.configSvc.appConfig.options.theme = this.update.form.value.DarkTheme ? "dark" : "light";
