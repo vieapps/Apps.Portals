@@ -76,13 +76,15 @@ export class AppConfig {
 		all: [
 			{
 				name: "Portals",
-				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Item", "Link", "Contact"]
+				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Item", "Link", "Contact"],
+				availableHosts: []
 			},
 			{
 				name: "Books",
-				objects: ["Book", "Category", "Statistic"]
+				objects: ["Book", "Category", "Statistic"],
+				availableHosts: []
 			}
-		] as Array<{ name: string, objects: Array<string> }>
+		] as Array<{ name: string, objects: Array<string>, availableHosts: Array<string> }>
 	};
 
 	/** User account registrations */

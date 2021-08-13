@@ -134,6 +134,18 @@ export class AppComponent implements OnInit {
 				}
 			}
 
+			if (this.configSvc.isWebApp) {
+				const host = AppUtility.parseURI().Host;
+				this.configSvc.appConfig.services.all.map((svc, index) => ({ hosts: svc.availableHosts, index: index })).forEach(info => {
+					if (info.hosts.length > 0 && info.hosts.indexOf(host) < 0) {
+						this.configSvc.appConfig.services.all.removeAt(info.index);
+					}
+				});
+				if (this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.configSvc.appConfig.services.active) < 0) {
+					this.configSvc.appConfig.services.active = this.configSvc.appConfig.services.all.first().name;
+				}
+			}
+
 			AppEvents.broadcast("App", { Type: "PlatformIsReady" });
 			this.sidebar.header.title = this.configSvc.appConfig.app.name;
 			await this.updateSidebarAsync({}, true);
