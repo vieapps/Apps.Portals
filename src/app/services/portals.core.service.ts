@@ -187,10 +187,8 @@ export class PortalsCoreService extends BaseService {
 		if (this.configSvc.appConfig.services.active === this.name) {
 			this.prepareSidebar();
 		}
+		await this.prepareSidebarFooterButtonsAsync(onNext);
 		AppEvents.broadcast(this.name, { Type: "PortalsInitialized" });
-		if (onNext !== undefined) {
-			onNext();
-		}
 	}
 
 	public canManageOrganization(organization?: Organization, account?: Account) {
@@ -1269,38 +1267,12 @@ export class PortalsCoreService extends BaseService {
 		});
 	}
 
-	public async getSidebarFooterButtonsAsync() {
-		const buttons = [
-			{
-				name: "cms",
-				icon: "library",
-				title: await this.configSvc.getResourceAsync("portals.preferences.cms"),
-				onClick: (event: Event, name: string, sidebar: any) => this.openSidebar(name, sidebar)
-			}
-		];
-		if (this.configSvc.isAuthenticated) {
-			buttons.push(
-				{
-					name: "portals",
-					icon: "cog",
-					title: await this.configSvc.getResourceAsync("portals.preferences.portals"),
-					onClick: (event: Event, name, sidebar) => this.openSidebar(name, sidebar)
-				// },
-				// {
-				// 	name: "notifications",
-				// 	icon: "notifications",
-				// 	title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
-				// 	onClick: (event: Event, name, sidebar) => this.openSidebar(name, sidebar, "Notifications")
-				}
-			);
-		}
-		return buttons;
-	}
-
 	private openSidebar(name: string, sidebar: any, event?: string) {
 		if (sidebar.active !== name) {
 			sidebar.active = name;
 			AppEvents.broadcast(event || this.name, { mode: "OpenSidebar", name: name });
+			this.configSvc.appConfig.services.active = this.name;
+			this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 		}
 	}
 
@@ -1395,6 +1367,39 @@ export class PortalsCoreService extends BaseService {
 			items: items
 		});
 
+		if (onNext !== undefined) {
+			onNext();
+		}
+	}
+
+	private async prepareSidebarFooterButtonsAsync(onNext?: () => void) {
+		const buttons = [
+			{
+				name: "cms",
+				icon: "logo-firebase",
+				title: await this.configSvc.getResourceAsync("portals.preferences.cms"),
+				onClick: (_: Event, name: string, sidebar: any) => this.openSidebar(name, sidebar)
+			}
+		];
+
+		if (this.configSvc.isAuthenticated) {
+			buttons.push(
+				{
+					name: "portals",
+					icon: "cog",
+					title: await this.configSvc.getResourceAsync("portals.preferences.portals"),
+					onClick: (_: Event, name, sidebar) => this.openSidebar(name, sidebar)
+				// },
+				// {
+				// 	name: "notifications",
+				// 	icon: "notifications",
+				// 	title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
+				// 	onClick: (event: Event, name, sidebar) => this.openSidebar(name, sidebar, "Notifications")
+				}
+			);
+		}
+
+		buttons.forEach((button, index) => AppEvents.broadcast("UpdateSidebarFooter", { button: button, index: index }));
 		if (onNext !== undefined) {
 			onNext();
 		}

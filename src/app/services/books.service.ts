@@ -26,10 +26,7 @@ export class BooksService extends BaseService {
 
 	private _reading = {
 		ID: undefined as string,
-		Chapter: {
-			Current: undefined as number,
-			Previous: undefined as number
-		}
+		Chapter: undefined as number
 	};
 
 	private initialize() {
@@ -45,10 +42,10 @@ export class BooksService extends BaseService {
 		AppEvents.on("App", async info => {
 			if (this.configSvc.appConfig.services.active === this.name) {
 				if ("Initialized" === info.args.Type) {
-					await this.updateCategoriesIntoSidebarAsync();
+					await this.updateSidebarAsync();
 				}
 				else if ("HomePageIsOpened" === info.args.Type && this._reading.ID !== undefined) {
-					await this.updateCategoriesIntoSidebarAsync();
+					await this.updateSidebarAsync();
 					this._reading.ID = undefined;
 				}
 			}
@@ -69,35 +66,27 @@ export class BooksService extends BaseService {
 		});
 
 		AppEvents.on("Books", async info => {
-			if (this.configSvc.appConfig.services.active === this.name) {
-				if ("CategoriesUpdated" === info.args.Type) {
-					await this.updateCategoriesIntoSidebarAsync();
-				}
-				else if ("OpenBook" === info.args.Type) {
-					const book = Book.get(info.args.ID);
-					if (book !== undefined && book.TotalChapters > 1) {
-						this.updateReading(book, info.args.Chapter || 1);
-					}
-				}
-				else if ("CloseBook" === info.args.Type && this._reading.ID !== undefined) {
-					await this.updateCategoriesIntoSidebarAsync();
-					this._reading.ID = undefined;
-					this._reading.Chapter.Current = undefined;
-					this._reading.Chapter.Previous = undefined;
+			if ("CategoriesUpdated" === info.args.Type) {
+				await this.updateSidebarAsync();
+			}
+			else if ("OpenBook" === info.args.Type || "OpenChapter" === info.args.Type) {
+				const book = Book.get(info.args.ID);
+				if (book !== undefined && book.TotalChapters > 1) {
+					this.updateReading(book, info.args.Chapter || 1);
 				}
 			}
+			else if ("CloseBook" === info.args.Type && this._reading.ID !== undefined) {
+				await this.updateSidebarAsync();
+				this._reading.ID = undefined;
+				this._reading.Chapter = undefined;
+			}
 		});
-
-		AppEvents.on("ActiveSidebar", _ => this.setSearchURL());
-		this.setSearchURL();
 	}
 
 	public async initializeAsync(onNext?: () => void) {
 		await Promise.all([
 			this.loadCategoriesAsync(async () => {
-				if (this.configSvc.appConfig.services.active === this.name) {
-					await this.updateCategoriesIntoSidebarAsync();
-				}
+				await this.updateSidebarAsync();
 				await this.fetchCategoriesAsync();
 			}),
 			this.loadInstructionsAsync(async () => await this.fetchInstructionsAsync()),
@@ -120,28 +109,34 @@ export class BooksService extends BaseService {
 			});
 		}
 
+		AppEvents.broadcast("UpdateSidebarFooter", { button: {
+			name: "books",
+			icon: "library",
+			title: "",
+			onClick: (_: Event, name: string, sidebar: any) => {
+				if (sidebar.active !== name) {
+					sidebar.active = name;
+					this.configSvc.appConfig.services.active = this.name;
+					this.configSvc.appConfig.URLs.search = "/books/search";
+					AppUtility.invoke(() => AppEvents.broadcast(this.name, { Type: "OpenSidebar" }), 123);
+				}
+			}
+		}, index: this.configSvc.appConfig.services.all.length > 1 ? 3 : 0 });
+
 		if (onNext !== undefined) {
 			onNext();
 		}
 	}
 
-	private setSearchURL() {
-		if (this.configSvc.appConfig.services.active === this.name) {
-			this.configSvc.appConfig.URLs.search = "/books/search";
-		}
-	}
-
-	private async updateCategoriesIntoSidebarAsync() {
+	private async updateSidebarAsync() {
 		AppEvents.broadcast("UpdateSidebar", {
-			index: 0,
-			name: "cms",
+			index: 3,
+			name: "books",
 			parent: { title: await this.configSvc.getResourceAsync("books.home.statistics.categories") },
 			items: this.categories.map(category => ({
 				title: category.Name,
 				link: `/books/category/${AppUtility.toANSI(category.Name, true)}`,
-				params: {
-					"x-request": AppCrypto.jsonEncode({ Category: category.Name })
-				},
+				params: { "x-request": AppCrypto.jsonEncode({ Category: category.Name }) },
 				expandable: category.Children !== undefined && category.Children.length > 0,
 				direction: "root"
 			}))
@@ -159,33 +154,30 @@ export class BooksService extends BaseService {
 	}
 
 	private updateReading(book: Book, chapter: number) {
+		const menuIndex = 3;
 		if (book.ID !== this._reading.ID) {
 			this._reading.ID = book.ID;
-			this._reading.Chapter.Previous = undefined;
-			this._reading.Chapter.Current = chapter - 1;
+			this._reading.Chapter = chapter - 1;
 			AppEvents.broadcast("UpdateSidebar", {
-				index: 0,
+				index: menuIndex,
 				parent: {
 					title: book.Title,
 					thumbnail: book.Cover
 				},
-				items: book.TOCs.map((toc, index) => this.getTOCItem(book, index, index === this._reading.Chapter.Current))
+				items: book.TOCs.map((_, index) => this.getTOCItem(book, index, index === this._reading.Chapter))
 			});
 		}
 		else {
-			this._reading.Chapter.Previous = this._reading.Chapter.Current;
-			if (this._reading.Chapter.Previous > -1) {
-				AppEvents.broadcast("UpdateSidebarItem", {
-					MenuIndex: 1,
-					ItemIndex: this._reading.Chapter.Previous,
-					ItemInfo: this.getTOCItem(book, this._reading.Chapter.Previous, false)
-				});
-			}
-			this._reading.Chapter.Current = chapter - 1;
 			AppEvents.broadcast("UpdateSidebarItem", {
-				MenuIndex: 1,
-				ItemIndex: this._reading.Chapter.Current,
-				ItemInfo: this.getTOCItem(book, this._reading.Chapter.Current, true)
+				MenuIndex: menuIndex,
+				ItemIndex: this._reading.Chapter,
+				ItemInfo: this.getTOCItem(book, this._reading.Chapter, false)
+			});
+			this._reading.Chapter = chapter - 1;
+			AppEvents.broadcast("UpdateSidebarItem", {
+				MenuIndex: menuIndex,
+				ItemIndex: this._reading.Chapter,
+				ItemInfo: this.getTOCItem(book, this._reading.Chapter, true)
 			});
 		}
 	}
@@ -215,9 +207,7 @@ export class BooksService extends BaseService {
 			this.getSearchingPath("book", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(o => Book.update(o));
-				}
+				(data.Objects as Array<any>).forEach(o => Book.update(o));
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -231,9 +221,7 @@ export class BooksService extends BaseService {
 			this.getSearchingPath("book", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(o => Book.update(o));
-				}
+				(data.Objects as Array<any>).forEach(o => Book.update(o));
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -276,12 +264,7 @@ export class BooksService extends BaseService {
 
 	public async getChapterAsync(id: string, chapter: number, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		const book = Book.get(id);
-		if (book === undefined || book.TOCs.length < 1) {
-			if (onSuccess !== undefined) {
-				onSuccess();
-			}
-		}
-		else if (chapter < 1 || chapter > book.Chapters.length || book.Chapters[chapter - 1] !== "") {
+		if (book === undefined || book.TOCs.length < 1 || chapter < 1 || chapter > book.Chapters.length || book.Chapters[chapter - 1] !== "") {
 			if (onSuccess !== undefined) {
 				onSuccess();
 			}
@@ -692,10 +675,7 @@ export class BooksService extends BaseService {
 			Query: {
 				url: url
 			}
-		});
-		if (onNext !== undefined) {
-			onNext();
-		}
+		}, onNext);
 	}
 
 	public async sendRequestToReCrawlAsync(id: string, url: string, mode: string) {

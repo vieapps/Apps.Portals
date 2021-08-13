@@ -52,68 +52,50 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 	}
 
 	ngOnInit() {
-		if (this.configSvc.isReady) {
-			this.initializeAsync();
-		}
-		else {
-			AppEvents.on("App", info => {
-				if ("Initialized" === info.args.Type) {
-					this.initializeAsync();
-				}
-			}, "AppReadyEventHandlerOfBookHomeScreen");
-		}
-
-		AppEvents.on("App", info => {
-			if ("LanguageChanged" === info.args.Type) {
-				this.prepareResourcesAsync().then(async () => {
-					if (this.booksSvc.instructions[this.configSvc.appConfig.language] === undefined) {
-						await this.booksSvc.fetchInstructionsAsync(() => this.updateIntroduction());
-					}
-					else {
-						this.updateIntroduction();
-					}
-				});
+		this.initializeAsync();
+		AppEvents.on("App", async info => {
+			if ("Initialized" === info.args.Type) {
+				await this.prepareBooksAsync();
 			}
-		}, "LanguageChangedEventHandlerOfBookHomeScreen");
-
-		AppEvents.on("Books", info => {
+			else if ("LanguageChanged" === info.args.Type) {
+				await this.prepareResourcesAsync();
+				if (this.booksSvc.instructions[this.configSvc.appConfig.language] === undefined) {
+					await this.booksSvc.fetchInstructionsAsync(() => this.updateIntroduction());
+				}
+				else {
+					this.updateIntroduction();
+				}
+			}
+		}, "BookFeaturedEventHandlers");
+		AppEvents.on("Books", async info => {
 			if ("InstructionsUpdated" === info.args.Type) {
 				this.updateIntroduction();
 			}
-		}, "IntroductionsChangedEventHandlerOfBookHomeScreen");
+			else if ("OpenSidebar" === info.args.Type) {
+				await this.prepareBooksAsync();
+			}
+		}, "BookFeaturedEventHandlers");
 	}
 
 	ngOnChanges(_: SimpleChanges) {
-		if (this.configSvc.isReady) {
-			this.updateBooks();
-		}
+		this.updateBooks();
 	}
 
 	ngOnDestroy() {
 		this.init.unsubscribe();
 		this.change.unsubscribe();
-		AppEvents.off("App", "AppReadyEventHandlerOfBookHomeScreen");
-		AppEvents.off("App", "LanguageChangedEventHandlerOfBookHomeScreen");
-		AppEvents.off("Books", "IntroductionsChangedEventHandlerOfBookHomeScreen");
+		AppEvents.off("App", "BookFeaturedEventHandlers");
+		AppEvents.off("Books", "BookFeaturedEventHandlers");
 	}
 
 	private async initializeAsync() {
 		await this.prepareResourcesAsync();
-
 		if (this.booksSvc.instructions[this.configSvc.appConfig.language] === undefined) {
 			await this.booksSvc.fetchInstructionsAsync(() => this.updateIntroduction());
 		}
 		else {
 			this.updateIntroduction();
 		}
-
-		if (this.books === undefined) {
-			await this.booksSvc.searchAsync({ FilterBy: {}, SortBy: {} }, () => this.updateBooks());
-		}
-		else {
-			this.updateBooks();
-		}
-
 		this.init.emit(this);
 	}
 
@@ -129,6 +111,15 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 	private updateIntroduction() {
 		this.introduction = (this.booksSvc.instructions[this.configSvc.appConfig.language] || {}).introduction;
 		this.change.emit(this);
+	}
+
+	private async prepareBooksAsync() {
+		if (this.books === undefined || this.books.length < 1) {
+			await this.booksSvc.searchAsync({ FilterBy: {}, SortBy: {} }, () => this.updateBooks());
+		}
+		else {
+			this.updateBooks();
+		}
 	}
 
 	private updateBooks() {

@@ -19,7 +19,7 @@ import { Book } from "@app/models/book";
 
 export class BooksReadPage implements OnInit, OnDestroy {
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
 		private booksSvc: BooksService
@@ -56,6 +56,10 @@ export class BooksReadPage implements OnInit, OnDestroy {
 
 	@ViewChild(IonContent, { static: true }) contentCtrl: IonContent;
 
+	get color() {
+		return this.configSvc.color;
+	}
+
 	get locale() {
 		return this.configSvc.locale;
 	}
@@ -90,9 +94,6 @@ export class BooksReadPage implements OnInit, OnDestroy {
 			if ("OpenChapter" === info.args.Type && this.chapter !== info.args.Chapter) {
 				this.scrollOffset = 0;
 				this.chapter = info.args.Chapter || 0;
-				if (this.book.Chapters[this.chapter - 1] === "") {
-					this.appFormsSvc.showLoadingAsync();
-				}
 				this.goChapterAsync();
 			}
 			else if ("Deleted" === info.args.Type && this.book.ID === info.args.ID) {
@@ -291,20 +292,20 @@ export class BooksReadPage implements OnInit, OnDestroy {
 		]);
 	}
 
-	openAuthorAsync() {
-		return this.configSvc.navigateForwardAsync(`/books/author/${AppUtility.toANSI(this.book.Author, true)}?x-request=${AppCrypto.jsonEncode({ Author: this.book.Author })}`);
+	async openAuthorAsync() {
+		await this.configSvc.navigateForwardAsync(`/books/author/${AppUtility.toANSI(this.book.Author, true)}?x-request=${AppCrypto.jsonEncode({ Author: this.book.Author })}`);
 	}
 
-	openInfoAsync() {
-		return this.configSvc.navigateForwardAsync(this.book.routerURI.replace("/read/", "/info/"));
+	async openInfoAsync() {
+		await this.configSvc.navigateForwardAsync(this.book.routerURI.replace("/read/", "/info/"));
 	}
 
 	openTOCs() {
-		AppEvents.broadcast("OpenSidebar", { Type: "start" });
+		AppEvents.broadcast("OpenSidebar");
 	}
 
-	openOptionsAsync() {
-		return this.configSvc.navigateForwardAsync("/books/options");
+	async openOptionsAsync() {
+		await this.configSvc.navigateForwardAsync("/books/options");
 	}
 
 	async openRecrawlAsync() {
@@ -335,8 +336,8 @@ export class BooksReadPage implements OnInit, OnDestroy {
 		);
 	}
 
-	openUpdateAsync() {
-		return this.configSvc.navigateForwardAsync(this.book.routerURI.replace("/read/", "/update/"));
+	async openUpdateAsync() {
+		await this.configSvc.navigateForwardAsync(this.book.routerURI.replace("/read/", "/update/"));
 	}
 
 	async deleteAsync() {

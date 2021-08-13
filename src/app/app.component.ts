@@ -210,19 +210,7 @@ export class AppComponent implements OnInit {
 			onThumbnailClick: header.onThumbnailClick || this.sidebar.header.onThumbnailClick,
 			title: header.title || this.sidebar.header.title,
 			onTitleClick: header.onTitleClick || this.sidebar.header.onTitleClick
-		},
-
-		this.sidebar.footer = this.configSvc.appConfig.services.active === this.portalsCoreSvc.name
-			? await this.portalsCoreSvc.getSidebarFooterButtonsAsync()
-			: [];
-		if (this.sidebar.footer.length > 0 && this.configSvc.isAuthenticated) {
-			this.sidebar.footer.push({
-				name: "preferences",
-				icon: "settings",
-				title: await this.configSvc.getResourceAsync("common.preferences.label"),
-				onClick: (_, name, sidebar) => sidebar.active = name
-			});
-		}
+		};
 
 		if (updateTopItems) {
 			const topItems = await this.configSvc.getSidebarTopItemsAsync();
@@ -318,11 +306,28 @@ export class AppComponent implements OnInit {
 		AppEvents.on("OpenSidebar", _ => this.sidebar.visible = true);
 		AppEvents.on("CloseSidebar", _ => this.sidebar.visible = false);
 		AppEvents.on("ToggleSidebar", _ => this.toggleSidebar());
-		AppEvents.on("ActiveSidebar", info => this.sidebar.active = info.args.name || "cms");
+		AppEvents.on("ActiveSidebar", info => this.sidebar.active = info.args.name || (this.sidebar.footer.first || {}).name);
 		AppEvents.on("UpdateSidebar", async info => await this.updateSidebarAsync(info.args));
 		AppEvents.on("UpdateSidebarTitle", info => {
 			this.sidebar.header.title = AppUtility.isNotEmpty(info.args.title) ? info.args.title : this.sidebar.header.title;
 			this.sidebar.header.onTitleClick = typeof info.args.onClick === "function" ? info.args.onClick : () => {};
+		});
+		AppEvents.on("AddSidebarItem", async info => await this.updateSidebarItemAsync(info.args.MenuIndex !== undefined ? info.args.MenuIndex : -1, -1, info.args.ItemInfo));
+		AppEvents.on("UpdateSidebarItem", async info => await this.updateSidebarItemAsync(info.args.MenuIndex !== undefined ? info.args.MenuIndex : -1, info.args.ItemIndex !== undefined ? info.args.ItemIndex : -1, info.args.ItemInfo));
+		AppEvents.on("UpdateSidebarFooter", info => {
+			this.sidebar.footer.insert(info.args.button, info.args.index !== undefined ? info.args.index : 0);
+			if (this.configSvc.isAuthenticated) {
+				AppUtility.invoke(async () => {
+					if (this.sidebar.footer.length > 0 && this.sidebar.footer.first(button => button.name === "preferences") === undefined) {
+						this.sidebar.footer.push({
+							name: "preferences",
+							icon: "settings",
+							title: await this.configSvc.getResourceAsync("common.preferences.label"),
+							onClick: (_, name, sidebar) => sidebar.active = name
+						});
+					}
+				}, 1234);
+			}
 		});
 
 		AppEvents.on("Navigate", async info => {

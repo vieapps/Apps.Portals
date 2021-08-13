@@ -135,9 +135,6 @@ export class PortalsCmsService extends BaseService {
 				]);
 			}
 		});
-
-		AppEvents.on("ActiveSidebar", _ => this.setSearchURL());
-		this.setSearchURL();
 	}
 
 	public async initializeAsync(onNext?: () => void) {
@@ -388,12 +385,6 @@ export class PortalsCmsService extends BaseService {
 
 	public setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onPreCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {
 		this.portalsCoreSvc.setLookupOptions(lookupOptions, lookupModalPage, contentType, multiple, nested, onPreCompleted);
-	}
-
-	private setSearchURL() {
-		if (this.configSvc.appConfig.services.active === this.name) {
-			this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
-		}
 	}
 
 	private updateSidebar(items: Array<any>, parent?: any, onNext?: () => void) {
