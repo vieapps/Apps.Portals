@@ -356,7 +356,7 @@ export class AppAPIs {
 			if ("Error" === msg.Type) {
 				// got a security issue
 				if (AppUtility.isGotSecurityException(data) && "UnauthorizedException" !== data.Type && "AccessDeniedException" !== data.Type) {
-					console.warn(`[AppAPIs]: ${data.Type} (${data.Code}): ${data.Message}`, data);
+					console.warn(`[AppAPIs]: ${data.Code} - ${data.Type}: ${data.Message}`, data);
 
 					// the token is expired => re-open WebSocket to renew token and reauthenticate
 					if ("TokenExpiredException" === data.Type) {
@@ -383,7 +383,7 @@ export class AppAPIs {
 
 				// print the error when has no callback
 				else {
-					console.error(`[AppAPIs]: ${data.Type} (${data.Code}): ${data.Message}`, AppConfig.isDebug ? data : "");
+					console.error(`[AppAPIs]: ${data.Code} - ${data.Type}: ${data.Message}`, AppConfig.isDebug ? data : "");
 				}
 			}
 
@@ -458,7 +458,7 @@ export class AppAPIs {
 		}
 	}
 
-	private static destroyWebSocket() {
+	private static disposeWebSocket() {
 		if (this._websocket !== undefined) {
 			this._websocket.close();
 			this._websocket = undefined;
@@ -467,7 +467,7 @@ export class AppAPIs {
 
 	/** Closes the WebSocket connection */
 	public static closeWebSocket(onClosed?: () => void) {
-		this.destroyWebSocket();
+		this.disposeWebSocket();
 		this._websocketURL = undefined;
 		this._websocketStatus = "close";
 		if (onClosed !== undefined) {
@@ -478,7 +478,7 @@ export class AppAPIs {
 	/** Reopens the WebSocket connection */
 	public static reopenWebSocket(reason?: string, defer?: number) {
 		if (this._websocketStatus !== "restarting") {
-			this.destroyWebSocket();
+			this.disposeWebSocket();
 			this._websocketStatus = "restarting";
 			this._attempt++;
 			console.warn(`[AppAPIs]: ${reason || "Re-open because the WebSocket connection is broken"}`);
@@ -538,7 +538,7 @@ export class AppAPIs {
 	private static resendWebSocketMessages() {
 		this._onResendWebSocketMessages = undefined;
 		const ids = AppUtility.getAttributes(this._callbackableMessages);
-		const id = ids.sort().firstOrDefault();
+		const id = ids.sort().first();
 		if (id !== undefined) {
 			if (id !== this._resendID) {
 				this._resendID = id;
@@ -546,7 +546,7 @@ export class AppAPIs {
 			}
 			if (ids.length > 1) {
 				this._onResendWebSocketMessages = () => {
-					if (this._resendID !== AppUtility.getAttributes(this._callbackableMessages).sort().firstOrDefault()) {
+					if (this._resendID !== AppUtility.getAttributes(this._callbackableMessages).sort().first()) {
 						this.resendWebSocketMessages();
 					}
 					else {
