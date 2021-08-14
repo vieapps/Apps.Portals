@@ -36,7 +36,10 @@
 			"refresh": "Refresh",
 			"filter": "Quick filter",
 			"move": "Move",
-			"continue": "Continue"
+			"continue": "Continue",
+			"later": "Later",
+			"login": "Log In",
+			"logout": "Log Out"
 		},
 		"messages": {
 			"loading": "Loading...",

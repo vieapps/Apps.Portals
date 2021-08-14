@@ -160,12 +160,19 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 				TrackingUtility.trackAsync(`Download: ${this.title}`, "/books/download/success"),
 				TrackingUtility.trackAsync(`Download: ${this.title}`, `/books/download/${type.toLowerCase()}`)
 			]);
-			PlatformUtility.openURL(this.book.Files[type].Url + "?" + AppUtility.toQuery(this.configSvc.appConfig.getAuthenticatedInfo()));
+			PlatformUtility.openURL(`${this.book.Files[type].Url}?${AppUtility.toQuery(this.configSvc.appConfig.getAuthenticatedInfo())}`);
 		}
 		else {
 			await Promise.all([
 				TrackingUtility.trackAsync(`Download: ${this.title}`, "/books/download/failed"),
-				this.appFormsSvc.showAlertAsync(undefined, undefined, await this.configSvc.getResourceAsync("books.info.notAuthenticated"))
+				this.appFormsSvc.showAlertAsync(
+					undefined,
+					await this.configSvc.getResourceAsync("books.info.notAuthenticated"),
+					undefined,
+					() => AppEvents.broadcast("Navigate", { Type: "LogIn" }),
+					await this.configSvc.getResourceAsync("common.buttons.login"),
+					await this.configSvc.getResourceAsync("common.buttons.later")
+				)
 			]);
 		}
 	}

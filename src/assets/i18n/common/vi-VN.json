@@ -36,7 +36,10 @@
 			"refresh": "Làm tươi",
 			"filter": "Lọc nhanh",
 			"move": "Di chuyển",
-			"continue": "Tiếp theo"
+			"continue": "Tiếp theo",
+			"later": "Để sau",
+			"login": "Đăng nhập",
+			"logout": "Đăng xuất"
 		},
 		"messages": {
 			"loading": "Tải dữ liệu...",
