@@ -563,7 +563,7 @@ export class AppFormsControl {
 				const selectValues = selectOptions.Values || selectOptions.values;
 				control.Options.SelectOptions = {
 					Values: AppUtility.isNotEmpty(selectValues)
-						? (AppUtility.toArray(selectValues, "#;") as Array<string>).map(value => ({ Value: value, Label: value }))
+						? ((AppUtility.indexOf(selectValues, "#;") > 0 ? AppUtility.toArray(selectValues, "#;") : AppUtility.toArray(selectValues, ";")) as Array<string>).map(value => ({ Value: value, Label: value }))
 						: AppUtility.isArray(selectValues, true)
 							? selectValues.length > 0 && typeof selectValues[0] === "string"
 								? (selectValues as Array<string>).map(value => ({ Value: value, Label: value }))
@@ -776,7 +776,7 @@ export class AppFormsService {
 									? (values as Array<string>).map(value => ({ Value: value, Label: value }))
 									: (values as Array<any>).map(data => formControl.Options.SelectOptions.RemoteURIConverter !== undefined ? formControl.Options.SelectOptions.RemoteURIConverter(data) : ({ Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value, Description: data.Description || data.description }))
 								: AppUtility.isNotEmpty(values)
-									? (AppUtility.toArray(values, "#;") as Array<string>).map(value => ({ Value: value, Label: value }))
+									? ((AppUtility.indexOf(values, "#;") > 0 ? AppUtility.toArray(values, "#;") : AppUtility.toArray(values, ";")) as Array<string>).map(value => ({ Value: value, Label: value }))
 									: AppUtility.isNotNull(values)
 										? [values.toString()]
 										: [];
