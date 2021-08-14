@@ -1,6 +1,4 @@
 import { HashSet, Dictionary } from "@app/components/app.collections";
-import { AppAPIs } from "@app/components/app.apis";
-import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { Privilege, Privileges } from "@app/models/privileges";
 import { UserProfile } from "@app/models/user";
