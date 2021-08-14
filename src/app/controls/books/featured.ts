@@ -54,11 +54,7 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 	ngOnInit() {
 		this.initializeAsync();
 		AppEvents.on("App", async info => {
-			if ("Initialized" === info.args.Type) {
-				await this.prepareResourcesAsync();
-				await this.prepareBooksAsync();
-			}
-			else if ("LanguageChanged" === info.args.Type) {
+			if ("LanguageChanged" === info.args.Type) {
 				await this.prepareResourcesAsync();
 				if (this.booksSvc.instructions[this.configSvc.appConfig.language] === undefined) {
 					await this.booksSvc.fetchInstructionsAsync(() => this.updateIntroduction());
@@ -109,15 +105,6 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 	private updateIntroduction() {
 		this.introduction = (this.booksSvc.instructions[this.configSvc.appConfig.language] || {}).introduction;
 		this.change.emit(this);
-	}
-
-	private async prepareBooksAsync() {
-		if (this.books === undefined || this.books.length < 12) {
-			await this.booksSvc.searchAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => this.updateBooks());
-		}
-		else {
-			this.updateBooks();
-		}
 	}
 
 	private updateBooks() {

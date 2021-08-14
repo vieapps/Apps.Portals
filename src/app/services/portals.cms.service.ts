@@ -1,13 +1,12 @@
 import { Injectable } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
-import { Dictionary } from "@app/components/app.collections";
 import { AppAPIs, AppMessage } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility, AppSidebar } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppCustomCompleter } from "@app/components/app.completer";
-import { AppPagination } from "@app/components/app.pagination";
+import { AppDataRequest, AppPagination } from "@app/components/app.pagination";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
@@ -40,10 +39,12 @@ export class PortalsCmsService extends BaseService {
 	private _oembedProviders: Array<{ name: string; schemes: RegExp[], pattern: { expression: RegExp; position: number; html: string } }>;
 	private _sidebarCategory: Category;
 	private _sidebarContentType: ContentType;
-	private _featuredContents = new Dictionary<string, CmsBaseModel>();
 
 	public get featuredContents() {
-		return this._featuredContents.toArray();
+		const organization = this.portalsCoreSvc.activeOrganization;
+		return organization !== undefined
+			? Item.instances.toArray(item => item.SystemID === organization.ID).sortBy({ name: "LastModified", reverse: true }).take(20).concat(Content.instances.toArray(item => item.SystemID === organization.ID).sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }).take(20))
+			: [];
 	}
 
 	private initialize() {
@@ -250,11 +251,11 @@ export class PortalsCmsService extends BaseService {
 		return this.domSanitizer.bypassSecurityTrustHtml(html || "");
 	}
 
-	public lookup(objectName: string, request: any, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public lookup(objectName: string, request: AppDataRequest, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		return this.portalsCoreSvc.lookup(objectName, request, onSuccess, onError, headers);
 	}
 
-	public async lookupAsync(objectName: string, request: any, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public async lookupAsync(objectName: string, request: AppDataRequest, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		await this.portalsCoreSvc.lookupAsync(objectName, request, onSuccess, onError, headers);
 	}
 
@@ -534,38 +535,27 @@ export class PortalsCmsService extends BaseService {
 
 	private async getFeaturedContentsAsync(contentTypes: ContentType[], index: number) {
 		const contentType = contentTypes[index];
-		const organization = Organization.get(contentType.SystemID);
-		const isSimpleItem = contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000002";
+		const isCmsItem = contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000002";
 		const request = AppPagination.buildRequest(
 			{ And: [
 				{ SystemID: { Equals: contentType.SystemID } },
 				{ RepositoryID: { Equals: contentType.RepositoryID } },
 				{ RepositoryEntityID: { Equals: contentType.ID } }
 			]},
-			isSimpleItem ? { LastModified: "Descending" } : { StartDate: "Descending", PublishedTime: "Descending", LastModified: "Descending" }
+			isCmsItem ? { LastModified: "Descending" } : { StartDate: "Descending", PublishedTime: "Descending", LastModified: "Descending" }
 		);
-		const onCompleted = () => {
+		const onSuccess = () => {
+			AppEvents.broadcast(this.name, { Type: "FeaturedContentsPrepared" });
 			if (index < contentTypes.length - 1) {
 				AppUtility.invoke(async () => await this.getFeaturedContentsAsync(contentTypes, index + 1), 13);
 			}
-			else {
-				AppEvents.broadcast(this.name, { Type: "FeaturedContentsPrepared" });
-			}
-		};
-		const onSuccess = (data?: any) => {
-			if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-				const objects = isSimpleItem
-					? (data.Objects as Array<any>).map(obj => Item.get(obj.ID))
-					: (data.Objects as Array<any>).map(obj => Content.get(obj.ID));
-				objects.filter(obj => obj !== undefined).forEach(obj => this._featuredContents.set(obj.ID, obj));
-			}
-			onCompleted();
 		};
 		const onError = (error?: any) => {
+			const organization = Organization.get(contentType.SystemID);
 			this.showError(`Error occurred while preparing featured contents\n${contentType.Title} @ ${organization.Title}`, error);
-			onCompleted();
+			onSuccess();
 		};
-		if (isSimpleItem) {
+		if (isCmsItem) {
 			await this.searchItemAsync(request, onSuccess, onError);
 		}
 		else {
@@ -637,7 +627,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public searchCategory(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchCategory(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("cms.category", this.configSvc.relatedQuery),
 			request,
@@ -653,7 +643,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async searchCategoryAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async searchCategoryAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await this.searchAsync(
 			this.getSearchingPath("cms.category", this.configSvc.relatedQuery),
 			request,
@@ -892,7 +882,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public searchContent(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchContent(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("cms.content", this.configSvc.relatedQuery),
 			request,
@@ -908,7 +898,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async searchContentAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async searchContentAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await this.searchAsync(
 			this.getSearchingPath("cms.content", this.configSvc.relatedQuery),
 			request,
@@ -1055,7 +1045,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public searchItem(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchItem(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("cms.item", this.configSvc.relatedQuery),
 			request,
@@ -1071,7 +1061,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async searchItemAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async searchItemAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await this.searchAsync(
 			this.getSearchingPath("cms.item", this.configSvc.relatedQuery),
 			request,
@@ -1222,7 +1212,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public searchLink(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchLink(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("cms.link", this.configSvc.relatedQuery),
 			request,
@@ -1238,7 +1228,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public async searchLinkAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async searchLinkAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await this.searchAsync(
 			this.getSearchingPath("cms.link", this.configSvc.relatedQuery),
 			request,
