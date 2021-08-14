@@ -5,7 +5,7 @@ import { AppConfig } from "@app/app.config";
 import { AppAPIs, AppRequestInfo, AppMessage } from "@app/components/app.apis";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
-import { AppPagination } from "@app/components/app.pagination";
+import { AppPagination, AppDataRequest } from "@app/components/app.pagination";
 
 /** Base class of all services */
 export class Base {
@@ -116,10 +116,10 @@ export class Base {
 		* @param dontProcessPagination Set to true to by-pass process pagination
 		* @param headers The additional header
 	*/
-	protected search(path: string, request: any = {}, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }) {
+	protected search(path: string, request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }) {
 		return this.sendRequest(
 			{
-				Path: AppUtility.format(path, { request: AppCrypto.jsonEncode(request) }),
+				Path: AppUtility.format(path, { request: AppCrypto.jsonEncode(request || {}) }),
 				Verb: "GET",
 				Header: headers
 			},
@@ -147,7 +147,8 @@ export class Base {
 		* @param useXHR Set to true to always use XHR, false to let system decides
 		* @param headers The additional header
 	*/
-	protected async searchAsync(path: string, request: any = {}, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false, headers?: { [header: string]: string }) {
+	protected async searchAsync(path: string, request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false, headers?: { [header: string]: string }) {
+		request = request || {};
 		const processPagination = AppUtility.isFalse(dontProcessPagination);
 		const requestInfo = processPagination ? AppAPIs.parseRequestInfo(path) : undefined;
 		const paginationPrefix = processPagination ? `${requestInfo.ObjectName}@${requestInfo.ServiceName}`.toLowerCase() : undefined;

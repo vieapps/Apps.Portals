@@ -5,7 +5,7 @@ import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { AppCustomCompleter } from "@app/components/app.completer";
-import { AppPagination } from "@app/components/app.pagination";
+import { AppPagination, AppDataRequest } from "@app/components/app.pagination";
 import { AppFormsControlConfig } from "@app/components/forms.service";
 import { Account } from "@app/models/account";
 import { UserProfile } from "@app/models/user";
@@ -67,7 +67,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public search(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchProfiles(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
 			this.getSearchingPath("profile", this.configSvc.relatedQuery),
 			request,
@@ -87,7 +87,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public async searchAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async searchProfilesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
 			this.getSearchingPath("profile", this.configSvc.relatedQuery),
 			request,

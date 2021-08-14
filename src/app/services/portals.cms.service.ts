@@ -6,7 +6,7 @@ import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility, AppSidebar } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppCustomCompleter } from "@app/components/app.completer";
-import { AppDataRequest, AppPagination } from "@app/components/app.pagination";
+import { AppPagination, AppDataRequest  } from "@app/components/app.pagination";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";

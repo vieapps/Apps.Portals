@@ -6,7 +6,7 @@ import { AppCrypto } from "@app/components/app.crypto";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility, AppSidebar } from "@app/components/app.utility";
 import { AppCustomCompleter } from "@app/components/app.completer";
-import { AppPagination } from "@app/components/app.pagination";
+import { AppPagination, AppDataRequest } from "@app/components/app.pagination";
 import { CounterInfo } from "@app/models/counters";
 import { StatisticBase, StatisticInfo } from "@app/models/statistics";
 import { Book, Bookmark } from "@app/models/book";
@@ -107,7 +107,7 @@ export class BooksService extends BaseService {
 		if (this.configSvc.isAuthenticated) {
 			await this.loadBookmarksAsync(async () => await this.fetchBookmarksAsync());
 		}
-		await this.searchAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, onNext);
+		await this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, onNext);
 	}
 
 	private updateSidebarTitle() {
@@ -231,7 +231,7 @@ export class BooksService extends BaseService {
 		);
 	}
 
-	public search(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchBooks(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return super.search(
 			this.getSearchingPath("book", this.configSvc.relatedQuery),
 			request,
@@ -247,7 +247,7 @@ export class BooksService extends BaseService {
 		);
 	}
 
-	public async searchAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async searchBooksAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.searchAsync(
 			this.getSearchingPath("book", this.configSvc.relatedQuery),
 			request,

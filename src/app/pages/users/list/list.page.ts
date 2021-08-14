@@ -159,10 +159,10 @@ export class UsersListPage implements OnInit, OnDestroy {
 			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
 		};
 		if (this.searching) {
-			this.subscription = this.usersSvc.search(this.request, onSuccess);
+			this.subscription = this.usersSvc.searchProfiles(this.request, onSuccess);
 		}
 		else {
-			await this.usersSvc.searchAsync(this.request, onSuccess);
+			await this.usersSvc.searchProfilesAsync(this.request, onSuccess);
 		}
 	}
 

@@ -302,10 +302,10 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 			await TrackingUtility.trackAsync(this.title + ` [${this.pageNumber}]`, this.uri);
 		};
 		if (this.searching) {
-			this.searchSubscription = this.booksSvc.search(this.request, onNextAsync);
+			this.searchSubscription = this.booksSvc.searchBooks(this.request, onNextAsync);
 		}
 		else {
-			await this.booksSvc.searchAsync(this.request, onNextAsync);
+			await this.booksSvc.searchBooksAsync(this.request, onNextAsync);
 		}
 	}
 
