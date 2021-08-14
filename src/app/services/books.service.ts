@@ -96,6 +96,7 @@ export class BooksService extends BaseService {
 
 	public async initializeAsync(onNext?: () => void) {
 		this.prepareSidebarFooterButtons();
+		await this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast("Books", { Type: "BooksUpdated" }));
 		await Promise.all([
 			this.loadCategoriesAsync(async () => {
 				await this.updateSidebarAsync();
@@ -107,7 +108,9 @@ export class BooksService extends BaseService {
 		if (this.configSvc.isAuthenticated) {
 			await this.loadBookmarksAsync(async () => await this.fetchBookmarksAsync());
 		}
-		await this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, onNext);
+		if (onNext !== undefined) {
+			onNext();
+		}
 	}
 
 	private updateSidebarTitle() {

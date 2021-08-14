@@ -68,6 +68,9 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 			if ("InstructionsUpdated" === info.args.Type) {
 				this.updateIntroduction();
 			}
+			else if ("BooksUpdated" === info.args.Type) {
+				this.updateBooks();
+			}
 		}, "BookFeaturedEventHandlers");
 	}
 
