@@ -1,5 +1,6 @@
 import { Injectable } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
+import { Dictionary } from "@app/components/app.collections";
 import { AppAPIs, AppMessage } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
@@ -42,9 +43,14 @@ export class PortalsCmsService extends BaseService {
 
 	public get featuredContents() {
 		const organization = this.portalsCoreSvc.activeOrganization;
-		return organization !== undefined
-			? Item.instances.toArray(item => item.SystemID === organization.ID).sortBy({ name: "LastModified", reverse: true }).take(20).concat(Content.instances.toArray(item => item.SystemID === organization.ID).sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }).take(20))
-			: [];
+		const cmsItems = organization !== undefined ? Item.instances.toArray(item => item.SystemID === organization.ID) : [];
+		const cmsContents = organization !== undefined ? Content.instances.toArray(item => item.SystemID === organization.ID) : [];
+		const contents = new Dictionary<string, CmsBaseModel>();
+		cmsItems.sortBy({ name: "LastModified", reverse: true }).take(20).forEach(content => contents.set(content.ID, content));
+		cmsItems.sortBy({ name: "Created", reverse: true }).take(20).forEach(content => contents.set(content.ID, content));
+		cmsContents.sortBy({ name: "LastModified", reverse: true }).take(20).forEach(content => contents.set(content.ID, content));
+		cmsContents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }).take(20).forEach(content => contents.set(content.ID, content));
+		return contents.toArray();
 	}
 
 	private initialize() {

@@ -120,10 +120,10 @@ export class AppCrypto {
 	}
 
 	/** Initializes all keys for encrypting/decrypting/signing */
-	public static init(keys: { aes: { key: string; iv: string }; rsa: { encryptionExponent?: string; decryptionExponent?: string; exponent: string; modulus: string; isBase64?: boolean }; jwt: string; }) {
+	public static init(keys: { aes: { key: string; iv: string; isBase64?: boolean; }; rsa: { encryptionExponent?: string; decryptionExponent?: string; exponent: string; modulus: string; isBase64?: boolean; }; jwt: string; }) {
 		if (keys.aes !== undefined) {
-			this._aes.key = CryptoJS.enc.Hex.parse(keys.aes.key);
-			this._aes.iv = CryptoJS.enc.Hex.parse(keys.aes.iv);
+			this._aes.key = CryptoJS.enc.Hex.parse(AppUtility.isTrue(keys.aes.isBase64) ? this.toHex(keys.aes.key) : keys.aes.key);
+			this._aes.iv = CryptoJS.enc.Hex.parse(AppUtility.isTrue(keys.aes.isBase64) ? this.toHex(keys.aes.iv) : keys.aes.iv);
 		}
 		if (keys.rsa !== undefined) {
 			let encryptionExponent = keys.rsa.encryptionExponent || keys.rsa.exponent;

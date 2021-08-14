@@ -55,7 +55,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		this._isPublished = AppUtility.isNotEmpty(this.orderBy) && !AppUtility.isEquals(this.orderBy, "LastModified");
 
 		const amounts = this.configSvc.appConfig.options.extras["featured"] || {};
-		this.amount = this.amount !== undefined ? this.amount : (this._isPublished ? amounts.published : amounts.updated) || 5;
+		this.amount = this.amount !== undefined ? this.amount : (this._isPublished ? amounts.published : amounts.updated) || 7;
 
 		if (this.configSvc.isReady) {
 			AppUtility.invoke(() => this.prepareAsync(), 456);
