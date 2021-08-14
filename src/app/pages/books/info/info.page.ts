@@ -18,7 +18,7 @@ import { CounterInfo } from "@app/models/counters";
 
 export class BooksInfoPage implements OnInit, OnDestroy {
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private booksSvc: BooksService
 	) {
@@ -56,6 +56,10 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 		updated: "Updated at",
 		link: "Permanent link"
 	};
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	get locale() {
 		return this.configSvc.locale;
@@ -101,19 +105,19 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 		};
 	}
 
-	initializeAsync() {
+	async initializeAsync() {
 		const id = this.configSvc.requestParams["ID"];
-		return this.booksSvc.getAsync(id, async () => {
+		await this.booksSvc.getBookAsync(id, async () => {
 			this.book = Book.get(id);
 			if (this.book !== undefined) {
 				await this.prepareLabelsAsync();
 				this.getStatistics();
 				this.title = this.configSvc.appTitle = this.book.Title + " - " + this.book.Author;
 				this.qrcode = this.configSvc.appConfig.isNativeApp
-					? JSON.stringify({ Service: this.booksSvc.name, Object: "book", ID: this.book.ID, Action: "Read" })
+					? AppUtility.stringify({ Service: this.booksSvc.name, Object: "Book", ID: this.book.ID, Action: "Read" })
 					: this.redirectUrl;
 				if (AppUtility.isObject(this.book.Files, true) && (this.book.Files.Epub.Size === "generating..." || this.book.Files.Mobi.Size === "generating...")) {
-					await this.booksSvc.generateFilesAsync(this.book.ID);
+					await this.booksSvc.generateEBookFilesAsync(this.book.ID);
 				}
 				await TrackingUtility.trackAsync(`Info: ${this.title}`, this.book.routerLink);
 			}

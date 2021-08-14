@@ -15,7 +15,7 @@ import { BooksService } from "@app/services/books.service";
 
 export class BooksOptionsPage implements OnInit, OnDestroy {
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private booksSvc: BooksService
 	) {
 	}
@@ -28,6 +28,10 @@ export class BooksOptionsPage implements OnInit, OnDestroy {
 	sample = "";
 	hash = "";
 	subscription: Subscription;
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	ngOnInit() {
 		this.options = {};

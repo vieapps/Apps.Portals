@@ -24,10 +24,10 @@ import { RatingPoint } from "@app/models/rating.point";
 export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 	constructor(
 		private router: Router,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
-		private booksSvc: BooksService,
-		public configSvc: ConfigurationService,
+		private booksSvc: BooksService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
@@ -94,6 +94,10 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 	@ViewChild(IonContent, { static: true }) private contentCtrl: IonContent;
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	get sortBy() {
 		return this.sorts.first().expression;

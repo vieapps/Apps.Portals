@@ -263,11 +263,11 @@ export class BooksService extends BaseService {
 		);
 	}
 
-	public async getAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontUpdateCounter: boolean = false) {
+	public async getBookAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontUpdateCounter: boolean = false) {
 		const book = Book.get(id);
 		if (book !== undefined && (book.TOCs.length > 0 || AppUtility.isNotEmpty(book.Body))) {
 			if (!dontUpdateCounter) {
-				await this.updateCounterAsync(id);
+				await this.updateBookCounterAsync(id);
 			}
 			if (onSuccess !== undefined) {
 				onSuccess();
@@ -279,7 +279,7 @@ export class BooksService extends BaseService {
 				async data => {
 					Book.update(data);
 					if (!dontUpdateCounter) {
-						await this.updateCounterAsync(id);
+						await this.updateBookCounterAsync(id);
 					}
 					if (onSuccess !== undefined) {
 						onSuccess(data);
@@ -295,7 +295,7 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	public async getChapterAsync(id: string, chapter: number, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async getBookChapterAsync(id: string, chapter: number, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		const book = Book.get(id);
 		if (book === undefined || book.TOCs.length < 1 || chapter < 1 || chapter > book.Chapters.length || book.Chapters[chapter - 1] !== "") {
 			if (onSuccess !== undefined) {
@@ -306,22 +306,22 @@ export class BooksService extends BaseService {
 			await this.readAsync(
 				this.getPath("book", id, `chapter=${chapter}`),
 				async data => {
-					this.updateChapter(data);
-					await this.updateCounterAsync(id, "view", onSuccess);
+					this.updateBookChapter(data);
+					await this.updateBookCounterAsync(id, "view", onSuccess);
 				},
 				error => this.processError("Error occurred while reading a chapter", error, onError)
 			);
 		}
 	}
 
-	private updateChapter(data: any) {
+	private updateBookChapter(data: any) {
 		const book = Book.get(data.ID);
 		if (book !== undefined) {
 			book.Chapters[data.Chapter - 1] = data.Content;
 		}
 	}
 
-	public async updateCounterAsync(id: string, action?: string, onSuccess?: (data?: any) => void) {
+	public async updateBookCounterAsync(id: string, action?: string, onSuccess?: (data?: any) => void) {
 		if (Book.instances.contains(id)) {
 			await this.sendRequestAsync({
 				ServiceName: this.name,
@@ -332,14 +332,14 @@ export class BooksService extends BaseService {
 					"id": id,
 					"action": action || "view"
 				}
-			}, data => this.updateCounters(data, onSuccess));
+			}, data => this.updateBookCounters(data, onSuccess));
 		}
 		else if (onSuccess !== undefined) {
 			onSuccess();
 		}
 	}
 
-	private updateCounters(data: any, onNext?: (data?: any) => void) {
+	private updateBookCounters(data: any, onNext?: (data?: any) => void) {
 		const book = AppUtility.isObject(data, true)
 			? Book.get(data.ID)
 			: undefined;
@@ -352,7 +352,7 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	public async generateFilesAsync(id: string) {
+	public async generateEBookFilesAsync(id: string) {
 		if (Book.instances.contains(id)) {
 			await this.sendRequestAsync({
 				ServiceName: this.name,
@@ -362,11 +362,11 @@ export class BooksService extends BaseService {
 					"object-identity": "files",
 					"id": id
 				}
-			}, data => this.updateFiles(data));
+			}, data => this.updateEBookFiles(data));
 		}
 	}
 
-	private updateFiles(data: any) {
+	private updateEBookFiles(data: any) {
 		const book = data.ID !== undefined
 			? Book.get(data.ID)
 			: undefined;
@@ -376,7 +376,7 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	public requestUpdateAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public requestUpdateBookAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
 			this.getPath("book", body.ID),
 			body,
@@ -385,7 +385,7 @@ export class BooksService extends BaseService {
 		);
 	}
 
-	public async updateAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public async updateBookAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await super.updateAsync(
 			this.getPath("book", body.ID),
 			body,
@@ -394,8 +394,8 @@ export class BooksService extends BaseService {
 	);
 	}
 
-	public async deleteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.deleteAsync(
+	public async deleteBookAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		await this.deleteBookAsync(
 			this.getPath("book", id),
 			data => {
 				Book.instances.remove(id);
@@ -410,13 +410,13 @@ export class BooksService extends BaseService {
 	private processUpdateBookMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Counters":
-				this.updateCounters(message.Data);
+				this.updateBookCounters(message.Data);
 				break;
 			case "Chapter":
-				this.updateChapter(message.Data);
+				this.updateBookChapter(message.Data);
 				break;
 			case "Files":
-				this.updateFiles(message.Data);
+				this.updateEBookFiles(message.Data);
 				break;
 			case "Delete":
 				Book.instances.remove(message.Data.ID);

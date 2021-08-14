@@ -19,7 +19,7 @@ import { Book } from "@app/models/book";
 
 export class BooksUpdatePage implements OnInit {
 	constructor(
-		public configSvc: ConfigurationService,
+		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
 		private filesSvc: FilesService,
@@ -45,6 +45,10 @@ export class BooksUpdatePage implements OnInit {
 		update: "Update",
 		cancel: "Cancel"
 	};
+
+	get color() {
+		return this.configSvc.color;
+	}
 
 	ngOnInit() {
 		this.update.requestOnly = !this.authSvc.isServiceModerator(this.booksSvc.name);
@@ -180,7 +184,7 @@ export class BooksUpdatePage implements OnInit {
 		delete bookInfo["CoverImage"];
 		if (this.update.hash !== AppCrypto.hash(bookInfo)) {
 			if (this.update.requestOnly) {
-				return this.booksSvc.requestUpdateAsync(
+				return this.booksSvc.requestUpdateBookAsync(
 					bookInfo,
 					async () => {
 						await Promise.all([
@@ -193,7 +197,7 @@ export class BooksUpdatePage implements OnInit {
 				);
 			}
 			else {
-				return this.booksSvc.updateAsync(
+				return this.booksSvc.updateBookAsync(
 					bookInfo,
 					async () => {
 						await Promise.all([

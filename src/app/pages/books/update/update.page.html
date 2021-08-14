@@ -1,5 +1,5 @@
 <ion-header>
-	<ion-toolbar [color]="configSvc.color">
+	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
 			<ion-button fill="clear" color="secondary" (click)="cancelAsync()">
 				{{ button.cancel }}
@@ -16,7 +16,7 @@
 	</ion-toolbar>
 </ion-header>
 
-<ion-content [color]="configSvc.color" class="ion-padding">
+<ion-content [color]="color" class="ion-padding">
 	<app-form *ngIf="update.config"
 		[color]="configSvc.color"
 		[form]="update.form"

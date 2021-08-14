@@ -140,7 +140,7 @@ export class BooksReadPage implements OnInit, OnDestroy {
 	async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
 		const id = this.configSvc.requestParams["ID"];
-		await this.booksSvc.getAsync(
+		await this.booksSvc.getBookAsync(
 			id,
 			async _ => {
 				this.book = Book.get(id);
@@ -179,7 +179,7 @@ export class BooksReadPage implements OnInit, OnDestroy {
 			this.scrollOffset = 0;
 			await this.scrollAsync(async () => {
 				if (this.book.TotalChapters > 1 && this.chapter < this.book.TotalChapters) {
-					await this.booksSvc.getChapterAsync(this.book.ID, this.chapter + 1);
+					await this.booksSvc.getBookChapterAsync(this.book.ID, this.chapter + 1);
 				}
 			});
 		}
@@ -232,15 +232,15 @@ export class BooksReadPage implements OnInit, OnDestroy {
 	async goChapterAsync(direction: string = "next") {
 		if (this.book.Chapters[this.chapter - 1] === "") {
 			await this.appFormsSvc.showLoadingAsync();
-			await this.booksSvc.getChapterAsync(
+			await this.booksSvc.getBookChapterAsync(
 				this.book.ID,
 				this.chapter,
-				async () => await this.scrollAsync(async () => await this.appFormsSvc.hideLoadingAsync(async () => await this.booksSvc.getChapterAsync(this.book.ID, direction === "previous" ? this.chapter - 1 : this.chapter + 1))),
+				async () => await this.scrollAsync(async () => await this.appFormsSvc.hideLoadingAsync(async () => await this.booksSvc.getBookChapterAsync(this.book.ID, direction === "previous" ? this.chapter - 1 : this.chapter + 1))),
 				async error => await this.appFormsSvc.showErrorAsync(error)
 			);
 		}
 		else {
-			await this.scrollAsync(async () => await this.booksSvc.getChapterAsync(this.book.ID, this.chapter + 1));
+			await this.scrollAsync(async () => await this.booksSvc.getBookChapterAsync(this.book.ID, this.chapter + 1));
 		}
 	}
 
@@ -345,7 +345,7 @@ export class BooksReadPage implements OnInit, OnDestroy {
 			await this.configSvc.getResourceAsync("common.buttons.delete"),
 			undefined,
 			await this.configSvc.getResourceAsync("books.read.delete.confirm"),
-			async () => await this.booksSvc.deleteAsync(
+			async () => await this.booksSvc.deleteBookAsync(
 				this.book.ID,
 				async () => await this.booksSvc.deleteBookmarkAsync(this.book.ID, async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.read.delete.message", { title: this.book.Title }))),
 				async error => await this.appFormsSvc.showErrorAsync(error)
