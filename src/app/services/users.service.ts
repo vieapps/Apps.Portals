@@ -286,7 +286,7 @@ export class UsersService extends BaseService {
 							this.showLog("The session was updated with new access token", this.configSvc.appConfig.session);
 							AppEvents.broadcast("Account", { Type: "Updated", Mode: "Session" });
 							AppEvents.sendToElectron(this.name, { Type: "Session", Data: this.configSvc.appConfig.session });
-						}, false, false, false);
+						}, false, false);
 						break;
 
 					case "Revoke":
@@ -298,7 +298,7 @@ export class UsersService extends BaseService {
 							await this.configSvc.updateSessionAsync(message.Data, async () => await this.configSvc.registerSessionAsync(() => {
 								this.showLog("The session was revoked by the APIs", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 								AppAPIs.reopenWebSocket("Reopens when the session was revoked by the APIs");
-							}), false, false, false);
+							}), false, false);
 						}
 						AppEvents.broadcast("Account", { Type: "Updated", Mode: "Session" });
 						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Session" });

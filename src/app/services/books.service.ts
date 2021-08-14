@@ -128,7 +128,7 @@ export class BooksService extends BaseService {
 				title: category.Name,
 				link: `/books/category/${AppUtility.toANSI(category.Name, true)}`,
 				params: { "x-request": AppCrypto.jsonEncode({ Category: category.Name }) },
-				expandable: category.Children !== undefined && category.Children.length > 0,
+				expandable: AppUtility.isGotData(category.Children),
 				direction: "root"
 			}))
 		});

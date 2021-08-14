@@ -561,13 +561,6 @@ export class AppAPIs {
 		}
 	}
 
-	/** Sends a message to APIs using WebSocket */
-	public static sendWebSocketMessage(message: string) {
-		if (this.isWebSocketReady && AppUtility.isNotEmpty(message)) {
-			this._websocket.send(message);
-		}
-	}
-
 	/**
 		* Sends a request to APIs using WebSocket
 		* @param request The requesting information

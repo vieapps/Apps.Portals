@@ -69,19 +69,7 @@ export class Account {
 	}
 
 	public get profile() {
-		const profile = UserProfile.get(this.id);
-		if (profile === undefined) {
-			AppUtility.invoke(() => {
-				if (!UserProfile.instances.contains(this.id)) {
-					AppAPIs.sendWebSocketRequest({
-						ServiceName: "Users",
-						ObjectName: "Profile",
-						Query: { "object-identity": this.id }
-					});
-				}
-			}, 1234);
-		}
-		return profile;
+		return UserProfile.get(this.id);
 	}
 
 	/**

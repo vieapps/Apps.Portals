@@ -397,13 +397,7 @@ export class AppComponent implements OnInit {
 		});
 
 		AppEvents.on("Profile", info => {
-			if ("Updated" === info.args.Type) {
-				this.updateSidebarImage();
-			}
-		});
-
-		AppEvents.on("Account", info => {
-			if ("Updated" === info.args.Type) {
+			if ("Updated" === info.args.Type && "APIs" === info.args.Mode) {
 				this.updateSidebarImage();
 			}
 		});
