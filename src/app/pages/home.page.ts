@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
-import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { ConfigurationService } from "@app/services/configuration.service";
 
@@ -38,25 +37,24 @@ export class HomePage implements OnInit, OnDestroy {
 			this.prepareAsync();
 		}
 		else {
-			AppEvents.on("App", info => {
-				if (AppUtility.isEquals(info.args.Type, "Initialized")) {
-					this.prepareAsync();
+			AppEvents.on("App", async info => {
+				if ("Initialized" === info.args.Type) {
+					await this.prepareAsync();
 				}
 			}, "Home:AppInitialized");
 		}
 
-		AppEvents.on("App", info => {
-			if (AppUtility.isEquals(info.args.Type, "LanguageChanged")) {
-				this.setTitleAsync();
+		AppEvents.on("App", async info => {
+			if ("LanguageChanged" === info.args.Type) {
+				await this.setTitleAsync();
 			}
 		}, "Home:LanguageChanged");
 
-		AppEvents.on("Navigated", info => {
-			if (this.configSvc.appConfig.URLs.home === info.args.Url) {
-				this.prepareAsync("return").then(() => {
-					AppEvents.broadcast("App", { Type: "HomePageIsOpened" });
-					this.changes = new Date();
-				});
+		AppEvents.on("Navigated", async info => {
+			if (this.configSvc.appConfig.URLs.home === info.args.URL) {
+				await this.prepareAsync("return");
+				AppEvents.broadcast("App", { Type: "HomePageIsOpened" });
+				this.changes = new Date();
 			}
 		}, "Home:Navigated");
 

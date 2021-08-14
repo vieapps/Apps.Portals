@@ -2,7 +2,7 @@ import { Injectable } from "@angular/core";
 import { AppAPIs, AppMessage } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
-import { AppUtility } from "@app/components/app.utility";
+import { AppUtility, AppSidebarMenuItem } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppCustomCompleter } from "@app/components/app.completer";
 import { AppPagination, AppDataRequest, AppDataPagination } from "@app/components/app.pagination";
@@ -1287,12 +1287,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	private prepareSidebar(onNext?: () => void) {
-		const items = new Array<{
-			title: string;
-			link: string;
-			direction?: string;
-			icon?: { name: string };
-		}>();
+		const items = new Array<AppSidebarMenuItem>();
 
 		if (this.configSvc.isAuthenticated) {
 			const account = this.configSvc.getAccount();

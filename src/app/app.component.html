@@ -38,7 +38,7 @@
 
 					<ion-menu-toggle auto-hide="false" [hidden]="!isSidebarTopMenuShown">
 						<ion-item *ngFor="let item of sidebar.top; trackBy: trackSidebarItem" [routerLink]="item.link" [queryParams]="item.params" [routerDirection]="item.direction" [color]="color" (click)="item.onClick($event, item, sidebar)" detail="false">
-							<ion-icon *ngIf="item.icon" [name]="item.icon" slot="start"></ion-icon>
+							<ion-icon *ngIf="item.icon && item.icon.name" [name]="item.icon.name" slot="start"></ion-icon>
 							<ion-label>
 								{{ item.title }}
 							</ion-label>
@@ -48,7 +48,7 @@
 					<ion-menu-toggle *ngFor="let menu of sidebar.menu; let menuIndex=index; trackBy: trackSidebarItem" [hidden]="sidebar.active !== menu.name" auto-hide="false">
 						<ion-list-header *ngIf="menu.parent && menu.parent.title" [color]="color" (click)="menu.parent.onClick($event, menu.parent, sidebar)" class="ion-padding-top">
 							<ion-label>
-								<ion-icon *ngIf="menu.parent.expandable" name="chevron-back" slot="start"></ion-icon>
+								<ion-icon *ngIf="menu.parent.expanded" name="chevron-back" slot="start"></ion-icon>
 								{{ menu.parent.title }}
 							</ion-label>
 						</ion-list-header>
@@ -59,7 +59,7 @@
 									{{ item.title }}
 								</ion-label>
 							</ion-item>
-							<ion-list *ngIf="sidebar.children && item.children && item.children.length > 0" [hidden]="!item.expanded" class="children">
+							<ion-list *ngIf="item.children && item.children.length > 0" [hidden]="!item.expanded" class="children">
 								<ion-item *ngFor="let child of item.children; let childIndex=index; trackBy: trackSidebarItem" [color]="color" (click)="child.onClick($event, { menuIndex: menuIndex, itemIndex: itemIndex, childIndex: childIndex }, sidebar)" class="ion-activatable" detail="false">
 									<ion-icon *ngIf="child.icon && child.icon.name" [name]="child.icon.name" [color]="child.icon.color" [slot]="child.icon.slot" (click)="child.onClick($event, { menuIndex: menuIndex, itemIndex: itemIndex, childIndex: childIndex, expand: true }, sidebar)"></ion-icon>
 									<ion-label>

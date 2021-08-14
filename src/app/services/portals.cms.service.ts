@@ -4,7 +4,7 @@ import { Dictionary } from "@app/components/app.collections";
 import { AppAPIs, AppMessage } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
-import { AppUtility, AppSidebar } from "@app/components/app.utility";
+import { AppUtility, AppSidebar, AppSidebarMenuItem } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppCustomCompleter } from "@app/components/app.completer";
 import { AppPagination, AppDataRequest  } from "@app/components/app.pagination";
@@ -394,7 +394,7 @@ export class PortalsCmsService extends BaseService {
 		this.portalsCoreSvc.setLookupOptions(lookupOptions, lookupModalPage, contentType, multiple, nested, onPreCompleted);
 	}
 
-	private updateSidebar(items: Array<any>, parent?: any, onNext?: () => void) {
+	private updateSidebar(items: Array<AppSidebarMenuItem>, parent?: AppSidebarMenuItem, onNext?: () => void) {
 		AppEvents.broadcast("UpdateSidebar", {
 			index: 0,
 			name: "cms",
@@ -473,63 +473,61 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	private getSidebarItems(categories: Category[], parent?: Category): { items: any[], parent: any } {
-		const expand: (menuItem: any, parentID?: string, dontUpdateExpaned?: boolean) => void = async (menuItem, parentID, dontUpdateExpanded) => {
+	private getSidebarItems(categories: Category[], parent?: Category) {
+		const expand: (menuItem: AppSidebarMenuItem, parentID?: string, dontUpdateExpaned?: boolean) => void = async (menuItem, parentID, dontUpdateExpanded) => {
 			if (parentID === undefined) {
 				if (!dontUpdateExpanded) {
 					menuItem.expanded = !menuItem.expanded;
 				}
-				menuItem.icon = { name: menuItem.expanded ? "chevron-down" : "chevron-forward", color: "medium", slot: "end" };
+				menuItem.icon = {
+					name: menuItem.expanded ? "chevron-down" : "chevron-forward",
+					color: "medium",
+					slot: "end"
+				};
 			}
 			else {
 				await this.updateSidebarWithCategoriesAsync(Category.get(parentID), menuItem.id);
 			}
 		};
 
-		const getItem: (category: Category) => any = category => ({
-			title: category.Title,
-			link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", category.ansiTitle),
-			params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: category.ID }),
-			id: category.ID,
-			onClick: async (event: Event, info: any, sidebar: AppSidebar) => {
-				const menuItem = info.childIndex !== undefined
-					? sidebar.menu[info.menuIndex].items[info.itemIndex].children[info.childIndex]
-					: sidebar.menu[info.menuIndex].items[info.itemIndex];
-				if (AppUtility.isTrue(info.expand)) {
-					event.stopPropagation();
-					expand(menuItem, info.childIndex === undefined ? undefined : sidebar.menu[info.menuIndex].items[info.itemIndex].id);
-				}
-				else {
-					await this.configSvc.navigateAsync(menuItem.direction, menuItem.link, menuItem.params);
-					if (menuItem.children !== undefined && menuItem.children.length > 0) {
-						expand(menuItem, info.childIndex === undefined ? undefined : sidebar.menu[info.menuIndex].items[info.itemIndex].id, menuItem.expanded);
+		const getItem: (category: Category, onCompleted: (item: AppSidebarMenuItem) => void) => AppSidebarMenuItem = (category, onCompleted) => {
+			const item: AppSidebarMenuItem = {
+				title: category.Title,
+				link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", category.ansiTitle),
+				params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: category.ID }),
+				id: category.ID,
+				onClick: async (event: Event, info: any, sidebar: AppSidebar) => {
+					const menuItem = info.childIndex !== undefined
+						? sidebar.menu[info.menuIndex].items[info.itemIndex].children[info.childIndex]
+						: sidebar.menu[info.menuIndex].items[info.itemIndex];
+					if (AppUtility.isTrue(info.expand)) {
+						event.stopPropagation();
+						expand(menuItem, info.childIndex === undefined ? undefined : sidebar.menu[info.menuIndex].items[info.itemIndex].id);
+					}
+					else {
+						await this.configSvc.navigateAsync(menuItem.direction, menuItem.link, menuItem.params);
+						if (menuItem.children !== undefined && menuItem.children.length > 0) {
+							expand(menuItem, info.childIndex === undefined ? undefined : sidebar.menu[info.menuIndex].items[info.itemIndex].id, menuItem.expanded);
+						}
 					}
 				}
-			}
-		});
-
-		const getChildren: (childrenCategories: Category[]) => any[] = childrenCategories => {
-			return childrenCategories.map(category => {
-				const item = getItem(category);
-				item.children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : [];
-				return item;
-			});
+			};
+			onCompleted(item);
+			return item;
 		};
 
+		const getChildren: (childrenCategories: Category[]) => AppSidebarMenuItem[] = childrenCategories => childrenCategories.map(category => getItem(category, item => item.children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : []));
+
 		return {
-			items: categories.map(category => {
-				const item = getItem(category);
-				item.children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : [];
-				return item;
-			}),
 			parent: {
 				title: parent === undefined ? "{{portals.sidebar.cms-categories}}" : parent.Title,
 				link: parent === undefined ? undefined : this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", parent.ansiTitle),
 				params: parent === undefined ? undefined : this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: parent.ID }),
-				expandable: parent !== undefined,
+				expanded: parent !== undefined,
 				onClick: async () => await this.updateSidebarWithCategoriesAsync(this._sidebarCategory !== undefined ? this._sidebarCategory.Parent : undefined, this._sidebarCategory !== undefined ? this._sidebarCategory.ID : undefined),
 				id: parent === undefined ? undefined : parent.ID,
-			}
+			} as AppSidebarMenuItem,
+			items: categories.map(category => getItem(category, item => item.children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : []))
 		};
 	}
 

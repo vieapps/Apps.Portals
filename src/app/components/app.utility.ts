@@ -779,7 +779,6 @@ export interface AppSidebar {
 	visible: boolean;
 	profile: boolean;
 	search: boolean;
-	children: boolean;
 	active: string;
 	header: {
 		thumbnail: string;
@@ -793,25 +792,10 @@ export interface AppSidebar {
 		title?: string;
 		onClick?: (event: Event, name: string, sidebar: AppSidebar) => void;
 	}>;
-	top: Array<{
-		title: string;
-		link: string;
-		params?: { [key: string]: string };
-		direction?: string;
-		icon?: string;
-		onClick?: (event: Event, info: any, sidebar: AppSidebar) => void;
-	}>;
+	top: Array<AppSidebarMenuItem>;
 	menu: Array<{
 		name: string;
-		parent?: {
-			title: string;
-			thumbnail?: string,
-			link: string;
-			params?: { [key: string]: string };
-			expandable: boolean;
-			onClick?: (event: Event, info: any, sidebar: AppSidebar) => void;
-			id?: string;
-		};
+		parent?: AppSidebarMenuItem;
 		items: Array<AppSidebarMenuItem>
 	}>;
 }
@@ -819,7 +803,7 @@ export interface AppSidebar {
 /** Presents a menu item in the side bar of the app */
 export interface AppSidebarMenuItem {
 	title: string;
-	link: string;
+	link?: string;
 	params?: { [key: string]: string };
 	direction?: string;
 	onClick?: (event: Event, info: any, sidebar: AppSidebar) => void;
@@ -827,6 +811,7 @@ export interface AppSidebarMenuItem {
 	expanded?: boolean;
 	detail?: boolean;
 	id?: string;
+	thumbnail?: string;
 	icon?: {
 		name: string;
 		color?: string;

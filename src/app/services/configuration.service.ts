@@ -17,7 +17,7 @@ import { AppStorage } from "@app/components/app.storage";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppEvents } from "@app/components/app.events";
 import { AppAPIs } from "@app/components/app.apis";
-import { AppUtility } from "@app/components/app.utility";
+import { AppUtility, AppSidebarMenuItem } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { Account } from "@app/models/account";
@@ -878,46 +878,46 @@ export class ConfigurationService extends BaseService {
 				link: this.appConfig.URLs.home,
 				params: undefined as { [key: string]: string },
 				direction: "root",
-				icon: "home",
+				icon: { name: "home" },
 				thumbnail: undefined as string,
 				onClick: () => {}
-			},
+			} as AppSidebarMenuItem,
 			login: {
 				title: await this.getResourceAsync("common.sidebar.login"),
 				link: this.appConfig.URLs.users.login,
 				params: undefined as { [key: string]: string },
 				direction: "forward",
-				icon: "log-in",
+				icon: { name: "log-in" },
 				thumbnail: undefined as string,
 				onClick: () => {}
-			},
+			} as AppSidebarMenuItem,
 			register: {
 				title: await this.getResourceAsync("common.sidebar.register"),
 				link: this.appConfig.URLs.users.register,
 				params: undefined as { [key: string]: string },
 				direction: "forward",
-				icon: "person-add",
+				icon: { name: "person-add" },
 				thumbnail: undefined as string,
 				onClick: () => {}
-			},
+			} as AppSidebarMenuItem,
 			profile: {
 				title: await this.getResourceAsync("common.sidebar.profile"),
 				link: `${this.appConfig.URLs.users.profile}/my`,
 				params: undefined as { [key: string]: string },
 				direction: "forward",
-				icon: "person",
+				icon: { name: "person" },
 				thumbnail: undefined as string,
 				onClick: () => {}
-			},
+			} as AppSidebarMenuItem,
 			search: {
 				title: await this.getResourceAsync("common.sidebar.search"),
 				link: undefined,
 				params: undefined as { [key: string]: string },
 				direction: "forward",
-				icon: "search",
+				icon: { name: "search" },
 				thumbnail: undefined as string,
 				onClick: async () => await this.navigateForwardAsync(this.appConfig.URLs.search)
-			}
+			} as AppSidebarMenuItem
 		};
 	}
 

@@ -47,7 +47,6 @@ export class AppComponent implements OnInit {
 		visible: true,
 		profile: false,
 		search: true,
-		children: true,
 		active: "cms",
 		header: {
 			thumbnail: undefined as string,
@@ -61,25 +60,10 @@ export class AppComponent implements OnInit {
 			title?: string,
 			onClick?: (event: Event, name: string, sidebar: AppSidebar) => void
 		}>(),
-		top: new Array<{
-			title: string,
-			link: string,
-			params?: { [key: string]: string },
-			direction?: string,
-			icon?: string,
-			onClick?: (event: Event, info: any, sidebar: AppSidebar) => void
-		}>(),
+		top: new Array<AppSidebarMenuItem>(),
 		menu: new Array<{
 			name: string,
-			parent?: {
-				title: string,
-				thumbnail?: string,
-				link: string,
-				params?: { [key: string]: string },
-				expandable: boolean,
-				onClick?: (event: Event, info: any, sidebar: AppSidebar) => void,
-				id?: string
-			},
+			parent?: AppSidebarMenuItem,
 			items: Array<AppSidebarMenuItem>
 		}>()
 	};
@@ -106,14 +90,14 @@ export class AppComponent implements OnInit {
 				this.configSvc.appConfig.URLs.routerParams = (event as RoutesRecognized).state.root.params;
 				this.configSvc.pushURL((event as RoutesRecognized).url, (event as RoutesRecognized).state.root.queryParams);
 				const current = this.configSvc.getCurrentURL();
-				AppEvents.broadcast("Navigating", { Url: current.url, Params: current.params });
+				AppEvents.broadcast("Navigating", { URL: current.url, Params: current.params });
 				if (AppAPIs.isPingPeriodTooLarge) {
 					AppAPIs.reopenWebSocket("<AppComponent>: Ping period is too large...");
 				}
 			}
 			else if (event instanceof NavigationEnd) {
 				const current = this.configSvc.getCurrentURL();
-				AppEvents.broadcast("Navigated", { Url: current.url, Params: current.params });
+				AppEvents.broadcast("Navigated", { URL: current.url, Params: current.params });
 			}
 		});
 
@@ -257,7 +241,7 @@ export class AppComponent implements OnInit {
 					thumbnail: info.parent.thumbnail,
 					link: info.parent.link,
 					params: info.parent.params,
-					expandable: !!info.parent.expandable,
+					expanded: !!info.parent.expanded,
 					onClick: typeof info.parent.onClick === "function"
 						? info.parent.onClick as (event: Event, info: any, sidebar: AppSidebar) => void
 						: () => {}
@@ -323,7 +307,13 @@ export class AppComponent implements OnInit {
 		AppEvents.on("OpenSidebar", _ => this.sidebar.visible = true);
 		AppEvents.on("CloseSidebar", _ => this.sidebar.visible = false);
 		AppEvents.on("ToggleSidebar", _ => this.toggleSidebar());
-		AppEvents.on("ActiveSidebar", info => this.sidebar.active = info.args.name || (this.sidebar.footer.first || {}).name);
+		AppEvents.on("ActiveSidebar", info => {
+			this.sidebar.active = info.args.name || (this.sidebar.footer.first() || {}).name;
+			const button = this.sidebar.footer.first(btn => btn.name === this.sidebar.active);
+			if (button !== undefined && typeof button.onClick === "function") {
+				button.onClick(undefined, this.sidebar.active, this.sidebar);
+			}
+		});
 		AppEvents.on("UpdateSidebar", async info => await this.updateSidebarAsync(info.args));
 		AppEvents.on("UpdateSidebarTitle", info => {
 			this.sidebar.header.title = AppUtility.isNotEmpty(info.args.title) ? info.args.title : this.sidebar.header.title;
@@ -356,13 +346,13 @@ export class AppComponent implements OnInit {
 		});
 
 		AppEvents.on("Navigate", async info => {
-			const url = AppUtility.isEquals(info.args.Type, "LogIn")
+			const url = "LogIn" === info.args.Type
 				? this.configSvc.appConfig.URLs.users.login
-				: AppUtility.isEquals(info.args.Type, "Profile")
+				: "Profile" === info.args.Type
 					? this.configSvc.appConfig.URLs.users.profile + "/my"
-					: AppUtility.isEquals(info.args.Type, "Accounts")
+					: "Profiles" === info.args.Type || "Accounts" === info.args.Type
 						? this.configSvc.appConfig.URLs.users.list
-						: info.args.Url;
+						: info.args.url || this.configSvc.appConfig.URLs.home;
 			switch ((info.args.Direction as string || "Forward").toLowerCase()) {
 				case "home":
 					await this.configSvc.navigateHomeAsync(url);
