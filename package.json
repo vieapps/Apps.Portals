@@ -1,8 +1,8 @@
 {
 	"name": "net.vieapps.portals",
-	"version": "4.0.0",
+	"version": "4.0.2",
 	"author": "VIEApps.net",
-	"homepage": "https://vieapps.net/",
+	"homepage": "https://cms.vieapps.net/",
 	"description": "Manage information and related services of CMS Portals",
 	"private": true,
 	"scripts": {

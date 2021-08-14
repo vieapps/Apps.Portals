@@ -33,7 +33,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "4.0.1",
+		version: "4.0.2",
 		frameworks: "ionic 5.6 - angular 11.2 - cordova 10.0",
 		mode: "",
 		platform: "",
@@ -170,9 +170,9 @@ export class AppConfig {
 
 	/** Tracking information */
 	public static tracking = {
-		google: new Array<string>(),
-		facebook: new Array<string>(),
-		domains: [],
+		google: [] as Array<string>,
+		facebook: [] as Array<string>,
+		domains: [] as Array<string>,
 	};
 
 	/** Facebook integration */
