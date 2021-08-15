@@ -97,8 +97,11 @@ export class PortalsCoreService extends BaseService {
 	private initialize() {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => {
 			// check system identity with activate organizations
-			const systemID = message.Data !== undefined ? message.Data.ID : undefined;
+			const systemID = message.Data !== undefined ? message.Data.SystemID : undefined;
 			if (systemID === undefined || this.activeOrganizations.indexOf(systemID) < 0) {
+				if (this.configSvc.isDebug) {
+					console.log(this.getMessage("By-pass the updating message because not in active organizations"), systemID);
+				}
 				return;
 			}
 
