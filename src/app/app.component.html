@@ -37,15 +37,15 @@
 				<ion-list class="ion-margin-vertical" lines="full">
 
 					<ion-menu-toggle auto-hide="false" [hidden]="!isSidebarTopMenuShown">
-						<ion-item *ngFor="let item of sidebar.Top; trackBy: trackSidebarItem" [color]="color" (click)="item.OnClick(item, sidebar, $event)" class="ion-activatable" detail="false">
-							<ion-icon *ngIf="item.Icon && item.Icon.Name" [name]="item.Icon.Name" slot="start"></ion-icon>
+						<ion-item *ngFor="let item of sidebar.TopMenu; trackBy: trackSidebarItem" [color]="color" (click)="item.OnClick(item, sidebar, $event)" class="ion-activatable" detail="false">
+							<ion-icon *ngIf="!!item.Icon && !!item.Icon.Name" [name]="item.Icon.Name" slot="start"></ion-icon>
 							<ion-label>
 								{{ item.Title }}
 							</ion-label>
 						</ion-item>
 					</ion-menu-toggle>
 
-					<ion-menu-toggle *ngFor="let menu of sidebar.Menu; let menuIndex=index; trackBy: trackSidebarItem" [hidden]="sidebar.Active !== menu.Name" auto-hide="false">
+					<ion-menu-toggle *ngFor="let menu of sidebar.MainMenu; let menuIndex=index; trackBy: trackSidebarItem" [hidden]="sidebar.Active !== menu.Name" auto-hide="false">
 						<ion-list-header *ngIf="!!menu.Parent && !!menu.Parent.Title" [color]="color" (click)="menu.Parent.OnClick(menu.Parent, sidebar, $event)" class="ion-padding-top">
 							<ion-label>
 								<ion-icon *ngIf="menu.Parent.Expanded" name="chevron-back" slot="start"></ion-icon>

@@ -528,15 +528,15 @@ export class PortalsCmsService extends BaseService {
 				ID: category.ID,
 				OnClick: async (data: { menuIndex: number; itemIndex: number; childIndex?: number; expand?: boolean; }, sidebar: AppSidebar, event: Event) => {
 					const menuItem = data.childIndex !== undefined
-						? sidebar.Menu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex]
-						: sidebar.Menu[data.menuIndex].Items[data.itemIndex];
+						? sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex]
+						: sidebar.MainMenu[data.menuIndex].Items[data.itemIndex];
 					if (AppUtility.isTrue(data.expand)) {
 						event.stopPropagation();
-						expand(menuItem, data.childIndex === undefined ? undefined : sidebar.Menu[data.menuIndex].Items[data.itemIndex].ID);
+						expand(menuItem, data.childIndex === undefined ? undefined : sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].ID);
 					}
 					else {
 						if (menuItem.Children !== undefined && menuItem.Children.length > 0) {
-							expand(menuItem, data.childIndex === undefined ? undefined : sidebar.Menu[data.menuIndex].Items[data.itemIndex].ID, menuItem.Expanded);
+							expand(menuItem, data.childIndex === undefined ? undefined : sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].ID, menuItem.Expanded);
 						}
 						await this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params);
 					}

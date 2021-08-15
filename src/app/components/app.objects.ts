@@ -16,8 +16,8 @@ export interface AppSidebar {
 		Title?: string;
 		OnClick?: (name: string, sidebar: AppSidebar, event?: Event) => void;
 	}>;
-	Top: Array<AppSidebarMenuItem>;
-	Menu: Array<{
+	TopMenu: Array<AppSidebarMenuItem>;
+	MainMenu: Array<{
 		Name: string;
 		Parent?: AppSidebarMenuItem;
 		Items: Array<AppSidebarMenuItem>

@@ -51,8 +51,8 @@ export class AppComponent implements OnInit {
 		Active: "cms",
 		Header: {
 			Thumbnail: undefined,
-			ThumbnailOnClick: undefined,
-			Title: undefined as string,
+			ThumbnailOnClick: _ => AppEvents.broadcast("Navigate", { Type: "Profile" }),
+			Title: undefined,
 			TitleOnClick: undefined
 		},
 		Footer: new Array<{
@@ -61,8 +61,8 @@ export class AppComponent implements OnInit {
 			Title?: string,
 			OnClick?: (name: string, sidebar: AppSidebar, event?: Event) => void
 		}>(),
-		Top: new Array<AppSidebarMenuItem>(),
-		Menu: new Array<{
+		TopMenu: new Array<AppSidebarMenuItem>(),
+		MainMenu: new Array<{
 			Name: string,
 			Parent?: AppSidebarMenuItem,
 			Items: Array<AppSidebarMenuItem>
@@ -136,9 +136,8 @@ export class AppComponent implements OnInit {
 				}
 			}
 
-			AppEvents.broadcast("App", { Type: "PlatformIsReady" });
 			this.sidebar.Header.Title = this.configSvc.appConfig.app.name;
-			await this.updateSidebarAsync({ Source: "PlatformIsReady" }, true);
+			await this.updateSidebarAsync({}, true, () => AppEvents.broadcast("App", { Type: "PlatformIsReady" }));
 
 			const isActivate = this.configSvc.isWebApp && AppUtility.isEquals("activate", this.configSvc.queryParams["prego"]);
 			await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "loading"}`));
@@ -151,7 +150,7 @@ export class AppComponent implements OnInit {
 	}
 
 	private getSidebarItem(itemInfo: any = {}, oldItem: any = {}, onCompleted?: (item: AppSidebarMenuItem) => void) {
-		const gotChildren = AppUtility.isArray(itemInfo.Children, true) && (itemInfo.Children as Array<any>).length > 0;
+		const gotChildren = AppUtility.isArray(itemInfo.Children, true) && AppUtility.isGotData(itemInfo.Children);
 		const isExpanded = gotChildren && !!itemInfo.Expanded;
 		const isDetail = !gotChildren && !!itemInfo.Detail;
 		const icon = itemInfo.Icon || {};
@@ -172,10 +171,10 @@ export class AppComponent implements OnInit {
 			Icon: icon,
 			OnClick: typeof itemInfo.OnClick === "function"
 				? itemInfo.OnClick
-				: async (data, sidebar) => {
+				:	async (data, sidebar) => {
 						const menuItem = data.childIndex !== undefined
-							? sidebar.Menu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex]
-							: sidebar.Menu[data.menuIndex].Items[data.itemIndex];
+							? sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex]
+							: sidebar.MainMenu[data.menuIndex].Items[data.itemIndex];
 						await this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params);
 					}
 		};
@@ -185,55 +184,21 @@ export class AppComponent implements OnInit {
 		return sidebarItem;
 	}
 
-	private async getSidebarTopItemsAsync() {
-		return {
-			Home: {
-				Title: await this.configSvc.getResourceAsync("common.sidebar.home"),
-				Icon: { Name: "home" },
-				Link: this.configSvc.appConfig.URLs.home,
-				OnClick: async data => await this.configSvc.navigateHomeAsync(data.Link)
-			} as AppSidebarMenuItem,
-			Login: {
-				Title: await this.configSvc.getResourceAsync("common.sidebar.login"),
-				Icon: { Name: "log-in" },
-				Link: this.configSvc.appConfig.URLs.users.login,
-				OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
-			} as AppSidebarMenuItem,
-			Register: {
-				Title: await this.configSvc.getResourceAsync("common.sidebar.register"),
-				Icon: { Name: "person-add" },
-				Link: this.configSvc.appConfig.URLs.users.register,
-				OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
-			} as AppSidebarMenuItem,
-			Profile: {
-				Title: await this.configSvc.getResourceAsync("common.sidebar.profile"),
-				Icon: { Name: "person" },
-				Link: `${this.configSvc.appConfig.URLs.users.profile}/my`,
-				OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
-			} as AppSidebarMenuItem,
-			Search: {
-				Title: await this.configSvc.getResourceAsync("common.sidebar.search"),
-				Icon: { Name: "search" },
-				OnClick: async _ => await this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.search)
-			} as AppSidebarMenuItem
-		};
-	}
-
-	private async normalizeSidebarTopItemsAsync() {
+	private normalizeSidebarItems() {
 		if (!this.sidebar.Search) {
-			this.sidebar.Top.removeAt(this.sidebar.Top.length - 1);
+			this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.length - 1);
 		}
 		if (this.configSvc.isAuthenticated) {
-			this.sidebar.Top.removeAt(this.sidebar.Top.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.login)));
-			this.sidebar.Top.removeAt(this.sidebar.Top.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.register)));
+			this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.login)));
+			this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.register)));
 			if (!this.sidebar.Profile) {
-				this.sidebar.Top.removeAt(this.sidebar.Top.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.profile)));
+				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.profile)));
 			}
 		}
 		else {
-			this.sidebar.Top.removeAt(this.sidebar.Top.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.profile)));
+			this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.profile)));
 			if (!this.authSvc.canRegisterNewAccounts) {
-				this.sidebar.Top.removeAt(this.sidebar.Top.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.register)));
+				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.register)));
 			}
 		}
 	}
@@ -242,14 +207,14 @@ export class AppComponent implements OnInit {
 		if (menuIndex < 0) {
 			menuIndex = 0;
 		}
-		else if (menuIndex >= this.sidebar.Menu.length) {
-			menuIndex = this.sidebar.Menu.length;
-			this.sidebar.Menu.push({ Name: undefined, Items: []});
+		else if (menuIndex >= this.sidebar.MainMenu.length) {
+			menuIndex = this.sidebar.MainMenu.length;
+			this.sidebar.MainMenu.push({ Name: undefined, Items: []});
 		}
-		this.sidebar.Menu[menuIndex].Items.update(
+		this.sidebar.MainMenu[menuIndex].Items.update(
 			this.getSidebarItem(
 				itemInfo,
-				itemIndex > -1 && itemIndex < this.sidebar.Menu[menuIndex].Items.length ? this.sidebar.Menu[menuIndex].Items[itemIndex] : {},
+				itemIndex > -1 && itemIndex < this.sidebar.MainMenu[menuIndex].Items.length ? this.sidebar.MainMenu[menuIndex].Items[itemIndex] : {},
 				async sidebarItem => sidebarItem.Title = sidebarItem.Title.startsWith("{{") && sidebarItem.Title.endsWith("}}")
 					? await this.configSvc.getResourceAsync(sidebarItem.Title.substr(2, sidebarItem.Title.length - 4).trim())
 					: sidebarItem.Title
@@ -258,33 +223,69 @@ export class AppComponent implements OnInit {
 		);
 	}
 
-	private async updateSidebarAsync(info: any = {}, updateTopItems: boolean = false) {
+	private async updateSidebarAsync(info: any, updateTopItems: boolean = false, onNext?: () => void) {
 		const header = info.Header;
 		if (header !== undefined) {
 			this.sidebar.Header = {
 				Thumbnail: header.Thumbnail || this.sidebar.Header.Thumbnail,
-				ThumbnailOnClick: header.ThumbnailOnClick || this.sidebar.Header.ThumbnailOnClick,
+				ThumbnailOnClick: header.ThumbnailOnClick || this.sidebar.Header.ThumbnailOnClick || (() => {}),
 				Title: header.Title || this.sidebar.Header.Title,
-				TitleOnClick: header.TitleOnClick || this.sidebar.Header.TitleOnClick
+				TitleOnClick: header.TitleOnClick || this.sidebar.Header.TitleOnClick || (() => {})
 			};
 		}
 
 		if (updateTopItems) {
-			const topItems = await this.getSidebarTopItemsAsync();
-			this.sidebar.Top = [topItems.Home, topItems.Profile, topItems.Login, topItems.Register, topItems.Search];
+			this.sidebar.TopMenu = [
+				{
+					Title: await this.configSvc.getResourceAsync("common.sidebar.home"),
+					Icon: { Name: "home" },
+					Link: this.configSvc.appConfig.URLs.home,
+					OnClick: async data => await this.configSvc.navigateHomeAsync(data.Link)
+				},
+				{
+					Title: await this.configSvc.getResourceAsync("common.sidebar.login"),
+					Icon: { Name: "log-in" },
+					Link: this.configSvc.appConfig.URLs.users.login,
+					OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
+				},
+				{
+					Title: await this.configSvc.getResourceAsync("common.sidebar.register"),
+					Icon: { Name: "person-add" },
+					Link: this.configSvc.appConfig.URLs.users.register,
+					OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
+				},
+				{
+					Title: await this.configSvc.getResourceAsync("common.sidebar.profile"),
+					Icon: { Name: "person" },
+					Link: `${this.configSvc.appConfig.URLs.users.profile}/my`,
+					OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
+				},
+				{
+					Title: await this.configSvc.getResourceAsync("common.sidebar.search"),
+					Icon: { Name: "search" },
+					OnClick: async _ => await this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.search)
+				}
+			];
+		}
+
+		if (info.Index === undefined && info.Items === undefined) {
+			if (onNext !== undefined) {
+				onNext();
+			}
+			return;
 		}
 
 		let index = info.Index !== undefined ? info.Index as number : 0;
 		if (index < 0) {
-			index = this.sidebar.Menu.length;
+			index = this.sidebar.MainMenu.length;
 		}
-		while (this.sidebar.Menu.length < index + 1) {
-			this.sidebar.Menu.push({ Name: undefined, Items: [] });
+		while (this.sidebar.MainMenu.length < index + 1) {
+			this.sidebar.MainMenu.push({ Name: undefined, Items: [] });
 		}
 
-		this.sidebar.Menu[index].Name = info.Name || this.sidebar.Menu[index].Name || "cms";
-		this.sidebar.Menu[index].Parent = info.Parent !== undefined
-			? {
+		this.sidebar.MainMenu[index].Name = info.Name || this.sidebar.MainMenu[index].Name || "cms";
+		this.sidebar.MainMenu[index].Parent = info.Parent !== undefined
+			?	{
 					Title: info.Parent.Title,
 					Link: info.Parent.Link,
 					Params: info.Parent.Params,
@@ -294,22 +295,23 @@ export class AppComponent implements OnInit {
 						? info.Parent.OnClick
 						: () => {}
 				}
-			: this.sidebar.Menu[index].Parent;
+			: this.sidebar.MainMenu[index].Parent;
 
-		const parent = this.sidebar.Menu[index].Parent;
+		const parent = this.sidebar.MainMenu[index].Parent;
 		if (parent !== undefined && parent.Title.startsWith("{{") && parent.Title.endsWith("}}")) {
 			parent.Title = await this.configSvc.getResourceAsync(parent.Title.substr(2, parent.Title.length - 4).trim());
 		}
 
 		if (AppUtility.isArray(info.Items, true)) {
 			if (!!info.Reset) {
-				this.sidebar.Menu[index].Items = [];
+				this.sidebar.MainMenu[index].Items = [];
 			}
 			await Promise.all((info.Items as Array<AppSidebarMenuItem>).map(item => {
 				const icon = item.Icon || { Name: undefined };
 				icon.Color = icon.Color || "medium";
 				icon.Slot = icon.Slot || "start";
 				return {
+					ID: item.ID,
 					Title: item.Title,
 					Link: item.Link,
 					Params: item.Params,
@@ -318,7 +320,6 @@ export class AppComponent implements OnInit {
 					Children: item.Children,
 					Expanded: item.Expanded,
 					Detail: item.Detail,
-					ID: item.ID,
 					Thumbnail: item.Thumbnail,
 					Icon: icon
 				};
@@ -327,7 +328,11 @@ export class AppComponent implements OnInit {
 			.map(item => this.updateSidebarItemAsync(index, -1, item)));
 		}
 		else {
-			this.sidebar.Menu[index].Items = [];
+			this.sidebar.MainMenu[index].Items = [];
+		}
+
+		if (onNext !== undefined) {
+			onNext();
 		}
 	}
 
@@ -338,13 +343,7 @@ export class AppComponent implements OnInit {
 		}
 		if (updateThumbnai) {
 			const profile = this.configSvc.getAccount().profile;
-			if (profile !== undefined) {
-				this.sidebar.Header.Thumbnail = profile.avatarURI;
-				this.sidebar.Header.ThumbnailOnClick = _ => AppEvents.broadcast("Navigate", { Type: "Profile" });
-			}
-			else {
-				this.sidebar.Header.Thumbnail = this.sidebar.Header.ThumbnailOnClick = undefined;
-			}
+			this.sidebar.Header.Thumbnail = profile !== undefined ? profile.avatarURI : undefined;
 		}
 	}
 
@@ -353,14 +352,14 @@ export class AppComponent implements OnInit {
 			this.sidebar.Footer = [];
 		}
 		if (typeof args.Predicate === "function" ? args.Predicate(this.sidebar) : true) {
-			this.sidebar.Footer.insert(args.Button, args.Index !== undefined ? args.Index : 0);
+			this.sidebar.Footer.insert(args.Button, args.Index !== undefined ? args.Index : this.sidebar.Footer.length);
 			if (typeof args.OnCompleted === "function") {
 				args.OnCompleted(this.sidebar);
 			}
 		}
 		if (this.configSvc.isAuthenticated) {
 			AppUtility.invoke(async () => {
-				if (this.sidebar.Footer.length > 0 && this.sidebar.Footer.first(button => button.Name === "preferences") === undefined) {
+				if (this.sidebar.Footer.findIndex(btn => btn.Name === "preferences") < 0) {
 					this.sidebar.Footer.push({
 						Name: "preferences",
 						Icon: "settings",
@@ -416,12 +415,13 @@ export class AppComponent implements OnInit {
 			const url = "LogIn" === info.args.Type
 				? this.configSvc.appConfig.URLs.users.login
 				: "Profile" === info.args.Type
-					? this.configSvc.appConfig.URLs.users.profile + "/my"
+					? `${this.configSvc.appConfig.URLs.users.profile}/my`
 					: "Profiles" === info.args.Type || "Accounts" === info.args.Type
 						? this.configSvc.appConfig.URLs.users.list
 						: info.args.url || this.configSvc.appConfig.URLs.home;
 			switch ((info.args.Direction as string || "Forward").toLowerCase()) {
 				case "home":
+				case "root":
 					await this.configSvc.navigateHomeAsync(url);
 					break;
 				case "back":
@@ -433,23 +433,19 @@ export class AppComponent implements OnInit {
 			}
 		});
 
-		AppEvents.on("App", async info => {
+		AppEvents.on("App", info => {
 			if ("LanguageChanged" === info.args.Type) {
-				await this.updateSidebarAsync({ Source: "AppLanguageChanged" }, true);
-				await this.normalizeSidebarTopItemsAsync();
 				AppEvents.sendToElectron("App", { Type: "LanguageChanged", Language: this.configSvc.appConfig.language });
+				AppUtility.invoke(async () => await this.updateSidebarAsync({}, true, () => this.normalizeSidebarItems()), 13);
 			}
 		});
 
-		AppEvents.on("Session", async info => {
+		AppEvents.on("Session", info => {
 			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
-				await this.updateSidebarAsync({ Source: "SessionLogInOut" }, true);
-				await this.normalizeSidebarTopItemsAsync();
 				if ("LogOut" === info.args.Type) {
-					this.sidebar.Header.Title = this.configSvc.appConfig.app.name;
-					this.sidebar.Header.TitleOnClick = () => {};
-					this.updateSidebarHeader();
+					this.updateSidebarHeader({ Title: this.configSvc.appConfig.app.name });
 				}
+				AppUtility.invoke(async () => await this.updateSidebarAsync({}, true, () => this.normalizeSidebarItems()), 13);
 			}
 		});
 
@@ -499,12 +495,12 @@ export class AppComponent implements OnInit {
 			"OK" === data.Status
 				? await this.configSvc.getResourceAsync(`users.activate.messages.success.${("account" === data.Mode ? "account" : "password")}`)
 				: await this.configSvc.getResourceAsync("users.activate.messages.error.general", { error: (data.Error ? ` (${data.Error.Message})` : "") }),
-			async () => {
+			_ => {
 				this.configSvc.appConfig.URLs.stack[this.configSvc.appConfig.URLs.stack.length - 1] = {
 					url: this.configSvc.appConfig.URLs.home,
 					params: {}
 				};
-				await this.router.navigateByUrl(this.configSvc.appConfig.URLs.home);
+				AppEvents.broadcast("Navigate", { Direction: "Home" });
 			}
 		);
 	}
@@ -565,7 +561,7 @@ export class AppComponent implements OnInit {
 				options: appConfig.options,
 				languages: appConfig.languages
 			}});
-			await this.normalizeSidebarTopItemsAsync();
+			await this.normalizeSidebarItems();
 			await this.appFormsSvc.hideLoadingAsync(async () => {
 				if (this.configSvc.appConfig.services.all.map(svc => svc.name).indexOf(this.portalsCoreSvc.name) > -1) {
 					await this.portalsCoreSvc.initializeAsync();
