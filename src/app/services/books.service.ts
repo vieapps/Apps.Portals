@@ -46,9 +46,9 @@ export class BooksService extends BaseService {
 		AppAPIs.registerAsObjectScopeProcessor(this.name, "Statistic", async message => await this.processUpdateStatisticMessageAsync(message));
 		AppAPIs.registerAsObjectScopeProcessor(this.name, "Bookmarks", async message => await this.processUpdateBookmarkMessageAsync(message));
 
-		AppEvents.on("App", async info => {
+		AppEvents.on("App", info => {
 			if ("HomePageIsOpened" === info.args.Type && this._reading.ID !== undefined) {
-				await this.updateSidebarAsync();
+				AppUtility.invoke(async () => await this.updateSidebarAsync(), 13);
 				this._reading.ID = undefined;
 			}
 		});
@@ -67,21 +67,24 @@ export class BooksService extends BaseService {
 			}
 		});
 
-		AppEvents.on("Account", async info => {
+		AppEvents.on("Account", info => {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode) {
-				await this.loadBookmarksAsync(async () => await this.getBookmarksAsync());
+				AppUtility.invoke(async () => await this.loadBookmarksAsync(async () => await this.getBookmarksAsync()), 123);
 			}
 		});
 
 		AppEvents.on("Profile", info => {
-			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.active === this.name) {
-				this.updateSidebarTitle();
+			if ("Updated" === info.args.Type && "APIs" === info.args.Mode) {
+				if (this.configSvc.appConfig.services.active === this.name) {
+					this.updateSidebarTitle();
+				}
+				AppUtility.invoke(async () => await this.loadBookmarksAsync(async () => await this.getBookmarksAsync()), 789);
 			}
 		});
 
-		AppEvents.on(this.name, async info => {
+		AppEvents.on(this.name, info => {
 			if ("CategoriesUpdated" === info.args.Type) {
-				await this.updateSidebarAsync();
+				AppUtility.invoke(async () => await this.updateSidebarAsync(), 13);
 			}
 			else if ("OpenBook" === info.args.Type || "OpenChapter" === info.args.Type) {
 				const book = Book.get(info.args.ID);
@@ -90,7 +93,7 @@ export class BooksService extends BaseService {
 				}
 			}
 			else if ("CloseBook" === info.args.Type && this._reading.ID !== undefined) {
-				await this.updateSidebarAsync();
+				AppUtility.invoke(async () => await this.updateSidebarAsync(), 13);
 				this._reading.ID = undefined;
 				this._reading.Chapter = undefined;
 			}
