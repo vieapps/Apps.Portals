@@ -467,6 +467,7 @@ export class ConfigurationService extends BaseService {
 				this.appConfig.session.account = Account.deserialize(this.appConfig.session.account);
 				if (this.appConfig.session.account.id !== undefined) {
 					Account.set(this.appConfig.session.account);
+					AppEvents.broadcast("Account", { Type: "Loaded", Mode: "Storage" });
 				}
 			}
 		}

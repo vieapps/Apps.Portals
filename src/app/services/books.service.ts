@@ -35,14 +35,16 @@ export class BooksService extends BaseService {
 	}
 
 	private initialize() {
+		AppAPIs.registerAsServiceScopeProcessor("Scheduler", () => AppUtility.invoke(async () => {
+			const profile = this.configSvc.getAccount().profile;
+			if (profile !== undefined) {
+				await this.sendBookmarksAsync(() => profile.LastSync = new Date());
+			}
+		}, 123));
+
 		AppAPIs.registerAsObjectScopeProcessor(this.name, "Book", message => this.processUpdateBookMessage(message));
 		AppAPIs.registerAsObjectScopeProcessor(this.name, "Statistic", async message => await this.processUpdateStatisticMessageAsync(message));
 		AppAPIs.registerAsObjectScopeProcessor(this.name, "Bookmarks", async message => await this.processUpdateBookmarkMessageAsync(message));
-		AppAPIs.registerAsServiceScopeProcessor("Scheduler", async () => {
-			if (this.configSvc.isAuthenticated) {
-				await this.sendBookmarksAsync(() => this.configSvc.getAccount().profile.LastSync = new Date());
-			}
-		});
 
 		AppEvents.on("App", async info => {
 			if ("HomePageIsOpened" === info.args.Type && this._reading.ID !== undefined) {
@@ -51,20 +53,23 @@ export class BooksService extends BaseService {
 			}
 		});
 
-		AppEvents.on("Account", async info => {
-			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.active === this.name) {
-				await this.loadBookmarksAsync(async () => await this.getBookmarksAsync());
+		AppEvents.on("Session", info => {
+			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
+				const defer = this.configSvc.appConfig.services.active === this.name ? 456 : 789;
+				AppUtility.invoke(() => this.prepareSidebarFooterButtons(() => {
+					if (this.configSvc.appConfig.services.active === this.name) {
+						AppUtility.invoke(() => AppEvents.broadcast("ActiveSidebar", { Name: "books" }), defer + 13);
+					}
+				}), defer);
+				if ("LogIn" === info.args.Type) {
+					AppUtility.invoke(() => this.prepareSidebarFooterButtons(), 3456);
+				}
 			}
 		});
 
-		AppEvents.on("Session", async info => {
-			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
-				if (this.configSvc.appConfig.services.active === this.name) {
-					this.prepareSidebarFooterButtons();
-				}
-				else {
-					AppUtility.invoke(() => this.prepareSidebarFooterButtons(), 567);
-				}
+		AppEvents.on("Account", async info => {
+			if ("Updated" === info.args.Type && "APIs" === info.args.Mode) {
+				await this.loadBookmarksAsync(async () => await this.getBookmarksAsync());
 			}
 		});
 
@@ -74,7 +79,7 @@ export class BooksService extends BaseService {
 			}
 		});
 
-		AppEvents.on("Books", async info => {
+		AppEvents.on(this.name, async info => {
 			if ("CategoriesUpdated" === info.args.Type) {
 				await this.updateSidebarAsync();
 			}
@@ -100,13 +105,11 @@ export class BooksService extends BaseService {
 			this.loadInstructionsAsync(async () => await this.fetchInstructionsAsync()),
 			this.loadStatisticsAsync()
 		]);
-		if (this.configSvc.isAuthenticated) {
-			await this.loadBookmarksAsync(async () => await this.fetchBookmarksAsync());
-		}
 		if (this.configSvc.appConfig.services.active === this.name) {
 			this.configSvc.appConfig.URLs.search = "/books/search";
 			AppEvents.broadcast("ActiveSidebar", { Name: "books" });
 		}
+		AppUtility.invoke(() => this.prepareSidebarFooterButtons(), 3456);
 		if (onNext !== undefined) {
 			onNext();
 		}
@@ -138,7 +141,7 @@ export class BooksService extends BaseService {
 		});
 	}
 
-	private prepareSidebarFooterButtons(source?: string) {
+	private prepareSidebarFooterButtons(onNext?: () => void) {
 		AppEvents.broadcast("UpdateSidebarFooter", {
 			Button: {
 				Name: "books",
@@ -155,17 +158,19 @@ export class BooksService extends BaseService {
 				}
 			},
 			Index: this.menuIndex,
-			Predicate: (sidebar: AppSidebar) => this.configSvc.appConfig.services.all.map(svc => svc.name).indexOf(this.name) > -1 && sidebar.Footer.map(btn => btn.Name).indexOf("books") < 0,
+			Predicate: (sidebar: AppSidebar) => sidebar.Footer.map(btn => btn.Name).indexOf("books") < 0,
 			OnCompleted: (sidebar: AppSidebar) => {
-				if (sidebar.Footer !== undefined && sidebar.Footer.length > 1) {
+				if (sidebar.Footer.length > 1) {
 					const index = sidebar.Footer.findIndex(button => button.Name === "books");
 					if (sidebar.Footer[index - 1].Name === "preferences") {
 						sidebar.Footer.move(index, index - 1);
 					}
 				}
-			},
-			Source: source || "ServiceEvent"
+			}
 		});
+		if (onNext !== undefined) {
+			onNext();
+		}
 	}
 
 	private getTOCItem(book: Book, index: number, isReading: boolean) {

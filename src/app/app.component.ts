@@ -353,7 +353,7 @@ export class AppComponent implements OnInit {
 		}
 		if (typeof args.Predicate === "function" ? args.Predicate(this.sidebar) : true) {
 			this.sidebar.Footer.insert(args.Button, args.Index !== undefined ? args.Index : 0);
-			if (typeof args.CnCompleted === "function") {
+			if (typeof args.OnCompleted === "function") {
 				args.OnCompleted(this.sidebar);
 			}
 		}

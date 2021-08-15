@@ -11,12 +11,11 @@ import { AppFormsControlConfig, AppFormsControlLookupOptionsConfig, AppFormsLook
 import { AppFormsControlComponent } from "@app/components/forms.control.component";
 import { AppFormsService } from "@app/components/forms.service";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
-import { FileOptions } from "@app/services/files.service";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { UsersService } from "@app/services/users.service";
-import { FilesService } from "@app/services/files.service";
+import { FilesService, FileOptions } from "@app/services/files.service";
 import { AttachmentInfo } from "@app/models/base";
 import { Account } from "@app/models/account";
 import { PortalBase as BaseModel, NotificationSettings, EmailNotificationSettings, WebHookNotificationSettings, EmailSettings, WebHookSettings } from "@app/models/portals.base";
@@ -154,35 +153,40 @@ export class PortalsCoreService extends BaseService {
 					await this.getContentTypeAsync(info.args.ID);
 				}
 			}
-			else if ("Changed" === info.args.Type && "Organization" === info.args.Object && this.configSvc.appConfig.services.active === this.name) {
-				this.prepareSidebar();
+			else if ("Changed" === info.args.Type && "Organization" === info.args.Object) {
 				this.updateSidebarTitle();
+				AppUtility.invoke(() => this.prepareSidebar(), 13);
+			}
+		});
+
+		AppEvents.on("Session", info => {
+			if (("LogIn" === info.args.Type || "LogOut" === info.args.Type) && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
+				AppUtility.invoke(async () => {
+					await this.prepareSidebarFooterButtonsAsync();
+					this.activeSidebar();
+				}, 13);
 			}
 		});
 
 		AppEvents.on("Account", info => {
-			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.active === this.name) {
+			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				this.updateSidebarTitle();
-				AppUtility.invoke(async () => await this.prepareSidebarFooterButtonsAsync(), 13);
-				if (Organization.active === undefined) {
+				AppUtility.invoke(async () => {
+					await this.prepareSidebarFooterButtonsAsync();
 					this.prepareSidebar();
-				}
+				}, 13);
 			}
 		});
 
-		AppEvents.on("Session", async info => {
-			if ("LogOut" === info.args.Type && this.configSvc.appConfig.services.active === this.name) {
-				await this.prepareSidebarFooterButtonsAsync();
-			}
-		});
-
-		AppEvents.on("Profile", async info => {
-			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.active === this.name) {
-				const organizations = this.activeOrganizations;
-				const organization = this.activeOrganization;
-				if (organization === undefined || organizations.indexOf(organization.ID) < 0) {
-					await this.getOrganizationAsync(organizations.first(), async _ => await this.setActiveOrganizationAsync(Organization.get(organizations.first())));
-				}
+		AppEvents.on("Profile", info => {
+			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
+				AppUtility.invoke(async () => {
+					const organizations = this.activeOrganizations;
+					const organization = this.activeOrganization;
+					if (organization === undefined || organizations.indexOf(organization.ID) < 0) {
+						await this.getOrganizationAsync(organizations.first(), async _ => await this.setActiveOrganizationAsync(Organization.get(organizations.first())));
+					}
+				}, 13);
 			}
 		});
 	}
@@ -203,12 +207,7 @@ export class PortalsCoreService extends BaseService {
 		}
 		await this.prepareSidebarFooterButtonsAsync(onNext);
 		AppEvents.broadcast(this.name, { Type: "PortalsInitialized" });
-		AppUtility.invoke(() => {
-			if (this.configSvc.isAuthenticated && this.activeOrganization !== undefined) {
-				const activeModule = this.activeModule;
-				AppEvents.broadcast("ActiveSidebar", { Name: activeModule !== undefined && activeModule.contentTypes.length > 0 ? "cms" : "portals" });
-			}
-		}, 789);
+		this.activeSidebar();
 	}
 
 	public canManageOrganization(organization?: Organization, account?: Account) {
@@ -1394,6 +1393,27 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
+	private activeSidebar(onNext?: () => void) {
+		if (this.configSvc.appConfig.services.active === this.name) {
+			AppUtility.invoke(() => {
+				let name = "cms";
+				if (this.configSvc.isAuthenticated && this.activeOrganization !== undefined) {
+					const activeModule = this.activeModule;
+					if (activeModule === undefined || activeModule.contentTypes.length < 1) {
+						name = "portals";
+					}
+				}
+				AppEvents.broadcast("ActiveSidebar", { Name: name });
+				if (onNext !== undefined) {
+					onNext();
+				}
+			}, 456);
+		}
+		else if (onNext !== undefined) {
+			onNext();
+		}
+	}
+
 	private async prepareSidebarFooterButtonsAsync(onNext?: () => void) {
 		const buttons = [{
 			Name: "cms",
@@ -1409,18 +1429,18 @@ export class PortalsCoreService extends BaseService {
 					Icon: "cog",
 					Title: await this.configSvc.getResourceAsync("portals.preferences.portals"),
 					OnClick: (name, sidebar) => this.openSidebar(name, sidebar)
-				},
-				{
-					Name: "chat",
-					Icon: "chatbox",
-					Title: await this.configSvc.getResourceAsync("portals.preferences.chatbox"),
-					OnClick: (name, sidebar) => this.openSidebar(name, sidebar)
-				},
-				{
-					Name: "notifications",
-					Icon: "notifications",
-					Title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
-					OnClick: (name, sidebar) => this.openSidebar(name, sidebar)
+				// },
+				// {
+				// 	Name: "chat",
+				// 	Icon: "chatbox",
+				// 	Title: await this.configSvc.getResourceAsync("portals.preferences.chatbox"),
+				// 	OnClick: (name, sidebar) => this.openSidebar(name, sidebar)
+				// },
+				// {
+				// 	Name: "notifications",
+				// 	Icon: "notifications",
+				// 	Title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
+				// 	OnClick: (name, sidebar) => this.openSidebar(name, sidebar)
 				}
 			);
 		}

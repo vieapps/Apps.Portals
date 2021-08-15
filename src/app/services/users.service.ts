@@ -283,8 +283,8 @@ export class UsersService extends BaseService {
 					case "Update":
 						await this.configSvc.updateSessionAsync(message.Data, () => {
 							this.showLog("The session was updated with new access token", this.configSvc.appConfig.session);
-							AppEvents.broadcast("Account", { Type: "Updated", Mode: "Session" });
-							AppEvents.sendToElectron(this.name, { Type: "Session", Data: this.configSvc.appConfig.session });
+							AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
+							AppEvents.sendToElectron("Users", { Type: "Session", Data: this.configSvc.appConfig.session });
 						}, false, false);
 						break;
 
@@ -299,9 +299,9 @@ export class UsersService extends BaseService {
 								AppAPIs.reopenWebSocket("Reopens when the session was revoked by the APIs");
 							}), false, false);
 						}
-						AppEvents.broadcast("Account", { Type: "Updated", Mode: "Session" });
-						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Session" });
-						AppEvents.sendToElectron(this.name, { Type: "LogOut" });
+						AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
+						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
+						AppEvents.sendToElectron("Users", { Type: "LogOut" });
 						break;
 
 					case "State":
@@ -309,7 +309,7 @@ export class UsersService extends BaseService {
 						if (userProfile !== undefined) {
 							userProfile.IsOnline = message.Data.IsOnline ? true : this.configSvc.isAuthenticated && account.id === userProfile.ID ? true : false;
 							userProfile.LastAccess = new Date();
-							AppEvents.sendToElectron(this.name, message);
+							AppEvents.sendToElectron("Users", message);
 						}
 						break;
 
@@ -323,7 +323,7 @@ export class UsersService extends BaseService {
 				this.configSvc.updateAccount(message.Data);
 				if (this.configSvc.isAuthenticated && account.id === message.Data.ID) {
 					AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
-					AppEvents.sendToElectron(this.name, message);
+					AppEvents.sendToElectron("Users", message);
 				}
 				break;
 

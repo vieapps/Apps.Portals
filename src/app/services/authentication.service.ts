@@ -211,8 +211,8 @@ export class AuthenticationService extends BaseService {
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			async data => await this.configSvc.updateSessionAsync(data, async () => await this.configSvc.registerSessionAsync(() => {
 				this.showLog("Log out successful", this.configSvc.isDebug ? data : "");
-				AppEvents.broadcast("Account", { Type: "Updated" });
-				AppEvents.broadcast("Profile", { Type: "Updated" });
+				AppEvents.broadcast("Account", { Type: "Updated", Mode: "Apps" });
+				AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Apps" });
 				AppEvents.broadcast("Session", { Type: "LogOut" });
 				AppEvents.sendToElectron("Users", { Type: "LogOut", Data: this.configSvc.appConfig.session });
 				if (onSuccess !== undefined) {

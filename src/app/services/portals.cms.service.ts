@@ -112,7 +112,7 @@ export class PortalsCmsService extends BaseService {
 					await this.updateSidebarWithCategoriesAsync();
 				}
 			}
-			else if ("Changed" === info.args.Type && ("Organization" === info.args.Object || "Module" === info.args.Object) && this.configSvc.appConfig.services.active === this.name) {
+			else if ("Changed" === info.args.Type && ("Organization" === info.args.Object || "Module" === info.args.Object)) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				await this.updateSidebarAsync();
@@ -122,27 +122,41 @@ export class PortalsCmsService extends BaseService {
 			}
 		});
 
-		AppEvents.on("Session", async info => {
-			if (("LogIn" === info.args.Type || "LogOut" === info.args.Type) && this.configSvc.appConfig.services.active === this.name) {
-				this._sidebarCategory = undefined;
-				this._sidebarContentType = undefined;
-				await this.updateSidebarAsync();
-				if ("LogIn" === info.args.Type) {
-					await this.prepareFeaturedContentsAsync();
-				}
+		AppEvents.on("Session", info => {
+			if (("LogIn" === info.args.Type || "LogOut" === info.args.Type) && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
+				AppUtility.invoke(async () => {
+					this._sidebarCategory = undefined;
+					this._sidebarContentType = undefined;
+					await this.updateSidebarAsync();
+					if ("LogIn" === info.args.Type) {
+						await this.prepareFeaturedContentsAsync();
+					}
+				}, 13);
+			}
+		});
+
+		AppEvents.on("Account", async info => {
+			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
+				AppUtility.invoke(async () => {
+					this._sidebarCategory = undefined;
+					this._sidebarContentType = undefined;
+					await this.updateSidebarAsync();
+				}, 13);
 			}
 		});
 
 		AppEvents.on("Profile", async info => {
-			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.active === this.name) {
+			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				if (Organization.active !== undefined && this.portalsCoreSvc.activeOrganizations.indexOf(Organization.active.ID) < 0) {
-					await this.portalsCoreSvc.removeActiveOrganizationAsync(Organization.active.ID);
-					this._sidebarCategory = undefined;
-					this._sidebarContentType = undefined;
-					await Promise.all([
-						this.prepareFeaturedContentsAsync(),
-						this.updateSidebarAsync()
-					]);
+					AppUtility.invoke(async () => {
+						await this.portalsCoreSvc.removeActiveOrganizationAsync(Organization.active.ID);
+						this._sidebarCategory = undefined;
+						this._sidebarContentType = undefined;
+						await Promise.all([
+							this.prepareFeaturedContentsAsync(),
+							this.updateSidebarAsync()
+						]);
+					}, 13);
 				}
 			}
 		});
