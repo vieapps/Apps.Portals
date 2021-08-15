@@ -57,6 +57,13 @@ export class PortalsCmsService extends BaseService {
 
 	private initialize() {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => {
+			// check system identity with activate organizations
+			const systemID = message.Data !== undefined ? message.Data.ID : undefined;
+			if (systemID === undefined || this.portalsCoreSvc.activeOrganizations.indexOf(systemID) < 0) {
+				return;
+			}
+
+			// process the message
 			switch (message.Type.Object) {
 				case "Category":
 				case "CMS.Category":
