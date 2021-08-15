@@ -1,18 +1,19 @@
 import { Injectable } from "@angular/core";
 import { DatePipe } from "@angular/common";
-import { AppAPIs, AppMessage } from "@app/components/app.apis";
+import { AppAPIs } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { AppCustomCompleter } from "@app/components/app.completer";
-import { AppPagination, AppDataRequest } from "@app/components/app.pagination";
-import { AppFormsControlConfig } from "@app/components/forms.service";
+import { AppPagination } from "@app/components/app.pagination";
+import { AppFormsControlConfig } from "@app/components/forms.objects";
 import { Account } from "@app/models/account";
 import { UserProfile } from "@app/models/user";
 import { Privilege } from "@app/models/privileges";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
+import { AppMessage, AppDataRequest } from "@app/components/app.objects";
 
 @Injectable()
 export class UsersService extends BaseService {
@@ -39,10 +40,8 @@ export class UsersService extends BaseService {
 				}
 			}
 		});
-		AppEvents.on("Navigated", _ => {
-			const profile = this.configSvc.isAuthenticated && AppUtility.isObject(this.configSvc.appConfig.session.account, true)
-				? this.configSvc.appConfig.session.account.profile
-				: undefined;
+		AppEvents.on("Navigating", _ => {
+			const profile = this.configSvc.getAccount().profile;
 			if (profile !== undefined) {
 				profile.LastAccess = new Date();
 			}

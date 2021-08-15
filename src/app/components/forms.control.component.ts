@@ -4,7 +4,8 @@ import { CompleterService } from "ng2-completer";
 import * as CKEditor from "@app/components/ckeditor";
 import "@app/components/ckeditor.vi";
 import { AppUtility } from "@app/components/app.utility";
-import { AppFormsControl, AppFormsService, AppFormsLookupValue } from "@app/components/forms.service";
+import { AppFormsControl, AppFormsLookupValue } from "@app/components/forms.objects";
+import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { FilesService } from "@app/services/files.service";
 

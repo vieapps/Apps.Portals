@@ -1,13 +1,15 @@
 import { Injectable } from "@angular/core";
-import { AppAPIs, AppMessage } from "@app/components/app.apis";
+import { AppAPIs } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
-import { AppUtility, AppSidebarMenuItem } from "@app/components/app.utility";
+import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppCustomCompleter } from "@app/components/app.completer";
-import { AppPagination, AppDataRequest, AppDataPagination } from "@app/components/app.pagination";
-import { AppFormsControlConfig, AppFormsControlLookupOptionsConfig, AppFormsLookupValue, AppFormsControl, AppFormsService } from "@app/components/forms.service";
+import { AppPagination } from "@app/components/app.pagination";
+import { AppSidebar, AppSidebarMenuItem, AppMessage, AppDataRequest, AppDataPagination } from "@app/components/app.objects";
+import { AppFormsControlConfig, AppFormsControlLookupOptionsConfig, AppFormsLookupValue, AppFormsControl } from "@app/components/forms.objects";
 import { AppFormsControlComponent } from "@app/components/forms.control.component";
+import { AppFormsService } from "@app/components/forms.service";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 import { FileOptions } from "@app/services/files.service";
 import { Base as BaseService } from "@app/services/base.service";
@@ -161,7 +163,10 @@ export class PortalsCoreService extends BaseService {
 		AppEvents.on("Account", info => {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.active === this.name) {
 				this.updateSidebarTitle();
-				this.prepareSidebar(async () => await this.prepareSidebarFooterButtonsAsync());
+				AppUtility.invoke(async () => await this.prepareSidebarFooterButtonsAsync(), 13);
+				if (Organization.active === undefined) {
+					this.prepareSidebar();
+				}
 			}
 		});
 
@@ -191,11 +196,19 @@ export class PortalsCoreService extends BaseService {
 			await this.getActiveOrganizationAsync(undefined, true);
 		}
 		if (this.configSvc.appConfig.services.active === this.name) {
-			this.prepareSidebar();
+			if (Organization.active === undefined) {
+				this.prepareSidebar();
+			}
 			this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 		}
 		await this.prepareSidebarFooterButtonsAsync(onNext);
 		AppEvents.broadcast(this.name, { Type: "PortalsInitialized" });
+		AppUtility.invoke(() => {
+			if (this.configSvc.isAuthenticated && this.activeOrganization !== undefined) {
+				const activeModule = this.activeModule;
+				AppEvents.broadcast("ActiveSidebar", { Name: activeModule !== undefined && activeModule.contentTypes.length > 0 ? "cms" : "portals" });
+			}
+		}, 789);
 	}
 
 	public canManageOrganization(organization?: Organization, account?: Account) {
@@ -1267,23 +1280,27 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	private updateSidebarTitle() {
-		const organization = this.configSvc.isAuthenticated ? this.activeOrganization : undefined;
-		AppEvents.broadcast("UpdateSidebarTitle", {
-			title: organization !== undefined ? organization.Alias : this.configSvc.appConfig.app.name,
-			onClick: organization !== undefined && this.canManageOrganization(organization) ? async () => await this.configSvc.navigateForwardAsync(organization.routerURI) : () => {}
-		});
+		AppUtility.invoke(async () => {
+			const organization = this.configSvc.isAuthenticated ? this.activeOrganization : undefined;
+			AppEvents.broadcast("UpdateSidebarTitle", {
+				Title: organization !== undefined ? organization.Alias : this.configSvc.appConfig.app.name,
+				OnClick: (organization !== undefined && this.canManageOrganization(organization) ? async _ => await this.configSvc.navigateForwardAsync(organization.routerURI) : _ => {}) as (sidebar?: AppSidebar, event?: Event) => void
+			});
+		}, 13);
 	}
 
-	private openSidebar(name: string, sidebar: any, event?: string) {
-		if (sidebar.active !== name) {
-			sidebar.active = name;
-			AppEvents.broadcast(event || this.name, { mode: "OpenSidebar", name: name });
-			if (name === "cms" || name === "portals") {
+	private openSidebar(name: string, sidebar: AppSidebar) {
+		if (sidebar.Active !== name) {
+			if (sidebar.Active !== "cms" && sidebar.Active !== "portals" && (name === "cms" || name === "portals")) {
 				this.updateSidebarTitle();
 			}
+			sidebar.Active = name;
+			if (sidebar.Active === "cms" || sidebar.Active === "portals") {
+				this.configSvc.appConfig.services.active = this.name;
+				this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
+			}
+			AppUtility.invoke(() => AppEvents.broadcast("OpenSidebar", { Name: sidebar.Active }), 13);
 		}
-		this.configSvc.appConfig.services.active = this.name;
-		this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 	}
 
 	private prepareSidebar(onNext?: () => void) {
@@ -1297,79 +1314,79 @@ export class PortalsCoreService extends BaseService {
 			if (canManageOrganization) {
 				items.push(
 					{
-						title: "{{portals.sidebar.logs}}",
-						link: "/logs",
-						direction: "root",
-						icon: { name: "file-tray-full" }
+						Title: "{{portals.sidebar.logs}}",
+						Link: "/logs",
+						Direction: "root",
+						Icon: { Name: "file-tray-full" }
 					},
 					{
-						title: "{{portals.sidebar.organizations}}",
-						link: this.getRouterLink(undefined, "list", "all", "organization", "core"),
-						direction: "root",
-						icon: { name: "business" }
+						Title: "{{portals.sidebar.organizations}}",
+						Link: this.getRouterLink(undefined, "list", "all", "organization", "core"),
+						Direction: "root",
+						Icon: { Name: "business" }
 					},
 					{
-						title: "{{portals.sidebar.roles}}",
-						link: this.getRouterLink(undefined, "list", "all", "role", "core"),
-						direction: "root",
-						icon: { name: "body" }
+						Title: "{{portals.sidebar.roles}}",
+						Link: this.getRouterLink(undefined, "list", "all", "role", "core"),
+						Direction: "root",
+						Icon: { Name: "body" }
 					},
 					{
-						title: "{{portals.sidebar.modules}}",
-						link: this.getRouterLink(undefined, "list", "all", "module", "core"),
-						direction: "root",
-						icon: { name: "albums" }
+						Title: "{{portals.sidebar.modules}}",
+						Link: this.getRouterLink(undefined, "list", "all", "module", "core"),
+						Direction: "root",
+						Icon: { Name: "albums" }
 					}
 				);
 			}
 
 			items.push({
-				title: "{{portals.sidebar.content-types}}",
-				link: this.getRouterLink(undefined, "list", "all", "content.type", "core"),
-				direction: "root",
-				icon: { name: "git-compare" }
+				Title: "{{portals.sidebar.content-types}}",
+				Link: this.getRouterLink(undefined, "list", "all", "content.type", "core"),
+				Direction: "root",
+				Icon: { Name: "git-compare" }
 			});
 
 			if (canModerateOrganization) {
 				items.push({
-					title: "{{portals.sidebar.expressions}}",
-					link: this.getRouterLink(undefined, "list", "all", "expression", "core"),
-					direction: "root",
-					icon: { name: "construct" }
+					Title: "{{portals.sidebar.expressions}}",
+					Link: this.getRouterLink(undefined, "list", "all", "expression", "core"),
+					Direction: "root",
+					Icon: { Name: "construct" }
 				});
 			}
 
 			if (canManageOrganization) {
 				items.push({
-					title: "{{portals.sidebar.sites}}",
-					link: this.getRouterLink(undefined, "list", "all", "site", "core"),
-					direction: "root",
-					icon: { name: "globe" }
+					Title: "{{portals.sidebar.sites}}",
+					Link: this.getRouterLink(undefined, "list", "all", "site", "core"),
+					Direction: "root",
+					Icon: { Name: "globe" }
 				});
 			}
 
 			if (canModerateOrganization) {
 				items.push({
-					title: "{{portals.sidebar.desktops}}",
-					link: this.getRouterLink(undefined, "list", "all", "desktop", "core"),
-					direction: "root",
-					icon: { name: "desktop" }
+					Title: "{{portals.sidebar.desktops}}",
+					Link: this.getRouterLink(undefined, "list", "all", "desktop", "core"),
+					Direction: "root",
+					Icon: { Name: "desktop" }
 				});
 			}
 
 			items.push({
-				title: "{{portals.sidebar.cms-categories}}",
-				link: this.getRouterLink(undefined, "list", "all", "category"),
-				direction: "root",
-				icon: { name: "color-filter" }
+				Title: "{{portals.sidebar.cms-categories}}",
+				Link: this.getRouterLink(undefined, "list", "all", "category"),
+				Direction: "root",
+				Icon: { Name: "color-filter" }
 			});
 		}
 
 		AppEvents.broadcast("UpdateSidebar", {
-			index: 1,
-			name: "portals",
-			reset: true,
-			items: items
+			Index: 1,
+			Name: "portals",
+			Reset: true,
+			Items: items
 		});
 
 		if (onNext !== undefined) {
@@ -1379,39 +1396,39 @@ export class PortalsCoreService extends BaseService {
 
 	private async prepareSidebarFooterButtonsAsync(onNext?: () => void) {
 		const buttons = [{
-			name: "cms",
-			icon: "logo-firebase",
-			title: await this.configSvc.getResourceAsync("portals.preferences.cms"),
-			onClick: (_: Event, name: string, sidebar: any) => this.openSidebar(name, sidebar)
+			Name: "cms",
+			Icon: "logo-firebase",
+			Title: await this.configSvc.getResourceAsync("portals.preferences.cms"),
+			OnClick: (name: string, sidebar: AppSidebar) => this.openSidebar(name, sidebar)
 		}];
 
 		if (this.configSvc.isAuthenticated) {
 			buttons.push(
 				{
-					name: "portals",
-					icon: "cog",
-					title: await this.configSvc.getResourceAsync("portals.preferences.portals"),
-					onClick: (_: Event, name, sidebar) => this.openSidebar(name, sidebar)
-				// },
-				// {
-				// 	name: "chat",
-				// 	icon: "chatbox",
-				// 	title: await this.configSvc.getResourceAsync("portals.preferences.chatbox"),
-				// 	onClick: (_: Event, name, sidebar) => this.openSidebar(name, sidebar, "Chat")
-				// },
-				// {
-				// 	name: "notifications",
-				// 	icon: "notifications",
-				// 	title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
-				// 	onClick: (_: Event, name, sidebar) => this.openSidebar(name, sidebar, "Notifications")
+					Name: "portals",
+					Icon: "cog",
+					Title: await this.configSvc.getResourceAsync("portals.preferences.portals"),
+					OnClick: (name, sidebar) => this.openSidebar(name, sidebar)
+				},
+				{
+					Name: "chat",
+					Icon: "chatbox",
+					Title: await this.configSvc.getResourceAsync("portals.preferences.chatbox"),
+					OnClick: (name, sidebar) => this.openSidebar(name, sidebar)
+				},
+				{
+					Name: "notifications",
+					Icon: "notifications",
+					Title: await this.configSvc.getResourceAsync("portals.preferences.notifications"),
+					OnClick: (name, sidebar) => this.openSidebar(name, sidebar)
 				}
 			);
 		}
 
 		buttons.forEach((button, index) => AppEvents.broadcast("UpdateSidebarFooter", {
-			button: button,
-			index: index,
-			reset: index === 0
+			Button: button,
+			Index: index,
+			Reset: index === 0
 		}));
 
 		if (onNext !== undefined) {

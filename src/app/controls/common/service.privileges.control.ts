@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from "@angular/core";
 import { AppUtility } from "@app/components/app.utility";
-import { AppFormsControl } from "@app/components/forms.service";
+import { AppFormsControl } from "@app/components/forms.objects";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { Privilege } from "@app/models/privileges";
 

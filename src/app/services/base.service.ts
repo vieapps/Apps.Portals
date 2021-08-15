@@ -2,12 +2,13 @@ import { Injectable } from "@angular/core";
 import { Location } from "@angular/common";
 import { Router, CanActivate } from "@angular/router";
 import { AppConfig } from "@app/app.config";
-import { AppAPIs, AppRequestInfo, AppMessage } from "@app/components/app.apis";
+import { AppAPIs } from "@app/components/app.apis";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
-import { AppPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppPagination } from "@app/components/app.pagination";
+import { AppRequestInfo, AppMessage, AppDataRequest } from "@app/components/app.objects";
 
-/** Base class of all services */
+/** Base class of all services of the app */
 export class Base {
 
 	private _name = "";
@@ -299,6 +300,19 @@ export class Base {
 		});
 	}
 
+}
+
+/** Presents a logging message of a service */
+export interface ServiceLog {
+	ID: string;
+	Time: Date;
+	CorrelationID: string;
+	DeveloperID?: string;
+	AppID?: string;
+	ServiceName: string;
+	ObjectName: string;
+	Logs: string;
+	Stack: string;
 }
 
 @Injectable()

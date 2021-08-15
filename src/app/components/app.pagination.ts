@@ -1,28 +1,7 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
-
-/** Presents a data pagination */
-export interface AppDataPagination {
-	TotalRecords: number;
-	TotalPages: number;
-	PageSize: number;
-	PageNumber: number;
-}
-
-/** Presents a filtering expression for requesting data */
-export interface AppDataFilter {
-	Query?: string;
-	And?: Array<{ [key: string]: any }>;
-	Or?: Array<{ [key: string]: any }>;
-}
-
-/** Presents a information for requesting data */
-export interface AppDataRequest {
-	FilterBy?: AppDataFilter;
-	SortBy?: { [key: string]: any };
-	Pagination?: AppDataPagination;
-}
+import { AppDataPagination, AppDataFilter, AppDataRequest } from "@app/components/app.objects";
 
 /** Servicing component for working with paginations */
 export class AppPagination {

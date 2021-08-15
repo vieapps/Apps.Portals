@@ -17,12 +17,12 @@ import { AppStorage } from "@app/components/app.storage";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppEvents } from "@app/components/app.events";
 import { AppAPIs } from "@app/components/app.apis";
-import { AppUtility, AppSidebarMenuItem } from "@app/components/app.utility";
+import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { Account } from "@app/models/account";
 import { Privilege } from "@app/models/privileges";
-import { Base as BaseService } from "@app/services/base.service";
+import { Base as BaseService, ServiceLog } from "@app/services/base.service";
 
 @Injectable()
 export class ConfigurationService extends BaseService {
@@ -50,7 +50,7 @@ export class ConfigurationService extends BaseService {
 
 	private _definitions: { [key: string]: any } = {};
 
-	public logs = new Array<ServiceLog>();
+	public serviceLogs = new Array<ServiceLog>();
 
 	/** Gets the configuration of the app */
 	public get appConfig() {
@@ -870,72 +870,9 @@ export class ConfigurationService extends BaseService {
 		await this.fetchAsync(`statics/instructions/${service.toLowerCase()}/${language || this.appConfig.language}.json`, onSuccess, onError);
 	}
 
-	/** Gets top items for displaying at sidebar */
-	public async getSidebarTopItemsAsync() {
-		return {
-			home: {
-				title: await this.getResourceAsync("common.sidebar.home"),
-				link: this.appConfig.URLs.home,
-				params: undefined as { [key: string]: string },
-				direction: "root",
-				icon: { name: "home" },
-				thumbnail: undefined as string,
-				onClick: () => {}
-			} as AppSidebarMenuItem,
-			login: {
-				title: await this.getResourceAsync("common.sidebar.login"),
-				link: this.appConfig.URLs.users.login,
-				params: undefined as { [key: string]: string },
-				direction: "forward",
-				icon: { name: "log-in" },
-				thumbnail: undefined as string,
-				onClick: () => {}
-			} as AppSidebarMenuItem,
-			register: {
-				title: await this.getResourceAsync("common.sidebar.register"),
-				link: this.appConfig.URLs.users.register,
-				params: undefined as { [key: string]: string },
-				direction: "forward",
-				icon: { name: "person-add" },
-				thumbnail: undefined as string,
-				onClick: () => {}
-			} as AppSidebarMenuItem,
-			profile: {
-				title: await this.getResourceAsync("common.sidebar.profile"),
-				link: `${this.appConfig.URLs.users.profile}/my`,
-				params: undefined as { [key: string]: string },
-				direction: "forward",
-				icon: { name: "person" },
-				thumbnail: undefined as string,
-				onClick: () => {}
-			} as AppSidebarMenuItem,
-			search: {
-				title: await this.getResourceAsync("common.sidebar.search"),
-				link: undefined,
-				params: undefined as { [key: string]: string },
-				direction: "forward",
-				icon: { name: "search" },
-				thumbnail: undefined as string,
-				onClick: async () => await this.navigateForwardAsync(this.appConfig.URLs.search)
-			} as AppSidebarMenuItem
-		};
-	}
-
 	/** Gets service logs */
 	public async getServiceLogsAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = true) {
 		await this.searchAsync(this.getSearchingPath(undefined, undefined, "logs"), request, onSuccess, onError, true, useXHR);
 	}
 
-}
-
-export interface ServiceLog {
-	ID: string;
-	Time: Date;
-	CorrelationID: string;
-	DeveloperID?: string;
-	AppID?: string;
-	ServiceName: string;
-	ObjectName: string;
-	Logs: string;
-	Stack: string;
 }

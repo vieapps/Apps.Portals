@@ -3,7 +3,7 @@ import { AppUtility } from "@app/components/app.utility";
 import { Privilege, Privileges } from "@app/models/privileges";
 import { UserProfile } from "@app/models/user";
 
-/** Account of the app */
+/** Presents an user account of the app */
 export class Account {
 
 	/** All user account instances */

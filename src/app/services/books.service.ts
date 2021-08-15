@@ -1,12 +1,13 @@
 import { Injectable } from "@angular/core";
 import { Dictionary } from "@app/components/app.collections";
 import { AppStorage } from "@app/components/app.storage";
-import { AppAPIs, AppMessage } from "@app/components/app.apis";
+import { AppAPIs } from "@app/components/app.apis";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppEvents } from "@app/components/app.events";
-import { AppUtility, AppSidebar } from "@app/components/app.utility";
+import { AppUtility } from "@app/components/app.utility";
 import { AppCustomCompleter } from "@app/components/app.completer";
-import { AppPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppPagination } from "@app/components/app.pagination";
+import { AppSidebar, AppSidebarMenuItem, AppMessage, AppDataRequest } from "@app/components/app.objects";
 import { CounterInfo } from "@app/models/counters";
 import { StatisticBase, StatisticInfo } from "@app/models/statistics";
 import { Book, Bookmark } from "@app/models/book";
@@ -30,7 +31,7 @@ export class BooksService extends BaseService {
 	};
 
 	private get menuIndex() {
-		return this.configSvc.appConfig.services.all.length > 1 ? 5 : 0;
+		return this.configSvc.appConfig.services.all.length > 1 ? 4 : 0;
 	}
 
 	private initialize() {
@@ -44,10 +45,7 @@ export class BooksService extends BaseService {
 		});
 
 		AppEvents.on("App", async info => {
-			if ("Initialized" === info.args.Type) {
-				await this.updateSidebarAsync();
-			}
-			else if ("HomePageIsOpened" === info.args.Type && this._reading.ID !== undefined) {
+			if ("HomePageIsOpened" === info.args.Type && this._reading.ID !== undefined) {
 				await this.updateSidebarAsync();
 				this._reading.ID = undefined;
 			}
@@ -98,15 +96,16 @@ export class BooksService extends BaseService {
 		this.prepareSidebarFooterButtons();
 		await this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast("Books", { Type: "BooksUpdated" }));
 		await Promise.all([
-			this.loadCategoriesAsync(async () => {
-				await this.updateSidebarAsync();
-				await this.fetchCategoriesAsync();
-			}),
+			this.loadCategoriesAsync(async () => await this.fetchCategoriesAsync()),
 			this.loadInstructionsAsync(async () => await this.fetchInstructionsAsync()),
 			this.loadStatisticsAsync()
 		]);
 		if (this.configSvc.isAuthenticated) {
 			await this.loadBookmarksAsync(async () => await this.fetchBookmarksAsync());
+		}
+		if (this.configSvc.appConfig.services.active === this.name) {
+			this.configSvc.appConfig.URLs.search = "/books/search";
+			AppEvents.broadcast("ActiveSidebar", { Name: "books" });
 		}
 		if (onNext !== undefined) {
 			onNext();
@@ -114,76 +113,68 @@ export class BooksService extends BaseService {
 	}
 
 	private updateSidebarTitle() {
-		const profile = this.configSvc.isAuthenticated ? this.configSvc.getAccount().profile : undefined;
-		AppEvents.broadcast("UpdateSidebarTitle", {
-			title: profile !== undefined ? profile.Name : this.configSvc.appConfig.app.name,
-			onClick: this.configSvc.isAuthenticated ? () => AppEvents.broadcast("Navigate", { Type: "Profile" }) : () => {}
-		});
+		AppUtility.invoke(() => {
+			const profile = this.configSvc.isAuthenticated ? this.configSvc.getAccount().profile : undefined;
+			AppEvents.broadcast("UpdateSidebarTitle", {
+				Title: profile !== undefined ? profile.Name : this.configSvc.appConfig.app.name,
+				OnClick: (profile !== undefined ? _ => AppEvents.broadcast("Navigate", { Type: "Profile" }) : _ => {}) as (sidebar?: AppSidebar, event?: Event) => void
+			});
+		}, 13);
 	}
 
 	private async updateSidebarAsync() {
 		AppEvents.broadcast("UpdateSidebar", {
-			index: this.menuIndex,
-			name: "books",
-			reset: true,
-			parent: { title: await this.configSvc.getResourceAsync("books.home.statistics.categories") },
-			items: this.categories.map(category => ({
-				title: category.Name,
-				link: `/books/category/${AppUtility.toANSI(category.Name, true)}`,
-				params: { "x-request": AppCrypto.jsonEncode({ Category: category.Name }) },
-				expandable: AppUtility.isGotData(category.Children),
-				direction: "root"
+			Index: this.menuIndex,
+			Name: "books",
+			Reset: true,
+			Parent: { Title: await this.configSvc.getResourceAsync("books.home.statistics.categories") },
+			Items: this.categories.map(category => ({
+				Title: category.Name,
+				Link: `/books/category/${AppUtility.toANSI(category.Name, true)}`,
+				Params: { "x-request": AppCrypto.jsonEncode({ Category: category.Name }) },
+				Expanded: AppUtility.isGotData(category.Children),
+				Direction: "root"
 			}))
 		});
 	}
 
-	private prepareSidebarFooterButtons(onNext?: () => void) {
+	private prepareSidebarFooterButtons(source?: string) {
 		AppEvents.broadcast("UpdateSidebarFooter", {
-			button: {
-				name: "books",
-				icon: "library",
-				title: "eBooks",
-				onClick: (_: Event, name: string, sidebar: AppSidebar) => {
-					if (sidebar.active !== name) {
-						sidebar.active = name;
-						AppUtility.invoke(async () => {
-							AppEvents.broadcast(this.name, { Type: "OpenSidebar" });
-							this.updateSidebarTitle();
-						}, 123);
+			Button: {
+				Name: "books",
+				Icon: "library",
+				Title: "eBooks",
+				OnClick: (name: string, sidebar: AppSidebar) => {
+					if (sidebar.Active !== name) {
+						sidebar.Active = name;
+						this.configSvc.appConfig.services.active = this.name;
+						this.configSvc.appConfig.URLs.search = "/books/search";
+						this.updateSidebarTitle();
+						AppUtility.invoke(() => AppEvents.broadcast("OpenSidebar", { Name: sidebar.Active }), 13);
 					}
-					this.configSvc.appConfig.services.active = this.name;
-					this.configSvc.appConfig.URLs.search = "/books/search";
 				}
 			},
-			index: this.menuIndex,
-			predicate: (sidebar: AppSidebar) => this.configSvc.appConfig.services.all.map(svc => svc.name).indexOf(this.name) > -1 && sidebar.footer.map(btn => btn.name).indexOf("books") < 0,
-			onCompleted: (sidebar: AppSidebar) => {
-				if (sidebar.footer !== undefined && sidebar.footer.length > 1) {
-					const index = sidebar.footer.findIndex(button => button.name === "books");
-					if (sidebar.footer[index - 1].name === "preferences") {
-						sidebar.footer.move(index, index - 1);
+			Index: this.menuIndex,
+			Predicate: (sidebar: AppSidebar) => this.configSvc.appConfig.services.all.map(svc => svc.name).indexOf(this.name) > -1 && sidebar.Footer.map(btn => btn.Name).indexOf("books") < 0,
+			OnCompleted: (sidebar: AppSidebar) => {
+				if (sidebar.Footer !== undefined && sidebar.Footer.length > 1) {
+					const index = sidebar.Footer.findIndex(button => button.Name === "books");
+					if (sidebar.Footer[index - 1].Name === "preferences") {
+						sidebar.Footer.move(index, index - 1);
 					}
 				}
-			}
+			},
+			Source: source || "ServiceEvent"
 		});
-		if (this.configSvc.appConfig.services.active === this.name) {
-			this.configSvc.appConfig.URLs.search = "/books/search";
-			AppEvents.broadcast("ActiveSidebar", { name: "books" });
-		}
-		if (onNext !== undefined) {
-			onNext();
-		}
 	}
 
 	private getTOCItem(book: Book, index: number, isReading: boolean) {
 		return {
-			title: book.TOCs[index],
-			link: book.routerLink,
-			params: book.routerParams,
-			detail: isReading,
-			icon: { color: "primary" },
-			onClick: () => AppEvents.broadcast("Books", { Type: "OpenChapter", ID: book.ID, Chapter: index + 1 })
-		};
+			Title: book.TOCs[index],
+			Detail: isReading,
+			Icon: { Color: "primary" },
+			OnClick: _ => AppEvents.broadcast("Books", { Type: "OpenChapter", ID: book.ID, Chapter: index + 1 })
+		} as AppSidebarMenuItem;
 	}
 
 	private updateReading(book: Book, chapter: number) {
@@ -191,12 +182,14 @@ export class BooksService extends BaseService {
 			this._reading.ID = book.ID;
 			this._reading.Chapter = chapter - 1;
 			AppEvents.broadcast("UpdateSidebar", {
-				index: this.menuIndex,
-				parent: {
-					title: book.Title,
-					thumbnail: book.Cover
+				Index: this.menuIndex,
+				Reset: true,
+				Parent: {
+					Title: book.Title,
+					Thumbnail: book.Cover
 				},
-				items: book.TOCs.map((_, index) => this.getTOCItem(book, index, index === this._reading.Chapter))
+				Items: book.TOCs.map((_, index) => this.getTOCItem(book, index, index === this._reading.Chapter)),
+				Source: "UpdateReading"
 			});
 		}
 		else {
@@ -483,12 +476,14 @@ export class BooksService extends BaseService {
 	public set categories(value: Array<StatisticInfo>) {
 		if (value !== undefined && value.length > 0) {
 			this.configSvc.appConfig.extras["Books-Categories"] = value;
-			AppEvents.broadcast("Books", { Type: "CategoriesUpdated" });
 		}
 	}
 
 	private async loadCategoriesAsync(onNext?: (categories?: Array<StatisticInfo>) => void) {
 		this.categories = (await AppStorage.getAsync("Books-Categories") as Array<any> || []).map(category => StatisticInfo.deserialize(category));
+		if (this.categories.length > 0) {
+			AppEvents.broadcast("Books", { Type: "CategoriesUpdated", Mode: "Storage" });
+		}
 		if (onNext !== undefined) {
 			onNext(this.categories);
 		}
@@ -497,7 +492,11 @@ export class BooksService extends BaseService {
 	private async fetchCategoriesAsync(onNext?: (categories?: Array<StatisticInfo>) => void) {
 		await this.fetchAsync("statics/books.categories.json", async data => {
 			this.categories = (data as Array<any>).map(category => StatisticInfo.deserialize(category));
-			if (onNext !== undefined) {
+			if (this.categories.length > 0) {
+				AppEvents.broadcast("Books", { Type: "CategoriesUpdated", Mode: "APIs" });
+				await this.storeCategoriesAsync(onNext);
+			}
+			else if (onNext !== undefined) {
 				onNext(this.categories);
 			}
 		});
@@ -550,7 +549,6 @@ export class BooksService extends BaseService {
 
 	private async loadStatisticsAsync(onSuccess?: () => void) {
 		await Promise.all([
-			this.loadCategoriesAsync(),
 			this.loadAuthorsAsync(),
 			this.sendRequestAsync({
 				ServiceName: this.name,

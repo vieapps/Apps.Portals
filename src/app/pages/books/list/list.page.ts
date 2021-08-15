@@ -4,7 +4,7 @@ import { Router, NavigationEnd } from "@angular/router";
 import { registerLocaleData } from "@angular/common";
 import { IonContent, IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
-import { AppPagination, AppDataPagination, AppDataRequest } from "@app/components/app.pagination";
+import { AppPagination } from "@app/components/app.pagination";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { PlatformUtility } from "@app/components/app.utility.platform";
@@ -12,6 +12,7 @@ import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { BooksService } from "@app/services/books.service";
+import { AppDataPagination, AppDataRequest } from "@app/components/app.objects";
 import { Book } from "@app/models/book";
 import { RatingPoint } from "@app/models/rating.point";
 

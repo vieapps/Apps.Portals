@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input } from "@angular/core";
+import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input, Output, EventEmitter } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -13,7 +13,7 @@ import { Category } from "@app/models/portals.cms.category";
 	styleUrls: ["./featured.contents.control.scss"]
 })
 
-export class FeaturedContentsControl implements OnInit, OnDestroy {
+export class FeaturedContentsControl implements OnInit, OnDestroy, OnChanges {
 
 	constructor(
 		private configSvc: ConfigurationService,
@@ -28,9 +28,11 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 	@Input() orderBy: string;
 	@Input() amount: number;
 
+	/** The event handler to run when the control was changed */
+	@Output() change = new EventEmitter<any>();
+
 	contents = new Array<FeaturedContent>();
 	private _isPublished = false;
-	private _preparing = false;
 
 	get color() {
 		return this.configSvc.color;
@@ -58,37 +60,31 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		this.amount = this.amount !== undefined ? this.amount : (this._isPublished ? amounts.published : amounts.updated) || 7;
 
 		if (this.configSvc.isReady) {
-			AppUtility.invoke(() => this.prepareAsync(), 456);
+			AppUtility.invoke(async () => await this.prepareLabelsAsync(), 13);
 		}
 		else {
 			AppEvents.on("App", info => {
 				if ("Initialized" === info.args.Type) {
-					AppUtility.invoke(async () =>  await this.prepareAsync(), 456);
+					AppUtility.invoke(async () => await this.prepareLabelsAsync(), 13);
 				}
 			}, `FeaturedContents:AppInitialized:${this._isPublished}`);
 		}
 
 		AppEvents.on(this.portalsCmsSvc.name, info => {
-			if ("FeaturedContentsPrepared" === info.args.Type || ("Changed" === info.args.Type && ("Organization" === info.args.Object || "Module" === info.args.Object))) {
-				AppUtility.invoke(async () =>  await this.prepareAsync(true), 123);
+			if ("FeaturedContentsPrepared" === info.args.Type || ("Changed" === info.args.Type && "Organization" === info.args.Object)) {
+				AppUtility.invoke(async () => await this.prepareContentsAsync(true), 13);
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
 	}
 
 	ngOnDestroy() {
+		this.change.unsubscribe();
 		AppEvents.off("App", `FeaturedContents:AppInitialized:${this._isPublished}`);
 		AppEvents.off(this.portalsCmsSvc.name, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
 	}
 
-	private async prepareAsync(force: boolean = false, prepareLabels: boolean = true) {
-		if (!this._preparing) {
-			this._preparing = true;
-			if (prepareLabels) {
-				await this.prepareLabelsAsync();
-			}
-			this.prepareContents(force);
-			this._preparing = false;
-		}
+	ngOnChanges(_: SimpleChanges) {
+		AppUtility.invoke(async () => await this.prepareContentsAsync(), 13);
 	}
 
 	private async prepareLabelsAsync() {
@@ -102,7 +98,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}
 	}
 
-	private prepareContents(force: boolean = false) {
+	private async prepareContentsAsync(force: boolean = false) {
 		if (this.contents.length < 1 || force) {
 			const organization = this.portalsCoreSvc.activeOrganization;
 			const organizationID = organization !== undefined ? organization.ID : undefined;
@@ -126,6 +122,9 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 				Category: content["category"],
 				OriginalObject: content
 			} as FeaturedContent)).filter(filterBy).orderBy(orderBy).take(this.amount);
+		}
+		if (this.contents.length < 1) {
+			AppEvents.broadcast(this.portalsCoreSvc.name, { Mode: "RequestFeaturedContents" });
 		}
 	}
 

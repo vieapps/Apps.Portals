@@ -3,28 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
 import { AppConfig } from "@app/app.config";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
-
-/** Presents the struct of an updating message */
-export interface AppMessage {
-	Type: {
-		Service: string;
-		Object?: string;
-		Event?: string;
-	};
-	Data: any;
-}
-
-/** Presents the struct of a requesting information */
-export interface AppRequestInfo {
-	Path?: string;
-	ServiceName?: string;
-	ObjectName?: string;
-	Verb?: string;
-	Header?: { [key: string]: string };
-	Query?: { [key: string]: string };
-	Extra?: { [key: string]: string };
-	Body?: any;
-}
+import { AppRequestInfo, AppMessage } from "@app/components/app.objects";
 
 /** Servicing component for working with APIs */
 export class AppAPIs {

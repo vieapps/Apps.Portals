@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="net.vieapps.portals" version="4.0.3" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="net.vieapps.portals" version="4.1.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>NGX Portals</name>
     <description>Manage information and related services of CMS Portals</description>
     <author email="vieapps.net@gmail.com" href="https://vieapps.net/">VIEApps.net</author>

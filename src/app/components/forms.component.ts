@@ -3,8 +3,9 @@ import { FormGroup } from "@angular/forms";
 import { AppConfig } from "@app/app.config";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
-import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsService } from "@app/components/forms.service";
+import { AppFormsControlConfig, AppFormsControl, AppFormsSegment } from "@app/components/forms.objects";
 import { AppFormsControlComponent } from "@app/components/forms.control.component";
+import { AppFormsService } from "@app/components/forms.service";
 
 @Component({
 	selector: "app-form",

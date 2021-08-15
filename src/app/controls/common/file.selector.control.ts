@@ -3,7 +3,8 @@ import { registerLocaleData } from "@angular/common";
 import { HashSet } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
-import { AppFormsControl, AppFormsService } from "@app/components/forms.service";
+import { AppFormsControl } from "@app/components/forms.objects";
+import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AttachmentInfo } from "@app/models/base";
 

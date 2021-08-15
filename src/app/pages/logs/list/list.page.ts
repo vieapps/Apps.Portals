@@ -4,9 +4,11 @@ import { IonInfiniteScroll, IonCheckbox } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
-import { AppPagination, AppDataPagination } from "@app/components/app.pagination";
+import { AppPagination } from "@app/components/app.pagination";
+import { AppDataFilter, AppDataPagination } from "@app/components/app.objects";
 import { AppFormsService } from "@app/components/forms.service";
-import { ConfigurationService, ServiceLog } from "@app/services/configuration.service";
+import { ServiceLog } from "@app/services/base.service";
+import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 
@@ -36,7 +38,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 		PageSize: 100,
 		PageNumber: 0
 	};
-	filterBy: { [key: string]: string } = {};
+	filterBy: AppDataFilter = {};
 	selected = new HashSet<string>();
 
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
@@ -74,7 +76,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 
 	get logs() {
 		const predicate = this.predicate;
-		return predicate !== undefined ? this.configSvc.logs.filter(predicate) : this.configSvc.logs;
+		return predicate !== undefined ? this.configSvc.serviceLogs.filter(predicate) : this.configSvc.serviceLogs;
 	}
 
 	ngOnInit() {
@@ -91,7 +93,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		this.configSvc.logs = [];
+		this.configSvc.serviceLogs = [];
 	}
 
 	private async initializeAsync() {
@@ -101,7 +103,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 	}
 
 	async refreshAsync() {
-		this.configSvc.logs = [];
+		this.configSvc.serviceLogs = [];
 		this.selected.clear();
 		this.selectAllCtrl.checked = false;
 		await this.initializeAsync();
@@ -129,7 +131,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 		if (event.detail.checked) {
 			if (selectAll) {
 				const predicate = this.predicate;
-				this.selected = (predicate !== undefined ? this.configSvc.logs.filter(predicate) : this.configSvc.logs).map(log => log.ID).toHashSet();
+				this.selected = (predicate !== undefined ? this.configSvc.serviceLogs.filter(predicate) : this.configSvc.serviceLogs).map(log => log.ID).toHashSet();
 			}
 			else {
 				this.selected.add(event.detail.value);
@@ -155,7 +157,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 				this.pageNumber++;
 				this.pagination = AppPagination.getDefault(data);
 				this.pagination.PageNumber = this.pageNumber;
-				this.configSvc.logs = this.configSvc.logs.concat(data.Objects);
+				this.configSvc.serviceLogs = this.configSvc.serviceLogs.concat(data.Objects);
 				await this.appFormsSvc.hideLoadingAsync(() => {
 					if (onNext !== undefined) {
 						onNext(data);
@@ -190,7 +192,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 				else {
 					delete this.filterBy["ServiceName"];
 				}
-				if (this.configSvc.logs.length < 1 || Object.keys(this.filterBy).length < 1) {
+				if (this.configSvc.serviceLogs.length < 1 || Object.keys(this.filterBy).length < 1) {
 					if (this.infiniteScrollCtrl !== undefined) {
 						this.infiniteScrollCtrl.disabled = false;
 					}

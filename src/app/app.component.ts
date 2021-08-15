@@ -1,14 +1,15 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, ViewChild } from "@angular/core";
 import { Router, RoutesRecognized, NavigationEnd } from "@angular/router";
 import { HttpClient } from "@angular/common/http";
-import { Platform } from "@ionic/angular";
+import { Platform, IonMenu } from "@ionic/angular";
 import { SplashScreen } from "@ionic-native/splash-screen/ngx";
 import { StatusBar } from "@ionic-native/status-bar/ngx";
 import { AppAPIs } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
-import { AppUtility, AppSidebar, AppSidebarMenuItem } from "@app/components/app.utility";
+import { AppUtility } from "@app/components/app.utility";
 import { AppFormsService } from "@app/components/forms.service";
+import { AppSidebar, AppSidebarMenuItem } from "@app/components/app.objects";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -44,47 +45,49 @@ export class AppComponent implements OnInit {
 	}
 
 	sidebar: AppSidebar = {
-		visible: true,
-		profile: false,
-		search: true,
-		active: "cms",
-		header: {
-			thumbnail: undefined as string,
-			onThumbnailClick: (_: Event, __: AppSidebar) => {},
-			title: undefined as string,
-			onTitleClick: (_: Event, __: AppSidebar) => {}
+		Visible: true,
+		Profile: false,
+		Search: true,
+		Active: "cms",
+		Header: {
+			Thumbnail: undefined,
+			ThumbnailOnClick: undefined,
+			Title: undefined as string,
+			TitleOnClick: undefined
 		},
-		footer: new Array<{
-			name: string,
-			icon: string,
-			title?: string,
-			onClick?: (event: Event, name: string, sidebar: AppSidebar) => void
+		Footer: new Array<{
+			Name: string,
+			Icon: string,
+			Title?: string,
+			OnClick?: (name: string, sidebar: AppSidebar, event?: Event) => void
 		}>(),
-		top: new Array<AppSidebarMenuItem>(),
-		menu: new Array<{
-			name: string,
-			parent?: AppSidebarMenuItem,
-			items: Array<AppSidebarMenuItem>
+		Top: new Array<AppSidebarMenuItem>(),
+		Menu: new Array<{
+			Name: string,
+			Parent?: AppSidebarMenuItem,
+			Items: Array<AppSidebarMenuItem>
 		}>()
 	};
+
+	@ViewChild(IonMenu, { static: true }) private menuCtrl: IonMenu;
 
 	get color() {
 		return this.configSvc.color;
 	}
 
 	get isSidebarShown() {
-		return this.sidebar.visible && this.configSvc.screenWidth >= 1200;
+		return this.sidebar.Visible && this.configSvc.screenWidth >= 1200;
 	}
 
 	get isSidebarTopMenuShown() {
-		return !(this.sidebar.active === "portals" || this.sidebar.active === "notifications" || this.sidebar.active === "chat" || this.sidebar.active === "preferences");
+		return !(this.sidebar.Active === "portals" || this.sidebar.Active === "notifications" || this.sidebar.Active === "chat" || this.sidebar.Active === "preferences");
 	}
 
 	get sidebarSignColor() {
 		return this.isSidebarShown ? "medium" : "light";
 	}
 
-	ngOnInit() {
+	public ngOnInit() {
 		this.router.events.subscribe(event => {
 			if (event instanceof RoutesRecognized) {
 				this.configSvc.appConfig.URLs.routerParams = (event as RoutesRecognized).state.root.params;
@@ -133,8 +136,8 @@ export class AppComponent implements OnInit {
 			}
 
 			AppEvents.broadcast("App", { Type: "PlatformIsReady" });
-			this.sidebar.header.title = this.configSvc.appConfig.app.name;
-			await this.updateSidebarAsync({}, true);
+			this.sidebar.Header.Title = this.configSvc.appConfig.app.name;
+			await this.updateSidebarAsync({ Source: "PlatformIsReady" }, true);
 
 			const isActivate = this.configSvc.isWebApp && AppUtility.isEquals("activate", this.configSvc.queryParams["prego"]);
 			await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "loading"}`));
@@ -142,41 +145,38 @@ export class AppComponent implements OnInit {
 		});
 	}
 
-	trackSidebarItem(index: number, item: any) {
-		return `${item.id || item.name || item.title}@${index}`;
-	}
-
-	toggleSidebar() {
-		this.sidebar.visible = !this.sidebar.visible;
+	public trackSidebarItem(index: number, item: any) {
+		return `${item.ID || item.Name || item.Title}@${index}`;
 	}
 
 	private getSidebarItem(itemInfo: any = {}, oldItem: any = {}, onCompleted?: (item: AppSidebarMenuItem) => void) {
-		const gotChildren = AppUtility.isArray(itemInfo.children, true) && (itemInfo.children as Array<any>).length > 0;
-		const isExpanded = gotChildren && !!itemInfo.expanded;
-		const isDetail = !gotChildren && !!itemInfo.detail;
-		const icon = itemInfo.icon || {};
-		if (icon.name === undefined && (gotChildren || isDetail)) {
-			icon.name = isDetail ? "chevron-forward" : isExpanded ? "chevron-down" : "chevron-forward",
-			icon.slot = "end";
+		const gotChildren = AppUtility.isArray(itemInfo.Children, true) && (itemInfo.Children as Array<any>).length > 0;
+		const isExpanded = gotChildren && !!itemInfo.Expanded;
+		const isDetail = !gotChildren && !!itemInfo.Detail;
+		const icon = itemInfo.Icon || {};
+		if (icon.Name === undefined && (gotChildren || isDetail)) {
+			icon.Name = isDetail ? "chevron-forward" : isExpanded ? "chevron-down" : "chevron-forward",
+			icon.Slot = "end";
 		}
 		const sidebarItem: AppSidebarMenuItem = {
-			title: itemInfo.title || oldItem.title,
-			link: itemInfo.link || oldItem.link,
-			params: itemInfo.params as { [key: string]: string } || oldItem.params,
-			direction: itemInfo.direction || oldItem.direction || "forward",
-			onClick: typeof itemInfo.onClick === "function"
-				? itemInfo.onClick
-				: async (_, info, sidebar) => {
-					const menuItem = info.childIndex !== undefined
-						? sidebar.menu[info.menuIndex].items[info.itemIndex].children[info.childIndex]
-						: sidebar.menu[info.menuIndex].items[info.itemIndex];
-					await this.configSvc.navigateAsync(menuItem.direction, menuItem.link, menuItem.params);
-				},
-			children: gotChildren ? (itemInfo.children as Array<any>).map(item => this.getSidebarItem(item)) : [],
-			expanded: isExpanded,
-			detail: isDetail,
-			id: itemInfo.id,
-			icon: icon
+			Title: itemInfo.Title || oldItem.Title,
+			Link: itemInfo.Link || oldItem.Link,
+			Params: itemInfo.Params || oldItem.Params,
+			Direction: itemInfo.Direction || oldItem.Direction || "forward",
+			Children: gotChildren ? (itemInfo.Children as Array<any>).map(item => this.getSidebarItem(item)) : [],
+			Expanded: isExpanded,
+			Detail: isDetail,
+			Thumbnail: itemInfo.Thumbnail,
+			ID: itemInfo.ID,
+			Icon: icon,
+			OnClick: typeof itemInfo.OnClick === "function"
+				? itemInfo.OnClick
+				: async (data, sidebar) => {
+						const menuItem = data.childIndex !== undefined
+							? sidebar.Menu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex]
+							: sidebar.Menu[data.menuIndex].Items[data.itemIndex];
+						await this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params);
+					}
 		};
 		if (onCompleted !== undefined) {
 			onCompleted(sidebarItem);
@@ -184,166 +184,232 @@ export class AppComponent implements OnInit {
 		return sidebarItem;
 	}
 
+	private async getSidebarTopItemsAsync() {
+		return {
+			Home: {
+				Title: await this.configSvc.getResourceAsync("common.sidebar.home"),
+				Icon: { Name: "home" },
+				Link: this.configSvc.appConfig.URLs.home,
+				OnClick: async data => await this.configSvc.navigateHomeAsync(data.Link)
+			} as AppSidebarMenuItem,
+			Login: {
+				Title: await this.configSvc.getResourceAsync("common.sidebar.login"),
+				Icon: { Name: "log-in" },
+				Link: this.configSvc.appConfig.URLs.users.login,
+				OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
+			} as AppSidebarMenuItem,
+			Register: {
+				Title: await this.configSvc.getResourceAsync("common.sidebar.register"),
+				Icon: { Name: "person-add" },
+				Link: this.configSvc.appConfig.URLs.users.register,
+				OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
+			} as AppSidebarMenuItem,
+			Profile: {
+				Title: await this.configSvc.getResourceAsync("common.sidebar.profile"),
+				Icon: { Name: "person" },
+				Link: `${this.configSvc.appConfig.URLs.users.profile}/my`,
+				OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
+			} as AppSidebarMenuItem,
+			Search: {
+				Title: await this.configSvc.getResourceAsync("common.sidebar.search"),
+				Icon: { Name: "search" },
+				OnClick: async _ => await this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.search)
+			} as AppSidebarMenuItem
+		};
+	}
+
+	private async normalizeSidebarTopItemsAsync() {
+		if (!this.sidebar.Search) {
+			this.sidebar.Top.removeAt(this.sidebar.Top.length - 1);
+		}
+		if (this.configSvc.isAuthenticated) {
+			this.sidebar.Top.removeAt(this.sidebar.Top.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.login)));
+			this.sidebar.Top.removeAt(this.sidebar.Top.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.register)));
+			if (!this.sidebar.Profile) {
+				this.sidebar.Top.removeAt(this.sidebar.Top.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.profile)));
+			}
+		}
+		else {
+			this.sidebar.Top.removeAt(this.sidebar.Top.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.profile)));
+			if (!this.authSvc.canRegisterNewAccounts) {
+				this.sidebar.Top.removeAt(this.sidebar.Top.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.register)));
+			}
+		}
+	}
+
 	private async updateSidebarItemAsync(menuIndex: number = -1, itemIndex: number = -1, itemInfo: any = {}) {
 		if (menuIndex < 0) {
 			menuIndex = 0;
 		}
-		else if (menuIndex >= this.sidebar.menu.length) {
-			menuIndex = this.sidebar.menu.length;
-			this.sidebar.menu.push({ name: undefined, items: []});
+		else if (menuIndex >= this.sidebar.Menu.length) {
+			menuIndex = this.sidebar.Menu.length;
+			this.sidebar.Menu.push({ Name: undefined, Items: []});
 		}
-		this.sidebar.menu[menuIndex].items.update(
+		this.sidebar.Menu[menuIndex].Items.update(
 			this.getSidebarItem(
 				itemInfo,
-				itemIndex > -1 && itemIndex < this.sidebar.menu[menuIndex].items.length ? this.sidebar.menu[menuIndex].items[itemIndex] : {},
-				async sidebarItem => sidebarItem.title = sidebarItem.title.startsWith("{{") && sidebarItem.title.endsWith("}}")
-					? await this.configSvc.getResourceAsync(sidebarItem.title.substr(2, sidebarItem.title.length - 4).trim())
-					: sidebarItem.title
+				itemIndex > -1 && itemIndex < this.sidebar.Menu[menuIndex].Items.length ? this.sidebar.Menu[menuIndex].Items[itemIndex] : {},
+				async sidebarItem => sidebarItem.Title = sidebarItem.Title.startsWith("{{") && sidebarItem.Title.endsWith("}}")
+					? await this.configSvc.getResourceAsync(sidebarItem.Title.substr(2, sidebarItem.Title.length - 4).trim())
+					: sidebarItem.Title
 			),
 			itemIndex
 		);
 	}
 
 	private async updateSidebarAsync(info: any = {}, updateTopItems: boolean = false) {
-		const header = info.header || {};
-		this.sidebar.header = {
-			thumbnail: header.thumbnail || this.sidebar.header.thumbnail,
-			onThumbnailClick: header.onThumbnailClick || this.sidebar.header.onThumbnailClick,
-			title: header.title || this.sidebar.header.title,
-			onTitleClick: header.onTitleClick || this.sidebar.header.onTitleClick
-		};
+		const header = info.Header;
+		if (header !== undefined) {
+			this.sidebar.Header = {
+				Thumbnail: header.Thumbnail || this.sidebar.Header.Thumbnail,
+				ThumbnailOnClick: header.ThumbnailOnClick || this.sidebar.Header.ThumbnailOnClick,
+				Title: header.Title || this.sidebar.Header.Title,
+				TitleOnClick: header.TitleOnClick || this.sidebar.Header.TitleOnClick
+			};
+		}
 
 		if (updateTopItems) {
-			const topItems = await this.configSvc.getSidebarTopItemsAsync();
-			this.sidebar.top = [topItems.home, topItems.profile, topItems.login, topItems.register, topItems.search];
+			const topItems = await this.getSidebarTopItemsAsync();
+			this.sidebar.Top = [topItems.Home, topItems.Profile, topItems.Login, topItems.Register, topItems.Search];
 		}
 
-		let index = info.index !== undefined ? info.index as number : 0;
+		let index = info.Index !== undefined ? info.Index as number : 0;
 		if (index < 0) {
-			index = this.sidebar.menu.length;
+			index = this.sidebar.Menu.length;
 		}
-		while (this.sidebar.menu.length < index + 1) {
-			this.sidebar.menu.push({
-				name: undefined,
-				parent: undefined,
-				items: []
-			});
+		while (this.sidebar.Menu.length < index + 1) {
+			this.sidebar.Menu.push({ Name: undefined, Items: [] });
 		}
 
-		if (info.reset !== undefined ? info.reset as boolean : true) {
-			this.sidebar.menu[index].items = [];
-		}
-
-		this.sidebar.menu[index].name = info.name || this.sidebar.menu[index].name || "menu";
-		this.sidebar.menu[index].parent = info.parent !== undefined
+		this.sidebar.Menu[index].Name = info.Name || this.sidebar.Menu[index].Name || "cms";
+		this.sidebar.Menu[index].Parent = info.Parent !== undefined
 			? {
-					title: info.parent.title,
-					thumbnail: info.parent.thumbnail,
-					link: info.parent.link,
-					params: info.parent.params,
-					expanded: !!info.parent.expanded,
-					onClick: typeof info.parent.onClick === "function"
-						? info.parent.onClick as (event: Event, info: any, sidebar: AppSidebar) => void
+					Title: info.Parent.Title,
+					Link: info.Parent.Link,
+					Params: info.Parent.Params,
+					Thumbnail: info.Parent.Thumbnail,
+					Expanded: !!info.Parent.Expanded,
+					OnClick: typeof info.Parent.OnClick === "function"
+						? info.Parent.OnClick
 						: () => {}
 				}
-			: this.sidebar.menu[index].parent;
-		if (this.sidebar.menu[index].parent !== undefined && this.sidebar.menu[index].parent.title.startsWith("{{") && this.sidebar.menu[index].parent.title.endsWith("}}")) {
-			this.sidebar.menu[index].parent.title = await this.configSvc.getResourceAsync(this.sidebar.menu[index].parent.title.substr(2, this.sidebar.menu[index].parent.title.length - 4).trim());
+			: this.sidebar.Menu[index].Parent;
+
+		const parent = this.sidebar.Menu[index].Parent;
+		if (parent !== undefined && parent.Title.startsWith("{{") && parent.Title.endsWith("}}")) {
+			parent.Title = await this.configSvc.getResourceAsync(parent.Title.substr(2, parent.Title.length - 4).trim());
 		}
 
-		await Promise.all((info.items as Array<any> || []).map(item => {
-			const icon = item.icon || { name: undefined };
-			icon.color = icon.color || "medium";
-			icon.slot = icon.slot || "start";
-			return {
-				title: item.title,
-				link: item.link,
-				params: item.params,
-				direction: item.direction,
-				onClick: item.onClick,
-				children: item.children,
-				expanded: item.expanded,
-				detail: item.detail,
-				id: item.id,
-				icon: icon
-			};
-		})
-		.filter(item => AppUtility.isNotEmpty(item.title) && AppUtility.isNotEmpty(item.link))
-		.map(item => this.updateSidebarItemAsync(index, -1, item)));
+		if (AppUtility.isArray(info.Items, true)) {
+			if (!!info.Reset) {
+				this.sidebar.Menu[index].Items = [];
+			}
+			await Promise.all((info.Items as Array<AppSidebarMenuItem>).map(item => {
+				const icon = item.Icon || { Name: undefined };
+				icon.Color = icon.Color || "medium";
+				icon.Slot = icon.Slot || "start";
+				return {
+					Title: item.Title,
+					Link: item.Link,
+					Params: item.Params,
+					Direction: item.Direction,
+					OnClick: item.OnClick,
+					Children: item.Children,
+					Expanded: item.Expanded,
+					Detail: item.Detail,
+					ID: item.ID,
+					Thumbnail: item.Thumbnail,
+					Icon: icon
+				};
+			})
+			.filter(item => AppUtility.isNotEmpty(item.Title))
+			.map(item => this.updateSidebarItemAsync(index, -1, item)));
+		}
+		else {
+			this.sidebar.Menu[index].Items = [];
+		}
 	}
 
-	private async normalizeSidebarAsync() {
-		const topItems = await this.configSvc.getSidebarTopItemsAsync();
+	private updateSidebarHeader(args?: any, updateThumbnai: boolean = true) {
+		if (args !== undefined) {
+			this.sidebar.Header.Title = AppUtility.isNotEmpty(args.Title) ? args.Title : this.sidebar.Header.Title;
+			this.sidebar.Header.TitleOnClick = typeof args.OnClick === "function" ? args.OnClick : _ => {};
+		}
+		if (updateThumbnai) {
+			const profile = this.configSvc.getAccount().profile;
+			if (profile !== undefined) {
+				this.sidebar.Header.Thumbnail = profile.avatarURI;
+				this.sidebar.Header.ThumbnailOnClick = _ => AppEvents.broadcast("Navigate", { Type: "Profile" });
+			}
+			else {
+				this.sidebar.Header.Thumbnail = this.sidebar.Header.ThumbnailOnClick = undefined;
+			}
+		}
+	}
+
+	private updateSidebarFooter(args: any) {
+		if (!!args.Reset) {
+			this.sidebar.Footer = [];
+		}
+		if (typeof args.Predicate === "function" ? args.Predicate(this.sidebar) : true) {
+			this.sidebar.Footer.insert(args.Button, args.Index !== undefined ? args.Index : 0);
+			if (typeof args.CnCompleted === "function") {
+				args.OnCompleted(this.sidebar);
+			}
+		}
 		if (this.configSvc.isAuthenticated) {
-			this.sidebar.top.removeAt(this.sidebar.top.findIndex(item => item.link.startsWith(topItems.login.link)));
-			this.sidebar.top.removeAt(this.sidebar.top.findIndex(item => item.link.startsWith(topItems.register.link)));
-			if (!this.sidebar.profile) {
-				this.sidebar.top.removeAt(this.sidebar.top.findIndex(item => item.link.startsWith(topItems.profile.link)));
-			}
-		}
-		else {
-			this.sidebar.top.removeAt(this.sidebar.top.findIndex(item => item.link.startsWith(topItems.profile.link)));
-			if (!this.authSvc.canRegisterNewAccounts) {
-				this.sidebar.top.removeAt(this.sidebar.top.findIndex(item => item.link.startsWith(topItems.register.link)));
-			}
-		}
-		if (!this.sidebar.search) {
-			this.sidebar.top.removeAt(this.sidebar.top.findIndex(item => item.link.startsWith(topItems.search.link)));
+			AppUtility.invoke(async () => {
+				if (this.sidebar.Footer.length > 0 && this.sidebar.Footer.first(button => button.Name === "preferences") === undefined) {
+					this.sidebar.Footer.push({
+						Name: "preferences",
+						Icon: "settings",
+						Title: await this.configSvc.getResourceAsync("common.preferences.label"),
+						OnClick: (name, sidebar) => sidebar.Active = name
+					});
+				}
+			}, 1234);
 		}
 	}
 
-	private updateSidebarImage() {
-		const profile = this.configSvc.getAccount().profile;
-		if (profile !== undefined) {
-			this.sidebar.header.thumbnail = profile.avatarURI;
-			this.sidebar.header.onThumbnailClick = () => AppEvents.broadcast("Navigate", { Type: "Profile" });
+	private async activeSidebarAsync(name: string, openSidebar: boolean = false) {
+		if (!!name && name !== this.sidebar.Active) {
+			const button = this.sidebar.Footer.first(btn => btn.Name === name);
+			if (button !== undefined && typeof button.OnClick === "function") {
+				button.OnClick(this.sidebar.Active, this.sidebar);
+			}
+			this.sidebar.Active = name;
+		}
+		if (openSidebar) {
+			await this.toggleSidebarAsync(true);
+		}
+	}
+
+	private async inactiveSidebarAsync() {
+		await this.toggleSidebarAsync(false);
+	}
+
+	public async toggleSidebarAsync(state?: boolean) {
+		this.sidebar.Visible = state !== undefined ? state : !this.sidebar.Visible;
+		if (this.sidebar.Visible) {
+			await this.menuCtrl.open();
 		}
 		else {
-			this.sidebar.header.thumbnail = this.sidebar.header.onThumbnailClick = undefined;
+			await this.menuCtrl.close();
 		}
 	}
 
 	private setupEventHandlers() {
-		AppEvents.on("OpenSidebar", _ => this.sidebar.visible = true);
-		AppEvents.on("CloseSidebar", _ => this.sidebar.visible = false);
-		AppEvents.on("ToggleSidebar", _ => this.toggleSidebar());
-		AppEvents.on("ActiveSidebar", info => {
-			this.sidebar.active = info.args.name || (this.sidebar.footer.first() || {}).name;
-			const button = this.sidebar.footer.first(btn => btn.name === this.sidebar.active);
-			if (button !== undefined && typeof button.onClick === "function") {
-				button.onClick(undefined, this.sidebar.active, this.sidebar);
-			}
-		});
+		AppEvents.on("ToggleSidebar", _ => this.toggleSidebarAsync());
+		AppEvents.on("ActiveSidebar", async info => await this.activeSidebarAsync(info.args.Name));
+		AppEvents.on("OpenSidebar", async info => await this.activeSidebarAsync(info.args.Name, true));
+		AppEvents.on("CloseSidebar", async _ => await this.inactiveSidebarAsync());
+
 		AppEvents.on("UpdateSidebar", async info => await this.updateSidebarAsync(info.args));
-		AppEvents.on("UpdateSidebarTitle", info => {
-			this.sidebar.header.title = AppUtility.isNotEmpty(info.args.title) ? info.args.title : this.sidebar.header.title;
-			this.sidebar.header.onTitleClick = typeof info.args.onClick === "function" ? info.args.onClick : () => {};
-		});
-		AppEvents.on("AddSidebarItem", async info => await this.updateSidebarItemAsync(info.args.MenuIndex !== undefined ? info.args.MenuIndex : -1, -1, info.args.ItemInfo));
+		AppEvents.on("AddSidebarItem", async info => this.updateSidebarItemAsync(info.args.MenuIndex !== undefined ? info.args.MenuIndex : -1, info.args.ItemIndex !== undefined ? info.args.ItemIndex : -1, info.args.ItemInfo));
 		AppEvents.on("UpdateSidebarItem", async info => await this.updateSidebarItemAsync(info.args.MenuIndex !== undefined ? info.args.MenuIndex : -1, info.args.ItemIndex !== undefined ? info.args.ItemIndex : -1, info.args.ItemInfo));
-		AppEvents.on("UpdateSidebarFooter", info => {
-			if (!!info.args.reset) {
-				this.sidebar.footer = [];
-			}
-			if (typeof info.args.predicate === "function" ? info.args.predicate(this.sidebar) : true) {
-				this.sidebar.footer.insert(info.args.button, info.args.index !== undefined ? info.args.index : 0);
-				if (typeof info.args.onCompleted === "function") {
-					info.args.onCompleted(this.sidebar);
-				}
-			}
-			if (this.configSvc.isAuthenticated) {
-				AppUtility.invoke(async () => {
-					if (this.sidebar.footer.length > 0 && this.sidebar.footer.first(button => button.name === "preferences") === undefined) {
-						this.sidebar.footer.push({
-							name: "preferences",
-							icon: "settings",
-							title: await this.configSvc.getResourceAsync("common.preferences.label"),
-							onClick: (_, name, sidebar) => sidebar.active = name
-						});
-					}
-				}, 1234);
-			}
-		});
+		AppEvents.on("UpdateSidebarTitle", info => this.updateSidebarHeader(info.args, false));
+		AppEvents.on("UpdateSidebarHeader", info => this.updateSidebarHeader(info.args));
+		AppEvents.on("UpdateSidebarFooter", info => this.updateSidebarFooter(info.args));
 
 		AppEvents.on("Navigate", async info => {
 			const url = "LogIn" === info.args.Type
@@ -368,27 +434,27 @@ export class AppComponent implements OnInit {
 
 		AppEvents.on("App", async info => {
 			if ("LanguageChanged" === info.args.Type) {
-				await this.updateSidebarAsync({}, true);
-				await this.normalizeSidebarAsync();
+				await this.updateSidebarAsync({ Source: "AppLanguageChanged" }, true);
+				await this.normalizeSidebarTopItemsAsync();
 				AppEvents.sendToElectron("App", { Type: "LanguageChanged", Language: this.configSvc.appConfig.language });
 			}
 		});
 
 		AppEvents.on("Session", async info => {
 			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
-				await this.updateSidebarAsync({}, true);
-				await this.normalizeSidebarAsync();
+				await this.updateSidebarAsync({ Source: "SessionLogInOut" }, true);
+				await this.normalizeSidebarTopItemsAsync();
 				if ("LogOut" === info.args.Type) {
-					this.sidebar.header.title = this.configSvc.appConfig.app.name;
-					this.sidebar.header.onTitleClick = () => {};
-					this.updateSidebarImage();
+					this.sidebar.Header.Title = this.configSvc.appConfig.app.name;
+					this.sidebar.Header.TitleOnClick = () => {};
+					this.updateSidebarHeader();
 				}
 			}
 		});
 
 		AppEvents.on("Profile", info => {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode) {
-				this.updateSidebarImage();
+				this.updateSidebarHeader();
 			}
 		});
 	}
@@ -498,7 +564,7 @@ export class AppComponent implements OnInit {
 				options: appConfig.options,
 				languages: appConfig.languages
 			}});
-			await this.normalizeSidebarAsync();
+			await this.normalizeSidebarTopItemsAsync();
 			await this.appFormsSvc.hideLoadingAsync(async () => {
 				if (this.configSvc.appConfig.services.all.map(svc => svc.name).indexOf(this.portalsCoreSvc.name) > -1) {
 					await this.portalsCoreSvc.initializeAsync();

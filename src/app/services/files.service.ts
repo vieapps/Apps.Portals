@@ -1,29 +1,16 @@
 import { Injectable } from "@angular/core";
 import { HttpEventType } from "@angular/common/http";
-import { AppAPIs, AppMessage } from "@app/components/app.apis";
+import { AppAPIs } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
-import { AppFormsService, AppFormsControlConfig, AppFormsControl } from "@app/components/forms.service";
+import { AppFormsControlConfig, AppFormsControl } from "@app/components/forms.objects";
+import { AppFormsService } from "@app/components/forms.service";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AttachmentInfo } from "@app/models/base";
-
-/** Presents the options for working with files of a business entity */
-export interface FileOptions {
-	ServiceName: string;
-	ObjectName: string;
-	SystemID?: string;
-	RepositoryID?: string;
-	RepositoryEntityID?: string;
-	ObjectID: string;
-	ObjectTitle?: string;
-	IsShared?: boolean;
-	IsTracked?: boolean;
-	IsTemporary?: boolean;
-	Extras?: { [key: string]: string };
-}
+import { AppMessage } from "@app/components/app.objects";
 
 @Injectable()
 export class FilesService extends BaseService {
@@ -443,4 +430,19 @@ export class FilesService extends BaseService {
 		);
 	}
 
+}
+
+/** Presents the options for working with files of a business entity */
+export interface FileOptions {
+	ServiceName: string;
+	ObjectName: string;
+	SystemID?: string;
+	RepositoryID?: string;
+	RepositoryEntityID?: string;
+	ObjectID: string;
+	ObjectTitle?: string;
+	IsShared?: boolean;
+	IsTracked?: boolean;
+	IsTemporary?: boolean;
+	Extras?: { [key: string]: string };
 }

@@ -3,7 +3,7 @@ import { Component, OnInit, OnDestroy } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@app/components/app.crypto";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
-import { AppFormsControl } from "@app/components/forms.service";
+import { AppFormsControl } from "@app/components/forms.objects";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { BooksService } from "@app/services/books.service";
 

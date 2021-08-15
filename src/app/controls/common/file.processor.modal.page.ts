@@ -5,7 +5,6 @@ import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { HashSet } from "@app/components/app.collections";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
-import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { FilesService, FileOptions } from "@app/services/files.service";

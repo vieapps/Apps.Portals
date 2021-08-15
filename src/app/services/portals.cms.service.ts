@@ -1,19 +1,20 @@
 import { Injectable } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
 import { Dictionary } from "@app/components/app.collections";
-import { AppAPIs, AppMessage } from "@app/components/app.apis";
+import { AppAPIs } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
-import { AppUtility, AppSidebar, AppSidebarMenuItem } from "@app/components/app.utility";
+import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppCustomCompleter } from "@app/components/app.completer";
-import { AppPagination, AppDataRequest  } from "@app/components/app.pagination";
+import { AppPagination  } from "@app/components/app.pagination";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { FilesService, FileOptions } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { AppFormsService, AppFormsControlConfig, AppFormsControlLookupOptionsConfig } from "@app/components/forms.service";
+import { AppFormsService } from "@app/components/forms.service";
+import { AppFormsControlConfig, AppFormsControlLookupOptionsConfig } from "@app/components/forms.objects";
 import { AppFormsControlComponent } from "@app/components/forms.control.component";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 import { Account } from "@app/models/account";
@@ -21,6 +22,7 @@ import { AttachmentInfo } from "@app/models/base";
 import { Organization, Module, ContentType, Desktop } from "@app/models/portals.core.all";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 import { Category, Content, Item, Link } from "@app/models/portals.cms.all";
+import { AppSidebar, AppSidebarMenuItem, AppMessage, AppDataRequest } from "@app/components/app.objects";
 
 @Injectable()
 export class PortalsCmsService extends BaseService {
@@ -95,28 +97,28 @@ export class PortalsCmsService extends BaseService {
 			if ("UpdateSidebarWithContentTypes" === info.args.Mode) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
-				await this.updateSidebarWithContentTypesAsync(undefined, () => AppEvents.broadcast("ActiveSidebar", { name: "cms" }));
+				await this.updateSidebarWithContentTypesAsync();
 			}
 			else if ("UpdateSidebarWithCategories" === info.args.Mode) {
 				if (AppUtility.isNotEmpty(info.args.ContentTypeID)) {
 					if (this._sidebarContentType === undefined || this._sidebarContentType.ID !== info.args.ContentTypeID) {
 						this._sidebarContentType = ContentType.get(info.args.ContentTypeID);
 						if (this._sidebarContentType !== undefined) {
-							await this.updateSidebarWithCategoriesAsync(undefined, undefined, () => AppEvents.broadcast("ActiveSidebar", { name: "cms" }));
+							await this.updateSidebarWithCategoriesAsync();
 						}
-					}
-					else {
-						AppEvents.broadcast("ActiveSidebar", { name: "cms" });
 					}
 				}
 				else if (this._sidebarContentType === undefined) {
-					await this.updateSidebarWithCategoriesAsync(undefined, undefined, () => AppEvents.broadcast("ActiveSidebar", { name: "cms" }));
+					await this.updateSidebarWithCategoriesAsync();
 				}
 			}
 			else if ("Changed" === info.args.Type && ("Organization" === info.args.Object || "Module" === info.args.Object) && this.configSvc.appConfig.services.active === this.name) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				await this.updateSidebarAsync();
+			}
+			else if ("RequestFeaturedContents" === info.args.Mode) {
+				await this.prepareFeaturedContentsAsync(false);
 			}
 		});
 
@@ -125,7 +127,9 @@ export class PortalsCmsService extends BaseService {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				await this.updateSidebarAsync();
-				AppEvents.broadcast("ActiveSidebar", { name: "cms" });
+				if ("LogIn" === info.args.Type) {
+					await this.prepareFeaturedContentsAsync();
+				}
 			}
 		});
 
@@ -133,13 +137,13 @@ export class PortalsCmsService extends BaseService {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.active === this.name) {
 				if (Organization.active !== undefined && this.portalsCoreSvc.activeOrganizations.indexOf(Organization.active.ID) < 0) {
 					await this.portalsCoreSvc.removeActiveOrganizationAsync(Organization.active.ID);
+					this._sidebarCategory = undefined;
+					this._sidebarContentType = undefined;
+					await Promise.all([
+						this.prepareFeaturedContentsAsync(),
+						this.updateSidebarAsync()
+					]);
 				}
-				this._sidebarCategory = undefined;
-				this._sidebarContentType = undefined;
-				await Promise.all([
-					this.prepareFeaturedContentsAsync(),
-					this.updateSidebarAsync()
-				]);
 			}
 		});
 	}
@@ -394,29 +398,31 @@ export class PortalsCmsService extends BaseService {
 		this.portalsCoreSvc.setLookupOptions(lookupOptions, lookupModalPage, contentType, multiple, nested, onPreCompleted);
 	}
 
-	private updateSidebar(items: Array<AppSidebarMenuItem>, parent?: AppSidebarMenuItem, onNext?: () => void) {
+	private updateSidebar(items?: Array<AppSidebarMenuItem>, parent?: AppSidebarMenuItem, onNext?: () => void) {
 		AppEvents.broadcast("UpdateSidebar", {
-			index: 0,
-			name: "cms",
-			reset: true,
-			parent: parent,
-			items: items
+			Index: 0,
+			Name: "cms",
+			Reset: true,
+			Parent: parent,
+			Items: items
 		});
 		if (onNext !== undefined) {
 			onNext();
 		}
 	}
 
-	private async updateSidebarAsync(onSuccess?: () => void) {
+	private async updateSidebarAsync() {
 		if (this.configSvc.isAuthenticated) {
 			const activeModule = this.portalsCoreSvc.activeModule;
 			if (this.getDefaultContentTypeOfCategory(activeModule) !== undefined) {
-				await this.updateSidebarWithCategoriesAsync(undefined, undefined, onSuccess);
+				await this.updateSidebarWithCategoriesAsync();
 			}
 			else if (activeModule !== undefined) {
-				await this.updateSidebarWithContentTypesAsync(undefined, onSuccess);
+				await this.updateSidebarWithContentTypesAsync();
 			}
-			AppEvents.broadcast("ActiveSidebar", { name: activeModule !== undefined && activeModule.contentTypes.length > 0 ? "cms" : this.configSvc.isAuthenticated ? "portals" : "cms" });
+		}
+		else {
+			this.updateSidebar();
 		}
 	}
 
@@ -426,11 +432,11 @@ export class PortalsCmsService extends BaseService {
 			: contentType => contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000001" && contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000002";
 		this.updateSidebar(
 			this.portalsCoreSvc.activeModule.contentTypes.filter(filterBy).sortBy("Title").map(contentType => ({
-				title: contentType.Title,
-				link: this.portalsCoreSvc.getRouterLink(contentType, "list"),
-				params: this.portalsCoreSvc.getRouterQueryParams(contentType)
+				Title: contentType.Title,
+				Link: this.portalsCoreSvc.getRouterLink(contentType, "list"),
+				Params: this.portalsCoreSvc.getRouterQueryParams(contentType)
 			})),
-			{ title: await this.configSvc.getResourceAsync("portals.sidebar.cms-contents") },
+			{ Title: await this.configSvc.getResourceAsync("portals.sidebar.cms-contents") },
 			onNext
 		);
 	}
@@ -440,11 +446,11 @@ export class PortalsCmsService extends BaseService {
 			this._sidebarCategory = parent;
 			this._sidebarContentType = this._sidebarContentType || this.getDefaultContentTypeOfContent(parent.module);
 			const info = this.getSidebarItems(parent.Children, parent);
-			const index = info.items.findIndex(item => item.id === expandedID);
+			const index = info.Items.findIndex(item => item.ID === expandedID);
 			if (index > -1) {
-				info.items[index].expanded = true;
+				info.Items[index].Expanded = true;
 			}
-			this.updateSidebar(info.items, info.parent, onNext);
+			this.updateSidebar(info.Items, info.Parent, onNext);
 		}
 		else {
 			const contentType = this.getDefaultContentTypeOfCategory(this.portalsCoreSvc.activeModule);
@@ -463,7 +469,7 @@ export class PortalsCmsService extends BaseService {
 					),
 					data => {
 						const info = this.getSidebarItems(data !== undefined ? Category.toArray(data.Objects) : Category.instances.toArray(category => category.SystemID === contentType.SystemID && category.RepositoryID === contentType.RepositoryID && category.ParentID === undefined).sortBy("OrderIndex", "Title"));
-						this.updateSidebar(info.items, info.parent, onNext);
+						this.updateSidebar(info.Items, info.Parent, onNext);
 					}
 				);
 			}
@@ -477,38 +483,38 @@ export class PortalsCmsService extends BaseService {
 		const expand: (menuItem: AppSidebarMenuItem, parentID?: string, dontUpdateExpaned?: boolean) => void = async (menuItem, parentID, dontUpdateExpanded) => {
 			if (parentID === undefined) {
 				if (!dontUpdateExpanded) {
-					menuItem.expanded = !menuItem.expanded;
+					menuItem.Expanded = !menuItem.Expanded;
 				}
-				menuItem.icon = {
-					name: menuItem.expanded ? "chevron-down" : "chevron-forward",
-					color: "medium",
-					slot: "end"
+				menuItem.Icon = {
+					Name: menuItem.Expanded ? "chevron-down" : "chevron-forward",
+					Color: "medium",
+					Slot: "end"
 				};
 			}
 			else {
-				await this.updateSidebarWithCategoriesAsync(Category.get(parentID), menuItem.id);
+				await this.updateSidebarWithCategoriesAsync(Category.get(parentID), menuItem.ID);
 			}
 		};
 
 		const getItem: (category: Category, onCompleted: (item: AppSidebarMenuItem) => void) => AppSidebarMenuItem = (category, onCompleted) => {
 			const item: AppSidebarMenuItem = {
-				title: category.Title,
-				link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", category.ansiTitle),
-				params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: category.ID }),
-				id: category.ID,
-				onClick: async (event: Event, info: any, sidebar: AppSidebar) => {
-					const menuItem = info.childIndex !== undefined
-						? sidebar.menu[info.menuIndex].items[info.itemIndex].children[info.childIndex]
-						: sidebar.menu[info.menuIndex].items[info.itemIndex];
-					if (AppUtility.isTrue(info.expand)) {
+				Title: category.Title,
+				Link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", category.ansiTitle),
+				Params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: category.ID }),
+				ID: category.ID,
+				OnClick: async (data: { menuIndex: number; itemIndex: number; childIndex?: number; expand?: boolean; }, sidebar: AppSidebar, event: Event) => {
+					const menuItem = data.childIndex !== undefined
+						? sidebar.Menu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex]
+						: sidebar.Menu[data.menuIndex].Items[data.itemIndex];
+					if (AppUtility.isTrue(data.expand)) {
 						event.stopPropagation();
-						expand(menuItem, info.childIndex === undefined ? undefined : sidebar.menu[info.menuIndex].items[info.itemIndex].id);
+						expand(menuItem, data.childIndex === undefined ? undefined : sidebar.Menu[data.menuIndex].Items[data.itemIndex].ID);
 					}
 					else {
-						await this.configSvc.navigateAsync(menuItem.direction, menuItem.link, menuItem.params);
-						if (menuItem.children !== undefined && menuItem.children.length > 0) {
-							expand(menuItem, info.childIndex === undefined ? undefined : sidebar.menu[info.menuIndex].items[info.itemIndex].id, menuItem.expanded);
+						if (menuItem.Children !== undefined && menuItem.Children.length > 0) {
+							expand(menuItem, data.childIndex === undefined ? undefined : sidebar.Menu[data.menuIndex].Items[data.itemIndex].ID, menuItem.Expanded);
 						}
+						await this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params);
 					}
 				}
 			};
@@ -516,18 +522,18 @@ export class PortalsCmsService extends BaseService {
 			return item;
 		};
 
-		const getChildren: (childrenCategories: Category[]) => AppSidebarMenuItem[] = childrenCategories => childrenCategories.map(category => getItem(category, item => item.children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : []));
+		const getChildren: (childrenCategories: Category[]) => AppSidebarMenuItem[] = childrenCategories => childrenCategories.map(category => getItem(category, item => item.Children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : []));
 
 		return {
-			parent: {
-				title: parent === undefined ? "{{portals.sidebar.cms-categories}}" : parent.Title,
-				link: parent === undefined ? undefined : this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", parent.ansiTitle),
-				params: parent === undefined ? undefined : this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: parent.ID }),
-				expanded: parent !== undefined,
-				onClick: async () => await this.updateSidebarWithCategoriesAsync(this._sidebarCategory !== undefined ? this._sidebarCategory.Parent : undefined, this._sidebarCategory !== undefined ? this._sidebarCategory.ID : undefined),
-				id: parent === undefined ? undefined : parent.ID,
+			Parent: {
+				Title: parent === undefined ? "{{portals.sidebar.cms-categories}}" : parent.Title,
+				Link: parent === undefined ? undefined : this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", parent.ansiTitle),
+				Params: parent === undefined ? undefined : this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: parent.ID }),
+				Expanded: parent !== undefined,
+				OnClick: async () => await this.updateSidebarWithCategoriesAsync(this._sidebarCategory !== undefined ? this._sidebarCategory.Parent : undefined, this._sidebarCategory !== undefined ? this._sidebarCategory.ID : undefined),
+				ID: parent === undefined ? undefined : parent.ID,
 			} as AppSidebarMenuItem,
-			items: categories.map(category => getItem(category, item => item.children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : []))
+			Items: categories.map(category => getItem(category, item => item.Children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : []))
 		};
 	}
 
@@ -567,7 +573,7 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	private async prepareFeaturedContentsAsync() {
+	private async prepareFeaturedContentsAsync(allActiveOrganizations: boolean = true) {
 		if (this.configSvc.isAuthenticated) {
 			const activeOrganization = await this.portalsCoreSvc.getActiveOrganizationAsync();
 			let activeContentTypes = new Array<ContentType>();
@@ -582,18 +588,20 @@ export class PortalsCmsService extends BaseService {
 				AppUtility.invoke(async () => await this.getFeaturedContentsAsync(activeContentTypes, 0), 123);
 			}
 
-			const availableOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync();
-			if (activeOrganization !== undefined) {
-				availableOrganizations.removeAt(availableOrganizations.findIndex(org => org.ID === activeOrganization.ID));
-			}
-			let availableContentTypes = new Array<ContentType>();
-			availableOrganizations.forEach(organization => organization.modules.forEach(module => {
-				const contentTypesOfCmsContent = this.getContentTypesOfContent(module);
-				const contentTypesOfCmsItem = this.getContentTypesOfItem(module);
-				availableContentTypes = availableContentTypes.concat(contentTypesOfCmsContent).concat(contentTypesOfCmsItem);
-			}));
-			if (availableContentTypes.length > 0) {
-				AppUtility.invoke(async () => await this.getFeaturedContentsAsync(availableContentTypes, 0), 3456);
+			if (allActiveOrganizations) {
+				const availableOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync();
+				if (activeOrganization !== undefined) {
+					availableOrganizations.removeAt(availableOrganizations.findIndex(org => org.ID === activeOrganization.ID));
+				}
+				let availableContentTypes = new Array<ContentType>();
+				availableOrganizations.forEach(organization => organization.modules.forEach(module => {
+					const contentTypesOfCmsContent = this.getContentTypesOfContent(module);
+					const contentTypesOfCmsItem = this.getContentTypesOfItem(module);
+					availableContentTypes = availableContentTypes.concat(contentTypesOfCmsContent).concat(contentTypesOfCmsItem);
+				}));
+				if (availableContentTypes.length > 0) {
+					AppUtility.invoke(async () => await this.getFeaturedContentsAsync(availableContentTypes, 0), 3456);
+				}
 			}
 		}
 	}

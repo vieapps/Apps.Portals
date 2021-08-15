@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit, Input, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { AppUtility } from "@app/components/app.utility";
-import { AppFormsControl } from "@app/components/forms.service";
+import { AppFormsControl } from "@app/components/forms.objects";
 import { ConfigurationService } from "@app/services/configuration.service";
 
 @Component({

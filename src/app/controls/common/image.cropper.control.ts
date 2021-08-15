@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from "@angular/core";
 import { ImageCroppedEvent } from "ngx-image-cropper";
 import { Crop as NativeImageCropper } from "@ionic-native/crop/ngx";
-import { AppFormsControl } from "@app/components/forms.service";
+import { AppFormsControl } from "@app/components/forms.objects";
 import { ConfigurationService } from "@app/services/configuration.service";
 
 @Component({

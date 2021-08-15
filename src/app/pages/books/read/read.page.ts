@@ -209,7 +209,7 @@ export class BooksReadPage implements OnInit, OnDestroy {
 		];
 
 		if (true !== this.configSvc.appConfig.extras["Books-ShowTOCs"]) {
-			if (this.screen > 992 || this.book === undefined || this.book.TotalChapters < 2) {
+			if (this.screen > 1199 || this.book === undefined || this.book.TotalChapters < 2) {
 				this.actions.removeAt(2);
 			}
 		}
