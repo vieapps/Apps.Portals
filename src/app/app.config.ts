@@ -82,9 +82,10 @@ export class AppConfig {
 			{
 				name: "Books",
 				objects: ["Book", "Category", "Statistic"],
-				appName: "NGX Books"
+				appName: "NGX Books",
+				appDescription: "Free online books from VIEApps.net"
 			}
-		] as Array<{ name: string; objects: Array<string>; availableHosts?: Array<string>; appName?: string }>
+		] as Array<{ name: string; objects: Array<string>; availableHosts?: Array<string>; appName?: string; appDescription?: string; }>
 	};
 
 	/** User account registrations */

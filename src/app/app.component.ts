@@ -130,8 +130,9 @@ export class AppComponent implements OnInit {
 				});
 				if (this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.configSvc.appConfig.services.active) < 0) {
 					const service = this.configSvc.appConfig.services.all.first();
-					this.configSvc.appConfig.app.name = service.appName || this.configSvc.appConfig.app.name;
 					this.configSvc.appConfig.services.active = service.name;
+					this.configSvc.appConfig.app.name = service.appName || this.configSvc.appConfig.app.name;
+					this.configSvc.appConfig.app.description = service.appDescription || this.configSvc.appConfig.app.description;
 				}
 			}
 
