@@ -117,8 +117,8 @@ export class UsersProfilePage implements OnInit {
 
 	async prepareButtonsAsync() {
 		if (this.mode === "invitation") {
-			this.buttons.cancel = { text: await this.configSvc.getResourceAsync("common.buttons.cancel"), handler: () => this.showProfileAsync() };
-			this.buttons.ok = { text: await this.configSvc.getResourceAsync("users.profile.buttons.invite"), handler: () => this.sendInvitationAsync() };
+			this.buttons.cancel = { text: await this.configSvc.getResourceAsync("common.buttons.cancel"), handler: async () => await this.showProfileAsync() };
+			this.buttons.ok = { text: await this.configSvc.getResourceAsync("users.profile.buttons.invite"), handler: async () => await this.sendInvitationAsync() };
 		}
 		else {
 			this.buttons.cancel = undefined;
@@ -126,7 +126,7 @@ export class UsersProfilePage implements OnInit {
 		}
 
 		this.buttons.invite = this.mode === "profile" && this.profile.ID === this.configSvc.getAccount().id && this.authSvc.canSendInvitations
-			? { text: await this.configSvc.getResourceAsync("users.profile.buttons.invitation"), icon: "people", handler: () => this.openSendInvitationAsync() }
+			? { text: await this.configSvc.getResourceAsync("users.profile.buttons.invitation"), icon: "people", handler: async () => await this.openSendInvitationAsync() }
 			: undefined;
 	}
 
@@ -162,8 +162,9 @@ export class UsersProfilePage implements OnInit {
 	}
 
 	async showProfileAsync(onNext?: () => void) {
-		const onSuccess = async () => {
-			this.profile = this.profile || UserProfile.get(this.id || this.configSvc.getAccount().id);
+		const id = this.id || this.configSvc.getAccount().id;
+		const showProfileAsync = async () => {
+			this.profile = this.profile || UserProfile.get(id);
 			this.labels.header = await this.configSvc.getResourceAsync("users.profile.labels.header");
 			this.labels.lastAccess = await this.configSvc.getResourceAsync("users.profile.labels.lastAccess");
 			await Promise.all([
@@ -171,19 +172,26 @@ export class UsersProfilePage implements OnInit {
 				TrackingUtility.trackAsync(`${await this.configSvc.getResourceAsync("users.profile.title")} [${this.profile.Name}]`, this.configSvc.appConfig.URLs.users.profile)
 			]).then(async () => await this.appFormsSvc.hideLoadingAsync(onNext));
 		};
-		const force = this.configSvc.appConfig.services.active === "Books" && this.profile.LastSync === undefined;
+		const force = this.configSvc.appConfig.services.active === "Books" && (this.profile === undefined || this.profile.LastSync === undefined);
 		if (this.profile === undefined || force) {
 			await this.appFormsSvc.showLoadingAsync();
 			await this.usersSvc.getProfileAsync(
-				this.id || this.configSvc.getAccount().id,
-				async () => await onSuccess(),
+				id,
+				async _ => {
+					this.profile = UserProfile.get(id);
+					if (id === this.configSvc.getAccount().id) {
+						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
+						AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: this.profile });
+					}
+					await showProfileAsync();
+				},
 				async error => await this.appFormsSvc.showErrorAsync(error),
-				false,
+				true,
 				force
 			);
 		}
 		else {
-			await onSuccess();
+			await showProfileAsync();
 		}
 	}
 

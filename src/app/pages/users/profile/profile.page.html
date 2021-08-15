@@ -2,17 +2,17 @@
 	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
 			<ion-back-button *ngIf="mode === 'profile'" text=""></ion-back-button>
-			<ion-button *ngIf="buttons.cancel" color="secondary" (click)="buttons.cancel.handler()">
-				<ion-icon *ngIf="buttons.cancel.icon" [name]="buttons.cancel.icon" slot="start"></ion-icon>
+			<ion-button *ngIf="!!buttons.cancel" color="secondary" (click)="buttons.cancel.handler()">
+				<ion-icon *ngIf="!!buttons.cancel.icon" [name]="buttons.cancel.icon" slot="start"></ion-icon>
 				{{ buttons.cancel.text }}
 			</ion-button>
 		</ion-buttons>
 		<ion-buttons slot="end">
-			<ion-button *ngIf="mode === 'profile' && !id && canManageUsers" [routerLink]="listURL">
+			<ion-button *ngIf="mode === 'profile' && !!!id && canManageUsers" [routerLink]="listURL">
 				<ion-icon name="people-circle" slot="icon-only"></ion-icon>
 			</ion-button>
-			<ion-button *ngIf="buttons.ok" color="primary" (click)="buttons.ok.handler()">
-				<ion-icon *ngIf="buttons.ok.icon" [name]="buttons.ok.icon" slot="start"></ion-icon>
+			<ion-button *ngIf="!!buttons.ok" color="primary" (click)="buttons.ok.handler()">
+				<ion-icon *ngIf="!!buttons.ok.icon" [name]="buttons.ok.icon" slot="start"></ion-icon>
 				{{ buttons.ok.text }}
 			</ion-button>
 		</ion-buttons>
@@ -22,15 +22,15 @@
 	</ion-toolbar>
 </ion-header>
 
-<ion-footer *ngIf="buttons.invite || (mode === 'profile' && actions)">
+<ion-footer *ngIf="!!buttons.invite || (mode === 'profile' && !!actions)">
 	<ion-toolbar [color]="color">
-		<ion-buttons *ngIf="buttons.invite" slot="start">
+		<ion-buttons *ngIf="!!buttons.invite" slot="start">
 			<ion-button (click)="buttons.invite.handler()">
-				<ion-icon *ngIf="buttons.invite.icon" [name]="buttons.invite.icon" slot="start"></ion-icon>
+				<ion-icon *ngIf="!!buttons.invite.icon" [name]="buttons.invite.icon" slot="start"></ion-icon>
 				{{ buttons.invite.text }}
 			</ion-button>
 		</ion-buttons>
-		<ion-buttons *ngIf="mode === 'profile' && actions" slot="end">
+		<ion-buttons *ngIf="mode === 'profile' && !!actions" slot="end">
 			<ion-button color="primary" (click)="showActionsAsync()">
 				<ion-icon name="ellipsis-horizontal" slot="icon-only"></ion-icon>
 			</ion-button>
@@ -40,7 +40,7 @@
 
 <ion-content [color]="color">
 
-	<div *ngIf="mode === 'profile' && profile">
+	<div *ngIf="mode === 'profile' && !!profile">
 		<figure>
 			<img [src]="profile.avatarURI" />
 		</figure>
@@ -56,15 +56,15 @@
 					{{ labels.header }}
 				</ion-label>
 			</ion-list-header>
-			<ion-item *ngIf="profile.Email && profile.Email !== ''" [color]="color">
+			<ion-item *ngIf="!!profile.Email && profile.Email !== ''" [color]="color">
 				<ion-icon icon="at" slot="start"></ion-icon>
 				{{ profile.Email }}
 			</ion-item>
-			<ion-item *ngIf="profile.Mobile && profile.Mobile !== ''" [color]="color">
+			<ion-item *ngIf="!!profile.Mobile && profile.Mobile !== ''" [color]="color">
 				<ion-icon icon="call" slot="start"></ion-icon>
 				{{ profile.Mobile }}
 			</ion-item>
-			<ion-item *ngIf="profile.fullAddress && profile.fullAddress !== ''" [color]="color">
+			<ion-item *ngIf="!!profile.fullAddress && profile.fullAddress !== ''" [color]="color">
 				<ion-icon icon="pin" slot="start"></ion-icon>
 				{{ profile.fullAddress }}
 			</ion-item>
@@ -77,12 +77,12 @@
 			</ion-item>
 		</ion-list>
 
-		<control-books-bookmarks *ngIf="activeService === 'Books' && !id"></control-books-bookmarks>
+		<control-books-bookmarks *ngIf="activeService === 'Books' && !!profile && !!!id"></control-books-bookmarks>
 
 	</div>
 
 	<div *ngIf="mode === 'invitation'" class="ion-padding">
-		<app-form *ngIf="invitation.config"
+		<app-form *ngIf="!!invitation.config"
 			[color]="color"
 			[form]="invitation.form"
 			[config]="invitation.config"

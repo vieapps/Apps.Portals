@@ -40,10 +40,16 @@ export class UsersService extends BaseService {
 				}
 			}
 		});
-		AppEvents.on("Navigating", _ => {
+		AppEvents.on("Navigated", _ => {
 			const profile = this.configSvc.getAccount().profile;
 			if (profile !== undefined) {
 				profile.LastAccess = new Date();
+			}
+			else if (this.configSvc.isAuthenticated) {
+				AppUtility.invoke(async () => await this.getProfileAsync(undefined, () => {
+					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
+					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: this.configSvc.getAccount().profile });
+				}, undefined, false, true), 456);
 			}
 		});
 	}
