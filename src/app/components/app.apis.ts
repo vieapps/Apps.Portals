@@ -372,7 +372,7 @@ export class AppAPIs {
 			}
 
 			// got a special message => broadcast or do a special action
-			else {
+			else if (!gotID) {
 				// prepare
 				const messageType = this.parseMessageType(msg.Type);
 
@@ -410,7 +410,7 @@ export class AppAPIs {
 				}
 
 				// broadcast the messags to all subscribers
-				else if (!gotID) {
+				else {
 					const message: AppMessage = { Type: messageType, Data: data };
 					if (AppConfig.isDebug) {
 						console.log("[AppAPIs]: Got an updating message", AppConfig.isNativeApp ? AppUtility.stringify(message) : message);
