@@ -15,7 +15,6 @@ import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 
 @Injectable()
-
 export class BooksService extends BaseService {
 
 	constructor(
@@ -156,18 +155,16 @@ export class BooksService extends BaseService {
 						this.configSvc.appConfig.services.active = this.name;
 						this.configSvc.appConfig.URLs.search = "/books/search";
 						this.updateSidebarTitle();
-						AppUtility.invoke(() => AppEvents.broadcast("OpenSidebarFooter", { Name: name }), 13);
+						AppUtility.invoke(() => AppEvents.broadcast("OpenSidebar", { Name: name }), 13);
 					}
 				}
 			},
 			Index: this.menuIndex,
 			Predicate: (sidebar: AppSidebar) => sidebar.Footer.findIndex(btn => btn.Name === "books") < 0,
 			OnCompleted: (sidebar: AppSidebar) => {
-				if (sidebar.Footer.length > 1) {
-					const index = sidebar.Footer.findIndex(btn => btn.Name === "books");
-					if (sidebar.Footer[index - 1].Name === "preferences") {
-						sidebar.Footer.move(index, index - 1);
-					}
+				const index = sidebar.Footer.length > 1 ? sidebar.Footer.findIndex(btn => btn.Name === "books") : 0;
+				if (index > 0 && sidebar.Footer[index - 1].Name === "preferences") {
+					sidebar.Footer.move(index, index - 1);
 				}
 			}
 		});
@@ -236,7 +233,7 @@ export class BooksService extends BaseService {
 	}
 
 	public searchBooks(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return super.search(
+		return this.search(
 			this.getSearchingPath("book", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -252,7 +249,7 @@ export class BooksService extends BaseService {
 	}
 
 	public async searchBooksAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await super.searchAsync(
+		await this.searchAsync(
 			this.getSearchingPath("book", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -620,16 +617,16 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	private async fetchBookmarksAsync(onNext?: () => void) {
-		await Promise.all(this.bookmarks.toArray(bookmark => !Book.instances.contains(bookmark.ID)).map(bookmark => this.getBookAsync(bookmark.ID)));
+	private async storeBookmarksAsync(onNext?: () => void) {
+		await AppStorage.setAsync("Books-Bookmarks", this.bookmarks.toArray());
+		AppEvents.broadcast("Books", { Type: "BookmarksUpdated" });
 		if (onNext !== undefined) {
 			onNext();
 		}
 	}
 
-	private async storeBookmarksAsync(onNext?: () => void) {
-		await AppStorage.setAsync("Books-Bookmarks", this.bookmarks.toArray());
-		AppEvents.broadcast("Books", { Type: "BookmarksUpdated" });
+	private async fetchBookmarksAsync(onNext?: () => void) {
+		await Promise.all(this.bookmarks.toArray(bookmark => !Book.instances.contains(bookmark.ID)).map(bookmark => this.getBookAsync(bookmark.ID)));
 		if (onNext !== undefined) {
 			onNext();
 		}
@@ -640,15 +637,6 @@ export class BooksService extends BaseService {
 			ServiceName: this.name,
 			ObjectName: "bookmarks"
 		}, async data => await this.updateBookmarksAsync(data, onNext));
-	}
-
-	public async sendBookmarksAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.sendRequestAsync({
-			ServiceName: this.name,
-			ObjectName: "bookmarks",
-			Verb: "POST",
-			Body: this.bookmarks.toArray().sortBy({ name: "Time", reverse: true }).take(30)
-		}, onSuccess, onError);
 	}
 
 	private async updateBookmarksAsync(data: any, onNext?: () => void) {
@@ -679,20 +667,33 @@ export class BooksService extends BaseService {
 		return this.storeBookmarksAsync(onNext);
 	}
 
-	public async deleteBookmarkAsync(id: string, onNext?: () => void) {
+	public async sendBookmarksAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		await this.sendRequestAsync({
 			ServiceName: this.name,
 			ObjectName: "bookmarks",
-			Verb: "DELETE",
-			Query: {
-				"object-identity": id
+			Verb: "POST",
+			Body: this.bookmarks.toArray().sortBy({ name: "Time", reverse: true }).take(30)
+		}, onSuccess, onError);
+	}
+
+	public async deleteBookmarkAsync(id: string, onNext?: () => void) {
+		await this.sendRequestAsync(
+			{
+				ServiceName: this.name,
+				ObjectName: "bookmarks",
+				Verb: "DELETE",
+				Query: {
+					"object-identity": id
+				}
+			},
+			async _ => {
+				this.bookmarks.remove(id);
+				await this.storeBookmarksAsync();
+				if (onNext !== undefined) {
+					onNext();
+				}
 			}
-		}, _ => {
-			this.bookmarks.remove(id);
-			if (onNext !== undefined) {
-				onNext();
-			}
-		});
+		);
 	}
 
 	private async processUpdateBookmarkMessageAsync(message: AppMessage) {
@@ -730,7 +731,7 @@ export class BooksService extends BaseService {
 				"object-identity": "recrawl",
 				"id": id,
 				"url": url,
-				"full": ("full" === mode) + ""
+				"full": `${"full" === mode}`
 			}
 		});
 	}

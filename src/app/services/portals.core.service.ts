@@ -1326,25 +1326,25 @@ export class PortalsCoreService extends BaseService {
 						Title: "{{portals.sidebar.logs}}",
 						Link: "/logs",
 						Direction: "root",
-						Icon: { Name: "file-tray-full" }
+						Icon: { Name: "file-tray-full", Color: "medium", Slot: "start" }
 					},
 					{
 						Title: "{{portals.sidebar.organizations}}",
 						Link: this.getRouterLink(undefined, "list", "all", "organization", "core"),
 						Direction: "root",
-						Icon: { Name: "business" }
+						Icon: { Name: "business", Color: "medium", Slot: "start" }
 					},
 					{
 						Title: "{{portals.sidebar.roles}}",
 						Link: this.getRouterLink(undefined, "list", "all", "role", "core"),
 						Direction: "root",
-						Icon: { Name: "body" }
+						Icon: { Name: "body", Color: "medium", Slot: "start" }
 					},
 					{
 						Title: "{{portals.sidebar.modules}}",
 						Link: this.getRouterLink(undefined, "list", "all", "module", "core"),
 						Direction: "root",
-						Icon: { Name: "albums" }
+						Icon: { Name: "albums", Color: "medium", Slot: "start" }
 					}
 				);
 			}
@@ -1353,7 +1353,7 @@ export class PortalsCoreService extends BaseService {
 				Title: "{{portals.sidebar.content-types}}",
 				Link: this.getRouterLink(undefined, "list", "all", "content.type", "core"),
 				Direction: "root",
-				Icon: { Name: "git-compare" }
+				Icon: { Name: "git-compare", Color: "medium", Slot: "start" }
 			});
 
 			if (canModerateOrganization) {
@@ -1361,7 +1361,7 @@ export class PortalsCoreService extends BaseService {
 					Title: "{{portals.sidebar.expressions}}",
 					Link: this.getRouterLink(undefined, "list", "all", "expression", "core"),
 					Direction: "root",
-					Icon: { Name: "construct" }
+					Icon: { Name: "construct", Color: "medium", Slot: "start" }
 				});
 			}
 
@@ -1370,7 +1370,7 @@ export class PortalsCoreService extends BaseService {
 					Title: "{{portals.sidebar.sites}}",
 					Link: this.getRouterLink(undefined, "list", "all", "site", "core"),
 					Direction: "root",
-					Icon: { Name: "globe" }
+					Icon: { Name: "globe", Color: "medium", Slot: "start" }
 				});
 			}
 
@@ -1379,7 +1379,7 @@ export class PortalsCoreService extends BaseService {
 					Title: "{{portals.sidebar.desktops}}",
 					Link: this.getRouterLink(undefined, "list", "all", "desktop", "core"),
 					Direction: "root",
-					Icon: { Name: "desktop" }
+					Icon: { Name: "desktop", Color: "medium", Slot: "start" }
 				});
 			}
 
@@ -1387,7 +1387,7 @@ export class PortalsCoreService extends BaseService {
 				Title: "{{portals.sidebar.cms-categories}}",
 				Link: this.getRouterLink(undefined, "list", "all", "category"),
 				Direction: "root",
-				Icon: { Name: "color-filter" }
+				Icon: { Name: "color-filter", Color: "medium", Slot: "start" }
 			});
 		}
 

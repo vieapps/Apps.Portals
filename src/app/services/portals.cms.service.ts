@@ -8,13 +8,14 @@ import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppCustomCompleter } from "@app/components/app.completer";
 import { AppPagination  } from "@app/components/app.pagination";
+import { AppSidebar, AppSidebarMenuItem, AppMessage, AppDataRequest } from "@app/components/app.objects";
+import { AppFormsControlConfig, AppFormsControlLookupOptionsConfig } from "@app/components/forms.objects";
+import { AppFormsService } from "@app/components/forms.service";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { FilesService, FileOptions } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { AppFormsService } from "@app/components/forms.service";
-import { AppFormsControlConfig, AppFormsControlLookupOptionsConfig } from "@app/components/forms.objects";
 import { AppFormsControlComponent } from "@app/components/forms.control.component";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 import { Account } from "@app/models/account";
@@ -22,7 +23,6 @@ import { AttachmentInfo } from "@app/models/base";
 import { Organization, Module, ContentType, Desktop } from "@app/models/portals.core.all";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 import { Category, Content, Item, Link } from "@app/models/portals.cms.all";
-import { AppSidebar, AppSidebarMenuItem, AppMessage, AppDataRequest } from "@app/components/app.objects";
 
 @Injectable()
 export class PortalsCmsService extends BaseService {

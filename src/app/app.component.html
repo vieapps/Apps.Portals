@@ -47,8 +47,11 @@
 
 					<ion-menu-toggle *ngFor="let menu of sidebar.MainMenu; let menuIndex=index; trackBy: trackSidebarItem" [hidden]="sidebar.Active !== menu.Name" [class]="'menu-' + menu.Name" auto-hide="false">
 						<ion-list-header *ngIf="!!menu.Parent && !!menu.Parent.Title" [color]="color" (click)="menu.Parent.OnClick(menu.Parent, sidebar, $event)" class="ion-padding-top">
-							<ion-label>
+							<ion-label [class]="!!menu.Parent.Thumbnail ? 'thumbnail' : ''">
 								<ion-icon *ngIf="menu.Parent.Expanded" name="chevron-back" slot="start"></ion-icon>
+								<ion-thumbnail *ngIf="!!menu.Parent.Thumbnail && !menu.Parent.Expanded" class="ion-float-start">
+									<img [src]="menu.Parent.Thumbnail" />
+								</ion-thumbnail>
 								{{ menu.Parent.Title }}
 							</ion-label>
 						</ion-list-header>

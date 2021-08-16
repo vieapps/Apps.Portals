@@ -55,18 +55,31 @@ ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-labe
 	font-weight: bold;
 	cursor: pointer;
 }
+ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label > ion-icon {
+	width: 24px;
+	margin-inline-end: 30px;
+}
+ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label.thumbnail {
+	line-height: inherit;
+	margin-top: 7px;
+}
+ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label.thumbnail > ion-thumbnail {
+	margin-top: -7px;
+}
+ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label > ion-thumbnail {
+	margin-right: 16px;
+}
 ion-menu > ion-content ion-list ion-item {
 	cursor: pointer;
 }
 ion-menu > ion-content ion-list.children > ion-item {
-	--padding-start: 32px;
+	--padding-start: 74px;
 }
 .md ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label {
 	text-transform: uppercase;
 }
 ion-menu > ion-content > ion-list > ion-menu-toggle img {
 	max-height: 44px;
-	margin-right: 16px;
 }
 ion-menu > ion-content > control-app-preferences img.logo {
 	width: 70px !important;
