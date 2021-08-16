@@ -1,12 +1,12 @@
 /** 
- * RSAjs - Encrypts and Decrypts text data using RSA
+ * RSAjs - Encrypts and Decrypts text data using RSA with PKCS1 padding
  * by David Shapiro & Eric Wilde (http://www.ohdave.com/rsa)
 */
 export var RSA = function() {
 	var biRadixBase = 2;
 	var biRadixBits = 16;
 	var bitsPerDigit = biRadixBits;
-	var biRadix = 1 << 16; // = 2^16 = 65536
+	var biRadix = 1 << 16;
 	var biHalfRadix = biRadix >>> 1;
 	var biRadixSquared = biRadix * biRadix;
 	var maxDigitVal = biRadix - 1;
@@ -189,7 +189,7 @@ export var RSA = function() {
 		var istop = isNeg ? 1 : 0;
 		var result = new BigInt();
 		var place = new BigInt();
-		place.digits[0] = 1; // radix^0
+		place.digits[0] = 1;
 		for (var i = s.length - 1; i >= istop; i--) {
 			var c = s.charCodeAt(i);
 			var digit = charToHex(c);
@@ -335,9 +335,8 @@ export var RSA = function() {
 		}
 	}
 
-	var highBitMasks = new Array(0x0000, 0x8000, 0xC000, 0xE000, 0xF000, 0xF800,
-		0xFC00, 0xFE00, 0xFF00, 0xFF80, 0xFFC0, 0xFFE0,
-		0xFFF0, 0xFFF8, 0xFFFC, 0xFFFE, 0xFFFF);
+	var highBitMasks = [0x0000, 0x8000, 0xC000, 0xE000, 0xF000, 0xF800, 0xFC00, 0xFE00, 0xFF00, 0xFF80, 0xFFC0, 0xFFE0, 0xFFF0, 0xFFF8, 0xFFFC, 0xFFFE, 0xFFFF];
+	var lowBitMasks = [0x0000, 0x0001, 0x0003, 0x0007, 0x000F, 0x001F, 0x003F, 0x007F, 0x00FF, 0x01FF, 0x03FF, 0x07FF, 0x0FFF, 0x1FFF, 0x3FFF, 0x7FFF, 0xFFFF];
 
 	function biShiftLeft(x, n) {
 		var digitCount = Math.floor(n / bitsPerDigit);
@@ -354,10 +353,6 @@ export var RSA = function() {
 		result.isNeg = x.isNeg;
 		return result;
 	}
-
-	var lowBitMasks = new Array(0x0000, 0x0001, 0x0003, 0x0007, 0x000F, 0x001F,
-		0x003F, 0x007F, 0x00FF, 0x01FF, 0x03FF, 0x07FF,
-		0x0FFF, 0x1FFF, 0x3FFF, 0x7FFF, 0xFFFF);
 
 	function biShiftRight(x, n) {
 		var digitCount = Math.floor(n / bitsPerDigit);
@@ -585,12 +580,12 @@ export var RSA = function() {
 		return result;
 	}
 
-	var RSAAPP = {};
-
-	RSAAPP.NoPadding = "NoPadding";
-	RSAAPP.PKCS1Padding = "PKCS1Padding";
-	RSAAPP.RawEncoding = "RawEncoding";
-	RSAAPP.NumericEncoding = "NumericEncoding"
+	var RSAAPP = {
+		NoPadding: "NoPadding",
+		PKCS1Padding: "PKCS1Padding",
+		RawEncoding: "RawEncoding",
+		NumericEncoding: "NumericEncoding"
+	};
 
 	function RSAKeyPair(encryptionExponent, decryptionExponent, modulus, keylen) {
 		this.e = biFromHex(encryptionExponent);

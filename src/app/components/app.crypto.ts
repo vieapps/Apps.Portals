@@ -121,11 +121,11 @@ export class AppCrypto {
 
 	/** Initializes all keys for encrypting/decrypting/signing */
 	public static init(keys: { aes: { key: string; iv: string; isBase64?: boolean; }; rsa: { encryptionExponent?: string; decryptionExponent?: string; exponent: string; modulus: string; isBase64?: boolean; }; jwt: string; }) {
-		if (keys.aes !== undefined) {
+		if (AppUtility.isObject(keys.aes, true)) {
 			this._aes.key = CryptoJS.enc.Hex.parse(AppUtility.isTrue(keys.aes.isBase64) ? this.toHex(keys.aes.key) : keys.aes.key);
 			this._aes.iv = CryptoJS.enc.Hex.parse(AppUtility.isTrue(keys.aes.isBase64) ? this.toHex(keys.aes.iv) : keys.aes.iv);
 		}
-		if (keys.rsa !== undefined) {
+		if (AppUtility.isObject(keys.rsa, true)) {
 			let encryptionExponent = keys.rsa.encryptionExponent || keys.rsa.exponent;
 			let decryptionExponent = keys.rsa.decryptionExponent || keys.rsa.exponent;
 			let modulus = keys.rsa.modulus;
@@ -136,8 +136,8 @@ export class AppCrypto {
 			}
 			this._rsa.init(encryptionExponent, decryptionExponent, modulus);
 		}
-		if (keys.jwt !== undefined) {
-			this._jwt = keys.jwt = keys.aes !== undefined ? this.aesDecrypt(keys.jwt) : keys.jwt;
+		if (AppUtility.isNotEmpty(keys.jwt)) {
+			this._jwt = keys.jwt = AppUtility.isObject(keys.aes, true) ? this.aesDecrypt(keys.jwt) : keys.jwt;
 		}
 	}
 
