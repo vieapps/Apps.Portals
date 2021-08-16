@@ -156,6 +156,7 @@ export class BooksService extends BaseService {
 						this.configSvc.appConfig.services.active = this.name;
 						this.configSvc.appConfig.URLs.search = "/books/search";
 						this.updateSidebarTitle();
+						AppUtility.invoke(() => AppEvents.broadcast("OpenSidebarFooter", { Name: name }), 13);
 					}
 				}
 			},

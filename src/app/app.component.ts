@@ -223,36 +223,36 @@ export class AppComponent implements OnInit {
 		this.sidebar.TopMenu = updateTopItems ? [
 			{
 				Title: await this.configSvc.getResourceAsync("common.sidebar.home"),
-				Icon: { Name: "home", Color: "primary", Slot: "start" },
 				Link: this.configSvc.appConfig.URLs.home,
+				Icon: { Name: "home", Color: "primary", Slot: "start" },
 				OnClick: async data => await this.configSvc.navigateHomeAsync(data.Link)
 			},
 			{
 				Title: await this.configSvc.getResourceAsync("common.sidebar.login"),
-				Icon: { Name: "log-in", Color: "success", Slot: "start" },
 				Link: this.configSvc.appConfig.URLs.users.login,
+				Icon: { Name: "log-in", Color: "success", Slot: "start" },
 				OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
 			},
 			{
 				Title: await this.configSvc.getResourceAsync("common.sidebar.register"),
-				Icon: { Name: "person-add", Color: "tertiary", Slot: "start" },
 				Link: this.configSvc.appConfig.URLs.users.register,
+				Icon: { Name: "person-add", Color: "warning", Slot: "start" },
 				OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
 			},
 			{
 				Title: await this.configSvc.getResourceAsync("common.sidebar.profile"),
-				Icon: { Name: "person", Color: "tertiary", Slot: "start" },
 				Link: `${this.configSvc.appConfig.URLs.users.profile}/my`,
+				Icon: { Name: "person", Color: "warning", Slot: "start" },
 				OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
 			},
 			{
 				Title: await this.configSvc.getResourceAsync("common.sidebar.search"),
-				Icon: { Name: "search", Color: "warning", Slot: "start" },
+				Icon: { Name: "search", Color: "tertiary", Slot: "start" },
 				OnClick: async _ => await this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.search)
 			}
 		] : this.sidebar.TopMenu;
 
-		if (info.Index === undefined && info.Parent === undefined && info.Items === undefined) {
+		if (info.Name === undefined && info.Parent === undefined && info.Items === undefined) {
 			if (onNext !== undefined) {
 				onNext();
 			}
@@ -267,7 +267,6 @@ export class AppComponent implements OnInit {
 			this.sidebar.MainMenu.push({ Name: undefined, Parent: undefined, Items: [] });
 		}
 
-		this.sidebar.MainMenu[index].Name = info.Name || "cms";
 		const parent = AppUtility.isObject(info.Parent, true)
 			?	{
 					ID: info.Parent.ID,
@@ -281,11 +280,13 @@ export class AppComponent implements OnInit {
 					OnClick: typeof info.Parent.OnClick === "function"
 						? info.Parent.OnClick
 						: _ => {}
-				}
+				} as AppSidebarMenuItem
 			: undefined;
-		if (parent !== undefined && parent.Title.startsWith("{{") && parent.Title.endsWith("}}")) {
+		if (parent !== undefined && AppUtility.isNotEmpty(parent.Title) && parent.Title.startsWith("{{") && parent.Title.endsWith("}}")) {
 			parent.Title = await this.configSvc.getResourceAsync(parent.Title.substr(2, parent.Title.length - 4).trim());
 		}
+
+		this.sidebar.MainMenu[index].Name = info.Name || "cms";
 		this.sidebar.MainMenu[index].Parent = parent;
 
 		if (AppUtility.isArray(info.Items, true)) {
