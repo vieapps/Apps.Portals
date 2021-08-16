@@ -27,7 +27,7 @@ export class UsersService extends BaseService {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, async message => await this.processUpdateMessageAsync(message));
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", () => {
 			if (this.configSvc.isAuthenticated) {
-				AppUtility.invoke(async () => await this.getProfileAsync(this.configSvc.appConfig.session.account.id, () => AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" }), undefined, false, true), 123);
+				AppUtility.invoke(async () => await Promise.all(this.configSvc.appConfig.services.all.map(service => service.name).map(service => this.getProfileAsync(this.configSvc.appConfig.session.account.id, () => AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" }), undefined, false, true, this.configSvc.appConfig.getRelatedQuery(service)))), 123);
 			}
 		});
 		AppEvents.on("App", async info => {
@@ -164,7 +164,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public async getProfileAsync(id?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, force: boolean = false) {
+	public async getProfileAsync(id?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, force: boolean = false, relatedQuery?: string) {
 		id = id || this.configSvc.getAccount().id;
 		if (!force && UserProfile.contains(id)) {
 			if (onSuccess !== undefined) {
@@ -173,7 +173,7 @@ export class UsersService extends BaseService {
 		}
 		else {
 			await this.readAsync(
-				this.getPath("profile", id, this.configSvc.relatedQuery),
+				this.getPath("profile", id, relatedQuery || this.configSvc.relatedQuery),
 				data => {
 					UserProfile.update(data);
 					if (onSuccess !== undefined) {
