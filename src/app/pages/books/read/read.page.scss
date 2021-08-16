@@ -78,14 +78,17 @@
 	margin: 20px 0;
 	line-height: 2;
 }
+.align-left,
 .align-left > p
 {
 	text-align: left;
 }
+.align-justify,
 .align-justify > p
 {
 	text-align: justify;
 }
+.align-right,
 .align-right > p
 {
 	text-align: right;
