@@ -268,7 +268,7 @@ export class AppComponent implements OnInit {
 		}
 
 		this.sidebar.MainMenu[index].Name = info.Name || "cms";
-		this.sidebar.MainMenu[index].Parent = info.Parent !== undefined
+		const parent = AppUtility.isObject(info.Parent, true)
 			?	{
 					ID: info.Parent.ID,
 					Title: info.Parent.Title,
@@ -283,34 +283,28 @@ export class AppComponent implements OnInit {
 						: _ => {}
 				}
 			: undefined;
-
-		const parent = this.sidebar.MainMenu[index].Parent;
 		if (parent !== undefined && parent.Title.startsWith("{{") && parent.Title.endsWith("}}")) {
 			parent.Title = await this.configSvc.getResourceAsync(parent.Title.substr(2, parent.Title.length - 4).trim());
 		}
+		this.sidebar.MainMenu[index].Parent = parent;
 
 		if (AppUtility.isArray(info.Items, true)) {
 			if (!!info.Reset) {
 				this.sidebar.MainMenu[index].Items = [];
 			}
-			await Promise.all((info.Items as Array<any>).map(item => {
-				const icon = item.Icon || { Name: undefined };
-				icon.Color = icon.Color || "medium";
-				icon.Slot = icon.Slot || "start";
-				return {
-					ID: item.ID,
-					Title: item.Title,
-					Link: item.Link,
-					Params: item.Params,
-					Direction: item.Direction,
-					OnClick: item.OnClick,
-					Children: item.Children,
-					Expanded: item.Expanded,
-					Detail: item.Detail,
-					Thumbnail: item.Thumbnail,
-					Icon: icon
-				} as AppSidebarMenuItem;
-			})
+			await Promise.all((info.Items as Array<any>).map(item => ({
+				ID: item.ID,
+				Title: item.Title,
+				Link: item.Link,
+				Params: item.Params,
+				Direction: item.Direction,
+				OnClick: item.OnClick,
+				Children: item.Children,
+				Expanded: item.Expanded,
+				Detail: item.Detail,
+				Thumbnail: item.Thumbnail,
+				Icon: item.Icon
+			} as AppSidebarMenuItem))
 			.filter(item => AppUtility.isNotEmpty(item.Title))
 			.map(item => this.updateSidebarItemAsync(index, -1, item)));
 		}

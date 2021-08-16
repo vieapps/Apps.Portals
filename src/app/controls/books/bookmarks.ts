@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild } from "@angular/core";
 import { IonList } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { BooksService } from "@app/services/books.service";
@@ -83,7 +84,7 @@ export class BookmarksControl implements OnInit, OnDestroy {
 
 	private async initializeAsync() {
 		await this.prepareLabelsAsync();
-		this.prepareBookmarks();
+		AppUtility.invoke(() => this.prepareBookmarks(), 345);
 	}
 
 	private async prepareLabelsAsync() {

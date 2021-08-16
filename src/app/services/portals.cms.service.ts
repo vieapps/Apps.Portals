@@ -425,8 +425,8 @@ export class PortalsCmsService extends BaseService {
 	private updateSidebar(items?: Array<AppSidebarMenuItem>, parent?: AppSidebarMenuItem, onNext?: () => void) {
 		AppEvents.broadcast("UpdateSidebar", {
 			Index: 0,
-			Name: "cms",
 			Reset: true,
+			Name: "cms",
 			Parent: parent,
 			Items: items
 		});

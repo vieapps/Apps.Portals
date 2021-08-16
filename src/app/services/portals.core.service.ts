@@ -1393,8 +1393,8 @@ export class PortalsCoreService extends BaseService {
 
 		AppEvents.broadcast("UpdateSidebar", {
 			Index: 1,
-			Name: "portals",
 			Reset: true,
+			Name: "portals",
 			Items: items
 		});
 
