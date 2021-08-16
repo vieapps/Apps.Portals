@@ -1308,7 +1308,7 @@ export class PortalsCoreService extends BaseService {
 				this.configSvc.appConfig.services.active = this.name;
 				this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 			}
-			AppUtility.invoke(() => AppEvents.broadcast("OpenSidebar", { Name: sidebar.Active }), 13);
+			AppUtility.invoke(() => AppEvents.broadcast("OpenSidebar"), 13);
 		}
 	}
 

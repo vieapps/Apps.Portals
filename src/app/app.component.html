@@ -38,7 +38,7 @@
 
 					<ion-menu-toggle auto-hide="false" [hidden]="!isSidebarTopMenuShown">
 						<ion-item *ngFor="let item of sidebar.TopMenu; trackBy: trackSidebarItem" [color]="color" (click)="item.OnClick(item, sidebar, $event)" class="ion-activatable" detail="false">
-							<ion-icon *ngIf="!!item.Icon && !!item.Icon.Name" [name]="item.Icon.Name" slot="start"></ion-icon>
+							<ion-icon *ngIf="!!item.Icon && !!item.Icon.Name" [name]="item.Icon.Name" [color]="item.Icon.Color" [slot]="item.Icon.Slot"></ion-icon>
 							<ion-label>
 								{{ item.Title }}
 							</ion-label>

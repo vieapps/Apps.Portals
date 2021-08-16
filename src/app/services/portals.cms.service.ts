@@ -522,10 +522,10 @@ export class PortalsCmsService extends BaseService {
 
 		const getItem: (category: Category, onCompleted: (item: AppSidebarMenuItem) => void) => AppSidebarMenuItem = (category, onCompleted) => {
 			const item: AppSidebarMenuItem = {
+				ID: category.ID,
 				Title: category.Title,
 				Link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", category.ansiTitle),
 				Params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: category.ID }),
-				ID: category.ID,
 				OnClick: async (data: { menuIndex: number; itemIndex: number; childIndex?: number; expand?: boolean; }, sidebar: AppSidebar, event: Event) => {
 					const menuItem = data.childIndex !== undefined
 						? sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex]
@@ -550,12 +550,12 @@ export class PortalsCmsService extends BaseService {
 
 		return {
 			Parent: {
+				ID: parent === undefined ? undefined : parent.ID,
 				Title: parent === undefined ? "{{portals.sidebar.cms-categories}}" : parent.Title,
 				Link: parent === undefined ? undefined : this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", parent.ansiTitle),
 				Params: parent === undefined ? undefined : this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: parent.ID }),
 				Expanded: parent !== undefined,
 				OnClick: async () => await this.updateSidebarWithCategoriesAsync(this._sidebarCategory !== undefined ? this._sidebarCategory.Parent : undefined, this._sidebarCategory !== undefined ? this._sidebarCategory.ID : undefined),
-				ID: parent === undefined ? undefined : parent.ID,
 			} as AppSidebarMenuItem,
 			Items: categories.map(category => getItem(category, item => item.Children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : []))
 		};
