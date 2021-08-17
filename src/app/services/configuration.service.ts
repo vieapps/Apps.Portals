@@ -325,7 +325,7 @@ export class ConfigurationService extends BaseService {
 		if (isCordova) {
 			TrackingUtility.initializeAsync(this.googleAnalytics);
 			if (this.isDebug) {
-				this.showLog(`Device Info\n- UUID: ${this.device.uuid}\n- Manufacturer: ${this.device.manufacturer}\n- Model: ${this.device.model}\n- Serial: ${this.device.serial}\n- Platform: ${this.device.platform} ${this.device.platform !== "browser" ? this.device.version : "[" + this.device.model + " v" + this.device.version + "]"}\n- Shell: ${this.appConfig.app.shell}`);
+				console.log(`Device Information\n- UUID: ${this.device.uuid}\n- Manufacturer: ${this.device.manufacturer}\n- Model: ${this.device.model}\n- Serial: ${this.device.serial}\n- Platform: ${this.device.platform} ${this.device.platform !== "browser" ? this.device.version : "[" + this.device.model + " v" + this.device.version + "]"}`);
 			}
 		}
 	}
