@@ -134,7 +134,7 @@ export class CmsLinksUpdatePage implements OnInit {
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
-		await this.trackAsync(`${this.title.track} | Request`);
+		await this.trackAsync(this.title.track);
 
 		if (AppUtility.isNotEmpty(this.link.ID) && this.link.ChildrenMode === "Normal" && this.link.childrenIDs === undefined) {
 			this.portalsCmsSvc.refreshLinkAsync(this.link.ID, async _ => await this.appFormsSvc.showToastAsync("The link was freshen-up"));
@@ -432,7 +432,7 @@ export class CmsLinksUpdatePage implements OnInit {
 							);
 						}
 						await Promise.all([
-							this.trackAsync(`${this.title.track} | Success`, "Upload", "Thumbnail"),
+							this.trackAsync(this.title.track, "Upload", "Thumbnail"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 							this.appFormsSvc.hideLoadingAsync()
 						]);
@@ -452,7 +452,7 @@ export class CmsLinksUpdatePage implements OnInit {
 									AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Updated", ID: oldParentID });
 								}
 								await Promise.all([
-									this.trackAsync(`${this.title.track} | Success`, "Update"),
+									this.trackAsync(this.title.track, "Update"),
 									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.update")),
 									this.appFormsSvc.hideLoadingAsync()
 								]);
@@ -461,7 +461,7 @@ export class CmsLinksUpdatePage implements OnInit {
 							async error => {
 								this.processing = false;
 								await Promise.all([
-									this.trackAsync(`${this.title.track} | Error`, "Update"),
+									this.trackAsync(this.title.track, "Update"),
 									this.appFormsSvc.showErrorAsync(error)
 								]);
 							}
@@ -478,7 +478,7 @@ export class CmsLinksUpdatePage implements OnInit {
 							}
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							await Promise.all([
-								this.trackAsync(`${this.title.track} | Success`),
+								this.trackAsync(this.title.track),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.new")),
 								this.appFormsSvc.hideLoadingAsync()
 							]);
@@ -487,7 +487,7 @@ export class CmsLinksUpdatePage implements OnInit {
 						async error => {
 							this.processing = false;
 							await Promise.all([
-								this.trackAsync(`${this.title.track} | Error`),
+								this.trackAsync(this.title.track),
 								this.appFormsSvc.showErrorAsync(error)
 							]);
 						}

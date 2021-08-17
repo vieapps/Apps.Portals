@@ -39,14 +39,17 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 	private subscription: Subscription;
 	private children = "{{number}} children: {{children}}";
 
-	title = "Roles";
+	title = {
+		track: "Roles",
+		page: "Roles"
+	};
 	roles = new Array<Role>();
 	parentRole: Role;
 	searching = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
-	filterBy = {
+	filterBy: AppDataFilter = {
 		Query: undefined as string,
 		And: new Array<{ [key: string]: any }>()
 	};
@@ -113,8 +116,14 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
 
+		this.searching = this.configSvc.currentURL.endsWith("/search");
+		const title = await this.configSvc.getResourceAsync(`portals.roles.title.${(this.searching ? "search" : "list")}`);
+		this.configSvc.appTitle = this.title.track = AppUtility.format(title, { info: "" });
+		this.children = await this.configSvc.getResourceAsync("portals.roles.list.children");
+
 		this.organization = this.portalsCoreSvc.getOrganization(this.configSvc.requestParams["SystemID"]);
 		if (this.organization === undefined) {
+			await this.trackAsync(`${this.title.track} | Invalid Organization`, "Check");
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
@@ -126,6 +135,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		}
 
 		if (!this.portalsCoreSvc.canModerateOrganization(this.organization)) {
+			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
 			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
 				this.configSvc.navigateHomeAsync()
@@ -137,11 +147,6 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
-
-		this.searching = this.configSvc.currentURL.endsWith("/search");
-		const title = await this.configSvc.getResourceAsync(`portals.roles.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: "" });
-		this.children = await this.configSvc.getResourceAsync("portals.roles.list.children");
 
 		if (this.searching) {
 			this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
@@ -162,7 +167,8 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 
 			if (this.parentRole !== undefined) {
 				this.roles = this.parentRole.Children;
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentRole.FullTitle}]` });
+				this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: `[${this.parentRole.FullTitle}]` });
+				await this.trackAsync(this.title.track);
 				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on("Portals", info => {
 					if (info.args.Object === "Role" && (this.parentRole.ID === info.args.ID || this.parentRole.ID === info.args.ParentID)) {
@@ -171,7 +177,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 				}, `Roles:${this.parentRole.ID}:Refresh`);
 			}
 			else {
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
+				this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: `[${this.organization.Title}]` });
 				this.filterBy.And = [
 					{ SystemID: { Equals: this.organization.ID } },
 					{ ParentID: "IsNull" }
@@ -270,13 +276,19 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackScreenAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
+			await this.trackAsync(this.title.track);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchRole(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
+			this.subscription = this.portalsCoreSvc.searchRole(this.request, onSuccess, async error => await Promise.all([
+				this.appFormsSvc.showErrorAsync(error),
+				this.trackAsync(this.title.track)
+			]));
 		}
 		else {
-			await this.portalsCoreSvc.searchRoleAsync(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
+			await this.portalsCoreSvc.searchRoleAsync(this.request, onSuccess, async error => await Promise.all([
+				this.appFormsSvc.showErrorAsync(error),
+				this.trackAsync(this.title.track)
+			]));
 		}
 	}
 
@@ -342,10 +354,16 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 
 	async exportToExcelAsync() {
 		await this.portalsCoreSvc.exportToExcelAsync("Role", this.organization.ID);
+		await this.trackAsync(this.actions[2].text, "Export");
 	}
 
 	async importFromExcelAsync() {
 		await this.portalsCoreSvc.importFromExcelAsync("Role", this.organization.ID);
+		await this.trackAsync(this.actions[3].text, "Import");
+	}
+
+	private async trackAsync(title: string, action?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: "Role", action: action || "Browse" });
 	}
 
 }

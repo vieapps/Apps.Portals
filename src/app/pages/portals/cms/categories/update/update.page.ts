@@ -128,7 +128,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
-		await this.trackAsync(`${this.title.track} | Request`);
+		await this.trackAsync(this.title.track);
 
 		if (AppUtility.isNotEmpty(this.category.ID) && this.category.childrenIDs === undefined) {
 			this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, async _ => await this.appFormsSvc.showToastAsync("The category was freshen-up"));
@@ -346,7 +346,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 							control.value.new,
 							this.portalsCmsSvc.getFileOptions(this.category, options => options.Extras["x-attachment-id"] = control.value.identity),
 							async _ => await Promise.all([
-								this.trackAsync(`${this.title.track} | Success`, "Upload", "Thumbnail"),
+								this.trackAsync(this.title.track, "Upload", "Thumbnail"),
 								this.portalsCmsSvc.refreshCategoryAsync(category.ID)
 							])
 						);
@@ -360,7 +360,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Updated", ID: oldParentID });
 							}
 							await Promise.all([
-								this.trackAsync(`${this.title.track} | Success`, "Update"),
+								this.trackAsync(this.title.track, "Update"),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.update")),
 								this.appFormsSvc.hideLoadingAsync()
 							]);
@@ -369,7 +369,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 						async error => {
 							this.processing = false;
 							await Promise.all([
-								this.trackAsync(`${this.title.track} | Error`, "Update"),
+								this.trackAsync(this.title.track, "Update"),
 								this.appFormsSvc.showErrorAsync(error)
 							]);
 						}
@@ -381,7 +381,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 						async data => {
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							await Promise.all([
-								this.trackAsync(`${this.title.track} | Success`),
+								this.trackAsync(this.title.track),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.new")),
 								this.appFormsSvc.hideLoadingAsync()
 							]);
@@ -390,7 +390,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 						async error => {
 							this.processing = false;
 							await Promise.all([
-								this.trackAsync(`${this.title.track} | Error`),
+								this.trackAsync(this.title.track),
 								this.appFormsSvc.showErrorAsync(error)
 							]);
 						}

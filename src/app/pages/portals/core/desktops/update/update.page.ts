@@ -76,20 +76,26 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 			await this.portalsCoreSvc.getOrganizationAsync(this.desktop.SystemID, _ => this.organization = Organization.get(this.desktop.SystemID), undefined, true);
 		}
 
+		this.desktop = this.desktop || new Desktop(this.organization.ID, "", this.configSvc.requestParams["ParentID"]);
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.desktops.title.${(AppUtility.isNotEmpty(this.desktop.ID) ? "update" : "create")}`);
+		await this.appFormsSvc.showLoadingAsync(this.title);
+
 		this.canModerateOrganization = this.portalsCoreSvc.canModerateOrganization(this.organization);
+
 		if (!this.canModerateOrganization) {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateBackAsync();
+			await Promise.all([
+				this.trackAsync(`${this.title} | No Permission`, "Check"),
+				this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync("Hmmmmmm....")),
+				this.configSvc.navigateBackAsync()
+			]);
 		}
 
-		this.desktop = this.desktop || new Desktop(this.organization.ID, "", this.configSvc.requestParams["ParentID"]);
 		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.desktop.SystemID) {
+			this.trackAsync(`${this.title} | Invalid Organization`, "Check"),
 			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"));
 			return;
 		}
 
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.desktops.title.${(AppUtility.isNotEmpty(this.desktop.ID) ? "update" : "create")}`);
-		await this.appFormsSvc.showLoadingAsync(this.title);
 
 		this.button = {
 			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.desktop.ID) ? "save" : "create")}`),
@@ -102,6 +108,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
+		await this.trackAsync(this.title);
 
 		if (AppUtility.isNotEmpty(this.desktop.ID)) {
 			AppEvents.on(this.filesSvc.name, info => {
@@ -417,14 +424,17 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Desktop", Type: "Updated", ID: oldParentID });
 							}
 							await Promise.all([
-								TrackingUtility.trackScreenAsync(this.title, this.configSvc.currentURL),
+								this.trackAsync(this.title, "Update"),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.desktops.update.messages.success.update")),
 								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 							]);
 						},
 						async error => {
 							this.processing = false;
-							await this.showErrorAsync(error);
+							await Promise.all([
+								this.trackAsync(this.title, "Update"),
+								this.appFormsSvc.showErrorAsync(error)
+							]);
 						}
 					);
 				}
@@ -434,14 +444,17 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 						async data => {
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Desktop", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							await Promise.all([
-								TrackingUtility.trackScreenAsync(this.title, this.configSvc.currentURL),
+								this.trackAsync(this.title),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.desktops.update.messages.success.new")),
 								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 							]);
 						},
 						async error => {
 							this.processing = false;
-							await this.showErrorAsync(error);
+							await Promise.all([
+								this.trackAsync(this.title),
+								this.appFormsSvc.showErrorAsync(error)
+							]);
 						}
 					);
 				}
@@ -450,6 +463,8 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	async deleteAsync() {
+		const button = await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete");
+		await this.trackAsync(`${button} | Request`, "Delete");
 		const modes = [
 			{
 				label: await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete-all"),
@@ -465,31 +480,32 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 			await this.configSvc.getResourceAsync("portals.desktops.update.messages.confirm.delete"),
 			this.desktop.childrenIDs === undefined || this.desktop.childrenIDs.length < 1 ? undefined : await this.configSvc.getResourceAsync("portals.desktops.update.messages.mode"),
 			async mode => {
-				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete"));
+				await this.appFormsSvc.showLoadingAsync(button);
 				await this.portalsCoreSvc.deleteDesktopAsync(
 					this.desktop.ID,
 					async data => {
 						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Desktop", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 						await Promise.all([
-							TrackingUtility.trackScreenAsync(await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete"), this.configSvc.currentURL),
+							this.trackAsync(`${button} | Success`, "Delete"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.desktops.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.showErrorAsync(error),
+					async error => await Promise.all([
+						this.appFormsSvc.showErrorAsync(error),
+						this.trackAsync(`${button} | Error`, "Delete")
+					]),
 					{ "x-children": mode }
 				);
 			},
 			await this.configSvc.getResourceAsync("common.buttons.delete"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel"),
-			this.desktop.childrenIDs === undefined || this.desktop.childrenIDs.length < 1 ? undefined : modes.map(mode => {
-				return {
-					type: "radio",
-					label: mode.label,
-					value: mode.value,
-					checked: mode.value === "delete"
-				};
-			})
+			this.desktop.childrenIDs === undefined || this.desktop.childrenIDs.length < 1 ? undefined : modes.map(mode => ({
+				type: "radio",
+				label: mode.label,
+				value: mode.value,
+				checked: mode.value === "delete"
+			}))
 		);
 	}
 
@@ -507,6 +523,10 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
 			);
 		}
+	}
+
+	private async trackAsync(title: string, action?: string, category?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: category || "Desktop", action: action || (this.desktop !== undefined && AppUtility.isNotEmpty(this.desktop.ID) ? "Edit" : "Create") });
 	}
 
 }

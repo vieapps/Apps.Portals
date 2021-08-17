@@ -4,6 +4,7 @@ import { IonInfiniteScroll, IonCheckbox } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppPagination } from "@app/components/app.pagination";
 import { AppDataFilter, AppDataPagination } from "@app/components/app.objects";
 import { AppFormsService } from "@app/components/forms.service";
@@ -148,6 +149,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 	}
 
 	private async searchAsync(onNext?: (data: any) => void) {
+		await TrackingUtility.trackAsync({ title: "Browse Logs", category: "ServiceLog", action: "Browse" });
 		await this.configSvc.getServiceLogsAsync(
 			{
 				FilterBy: this.filterBy,
@@ -164,7 +166,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 					}
 				});
 			},
-			async _ => await this.appFormsSvc.hideLoadingAsync()
+			async _ => await this.appFormsSvc.hideLoadingAsync(async () => await TrackingUtility.trackAsync({ title: "Browse Logs (Error)", category: "ServiceLog", action: "Browse" }))
 		);
 	}
 

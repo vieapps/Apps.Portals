@@ -50,7 +50,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
-	filterBy = {
+	filterBy: AppDataFilter = {
 		Query: undefined as string,
 		And: new Array<{ [key: string]: any }>()
 	};
@@ -104,6 +104,10 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 
+		this.searching = this.configSvc.currentURL.endsWith("/search");
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.organizations.title.${(this.searching ? "search" : "list")}`);
+		this.owner = await this.configSvc.getResourceAsync("portals.organizations.list.owner");
+
 		if (!this.isSystemAdministrator) {
 			this.organizations = [];
 			await Promise.all(this.portalsCoreSvc.activeOrganizations.map(async id => {
@@ -114,6 +118,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 				}
 			}));
 			if (this.organizations.length < 1) {
+				await this.trackAsync(`${this.title} | No Permission`, "Check");
 				await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync("Hmmmmmm...."));
 				await this.configSvc.navigateHomeAsync();
 				return;
@@ -131,10 +136,6 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
-
-		this.searching = this.configSvc.currentURL.endsWith("/search");
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.organizations.title.${(this.searching ? "search" : "list")}`);
-		this.owner = await this.configSvc.getResourceAsync("portals.organizations.list.owner");
 
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.organizations.list.searchbar");
@@ -156,6 +157,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			}, "Organizations:Refresh");
 		}
 		else {
+			await this.trackAsync(this.title);
 			await this.appFormsSvc.hideLoadingAsync();
 		}
 	}
@@ -243,13 +245,19 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackScreenAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
+			await this.trackAsync(this.title);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchOrganization(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
+			this.subscription = this.portalsCoreSvc.searchOrganization(this.request, onSuccess, async error => await Promise.all([
+				this.appFormsSvc.showErrorAsync(error),
+				this.trackAsync(this.title)
+			]));
 		}
 		else {
-			await this.portalsCoreSvc.searchOrganizationAsync(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
+			await this.portalsCoreSvc.searchOrganizationAsync(this.request, onSuccess, async error => await Promise.all([
+				this.appFormsSvc.showErrorAsync(error),
+				this.trackAsync(this.title)
+			]));
 		}
 	}
 
@@ -340,10 +348,16 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	async exportToExcelAsync() {
 		await this.portalsCoreSvc.exportToExcelAsync("Organization", this.portalsCoreSvc.activeOrganization.ID);
+		await this.trackAsync(this.actions[2].text, "Export");
 	}
 
 	async importFromExcelAsync() {
 		await this.portalsCoreSvc.importFromExcelAsync("Organization", this.portalsCoreSvc.activeOrganization.ID);
+		await this.trackAsync(this.actions[3].text, "Import");
+	}
+
+	private async trackAsync(title: string, action?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: "Organization", action: action || "Browse" });
 	}
 
 }

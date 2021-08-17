@@ -85,22 +85,24 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 			await this.portalsCoreSvc.getOrganizationAsync(this.contentType.SystemID, _ => this.organization = Organization.get(this.contentType.SystemID), undefined, true);
 		}
 
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.contenttypes.title.${(AppUtility.isNotEmpty(this.contentType.ID) ? "update" : "create")}`);
+
 		this.canModerateOrganization = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined) || this.portalsCoreSvc.canModerateOrganization(this.organization);
 		if (!this.canModerateOrganization) {
-			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+			await Promise.all([
+				this.trackAsync(`${this.title} | No Permission`, "Check"),
+				this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync("Hmmmmmm....")),
 				this.configSvc.navigateBackAsync()
-			]));
+			]);
 			return;
 		}
 
 		this.contentType = this.contentType || new ContentType(this.organization.ID);
 		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.contentType.SystemID) {
+			this.trackAsync(`${this.title} | Invalid Organization`, "Check"),
 			await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid")));
 			return;
 		}
-
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.contenttypes.title.${(AppUtility.isNotEmpty(this.contentType.ID) ? "update" : "create")}`);
 
 		if (Module.instances.toArray(o => o.SystemID === this.organization.ID).length < 1) {
 			const request = AppPagination.buildRequest(
@@ -112,6 +114,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 		}
 
 		if (Module.instances.toArray(o => o.SystemID === this.organization.ID).length < 1) {
+			this.trackAsync(`${this.title} | Invalid Organization`, "Check"),
 			await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid")));
 			return;
 		}
@@ -130,6 +133,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
+		await this.trackAsync(this.title);
 	}
 
 	private getModuleDefinition(moduleID: string) {
@@ -566,14 +570,17 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 							this.configSvc.removeDefinition(this.portalsCoreSvc.name, ContentType.get(data.ID).getObjectName(true), undefined, { "x-content-type-id": data.ID });
 							this.configSvc.removeDefinition(this.portalsCoreSvc.name, ContentType.get(data.ID).getObjectName(true), undefined, { "x-content-type-id": data.ID, "x-view-controls": "x" });
 							await Promise.all([
-								TrackingUtility.trackScreenAsync(this.title, this.configSvc.currentURL),
+								this.trackAsync(this.title, "Update"),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.update")),
 								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 							]);
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.showErrorAsync(error);
+							await Promise.all([
+								this.trackAsync(this.title, "Update"),
+								this.appFormsSvc.showErrorAsync(error)
+							]);
 						}
 					);
 				}
@@ -583,14 +590,17 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 						async data => {
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Created", ID: data.ID });
 							await Promise.all([
-								TrackingUtility.trackScreenAsync(this.title, this.configSvc.currentURL),
+								this.trackAsync(this.title),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.new")),
 								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 							]);
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.showErrorAsync(error);
+							await Promise.all([
+								this.trackAsync(this.title),
+								this.appFormsSvc.showErrorAsync(error)
+							]);
 						}
 					);
 				}
@@ -599,6 +609,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 	}
 
 	async deleteAsync() {
+		await this.trackAsync(`${await this.configSvc.getResourceAsync("portals.contcontenttypesents.update.buttons.delete")} | Request`, "Delete");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.confirm.delete"),
@@ -610,23 +621,27 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 	}
 
 	async removeAsync() {
+		const button = await this.configSvc.getResourceAsync("portals.contenttypes.update.buttons.delete");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.confirm.delete"),
 			await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.confirm.remove"),
 			async () => {
-				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.buttons.delete"));
+				await this.appFormsSvc.showLoadingAsync(button);
 				await this.portalsCoreSvc.deleteContentTypeAsync(
 					this.contentType.ID,
 					async data => {
 						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Deleted", ID: data.ID });
 						await Promise.all([
-							TrackingUtility.trackScreenAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.buttons.delete"), this.configSvc.currentURL),
+							this.trackAsync(`${button} | Success`, "Delete"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.showErrorAsync(error)
+					async error => await Promise.all([
+						this.appFormsSvc.showErrorAsync(error),
+						this.trackAsync(`${button} | Error`, "Delete")
+					])
 				);
 			},
 			await this.configSvc.getResourceAsync("portals.contenttypes.update.buttons.remove"),
@@ -648,6 +663,10 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
 			);
 		}
+	}
+
+	private async trackAsync(title: string, action?: string, category?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: category || "ContentType", action: action || (this.contentType !== undefined && AppUtility.isNotEmpty(this.contentType.ID) ? "Edit" : "Create") });
 	}
 
 }

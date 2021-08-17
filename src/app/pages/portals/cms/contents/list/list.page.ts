@@ -288,7 +288,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 				this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 				this.pagination.PageNumber = this.pageNumber;
 				this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-				await this.trackAsync(`${this.title.track} | Success`);
+				await this.trackAsync(this.title.track);
 			}
 			catch (e) {
 				console.error("Error occurred while searching CMS content", e);
@@ -297,13 +297,13 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		if (this.searching) {
 			this.subscription = this.portalsCmsSvc.searchContent(this.request, nextAsync, async error => await Promise.all([
 				this.appFormsSvc.showErrorAsync(error),
-				this.trackAsync(`${this.title.track} | Error`)
+				this.trackAsync(this.title.track)
 			]));
 		}
 		else {
 			await this.portalsCmsSvc.searchContentAsync(this.request, nextAsync, async error => await Promise.all([
 				this.appFormsSvc.showErrorAsync(error),
-				this.trackAsync(`${this.title.track} | Error`)
+				this.trackAsync(this.title.track)
 			]));
 		}
 	}

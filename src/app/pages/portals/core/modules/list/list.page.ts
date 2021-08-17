@@ -41,12 +41,15 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 	private definition: ModuleDefinition;
 	private definitions: Array<ModuleDefinition>;
 
-	title = "Modules";
+	title = {
+		track: "Modules",
+		page: "Modules"
+	};
 	modules = new Array<Module>();
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
-	filterBy = {
+	filterBy: AppDataFilter = {
 		Query: undefined as string,
 		And: new Array<{ [key: string]: any }>()
 	};
@@ -105,7 +108,9 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 
+		this.title.track = await this.configSvc.getResourceAsync("portals.modules.title.list", { info: "" });
 		if (!this.isSystemAdministrator && this.organization === undefined) {
+			await this.trackAsync(`${this.title.track} | Invalid Organization`, "Check");
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
@@ -117,6 +122,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		}
 
 		if (!this.canModerateOrganization) {
+			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
 			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
 				this.configSvc.navigateHomeAsync()
@@ -143,7 +149,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 			this.filterBy.And.push({ ModuleDefinitionID: { Equals: this.definitionID } });
 		}
 
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("portals.modules.title.list", { info: `[${this.organization.Title}]` });
+		this.configSvc.appTitle = this.title.page = await this.configSvc.getResourceAsync("portals.modules.title.list", { info: `[${this.organization.Title}]` });
 		this.actions = [
 			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.create"), "create", () => this.createAsync()),
 			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
@@ -205,9 +211,12 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackScreenAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
+			await this.trackAsync(this.title.track);
 		};
-		await this.portalsCoreSvc.searchModuleAsync(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
+		await this.portalsCoreSvc.searchModuleAsync(this.request, onSuccess, async error => await Promise.all([
+			this.appFormsSvc.showErrorAsync(error),
+			this.trackAsync(this.title.track)
+		]));
 	}
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
@@ -269,10 +278,16 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 
 	async exportToExcelAsync() {
 		await this.portalsCoreSvc.exportToExcelAsync("Module", this.organization.ID);
+		await this.trackAsync(this.actions[2].text, "Export");
 	}
 
 	async importFromExcelAsync() {
 		await this.portalsCoreSvc.importFromExcelAsync("Module", this.organization.ID);
+		await this.trackAsync(this.actions[3].text, "Import");
+	}
+
+	private async trackAsync(title: string, action?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: "Module", action: action || "Browse" });
 	}
 
 }

@@ -58,6 +58,10 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		return this.configSvc.appConfig.app.shell;
 	}
 
+	get totalServices() {
+		return this.configSvc.appConfig.services.all.length;
+	}
+
 	labels = {
 		options: {
 			label: "Options",

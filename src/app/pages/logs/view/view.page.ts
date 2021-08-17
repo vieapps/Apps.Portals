@@ -1,4 +1,5 @@
 import { Component, OnInit } from "@angular/core";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsService } from "@app/components/forms.service";
 import { ServiceLog } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -44,6 +45,7 @@ export class LogsViewPage implements OnInit {
 	private async prepareAsync() {
 		const ids = (this.configSvc.requestParams["ids"] as Array<string>).toHashSet();
 		this.logs = this.configSvc.serviceLogs.filter(log => ids.contains(log.ID));
+		await TrackingUtility.trackAsync({ title: this.title, category: "ServiceLog", action: "View" });
 	}
 
 	track(index: number, log: ServiceLog) {

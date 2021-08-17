@@ -21,7 +21,7 @@
 	</ion-list>
 </div>
 
-<div *ngIf="appShell !== 'Electron'" class="desktop apps">
+<div *ngIf="appShell !== 'Electron' && totalServices > 1" class="desktop apps">
 	<h2>{{ labels.apps.desktop }}</h2>
 	<div>
 		<a href="{{ downloadURLs.Windows }}" target="_blank">

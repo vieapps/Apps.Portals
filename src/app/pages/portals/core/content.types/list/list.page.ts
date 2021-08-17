@@ -45,13 +45,16 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 	private definitions: Array<ContentTypeDefinition>;
 	private objects = new Array<ContentType>();
 
-	title = "ContentTypes";
+	title = {
+		track: "ContentTypes",
+		page: "ContentTypes"
+	};
 	filtering = false;
 	contentTypes = new Array<ContentType>();
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
-	filterBy = {
+	filterBy: AppDataFilter = {
 		Query: undefined as string,
 		And: new Array<{ [key: string]: any }>()
 	};
@@ -121,6 +124,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 
 		if (!this.isSystemAdministrator && this.organization === undefined) {
+			await this.trackAsync(`${this.title.track} | Invalid Organization`, "Check");
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
@@ -131,10 +135,14 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 			return;
 		}
 
+		const title = await this.configSvc.getResourceAsync("portals.contenttypes.title.list");
+		this.title.track = AppUtility.format(title, { info: "" });
+
 		if (!this.canModerateOrganization) {
+			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
 			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateHomeAsync()
+				this.configSvc.navigateBackAsync()
 			]));
 			return;
 		}
@@ -164,7 +172,6 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 			move: await this.configSvc.getResourceAsync("portals.contenttypes.list.move")
 		};
 
-		const title = await this.configSvc.getResourceAsync("portals.contenttypes.title.list");
 		const titleInfo = AppUtility.isNotEmpty(this.repositoryID)
 			? Module.contains(this.repositoryID)
 				? Module.get(this.repositoryID).Title
@@ -172,13 +179,14 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 			: this.organization !== undefined
 				? this.organization.Title
 				: undefined;
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: titleInfo !== undefined ? `[${titleInfo}]` : "" });
+		this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: titleInfo !== undefined ? `[${titleInfo}]` : "" });
 
 		this.actions = [
 			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.contenttypes.title.create"), "create", () => this.createAsync()),
 			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
 			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
 		];
+
 		await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 		const identity = this.definition !== undefined
 			? `ContentTypes:${this.definitionID}:Refresh`
@@ -254,14 +262,17 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 
 	private async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination);
-		const onSuccess = async (data: any) => {
+		const nextAsync = async (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackScreenAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
+			await this.trackAsync(this.title.track);
 		};
-		await this.portalsCoreSvc.searchContentTypeAsync(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
+		await this.portalsCoreSvc.searchContentTypeAsync(this.request, nextAsync, async error => await Promise.all([
+			this.appFormsSvc.showErrorAsync(error),
+			this.trackAsync(this.title.track)
+		]));
 	}
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
@@ -362,10 +373,16 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 
 	async exportToExcelAsync() {
 		await this.portalsCoreSvc.exportToExcelAsync("Content.Type", this.organization.ID);
+		await this.trackAsync(this.actions[2].text, "Export");
 	}
 
 	async importFromExcelAsync() {
 		await this.portalsCoreSvc.importFromExcelAsync("Content.Type", this.organization.ID);
+		await this.trackAsync(this.actions[3].text, "Import");
+	}
+
+	private async trackAsync(title: string, action?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: "ContentType", action: action || "Browse" });
 	}
 
 }

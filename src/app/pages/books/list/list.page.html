@@ -23,7 +23,7 @@
 		</ion-title>
 		<ion-searchbar [hidden]="!searching && !filtering"
 			(ionChange)="onStartSearch($event)"
-			(ionClear)="onClearSearch($event)"
+			(ionClear)="onClearSearch()"
 			(ionCancel)="onCancelSearch($event)"></ion-searchbar>
 	</ion-toolbar>
 </ion-header>

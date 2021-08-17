@@ -38,14 +38,17 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 	private parentID: string;
 	private subscription: Subscription;
 
-	title = "Desktops";
+	title = {
+		track: "Desktops",
+		page: "Desktops"
+	};
 	desktops = new Array<Desktop>();
 	parentDesktop: Desktop;
 	searching = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
-	filterBy = {
+	filterBy: AppDataFilter = {
 		Query: undefined as string,
 		And: new Array<{ [key: string]: any }>()
 	};
@@ -131,17 +134,18 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			return;
 		}
 
+		this.searching = this.configSvc.currentURL.endsWith("/search");
+		const title = await this.configSvc.getResourceAsync(`portals.desktops.title.${(this.searching ? "search" : "list")}`);
+		this.configSvc.appTitle = this.title.track = AppUtility.format(title, { info: "" });
+
 		if (!this.portalsCoreSvc.canModerateOrganization(this.organization)) {
+			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
 			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
 				this.configSvc.navigateHomeAsync()
 			]));
 			return;
 		}
-
-		this.searching = this.configSvc.currentURL.endsWith("/search");
-		const title = await this.configSvc.getResourceAsync(`portals.desktops.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: "" });
 
 		this.labels = {
 			children: await this.configSvc.getResourceAsync("portals.desktops.list.children"),
@@ -174,7 +178,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 			if (this.parentDesktop !== undefined) {
 				this.desktops = this.parentDesktop.Children;
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.parentDesktop.FullTitle}]` });
+				this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: `[${this.parentDesktop.FullTitle}]` });
 				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on("Portals", info => {
 					if (info.args.Object === "Desktop" && (this.parentDesktop.ID === info.args.ID || this.parentDesktop.ID === info.args.ParentID)) {
@@ -183,7 +187,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 				}, `Desktops:${this.parentDesktop.ID}:Refresh`);
 			}
 			else {
-				this.configSvc.appTitle = this.title = AppUtility.format(title, { info: `[${this.organization.Title}]` });
+				this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: `[${this.organization.Title}]` });
 				this.filterBy.And = [
 					{ SystemID: { Equals: this.organization.ID } },
 					{ ParentID: "IsNull" }
@@ -282,13 +286,19 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackScreenAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
+			await this.trackAsync(this.title.track);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchDesktop(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
+			this.subscription = this.portalsCoreSvc.searchDesktop(this.request, onSuccess, async error => await Promise.all([
+				this.appFormsSvc.showErrorAsync(error),
+				this.trackAsync(this.title.track)
+			]));
 		}
 		else {
-			await this.portalsCoreSvc.searchDesktopAsync(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
+			await this.portalsCoreSvc.searchDesktopAsync(this.request, onSuccess, async error => await Promise.all([
+				this.appFormsSvc.showErrorAsync(error),
+				this.trackAsync(this.title.track)
+			]));
 		}
 	}
 
@@ -363,10 +373,16 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 	async exportToExcelAsync() {
 		await this.portalsCoreSvc.exportToExcelAsync("Desktop", this.organization.ID);
+		await this.trackAsync(this.actions[2].text, "Export");
 	}
 
 	async importFromExcelAsync() {
 		await this.portalsCoreSvc.importFromExcelAsync("Desktop", this.organization.ID);
+		await this.trackAsync(this.actions[3].text, "Import");
+	}
+
+	private async trackAsync(title: string, action?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: "Desktop", action: action || "Browse" });
 	}
 
 }

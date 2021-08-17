@@ -43,13 +43,16 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	private organization: Organization;
 	private desktop: Desktop;
 
-	title = "Portlets";
+	title = {
+		track: "Portlets",
+		page: "Portlets"
+	};
 	portlets = new Array<Portlet>();
 	filtering = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
-	filterBy = {
+	filterBy: AppDataFilter = {
 		Query: undefined as string,
 		And: new Array<{ [key: string]: any }>()
 	};
@@ -114,6 +117,9 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
 
+		const title = await this.configSvc.getResourceAsync("portals.portlets.title.list");
+		this.title.track = AppUtility.format(title, { info: "" });
+
 		this.organization = this.portalsCoreSvc.getOrganization(this.configSvc.requestParams["SystemID"]);
 		this.desktop = Desktop.get(this.configSvc.requestParams["DesktopID"]);
 
@@ -121,6 +127,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 
 		if (!this.isSystemAdministrator && this.organization === undefined) {
+			await this.trackAsync(`${this.title.track} | Invalid Organization`, "Check");
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
@@ -132,6 +139,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		}
 
 		if (!this.canModerateOrganization || this.organization === undefined) {
+			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
 			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
 				this.configSvc.navigateHomeAsync()
@@ -164,6 +172,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		if (this.desktop !== undefined && this.desktop.portlets !== undefined && this.desktop.portlets.length > 0) {
 			this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.reorder"), "swap-vertical", () => this.openReorderAsync()));
 			this.preparePortlets();
+			await this.trackAsync(this.title.track);
 			await this.appFormsSvc.hideLoadingAsync();
 		}
 		else {
@@ -183,11 +192,11 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 
 	private async prepareTitleAsync() {
 		if (this.redordering) {
-			this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("portals.portlets.title.reorder");
+			this.configSvc.appTitle = this.title.page = await this.configSvc.getResourceAsync("portals.portlets.title.reorder");
 		}
 		else {
 			const title = await this.configSvc.getResourceAsync("portals.portlets.title.list");
-			this.configSvc.appTitle = this.title = AppUtility.format(title, { info: this.desktop !== undefined ? `[${this.desktop.FullTitle}]` : "" });
+			this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: this.desktop !== undefined ? `[${this.desktop.FullTitle}]` : "" });
 		}
 	}
 
@@ -252,9 +261,12 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackScreenAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
+			await this.trackAsync(this.title.track);
 		};
-		await this.portalsCoreSvc.searchPortletAsync(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
+		await this.portalsCoreSvc.searchPortletAsync(this.request, onSuccess, async error => await Promise.all([
+			this.appFormsSvc.showErrorAsync(error),
+			this.trackAsync(this.title.track)
+		]));
 	}
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
@@ -378,7 +390,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	async doReorderAsync() {
 		if (this.hash !== AppCrypto.hash(this.ordered)) {
 			this.processing = true;
-			await this.appFormsSvc.showLoadingAsync(this.title);
+			await this.appFormsSvc.showLoadingAsync(this.title.track);
 			const reordered = this.ordered.toList().Select(zone => zone.Children).SelectMany(portlets => portlets.toList()).Select(portlet => {
 				return {
 					ID: portlet.ID,
@@ -416,6 +428,10 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		this.redordering = false;
 		await this.prepareTitleAsync();
 		await this.appFormsSvc.hideLoadingAsync(onNext);
+	}
+
+	private async trackAsync(title: string, action?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: "Portlet", action: action || "Browse" });
 	}
 
 }

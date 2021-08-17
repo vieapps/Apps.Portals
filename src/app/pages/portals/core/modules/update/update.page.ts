@@ -63,6 +63,9 @@ export class PortalsModulesUpdatePage implements OnInit {
 	private async initializeAsync() {
 		this.module = Module.get(this.configSvc.requestParams["ID"]);
 
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.modules.title.${(this.module !== undefined ? "update" : "create")}`);
+		await this.appFormsSvc.showLoadingAsync(this.title);
+
 		this.organization = this.module !== undefined
 			? Organization.get(this.module.SystemID)
 			: this.portalsCoreSvc.activeOrganization || new Organization();
@@ -74,19 +77,20 @@ export class PortalsModulesUpdatePage implements OnInit {
 		this.isSystemModerator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canModerateOrganization = this.isSystemModerator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 		if (!this.canModerateOrganization) {
-			await this.appFormsSvc.showToastAsync("Hmmmmmm....");
-			await this.configSvc.navigateBackAsync();
+			await Promise.all([
+				this.trackAsync(`${this.title} | No Permission`, "Check"),
+				this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync("Hmmmmmm....")),
+				this.configSvc.navigateBackAsync()
+			]);
 			return;
 		}
 
 		this.module = this.module || new Module(this.organization.ID);
 		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.module.SystemID) {
-			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"));
+			this.trackAsync(`${this.title} | Invalid Organization`, "Check"),
+			this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid")));
 			return;
 		}
-
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.modules.title.${(AppUtility.isNotEmpty(this.module.ID) ? "update" : "create")}`);
-		await this.appFormsSvc.showLoadingAsync(this.title);
 
 		this.button = {
 			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.module.ID) ? "save" : "create")}`),
@@ -96,6 +100,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 		this.definitions = await this.portalsCoreSvc.getDefinitionsAsync();
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
+		await this.trackAsync(this.title);
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
@@ -294,14 +299,17 @@ export class PortalsModulesUpdatePage implements OnInit {
 						async data => {
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Module", Type: "Updated", ID: data.ID });
 							await Promise.all([
-								TrackingUtility.trackScreenAsync(this.title, this.configSvc.currentURL),
+								this.trackAsync(this.title, "Update"),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.modules.update.messages.success.update")),
 								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 							]);
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.showErrorAsync(error);
+							await Promise.all([
+								this.trackAsync(this.title, "Update"),
+								this.appFormsSvc.showErrorAsync(error)
+							]);
 						}
 					);
 				}
@@ -311,14 +319,17 @@ export class PortalsModulesUpdatePage implements OnInit {
 						async data => {
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Module", Type: "Created", ID: data.ID });
 							await Promise.all([
-								TrackingUtility.trackScreenAsync(this.title, this.configSvc.currentURL),
+								this.trackAsync(this.title),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.modules.update.messages.success.new")),
 								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 							]);
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.showErrorAsync(error);
+							await Promise.all([
+								this.trackAsync(this.title),
+								this.appFormsSvc.showErrorAsync(error)
+							]);
 						}
 					);
 				}
@@ -327,6 +338,8 @@ export class PortalsModulesUpdatePage implements OnInit {
 	}
 
 	async deleteAsync() {
+		const button = await this.configSvc.getResourceAsync("portals.modules.update.buttons.delete");
+		await this.trackAsync(`${button} | Request`, "Delete");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.modules.update.messages.confirm.delete"),
@@ -338,23 +351,27 @@ export class PortalsModulesUpdatePage implements OnInit {
 	}
 
 	async removeAsync() {
+		const button = await this.configSvc.getResourceAsync("portals.modules.update.buttons.delete");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.modules.update.messages.confirm.delete"),
 			await this.configSvc.getResourceAsync("portals.modules.update.messages.confirm.remove"),
 			async () => {
-				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.modules.update.buttons.delete"));
+				await this.appFormsSvc.showLoadingAsync(button);
 				await this.portalsCoreSvc.deleteModuleAsync(
 					this.module.ID,
 					async data => {
 						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Module", Type: "Deleted", ID: data.ID });
 						await Promise.all([
-							TrackingUtility.trackScreenAsync(await this.configSvc.getResourceAsync("portals.modules.update.buttons.delete"), this.configSvc.currentURL),
+							this.trackAsync(`${button} | Success`, "Delete"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.modules.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.showErrorAsync(error)
+					async error => await Promise.all([
+						this.appFormsSvc.showErrorAsync(error),
+						this.trackAsync(`${button} | Error`, "Delete")
+					])
 				);
 			},
 			await this.configSvc.getResourceAsync("portals.modules.update.buttons.remove"),
@@ -376,6 +393,10 @@ export class PortalsModulesUpdatePage implements OnInit {
 				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
 			);
 		}
+	}
+
+	private async trackAsync(title: string, action?: string, category?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: category || "Module", action: action || (this.module !== undefined && AppUtility.isNotEmpty(this.module.ID) ? "Edit" : "Create") });
 	}
 
 }

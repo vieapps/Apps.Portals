@@ -150,7 +150,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
-		await this.trackAsync(`${this.title.track} | Request`);
+		await this.trackAsync(this.title.track);
 
 		if (AppUtility.isNotEmpty(this.content.ID)) {
 			AppEvents.on(this.filesSvc.name, info => {
@@ -495,7 +495,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 							);
 						}
 						await Promise.all([
-							this.trackAsync(`${this.title.track} | Success`, "Upload", "Thumbnail"),
+							this.trackAsync(this.title.track, "Upload", "Thumbnail"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 							this.appFormsSvc.hideLoadingAsync()
 						]);
@@ -518,7 +518,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 									(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
 								}
 								await Promise.all([
-									this.trackAsync(`${this.title.track} | Success`, "Update"),
+									this.trackAsync(this.title.track, "Update"),
 									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 									this.appFormsSvc.hideLoadingAsync()
 								]);
@@ -527,7 +527,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 							async error => {
 								this.processing = false;
 								await Promise.all([
-									this.trackAsync(`${this.title.track} | Error`, "Update"),
+									this.trackAsync(this.title.track, "Update"),
 									this.appFormsSvc.showErrorAsync(error)
 								]);
 							}
@@ -547,7 +547,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 								(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
 							}
 							await Promise.all([
-								this.trackAsync(`${this.title.track} | Success`),
+								this.trackAsync(this.title.track),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new")),
 								this.appFormsSvc.hideLoadingAsync()
 							]);
@@ -556,7 +556,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 						async error => {
 							this.processing = false;
 							await Promise.all([
-								this.trackAsync(`${this.title.track} | Error`),
+								this.trackAsync(this.title.track),
 								this.appFormsSvc.showErrorAsync(error)
 							]);
 						}

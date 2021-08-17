@@ -42,14 +42,17 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 	isSystemAdministrator = false;
 	canModerateOrganization = false;
 
-	title = "Sites";
+	title = {
+		track: "Sites",
+		page: "Sites"
+	};
 	sites = new Array<Site>();
 	searching = false;
 	filtering = false;
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
-	filterBy = {
+	filterBy: AppDataFilter = {
 		Query: undefined as string,
 		And: new Array<{ [key: string]: any }>()
 	};
@@ -104,11 +107,16 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
 
+		this.searching = this.configSvc.currentURL.endsWith("/search");
+		const title = await this.configSvc.getResourceAsync(`portals.sites.title.${(this.searching ? "search" : "list")}`);
+		this.title.track = AppUtility.format(title, { info: ""});
+
 		this.organization = this.portalsCoreSvc.getOrganization(this.configSvc.requestParams["SystemID"]);
 		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 
 		if (!this.isSystemAdministrator && this.organization === undefined) {
+			await this.trackAsync(`${this.title.track} | Invalid Organization`, "Check");
 			await this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
@@ -120,6 +128,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		}
 
 		if (!this.canModerateOrganization) {
+			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
 			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
 				this.configSvc.navigateHomeAsync()
@@ -136,8 +145,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		};
 
 		this.searching = this.configSvc.currentURL.endsWith("/search");
-		const title = await this.configSvc.getResourceAsync(`portals.sites.title.${(this.searching ? "search" : "list")}`);
-		this.configSvc.appTitle = this.title = AppUtility.format(title, { info: this.isSystemAdministrator ? "" : `[${this.organization.Title}]` });
+		this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: this.isSystemAdministrator ? "" : `[${this.organization.Title}]` });
 
 		this.filterBy.And = this.isSystemAdministrator && this.configSvc.requestParams["SystemID"] === undefined
 			? []
@@ -241,18 +249,24 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 
 	private async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const onSuccess = async (data: any) => {
+		const nextAsync = async (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackScreenAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
+			await this.trackAsync(this.title.track);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchSite(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
+			this.subscription = this.portalsCoreSvc.searchSite(this.request, nextAsync, async error => await Promise.all([
+				this.appFormsSvc.showErrorAsync(error),
+				this.trackAsync(this.title.track)
+			]));
 		}
 		else {
-			await this.portalsCoreSvc.searchSiteAsync(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
+			await this.portalsCoreSvc.searchSiteAsync(this.request, nextAsync, async error => await Promise.all([
+				this.appFormsSvc.showErrorAsync(error),
+				this.trackAsync(this.title.track)
+			]));
 		}
 	}
 
@@ -327,10 +341,16 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 
 	async exportToExcelAsync() {
 		await this.portalsCoreSvc.exportToExcelAsync("Site", this.organization.ID);
+		await this.trackAsync(this.actions[2].text, "Export");
 	}
 
 	async importFromExcelAsync() {
 		await this.portalsCoreSvc.importFromExcelAsync("Site", this.organization.ID);
+		await this.trackAsync(this.actions[3].text, "Import");
+	}
+
+	private async trackAsync(title: string, action?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: "Site", action: action || "Browse" });
 	}
 
 }

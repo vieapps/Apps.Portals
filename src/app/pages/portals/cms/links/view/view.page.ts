@@ -156,7 +156,7 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
-		await this.trackAsync(`${this.title.track} | Success`);
+		await this.trackAsync(this.title.track);
 
 		AppEvents.on(this.portalsCoreSvc.name, info => {
 			if (info.args.Object === "CMS.Link" && this.link.ID === info.args.ID) {

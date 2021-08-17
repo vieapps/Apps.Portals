@@ -54,12 +54,7 @@ export class BooksService extends BaseService {
 
 		AppEvents.on("Session", info => {
 			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
-				const defer = this.configSvc.appConfig.services.active === this.name ? 456 : 789;
-				AppUtility.invoke(() => this.prepareSidebarFooterButtons(() => {
-					if (this.configSvc.appConfig.services.active === this.name) {
-						AppUtility.invoke(() => AppEvents.broadcast("ActiveSidebar", { Name: "books" }), defer + 13);
-					}
-				}), defer);
+				AppUtility.invoke(() => this.prepareSidebarFooterButtons(), this.configSvc.appConfig.services.active === this.name ? 456 : 789);
 				if ("LogIn" === info.args.Type) {
 					AppUtility.invoke(() => this.prepareSidebarFooterButtons(), 3456);
 				}
@@ -155,7 +150,9 @@ export class BooksService extends BaseService {
 						this.configSvc.appConfig.services.active = this.name;
 						this.configSvc.appConfig.URLs.search = "/books/search";
 						this.updateSidebarTitle();
-						AppUtility.invoke(() => AppEvents.broadcast("OpenSidebar", { Name: name }), 13);
+						if (!sidebar.Visible) {
+							AppUtility.invoke(() => AppEvents.broadcast("OpenSidebar", { Name: name }), 13);
+						}
 					}
 				}
 			},
