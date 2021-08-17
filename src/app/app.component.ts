@@ -195,7 +195,7 @@ export class AppComponent implements OnInit {
 		this.sidebar.MainMenu[menuIndex].Items.update(
 			this.getSidebarItem(
 				itemInfo,
-				async sidebarItem => sidebarItem.Title = sidebarItem.Title.startsWith("{{") && sidebarItem.Title.endsWith("}}")
+				async sidebarItem => sidebarItem.Title = AppUtility.isNotEmpty(sidebarItem.Title) && sidebarItem.Title.startsWith("{{") && sidebarItem.Title.endsWith("}}")
 					? await this.configSvc.getResourceAsync(sidebarItem.Title.substr(2, sidebarItem.Title.length - 4).trim())
 					: sidebarItem.Title
 			),
@@ -473,7 +473,7 @@ export class AppComponent implements OnInit {
 				mode,
 				code,
 				async () => await this.initializeAsync(async () => await Promise.all([
-					TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("common.loading.activate"), `users/activate/${mode}`),
+					TrackingUtility.trackScreenAsync(await this.configSvc.getResourceAsync("common.loading.activate"), `users/activate/${mode}`),
 					this.showActivationResultAsync({
 						Status: "OK",
 						Mode: mode

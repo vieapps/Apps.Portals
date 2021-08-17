@@ -34,7 +34,10 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	canModerate = false;
 	canEdit = false;
 	canDoApproval = false;
-	title = "";
+	title = {
+		page: "Content",
+		track: "Content"
+	};
 	formConfig: Array<AppFormsControlConfig>;
 	formSegments = {
 		items: undefined as Array<AppFormsSegment>,
@@ -93,11 +96,14 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			await this.portalsCmsSvc.getContentAsync(contentID, _ => this.content = Content.get(contentID), undefined, true);
 		}
 
+		this.title.track = await this.configSvc.getResourceAsync("portals.cms.contents.title.view");
+
 		if (this.content === undefined) {
-			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+			await Promise.all([
+				this.trackAsync(`${this.title.track} | No Content`, "Check"),
+				this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync("Hmmmmmm....")),
 				this.configSvc.navigateBackAsync()
-			]));
+			]);
 			return;
 		}
 
@@ -121,13 +127,15 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		}
 
 		if (!canView) {
-			await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync("Hmmmmmm...."));
-			await this.configSvc.navigateBackAsync();
+			await Promise.all([
+				this.trackAsync(`${this.title.track} | No Permission`, "Check"),
+				this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync("Hmmmmmm....")),
+				this.configSvc.navigateBackAsync()
+			]);
 			return;
 		}
 
-		this.title = await this.configSvc.getResourceAsync("portals.cms.contents.title.view");
-		this.configSvc.appTitle = this.title = this.title + ` [${this.content.Title}]`;
+		this.configSvc.appTitle = this.title.page = this.title.track + ` [${this.content.Title}]`;
 
 		this.resources = {
 			status: await this.configSvc.getResourceAsync("portals.cms.contents.controls.Status.label"),
@@ -147,6 +155,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
+		await this.trackAsync(`${this.title.track} | Success`);
 
 		AppEvents.on(this.portalsCoreSvc.name, info => {
 			if (info.args.Object === "CMS.Content" && this.content.ID === info.args.ID) {
@@ -390,6 +399,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	async deleteAsync() {
+		await this.trackAsync(`${this.resources.delete} | Request`, "Delete");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete"),
@@ -404,12 +414,15 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 							(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
 						}
 						await Promise.all([
-							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"), this.configSvc.currentURL),
+							this.trackAsync(`${this.resources.delete} | Success`, "Delete"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
-					async error => await this.appFormsSvc.showErrorAsync(error)
+					async error => await Promise.all([
+						this.appFormsSvc.showErrorAsync(error),
+						this.trackAsync(`${this.resources.delete} | Error`, "Delete")
+					])
 				);
 			},
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove"),
@@ -418,6 +431,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	async deleteThumbnailAsync() {
+		await this.trackAsync(`${this.resources.deleteThumbnail} | Request`, "Delete", "Thumbnail");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.deleteThumbnail"),
@@ -428,8 +442,12 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 					async _ => {
 						this.prepareAttachments("Thumbnails", [], undefined, this.content.thumbnails[0]);
 						this.content.thumbnails.removeAll();
+						await this.trackAsync(`${this.resources.deleteThumbnail} | Success`, "Delete", "Thumbnail");
 					},
-					async error => await this.appFormsSvc.showErrorAsync(error),
+					async error => await Promise.all([
+						this.appFormsSvc.showErrorAsync(error),
+						this.trackAsync(`${this.resources.deleteThumbnail} | Error`, "Delete", "Thumbnail")
+					]),
 					this.portalsCoreSvc.getPortalFileHeaders(this.content)
 				);
 			},
@@ -440,6 +458,10 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	async cancelAsync() {
 		await this.configSvc.navigateBackAsync();
+	}
+
+	private async trackAsync(title: string, action?: string, category?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: category || "Content", action: action || "View" });
 	}
 
 }

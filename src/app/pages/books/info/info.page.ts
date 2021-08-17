@@ -119,7 +119,7 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 				if (AppUtility.isObject(this.book.Files, true) && (this.book.Files.Epub.Size === "generating..." || this.book.Files.Mobi.Size === "generating...")) {
 					await this.booksSvc.generateEBookFilesAsync(this.book.ID);
 				}
-				await TrackingUtility.trackAsync(`Info: ${this.title}`, this.book.routerLink);
+				await this.trackAsync(this.title + " | View");
 			}
 			else {
 				await this.configSvc.navigateBackAsync();
@@ -156,15 +156,12 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 
 	async downloadAsync(type: string) {
 		if (this.configSvc.isAuthenticated) {
-			await Promise.all([
-				TrackingUtility.trackAsync(`Download: ${this.title}`, "/books/download/success"),
-				TrackingUtility.trackAsync(`Download: ${this.title}`, `/books/download/${type.toLowerCase()}`)
-			]);
+			await this.trackAsync(this.title + " | Download | Success", "Download", "/books/download/success");
 			PlatformUtility.openURL(`${this.book.Files[type].Url}?${AppUtility.toQuery(this.configSvc.appConfig.getAuthenticatedInfo())}`);
 		}
 		else {
 			await Promise.all([
-				TrackingUtility.trackAsync(`Download: ${this.title}`, "/books/download/failed"),
+				this.trackAsync(this.title + " | Download | Error", "Download", "/books/download/failed"),
 				this.appFormsSvc.showAlertAsync(
 					undefined,
 					await this.configSvc.getResourceAsync("books.info.notAuthenticated"),
@@ -177,13 +174,17 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 		}
 	}
 
-	copyLinkAsync() {
+	async copyLinkAsync() {
 		PlatformUtility.copyToClipboard(this.redirectUrl);
-		return this.appFormsSvc.showToastAsync("Copied...");
+		await this.appFormsSvc.showToastAsync("Copied...");
 	}
 
 	openSource() {
 		PlatformUtility.openURL(this.sourceUrl);
+	}
+
+	private async trackAsync(title: string, action?: string, url?: string) {
+		await TrackingUtility.trackAsync({ title: title, campaignUrl: url, category: "Book", action: action || "View" });
 	}
 
 }

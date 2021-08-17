@@ -12,7 +12,7 @@
 			</ion-button>
 		</ion-buttons>
 		<ion-title [hidden]="searching">
-			{{ title }}
+			{{ title.page }}
 		</ion-title>
 		<ion-searchbar [hidden]="!searching"
 			(ionChange)="onSearch($event)"

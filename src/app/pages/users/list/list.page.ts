@@ -152,18 +152,18 @@ export class UsersListPage implements OnInit, OnDestroy {
 
 	private async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const onSuccess = async (data: any) => {
+		const nextAsync = async (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
+			await TrackingUtility.trackAsync({ title: `Users - ${this.title}`, category: "Users:Profile", action: this.searching ? "Search" : "Browse" }, false);
 		};
 		if (this.searching) {
-			this.subscription = this.usersSvc.searchProfiles(this.request, onSuccess);
+			this.subscription = this.usersSvc.searchProfiles(this.request, nextAsync);
 		}
 		else {
-			await this.usersSvc.searchProfilesAsync(this.request, onSuccess);
+			await this.usersSvc.searchProfilesAsync(this.request, nextAsync);
 		}
 	}
 

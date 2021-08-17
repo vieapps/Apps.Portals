@@ -61,9 +61,9 @@ export class UsersAvatarPage implements OnInit {
 		this.mode = event.detail.value;
 	}
 
-	updateAsync() {
+	async updateAsync() {
 		this.processing = true;
-		return AppUtility.isEquals(this.mode, "Avatar") && this.imageCropper.data !== undefined
+		await (AppUtility.isEquals(this.mode, "Avatar") && this.imageCropper.data !== undefined
 			? this.filesSvc.uploadAvatarAsync(
 					this.imageCropper.data,
 					async data => await this.closeAsync(this.mode, data.URI),
@@ -72,11 +72,11 @@ export class UsersAvatarPage implements OnInit {
 						this.processing = false;
 					}
 				)
-			: this.closeAsync(this.mode);
+			: this.closeAsync(this.mode));
 	}
 
-	closeAsync(mode?: string, imageURI?: string) {
-		return this.appFormsSvc.hideModalAsync({
+	async closeAsync(mode?: string, imageURI?: string) {
+		await this.appFormsSvc.hideModalAsync({
 			mode: mode,
 			imageURI: imageURI
 		});

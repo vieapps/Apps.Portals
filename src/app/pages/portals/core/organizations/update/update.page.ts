@@ -699,7 +699,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 						async data => {
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Organization", Type: "Updated", ID: data.ID });
 							await Promise.all([
-								TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
+								TrackingUtility.trackScreenAsync(this.title, this.configSvc.currentURL),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.update")),
 								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 							]);
@@ -716,7 +716,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 						async data => {
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Organization", Type: "Created", ID: data.ID });
 							await Promise.all([
-								TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
+								TrackingUtility.trackScreenAsync(this.title, this.configSvc.currentURL),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.new")),
 								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 							]);

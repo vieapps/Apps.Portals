@@ -52,7 +52,10 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	canUpdate = false;
 	canContribute = false;
 
-	title = "Categories";
+	title = {
+		page: "Categories",
+		track: "Categories"
+	};
 	parentCategory: Category;
 	categories = new Array<Category>();
 	searching = false;
@@ -134,6 +137,12 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
+
+		this.searching = this.configSvc.currentURL.endsWith("/search");
+		this.title.track = this.redordering
+			? await this.configSvc.getResourceAsync("portals.cms.categories.title.reorder")
+			: AppUtility.format(await this.configSvc.getResourceAsync(`portals.cms.categories.title.${(this.searching ? "search" : "list")}`), { info: "" });
+
 		const contentTypeID = this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"];
 		this.contentType = ContentType.get(contentTypeID);
 		if (this.contentType === undefined && AppUtility.isNotEmpty(contentTypeID)) {
@@ -145,6 +154,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			: await this.portalsCoreSvc.getActiveOrganizationAsync();
 
 		if (this.organization === undefined) {
+			await this.trackAsync(`${this.title.track} | No Organization`, "Check");
 			await this.appFormsSvc.hideLoadingAsync(async () => await this.backAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all"));
 			return;
 		}
@@ -164,9 +174,10 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		this.canUpdate = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
 		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
 		if (!this.canContribute) {
+			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
 			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateHomeAsync()
+				this.configSvc.navigateBackAsync()
 			]));
 			return;
 		}
@@ -184,7 +195,6 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			move: await this.configSvc.getResourceAsync("portals.cms.categories.list.labels.move"),
 		};
 
-		this.searching = this.configSvc.currentURL.endsWith("/search");
 		this.children = await this.configSvc.getResourceAsync("portals.cms.categories.list.children");
 		this.alias = await this.configSvc.getResourceAsync("portals.cms.categories.controls.Alias.label");
 		await this.prepareTitleAsync();
@@ -239,11 +249,11 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	private async prepareTitleAsync() {
 		if (this.redordering) {
-			this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("portals.cms.categories.title.reorder");
+			this.configSvc.appTitle = this.title.page = await this.configSvc.getResourceAsync("portals.cms.categories.title.reorder");
 		}
 		else {
 			const title = await this.configSvc.getResourceAsync(`portals.cms.categories.title.${(this.searching ? "search" : "list")}`);
-			this.configSvc.appTitle = this.title = AppUtility.format(title, { info: this.parentCategory !== undefined ? `[${this.parentCategory.FullTitle}]` : this.module === undefined && this.organization === undefined ? "" : `[${(this.module === undefined ? this.organization.Title : this.organization.Title + " :: " + this.module.Title)}]` });
+			this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: this.parentCategory !== undefined ? `[${this.parentCategory.FullTitle}]` : this.module === undefined && this.organization === undefined ? "" : `[${(this.module === undefined ? this.organization.Title : this.organization.Title + " :: " + this.module.Title)}]` });
 		}
 	}
 
@@ -260,9 +270,6 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	private prepareCategories() {
 		this.categories = this.parentCategory.Children;
-		if (this.configSvc.isDebug) {
-			console.log("<CMS Portals>: Categories (children)", this.categories);
-		}
 	}
 
 	track(index: number, item: any) {
@@ -328,13 +335,19 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
+			await this.trackAsync(`${this.title.track} | Success`);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchCategory(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
+			this.subscription = this.portalsCmsSvc.searchCategory(this.request, onSuccess, async error => await Promise.all([
+				this.appFormsSvc.showErrorAsync(error),
+				this.trackAsync(`${this.title.track} | Error`)
+			]));
 		}
 		else {
-			await this.portalsCmsSvc.searchCategoryAsync(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));
+			await this.portalsCmsSvc.searchCategoryAsync(this.request, onSuccess, async error => await Promise.all([
+				this.appFormsSvc.showErrorAsync(error),
+				this.trackAsync(`${this.title.track} | Error`)
+			]));
 		}
 	}
 
@@ -484,7 +497,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	async doReorderAsync() {
 		if (this.hash !== AppCrypto.hash(this.ordered)) {
 			this.processing = true;
-			await this.appFormsSvc.showLoadingAsync(this.title);
+			await this.appFormsSvc.showLoadingAsync(this.title.page);
 			const reordered = this.ordered.toList().Select(category => {
 				return {
 					ID: category.ID,
@@ -567,6 +580,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	async exportToExcelAsync() {
 		await this.portalsCoreSvc.exportToExcelAsync("CMS.Category", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined);
+		await this.trackAsync(this.actions[2].text, "Export");
 	}
 
 	async importFromExcelAsync() {
@@ -577,6 +591,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			this.contentType !== undefined ? this.contentType.ID : undefined,
 			async _ => {
 				await this.appFormsSvc.showLoadingAsync();
+				await this.trackAsync(this.actions[3].text, "Import");
 				this.categories = [];
 				this.pageNumber = 0;
 				AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination), this.paginationPrefix);
@@ -593,6 +608,10 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 				));
 			}
 		);
+	}
+
+	private async trackAsync(title: string, action?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: "Category", action: action || (this.searching ? "Search" : "Browse") });
 	}
 
 }

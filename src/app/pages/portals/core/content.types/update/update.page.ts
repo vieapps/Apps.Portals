@@ -566,7 +566,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 							this.configSvc.removeDefinition(this.portalsCoreSvc.name, ContentType.get(data.ID).getObjectName(true), undefined, { "x-content-type-id": data.ID });
 							this.configSvc.removeDefinition(this.portalsCoreSvc.name, ContentType.get(data.ID).getObjectName(true), undefined, { "x-content-type-id": data.ID, "x-view-controls": "x" });
 							await Promise.all([
-								TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
+								TrackingUtility.trackScreenAsync(this.title, this.configSvc.currentURL),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.update")),
 								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 							]);
@@ -583,7 +583,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 						async data => {
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Created", ID: data.ID });
 							await Promise.all([
-								TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
+								TrackingUtility.trackScreenAsync(this.title, this.configSvc.currentURL),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.new")),
 								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 							]);
@@ -621,7 +621,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 					async data => {
 						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Deleted", ID: data.ID });
 						await Promise.all([
-							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.buttons.delete"), this.configSvc.currentURL),
+							TrackingUtility.trackScreenAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.buttons.delete"), this.configSvc.currentURL),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);

@@ -1,6 +1,5 @@
 import { Subscription } from "rxjs";
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from "@angular/core";
-import { Router, NavigationEnd } from "@angular/router";
 import { registerLocaleData } from "@angular/common";
 import { IonContent, IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
@@ -8,11 +7,11 @@ import { AppPagination } from "@app/components/app.pagination";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppDataPagination, AppDataFilter, AppDataRequest } from "@app/components/app.objects";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { BooksService } from "@app/services/books.service";
-import { AppDataPagination, AppDataRequest } from "@app/components/app.objects";
 import { Book } from "@app/models/book";
 import { RatingPoint } from "@app/models/rating.point";
 
@@ -24,7 +23,6 @@ import { RatingPoint } from "@app/models/rating.point";
 
 export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 	constructor(
-		private router: Router,
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
@@ -33,7 +31,7 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
 
-	filterBy = {
+	filterBy: AppDataFilter = {
 		Query: undefined as string,
 		And: [
 			{
@@ -89,8 +87,7 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 		icon: string,
 		handler: () => void
 	}>;
-	routerSubscription: Subscription;
-	searchSubscription: Subscription;
+	subscription: Subscription;
 
 	@ViewChild(IonContent, { static: true }) private contentCtrl: IonContent;
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
@@ -157,16 +154,6 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 
 	ngOnInit() {
 		this.initializeAsync();
-
-		this.routerSubscription = this.router.events.subscribe(event => {
-			if (event instanceof NavigationEnd) {
-				if (this.configSvc.currentURL.startsWith(this.uri)) {
-					this.configSvc.appTitle = this.title;
-					TrackingUtility.trackAsync(this.title, this.uri);
-				}
-			}
-		});
-
 		if (!this.searching) {
 			AppEvents.on("Session", info => {
 				if ("Updated" === info.args.Type) {
@@ -193,9 +180,6 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	ngOnDestroy() {
-		if (this.routerSubscription !== undefined) {
-			this.routerSubscription.unsubscribe();
-		}
 		this.cancelSearch(true);
 		if (!this.searching) {
 			AppEvents.off("Session", `AccountEventHandlers${this.eventIdentity}`);
@@ -267,7 +251,7 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 		}
 	}
 
-	onClearSearch(event: any) {
+	onClearSearch() {
 		this.cancelSearch();
 		this.filterBy.Query = undefined;
 		this.books = [];
@@ -276,7 +260,7 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 
 	onCancelSearch(event: any, back: boolean = false) {
 		if (this.searching) {
-			this.onClearSearch(event);
+			this.onClearSearch();
 		}
 		if (back) {
 			this.filtering = false;
@@ -299,25 +283,25 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 
 	async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const onNextAsync = async (data: any) => {
+		const nextAsync = async (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackAsync(this.title + ` [${this.pageNumber}]`, this.uri);
+			await TrackingUtility.trackAsync({ title: this.searching ? await this.configSvc.getResourceAsync("books.list.title.search") : this.category || this.author, category: "Book", action: this.searching ? "Search" : "Browse" });
 		};
 		if (this.searching) {
-			this.searchSubscription = this.booksSvc.searchBooks(this.request, onNextAsync);
+			this.subscription = this.booksSvc.searchBooks(this.request, nextAsync);
 		}
 		else {
-			await this.booksSvc.searchBooksAsync(this.request, onNextAsync);
+			await this.booksSvc.searchBooksAsync(this.request, nextAsync);
 		}
 	}
 
 	cancelSearch(dontDisableInfiniteScroll?: boolean) {
-		if (this.searchSubscription !== undefined) {
-			this.searchSubscription.unsubscribe();
-			this.searchSubscription = undefined;
+		if (this.subscription !== undefined) {
+			this.subscription.unsubscribe();
+			this.subscription = undefined;
 		}
 		if (AppUtility.isFalse(dontDisableInfiniteScroll)) {
 			this.infiniteScrollCtrl.disabled = true;
@@ -408,8 +392,8 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 		}
 	}
 
-	showActionsAsync() {
-		return this.appFormsSvc.showActionSheetAsync(this.actions);
+	async showActionsAsync() {
+		await this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
 	showFilter() {

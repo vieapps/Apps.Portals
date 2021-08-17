@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
+import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { ConfigurationService } from "@app/services/configuration.service";
 
@@ -37,23 +38,25 @@ export class HomePage implements OnInit, OnDestroy {
 			this.prepareAsync();
 		}
 		else {
-			AppEvents.on("App", async info => {
+			AppEvents.on("App", info => {
 				if ("Initialized" === info.args.Type) {
-					await this.prepareAsync();
+					AppUtility.invoke(async () => await this.prepareAsync(), 13);
 				}
 			}, "Home:AppInitialized");
 		}
 
-		AppEvents.on("App", async info => {
+		AppEvents.on("App", info => {
 			if ("LanguageChanged" === info.args.Type) {
-				await this.setTitleAsync();
+				AppUtility.invoke(async () => await this.setTitleAsync(), 13);
 			}
 		}, "Home:LanguageChanged");
 
-		AppEvents.on("Navigated", async info => {
+		AppEvents.on("Navigated", info => {
 			if (this.configSvc.appConfig.URLs.home === info.args.URL) {
-				await this.prepareAsync("return");
-				AppEvents.broadcast("App", { Type: "HomePageIsOpened" });
+				AppUtility.invoke(async () => {
+					await this.prepareAsync("Return");
+					AppEvents.broadcast("App", { Type: "HomePageIsOpened" });
+				}, 13);
 				this.changes = new Date();
 			}
 		}, "Home:Navigated");
@@ -70,17 +73,13 @@ export class HomePage implements OnInit, OnDestroy {
 		AppEvents.off("SetHomepageTitleResource", "Home:SetTitle");
 	}
 
-	private async prepareAsync(section?: string) {
+	private async prepareAsync(action?: string) {
 		await this.setTitleAsync();
-		await this.trackAsync(section);
+		await TrackingUtility.trackAsync({ title: this.title, category: "Home", action: action || "Open" });
 	}
 
 	private async setTitleAsync() {
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(this.titleResource);
-	}
-
-	private trackAsync(section?: string) {
-		return TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.URLs.home}/${section || "initialize"}`);
 	}
 
 }

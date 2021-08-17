@@ -49,7 +49,7 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 		if (this.configSvc.isDebug) {
 			console.log("Initialize CMS Portals", this.configSvc.requestParams);
 		}
-		await TrackingUtility.trackAsync("Initialize and open a view of CMS Portals", "/portals/initializer");
+		await TrackingUtility.trackScreenAsync("Initialize and open a view of CMS Portals", "/portals/initializer");
 		const organizationID = this.configSvc.requestParams["SystemID"];
 		let forward = false;
 		let url: string;

@@ -4,6 +4,7 @@ import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppCustomCompleter } from "@app/components/app.completer";
 import { AppPagination } from "@app/components/app.pagination";
 import { AppSidebar, AppSidebarMenuItem, AppMessage, AppDataRequest, AppDataPagination } from "@app/components/app.objects";
@@ -3095,6 +3096,12 @@ export class PortalsCoreService extends BaseService {
 		if (statuses.findIndex(status => status.value === "Published") > 0) {
 			statuses.find(status => status.value === "Pending").label = await this.configSvc.getResourceAsync("portals.common.approval.Pending2");
 		}
+
+		const contenType = ContentType.get(entityInfo);
+		if (contenType !== undefined) {
+			await TrackingUtility.trackAsync({ title: title + " | Open", category: `${this.name}:${contenType.contentTypeDefinition.ObjectName}`, action: "Approve" });
+		}
+
 		await this.appFormsSvc.showAlertAsync(
 			title,
 			undefined,
@@ -3103,8 +3110,16 @@ export class PortalsCoreService extends BaseService {
 				await this.appFormsSvc.showLoadingAsync(title);
 				await this.readAsync(
 					this.getPath("approve", id),
-					async _ => await this.appFormsSvc.showAlertAsync(title, await this.configSvc.getResourceAsync("portals.common.approval.message", { status: await this.configSvc.getResourceAsync(`status.approval.${status}`) })),
-					async error => await this.appFormsSvc.showErrorAsync(error),
+					async _ => {
+						if (contenType !== undefined) {
+							await TrackingUtility.trackAsync({ title: title + " | Success", category: `${this.name}:${contenType.contentTypeDefinition.ObjectName}`, action: "Approve" });
+						}
+						await this.appFormsSvc.showAlertAsync(title, await this.configSvc.getResourceAsync("portals.common.approval.message", { status: await this.configSvc.getResourceAsync(`status.approval.${status}`) }));
+					},
+					async error => await Promise.all([
+						this.appFormsSvc.showErrorAsync(error),
+						contenType !== undefined ? TrackingUtility.trackAsync({ title: title + " | Error", category: `${this.name}:${contenType.contentTypeDefinition.ObjectName}`, action: "Approve" }) : new Promise<void>(() => {})
+					]),
 					{
 						"x-entity": entityInfo,
 						"x-status": status

@@ -103,6 +103,7 @@ export class UsersOtpPage implements OnInit {
 			this.prepareStatusAsync()
 		]);
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.profile.otp.title");
+		await this.trackAsync(this.title, "Open");
 		if (onNext !== undefined) {
 			onNext();
 		}
@@ -189,11 +190,15 @@ export class UsersOtpPage implements OnInit {
 				this.provision.info = data.Provisioning;
 				this.provision.uri = this.mode === "sms" ? "" : data.URI;
 				await Promise.all([
+					this.trackAsync(this.title + " | Prepare | Success", "Prepare"),
 					this.prepareStatusAsync(),
 					this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.focus(this.otpCtrl))
 				]);
 			},
-			async error => await this.appFormsSvc.showErrorAsync(error),
+			async error => await Promise.all([
+				this.trackAsync(this.title + " | Prepare | Error", "Prepare"),
+				this.appFormsSvc.showErrorAsync(error)
+			]),
 			this.mode === "sms"
 				? "x-body=" + AppCrypto.jsonEncode({
 					OtpType: AppCrypto.rsaEncrypt("SMS"),
@@ -218,15 +223,18 @@ export class UsersOtpPage implements OnInit {
 				this.provision.phone = "";
 				await this.prepareAsync();
 				await Promise.all([
-					TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.URLs.users.update}/otp`),
+					this.trackAsync(this.title + " | Update | Success"),
 					this.appFormsSvc.hideLoadingAsync()
 				]);
 			},
-			async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => {
-				this.provision.value = "";
-				this.password = "";
-				PlatformUtility.focus(this.otpCtrl);
-			})
+			async error => await Promise.all([
+				this.trackAsync(this.title + " | Update | Error"),
+				this.appFormsSvc.showErrorAsync(error, undefined, () => {
+					this.provision.value = "";
+					this.password = "";
+					PlatformUtility.focus(this.otpCtrl);
+				})
+			])
 		);
 	}
 
@@ -239,10 +247,13 @@ export class UsersOtpPage implements OnInit {
 				data.password + "",
 				provider.Info,
 				async () => await this.prepareAsync(async () => await Promise.all([
-					TrackingUtility.trackAsync(this.title, `${this.configSvc.appConfig.URLs.users.update}/otp`),
+					this.trackAsync(this.title + " | Delete | Success", "Delete"),
 					this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.otp.messages.success", { label: provider.Label }))
 				])),
-				async error => await this.appFormsSvc.showErrorAsync(error)
+				async error => await Promise.all([
+					this.trackAsync(this.title + " | Delete | Error", "Delete"),
+					this.appFormsSvc.showErrorAsync(error)
+				])
 			),
 			await this.configSvc.getResourceAsync("common.buttons.yes"),
 			await this.configSvc.getResourceAsync("common.buttons.no"),
@@ -256,13 +267,20 @@ export class UsersOtpPage implements OnInit {
 		);
 	}
 
-	doneAsync(onNext?: () => void) {
-		return this.appFormsSvc.hideLoadingAsync(async () => {
-			if (onNext !== undefined) {
-				onNext();
-			}
-			await this.configSvc.navigateBackAsync(!this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.profile) ? `${this.configSvc.appConfig.URLs.users.profile}/my` : undefined);
-		});
+	async doneAsync(onNext?: () => void) {
+		await Promise.all([
+			this.trackAsync(this.title + " | Done", "Complete"),
+			this.appFormsSvc.hideLoadingAsync(async () => {
+				if (onNext !== undefined) {
+					onNext();
+				}
+				await this.configSvc.navigateBackAsync(!this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.profile) ? `${this.configSvc.appConfig.URLs.users.profile}/my` : undefined);
+			})
+		]);
+	}
+
+	private async trackAsync(title: string, action?: string) {
+		await TrackingUtility.trackAsync({ title: `Users - ${title}`, campaignUrl: this.configSvc.appConfig.URLs.users.otp, category: "Users:OTP", action: action || "Update" }, false);
 	}
 
 }

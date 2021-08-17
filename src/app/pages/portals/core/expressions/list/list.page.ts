@@ -270,7 +270,7 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
+			await TrackingUtility.trackScreenAsync(`${this.title} [${this.pageNumber}]`, this.configSvc.currentURL);
 		};
 		if (this.searching) {
 			this.subscription = this.portalsCoreSvc.searchExpression(this.request, onSuccess, async error => await this.appFormsSvc.showErrorAsync(error));

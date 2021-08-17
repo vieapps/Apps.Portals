@@ -46,7 +46,10 @@ export class CmsLinksUpdatePage implements OnInit {
 		full: ""
 	};
 
-	title = "";
+	title = {
+		page: "Link",
+		track: "Link"
+	};
 	form = new FormGroup({});
 	formConfig: Array<AppFormsControlConfig>;
 	formSegments = {
@@ -82,8 +85,12 @@ export class CmsLinksUpdatePage implements OnInit {
 				? Organization.get(this.contentType.SystemID)
 				: await this.portalsCoreSvc.getActiveOrganizationAsync();
 
+		this.title.track = await this.configSvc.getResourceAsync(`portals.cms.links.title.${(this.link !== undefined && AppUtility.isNotEmpty(this.link.ID) ? "update" : "create")}`);
 		if (this.organization === undefined) {
-			await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all");
+			await Promise.all([
+				this.trackAsync(`${this.title.track} | Invalid Organization`, "Check"),
+				this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all"))
+			]);
 			return;
 		}
 
@@ -93,7 +100,10 @@ export class CmsLinksUpdatePage implements OnInit {
 				? this.link.contentType
 				: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 			if (this.contentType === undefined) {
-				await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all"));
+				await Promise.all([
+					this.trackAsync(`${this.title.track} | Invalid Content Type`, "Check"),
+					this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all"))
+				]);
 				return;
 			}
 		}
@@ -106,15 +116,16 @@ export class CmsLinksUpdatePage implements OnInit {
 			canUpdate = AppUtility.isEquals(this.link.CreatedID, this.configSvc.getAccount().id);
 		}
 		if (!canUpdate) {
-			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+			await Promise.all([
+				this.trackAsync(`${this.title.track} | No Permission`, "Check"),
+				this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync("Hmmmmmm....")),
 				this.configSvc.navigateBackAsync()
-			]));
+			]);
 			return;
 		}
 
 		this.link = this.link || new Link(this.organization.ID, this.module.ID, this.contentType.ID, this.configSvc.requestParams["ParentID"]);
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.cms.links.title.${(AppUtility.isNotEmpty(this.link.ID) ? "update" : "create")}`);
+		this.configSvc.appTitle = this.title.page = this.title.track + (AppUtility.isNotEmpty(this.link.ID) ? ` [${this.link.FullTitle}]` : "");
 
 		this.button = {
 			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.link.ID) ? "save" : "create")}`),
@@ -123,6 +134,7 @@ export class CmsLinksUpdatePage implements OnInit {
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
+		await this.trackAsync(`${this.title.track} | Request`);
 
 		if (AppUtility.isNotEmpty(this.link.ID) && this.link.ChildrenMode === "Normal" && this.link.childrenIDs === undefined) {
 			this.portalsCmsSvc.refreshLinkAsync(this.link.ID, async _ => await this.appFormsSvc.showToastAsync("The link was freshen-up"));
@@ -398,7 +410,7 @@ export class CmsLinksUpdatePage implements OnInit {
 			}
 			else {
 				this.processing = true;
-				await this.appFormsSvc.showLoadingAsync(this.title);
+				await this.appFormsSvc.showLoadingAsync(this.title.track);
 
 				const link = this.form.value;
 				delete link["Thumbnails"];
@@ -420,7 +432,7 @@ export class CmsLinksUpdatePage implements OnInit {
 							);
 						}
 						await Promise.all([
-							TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
+							this.trackAsync(`${this.title.track} | Success`, "Upload", "Thumbnail"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 							this.appFormsSvc.hideLoadingAsync()
 						]);
@@ -440,7 +452,7 @@ export class CmsLinksUpdatePage implements OnInit {
 									AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Updated", ID: oldParentID });
 								}
 								await Promise.all([
-									TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
+									this.trackAsync(`${this.title.track} | Success`, "Update"),
 									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.update")),
 									this.appFormsSvc.hideLoadingAsync()
 								]);
@@ -448,7 +460,10 @@ export class CmsLinksUpdatePage implements OnInit {
 							},
 							async error => {
 								this.processing = false;
-								await this.appFormsSvc.showErrorAsync(error);
+								await Promise.all([
+									this.trackAsync(`${this.title.track} | Error`, "Update"),
+									this.appFormsSvc.showErrorAsync(error)
+								]);
 							}
 						);
 					}
@@ -463,7 +478,7 @@ export class CmsLinksUpdatePage implements OnInit {
 							}
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							await Promise.all([
-								TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
+								this.trackAsync(`${this.title.track} | Success`),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.new")),
 								this.appFormsSvc.hideLoadingAsync()
 							]);
@@ -471,7 +486,10 @@ export class CmsLinksUpdatePage implements OnInit {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.showErrorAsync(error);
+							await Promise.all([
+								this.trackAsync(`${this.title.track} | Error`),
+								this.appFormsSvc.showErrorAsync(error)
+							]);
 						}
 					);
 				}
@@ -480,6 +498,7 @@ export class CmsLinksUpdatePage implements OnInit {
 	}
 
 	async deleteAsync() {
+		await this.trackAsync(`${await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.delete")} | Request`, "Delete");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.cms.links.update.messages.confirm.delete"),
@@ -501,37 +520,39 @@ export class CmsLinksUpdatePage implements OnInit {
 				value: "set-null"
 			}
 		];
+		const button = await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.delete");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.cms.links.update.messages.confirm.delete"),
 			await this.configSvc.getResourceAsync("portals.cms.links.update.messages.confirm.remove"),
 			async mode => {
-				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.delete"));
+				await this.appFormsSvc.showLoadingAsync(button);
 				await this.portalsCmsSvc.deleteLinkAsync(
 					this.link.ID,
 					async data => {
 						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 						await Promise.all([
-							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.delete"), this.configSvc.currentURL),
+							this.trackAsync(`${button} | Success`, "Delete"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync()
 						]);
 						await this.configSvc.navigateBackAsync();
 					},
-					async error => await this.appFormsSvc.showErrorAsync(error),
+					async error => await Promise.all([
+						this.appFormsSvc.showErrorAsync(error),
+						this.trackAsync(`${button} | Error`, "Delete")
+					]),
 					{ "x-children": mode }
 				);
 			},
 			await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.remove"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel"),
-			this.link.childrenIDs === undefined || this.link.childrenIDs.length < 1 ? undefined : modes.map(mode => {
-				return {
-					type: "radio",
-					label: mode.label,
-					value: mode.value,
-					checked: mode.value === "delete"
-				};
-			})
+			this.link.childrenIDs === undefined || this.link.childrenIDs.length < 1 ? undefined : modes.map(mode => ({
+				type: "radio",
+				label: mode.label,
+				value: mode.value,
+				checked: mode.value === "delete"
+			}))
 		);
 	}
 
@@ -549,6 +570,10 @@ export class CmsLinksUpdatePage implements OnInit {
 				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
 			);
 		}
+	}
+
+	private async trackAsync(title: string, action?: string, category?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: category || "Link", action: action || (this.link !== undefined && AppUtility.isNotEmpty(this.link.ID) ? "Edit" : "Create") });
 	}
 
 }

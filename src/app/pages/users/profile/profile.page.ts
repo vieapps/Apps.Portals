@@ -167,10 +167,11 @@ export class UsersProfilePage implements OnInit {
 			this.profile = this.profile || UserProfile.get(id);
 			this.labels.header = await this.configSvc.getResourceAsync("users.profile.labels.header");
 			this.labels.lastAccess = await this.configSvc.getResourceAsync("users.profile.labels.lastAccess");
+			await this.setModeAsync("profile", await this.configSvc.getResourceAsync("users.profile.title"));
 			await Promise.all([
-				this.setModeAsync("profile", await this.configSvc.getResourceAsync("users.profile.title")),
-				TrackingUtility.trackAsync(`${await this.configSvc.getResourceAsync("users.profile.title")} [${this.profile.Name}]`, this.configSvc.appConfig.URLs.users.profile)
-			]).then(async () => await this.appFormsSvc.hideLoadingAsync(onNext));
+				this.trackAsync(this.title),
+				this.appFormsSvc.hideLoadingAsync(onNext)
+			]);
 		};
 		const force = this.configSvc.appConfig.services.active === "Books" && (this.profile === undefined || this.profile.LastSync === undefined);
 		if (this.profile === undefined || force) {
@@ -183,9 +184,15 @@ export class UsersProfilePage implements OnInit {
 						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
 						AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: this.profile });
 					}
-					await showProfileAsync();
+					await Promise.all([
+						TrackingUtility.trackEventAsync("Users:Profile", "Reload", undefined, undefined, false),
+						showProfileAsync()
+					]);
 				},
-				async error => await this.appFormsSvc.showErrorAsync(error),
+				async error => await Promise.all([
+					TrackingUtility.trackEventAsync("Users:Profile", "Reload", undefined, undefined, false),
+					this.appFormsSvc.showErrorAsync(error)
+				]),
 				true,
 				force
 			);
@@ -195,8 +202,9 @@ export class UsersProfilePage implements OnInit {
 		}
 	}
 
-	openAvatarAsync() {
-		return this.appFormsSvc.showModalAsync(
+	async openAvatarAsync() {
+		await this.trackAsync("Avatar | Open", `${this.configSvc.appConfig.URLs.users.profile}/avatar`, "Open", "Users:Avatar");
+		await this.appFormsSvc.showModalAsync(
 			UsersAvatarPage,
 			{
 				mode: AppUtility.isEquals(this.profile.Avatar, "") || AppUtility.isEquals(this.profile.Avatar, this.profile.Gravatar) ? "Gravatar" : "Avatar",
@@ -217,12 +225,17 @@ export class UsersProfilePage implements OnInit {
 						ID: this.profile.ID,
 						Avatar: imageURI || ""
 					},
-					async () => await this.configSvc.storeSessionAsync(async () => await Promise.all([
-						new Promise<void>(() => AppEvents.broadcast("Profile", { Type: "Updated" })),
-						TrackingUtility.trackAsync(`${await this.configSvc.getResourceAsync("users.profile.avatar.title")} [${this.profile.Name}]`, `${this.configSvc.appConfig.URLs.users.update}/avatar`),
-						this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.avatar.message"))
-					])),
-					error => console.error(`Error occurred while updating profile with new avatar image => ${AppUtility.getErrorMessage(error)}`, error)
+					async () => {
+						AppEvents.broadcast("Profile", { Type: "Updated" });
+						await this.configSvc.storeSessionAsync(async () => await Promise.all([
+							this.trackAsync("Avatar | Success", `${this.configSvc.appConfig.URLs.users.update}/avatar`, !!imageURI ? "Upload" : "Update", "Users:Avatar"),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.avatar.message"))
+						]));
+					},
+					async error => {
+						console.error(`Error occurred while updating profile with new avatar image => ${AppUtility.getErrorMessage(error)}`, error);
+						await this.trackAsync("Avatar | Error", `${this.configSvc.appConfig.URLs.users.update}/avatar`, !!imageURI ? "Upload" : "Update", "Users:Avatar");
+					}
 				);
 			}
 		}
@@ -234,6 +247,11 @@ export class UsersProfilePage implements OnInit {
 
 	openOTPAsync() {
 		return this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.users.otp);
+	}
+
+	onServicePrivilegesChanged(event: any) {
+		this.invitation.privileges = event.privileges;
+		this.invitation.relatedInfo = event.relatedInfo;
 	}
 
 	async openSendInvitationAsync() {
@@ -260,11 +278,7 @@ export class UsersProfilePage implements OnInit {
 			}
 		];
 		await this.setModeAsync("invitation", await this.configSvc.getResourceAsync("users.profile.invitation.title"));
-	}
-
-	onServicePrivilegesChanged(event: any) {
-		this.invitation.privileges = event.privileges;
-		this.invitation.relatedInfo = event.relatedInfo;
+		await this.trackAsync("Invitation | Request", `${this.configSvc.appConfig.URLs.users.profile}/invite`, "Open", "Users:Invitation");
 	}
 
 	async sendInvitationAsync() {
@@ -279,33 +293,45 @@ export class UsersProfilePage implements OnInit {
 				this.invitation.privileges,
 				this.invitation.relatedInfo,
 				async () => await Promise.all([
-					TrackingUtility.trackAsync(`${this.title} [${this.profile.Name}]`, `${this.configSvc.appConfig.URLs.users.root}/invite`),
+					this.trackAsync("Invitation | Success", `${this.configSvc.appConfig.URLs.users.root}/invite`, "Send", "Users:Invitation"),
 					this.showProfileAsync(async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.invitation.message")))
 				]),
-				async error => await this.appFormsSvc.showErrorAsync(error)
+				async error => await Promise.all([
+					this.appFormsSvc.showErrorAsync(error),
+					this.trackAsync("Invitation | Error", `${this.configSvc.appConfig.URLs.users.root}/invite`, "Send", "Users:Invitation")
+				])
 			);
 		}
 	}
 
 	async logoutAsync() {
+		const button = await this.configSvc.getResourceAsync("users.profile.buttons.logout");
+		await this.trackAsync(button + " | Request", `${this.configSvc.appConfig.URLs.users.root}/logout`, "LogOut", "Users:Account");
 		await this.appFormsSvc.showAlertAsync(
-			await this.configSvc.getResourceAsync("users.profile.buttons.logout"),
+			button,
 			undefined,
 			await this.configSvc.getResourceAsync("users.profile.logout.confirm"),
 			async () => {
-				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("users.profile.buttons.logout"));
+				await this.appFormsSvc.showLoadingAsync(button);
 				await this.authSvc.logOutAsync(
 					async () => await Promise.all([
-						TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("users.profile.buttons.logout"), `${this.configSvc.appConfig.URLs.users.root}/logout`),
+						this.trackAsync(button + " | Success", `${this.configSvc.appConfig.URLs.users.root}/logout`, "LogOut", "Users:Account"),
 						this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.logout.success"))),
 						this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync()
 					]),
-					async error => await this.appFormsSvc.showErrorAsync(error)
+					async error => await Promise.all([
+						this.appFormsSvc.showErrorAsync(error),
+						this.trackAsync(button + " | Error", `${this.configSvc.appConfig.URLs.users.root}/logout`, "LogOut", "Users:Account")
+					])
 				);
 			},
-			await this.configSvc.getResourceAsync("users.profile.buttons.logout"),
+			button,
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
+	}
+
+	private async trackAsync(title: string, url?: string, action?: string, category?: string) {
+		await TrackingUtility.trackAsync({ title: `Users - ${title}`, campaignUrl: url || this.configSvc.appConfig.URLs.users.profile, category: category || "Users:Profile", action: action || "View" }, false);
 	}
 
 }

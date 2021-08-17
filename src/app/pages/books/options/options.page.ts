@@ -66,7 +66,7 @@ export class BooksOptionsPage implements OnInit, OnDestroy {
 			});
 		}));
 		this.config = config;
-		await TrackingUtility.trackAsync(this.title, "/books/options");
+		await TrackingUtility.trackAsync({ title: this.title, campaignUrl: "/books/options", category: "Book", action: "Options" });
 	}
 
 	onFormInitialized() {

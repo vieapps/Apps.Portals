@@ -235,8 +235,14 @@ export class BooksReadPage implements OnInit, OnDestroy {
 			await this.booksSvc.getBookChapterAsync(
 				this.book.ID,
 				this.chapter,
-				async () => await this.scrollAsync(async () => await this.appFormsSvc.hideLoadingAsync(async () => await this.booksSvc.getBookChapterAsync(this.book.ID, direction === "previous" ? this.chapter - 1 : this.chapter + 1))),
-				async error => await this.appFormsSvc.showErrorAsync(error)
+				async () => {
+					await this.scrollAsync();
+					await this.appFormsSvc.hideLoadingAsync(async () => await this.booksSvc.getBookChapterAsync(this.book.ID, direction === "previous" ? this.chapter - 1 : this.chapter + 1));
+				},
+				async error => await Promise.all([
+					this.trackAsync(this.title + " | Error"),
+					this.appFormsSvc.showErrorAsync(error)
+				])
 			);
 		}
 		else {
@@ -287,8 +293,8 @@ export class BooksReadPage implements OnInit, OnDestroy {
 			}
 		}
 		await Promise.all([
-			this.appFormsSvc.hideLoadingAsync(onNext),
-			TrackingUtility.trackAsync(this.title + ` [${this.chapter}]`, this.book.routerLink)
+			this.trackAsync(this.title + ` | Read ${this.book.TotalChapters > 1 && this.chapter > 0 ? ` - Chapter: ${this.chapter}` : ""}`),
+			this.appFormsSvc.hideLoadingAsync(onNext)
 		]);
 	}
 
@@ -309,13 +315,17 @@ export class BooksReadPage implements OnInit, OnDestroy {
 	}
 
 	async openRecrawlAsync() {
+		await this.trackAsync(this.title + " | ReCrawl | Open", "ReCrawl");
 		await this.appFormsSvc.showAlertAsync(
 			await this.configSvc.getResourceAsync("books.crawl.header"),
 			undefined,
 			undefined,
 			async mode => {
 				await this.booksSvc.sendRequestToReCrawlAsync(this.book.ID, this.book.SourceUrl, mode);
-				await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.crawl.message"), 2000);
+				await Promise.all([
+					this.trackAsync(this.title + " | ReCrawl | Sent", "ReCrawl"),
+					this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.crawl.message"), 2000)
+				]);
 			},
 			await this.configSvc.getResourceAsync("books.crawl.button"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel"),
@@ -341,18 +351,33 @@ export class BooksReadPage implements OnInit, OnDestroy {
 	}
 
 	async deleteAsync() {
+		await this.trackAsync(this.title + " | Delete | Open", "Delete");
 		await this.appFormsSvc.showAlertAsync(
 			await this.configSvc.getResourceAsync("common.buttons.delete"),
 			undefined,
 			await this.configSvc.getResourceAsync("books.read.delete.confirm"),
 			async () => await this.booksSvc.deleteBookAsync(
 				this.book.ID,
-				async () => await this.booksSvc.deleteBookmarkAsync(this.book.ID, async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.read.delete.message", { title: this.book.Title }))),
-				async error => await this.appFormsSvc.showErrorAsync(error)
+				async () => {
+					await this.booksSvc.deleteBookmarkAsync(this.book.ID);
+					await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.read.delete.message", { title: this.book.Title }));
+					await Promise.all([
+						this.trackAsync(this.title + " | Delete | Success", "Delete"),
+						this.configSvc.navigateBackAsync()
+					]);
+				},
+				async error => await Promise.all([
+					this.trackAsync(this.title + " | Delete | Error", "Delete"),
+					this.appFormsSvc.showErrorAsync(error)
+				])
 			),
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
+	}
+
+	private async trackAsync(title: string, action?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: "Book", action: action || "Read" });
 	}
 
 }

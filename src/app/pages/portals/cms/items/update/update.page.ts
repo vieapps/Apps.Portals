@@ -45,7 +45,10 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		full: ""
 	};
 
-	title = "";
+	title = {
+		page: "Item",
+		track: "Item"
+	};
 	form = new FormGroup({});
 	formConfig: Array<AppFormsControlConfig>;
 	formSegments = {
@@ -94,8 +97,13 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 				? Organization.get(this.contentType.SystemID)
 				: await this.portalsCoreSvc.getActiveOrganizationAsync();
 
+		this.title.track = await this.configSvc.getResourceAsync(`portals.cms.contents.title.${(this.item !== undefined && AppUtility.isNotEmpty(this.item.ID) ? "update" : "create")}`);
+
 		if (this.organization === undefined) {
-			await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all"));
+			await Promise.all([
+				this.trackAsync(`${this.title.track} | Invalid Organization`, "Check"),
+				this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all"))
+			]);
 			return;
 		}
 
@@ -105,7 +113,10 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 				? this.item.contentType
 				: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 			if (this.contentType === undefined) {
-				await this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all"));
+				await Promise.all([
+					this.trackAsync(`${this.title.track} | Invalid Content Type`, "Check"),
+					this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all"))
+				]);
 				return;
 			}
 		}
@@ -119,15 +130,17 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		if (!canUpdate) {
-			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateHomeAsync()
-			]));
+			await Promise.all([
+				this.trackAsync(`${this.title.track} | No Permission`, "Check"),
+				this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync("Hmmmmmm....")),
+				this.configSvc.navigateBackAsync()
+			]);
 			return;
 		}
 
 		this.item = this.item || new Item(this.organization.ID, this.module.ID, this.contentType.ID);
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(`portals.cms.contents.title.${(AppUtility.isNotEmpty(this.item.ID) ? "update" : "create")}`);
+		this.configSvc.appTitle = this.title.page = this.title.track + (AppUtility.isNotEmpty(this.item.ID) ? ` [${this.item.Title}]` : "");
+		await this.trackAsync(`${this.title.track} | Request`);
 
 		this.buttons = {
 			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.item.ID) ? "save" : "create")}`),
@@ -300,7 +313,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 			}
 			else {
 				this.processing = true;
-				await this.appFormsSvc.showLoadingAsync(this.title);
+				await this.appFormsSvc.showLoadingAsync(this.title.track);
 
 				const item = this.form.value;
 				delete item["Thumbnails"];
@@ -318,7 +331,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 							);
 						}
 						await Promise.all([
-							TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
+							this.trackAsync(`${this.title.track} | Success`, "Upload", "Thumbnail"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
@@ -333,7 +346,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 								}
 								AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Item", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 								await Promise.all([
-									TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
+									this.trackAsync(`${this.title.track} | Success`, "Update"),
 									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 									this.appFormsSvc.hideLoadingAsync()
 								]);
@@ -357,7 +370,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 							}
 							AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Item", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 							await Promise.all([
-								TrackingUtility.trackAsync(this.title, this.configSvc.currentURL),
+								this.trackAsync(`${this.title.track} | Success`),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new")),
 								this.appFormsSvc.hideLoadingAsync()
 							]);
@@ -365,7 +378,10 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 						},
 						async error => {
 							this.processing = false;
-							await this.appFormsSvc.showErrorAsync(error);
+							await Promise.all([
+								this.trackAsync(`${this.title.track} | Error`),
+								this.appFormsSvc.showErrorAsync(error)
+							]);
 						}
 					);
 				}
@@ -374,24 +390,29 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	async deleteAsync() {
+		const button = await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete");
+		await this.trackAsync(`${button} | Request`, "Delete");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete"),
 			undefined,
 			async () => {
-				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"));
+				await this.appFormsSvc.showLoadingAsync(button);
 				await this.portalsCmsSvc.deleteItemAsync(
 					this.item.ID,
 					async data => {
 						AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Item", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 						await Promise.all([
-							TrackingUtility.trackAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"), this.configSvc.currentURL),
+							this.trackAsync(`${button} | Success`, "Delete"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync()
 						]);
 						await this.configSvc.navigateBackAsync();
 					},
-					async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error))
+					async error => await Promise.all([
+						this.appFormsSvc.showErrorAsync(error),
+						this.trackAsync(`${button} | Error`, "Delete")
+					])
 				);
 			},
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove"),
@@ -413,6 +434,10 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
 			);
 		}
+	}
+
+	private async trackAsync(title: string, action?: string, category?: string) {
+		await TrackingUtility.trackAsync({ title: title, category: category || "Item", action: action || (this.item !== undefined && AppUtility.isNotEmpty(this.item.ID) ? "Edit" : "Create") });
 	}
 
 }

@@ -272,7 +272,10 @@ export class UsersUpdatePage implements OnInit {
 		this.update.language = this.profile.Language;
 		this.update.darkTheme = AppUtility.isEquals("dark", this.configSvc.color);
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.profile.update.title");
-		await this.prepareButtonsAsync();
+		await Promise.all([
+			this.prepareButtonsAsync(),
+			this.trackAsync(this.title + " | Request", "Open")
+		]);
 		this.update.config = config;
 	}
 
@@ -304,18 +307,19 @@ export class UsersUpdatePage implements OnInit {
 						AppEvents.broadcast("Profile", { Type: "Updated" });
 					}
 					await Promise.all([
-						TrackingUtility.trackAsync(`${this.title} [${this.profile.Name}]`, `${this.configSvc.appConfig.URLs.users.update}/profile`),
+						this.trackAsync(this.title + " | Success"),
 						this.showProfileAsync(async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.update.messages.success")))
 					]);
 				},
-				async error => await this.appFormsSvc.showErrorAsync(error)
+				async error => await Promise.all([
+					this.trackAsync(this.title + " | Error"),
+					this.appFormsSvc.showErrorAsync(error)
+				])
 			);
 		}
 	}
 
 	async openUpdatePasswordAsync() {
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.profile.password.title");
-		await this.prepareButtonsAsync();
 		this.password.config = [
 			{
 				Name: "OldPassword",
@@ -350,6 +354,11 @@ export class UsersUpdatePage implements OnInit {
 				}
 			},
 		];
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.profile.password.title");
+		await Promise.all([
+			this.prepareButtonsAsync(),
+			this.trackAsync(this.title + " | Request", "Open", "Users:Password")
+		]);
 	}
 
 	async updatePasswordAsync() {
@@ -359,17 +368,18 @@ export class UsersUpdatePage implements OnInit {
 				this.password.form.value.OldPassword,
 				this.password.form.value.Password,
 				async () => await Promise.all([
-					TrackingUtility.trackAsync(`${this.title} [${this.profile.Name}]`, `${this.configSvc.appConfig.URLs.users.update}/password`),
+					this.trackAsync(this.title + " | Success", "Update", "Users:Password"),
 					this.showProfileAsync(async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.password.message")))
 				]),
-				async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => this.password.controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "OldPassword")).focus())
+				async error => await Promise.all([
+					this.trackAsync(this.title + " | Error", "Update", "Users:Password"),
+					this.appFormsSvc.showErrorAsync(error, undefined, () => this.password.controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "OldPassword")).focus())
+				])
 			);
 		}
 	}
 
 	async openUpdateEmailAsync() {
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.profile.email.title");
-		await this.prepareButtonsAsync();
 		this.email.config = [
 			{
 				Name: "OldPassword",
@@ -404,6 +414,11 @@ export class UsersUpdatePage implements OnInit {
 				}
 			},
 		];
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.profile.email.title");
+		await Promise.all([
+			this.prepareButtonsAsync(),
+			this.trackAsync(this.title + " | Request", "Open", "Users:Email")
+		]);
 	}
 
 	async updateEmailAsync() {
@@ -413,23 +428,30 @@ export class UsersUpdatePage implements OnInit {
 				this.email.form.value.OldPassword,
 				this.email.form.value.Email,
 				async () => await Promise.all([
-					TrackingUtility.trackAsync(`${this.title} [${this.profile.Name}]`, `${this.configSvc.appConfig.URLs.users.update}/email`),
+					this.trackAsync(this.title + " | Success", "Update", "Users:Email"),
 					this.showProfileAsync(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.email.message")))
 				]),
-				async error => await this.appFormsSvc.showErrorAsync(error, undefined, () => this.password.controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "OldPassword")).focus())
+				async error => await Promise.all([
+					this.trackAsync(this.title + " | Error", "Update", "Users:Email"),
+					this.appFormsSvc.showErrorAsync(error, undefined, () => this.password.controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "OldPassword")).focus())
+				])
 			);
 		}
 	}
 
 	async openUpdateServicePrivilegesAsync() {
-		this.configSvc.appTitle = this.title = `${await this.configSvc.getResourceAsync("users.profile.privileges.title")} [${this.profile.Name}]`;
-		await this.prepareButtonsAsync();
 		this.services = this.authSvc.isSystemAdministrator()
 			? this.configSvc.appConfig.services.all.map(service => service.name.toLowerCase())
 			: this.configSvc.appConfig.services.all.filter(service => this.authSvc.isServiceAdministrator(service.name)).map(service => service.name.toLowerCase());
 		const privileges = Account.get(this.profile.ID).privileges;
 		this.services.forEach(service => this.servicePrivileges.privileges[service] = privileges.filter(privilege => AppUtility.isEquals(privilege.ServiceName, service)));
 		this.servicePrivileges.hash = AppCrypto.hash(this.servicePrivileges.privileges);
+		const title = await this.configSvc.getResourceAsync("users.profile.privileges.title");
+		this.configSvc.appTitle = this.title = `${title} [${this.profile.Name}]`;
+		await Promise.all([
+			this.prepareButtonsAsync(),
+			this.trackAsync(title + " | Request", "Open", "Users:Privileges")
+		]);
 	}
 
 	trackServicePrivileges(index: number, service: string) {
@@ -446,15 +468,19 @@ export class UsersUpdatePage implements OnInit {
 
 	async updateServicePrivilegesAsync() {
 		if (this.servicePrivileges.hash !== AppCrypto.hash(this.servicePrivileges.privileges)) {
-			await this.appFormsSvc.showLoadingAsync(this.title);
+			const title = await this.configSvc.getResourceAsync("users.profile.privileges.title");
+			await this.appFormsSvc.showLoadingAsync(title);
 			await this.usersSvc.updateServicePrivilegesAsync(
 				this.profile.ID,
 				this.servicePrivileges.privileges,
 				async () => await Promise.all([
-					TrackingUtility.trackAsync(`${this.title} [${this.profile.Name}]`, `${this.configSvc.appConfig.URLs.users.update}/privileges`),
+					this.trackAsync(title + " | Success", "Update", "Users:Privileges"),
 					this.showProfileAsync(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.privileges.message", { name: this.profile.Name })))
 				]),
-				async error => await this.appFormsSvc.showErrorAsync(error)
+				async error => await Promise.all([
+					this.trackAsync(title + " | Error", "Update", "Users:Privileges"),
+					this.appFormsSvc.showErrorAsync(error)
+				])
 			);
 		}
 		else {
@@ -469,6 +495,10 @@ export class UsersUpdatePage implements OnInit {
 			}
 			await this.configSvc.navigateBackAsync(!this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.profile) ? `${this.configSvc.appConfig.URLs.users.profile}/my` : undefined);
 		});
+	}
+
+	private async trackAsync(title: string, action?: string, category?: string) {
+		await TrackingUtility.trackAsync({ title: `Users - ${title}`, campaignUrl: this.configSvc.appConfig.URLs.users.profile, category: category || "Users:Profile", action: action || "Update" }, false);
 	}
 
 }
