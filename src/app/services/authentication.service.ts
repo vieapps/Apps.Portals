@@ -132,17 +132,27 @@ export class AuthenticationService extends BaseService {
 
 	/** Checks to see the visitor can register new account or not */
 	public get canRegisterNewAccounts() {
-		return this.configSvc.appConfig.accountRegistrations.registrable;
+		return this.configSvc.appConfig.accounts.registrable;
 	}
 
 	/** Checks to see the user can send invitations or not */
 	public get canSendInvitations() {
-		return this.canDo(this.configSvc.appConfig.accountRegistrations.sendInvitationRole);
+		return this.canDo(this.configSvc.appConfig.accounts.sendInvitationRole);
 	}
 
 	/** Checks to see the user can set privileges of current service or not */
 	public get canSetServicePrivileges() {
-		return this.configSvc.appConfig.accountRegistrations.setServicePrivilegs && this.canDo(this.configSvc.appConfig.accountRegistrations.setServicePrivilegsRole);
+		const account = this.configSvc.getAccount();
+		if (account !== undefined) {
+			if (this.configSvc.appConfig.accounts.setServicePrivilegs) {
+				return this.canDo(this.configSvc.appConfig.accounts.setServicePrivilegsRole, this.configSvc.appConfig.services.active, account);
+			}
+			else {
+				const service = this.configSvc.appConfig.services.all.first(svc => svc.name === this.configSvc.appConfig.services.active);
+				return service !== undefined && AppUtility.isTrue(service.canSetPrivilegs) && this.canDo(this.configSvc.appConfig.accounts.setServicePrivilegsRole, service.name, account);
+			}
+		}
+		return false;
 	}
 
 	private async processErrorAsync(error: any, message: string, onNext?: (error?: any) => void) {
