@@ -569,7 +569,7 @@ export class AppComponent implements OnInit {
 				app: appConfig.app,
 				session: appConfig.session,
 				services: appConfig.services,
-				accountRegistrations: appConfig.accountRegistrations,
+				accounts: appConfig.accounts,
 				options: appConfig.options,
 				languages: appConfig.languages
 			};

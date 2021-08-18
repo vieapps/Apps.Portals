@@ -81,7 +81,7 @@ export class UsersOtpPage implements OnInit {
 	}
 
 	get phoneIsAllowed() {
-		return this.configSvc.appConfig.accountRegistrations.phoneIsAllowed;
+		return this.configSvc.appConfig.accounts.phoneIsAllowed;
 	}
 
 	get gotAuthenticatorApp() {

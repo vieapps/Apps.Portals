@@ -154,7 +154,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 			return;
 		}
 
-		AppEvents.broadcast(this.portalsCmsSvc.name, { Mode: "UpdateSidebarWithCategories" });
+		AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebarWithCategories" });
 
 		this.buttons = {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),

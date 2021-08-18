@@ -7,7 +7,7 @@ import en_US from "@angular/common/locales/en";
 /** Configuration of the app */
 export class AppConfig {
 
-	/** URIs of the remote API and related resources */
+	/** App URIs (remote APIs and related resources) */
 	public static URIs = {
 		/** APIs */
 		apis: "https://apis.vieapps.net/",
@@ -25,7 +25,7 @@ export class AppConfig {
 		medias: ["fs.vieportal.net"] as Array<string>
 	};
 
-	/** Information of the app */
+	/** App information */
 	public static app = {
 		name: "NGX Portals",
 		description: "Manage information and related services of CMS Portals",
@@ -33,7 +33,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "4.5.3",
+		version: "4.5.6",
 		frameworks: "ionic 5.6 - angular 11.2 - cordova 10.0",
 		mode: "",
 		platform: "",
@@ -44,7 +44,7 @@ export class AppConfig {
 		offline: false
 	};
 
-	/** Session information */
+	/** App session */
 	public static session = {
 		id: undefined as string,
 		token: undefined as { [key: string]: any },
@@ -69,7 +69,7 @@ export class AppConfig {
 		}
 	};
 
-	/** Services in the app */
+	/** App services */
 	public static services = {
 		active: "Portals",
 		activeID: "",
@@ -82,18 +82,21 @@ export class AppConfig {
 			{
 				name: "Books",
 				objects: ["Book", "Category", "Statistic"],
+				canSetPrivilegs: true,
 				appName: "NGX Books",
 				appDescription: "Free online books & EPUB/MOBI e-books"
 			}
-		] as Array<{ name: string; objects: Array<string>; availableHosts?: Array<string>; appName?: string; appDescription?: string; }>
+		] as Array<{ name: string; objects: Array<string>; availableHosts?: Array<string>; canSetPrivilegs?: boolean; appName?: string; appDescription?: string; }>
 	};
 
-	/** User account registrations */
-	public static accountRegistrations = {
+	/** App accounts */
+	public static accounts = {
 		registrable: true,
-		required: [],
-		hidden: ["Gender", "BirthDay", "Address", "Addresses", "Mobile"],
-		excluded: ["Language", "DarkTheme"],
+		registration: {
+			required: [],
+			hidden: ["Gender", "BirthDay", "Address", "Addresses", "Mobile"],
+			excluded: ["Language", "DarkTheme"]
+		},
 		sendInvitationRole: "Authenticated",
 		setServicePrivilegs: false,
 		setServicePrivilegsRole: "ServiceAdministrator",

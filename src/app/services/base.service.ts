@@ -378,10 +378,10 @@ export class RegisterGuardService implements CanActivate {
 	}
 
 	canActivate() {
-		if (!AppConfig.accountRegistrations.registrable) {
+		if (!AppConfig.accounts.registrable) {
 			this.router.navigateByUrl(AppConfig.URLs.home);
 		}
-		return AppConfig.accountRegistrations.registrable;
+		return AppConfig.accounts.registrable;
 	}
 
 }

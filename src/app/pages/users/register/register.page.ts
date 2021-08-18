@@ -173,11 +173,11 @@ export class UsersRegisterPage implements OnInit {
 		];
 
 		config.forEach(options => {
-			if (this.configSvc.appConfig.accountRegistrations.hidden.indexOf(options.Name) > -1) {
+			if (this.configSvc.appConfig.accounts.registration.hidden.indexOf(options.Name) > -1) {
 				options.Hidden = true;
 				options.Required = false;
 			}
-			else if (!options.Required && this.configSvc.appConfig.accountRegistrations.required.indexOf(options.Name) > -1) {
+			else if (!options.Required && this.configSvc.appConfig.accounts.registration.required.indexOf(options.Name) > -1) {
 				options.Required = true;
 			}
 		});

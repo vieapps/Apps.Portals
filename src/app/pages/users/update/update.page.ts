@@ -263,11 +263,11 @@ export class UsersUpdatePage implements OnInit {
 		];
 
 		config.forEach(options => {
-			if (!options.Required && this.configSvc.appConfig.accountRegistrations.required.findIndex(value => AppUtility.isEquals(value, options.Name)) > -1) {
+			if (!options.Required && this.configSvc.appConfig.accounts.registration.required.findIndex(value => AppUtility.isEquals(value, options.Name)) > -1) {
 				options.Required = true;
 			}
 		});
-		this.configSvc.appConfig.accountRegistrations.excluded.forEach(name => config.removeAt(config.findIndex(ctrl => ctrl.Name === name)));
+		this.configSvc.appConfig.accounts.registration.excluded.forEach(name => config.removeAt(config.findIndex(ctrl => ctrl.Name === name)));
 
 		this.update.language = this.profile.Language;
 		this.update.darkTheme = AppUtility.isEquals("dark", this.configSvc.color);
@@ -440,9 +440,7 @@ export class UsersUpdatePage implements OnInit {
 	}
 
 	async openUpdateServicePrivilegesAsync() {
-		this.services = this.authSvc.isSystemAdministrator()
-			? this.configSvc.appConfig.services.all.map(service => service.name.toLowerCase())
-			: this.configSvc.appConfig.services.all.filter(service => this.authSvc.isServiceAdministrator(service.name)).map(service => service.name.toLowerCase());
+		this.services = this.configSvc.appConfig.services.all.filter(service => this.authSvc.isServiceAdministrator(service.name) && AppUtility.isTrue(service.canSetPrivilegs)).map(service => service.name.toLowerCase());
 		const privileges = Account.get(this.profile.ID).privileges;
 		this.services.forEach(service => this.servicePrivileges.privileges[service] = privileges.filter(privilege => AppUtility.isEquals(privilege.ServiceName, service)));
 		this.servicePrivileges.hash = AppCrypto.hash(this.servicePrivileges.privileges);
@@ -450,7 +448,7 @@ export class UsersUpdatePage implements OnInit {
 		this.configSvc.appTitle = this.title = `${title} [${this.profile.Name}]`;
 		await Promise.all([
 			this.prepareButtonsAsync(),
-			this.trackAsync(title + " | Request", "Open", "Users:Privileges")
+			this.trackAsync(title, "Open", "Users:Privileges")
 		]);
 	}
 
@@ -474,11 +472,11 @@ export class UsersUpdatePage implements OnInit {
 				this.profile.ID,
 				this.servicePrivileges.privileges,
 				async () => await Promise.all([
-					this.trackAsync(title + " | Success", "Update", "Users:Privileges"),
+					this.trackAsync(title, "Update", "Users:Privileges"),
 					this.showProfileAsync(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.privileges.message", { name: this.profile.Name })))
 				]),
 				async error => await Promise.all([
-					this.trackAsync(title + " | Error", "Update", "Users:Privileges"),
+					this.trackAsync(title, "Update", "Users:Privileges"),
 					this.appFormsSvc.showErrorAsync(error)
 				])
 			);
