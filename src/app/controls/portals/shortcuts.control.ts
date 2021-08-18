@@ -40,7 +40,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		if (this.configSvc.isReady) {
 			AppUtility.invoke(async () => {
 				await this.prepareLabelAsync();
-				await this.prepareAsync();
+				await this.prepareShortcutsAsync();
 			}, 13);
 		}
 		else {
@@ -49,13 +49,13 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 					AppUtility.invoke(async () => await this.prepareLabelAsync(), 13);
 				}
 				else if ("FullyInitialized" === info.args.Type) {
-					AppUtility.invoke(async () => await this.prepareAsync(), 13);
+					AppUtility.invoke(async () => await this.prepareShortcutsAsync(), 13);
 				}
 			}, "Shortcuts:AppEvents");
 		}
 		AppEvents.on("Session", info => {
 			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
-				AppUtility.invoke(async () => await this.prepareAsync(), 13);
+				AppUtility.invoke(async () => await this.prepareShortcutsAsync(), 13);
 			}
 		}, "Shortcuts:SessionEvents");
 		AppEvents.on(this.portalsCoreSvc.name, info => {
@@ -84,7 +84,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		this.label = await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.labels.shortcuts");
 	}
 
-	private async prepareAsync() {
+	private async prepareShortcutsAsync() {
 		const shortcuts = this.configSvc.appConfig.options.extras["shortcuts"] || {};
 		this.shortcuts = (shortcuts.items as Array<AppShortcut> || []).map(shortcut => shortcut);
 
@@ -117,7 +117,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 
 		this.shortcuts.insert({
 			Title: shortcuts.contents as string || await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.labels.contents"),
-			Link: this.portalsCoreSvc.getRouterLink(undefined, "list", "all", "category"),
+			Link: this.configSvc.isAuthenticated ? this.portalsCoreSvc.getRouterLink(undefined, "list", "all", "category") : undefined,
 			Icon: {
 				Name: "logo-firebase"
 			},
