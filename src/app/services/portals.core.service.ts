@@ -100,9 +100,6 @@ export class PortalsCoreService extends BaseService {
 			// check system identity with activate organizations
 			const systemID = message.Data !== undefined ? message.Data.SystemID : undefined;
 			if (systemID === undefined || this.activeOrganizations.indexOf(systemID) < 0) {
-				if (this.configSvc.isDebug) {
-					console.log(this.getMessage("By-pass the updating message because not in active organizations"), systemID);
-				}
 				return;
 			}
 
@@ -166,7 +163,7 @@ export class PortalsCoreService extends BaseService {
 			}
 			else if ("Changed" === info.args.Type && "Organization" === info.args.Object) {
 				this.updateSidebarTitle();
-				AppUtility.invoke(() => this.prepareSidebar(), 13);
+				AppUtility.invoke(() => this.prepareSidebar());
 			}
 		});
 
@@ -175,7 +172,7 @@ export class PortalsCoreService extends BaseService {
 				AppUtility.invoke(async () => {
 					await this.prepareSidebarFooterButtonsAsync();
 					this.activeSidebar();
-				}, 13);
+				});
 			}
 		});
 
@@ -189,7 +186,7 @@ export class PortalsCoreService extends BaseService {
 						this.configSvc.appConfig.options.extras["organizations"] = new Array<string>();
 						await this.configSvc.saveOptionsAsync();
 					}
-				}, 13);
+				});
 			}
 		});
 
@@ -201,7 +198,7 @@ export class PortalsCoreService extends BaseService {
 					if (organization === undefined || organizations.indexOf(organization.ID) < 0) {
 						await this.getOrganizationAsync(organizations.first(), async _ => await this.setActiveOrganizationAsync(Organization.get(organizations.first())));
 					}
-				}, 13);
+				});
 			}
 		});
 	}
@@ -349,14 +346,14 @@ export class PortalsCoreService extends BaseService {
 		return Organization.active;
 	}
 
-	public async removeActiveOrganizationAsync(organizationID: string, onNext?: () => void) {
+	public removeActiveOrganizationAsync(organizationID: string, onNext?: () => void) {
 		this.configSvc.appConfig.services.activeID = undefined;
 		this.configSvc.appConfig.options.extras["organization"] = undefined;
 		this.activeOrganizations.remove(organizationID);
 		delete this.activeModules[organizationID];
 		Organization.active = undefined;
 		Module.active = undefined;
-		await this.setActiveOrganizationAsync(Organization.get(this.activeOrganizations.first()), onNext);
+		return this.setActiveOrganizationAsync(Organization.get(this.activeOrganizations.first()), onNext);
 	}
 
 	public async getActiveModuleAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void) {
@@ -1260,7 +1257,7 @@ export class PortalsCoreService extends BaseService {
 		return this.usersSvc.getAuditFormControl(ojbect.Created, ojbect.CreatedID, ojbect.LastModified, ojbect.LastModifiedID, segment, onCompleted);
 	}
 
-	public async getAuditInfoAsync(ojbect: BaseModel) {
+	public getAuditInfoAsync(ojbect: BaseModel) {
 		return this.usersSvc.getAuditInfoAsync(ojbect.Created, ojbect.CreatedID, ojbect.LastModified, ojbect.LastModifiedID);
 	}
 
@@ -1281,16 +1278,16 @@ export class PortalsCoreService extends BaseService {
 		return this.search(this.getSearchingPath(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, headers);
 	}
 
-	public async lookupAsync(objectName: string, request: AppDataRequest, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await this.searchAsync(this.getSearchingPath(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, false, headers);
+	public lookupAsync(objectName: string, request: AppDataRequest, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		return this.searchAsync(this.getSearchingPath(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, false, headers);
 	}
 
-	public async getAsync(objectName: string, id: string, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await this.readAsync(this.getPath(objectName, id), onSuccess, onError, headers, true);
+	public getAsync(objectName: string, id: string, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		return this.readAsync(this.getPath(objectName, id), onSuccess, onError, headers, true);
 	}
 
-	public async refreshAsync(objectName: string, id: string, onSuccess?: (data: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, headers?: { [header: string]: string }) {
-		await this.readAsync(this.getPath(objectName, "refresh", `object-id=${id}`), onSuccess, onError, headers, useXHR);
+	public refreshAsync(objectName: string, id: string, onSuccess?: (data: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, headers?: { [header: string]: string }) {
+		return this.readAsync(this.getPath(objectName, "refresh", `object-id=${id}`), onSuccess, onError, headers, useXHR);
 	}
 
 	private updateSidebarTitle() {
@@ -1538,8 +1535,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async searchOrganizationAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.searchAsync(
+	public searchOrganizationAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.searchAsync(
 			this.getSearchingPath("organization", this.configSvc.relatedQuery),
 			request,
 			data => this.processOrganizations(data, onSuccess),
@@ -1547,8 +1544,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async createOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.createAsync(
+	public createOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
 			this.getPath("organization"),
 			body,
 			data => {
@@ -1561,34 +1558,29 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async getOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		if (Organization.contains(id) && Organization.get(id).modules.length > 0) {
-			if (onSuccess !== undefined) {
-				onSuccess();
-			}
-		}
-		else {
-			await this.readAsync(
-				this.getPath("organization", id),
-				data => {
-					Organization.update(data);
-					if (AppUtility.isArray(data.Modules, true)) {
-						(data.Modules as Array<any>).forEach(module => {
-							Module.update(module);
-							if (AppUtility.isArray(module.ContentTypes, true)) {
-								(module.ContentTypes as Array<any>).forEach(contentType => ContentType.update(contentType));
-							}
-						});
-					}
-					if (onSuccess !== undefined) {
-						onSuccess(data);
-					}
-				},
-				error => this.processError("Error occurred while getting an organization", error, onError),
-				undefined,
-				useXHR
-			);
-		}
+	public getOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return Organization.contains(id) && Organization.get(id).modules.length > 0
+			? AppUtility.execute(onSuccess)
+			: this.readAsync(
+					this.getPath("organization", id),
+					data => {
+						Organization.update(data);
+						if (AppUtility.isArray(data.Modules, true)) {
+							(data.Modules as Array<any>).forEach(module => {
+								Module.update(module);
+								if (AppUtility.isArray(module.ContentTypes, true)) {
+									(module.ContentTypes as Array<any>).forEach(contentType => ContentType.update(contentType));
+								}
+							});
+						}
+						if (onSuccess !== undefined) {
+							onSuccess(data);
+						}
+					},
+					error => this.processError("Error occurred while getting an organization", error, onError),
+					undefined,
+					useXHR
+				);
 	}
 
 	public getOrganization(id: string, getActiveOrganizationWhenNotFound: boolean = true) {
@@ -1599,8 +1591,8 @@ export class PortalsCoreService extends BaseService {
 		return organization || (getActiveOrganizationWhenNotFound ? this.activeOrganization : undefined);
 	}
 
-	public async updateOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.updateAsync(
+	public updateOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
 			this.getPath("organization", body.ID),
 			body,
 			data => {
@@ -1613,8 +1605,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async deleteOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.deleteAsync(
+	public deleteOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
 			this.getPath("organization", id),
 			data => {
 				Organization.instances.remove(id);
@@ -1709,8 +1701,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async searchRoleAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.searchAsync(
+	public searchRoleAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.searchAsync(
 			this.getSearchingPath("role", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -1733,8 +1725,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async createRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.createAsync(
+	public createRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
 			this.getPath("role"),
 			body,
 			data => {
@@ -1749,30 +1741,25 @@ export class PortalsCoreService extends BaseService {
 
 	public async getRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const role = Role.get(id);
-		if (role !== undefined && role.childrenIDs !== undefined) {
-			if (onSuccess !== undefined) {
-				onSuccess();
-			}
-		}
-		else {
-			await this.readAsync(
-				this.getPath("role", id),
-				data => {
-					this.updateRole(data);
-					if (onSuccess !== undefined) {
-						onSuccess(data);
-					}
-				},
-				error => this.processError("Error occurred while getting a role", error, onError),
-				undefined,
-				useXHR
-			);
-		}
+		return role !== undefined && role.childrenIDs !== undefined
+			? AppUtility.execute(onSuccess)
+			: this.readAsync(
+					this.getPath("role", id),
+					data => {
+						this.updateRole(data);
+						if (onSuccess !== undefined) {
+							onSuccess(data);
+						}
+					},
+					error => this.processError("Error occurred while getting a role", error, onError),
+					undefined,
+					useXHR
+				);
 	}
 
-	public async updateRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public updateRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		const parentID = Role.contains(body.ID) ? Role.get(body.ID).ParentID : undefined;
-		await this.updateAsync(
+		return this.updateAsync(
 			this.getPath("role", body.ID),
 			body,
 			data => {
@@ -1785,9 +1772,9 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async deleteRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public deleteRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Role.contains(id) ? Role.get(id).ParentID : undefined;
-		await this.deleteAsync(
+		return this.deleteAsync(
 			this.getPath("role", id),
 			data => {
 				this.deleteRole(data.ID, parentID);
@@ -1800,8 +1787,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async refreshRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await this.refreshAsync(
+	public refreshRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		return this.refreshAsync(
 			"role",
 			id,
 			data => {
@@ -1917,8 +1904,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async searchDesktopAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.searchAsync(
+	public searchDesktopAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.searchAsync(
 			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
 			request,
 			data => this.processDesktops(data, onSuccess),
@@ -1926,8 +1913,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async createDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.createAsync(
+	public createDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
 			this.getPath("desktop"),
 			body,
 			data => {
@@ -1942,33 +1929,28 @@ export class PortalsCoreService extends BaseService {
 
 	public async getDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const desktop = Desktop.get(id);
-		if (desktop !== undefined && desktop.childrenIDs !== undefined) {
-			if (onSuccess !== undefined) {
-				onSuccess();
-			}
-		}
-		else {
-			await this.readAsync(
-				this.getPath("desktop", id),
-				data => {
-					this.updateDesktop(data);
-					if (onSuccess !== undefined) {
-						onSuccess(data);
-					}
-					if (onSuccess !== undefined) {
-						onSuccess(data);
-					}
-				},
-				error => this.processError("Error occurred while getting a desktop", error, onError),
-				undefined,
-				useXHR
-			);
-		}
+		return desktop !== undefined && desktop.childrenIDs !== undefined
+			? AppUtility.execute(onSuccess)
+			: this.readAsync(
+					this.getPath("desktop", id),
+					data => {
+						this.updateDesktop(data);
+						if (onSuccess !== undefined) {
+							onSuccess(data);
+						}
+						if (onSuccess !== undefined) {
+							onSuccess(data);
+						}
+					},
+					error => this.processError("Error occurred while getting a desktop", error, onError),
+					undefined,
+					useXHR
+				);
 	}
 
-	public async updateDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public updateDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Desktop.contains(body.ID) ? Desktop.get(body.ID).ParentID : undefined;
-		await this.updateAsync(
+		return this.updateAsync(
 			this.getPath("desktop", body.ID),
 			body,
 			data => {
@@ -1982,9 +1964,9 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async deleteDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public deleteDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Desktop.contains(id) ? Desktop.get(id).ParentID : undefined;
-		await this.deleteAsync(
+		return this.deleteAsync(
 			this.getPath("desktop", id),
 			data => {
 				this.deleteDesktop(data.ID, parentID);
@@ -1997,8 +1979,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async refreshDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await this.refreshAsync(
+	public refreshDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		return this.refreshAsync(
 			"desktop",
 			id,
 			data => {
@@ -2138,8 +2120,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async searchPortletAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
-		await this.searchAsync(
+	public searchPortletAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
+		return this.searchAsync(
 			this.getSearchingPath("portlet", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -2160,8 +2142,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async createPortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.createAsync(
+	public createPortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
 			this.getPath("portlet"),
 			body,
 			data => {
@@ -2175,29 +2157,24 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getPortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		if (Portlet.contains(id) && Portlet.get(id).otherDesktops !== undefined) {
-			if (onSuccess) {
-				onSuccess();
-			}
-		}
-		else {
-			await this.readAsync(
-				this.getPath("portlet", id),
-				data => {
-					Portlet.update(data);
-					if (onSuccess !== undefined) {
-						onSuccess(data);
-					}
-				},
-				error => this.processError("Error occurred while getting a portlet", error, onError),
-				undefined,
-				useXHR
-			);
-		}
+		return Portlet.contains(id) && Portlet.get(id).otherDesktops !== undefined
+			? AppUtility.execute(onSuccess)
+			: this.readAsync(
+					this.getPath("portlet", id),
+					data => {
+						Portlet.update(data);
+						if (onSuccess !== undefined) {
+							onSuccess(data);
+						}
+					},
+					error => this.processError("Error occurred while getting a portlet", error, onError),
+					undefined,
+					useXHR
+				);
 	}
 
-	public async updatePortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
-		await this.updateAsync(
+	public updatePortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+		return this.updateAsync(
 			this.getPath("portlet", body.ID),
 			body,
 			data => {
@@ -2212,8 +2189,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async deletePortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.deleteAsync(
+	public deletePortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
 			this.getPath("portlet", id),
 			data => {
 				Portlet.instances.remove(data.ID);
@@ -2305,8 +2282,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async searchSiteAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false) {
-		await this.searchAsync(
+	public searchSiteAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false) {
+		return this.searchAsync(
 			this.getSearchingPath("site", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -2327,8 +2304,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async createSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.createAsync(
+	public createSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
 			this.getPath("site"),
 			body,
 			data => {
@@ -2342,29 +2319,24 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		if (Site.contains(id)) {
-			if (onSuccess !== undefined) {
-				onSuccess();
-			}
-		}
-		else {
-			await this.readAsync(
-				this.getPath("site", id),
-				data => {
-					Site.update(data);
-					if (onSuccess !== undefined) {
-						onSuccess(data);
-					}
-				},
-				error => this.processError("Error occurred while getting a site", error, onError),
-				undefined,
-				useXHR
-			);
-		}
+		return Site.contains(id)
+			? AppUtility.execute(onSuccess)
+			: this.readAsync(
+					this.getPath("site", id),
+					data => {
+						Site.update(data);
+						if (onSuccess !== undefined) {
+							onSuccess(data);
+						}
+					},
+					error => this.processError("Error occurred while getting a site", error, onError),
+					undefined,
+					useXHR
+				);
 	}
 
-	public async updateSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.updateAsync(
+	public updateSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
 			this.getPath("site", body.ID),
 			body,
 			data => {
@@ -2377,8 +2349,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async deleteSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.deleteAsync(
+	public deleteSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
 			this.getPath("site", id),
 			data => {
 				Site.instances.remove(data.ID);
@@ -2449,8 +2421,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async searchModuleAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
-		await this.searchAsync(
+	public searchModuleAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
+		return this.searchAsync(
 			this.getSearchingPath("module", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -2472,8 +2444,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async createModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.createAsync(
+	public createModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
 			this.getPath("module"),
 			body,
 			data => {
@@ -2494,32 +2466,27 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		if (Module.contains(id) && Module.get(id).contentTypes.length > 0) {
-			if (onSuccess) {
-				onSuccess();
-			}
-		}
-		else {
-			await this.readAsync(
-				this.getPath("module", id),
-				data => {
-					Module.update(data);
-					if (AppUtility.isArray(data.ContentTypes, true)) {
-						(data.ContentTypes as Array<any>).forEach(contentType => ContentType.update(contentType));
-					}
-					if (onSuccess !== undefined) {
-						onSuccess(data);
-					}
-				},
-				error => this.processError("Error occurred while getting a module", error, onError),
-				undefined,
-				useXHR
-			);
-		}
+		return Module.contains(id) && Module.get(id).contentTypes.length > 0
+			? AppUtility.execute(onSuccess)
+			: this.readAsync(
+					this.getPath("module", id),
+					data => {
+						Module.update(data);
+						if (AppUtility.isArray(data.ContentTypes, true)) {
+							(data.ContentTypes as Array<any>).forEach(contentType => ContentType.update(contentType));
+						}
+						if (onSuccess !== undefined) {
+							onSuccess(data);
+						}
+					},
+					error => this.processError("Error occurred while getting a module", error, onError),
+					undefined,
+					useXHR
+				);
 	}
 
-	public async updateModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.updateAsync(
+	public updateModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
 			this.getPath("module", body.ID),
 			body,
 			data => {
@@ -2535,8 +2502,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async deleteModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.deleteAsync(
+	public deleteModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
 			this.getPath("module", id),
 			data => {
 				Module.instances.remove(data.ID);
@@ -2607,8 +2574,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async searchContentTypeAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		await this.searchAsync(
+	public searchContentTypeAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return this.searchAsync(
 			this.getSearchingPath("content.type", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -2629,8 +2596,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async createContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.createAsync(
+	public createContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
 			this.getPath("content.type"),
 			body,
 			data => {
@@ -2644,29 +2611,24 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		if (ContentType.contains(id)) {
-			if (onSuccess !== undefined) {
-				onSuccess();
-			}
-		}
-		else {
-			await this.readAsync(
-				this.getPath("content.type", id),
-				data => {
-					ContentType.update(data);
-					if (onSuccess !== undefined) {
-						onSuccess(data);
-					}
-				},
-				error => this.processError("Error occurred while getting a content type", error, onError),
-				undefined,
-				useXHR
-			);
-		}
+		return ContentType.contains(id)
+			? AppUtility.execute(onSuccess)
+			: this.readAsync(
+					this.getPath("content.type", id),
+					data => {
+						ContentType.update(data);
+						if (onSuccess !== undefined) {
+							onSuccess(data);
+						}
+					},
+					error => this.processError("Error occurred while getting a content type", error, onError),
+					undefined,
+					useXHR
+				);
 	}
 
-	public async updateContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.updateAsync(
+	public updateContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
 			this.getPath("content.type", body.ID),
 			body,
 			data => {
@@ -2679,8 +2641,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async deleteContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.deleteAsync(
+	public deleteContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
 			this.getPath("content.type", id),
 			data => {
 				ContentType.instances.remove(data.ID);
@@ -2750,8 +2712,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async searchExpressionAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.searchAsync(
+	public searchExpressionAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.searchAsync(
 			this.getSearchingPath("expression", this.configSvc.relatedQuery),
 			request,
 			data => {
@@ -2766,8 +2728,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async createExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.createAsync(
+	public createExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
 			this.getPath("expression"),
 			body,
 			data => {
@@ -2781,29 +2743,24 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public async getExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		if (Expression.contains(id)) {
-			if (onSuccess !== undefined) {
-				onSuccess();
-			}
-		}
-		else {
-			await this.readAsync(
-				this.getPath("expression", id),
-				data => {
-					Expression.update(data);
-					if (onSuccess !== undefined) {
-						onSuccess(data);
-					}
-				},
-				error => this.processError("Error occurred while getting an expression", error, onError),
-				undefined,
-				useXHR
-			);
-		}
+		return Expression.contains(id)
+			? AppUtility.execute(onSuccess)
+			: this.readAsync(
+					this.getPath("expression", id),
+					data => {
+						Expression.update(data);
+						if (onSuccess !== undefined) {
+							onSuccess(data);
+						}
+					},
+					error => this.processError("Error occurred while getting an expression", error, onError),
+					undefined,
+					useXHR
+				);
 	}
 
-	public async updateExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.updateAsync(
+	public updateExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
 			this.getPath("expression", body.ID),
 			body,
 			data => {
@@ -2816,8 +2773,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async deleteExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.deleteAsync(
+	public deleteExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
 			this.getPath("expression", id),
 			data => {
 				Expression.instances.remove(data.ID);
