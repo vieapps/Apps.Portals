@@ -127,7 +127,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}
 
 		if (this.contents.length < 1) {
-			AppEvents.broadcast(this.portalsCoreSvc.name, { Mode: "RequestFeaturedContents" });
+			AppEvents.broadcast(this.portalsCoreSvc.name, { Type: "RequestFeaturedContents" });
 		}
 	}
 

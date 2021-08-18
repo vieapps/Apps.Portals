@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
-import { Dictionary } from "@app/components/app.collections";
+import { Dictionary, HashSet } from "@app/components/app.collections";
 import { AppAPIs } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
@@ -42,6 +42,7 @@ export class PortalsCmsService extends BaseService {
 	private _oembedProviders: Array<{ name: string; schemes: RegExp[], pattern: { expression: RegExp; position: number; html: string } }>;
 	private _sidebarCategory: Category;
 	private _sidebarContentType: ContentType;
+	private _noContents = new HashSet<string>();
 
 	public get featuredContents() {
 		const organization = this.portalsCoreSvc.activeOrganization;
@@ -104,12 +105,12 @@ export class PortalsCmsService extends BaseService {
 		AppAPIs.registerAsServiceScopeProcessor(this.filesSvc.name, message => this.processAttachmentUpdateMessage(message));
 
 		AppEvents.on(this.name, async info => {
-			if ("UpdateSidebarWithContentTypes" === info.args.Mode) {
+			if ("UpdateSidebarWithContentTypes" === info.args.Type) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				await this.updateSidebarWithContentTypesAsync();
 			}
-			else if ("UpdateSidebarWithCategories" === info.args.Mode) {
+			else if ("UpdateSidebarWithCategories" === info.args.Type) {
 				if (AppUtility.isNotEmpty(info.args.ContentTypeID)) {
 					if (this._sidebarContentType === undefined || this._sidebarContentType.ID !== info.args.ContentTypeID) {
 						this._sidebarContentType = ContentType.get(info.args.ContentTypeID);
@@ -127,8 +128,14 @@ export class PortalsCmsService extends BaseService {
 				this._sidebarContentType = undefined;
 				await this.updateSidebarAsync();
 			}
-			else if ("RequestFeaturedContents" === info.args.Mode) {
-				await this.prepareFeaturedContentsAsync(false);
+			else if ("RequestFeaturedContents" === info.args.Type) {
+				const organization = this.portalsCoreSvc.activeOrganization;
+				if (organization !== undefined && !this._noContents.contains(organization.ID)) {
+					if (organization.modules.toList().SelectMany(module => module.contentTypes.toList()).Count() > 0) {
+						this._noContents.add(organization.ID);
+						await this.prepareFeaturedContentsAsync(false);
+					}
+				}
 			}
 		});
 
@@ -578,7 +585,10 @@ export class PortalsCmsService extends BaseService {
 			]},
 			isCmsItem ? { LastModified: "Descending" } : { StartDate: "Descending", PublishedTime: "Descending", LastModified: "Descending" }
 		);
-		const onSuccess = () => {
+		const onSuccess = (data?: any) => {
+			if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
+				this._noContents.remove(data.Objects.first().SystemID);
+			}
 			AppEvents.broadcast(this.name, { Type: "FeaturedContentsPrepared" });
 			if (index < contentTypes.length - 1) {
 				AppUtility.invoke(async () => await this.getFeaturedContentsAsync(contentTypes, index + 1), 13);
@@ -939,8 +949,9 @@ export class PortalsCmsService extends BaseService {
 			this.getSearchingPath("cms.content", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
 					(data.Objects as Array<any>).forEach(obj => Content.update(obj));
+					this._noContents.remove(data.Objects.first().SystemID);
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -1035,6 +1046,7 @@ export class PortalsCmsService extends BaseService {
 			case "Create":
 			case "Update":
 				Content.update(message.Data);
+				this._noContents.remove(message.Data.SystemID);
 				break;
 
 			case "Delete":
@@ -1104,8 +1116,9 @@ export class PortalsCmsService extends BaseService {
 			this.getSearchingPath("cms.item", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
 					(data.Objects as Array<any>).forEach(obj => Item.update(obj));
+					this._noContents.remove(data.Objects.first().SystemID);
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -1200,6 +1213,7 @@ export class PortalsCmsService extends BaseService {
 			case "Create":
 			case "Update":
 				Item.update(message.Data);
+				this._noContents.remove(message.Data.SystemID);
 				break;
 
 			case "Delete":
