@@ -105,43 +105,50 @@ export class AppComponent implements OnInit {
 		});
 
 		this.platform.ready().then(async () => {
-			this.configSvc.prepare();
-			await Promise.all([
+			await this.configSvc.loadSessionAsync(async () => await Promise.all([
 				this.configSvc.loadURIsAsync(),
 				this.configSvc.loadOptionsAsync()
-			]);
+			]));
+			this.configSvc.prepare();
 			await this.configSvc.prepareLanguagesAsync();
 			this.registerEventProcessors();
 
+			const appConfig = this.configSvc.appConfig;
+			if (appConfig.isWebApp) {
+				const host = AppUtility.parseURI().Host;
+				appConfig.services.all.map((svc, index) => ({ hosts: svc.availableHosts || [], index: index })).forEach(info => {
+					if (info.hosts.length > 0 && info.hosts.indexOf(host) < 0) {
+						appConfig.services.all.removeAt(info.index);
+					}
+				});
+				if (appConfig.services.all.findIndex(svc => svc.name === appConfig.services.active) < 0) {
+					const service = appConfig.services.all.first();
+					appConfig.services.active = service.name;
+					appConfig.app.name = service.appName || appConfig.app.name;
+					appConfig.app.description = service.appDescription || appConfig.app.description;
+				}
+			}
+
+			this.sidebar.Header.Title = appConfig.app.name;
+			await this.updateSidebarAsync({}, true, () => AppEvents.broadcast("App", { Type: "PlatformIsReady" }));
+
 			if (this.platform.is("cordova")) {
 				this.splashScreen.hide();
-				if (this.configSvc.isNativeApp) {
+				if (appConfig.isNativeApp) {
 					this.statusBar.styleDefault();
 					this.statusBar.overlaysWebView(false);
 				}
 			}
 
-			if (this.configSvc.isWebApp) {
-				const host = AppUtility.parseURI().Host;
-				this.configSvc.appConfig.services.all.map((svc, index) => ({ hosts: svc.availableHosts || [], index: index })).forEach(info => {
-					if (info.hosts.length > 0 && info.hosts.indexOf(host) < 0) {
-						this.configSvc.appConfig.services.all.removeAt(info.index);
-					}
-				});
-				if (this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.configSvc.appConfig.services.active) < 0) {
-					const service = this.configSvc.appConfig.services.all.first();
-					this.configSvc.appConfig.services.active = service.name;
-					this.configSvc.appConfig.app.name = service.appName || this.configSvc.appConfig.app.name;
-					this.configSvc.appConfig.app.description = service.appDescription || this.configSvc.appConfig.app.description;
-				}
-			}
-
-			this.sidebar.Header.Title = this.configSvc.appConfig.app.name;
-			await this.updateSidebarAsync({}, true, () => AppEvents.broadcast("App", { Type: "PlatformIsReady" }));
-
 			const isActivate = this.configSvc.isWebApp && AppUtility.isEquals("activate", this.configSvc.queryParams["prego"]);
 			await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "loading"}`));
-			await (isActivate ? this.activateAsync() : this.initializeAsync());
+
+			if (isActivate) {
+				await this.activateAsync();
+			}
+			else {
+				await this.initializeAsync();
+			}
 		});
 	}
 
@@ -268,7 +275,7 @@ export class AppComponent implements OnInit {
 		}
 
 		const parent = AppUtility.isObject(info.Parent, true)
-			?	{
+			? {
 					ID: info.Parent.ID,
 					Title: info.Parent.Title,
 					Link: info.Parent.Link,
@@ -277,9 +284,7 @@ export class AppComponent implements OnInit {
 					Detail: !!info.Parent.Detail,
 					Thumbnail: info.Parent.Thumbnail,
 					Icon: info.Parent.Icon,
-					OnClick: typeof info.Parent.OnClick === "function"
-						? info.Parent.OnClick
-						: _ => {}
+					OnClick: typeof info.Parent.OnClick === "function" ? info.Parent.OnClick : _ => {}
 				} as AppSidebarMenuItem
 			: undefined;
 		if (parent !== undefined && AppUtility.isNotEmpty(parent.Title) && parent.Title.startsWith("{{") && parent.Title.endsWith("}}")) {
@@ -413,7 +418,7 @@ export class AppComponent implements OnInit {
 		AppEvents.on("CloseSidebar", async _ => await this.inactiveSidebarAsync());
 
 		AppEvents.on("UpdateSidebar", async info => await this.updateSidebarAsync(info.args));
-		AppEvents.on("AddSidebarItem", async info => this.updateSidebarItemAsync(info.args.MenuIndex !== undefined ? info.args.MenuIndex : -1, info.args.ItemIndex !== undefined ? info.args.ItemIndex : -1, info.args.ItemInfo));
+		AppEvents.on("AddSidebarItem", async info => await this.updateSidebarItemAsync(info.args.MenuIndex !== undefined ? info.args.MenuIndex : -1, info.args.ItemIndex !== undefined ? info.args.ItemIndex : -1, info.args.ItemInfo));
 		AppEvents.on("UpdateSidebarItem", async info => await this.updateSidebarItemAsync(info.args.MenuIndex !== undefined ? info.args.MenuIndex : -1, info.args.ItemIndex !== undefined ? info.args.ItemIndex : -1, info.args.ItemInfo));
 
 		AppEvents.on("UpdateSidebarTitle", info => this.updateSidebarHeader(info.args, false));
@@ -505,10 +510,7 @@ export class AppComponent implements OnInit {
 				? await this.configSvc.getResourceAsync(`users.activate.messages.success.${("account" === data.Mode ? "account" : "password")}`)
 				: await this.configSvc.getResourceAsync("users.activate.messages.error.general", { error: (data.Error ? ` (${data.Error.Message})` : "") }),
 			_ => {
-				this.configSvc.appConfig.URLs.stack[this.configSvc.appConfig.URLs.stack.length - 1] = {
-					url: this.configSvc.appConfig.URLs.home,
-					params: {}
-				};
+				this.configSvc.appConfig.URLs.stack.update({ url: this.configSvc.appConfig.URLs.home, params: {} }, this.configSvc.appConfig.URLs.stack.length - 1);
 				AppEvents.broadcast("Navigate", { Direction: "Home" });
 			}
 		);
@@ -555,13 +557,13 @@ export class AppComponent implements OnInit {
 
 	private finalize(onNext?: () => void) {
 		const appConfig = this.configSvc.appConfig;
-		console.log("<AppComponent>: The app was initialized", this.configSvc.isNativeApp ? AppUtility.stringify(appConfig.app) : appConfig.app);
+		console.log("<AppComponent>: The app was initialized", appConfig.isNativeApp ? AppUtility.stringify(appConfig.app) : appConfig.app);
 		if (this.configSvc.isWebApp) {
 			PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
 		}
+		this.normalizeSidebarItems();
 		AppAPIs.openWebSocket(async () => {
-			AppEvents.broadcast("App", { Type: "Initialized" });
-			AppEvents.sendToElectron("App", { Type: "Initialized", Data: {
+			const data = {
 				URIs: appConfig.URIs,
 				app: appConfig.app,
 				session: appConfig.session,
@@ -569,46 +571,36 @@ export class AppComponent implements OnInit {
 				accountRegistrations: appConfig.accountRegistrations,
 				options: appConfig.options,
 				languages: appConfig.languages
-			}});
-			await this.normalizeSidebarItems();
+			};
+			AppEvents.broadcast("App", { Type: "Initialized", Data: data });
+			AppEvents.sendToElectron("App", { Type: "Initialized", Data: data });
 			await this.appFormsSvc.hideLoadingAsync(async () => {
-				if (this.configSvc.appConfig.services.all.map(svc => svc.name).indexOf(this.portalsCoreSvc.name) > -1) {
+				if (appConfig.services.all.findIndex(svc => svc.name === this.portalsCoreSvc.name) > -1) {
 					await this.portalsCoreSvc.initializeAsync();
 					await this.portalsCmsSvc.initializeAsync();
 				}
-				if (this.configSvc.appConfig.services.all.map(svc => svc.name).indexOf(this.booksSvc.name) > -1) {
+				if (appConfig.services.all.findIndex(svc => svc.name === this.booksSvc.name) > -1) {
 					await this.booksSvc.initializeAsync();
 				}
-				AppEvents.broadcast("App", { Type: "FullyInitialized" });
-				AppEvents.sendToElectron("App", { Type: "FullyInitialized", Data: {
-					URIs: appConfig.URIs,
-					app: appConfig.app,
-					session: appConfig.session,
-					services: appConfig.services,
-					accountRegistrations: appConfig.accountRegistrations,
-					options: appConfig.options,
-					languages: appConfig.languages
-				}});
+				AppEvents.broadcast("App", { Type: "FullyInitialized", Data: data });
+				AppEvents.sendToElectron("App", { Type: "FullyInitialized", Data: data});
 				if (onNext !== undefined) {
 					onNext();
 				}
 				else {
-					let redirect = this.configSvc.queryParams["redirect"] as string || this.configSvc.appConfig.URLs.redirectToWhenReady;
+					let redirect = this.configSvc.queryParams["redirect"] as string || appConfig.URLs.redirectToWhenReady;
 					if (AppUtility.isNotEmpty(redirect)) {
-						this.configSvc.appConfig.URLs.redirectToWhenReady = undefined;
-						this.configSvc.appConfig.URLs.stack[this.configSvc.appConfig.URLs.stack.length - 1] = {
-							url: this.configSvc.appConfig.URLs.home,
-							params: {}
-						};
+						appConfig.URLs.redirectToWhenReady = undefined;
+						appConfig.URLs.stack.update({ url: appConfig.URLs.home, params: {} }, appConfig.URLs.stack.length - 1);
 						try {
 							redirect = AppCrypto.base64urlDecode(redirect);
-							if (this.configSvc.isDebug) {
+							if (appConfig.isDebug) {
 								console.warn(`<AppComponent>: Redirect to the requested URI => ${redirect}`);
 							}
 							await this.configSvc.navigateForwardAsync(redirect);
 						}
 						catch (error) {
-							console.error(`<AppComponent>: The requested URI for redirecting is not well-form => ${redirect}`, this.configSvc.isNativeApp ? JSON.stringify(error) : error);
+							console.error(`<AppComponent>: The requested URI for redirecting is not well-form => ${redirect}`, appConfig.isNativeApp ? AppUtility.stringify(error) : error);
 						}
 					}
 				}

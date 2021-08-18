@@ -114,47 +114,36 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the current working URL */
 	public getCurrentURL() {
-		return this.appConfig.URLs.stack.length > 0 ? this.appConfig.URLs.stack[this.appConfig.URLs.stack.length - 1] : undefined;
+		return this.appConfig.URLs.stack.last();
 	}
 
 	/** Gets the previous URL */
 	public getPreviousURL() {
-		return this.appConfig.URLs.stack.length > 1 ? this.appConfig.URLs.stack[this.appConfig.URLs.stack.length - 2] : undefined;
+		return this.appConfig.URLs.stack.previousLast();
 	}
 
 	/** Pushs/Adds an URL into stack of routes */
 	public pushURL(url: string, params: { [key: string]: any }) {
 		url = url.indexOf("?") > 0 ? url.substr(0, url.indexOf("?")) : url;
-		this.appConfig.URLs.stack = url !== this.appConfig.URLs.home ? this.appConfig.URLs.stack : [];
-		const previous = this.getPreviousURL();
-		const current = this.getCurrentURL();
-		if (previous !== undefined && previous.url.startsWith(url)) {
+		if (url === this.appConfig.URLs.home) {
+			this.appConfig.URLs.stack.removeAll();
+		}
+		const previousURL = this.getPreviousURL();
+		const currentURL = this.getCurrentURL();
+		if (previousURL !== undefined && previousURL.url.startsWith(url)) {
 			this.appConfig.URLs.stack.pop();
 		}
-		else if (current === undefined || !current.url.startsWith(url)) {
-			this.appConfig.URLs.stack.push({
-				url: url,
-				params: params
-			});
+		else if (currentURL === undefined || !currentURL.url.startsWith(url)) {
+			this.appConfig.URLs.stack.push({ url: url, params: params });
 		}
 		if (this.appConfig.URLs.stack.length > 30) {
-			this.appConfig.URLs.stack.splice(0, this.appConfig.URLs.stack.length - 30);
+			this.appConfig.URLs.stack.clear(0, this.appConfig.URLs.stack.length - 30);
 		}
 	}
 
 	/** Removes the current working URL from the stack, also pop the current view */
 	public popURL() {
 		this.navController.pop().then(() => this.appConfig.URLs.stack.pop());
-	}
-
-	private getURL(info: { url: string, params: { [key: string]: any } }, alternativeUrl?: string) {
-		if (info === undefined) {
-			return alternativeUrl || this.appConfig.URLs.home;
-		}
-		else {
-			const query = AppUtility.toQuery(info.params);
-			return info.url + (query !== "" ? (info.url.indexOf("?") > 0 ? "&" : "?") + query : "");
-		}
 	}
 
 	/** Gets the URL for opening the app on web-browser */
@@ -164,12 +153,12 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the current working URL */
 	public get currentURL() {
-		return this.getURL(this.getCurrentURL());
+		return AppUtility.getURI(this.getCurrentURL());
 	}
 
 	/** Gets the previous URL */
 	public get previousURL() {
-		return this.getURL(this.getPreviousURL());
+		return AppUtility.getURI(this.getPreviousURL());
 	}
 
 	/** Gets the URL for activating new account/password */
@@ -194,8 +183,8 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the query params of the current page/view */
 	public get queryParams() {
-		const current = this.getCurrentURL();
-		return current !== undefined ? current.params : {} as { [key: string]: any };
+		const info = this.getCurrentURL() || { params : {} as { [key: string]: any } };
+		return info.params;
 	}
 
 	/** Gets the request params of the current page/view (means decoded JSON of 'x-request' query parameter) */
@@ -233,8 +222,7 @@ export class ConfigurationService extends BaseService {
 	public prepare() {
 		const isCordova = this.platform.is("cordova");
 		const isNativeApp = isCordova && (this.device.platform === "iOS" || this.device.platform === "Android");
-		this.appConfig.app.mode = isNativeApp ? "NTA" : "PWA";
-
+		const isElectronApp = this.electronSvc !== undefined && this.electronSvc.isElectronApp;
 		const userAgent = navigator ? navigator.userAgent : "";
 		const platform = isNativeApp
 			? this.device.platform
@@ -250,6 +238,7 @@ export class ConfigurationService extends BaseService {
 								: "Mobile"
 				: "Desktop";
 
+		this.appConfig.app.mode = isNativeApp ? "NTA" : "PWA";
 		this.appConfig.app.os = platform !== "Desktop"
 			? platform
 			: /Windows/i.test(userAgent)
@@ -278,28 +267,18 @@ export class ConfigurationService extends BaseService {
 		if (isNativeApp) {
 			this.appConfig.URLs.base = "";
 			this.appConfig.app.platform = this.device.platform;
-			this.appConfig.session.device = this.device.uuid + "@" + this.appConfig.app.id;
+			this.appConfig.session.device = `${this.device.uuid}@${this.appConfig.app.id}-${this.device.platform.toLocaleLowerCase()}`;
 		}
 
 		else {
 			this.appConfig.URLs.base = this.platformLocation.getBaseHrefFromDOM();
 			this.appConfig.app.platform = `${platform} ${this.appConfig.app.mode}`;
-		}
-
-		if (isCordova) {
-			if (isNativeApp) {
-				this.appVersion.getVersionCode()
-					.then(version => this.appConfig.app.version = isNativeApp && !this.isRunningOnIOS ? (version + "").replace(/0/g, ".") : version + "")
-					.catch(error => this.showError("Error occurred while preparing the app version", error));
-				PlatformUtility.setInAppBrowser(this.inappBrowser);
-				PlatformUtility.setClipboard(this.clipboard);
-				if (!this.isRunningOnIOS) {
-					PlatformUtility.setKeyboard(this.keyboard);
-				}
+			if (AppUtility.isEmpty(this.appConfig.session.device)) {
+				this.appConfig.session.device = `${AppCrypto.md5(`${userAgent}${Math.random()}`)}@${this.appConfig.app.id}-${isElectronApp ? "electron" : "pwa"}`;
 			}
 		}
 
-		if (this.electronSvc !== undefined && this.electronSvc.isElectronApp) {
+		if (isElectronApp) {
 			AppEvents.initializeElectronService(this.electronSvc);
 			PlatformUtility.setElectronService(this.electronSvc);
 			this.appConfig.app.shell = "Electron";
@@ -320,6 +299,16 @@ export class ConfigurationService extends BaseService {
 		}
 		else {
 			this.appConfig.app.shell = isNativeApp ? "Cordova" : "Browser";
+			if (isCordova && isNativeApp) {
+				this.appVersion.getVersionCode()
+					.then(version => this.appConfig.app.version = isNativeApp && !this.isRunningOnIOS ? (version + "").replace(/0/g, ".") : version + "")
+					.catch(error => this.showError("Error occurred while preparing the app version", error));
+				PlatformUtility.setInAppBrowser(this.inappBrowser);
+				PlatformUtility.setClipboard(this.clipboard);
+				if (!this.isRunningOnIOS) {
+					PlatformUtility.setKeyboard(this.keyboard);
+				}
+			}
 		}
 
 		if (isCordova) {

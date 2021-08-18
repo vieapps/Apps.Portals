@@ -33,7 +33,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "4.5.2",
+		version: "4.5.3",
 		frameworks: "ionic 5.6 - angular 11.2 - cordova 10.0",
 		mode: "",
 		platform: "",
@@ -47,7 +47,7 @@ export class AppConfig {
 	/** Session information */
 	public static session = {
 		id: undefined as string,
-		token: undefined as any,
+		token: undefined as { [key: string]: any },
 		account: undefined as Account,
 		keys: {
 			aes: {
@@ -76,8 +76,8 @@ export class AppConfig {
 		all: [
 			{
 				name: "Portals",
-				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Item", "Link", "Contact"],
-			availableHosts: []
+				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Item", "Link", "Form"],
+				availableHosts: [/*"cms.vieapps.net"*/]
 			},
 			{
 				name: "Books",
@@ -98,7 +98,7 @@ export class AppConfig {
 		setServicePrivilegs: false,
 		setServicePrivilegsRole: "ServiceAdministrator",
 		setObjectPrivilegs: true,
-		phoneIsAllowed: true
+		phoneIsAllowed: false
 	};
 
 	/** Geographic meta */
@@ -171,7 +171,7 @@ export class AppConfig {
 
 	/** Tracking information */
 	public static tracking = {
-		google: [] as Array<string>,
+		google: ["UA-3060572-8"] as Array<string>,
 		facebook: [] as Array<string>,
 		domains: [] as Array<string>,
 	};
@@ -205,7 +205,7 @@ export class AppConfig {
 
 	/** Gets the state that determines is native app */
 	public static get isNativeApp() {
-		return AppUtility.isEquals("NTA", this.app.mode);
+		return this.app.mode === "NTA";
 	}
 
 	/** Gets the state that determines is web progressive app */

@@ -3,7 +3,7 @@
     <name>NGX Apps</name>
     <description>Manage information and related services of CMS Portals</description>
     <author email="vieapps.net@gmail.com" href="https://vieapps.net/">VIEApps.net</author>
-    <content src="index.html" />
+    <content original-src="index.html" src="http://localhost:8100" />
     <access origin="*" />
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
@@ -109,4 +109,5 @@
     <plugin name="cordova-plugin-splashscreen" spec="^6.0.0" />
     <plugin name="cordova-plugin-statusbar" spec="^2.4.3" />
     <plugin name="cordova-plugin-whitelist" spec="^1.3.4" />
+    <allow-navigation href="http://localhost:8100" sessionid="c0234764" />
 </widget>
