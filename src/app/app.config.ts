@@ -77,7 +77,7 @@ export class AppConfig {
 			{
 				name: "Portals",
 				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Item", "Link", "Form"],
-				availableHosts: []
+				availableHosts: [/*"cms.vieapps.net"*/]
 			},
 			{
 				name: "Books",
@@ -101,7 +101,7 @@ export class AppConfig {
 		setServicePrivilegs: false,
 		setServicePrivilegsRole: "ServiceAdministrator",
 		setObjectPrivilegs: true,
-		phoneIsAllowed: true
+		phoneIsAllowed: false
 	};
 
 	/** Geographic meta */
@@ -174,7 +174,7 @@ export class AppConfig {
 
 	/** Tracking information */
 	public static tracking = {
-		google: [] as Array<string>,
+		google: ["UA-3060572-8"] as Array<string>,
 		facebook: [] as Array<string>,
 		domains: [] as Array<string>,
 	};
