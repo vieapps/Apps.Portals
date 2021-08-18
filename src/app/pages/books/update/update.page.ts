@@ -206,7 +206,7 @@ export class BooksUpdatePage implements OnInit {
 					bookInfo,
 					async () => {
 						await Promise.all([
-							this.trackAsync(this.title + " | Success"),
+							this.trackAsync(this.title),
 							this.appFormsSvc.hideLoadingAsync(),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.update.messages.success"))
 						]);
@@ -216,7 +216,7 @@ export class BooksUpdatePage implements OnInit {
 						await this.configSvc.navigateBackAsync();
 					},
 					async error => await Promise.all([
-						this.trackAsync(this.title + " | Error"),
+						this.trackAsync(this.title),
 						this.appFormsSvc.showErrorAsync(error)
 					])
 				);

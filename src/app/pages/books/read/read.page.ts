@@ -240,7 +240,7 @@ export class BooksReadPage implements OnInit, OnDestroy {
 					await this.appFormsSvc.hideLoadingAsync(async () => await this.booksSvc.getBookChapterAsync(this.book.ID, direction === "previous" ? this.chapter - 1 : this.chapter + 1));
 				},
 				async error => await Promise.all([
-					this.trackAsync(this.title + " | Error"),
+					this.trackAsync(this.title),
 					this.appFormsSvc.showErrorAsync(error)
 				])
 			);

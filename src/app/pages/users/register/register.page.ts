@@ -185,7 +185,7 @@ export class UsersRegisterPage implements OnInit {
 		this.register.button.label = await this.configSvc.getResourceAsync("users.register.button");
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.register.title");
 		this.register.config = config;
-		await this.trackAsync(this.title + " | Request");
+		await this.trackAsync(this.title);
 	}
 
 	onFormInitialized() {
@@ -200,7 +200,7 @@ export class UsersRegisterPage implements OnInit {
 				this.register.form.value,
 				this.register.form.value.Captcha,
 				async () => await Promise.all([
-					this.trackAsync(this.title + " | Success"),
+					this.trackAsync(this.title),
 					this.appFormsSvc.showAlertAsync(
 						await this.configSvc.getResourceAsync("users.register.alert.header"),
 						undefined,
@@ -209,7 +209,7 @@ export class UsersRegisterPage implements OnInit {
 					)
 				]),
 				async error => await Promise.all([
-					this.trackAsync(this.title + " | Error"),
+					this.trackAsync(this.title),
 					this.refreshCaptchaAsync(),
 					this.appFormsSvc.showErrorAsync(error, undefined, () => {
 						if (AppUtility.isGotCaptchaException(error)) {

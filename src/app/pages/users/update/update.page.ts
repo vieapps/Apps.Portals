@@ -274,7 +274,7 @@ export class UsersUpdatePage implements OnInit {
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.profile.update.title");
 		await Promise.all([
 			this.prepareButtonsAsync(),
-			this.trackAsync(this.title + " | Request", "Open")
+			this.trackAsync(this.title, "Open")
 		]);
 		this.update.config = config;
 	}
@@ -307,12 +307,12 @@ export class UsersUpdatePage implements OnInit {
 						AppEvents.broadcast("Profile", { Type: "Updated" });
 					}
 					await Promise.all([
-						this.trackAsync(this.title + " | Success"),
+						this.trackAsync(this.title),
 						this.showProfileAsync(async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.update.messages.success")))
 					]);
 				},
 				async error => await Promise.all([
-					this.trackAsync(this.title + " | Error"),
+					this.trackAsync(this.title),
 					this.appFormsSvc.showErrorAsync(error)
 				])
 			);
@@ -357,7 +357,7 @@ export class UsersUpdatePage implements OnInit {
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.profile.password.title");
 		await Promise.all([
 			this.prepareButtonsAsync(),
-			this.trackAsync(this.title + " | Request", "Open", "Users:Password")
+			this.trackAsync(this.title, "Open", "Users:Password")
 		]);
 	}
 
@@ -368,12 +368,12 @@ export class UsersUpdatePage implements OnInit {
 				this.password.form.value.OldPassword,
 				this.password.form.value.Password,
 				async () => await Promise.all([
-					this.trackAsync(this.title + " | Success", "Update", "Users:Password"),
+					this.trackAsync(this.title, "Update", "Users:Password"),
 					this.showProfileAsync(async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.password.message")))
 				]),
 				async error => await Promise.all([
-					this.trackAsync(this.title + " | Error", "Update", "Users:Password"),
-					this.appFormsSvc.showErrorAsync(error, undefined, () => this.password.controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "OldPassword")).focus())
+					this.trackAsync(this.title, "Update", "Users:Password"),
+					this.appFormsSvc.showErrorAsync(error, undefined, () => this.password.controls.find(ctrl => ctrl.Name === "OldPassword").focus())
 				])
 			);
 		}
@@ -417,7 +417,7 @@ export class UsersUpdatePage implements OnInit {
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.profile.email.title");
 		await Promise.all([
 			this.prepareButtonsAsync(),
-			this.trackAsync(this.title + " | Request", "Open", "Users:Email")
+			this.trackAsync(this.title, "Open", "Users:Email")
 		]);
 	}
 
@@ -428,12 +428,12 @@ export class UsersUpdatePage implements OnInit {
 				this.email.form.value.OldPassword,
 				this.email.form.value.Email,
 				async () => await Promise.all([
-					this.trackAsync(this.title + " | Success", "Update", "Users:Email"),
+					this.trackAsync(this.title, "Update", "Users:Email"),
 					this.showProfileAsync(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.email.message")))
 				]),
 				async error => await Promise.all([
-					this.trackAsync(this.title + " | Error", "Update", "Users:Email"),
-					this.appFormsSvc.showErrorAsync(error, undefined, () => this.password.controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "OldPassword")).focus())
+					this.trackAsync(this.title, "Update", "Users:Email"),
+					this.appFormsSvc.showErrorAsync(error, undefined, () => this.email.controls.find(ctrl => ctrl.Name === "OldPassword").focus())
 				])
 			);
 		}

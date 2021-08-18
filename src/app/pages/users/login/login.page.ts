@@ -128,7 +128,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 		this.reset.button.label = await this.configSvc.getResourceAsync("users.login.login.buttons.forgot");
 		this.mode = "login";
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.login.login.title");
-		await this.trackAsync(this.title + " | Request");
+		await this.trackAsync(this.title);
 	}
 
 	onLoginFormInitialized() {
@@ -150,11 +150,11 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 				this.login.form.value.Account,
 				this.login.form.value.Password,
 				async data => await Promise.all([
-					this.trackAsync(this.title + " | Success"),
+					this.trackAsync(this.title),
 					this.appFormsSvc.hideLoadingAsync(async () => await (data.Require2FA ? this.openLoginOTPAsync(data) : this.closeAsync()))
 				]),
 				async error => await Promise.all([
-					this.trackAsync(this.title + " | Error"),
+					this.trackAsync(this.title),
 					this.appFormsSvc.showErrorAsync(error, undefined, () => this.login.controls.find(ctrl => ctrl.Name === "Account").focus())
 				])
 			);
@@ -338,7 +338,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 		};
 		this.mode = "reset";
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.login.reset.title");
-		await this.trackAsync(this.title + " | Request", `${this.configSvc.appConfig.URLs.users.root}/reset`, "Open", "Users:Password");
+		await this.trackAsync(this.title, `${this.configSvc.appConfig.URLs.users.root}/reset`, "Open", "Users:Password");
 	}
 
 	async resetPasswordAsync() {
@@ -364,7 +364,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 					account,
 					otp,
 					async () => await Promise.all([
-						this.trackAsync(this.title + " | Success", `${this.configSvc.appConfig.URLs.users.root}/reset`, "Reset", "Users:Password"),
+						this.trackAsync(this.title, `${this.configSvc.appConfig.URLs.users.root}/reset`, "Reset", "Users:Password"),
 						this.appFormsSvc.showAlertAsync(
 							await this.configSvc.getResourceAsync("users.login.reset.title"),
 							undefined,
@@ -398,7 +398,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 					account,
 					captcha,
 					async () => await Promise.all([
-						this.trackAsync(this.title + " | Success", `${this.configSvc.appConfig.URLs.users.root}/reset`, "Reset", "Users:Password"),
+						this.trackAsync(this.title, `${this.configSvc.appConfig.URLs.users.root}/reset`, "Reset", "Users:Password"),
 						this.appFormsSvc.showAlertAsync(
 							await this.configSvc.getResourceAsync("users.login.reset.title"),
 							undefined,
@@ -408,7 +408,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 					]),
 					async error => await Promise.all([
 						this.refreshCaptchaAsync(),
-						this.trackAsync(this.title + " | Error", `${this.configSvc.appConfig.URLs.users.root}/reset`, "Reset", "Users:Password"),
+						this.trackAsync(this.title, `${this.configSvc.appConfig.URLs.users.root}/reset`, "Reset", "Users:Password"),
 						this.appFormsSvc.showErrorAsync(error, undefined, () => control.controlRef.deleteValue())
 					])
 				);
