@@ -1051,7 +1051,9 @@ export class PortalsCmsService extends BaseService {
 			if (AppUtility.isArray(message.Data.OtherCategories)) {
 				(message.Data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: categoryID }));
 			}
-			this.prepareFeaturedContentsAsync();
+			if (this.configSvc.isAuthenticated) {
+				this.prepareFeaturedContentsAsync();
+			}
 		}
 	}
 
@@ -1211,7 +1213,9 @@ export class PortalsCmsService extends BaseService {
 
 		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
 			AppEvents.broadcast(this.name, { Object: "CMS.Item", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
-			this.prepareFeaturedContentsAsync();
+			if (this.configSvc.isAuthenticated) {
+				this.prepareFeaturedContentsAsync();
+			}
 		}
 	}
 

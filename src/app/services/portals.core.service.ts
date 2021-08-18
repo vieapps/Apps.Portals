@@ -287,13 +287,13 @@ export class PortalsCoreService extends BaseService {
 		return organizations;
 	}
 
-	public async getActiveOrganizationsAsync() {
+	public async getActiveOrganizationsAsync(useXHR: boolean = true) {
 		const organizations = new Array<Organization>();
 		const organizationIDs = this.activeOrganizations;
 		await Promise.all((organizationIDs || []).filter(id => AppUtility.isNotEmpty(id)).map(async id => {
 			let organization = Organization.get(id);
 			if (organization === undefined) {
-				await this.getOrganizationAsync(id, _ => organization = Organization.get(id), undefined, true);
+				await this.getOrganizationAsync(id, _ => organization = Organization.get(id), undefined, useXHR);
 			}
 			if (organization !== undefined) {
 				organizations.push(organization);
@@ -1392,7 +1392,7 @@ export class PortalsCoreService extends BaseService {
 				Title: "{{portals.sidebar.cms-categories}}",
 				Link: this.getRouterLink(undefined, "list", "all", "category"),
 				Direction: "root",
-				Icon: { Name: "color-filter", Color: "medium", Slot: "start" }
+				Icon: { Name: "logo-firebase", Color: "medium", Slot: "start" }
 			});
 		}
 

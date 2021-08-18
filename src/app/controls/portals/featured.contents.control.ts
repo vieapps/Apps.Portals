@@ -99,6 +99,10 @@ export class FeaturedContentsControl implements OnInit, OnDestroy, OnChanges {
 	}
 
 	private async prepareContentsAsync(force: boolean = false) {
+		if (!this.configSvc.isAuthenticated) {
+			return;
+		}
+
 		if (this.contents.length < 1 || force) {
 			const organization = this.portalsCoreSvc.activeOrganization;
 			const organizationID = organization !== undefined ? organization.ID : undefined;
@@ -123,6 +127,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy, OnChanges {
 				OriginalObject: content
 			} as FeaturedContent)).filter(filterBy).orderBy(orderBy).take(this.amount);
 		}
+
 		if (this.contents.length < 1) {
 			AppEvents.broadcast(this.portalsCoreSvc.name, { Mode: "RequestFeaturedContents" });
 		}
