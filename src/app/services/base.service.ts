@@ -156,15 +156,13 @@ export class Base {
 		const pagination = processPagination ? AppPagination.get(request, paginationPrefix) : undefined;
 		const pageNumber = processPagination && request.Pagination !== undefined ? request.Pagination.PageNumber : pagination !== undefined ? pagination.PageNumber : 0;
 		if (pagination !== undefined && (pageNumber < pagination.PageNumber || pagination.TotalPages <= pagination.PageNumber)) {
-			if (onSuccess !== undefined) {
-				onSuccess();
-			}
+			return AppUtility.execute(onSuccess);
 		}
 		else {
 			if (request.Pagination !== undefined && request.Pagination.PageNumber !== undefined) {
 				request.Pagination.PageNumber++;
 			}
-			await this.sendRequestAsync(
+			return this.sendRequestAsync(
 				{
 					Path: AppUtility.format(path, { request: AppCrypto.jsonEncode(request) }),
 					Verb: "GET",
