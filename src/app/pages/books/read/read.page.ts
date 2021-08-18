@@ -293,7 +293,7 @@ export class BooksReadPage implements OnInit, OnDestroy {
 			}
 		}
 		await Promise.all([
-			this.trackAsync(this.title + ` | Read ${this.book.TotalChapters > 1 && this.chapter > 0 ? ` - Chapter: ${this.chapter}` : ""}`),
+			this.trackAsync(this.title),
 			this.appFormsSvc.hideLoadingAsync(onNext)
 		]);
 	}
@@ -315,7 +315,7 @@ export class BooksReadPage implements OnInit, OnDestroy {
 	}
 
 	async openRecrawlAsync() {
-		await this.trackAsync(this.title + " | ReCrawl | Open", "ReCrawl");
+		await this.trackAsync(this.title, "ReCrawl");
 		await this.appFormsSvc.showAlertAsync(
 			await this.configSvc.getResourceAsync("books.crawl.header"),
 			undefined,
@@ -323,7 +323,7 @@ export class BooksReadPage implements OnInit, OnDestroy {
 			async mode => {
 				await this.booksSvc.sendRequestToReCrawlAsync(this.book.ID, this.book.SourceUrl, mode);
 				await Promise.all([
-					this.trackAsync(this.title + " | ReCrawl | Sent", "ReCrawl"),
+					this.trackAsync(this.title, "ReCrawl"),
 					this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.crawl.message"), 2000)
 				]);
 			},
@@ -351,7 +351,7 @@ export class BooksReadPage implements OnInit, OnDestroy {
 	}
 
 	async deleteAsync() {
-		await this.trackAsync(this.title + " | Delete | Open", "Delete");
+		await this.trackAsync(this.title, "Delete");
 		await this.appFormsSvc.showAlertAsync(
 			await this.configSvc.getResourceAsync("common.buttons.delete"),
 			undefined,
@@ -362,12 +362,12 @@ export class BooksReadPage implements OnInit, OnDestroy {
 					await this.booksSvc.deleteBookmarkAsync(this.book.ID);
 					await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.read.delete.message", { title: this.book.Title }));
 					await Promise.all([
-						this.trackAsync(this.title + " | Delete | Success", "Delete"),
+						this.trackAsync(this.title, "Delete"),
 						this.configSvc.navigateBackAsync()
 					]);
 				},
 				async error => await Promise.all([
-					this.trackAsync(this.title + " | Delete | Error", "Delete"),
+					this.trackAsync(this.title, "Delete"),
 					this.appFormsSvc.showErrorAsync(error)
 				])
 			),

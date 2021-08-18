@@ -149,7 +149,7 @@ export class BooksUpdatePage implements OnInit {
 		}
 
 		this.update.config = formConfig;
-		await this.trackAsync(this.title + " | Open", "Open");
+		await this.trackAsync(this.title, "Open");
 	}
 
 	onFormInitialized() {
@@ -189,14 +189,14 @@ export class BooksUpdatePage implements OnInit {
 					bookInfo,
 					async () => {
 						await Promise.all([
-							this.trackAsync(this.title + " | Request | Success", "Request"),
+							this.trackAsync(this.title, "Request"),
 							this.appFormsSvc.hideLoadingAsync(),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.update.messages.sent"))
 						]);
 						await this.configSvc.navigateBackAsync();
 					},
 					async error => await Promise.all([
-						this.trackAsync(this.title + " | Request | Error", "Request"),
+						this.trackAsync(this.title, "Request"),
 						this.appFormsSvc.showErrorAsync(error)
 					])
 				);
@@ -232,7 +232,7 @@ export class BooksUpdatePage implements OnInit {
 			await this.appFormsSvc.showLoadingAsync(this.title);
 			if (this.update.form.controls.CoverImage.value.new !== undefined) {
 				await this.uploadCoverAsync(async () => {
-					await this.trackAsync(this.title + " | Upload Cover", "Upload", "Cover");
+					await this.trackAsync(this.title, "Upload", "Cover");
 					await this.updateBookAsync();
 				});
 			}

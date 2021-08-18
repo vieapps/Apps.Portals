@@ -119,7 +119,7 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 				if (AppUtility.isObject(this.book.Files, true) && (this.book.Files.Epub.Size === "generating..." || this.book.Files.Mobi.Size === "generating...")) {
 					await this.booksSvc.generateEBookFilesAsync(this.book.ID);
 				}
-				await this.trackAsync(this.title + " | View");
+				await this.trackAsync(this.title);
 			}
 			else {
 				await this.configSvc.navigateBackAsync();
@@ -156,12 +156,12 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 
 	async downloadAsync(type: string) {
 		if (this.configSvc.isAuthenticated) {
-			await this.trackAsync(this.title + " | Download | Success", "Download", "/books/download/success");
+			await this.trackAsync(this.title, "Download", "/books/download/success");
 			PlatformUtility.openURL(`${this.book.Files[type].Url}?${AppUtility.toQuery(this.configSvc.appConfig.getAuthenticatedInfo())}`);
 		}
 		else {
 			await Promise.all([
-				this.trackAsync(this.title + " | Download | Error", "Download", "/books/download/failed"),
+				this.trackAsync(this.title, "Download", "/books/download/failed"),
 				this.appFormsSvc.showAlertAsync(
 					undefined,
 					await this.configSvc.getResourceAsync("books.info.notAuthenticated"),
