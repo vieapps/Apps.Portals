@@ -11,6 +11,21 @@ export class AppUtility {
 		"TokenNotFoundException", "TokenExpiredException", "TokenRevokedException", "InvalidTokenException", "InvalidTokenSignatureException"
 	];
 
+	/** Gets an empty promise */
+	public static get promise() {
+		return this.execute();
+	}
+
+	/** Executes a function asynchronously and return a promise */
+	public static execute(func?: () => void) {
+		return new Promise<void>((resolve, _) => {
+			if (func !== undefined) {
+				func();
+			}
+			resolve();
+		});
+	}
+
 	/** Checks to see the object is boolean and equals to true */
 	public static isTrue(object?: any) {
 		return object !== undefined && typeof object === "boolean" && object === true;
