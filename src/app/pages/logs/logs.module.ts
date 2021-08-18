@@ -8,17 +8,22 @@ export const routes: Routes = [
 	{
 		path: "",
 		canActivate: [AuthenticatedGuardService],
-		loadChildren: "@app/pages/logs/list/list.module#LogsListPageModule"
+		loadChildren: "@app/pages/logs/services/list/list.module#LogsListPageModule"
 	},
 	{
-		path: "search",
+		path: "services",
 		canActivate: [AuthenticatedGuardService],
-		loadChildren: "@app/pages/logs/list/list.module#LogsListPageModule"
+		loadChildren: "@app/pages/logs/services/list/list.module#LogsListPageModule"
 	},
 	{
-		path: "view",
+		path: "services/search",
 		canActivate: [AuthenticatedGuardService],
-		loadChildren: "@app/pages/logs/view/view.module#LogsViewPageModule"
+		loadChildren: "@app/pages/logs/services/list/list.module#LogsListPageModule"
+	},
+	{
+		path: "services/view",
+		canActivate: [AuthenticatedGuardService],
+		loadChildren: "@app/pages/logs/services/view/view.module#LogsViewPageModule"
 	}
 ];
 
