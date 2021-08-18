@@ -34,26 +34,30 @@ export class BooksService extends BaseService {
 	}
 
 	private initialize() {
-		AppAPIs.registerAsServiceScopeProcessor("Scheduler", () => AppUtility.invoke(async () => {
-			const profile = this.configSvc.getAccount().profile;
-			if (profile !== undefined) {
-				await this.sendBookmarksAsync(() => profile.LastSync = new Date());
+		AppAPIs.registerAsServiceScopeProcessor("Scheduler", () => {
+			if (this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
+				AppUtility.invoke(async () => {
+					const profile = this.configSvc.getAccount().profile;
+					if (profile !== undefined) {
+						await this.sendBookmarksAsync(() => profile.LastSync = new Date());
+					}
+				}, 123);
 			}
-		}, 123));
+		});
 
 		AppAPIs.registerAsObjectScopeProcessor(this.name, "Book", message => this.processUpdateBookMessage(message));
 		AppAPIs.registerAsObjectScopeProcessor(this.name, "Statistic", async message => await this.processUpdateStatisticMessageAsync(message));
 		AppAPIs.registerAsObjectScopeProcessor(this.name, "Bookmarks", async message => await this.processUpdateBookmarkMessageAsync(message));
 
 		AppEvents.on("App", info => {
-			if ("HomePageIsOpened" === info.args.Type && this._reading.ID !== undefined) {
+			if ("HomePageIsOpened" === info.args.Type && this._reading.ID !== undefined && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				AppUtility.invoke(async () => await this.updateSidebarAsync(), 13);
 				this._reading.ID = undefined;
 			}
 		});
 
 		AppEvents.on("Session", info => {
-			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
+			if (("LogIn" === info.args.Type || "LogOut" === info.args.Type) && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				AppUtility.invoke(() => this.prepareSidebarFooterButtons(), this.configSvc.appConfig.services.active === this.name ? 456 : 789);
 				if ("LogIn" === info.args.Type) {
 					AppUtility.invoke(() => this.prepareSidebarFooterButtons(), 3456);
@@ -66,7 +70,7 @@ export class BooksService extends BaseService {
 		});
 
 		AppEvents.on("Profile", info => {
-			if ("Updated" === info.args.Type && "APIs" === info.args.Mode) {
+			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				AppUtility.invoke(async () => await this.getBookmarksAsync(), 123);
 				if (this.configSvc.appConfig.services.active === this.name) {
 					this.updateSidebarTitle();
