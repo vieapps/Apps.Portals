@@ -185,12 +185,12 @@ export class UsersProfilePage implements OnInit {
 						AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: this.profile });
 					}
 					await Promise.all([
-						TrackingUtility.trackEventAsync("Users:Profile", "Reload", false),
+						TrackingUtility.trackEventAsync("Users:Profile", "Reload", "Force reload to get last sync", false),
 						showProfileAsync()
 					]);
 				},
 				async error => await Promise.all([
-					TrackingUtility.trackEventAsync("Users:Profile", "Reload", false),
+					TrackingUtility.trackEventAsync("Users:Profile", "Reload", "Force reload to get last sync", false),
 					this.appFormsSvc.showErrorAsync(error)
 				]),
 				true,
