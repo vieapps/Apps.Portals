@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input, Output, EventEmitter } from "@angular/core";
+import { Component, OnInit, OnDestroy, Input } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -13,7 +13,7 @@ import { Category } from "@app/models/portals.cms.category";
 	styleUrls: ["./featured.contents.control.scss"]
 })
 
-export class FeaturedContentsControl implements OnInit, OnDestroy, OnChanges {
+export class FeaturedContentsControl implements OnInit, OnDestroy {
 
 	constructor(
 		private configSvc: ConfigurationService,
@@ -27,9 +27,6 @@ export class FeaturedContentsControl implements OnInit, OnDestroy, OnChanges {
 	@Input() status: string;
 	@Input() orderBy: string;
 	@Input() amount: number;
-
-	/** The event handler to run when the control was changed */
-	@Output() change = new EventEmitter<any>();
 
 	contents = new Array<FeaturedContent>();
 	private _isPublished = false;
@@ -60,12 +57,18 @@ export class FeaturedContentsControl implements OnInit, OnDestroy, OnChanges {
 		this.amount = this.amount !== undefined ? this.amount : (this._isPublished ? amounts.published : amounts.updated) || 7;
 
 		if (this.configSvc.isReady) {
-			AppUtility.invoke(async () => await this.prepareLabelsAsync(), 13);
+			AppUtility.invoke(async () => {
+				await this.prepareLabelsAsync();
+				await this.prepareContentsAsync();
+			}, 13);
 		}
 		else {
 			AppEvents.on("App", info => {
-				if ("Initialized" === info.args.Type) {
-					AppUtility.invoke(async () => await this.prepareLabelsAsync(), 13);
+				if ("FullyInitialized" === info.args.Type) {
+					AppUtility.invoke(async () => {
+						await this.prepareLabelsAsync();
+						await this.prepareContentsAsync();
+					}, 13);
 				}
 			}, `FeaturedContents:AppInitialized:${this._isPublished}`);
 		}
@@ -78,13 +81,8 @@ export class FeaturedContentsControl implements OnInit, OnDestroy, OnChanges {
 	}
 
 	ngOnDestroy() {
-		this.change.unsubscribe();
 		AppEvents.off("App", `FeaturedContents:AppInitialized:${this._isPublished}`);
 		AppEvents.off(this.portalsCmsSvc.name, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
-	}
-
-	ngOnChanges(_: SimpleChanges) {
-		AppUtility.invoke(async () => await this.prepareContentsAsync(), 13);
 	}
 
 	private async prepareLabelsAsync() {
