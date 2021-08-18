@@ -9,7 +9,10 @@ declare global {
 		/** Updates an element at a specified index/position (replaces or inserts) */
 		update(value: T, index?: number): T[];
 
-		/** Clears (Removes) a ranges of elements */
+		/** Merges other values */
+		merge(values?: T[]): T[];
+
+		/** Clears (Removes) a range of elements */
 		clear(start?: number, amount?: number): T[];
 
 		/** Removes an element */
@@ -91,6 +94,15 @@ if (!Array.prototype.update) {
 		}
 		else {
 			this.push(value);
+		}
+		return this;
+	};
+}
+
+if (!Array.prototype.merge) {
+	Array.prototype.merge = function<T>(this: T[], values?: T[]): T[] {
+		if (values !== undefined) {
+			values.forEach(value => this.push(value));
 		}
 		return this;
 	};

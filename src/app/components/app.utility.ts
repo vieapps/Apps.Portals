@@ -26,6 +26,13 @@ export class AppUtility {
 		});
 	}
 
+	/** Executes a function asynchronously by 'setTimeout' */
+	public static invoke(func: () => void, defer?: number) {
+		if (func !== undefined) {
+			setTimeout(() => func(), defer || 0);
+		}
+	}
+
 	/** Checks to see the object is boolean and equals to true */
 	public static isTrue(object?: any) {
 		return object !== undefined && typeof object === "boolean" && object === true;
@@ -478,11 +485,6 @@ export class AppUtility {
 			parameters.filter(parameter => parameter.name === key).forEach(parameter => template = template.replace(this.toRegExp(`/${parameter.token}/g`), value));
 		});
 		return template;
-	}
-
-	/** Invokes an action by 'setTimeout' */
-	public static invoke(action: () => void, defer?: number) {
-		setTimeout(() => action(), defer || 0);
 	}
 
 	/** Converts an observable object into promise object for working with async/await */
