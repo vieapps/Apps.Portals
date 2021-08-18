@@ -437,19 +437,15 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	private async updateSidebarAsync() {
-		if (this.configSvc.isAuthenticated) {
-			const activeModule = this.portalsCoreSvc.activeModule;
-			if (this.getDefaultContentTypeOfCategory(activeModule) !== undefined) {
-				await this.updateSidebarWithCategoriesAsync();
-			}
-			else if (activeModule !== undefined) {
-				await this.updateSidebarWithContentTypesAsync();
-			}
-		}
-		else {
-			this.updateSidebar();
-		}
+	private updateSidebarAsync() {
+		const activeModule = this.configSvc.isAuthenticated ? this.portalsCoreSvc.activeModule : undefined;
+		return this.configSvc.isAuthenticated
+			? this.getDefaultContentTypeOfCategory(activeModule) !== undefined
+				? this.updateSidebarWithCategoriesAsync()
+				: activeModule !== undefined
+					? this.updateSidebarWithContentTypesAsync()
+					: AppUtility.promise
+			: AppUtility.execute(() => this.updateSidebar());
 	}
 
 	private async updateSidebarWithContentTypesAsync(definitionID?: string, onNext?: () => void) {
@@ -467,7 +463,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	private async updateSidebarWithCategoriesAsync(parent?: Category, expandedID?: string, onNext?: () => void) {
+	private updateSidebarWithCategoriesAsync(parent?: Category, expandedID?: string, onNext?: () => void) {
 		if (parent !== undefined) {
 			this._sidebarCategory = parent;
 			this._sidebarContentType = this._sidebarContentType || this.getDefaultContentTypeOfContent(parent.module);
@@ -476,14 +472,14 @@ export class PortalsCmsService extends BaseService {
 			if (index > -1) {
 				info.Items[index].Expanded = true;
 			}
-			this.updateSidebar(info.Items, info.Parent, onNext);
+			return AppUtility.execute(() => this.updateSidebar(info.Items, info.Parent, onNext));
 		}
 		else {
 			const contentType = this.getDefaultContentTypeOfCategory(this.portalsCoreSvc.activeModule);
 			if (contentType !== undefined) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = this._sidebarContentType || this.getDefaultContentTypeOfContent(this.portalsCoreSvc.activeModule);
-				await this.searchCategoryAsync(
+				return this.searchCategoryAsync(
 					AppPagination.buildRequest(
 						{ And: [
 							{ SystemID: { Equals: contentType.SystemID } },
@@ -499,13 +495,13 @@ export class PortalsCmsService extends BaseService {
 					}
 				);
 			}
-			else if (onNext !== undefined) {
-				onNext();
+			else {
+				return AppUtility.execute(onNext);
 			}
 		}
 	}
 
-	private getSidebarItems(categories: Array<Category>, parent?: Category) {
+	private getSidebarItems(categories: Array<Category>, parent?: Category): { Parent: AppSidebarMenuItem; Items: AppSidebarMenuItem[] } {
 		const expand: (menuItem: AppSidebarMenuItem, parentID?: string, dontUpdateExpaned?: boolean) => void = async (menuItem, parentID, dontUpdateExpanded) => {
 			if (parentID === undefined) {
 				if (!dontUpdateExpanded) {
