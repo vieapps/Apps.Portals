@@ -9,6 +9,9 @@ declare global {
 		/** Updates an element at a specified index/position (replaces or inserts) */
 		update(value: T, index?: number): T[];
 
+		/** Clears (Removes) a ranges of elements */
+		clear(start?: number, amount?: number): T[];
+
 		/** Removes an element */
 		remove(value: T, findIndex?: (value: T, array: T[]) => number): T[];
 
@@ -48,6 +51,15 @@ declare global {
 		/** Gets the first or default element that matched with the predicate */
 		firstOrDefault(predicate?: (value: T, index: number, array: T[]) => boolean): T;
 
+		/** Gets the last element that matched with the predicate */
+		last(predicate?: (value: T, index: number, array: T[]) => boolean): T;
+
+		/** Gets the last or default element that matched with the predicate */
+		lastOrDefault(predicate?: (value: T, index: number, array: T[]) => boolean): T;
+
+		/** Gets the previous element of the last element that matched with the predicate */
+		previousLast(predicate?: (value: T, index: number, array: T[]) => boolean): T;
+
 		/** Converts to List object (for working with LINQ) */
 		toList(predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): List<T>;
 
@@ -84,6 +96,13 @@ if (!Array.prototype.update) {
 	};
 }
 
+if (!Array.prototype.clear) {
+	Array.prototype.clear = function<T>(this: T[], start?: number, amount?: number): T[] {
+		this.splice(start !== undefined && start > 0 ? start : 0, amount !== undefined && amount > 0 ? amount : this.length);
+		return this;
+	};
+}
+
 if (!Array.prototype.remove) {
 	Array.prototype.remove = function<T>(this: T[], value: T, findIndex?: (value: T, array: T[]) => number): T[] {
 		return this.removeAt(findIndex !== undefined ? findIndex(value, this) : this.indexOf(value));
@@ -101,8 +120,7 @@ if (!Array.prototype.removeAt) {
 
 if (!Array.prototype.removeAll) {
 	Array.prototype.removeAll = function<T>(this: T[]): T[] {
-		this.splice(0, this.length);
-		return this;
+		return this.clear();
 	};
 }
 
@@ -215,6 +233,26 @@ if (!Array.prototype.first) {
 if (!Array.prototype.firstOrDefault) {
 	Array.prototype.firstOrDefault = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
 		return this.first(predicate) || this.first();
+	};
+}
+
+if (!Array.prototype.last) {
+	Array.prototype.last = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
+		const array = predicate !== undefined ? this.filter(predicate) : this;
+		return array.length > 0 ? array[array.length - 1] : undefined;
+	};
+}
+
+if (!Array.prototype.lastOrDefault) {
+	Array.prototype.lastOrDefault = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
+		return this.last(predicate) || this.last();
+	};
+}
+
+if (!Array.prototype.previousLast) {
+	Array.prototype.previousLast = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
+		const array = predicate !== undefined ? this.filter(predicate) : this;
+		return array.length > 1 ? array[array.length - 2] : undefined;
 	};
 }
 
