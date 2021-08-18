@@ -52,7 +52,7 @@ export class TrackingUtility {
 		options = options || {};
 		await Promise.all([
 			this.trackScreenAsync(options.title, options.campaignUrl, addPrefix),
-			AppUtility.isNotNull(options.category) && AppUtility.isNotNull(options.action) ? this.trackEventAsync(options.category, options.action, options.label, addPrefix) : new Promise<void>(() => {})
+			AppUtility.isNotNull(options.category) && AppUtility.isNotNull(options.action) ? this.trackEventAsync(options.category, options.action, options.label, addPrefix) : AppUtility.promise
 		]);
 	}
 
