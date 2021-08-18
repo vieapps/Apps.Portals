@@ -1329,7 +1329,7 @@ export class PortalsCoreService extends BaseService {
 				items.push(
 					{
 						Title: "{{portals.sidebar.logs}}",
-						Link: "/logs",
+						Link: "/logs/services",
 						Direction: "root",
 						Icon: { Name: "file-tray-full", Color: "medium", Slot: "start" }
 					},
