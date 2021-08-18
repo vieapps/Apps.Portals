@@ -203,7 +203,7 @@ export class UsersProfilePage implements OnInit {
 	}
 
 	async openAvatarAsync() {
-		await this.trackAsync("Avatar | Open", `${this.configSvc.appConfig.URLs.users.profile}/avatar`, "Open", "Users:Avatar");
+		await this.trackAsync("Avatar", `${this.configSvc.appConfig.URLs.users.profile}/avatar`, "Open", "Users:Avatar");
 		await this.appFormsSvc.showModalAsync(
 			UsersAvatarPage,
 			{
@@ -228,13 +228,13 @@ export class UsersProfilePage implements OnInit {
 					async () => {
 						AppEvents.broadcast("Profile", { Type: "Updated" });
 						await this.configSvc.storeSessionAsync(async () => await Promise.all([
-							this.trackAsync("Avatar | Success", `${this.configSvc.appConfig.URLs.users.update}/avatar`, !!imageURI ? "Upload" : "Update", "Users:Avatar"),
+							this.trackAsync("Avatar", `${this.configSvc.appConfig.URLs.users.update}/avatar`, !!imageURI ? "Upload" : "Update", "Users:Avatar"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.avatar.message"))
 						]));
 					},
 					async error => {
 						console.error(`Error occurred while updating profile with new avatar image => ${AppUtility.getErrorMessage(error)}`, error);
-						await this.trackAsync("Avatar | Error", `${this.configSvc.appConfig.URLs.users.update}/avatar`, !!imageURI ? "Upload" : "Update", "Users:Avatar");
+						await this.trackAsync("Avatar", `${this.configSvc.appConfig.URLs.users.update}/avatar`, !!imageURI ? "Upload" : "Update", "Users:Avatar");
 					}
 				);
 			}
@@ -306,7 +306,7 @@ export class UsersProfilePage implements OnInit {
 
 	async logoutAsync() {
 		const button = await this.configSvc.getResourceAsync("users.profile.buttons.logout");
-		await this.trackAsync(button + " | Request", `${this.configSvc.appConfig.URLs.users.root}/logout`, "LogOut", "Users:Account");
+		await this.trackAsync(button, `${this.configSvc.appConfig.URLs.users.root}/logout`, "LogOut", "Users:Account");
 		await this.appFormsSvc.showAlertAsync(
 			button,
 			undefined,
@@ -315,13 +315,13 @@ export class UsersProfilePage implements OnInit {
 				await this.appFormsSvc.showLoadingAsync(button);
 				await this.authSvc.logOutAsync(
 					async () => await Promise.all([
-						this.trackAsync(button + " | Success", `${this.configSvc.appConfig.URLs.users.root}/logout`, "LogOut", "Users:Account"),
+						this.trackAsync(button, `${this.configSvc.appConfig.URLs.users.root}/logout`, "LogOut", "Users:Account"),
 						this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.logout.success"))),
 						this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync()
 					]),
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
-						this.trackAsync(button + " | Error", `${this.configSvc.appConfig.URLs.users.root}/logout`, "LogOut", "Users:Account")
+						this.trackAsync(button, `${this.configSvc.appConfig.URLs.users.root}/logout`, "LogOut", "Users:Account")
 					])
 				);
 			},

@@ -609,7 +609,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 	}
 
 	async deleteAsync() {
-		await this.trackAsync(`${await this.configSvc.getResourceAsync("portals.contcontenttypesents.update.buttons.delete")} | Request`, "Delete");
+		await this.trackAsync(`${await this.configSvc.getResourceAsync("portals.contcontenttypesents.update.buttons.delete")}`, "Delete");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.confirm.delete"),
@@ -633,14 +633,14 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 					async data => {
 						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Deleted", ID: data.ID });
 						await Promise.all([
-							this.trackAsync(`${button} | Success`, "Delete"),
+							this.trackAsync(button, "Delete"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
-						this.trackAsync(`${button} | Error`, "Delete")
+						this.trackAsync(button, "Delete")
 					])
 				);
 			},

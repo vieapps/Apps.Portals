@@ -905,7 +905,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 
 	async deleteAsync() {
 		const button = await this.configSvc.getResourceAsync("portals.portlets.update.buttons.delete");
-		await this.trackAsync(`${button} | Request`, "Delete");
+		await this.trackAsync(button, "Delete");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.portlets.update.messages.confirm.delete"),
@@ -918,14 +918,14 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 						this.desktop.portlets.removeAt(this.desktop.portlets.findIndex(p => p.ID === data.ID));
 						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Portlet", Type: "Deleted", ID: data.ID, DekstopID: data.DekstopID });
 						await Promise.all([
-							this.trackAsync(`${button} | Success`, "Delete"),
+							this.trackAsync(button, "Delete"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.portlets.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
-						this.trackAsync(`${button} | Error`, "Delete")
+						this.trackAsync(button, "Delete")
 					])
 				);
 			},

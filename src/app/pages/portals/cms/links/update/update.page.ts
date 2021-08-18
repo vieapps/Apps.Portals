@@ -498,7 +498,7 @@ export class CmsLinksUpdatePage implements OnInit {
 	}
 
 	async deleteAsync() {
-		await this.trackAsync(`${await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.delete")} | Request`, "Delete");
+		await this.trackAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.delete"), "Delete");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.cms.links.update.messages.confirm.delete"),
@@ -532,7 +532,7 @@ export class CmsLinksUpdatePage implements OnInit {
 					async data => {
 						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 						await Promise.all([
-							this.trackAsync(`${button} | Success`, "Delete"),
+							this.trackAsync(button, "Delete"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync()
 						]);
@@ -540,7 +540,7 @@ export class CmsLinksUpdatePage implements OnInit {
 					},
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
-						this.trackAsync(`${button} | Error`, "Delete")
+						this.trackAsync(button, "Delete")
 					]),
 					{ "x-children": mode }
 				);

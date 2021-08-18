@@ -464,7 +464,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 
 	async deleteAsync() {
 		const button = await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete");
-		await this.trackAsync(`${button} | Request`, "Delete");
+		await this.trackAsync(button, "Delete");
 		const modes = [
 			{
 				label: await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete-all"),
@@ -486,14 +486,14 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 					async data => {
 						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Desktop", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 						await Promise.all([
-							this.trackAsync(`${button} | Success`, "Delete"),
+							this.trackAsync(button, "Delete"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.desktops.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
-						this.trackAsync(`${button} | Error`, "Delete")
+						this.trackAsync(button, "Delete")
 					]),
 					{ "x-children": mode }
 				);

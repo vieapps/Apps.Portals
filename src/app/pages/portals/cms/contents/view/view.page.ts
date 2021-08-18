@@ -399,7 +399,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	async deleteAsync() {
-		await this.trackAsync(`${this.resources.delete} | Request`, "Delete");
+		await this.trackAsync(this.resources.delete, "Delete");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete"),
@@ -414,14 +414,14 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 							(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
 						}
 						await Promise.all([
-							this.trackAsync(`${this.resources.delete} | Success`, "Delete"),
+							this.trackAsync(this.resources.delete, "Delete"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
-						this.trackAsync(`${this.resources.delete} | Error`, "Delete")
+						this.trackAsync(this.resources.delete, "Delete")
 					])
 				);
 			},
@@ -431,7 +431,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	async deleteThumbnailAsync() {
-		await this.trackAsync(`${this.resources.deleteThumbnail} | Request`, "Delete", "Thumbnail");
+		await this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.deleteThumbnail"),
@@ -442,11 +442,11 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 					async _ => {
 						this.prepareAttachments("Thumbnails", [], undefined, this.content.thumbnails[0]);
 						this.content.thumbnails.removeAll();
-						await this.trackAsync(`${this.resources.deleteThumbnail} | Success`, "Delete", "Thumbnail");
+						await this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail");
 					},
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
-						this.trackAsync(`${this.resources.deleteThumbnail} | Error`, "Delete", "Thumbnail")
+						this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail")
 					]),
 					this.portalsCoreSvc.getPortalFileHeaders(this.content)
 				);

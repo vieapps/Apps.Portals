@@ -535,7 +535,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 
 	async deleteAsync() {
 		const button = await this.configSvc.getResourceAsync("portals.expressions.update.buttons.delete");
-		await this.trackAsync(`${button} | Request`, "Delete");
+		await this.trackAsync(button, "Delete");
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.expressions.update.messages.confirm.delete"),
@@ -547,14 +547,14 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 					async data => {
 						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Expression", Type: "Deleted", ID: data.ID });
 						await Promise.all([
-							this.trackAsync(`${button} | Success`, "Delete"),
+							this.trackAsync(button, "Delete"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.expressions.update.messages.success.delete")),
 							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
 						]);
 					},
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
-						this.trackAsync(`${button} | Error`, "Delete")
+						this.trackAsync(button, "Delete")
 					])
 				);
 			},
