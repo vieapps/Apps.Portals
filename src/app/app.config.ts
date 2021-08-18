@@ -83,7 +83,7 @@ export class AppConfig {
 				name: "Books",
 				objects: ["Book", "Category", "Statistic"],
 				appName: "NGX Books",
-				appDescription: "Free online books & .EPUB/.MOBI ebooks"
+				appDescription: "Free online books & EPUB/MOBI e-books"
 			}
 		] as Array<{ name: string; objects: Array<string>; availableHosts?: Array<string>; appName?: string; appDescription?: string; }>
 	};
@@ -277,7 +277,7 @@ export class AppConfig {
 			"related-service": (AppUtility.isNotEmpty(service) ? service : this.services.active || "").trim().toLowerCase(),
 			"active-id": (AppUtility.isNotEmpty(activeID) ? activeID : this.services.activeID || "").trim().toLowerCase()
 		};
-		AppUtility.toKeyValuePair(additional, kvp => AppUtility.isNotNull(kvp.value)).forEach(kvp => json[kvp.key.toString()] = additional[kvp.value.toString()]);
+		AppUtility.toKeyValuePair(additional, kvp => AppUtility.isNotNull(kvp.value)).forEach(kvp => json[kvp.key.toString()] = kvp.value.toString());
 		if (onCompleted !== undefined) {
 			onCompleted(json);
 		}
