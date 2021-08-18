@@ -70,8 +70,8 @@ export class FilesService extends BaseService {
 			"x-tracked": AppUtility.isTrue(options.IsTracked) ? "true" : undefined,
 			"x-temporary": AppUtility.isTrue(options.IsTemporary) ? "true" : undefined
 		};
-		AppUtility.getAttributes(options.Extras).forEach(name => headers[name] = options.Extras[name]);
-		AppUtility.getAttributes(additional).forEach(name => headers[name] = additional[name]);
+		AppUtility.toKeyValuePair(options.Extras).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
+		AppUtility.toKeyValuePair(additional).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
 		return headers;
 	}
 
@@ -126,32 +126,32 @@ export class FilesService extends BaseService {
 		}
 	}
 
-	public async uploadAvatarAsync(data: string | Array<string> | FormData, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.uploadAsync("avatars", data, undefined, onSuccess, onError);
+	public uploadAvatarAsync(data: string | Array<string> | FormData, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.uploadAsync("avatars", data, undefined, onSuccess, onError);
 	}
 
 	public uploadThumbnail(data: string | Array<string> | FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
 		return this.upload("thumbnails", data, this.getFileHeaders(options), onSuccess, onError, onProgress);
 	}
 
-	public async uploadThumbnailAsync(data: string | Array<string> | FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.uploadAsync("thumbnails", data, this.getFileHeaders(options), onSuccess, onError);
+	public uploadThumbnailAsync(data: string | Array<string> | FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.uploadAsync("thumbnails", data, this.getFileHeaders(options), onSuccess, onError);
 	}
 
 	public uploadFile(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
 		return this.upload("files", data, this.getFileHeaders(options), onSuccess, onError, onProgress);
 	}
 
-	public async uploadFileAsync(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.uploadAsync("files", data, this.getFileHeaders(options), onSuccess, onError);
+	public uploadFileAsync(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.uploadAsync("files", data, this.getFileHeaders(options), onSuccess, onError);
 	}
 
 	public uploadTemporaryFile(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
 		return this.upload("temp.file", data, this.getFileHeaders(options), onSuccess, onError, onProgress);
 	}
 
-	public async uploadTemporaryFileAsync(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.uploadAsync("temp.file", data, this.getFileHeaders(options), onSuccess, onError);
+	public uploadTemporaryFileAsync(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.uploadAsync("temp.file", data, this.getFileHeaders(options), onSuccess, onError);
 	}
 
 	public getTemporaryFileURI(message: AppMessage) {
@@ -311,8 +311,8 @@ export class FilesService extends BaseService {
 		return controlConfig;
 	}
 
-	public async searchThumbnailsAsync(options: FileOptions, onSuccess?: (thumbnails: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		await this.searchAsync(
+	public searchThumbnailsAsync(options: FileOptions, onSuccess?: (thumbnails: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return this.searchAsync(
 			this.getSearchingPath("thumbnails", this.configSvc.relatedQuery),
 			undefined,
 			data => {
@@ -327,8 +327,8 @@ export class FilesService extends BaseService {
 		);
 	}
 
-	public async deleteThumbnailAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await this.deleteAsync(
+	public deleteThumbnailAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		return this.deleteAsync(
 			this.getPath("thumbnail", id),
 			onSuccess,
 			error => this.processError("Error occurred while deleting a thumbnail", error, onError),
@@ -396,8 +396,8 @@ export class FilesService extends BaseService {
 		return controlConfig;
 	}
 
-	public async searchAttachmentsAsync(options: FileOptions, onSuccess?: (attachments: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		await this.searchAsync(
+	public searchAttachmentsAsync(options: FileOptions, onSuccess?: (attachments: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return this.searchAsync(
 			this.getSearchingPath("attachments", this.configSvc.relatedQuery),
 			undefined,
 			data => {
@@ -412,8 +412,8 @@ export class FilesService extends BaseService {
 		);
 	}
 
-	public async updateAttachmentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.updateAsync(
+	public updateAttachmentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
 			this.getPath("attachment", body.ID),
 			body,
 			onSuccess,
@@ -421,8 +421,8 @@ export class FilesService extends BaseService {
 		);
 	}
 
-	public async deleteAttachmentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		await this.deleteAsync(
+	public deleteAttachmentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		return this.deleteAsync(
 			this.getPath("attachment", id),
 			onSuccess,
 			error => this.processError("Error occurred while deleting an attachment", error, onError),
