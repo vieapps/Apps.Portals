@@ -165,15 +165,14 @@ export class AppUtility {
 		return chars;
 	}
 
-	/** Parses the error */
-	public static parseError(error: any) {
-		try {
-			return error instanceof HttpErrorResponse
-				? error.error
-				: "Error" === error.Type && error.Data !== undefined ? error.Data : error;
+	/** Gets an URI */
+	public static getURI(info: { url: string, params: { [key: string]: any } }, alternativeURL?: string) {
+		if (info === undefined) {
+			return alternativeURL || "/";
 		}
-		catch (e) {
-			return error;
+		else {
+			const query = this.toQuery(info.params);
+			return info.url + (query !== "" ? (info.url.indexOf("?") > 0 ? "&" : "?") + query : "");
 		}
 	}
 
@@ -265,6 +264,18 @@ export class AppUtility {
 			Hash: hash,
 			HashParams: hashParams
 		};
+	}
+
+	/** Parses the error */
+	public static parseError(error: any) {
+		try {
+			return error instanceof HttpErrorResponse
+				? error.error
+				: "Error" === error.Type && error.Data !== undefined ? error.Data : error;
+		}
+		catch (e) {
+			return error;
+		}
 	}
 
 	/** Gets the position of the sub-string in the string */
