@@ -120,7 +120,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 
 	async onInfiniteScrollAsync() {
 		if (this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : new Promise<void>(() => {})));
+			await this.searchAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : AppUtility.promise));
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
 			await this.infiniteScrollCtrl.complete();

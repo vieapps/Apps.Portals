@@ -45,7 +45,7 @@ export class ConfigurationService extends BaseService {
 		super("Configuration");
 		AppStorage.initializeAsync(this.storage, () => this.showLog(`Storage is ready. Driver: ${this.storage.driver}`));
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", async () => await this.reloadGeoMetaAsync());
-		AppEvents.on("App", async info => await ("PlatformIsReady" === info.args.Type ? this.loadGeoMetaAsync() : new Promise<void>(() => {})));
+		AppEvents.on("App", async info => await ("PlatformIsReady" === info.args.Type ? this.loadGeoMetaAsync() : AppUtility.promise));
 	}
 
 	private _definitions: { [key: string]: any } = {};
@@ -781,7 +781,7 @@ export class ConfigurationService extends BaseService {
 	public async changeLanguageAsync(language: string, saveOptions: boolean = true) {
 		this.appConfig.options.i18n = language;
 		await Promise.all([
-			saveOptions ? this.saveOptionsAsync() : new Promise<void>(() => {}),
+			saveOptions ? this.saveOptionsAsync() : AppUtility.promise,
 			this.setResourceLanguageAsync(language)
 		]).then(() => AppEvents.broadcast("App", { Type: "LanguageChanged" }));
 	}

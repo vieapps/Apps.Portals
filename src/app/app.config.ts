@@ -33,7 +33,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "4.5.6",
+		version: "4.2108.1",
 		frameworks: "ionic 5.6 - angular 11.2 - cordova 10.0",
 		mode: "",
 		platform: "",
@@ -77,7 +77,7 @@ export class AppConfig {
 			{
 				name: "Portals",
 				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Item", "Link", "Form"],
-				availableHosts: [/*"cms.vieapps.net"*/]
+				availableHosts: []
 			},
 			{
 				name: "Books",
@@ -101,7 +101,7 @@ export class AppConfig {
 		setServicePrivilegs: false,
 		setServicePrivilegsRole: "ServiceAdministrator",
 		setObjectPrivilegs: true,
-		phoneIsAllowed: false
+		phoneIsAllowed: true
 	};
 
 	/** Geographic meta */
@@ -129,7 +129,7 @@ export class AppConfig {
 		}
 	};
 
-	/** Options of the app */
+	/** App options */
 	public static options = {
 		i18n: "vi-VN",
 		theme: "light",
@@ -137,7 +137,7 @@ export class AppConfig {
 		extras: {} as { [key: string]: any }
 	};
 
-	/** Information for working with URLs (stack, host, ...) */
+	/** App URLs (stack, host, ...) */
 	public static URLs = {
 		stack: [] as Array<{ url: string, params: { [key: string]: any } }>,
 		home: "/home",
@@ -174,7 +174,7 @@ export class AppConfig {
 
 	/** Tracking information */
 	public static tracking = {
-		google: ["UA-3060572-8"] as Array<string>,
+		google: [] as Array<string>,
 		facebook: [] as Array<string>,
 		domains: [] as Array<string>,
 	};

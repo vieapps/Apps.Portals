@@ -3103,7 +3103,7 @@ export class PortalsCoreService extends BaseService {
 
 		const contenType = ContentType.get(entityInfo);
 		if (contenType !== undefined) {
-			await TrackingUtility.trackAsync({ title: title + " | Open", category: `${this.name}:${contenType.contentTypeDefinition.ObjectName}`, action: "Approve" });
+			await TrackingUtility.trackAsync({ title: title, category: `${this.name}:${contenType.contentTypeDefinition.ObjectName}`, action: "Approve" });
 		}
 
 		await this.appFormsSvc.showAlertAsync(
@@ -3116,13 +3116,13 @@ export class PortalsCoreService extends BaseService {
 					this.getPath("approve", id),
 					async _ => {
 						if (contenType !== undefined) {
-							await TrackingUtility.trackAsync({ title: title + " | Success", category: `${this.name}:${contenType.contentTypeDefinition.ObjectName}`, action: "Approve" });
+							await TrackingUtility.trackAsync({ title: title, category: `${this.name}:${contenType.contentTypeDefinition.ObjectName}`, action: "Approve" });
 						}
 						await this.appFormsSvc.showAlertAsync(title, await this.configSvc.getResourceAsync("portals.common.approval.message", { status: await this.configSvc.getResourceAsync(`status.approval.${status}`) }));
 					},
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
-						contenType !== undefined ? TrackingUtility.trackAsync({ title: title + " | Error", category: `${this.name}:${contenType.contentTypeDefinition.ObjectName}`, action: "Approve" }) : new Promise<void>(() => {})
+						contenType !== undefined ? TrackingUtility.trackAsync({ title: title, category: `${this.name}:${contenType.contentTypeDefinition.ObjectName}`, action: "Approve" }) : AppUtility.promise
 					]),
 					{
 						"x-entity": entityInfo,

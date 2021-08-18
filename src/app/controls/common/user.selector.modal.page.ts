@@ -118,7 +118,7 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 
 	async onInfiniteScrollAsync() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : new Promise<void>(() => {})));
+			await this.searchAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : AppUtility.promise));
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
 			await this.infiniteScrollCtrl.complete();
@@ -188,7 +188,7 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 	closeAsync(ids?: Array<string>) {
 		return ids === undefined || ids.length > 0
 			? this.appFormsSvc.hideModalAsync(ids)
-			: new Promise<void>(() => {});
+			: AppUtility.promise;
 	}
 
 }

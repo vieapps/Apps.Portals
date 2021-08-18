@@ -160,7 +160,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 
 	async onInfiniteScrollAsync() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : new Promise<void>(() => {})));
+			await this.searchAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : AppUtility.promise));
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
 			await this.infiniteScrollCtrl.complete();
@@ -279,7 +279,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	closeAsync(items?: Array<DataItem>) {
 		return items === undefined || items.length > 0
 			? this.appFormsSvc.hideModalAsync(items)
-			: new Promise<void>(() => {});
+			: AppUtility.promise;
 	}
 
 	back(event: Event) {

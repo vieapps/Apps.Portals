@@ -161,7 +161,7 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 		return this.mode === "select"
 			? ids === undefined || ids.length > 0
 				? this.appFormsSvc.hideModalAsync(ids === undefined ? undefined : this.attachments.filter(attachment => ids.indexOf(attachment.ID) > -1))
-				: new Promise<void>(() => {})
+				: AppUtility.promise
 			: this.appFormsSvc.hideModalAsync();
 	}
 
