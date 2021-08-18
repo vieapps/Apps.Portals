@@ -562,6 +562,7 @@ export class AppComponent implements OnInit {
 			PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
 		}
 		this.normalizeSidebarItems();
+
 		AppAPIs.openWebSocket(async () => {
 			const data = {
 				URIs: appConfig.URIs,
@@ -572,16 +573,20 @@ export class AppComponent implements OnInit {
 				options: appConfig.options,
 				languages: appConfig.languages
 			};
+
 			AppEvents.broadcast("App", { Type: "Initialized", Data: data });
 			AppEvents.sendToElectron("App", { Type: "Initialized", Data: data });
+
+			if (appConfig.services.all.findIndex(svc => svc.name === this.portalsCoreSvc.name) > -1) {
+				await this.portalsCoreSvc.initializeAsync();
+				await this.portalsCmsSvc.initializeAsync();
+			}
+
+			if (appConfig.services.all.findIndex(svc => svc.name === this.booksSvc.name) > -1) {
+				await this.booksSvc.initializeAsync();
+			}
+
 			await this.appFormsSvc.hideLoadingAsync(async () => {
-				if (appConfig.services.all.findIndex(svc => svc.name === this.portalsCoreSvc.name) > -1) {
-					await this.portalsCoreSvc.initializeAsync();
-					await this.portalsCmsSvc.initializeAsync();
-				}
-				if (appConfig.services.all.findIndex(svc => svc.name === this.booksSvc.name) > -1) {
-					await this.booksSvc.initializeAsync();
-				}
 				AppEvents.broadcast("App", { Type: "FullyInitialized", Data: data });
 				AppEvents.sendToElectron("App", { Type: "FullyInitialized", Data: data});
 				if (onNext !== undefined) {
