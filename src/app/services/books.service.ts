@@ -582,10 +582,10 @@ export class BooksService extends BaseService {
 				return this.storeAuthorsAsync();
 
 			case "Status":
-				return new Promise<void>(() => this.configSvc.appConfig.extras["Books-Status"] = (message.Data.Objects as Array<any>).map(s => StatisticBase.deserialize(s)));
+				return AppUtility.execute(() => this.configSvc.appConfig.extras["Books-Status"] = (message.Data.Objects as Array<any>).map(s => StatisticBase.deserialize(s)));
 
 			default:
-				return new Promise<void>(message.Type.Event === "All" ? () => {} : () => console.warn(this.getMessage("Got an update message"), message));
+				return message.Type.Event === "All" ? AppUtility.promise : AppUtility.execute(() => console.warn(this.getMessage("Got an update message"), message));
 		}
 	}
 
