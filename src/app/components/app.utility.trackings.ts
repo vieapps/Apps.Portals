@@ -12,17 +12,17 @@ export class TrackingUtility {
 		const promises = new Array<Promise<void>>();
 		if (this._googleAnalytics === undefined && googleAnalytics !== undefined && AppConfig.tracking.google.length > 0) {
 			this._googleAnalytics = googleAnalytics;
-			AppConfig.tracking.google.forEach(googleID => {
-				promises.push(this._googleAnalytics.startTrackerWithId(googleID, 13)
-					.then(() => this._googleAnalytics.setAppVersion(AppConfig.app.version))
-					.then(() => this._googleAnalytics.setUserId(AppConfig.session.device))
-					.then(() => this._googleAnalytics.setVar("checkProtocolTask", null))
-					.then(() => this._googleAnalytics.setVar("checkStorageTask", null))
-					.then(() => this._googleAnalytics.setVar("historyImportTask", null))
-					.then(() => console.log(`[AppTracking]: Google Analytics [${googleID}] is ready now...`))
-					.catch(error => console.error(`[AppTracking]: Error occurred while initializing Google Analytics [${googleID}]`, error))
-				);
-			});
+			AppConfig.tracking.google.forEach(googleID => promises.push(Promise.all([
+					this._googleAnalytics.startTrackerWithId(googleID, 13),
+					this._googleAnalytics.setAppVersion(AppConfig.app.version),
+					this._googleAnalytics.setUserId(AppConfig.session.device),
+					this._googleAnalytics.setVar("checkProtocolTask", null),
+					this._googleAnalytics.setVar("checkStorageTask", null),
+					this._googleAnalytics.setVar("historyImportTask", null)
+				])
+				.then(() => console.log(`[AppTracking]: Google Analytics [${googleID}] is ready now...`))
+				.catch(error => console.error(`[AppTracking]: Error occurred while initializing Google Analytics [${googleID}]`, error))
+			));
 		}
 		return Promise.all(promises);
 	}
