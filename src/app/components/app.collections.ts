@@ -185,16 +185,16 @@ Array.prototype.orderBy = function<T>(this: T[], sorts: Array<{ name: string, re
 Array.prototype.sortBy = function<T>(this: T[], ...sorts: Array<string | { name: string, reverse?: boolean, transformer?: (value: any) => any }>): T[] {
 	return this.orderBy(sorts !== undefined && sorts.length > 0
 		? (sorts as Array<any>).filter(sort => sort !== undefined && sort !== null).map(sort => typeof sort === "string"
-				? ({
-						name: sort as string,
-						reverse: false,
-						transformer: undefined as (value: any) => any
-					})
-				: ({
-						name: sort.name as string,
-						reverse: true === sort.reverse,
-						transformer: sort.transformer as (value: any) => any
-					})
+			? ({
+					name: sort as string,
+					reverse: false,
+					transformer: undefined as (value: any) => any
+				})
+			: ({
+					name: sort.name as string,
+					reverse: true === sort.reverse,
+					transformer: sort.transformer as (value: any) => any
+				})
 			)
 		: undefined
 	);
@@ -272,14 +272,9 @@ export class HashSet<T> extends Set<T>  {
 		return this;
 	}
 
-	/** Merges other values */
+	/** Merges the values into this collection */
 	merge(values: IterableIterator<T> | Array<T>) {
-		if (values !== undefined) {
-			for (const value of values) {
-				this.set(value);
-			}
-		}
-		return this;
+		return this.update(values);
 	}
 
 	/** Removes a value from this collection */
@@ -331,10 +326,7 @@ export class HashSet<T> extends Set<T>  {
 
 	/** Concatenates this collection with other collection */
 	concat(other: Set<T>) {
-		if (other !== undefined) {
-			other.forEach(value => this.add(value));
-		}
-		return this;
+		return this.update(other !== undefined ? other.values() : undefined);
 	}
 
 	/** Produces the set difference of two collections by using the equality comparer to compare values */
@@ -393,11 +385,11 @@ export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 		return this;
 	}
 
-	/** Merges other values */
-	merge(values: IterableIterator<TValue> | Array<TValue>, keySelector?: (value: TValue) => TKey) {
+	/** Merges the values into this collection */
+	merge(values: IterableIterator<TValue> | Array<TValue>, keySelector: (value: TValue) => TKey) {
 		if (values !== undefined && keySelector !== undefined) {
 			for (const value of values) {
-				this.update(keySelector(value), value);
+				this.set(keySelector(value), value);
 			}
 		}
 		return this;
