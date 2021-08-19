@@ -427,7 +427,6 @@ export class PortalsCmsService extends BaseService {
 	private updateSidebar(items?: Array<AppSidebarMenuItem>, parent?: AppSidebarMenuItem, onNext?: () => void) {
 		AppEvents.broadcast("UpdateSidebar", {
 			Index: 0,
-			Reset: true,
 			Name: "cms",
 			Parent: parent,
 			Items: items
@@ -467,11 +466,7 @@ export class PortalsCmsService extends BaseService {
 		if (parent !== undefined) {
 			this._sidebarCategory = parent;
 			this._sidebarContentType = this._sidebarContentType || this.getDefaultContentTypeOfContent(parent.module);
-			const info = this.getSidebarItems(parent.Children, parent);
-			const index = info.Items.findIndex(item => item.ID === expandedID);
-			if (index > -1) {
-				info.Items[index].Expanded = true;
-			}
+			const info = this.getSidebarItems(parent.Children, parent, expandedID);
 			return AppUtility.execute(() => this.updateSidebar(info.Items, info.Parent, onNext));
 		}
 		else {
@@ -490,7 +485,10 @@ export class PortalsCmsService extends BaseService {
 						{ OrderIndex: "Ascending", Title: "Ascending" }
 					),
 					data => {
-						const info = this.getSidebarItems(data !== undefined ? Category.toArray(data.Objects) : Category.instances.toArray(category => category.SystemID === contentType.SystemID && category.RepositoryID === contentType.RepositoryID && category.ParentID === undefined).sortBy("OrderIndex", "Title"));
+						const categories = data !== undefined
+							? Category.toArray(data.Objects)
+							: Category.instances.toArray(category => category.SystemID === contentType.SystemID && category.RepositoryID === contentType.RepositoryID && category.ParentID === undefined).sortBy("OrderIndex", "Title");
+						const info = this.getSidebarItems(categories, parent, expandedID);
 						this.updateSidebar(info.Items, info.Parent, onNext);
 					}
 				);
@@ -501,8 +499,8 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	private getSidebarItems(categories: Array<Category>, parent?: Category): { Parent: AppSidebarMenuItem; Items: AppSidebarMenuItem[] } {
-		const expand: (menuItem: AppSidebarMenuItem, parentID?: string, dontUpdateExpaned?: boolean) => void = async (menuItem, parentID, dontUpdateExpanded) => {
+	private getSidebarItems(categories: Array<Category>, parent?: Category, expandedID?: string): { Parent: AppSidebarMenuItem; Items: AppSidebarMenuItem[] } {
+		const expand: (menuItem: AppSidebarMenuItem, parentID?: string, dontUpdateExpaned?: boolean) => void = (menuItem, parentID, dontUpdateExpanded) => {
 			if (parentID === undefined) {
 				if (!dontUpdateExpanded) {
 					menuItem.Expanded = !menuItem.Expanded;
@@ -514,7 +512,7 @@ export class PortalsCmsService extends BaseService {
 				};
 			}
 			else {
-				await this.updateSidebarWithCategoriesAsync(Category.get(parentID), menuItem.ID);
+				AppUtility.invoke(async () => await this.updateSidebarWithCategoriesAsync(Category.get(parentID), menuItem.ID));
 			}
 		};
 
@@ -524,7 +522,8 @@ export class PortalsCmsService extends BaseService {
 				Title: category.Title,
 				Link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", category.ansiTitle),
 				Params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: category.ID }),
-				OnClick: async (data: { menuIndex: number; itemIndex: number; childIndex?: number; expand?: boolean; }, sidebar: AppSidebar, event: Event) => {
+				Expanded: category.ID === expandedID,
+				OnClick: (data: { menuIndex: number; itemIndex: number; childIndex?: number; expand?: boolean; }, sidebar: AppSidebar, event: Event) => {
 					const menuItem = data.childIndex !== undefined
 						? sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex]
 						: sidebar.MainMenu[data.menuIndex].Items[data.itemIndex];
@@ -536,7 +535,7 @@ export class PortalsCmsService extends BaseService {
 						if (menuItem.Children !== undefined && menuItem.Children.length > 0) {
 							expand(menuItem, data.childIndex === undefined ? undefined : sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].ID, menuItem.Expanded);
 						}
-						await this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params);
+						AppUtility.invoke(async () => await this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params));
 					}
 				}
 			};
@@ -554,7 +553,7 @@ export class PortalsCmsService extends BaseService {
 				Link: parent === undefined ? undefined : this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", parent.ansiTitle),
 				Params: parent === undefined ? undefined : this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: parent.ID }),
 				Expanded: parent !== undefined,
-				OnClick: async () => await this.updateSidebarWithCategoriesAsync(this._sidebarCategory !== undefined ? this._sidebarCategory.Parent : undefined, this._sidebarCategory !== undefined ? this._sidebarCategory.ID : undefined),
+				OnClick: menuItem => AppUtility.invoke(async () => await this.updateSidebarWithCategoriesAsync(this._sidebarCategory !== undefined ? this._sidebarCategory.Parent : undefined, this._sidebarCategory !== undefined ? this._sidebarCategory.ID : menuItem.ID)),
 			} as AppSidebarMenuItem,
 			Items: categories.map(category => getItem(category, item => item.Children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : []))
 		};

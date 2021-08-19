@@ -5,8 +5,8 @@ export interface AppSidebar {
 	Search: boolean;
 	Active: string;
 	Header: {
-		Thumbnail: string;
-		ThumbnailOnClick: (sidebar?: AppSidebar, event?: Event) => void;
+		Avatar: string;
+		AvatarOnClick: (sidebar?: AppSidebar, event?: Event) => void;
 		Title: string;
 		TitleOnClick: (sidebar?: AppSidebar, event?: Event) => void;
 	};
@@ -22,6 +22,16 @@ export interface AppSidebar {
 		Parent?: AppSidebarMenuItem;
 		Items: Array<AppSidebarMenuItem>
 	}>;
+	toggle: (visible?: boolean) => void;
+	active: (name?: string, open?: boolean) => void;
+	open: (name?: string) => void;
+	close: () => void;
+	updateTopMenu: (items: Array<AppSidebarMenuItem>) => void;
+	normalizeTopMenu: () => void;
+	updateMainMenu: (name: string, parent: AppSidebarMenuItem, items: Array<AppSidebarMenuItem>, index?: number) => void;
+	updateHeader: (args: any, updateAvatar: boolean) => void;
+	updateFooter: (args: any) => void;
+	normalizeFooter: () => void;
 }
 
 /** Presents a menu item in the side bar of the app */

@@ -7,8 +7,8 @@
 			<ion-header>
 				<ion-menu-toggle auto-hide="false">
 					<ion-toolbar [color]="color">
-						<ion-thumbnail *ngIf="!!sidebar.Header.Thumbnail" slot="start" (click)="sidebar.Header.ThumbnailOnClick(sidebar, $event)">
-							<img [src]="sidebar.Header.Thumbnail" />
+						<ion-thumbnail *ngIf="!!sidebar.Header.Avatar" slot="start" (click)="sidebar.Header.AvatarOnClick(sidebar, $event)">
+							<img [src]="sidebar.Header.Avatar" />
 						</ion-thumbnail>
 						<ion-title (click)="sidebar.Header.TitleOnClick(sidebar, $event)">
 							{{ sidebar.Header.Title }}
@@ -25,7 +25,7 @@
 						</ion-button>
 					</ion-buttons>
 					<ion-buttons slot="end">
-						<ion-button fill="clear" [color]="sidebarSignColor" (click)="toggleSidebarAsync()">
+						<ion-button fill="clear" [color]="sidebarSignColor" (click)="sidebar.toggle()">
 							<ion-icon name="trail-sign" slot="icon-only"></ion-icon>
 						</ion-button>
 					</ion-buttons>
