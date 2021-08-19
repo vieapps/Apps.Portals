@@ -9,7 +9,7 @@ import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { AppFormsService } from "@app/components/forms.service";
-import { AppSidebar, AppSidebarMenuItem } from "@app/components/app.objects";
+import { AppSidebar, AppSidebarMenuItem, AppSidebarFooterItem } from "@app/components/app.objects";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -51,30 +51,25 @@ export class AppComponent implements OnInit {
 		Active: "cms",
 		Header: {
 			Avatar: undefined,
-			AvatarOnClick: _ => AppEvents.broadcast("Navigate", { Type: "Profile" }),
+			AvatarOnClick: undefined,
 			Title: undefined,
 			TitleOnClick: undefined
 		},
-		Footer: new Array<{
-			Name: string,
-			Icon: string,
-			Title?: string,
-			OnClick?: (name: string, sidebar: AppSidebar, event?: Event) => void
-		}>(),
+		Footer: new Array<AppSidebarFooterItem>(),
 		TopMenu: new Array<AppSidebarMenuItem>(),
 		MainMenu: new Array<{
-			Name: string,
-			Parent?: AppSidebarMenuItem,
+			Name: string;
+			Parent?: AppSidebarMenuItem;
 			Items: Array<AppSidebarMenuItem>
 		}>(),
-		toggle: undefined as (visible?: boolean) => void,
-		active: undefined as (name?: string, open?: boolean) => void,
-		updateTopMenu: undefined as (items: Array<AppSidebarMenuItem>) => void,
-		normalizeTopMenu: undefined as () => void,
-		updateMainMenu: undefined as (name: string, parent: AppSidebarMenuItem, items: Array<AppSidebarMenuItem>, index?: number) => void,
-		updateHeader: undefined as (args: any, updateAvatar: boolean) => void,
-		updateFooter: undefined as (args: any) => void,
-		normalizeFooter: undefined as () => void
+		toggle: undefined,
+		active: undefined,
+		updateTopMenu: undefined,
+		normalizeTopMenu: undefined,
+		updateMainMenu: undefined,
+		updateHeader: undefined,
+		updateFooter: undefined,
+		normalizeFooter: undefined
 	};
 
 	@ViewChild(IonMenu, { static: true }) private menuCtrl: IonMenu;
@@ -89,10 +84,6 @@ export class AppComponent implements OnInit {
 
 	get isSidebarTopMenuShown() {
 		return !(this.sidebar.Active === "portals" || this.sidebar.Active === "notifications" || this.sidebar.Active === "chat" || this.sidebar.Active === "preferences");
-	}
-
-	get sidebarSignColor() {
-		return this.isSidebarShown ? "medium" : "light";
 	}
 
 	public ngOnInit() {
@@ -164,6 +155,8 @@ export class AppComponent implements OnInit {
 	}
 
 	private prepareSidebar() {
+		this.sidebar.Header.AvatarOnClick = () => AppEvents.broadcast("Navigate", { Type: "Profile" });
+
 		this.sidebar.toggle = (visible?: boolean) => {
 			this.sidebar.Visible = visible !== undefined ? !!visible : !this.sidebar.Visible;
 			AppUtility.invoke(async () => await (this.sidebar.Visible ? this.menuCtrl.open() : this.menuCtrl.close()));
@@ -230,14 +223,26 @@ export class AppComponent implements OnInit {
 		};
 
 		this.sidebar.updateFooter = (args: any) => {
-			if (!!args.Reset) {
-				this.sidebar.Footer = [];
-			}
-			if (typeof args.Predicate === "function" ? args.Predicate(this.sidebar) : true) {
-				this.sidebar.Footer.insert(args.Button, args.Index !== undefined ? args.Index : this.sidebar.Footer.length);
-				if (typeof args.OnCompleted === "function") {
-					args.OnCompleted(this.sidebar);
-				}
+			const predicate: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean = typeof args.Predicate === "function"
+				? (sidebar, item) => args.Predicate(sidebar, item)
+				: (sidebar, item) => sidebar.Footer.findIndex(btn => btn.Name === item.Name) < 0;
+			const onCompleted: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void = typeof args.onCompleted === "function"
+				? (sidebar, item) => args.onCompleted(sidebar, item)
+				: (sidebar, item) => {
+						const index = item.Name === "preferences" ? 0 : sidebar.Footer.findIndex(btn => btn.Name === item.Name);
+						if (index > 0 && sidebar.Footer[index - 1].Name === "preferences") {
+							sidebar.Footer.move(index, index - 1);
+						}
+					};
+			this.sidebar.Footer = !!args.Reset ? [] : this.sidebar.Footer;
+			if (AppUtility.isArray(args.Items, true)) {
+				(args.Items as Array<AppSidebarFooterItem>).forEach(item => {
+					if (predicate(this.sidebar, item)) {
+						const index = item["Index"] as number;
+						this.sidebar.Footer.insert(item, index !== undefined && index > -1 && index < this.sidebar.Footer.length ? index : this.sidebar.Footer.length);
+						onCompleted(this.sidebar, item);
+					}
+				});
 				this.sidebar.normalizeFooter();
 			}
 		};
@@ -245,16 +250,16 @@ export class AppComponent implements OnInit {
 		this.sidebar.normalizeFooter = () => {
 			if (this.configSvc.isAuthenticated && this.sidebar.Footer.length > 0) {
 				AppUtility.invoke(async () => {
-					if (this.sidebar.Footer.findIndex(btn => btn.Name === "preferences") < 0) {
-						this.sidebar.Footer.push({
+					if (this.sidebar.Footer.findIndex(item => item.Name === "preferences") < 0) {
+						this.sidebar.updateFooter({ Items: [{
 							Name: "preferences",
 							Icon: "settings",
 							Title: await this.configSvc.getResourceAsync("common.preferences.label"),
-							OnClick: (name, sidebar) => {
+							OnClick: (name: string, sidebar: AppSidebar) => {
 								sidebar.Active = name;
 								sidebar.active(name, true);
 							}
-						});
+						}] });
 					}
 				}, 1234);
 			}

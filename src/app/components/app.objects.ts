@@ -10,12 +10,7 @@ export interface AppSidebar {
 		Title: string;
 		TitleOnClick: (sidebar?: AppSidebar, event?: Event) => void;
 	};
-	Footer: Array<{
-		Name: string;
-		Icon: string;
-		Title?: string;
-		OnClick?: (name: string, sidebar: AppSidebar, event?: Event) => void;
-	}>;
+	Footer: Array<AppSidebarFooterItem>;
 	TopMenu: Array<AppSidebarMenuItem>;
 	MainMenu: Array<{
 		Name: string;
@@ -32,7 +27,7 @@ export interface AppSidebar {
 	normalizeFooter: () => void;
 }
 
-/** Presents a menu item in the side bar of the app */
+/** Presents an item in the app side bar main menu */
 export interface AppSidebarMenuItem {
 	Title: string;
 	Link?: string;
@@ -49,6 +44,14 @@ export interface AppSidebarMenuItem {
 		Color?: string;
 		Slot?: string;
 	};
+}
+
+/** Presents an item in the app side bar footer */
+export interface AppSidebarFooterItem {
+	Name: string;
+	Icon: string;
+	Title?: string;
+	OnClick?: (name: string, sidebar: AppSidebar, event?: Event) => void;
 }
 
 /** Presents a shortcut of the app */

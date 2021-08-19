@@ -58,9 +58,9 @@ export class BooksService extends BaseService {
 
 		AppEvents.on("Session", info => {
 			if (("LogIn" === info.args.Type || "LogOut" === info.args.Type) && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
-				AppUtility.invoke(() => this.prepareSidebarFooterButtons(), this.configSvc.appConfig.services.active === this.name ? 456 : 789);
+				AppUtility.invoke(() => this.prepareSidebarFooterItems(), this.configSvc.appConfig.services.active === this.name ? 456 : 789);
 				if ("LogIn" === info.args.Type) {
-					AppUtility.invoke(() => this.prepareSidebarFooterButtons(), 3456);
+					AppUtility.invoke(() => this.prepareSidebarFooterItems(), 3456);
 				}
 				else if ("LogOut" === info.args.Type) {
 					this.bookmarks.clear();
@@ -97,7 +97,7 @@ export class BooksService extends BaseService {
 	}
 
 	public async initializeAsync(onNext?: () => void) {
-		this.prepareSidebarFooterButtons();
+		this.prepareSidebarFooterItems();
 		await this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast("Books", { Type: "BooksUpdated" }));
 		if (this.configSvc.isAuthenticated) {
 			await this.loadBookmarksAsync(async () => await this.fetchBookmarksAsync());
@@ -110,7 +110,7 @@ export class BooksService extends BaseService {
 		if (this.configSvc.appConfig.services.active === this.name) {
 			AppEvents.broadcast("ActiveSidebar", { Name: "books" });
 		}
-		AppUtility.invoke(() => this.prepareSidebarFooterButtons(), 3456);
+		AppUtility.invoke(() => this.prepareSidebarFooterItems(), 3456);
 		if (onNext !== undefined) {
 			onNext();
 		}
@@ -141,33 +141,23 @@ export class BooksService extends BaseService {
 		});
 	}
 
-	private prepareSidebarFooterButtons(onNext?: () => void) {
-		AppEvents.broadcast("UpdateSidebarFooter", {
-			Button: {
-				Name: "books",
-				Icon: "library",
-				Title: "eBooks",
-				OnClick: (name: string, sidebar: AppSidebar) => {
-					if (sidebar.Active !== name) {
-						sidebar.Active = name;
-						this.configSvc.appConfig.services.active = this.name;
-						this.configSvc.appConfig.URLs.search = "/books/search";
-						this.updateSidebarTitle();
-						if (!sidebar.Visible) {
-							AppUtility.invoke(() => AppEvents.broadcast("OpenSidebar", { Name: name }), 13);
-						}
+	private prepareSidebarFooterItems(onNext?: () => void) {
+		AppEvents.broadcast("UpdateSidebarFooter", { Items: [{
+			Name: "books",
+			Icon: "library",
+			Title: "eBooks",
+			OnClick: (name: string, sidebar: AppSidebar) => {
+				if (sidebar.Active !== name) {
+					sidebar.Active = name;
+					this.configSvc.appConfig.services.active = this.name;
+					this.configSvc.appConfig.URLs.search = "/books/search";
+					this.updateSidebarTitle();
+					if (!sidebar.Visible) {
+						AppUtility.invoke(() => AppEvents.broadcast("OpenSidebar", { Name: name }), 13);
 					}
 				}
-			},
-			Index: this.menuIndex,
-			Predicate: (sidebar: AppSidebar) => sidebar.Footer.findIndex(btn => btn.Name === "books") < 0,
-			OnCompleted: (sidebar: AppSidebar) => {
-				const index = sidebar.Footer.length > 1 ? sidebar.Footer.findIndex(btn => btn.Name === "books") : 0;
-				if (index > 0 && sidebar.Footer[index - 1].Name === "preferences") {
-					sidebar.Footer.move(index, index - 1);
-				}
 			}
-		});
+		}] });
 		if (onNext !== undefined) {
 			onNext();
 		}

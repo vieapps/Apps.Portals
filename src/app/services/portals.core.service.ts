@@ -7,7 +7,7 @@ import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppCustomCompleter } from "@app/components/app.completer";
 import { AppPagination } from "@app/components/app.pagination";
-import { AppSidebar, AppSidebarMenuItem, AppMessage, AppDataRequest, AppDataPagination } from "@app/components/app.objects";
+import { AppSidebar, AppSidebarMenuItem, AppSidebarFooterItem, AppMessage, AppDataRequest, AppDataPagination } from "@app/components/app.objects";
 import { AppFormsControlConfig, AppFormsControlLookupOptionsConfig, AppFormsLookupValue, AppFormsControl } from "@app/components/forms.objects";
 import { AppFormsControlComponent } from "@app/components/forms.control.component";
 import { AppFormsService } from "@app/components/forms.service";
@@ -170,7 +170,7 @@ export class PortalsCoreService extends BaseService {
 		AppEvents.on("Session", info => {
 			if (("LogIn" === info.args.Type || "LogOut" === info.args.Type) && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				AppUtility.invoke(async () => {
-					await this.prepareSidebarFooterButtonsAsync();
+					await this.prepareSidebarFooterItemsAsync();
 					this.activeSidebar();
 				});
 			}
@@ -180,7 +180,7 @@ export class PortalsCoreService extends BaseService {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				this.updateSidebarTitle();
 				AppUtility.invoke(async () => {
-					await this.prepareSidebarFooterButtonsAsync();
+					await this.prepareSidebarFooterItemsAsync();
 					this.prepareSidebar();
 					if ("LogOut" === info.args.Type) {
 						this.configSvc.appConfig.options.extras["organizations"] = new Array<string>();
@@ -217,7 +217,7 @@ export class PortalsCoreService extends BaseService {
 			}
 			this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 		}
-		await this.prepareSidebarFooterButtonsAsync(onNext);
+		await this.prepareSidebarFooterItemsAsync(onNext);
 		AppEvents.broadcast(this.name, { Type: "PortalsInitialized" });
 		this.activeSidebar();
 	}
@@ -1425,8 +1425,8 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	private async prepareSidebarFooterButtonsAsync(onNext?: () => void) {
-		const buttons = [{
+	private async prepareSidebarFooterItemsAsync(onNext?: () => void) {
+		const items: Array<AppSidebarFooterItem> = [{
 			Name: "cms",
 			Icon: "logo-firebase",
 			Title: await this.configSvc.getResourceAsync("portals.preferences.cms"),
@@ -1434,7 +1434,7 @@ export class PortalsCoreService extends BaseService {
 		}];
 
 		if (this.configSvc.isAuthenticated) {
-			buttons.push(
+			items.push(
 				{
 					Name: "portals",
 					Icon: "cog",
@@ -1456,11 +1456,7 @@ export class PortalsCoreService extends BaseService {
 			);
 		}
 
-		buttons.forEach((button, index) => AppEvents.broadcast("UpdateSidebarFooter", {
-			Button: button,
-			Index: index,
-			Reset: index === 0
-		}));
+		AppEvents.broadcast("UpdateSidebarFooter", { Items: items, Reset: true });
 
 		if (onNext !== undefined) {
 			onNext();
