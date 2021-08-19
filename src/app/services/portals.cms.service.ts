@@ -48,12 +48,12 @@ export class PortalsCmsService extends BaseService {
 		const organization = this.portalsCoreSvc.activeOrganization;
 		const cmsItems = organization !== undefined ? Item.instances.toArray(item => item.SystemID === organization.ID) : [];
 		const cmsContents = organization !== undefined ? Content.instances.toArray(item => item.SystemID === organization.ID) : [];
-		const contents = new Dictionary<string, CmsBaseModel>();
-		cmsItems.sortBy({ name: "LastModified", reverse: true }).take(20).forEach(content => contents.set(content.ID, content));
-		cmsItems.sortBy({ name: "Created", reverse: true }).take(20).forEach(content => contents.set(content.ID, content));
-		cmsContents.sortBy({ name: "LastModified", reverse: true }).take(20).forEach(content => contents.set(content.ID, content));
-		cmsContents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }).take(20).forEach(content => contents.set(content.ID, content));
-		return contents.toArray();
+		return new Dictionary<string, CmsBaseModel>()
+			.merge(cmsItems.sortBy({ name: "LastModified", reverse: true }).take(20), content => content.ID)
+			.merge(cmsItems.sortBy({ name: "Created", reverse: true }).take(20), content => content.ID)
+			.merge(cmsContents.sortBy({ name: "LastModified", reverse: true }).take(20), content => content.ID)
+			.merge(cmsContents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }).take(20), content => content.ID)
+			.toArray();
 	}
 
 	private initialize() {
@@ -125,7 +125,7 @@ export class PortalsCmsService extends BaseService {
 				this._sidebarContentType = undefined;
 				await this.updateSidebarAsync();
 			}
-			else if ("RequestFeaturedContents" === info.args.Type) {
+			else if ("FeaturedContents" === info.args.Type && "Request" === info.args.Mode) {
 				const organization = this.portalsCoreSvc.activeOrganization;
 				if (organization !== undefined && !this._noContents.contains(organization.ID)) {
 					if (organization.modules.toList().SelectMany(module => module.contentTypes.toList()).Count() > 0) {
@@ -579,7 +579,7 @@ export class PortalsCmsService extends BaseService {
 		const onSuccess = (data?: any) => {
 			if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
 				this._noContents.remove(data.Objects.first().SystemID);
-				AppEvents.broadcast(this.name, { Type: "FeaturedContentsPrepared" });
+				AppEvents.broadcast(this.name, { Type: "FeaturedContents", Mode: "Prepared" });
 			}
 			if (index < contentTypes.length - 1) {
 				AppUtility.invoke(async () => await this.getFeaturedContentsAsync(contentTypes, index + 1));

@@ -68,7 +68,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}
 
 		AppEvents.on(this.portalsCmsSvc.name, info => {
-			if ("FeaturedContentsPrepared" === info.args.Type || ("Changed" === info.args.Type && "Organization" === info.args.Object)) {
+			if (("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode) || ("Changed" === info.args.Type && "Organization" === info.args.Object)) {
 				AppUtility.invoke(() => this.prepareContents(true));
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
@@ -91,37 +91,34 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 	}
 
 	private prepareContents(force: boolean = false) {
-		if (!this.configSvc.isAuthenticated) {
-			return;
-		}
-
-		if (this.contents.length < 1 || force) {
-			const organization = this.portalsCoreSvc.activeOrganization;
-			const organizationID = organization !== undefined ? organization.ID : undefined;
-			const filterBy: (content: FeaturedContent) => boolean = AppUtility.isNotEmpty(this.status)
-				? content => content.SystemID === organizationID && content.Status === this.status
-				: content => content.SystemID === organizationID;
-			const orderBy = this._isPublished
-				? [{ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }]
-				: [];
-			orderBy.push({ name: "LastModified", reverse: true });
-			this.contents = this.portalsCmsSvc.featuredContents.map(content => ({
-				ID: content.ID,
-				Title: content.Title,
-				Status: content.Status,
-				ThumbnailURI: content.thumbnailURI,
-				Created: new Date(content.Created),
-				LastModified: new Date(content.LastModified),
-				StartDate: new Date(content["StartDate"] || content.Created),
-				PublishedTime: new Date(content["PublishedTime"] || content.Created),
-				SystemID: content.SystemID,
-				Category: content["category"],
-				OriginalObject: content
-			} as FeaturedContent)).filter(filterBy).orderBy(orderBy).take(this.amount);
-		}
-
-		if (this.contents.length < 1) {
-			AppEvents.broadcast(this.portalsCoreSvc.name, { Type: "RequestFeaturedContents" });
+		if (this.configSvc.isAuthenticated) {
+			if (this.contents.length < 1 || force) {
+				const organization = this.portalsCoreSvc.activeOrganization;
+				const organizationID = organization !== undefined ? organization.ID : undefined;
+				const filterBy: (content: FeaturedContent) => boolean = AppUtility.isNotEmpty(this.status)
+					? content => content.SystemID === organizationID && content.Status === this.status
+					: content => content.SystemID === organizationID;
+				const orderBy = this._isPublished
+					? [{ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }]
+					: [];
+				orderBy.push({ name: "LastModified", reverse: true });
+				this.contents = this.portalsCmsSvc.featuredContents.map(content => ({
+					ID: content.ID,
+					Title: content.Title,
+					Status: content.Status,
+					ThumbnailURI: content.thumbnailURI,
+					Created: new Date(content.Created),
+					LastModified: new Date(content.LastModified),
+					StartDate: new Date(content["StartDate"] || content.Created),
+					PublishedTime: new Date(content["PublishedTime"] || content.Created),
+					SystemID: content.SystemID,
+					Category: content["category"],
+					OriginalObject: content
+				} as FeaturedContent)).filter(filterBy).orderBy(orderBy).take(this.amount);
+			}
+			if (this.contents.length < 1) {
+				AppEvents.broadcast(this.portalsCoreSvc.name, { Type: "FeaturedContents", Mode: "Request" });
+			}
 		}
 	}
 
