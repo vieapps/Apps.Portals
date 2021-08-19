@@ -225,23 +225,20 @@ export class AppComponent implements OnInit {
 		this.sidebar.updateFooter = (args: any) => {
 			const predicate: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean = typeof args.Predicate === "function"
 				? (sidebar, item) => args.Predicate(sidebar, item)
-				: (sidebar, item) => sidebar.Footer.findIndex(btn => btn.Name === item.Name) < 0;
-			const onCompleted: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void = typeof args.onCompleted === "function"
-				? (sidebar, item) => args.onCompleted(sidebar, item)
+				: (sidebar, item) => sidebar.Footer.findIndex(icon => icon.Name === item.Name) < 0;
+			const onUpdated: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void = typeof args.onUpdated === "function"
+				? (sidebar, item) => args.onUpdated(sidebar, item)
 				: (sidebar, item) => {
-						const index = item.Name === "preferences" ? 0 : sidebar.Footer.findIndex(btn => btn.Name === item.Name);
+						const index = item.Name === "preferences" ? 0 : sidebar.Footer.findIndex(icon => icon.Name === item.Name);
 						if (index > 0 && sidebar.Footer[index - 1].Name === "preferences") {
 							sidebar.Footer.move(index, index - 1);
 						}
 					};
-			this.sidebar.Footer = !!args.Reset ? [] : this.sidebar.Footer;
+			this.sidebar.Footer = !!args.Reset || !!args.Clear ? [] : this.sidebar.Footer;
 			if (AppUtility.isArray(args.Items, true)) {
-				(args.Items as Array<AppSidebarFooterItem>).forEach(item => {
-					if (predicate(this.sidebar, item)) {
-						const index = item["Index"] as number;
-						this.sidebar.Footer.insert(item, index !== undefined && index > -1 && index < this.sidebar.Footer.length ? index : this.sidebar.Footer.length);
-						onCompleted(this.sidebar, item);
-					}
+				(args.Items as Array<AppSidebarFooterItem>).filter(item => predicate(this.sidebar, item)).forEach(item => {
+					this.sidebar.Footer.insert(item, item["Index"] as number);
+					onUpdated(this.sidebar, item);
 				});
 				this.sidebar.normalizeFooter();
 			}
