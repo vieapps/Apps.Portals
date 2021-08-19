@@ -95,9 +95,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		const organization = this.configSvc.isAuthenticated ? await this.portalsCoreSvc.getActiveOrganizationAsync() : undefined;
 		this.shortcuts.insert({
 			Title: AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.organization"), { organization: organization !== undefined ? organization.Title : "N/A" }),
-			Icon: {
-				Name: "business"
-			},
+			Icon: { Name: "business" },
 			Editable: false,
 			Removable: true,
 			OnClick: async _ => await this.changeOrganizationAsync(),
@@ -107,9 +105,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		const module = this.configSvc.isAuthenticated ? await this.portalsCoreSvc.getActiveModuleAsync() : undefined;
 		this.shortcuts.insert({
 			Title: AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.module"), { module: module !== undefined ? module.Title : "N/A" }),
-			Icon: {
-				Name: "albums"
-			},
+			Icon: { Name: "albums" },
 			Editable: false,
 			Removable: false,
 			OnClick: async () => await this.changeModuleAsync()
@@ -118,22 +114,26 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		this.shortcuts.insert({
 			Title: shortcuts.contents as string || await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.labels.contents"),
 			Link: this.configSvc.isAuthenticated ? this.portalsCoreSvc.getRouterLink(undefined, "list", "all", "category") : undefined,
-			Icon: {
-				Name: "logo-firebase"
-			},
+			Icon: { Name: "logo-firebase" },
 			Editable: false,
-			Removable: false
+			Removable: false,
+			OnClick: shortcut => {
+				AppEvents.broadcast("OpenSidebar", { Name: "cms" });
+				AppUtility.invoke(async () => await this.configSvc.navigateForwardAsync(shortcut.Link));
+			}
 		}, 2);
 
 		const contentType = this.configSvc.isAuthenticated ? this.portalsCmsSvc.getDefaultContentTypeOfItem(module) || this.portalsCmsSvc.getDefaultContentTypeOfLink(module) : undefined;
 		this.shortcuts.insert({
 			Title: shortcuts.others as string || await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.labels.others"),
 			Link: this.portalsCoreSvc.getAppURL(contentType),
-			Icon: {
-				Name: "newspaper"
-			},
+			Icon: { Name: "newspaper" },
 			Editable: false,
-			Removable: false
+			Removable: false,
+			OnClick: shortcut => {
+				AppEvents.broadcast("OpenSidebar", { Name: "cms" });
+				AppUtility.invoke(async () => await this.configSvc.navigateForwardAsync(shortcut.Link));
+			}
 		}, 3);
 
 		this.shortcuts.forEach((shortcut, order) => {
@@ -152,13 +152,13 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		return `${shortcut.Title}@${index}`;
 	}
 
-	async navigateAsync(shortcut: AppShortcut, index: number, event: Event) {
+	navigate(shortcut: AppShortcut, index: number, event: Event) {
 		event.stopPropagation();
 		if (typeof shortcut.OnClick === "function") {
 			shortcut.OnClick(shortcut, index, event);
 		}
 		else {
-			await this.configSvc.navigateAsync(shortcut.Direction, shortcut.Link);
+			AppUtility.invoke(async () => await this.configSvc.navigateAsync(shortcut.Direction, shortcut.Link));
 		}
 	}
 

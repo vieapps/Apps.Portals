@@ -1294,8 +1294,8 @@ export class PortalsCoreService extends BaseService {
 		AppUtility.invoke(async () => {
 			const organization = this.configSvc.isAuthenticated ? this.activeOrganization : undefined;
 			AppEvents.broadcast("UpdateSidebarTitle", {
-				Title: organization !== undefined ? organization.Alias : this.configSvc.appConfig.app.name,
-				OnClick: (organization !== undefined && this.canManageOrganization(organization) ? async _ => await this.configSvc.navigateForwardAsync(organization.routerURI) : _ => {}) as (sidebar?: AppSidebar, event?: Event) => void
+				title: organization !== undefined ? organization.Alias : this.configSvc.appConfig.app.name,
+				onClick: (organization !== undefined && this.canManageOrganization(organization) ? async _ => await this.configSvc.navigateForwardAsync(organization.routerURI) : _ => {}) as (sidebar?: AppSidebar, event?: Event) => void
 			});
 		}, 13);
 	}
@@ -1394,9 +1394,10 @@ export class PortalsCoreService extends BaseService {
 		}
 
 		AppEvents.broadcast("UpdateSidebar", {
-			Index: 1,
-			Name: "portals",
-			Items: items
+			name: "portals",
+			parent: { Title: "{{portals.sidebar.titles.system}}" },
+			items: items,
+			index: 1
 		});
 
 		if (onNext !== undefined) {
@@ -1456,7 +1457,7 @@ export class PortalsCoreService extends BaseService {
 			);
 		}
 
-		AppEvents.broadcast("UpdateSidebarFooter", { Items: items, Reset: true });
+		AppEvents.broadcast("UpdateSidebarFooter", { items: items, reset: true });
 
 		if (onNext !== undefined) {
 			onNext();

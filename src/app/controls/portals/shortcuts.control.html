@@ -9,7 +9,7 @@
 	</ion-row>
 	<ion-row>
 		<ion-col *ngFor="let shortcut of shortcuts; let idx=index; trackBy: track" size="12" size-lg="6">
-			<ion-item [color]="color" (click)="navigateAsync(shortcut, idx, $event)" class="ion-activatable" detail="false" lines="none">
+			<ion-item [color]="color" (click)="navigate(shortcut, idx, $event)" class="ion-activatable" detail="false" lines="none">
 				<ion-icon *ngIf="shortcut.Icon && shortcut.Icon.Name" [name]="shortcut.Icon.Name" [color]="shortcut.Icon.Color" slot="start"></ion-icon>
 				<ion-label>
 					<span *ngIf="isAuthenticated" class="ion-float-end">

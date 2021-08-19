@@ -120,29 +120,29 @@ export class BooksService extends BaseService {
 		AppUtility.invoke(() => {
 			const profile = this.configSvc.getAccount().profile;
 			AppEvents.broadcast("UpdateSidebarTitle", {
-				Title: profile !== undefined ? profile.Name : this.configSvc.appConfig.app.name,
-				OnClick: profile !== undefined ? () => AppEvents.broadcast("Navigate", { Type: "Profile" }) : undefined
+				title: profile !== undefined ? profile.Name : this.configSvc.appConfig.app.name,
+				onClick: profile !== undefined ? () => AppEvents.broadcast("Navigate", { Type: "Profile" }) : undefined
 			});
 		}, 13);
 	}
 
 	private async updateSidebarAsync() {
 		AppEvents.broadcast("UpdateSidebar", {
-			Index: this.menuIndex,
-			Name: "books",
-			Parent: { Title: await this.configSvc.getResourceAsync("books.home.statistics.categories") },
-			Items: this.categories.map(category => ({
+			name: "books",
+			parent: { Title: await this.configSvc.getResourceAsync("books.home.statistics.categories") },
+			items: this.categories.map(category => ({
 				Title: category.Name,
 				Link: `/books/category/${AppUtility.toANSI(category.Name, true)}`,
 				Params: { "x-request": AppCrypto.jsonEncode({ Category: category.Name }) },
 				Expanded: AppUtility.isGotData(category.Children),
 				Direction: "root"
-			}))
+			})),
+			index: this.menuIndex,
 		});
 	}
 
 	private prepareSidebarFooterItems(onNext?: () => void) {
-		AppEvents.broadcast("UpdateSidebarFooter", { Items: [{
+		AppEvents.broadcast("UpdateSidebarFooter", { items: [{
 			Name: "books",
 			Icon: "library",
 			Title: "eBooks",
@@ -177,27 +177,26 @@ export class BooksService extends BaseService {
 			this._reading.ID = book.ID;
 			this._reading.Chapter = chapter - 1;
 			AppEvents.broadcast("UpdateSidebar", {
-				Index: this.menuIndex,
-				Reset: true,
-				Name: "books",
-				Parent: {
+				name: "books",
+				parent: {
 					Title: book.Title,
 					Thumbnail: book.Cover
 				},
-				Items: book.TOCs.map((_, index) => this.getTOCItem(book, index, index === this._reading.Chapter))
+				items: book.TOCs.map((_, index) => this.getTOCItem(book, index, index === this._reading.Chapter)),
+				index: this.menuIndex
 			});
 		}
 		else {
 			AppEvents.broadcast("UpdateSidebarItem", {
-				MenuIndex: this.menuIndex,
-				ItemIndex: this._reading.Chapter,
-				ItemInfo: this.getTOCItem(book, this._reading.Chapter, false)
+				menuIndex: this.menuIndex,
+				itemIndex: this._reading.Chapter,
+				itemInfo: this.getTOCItem(book, this._reading.Chapter, false)
 			});
 			this._reading.Chapter = chapter - 1;
 			AppEvents.broadcast("UpdateSidebarItem", {
-				MenuIndex: this.menuIndex,
-				ItemIndex: this._reading.Chapter,
-				ItemInfo: this.getTOCItem(book, this._reading.Chapter, true)
+				menuIndex: this.menuIndex,
+				itemIndex: this._reading.Chapter,
+				itemInfo: this.getTOCItem(book, this._reading.Chapter, true)
 			});
 		}
 	}

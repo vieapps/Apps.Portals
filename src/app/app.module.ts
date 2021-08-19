@@ -1,5 +1,5 @@
 import { NgModule, Injectable } from "@angular/core";
-import { BrowserModule, HammerGestureConfig, HAMMER_GESTURE_CONFIG } from "@angular/platform-browser";
+import { BrowserModule, HammerModule, HammerGestureConfig, HAMMER_GESTURE_CONFIG } from "@angular/platform-browser";
 import { HttpClient, HttpClientModule } from "@angular/common/http";
 import { RouteReuseStrategy } from "@angular/router";
 
@@ -103,7 +103,8 @@ export class HammerConfig extends HammerGestureConfig {
 		DataLookupModalPageModule,
 		TimePipeModule,
 		AppFormsModule,
-		AppRoutingModule
+		AppRoutingModule,
+		HammerModule
 	],
 	declarations: [AppComponent],
 	bootstrap: [AppComponent]

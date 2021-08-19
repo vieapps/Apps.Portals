@@ -428,10 +428,10 @@ export class PortalsCmsService extends BaseService {
 
 	private updateSidebar(items?: Array<AppSidebarMenuItem>, parent?: AppSidebarMenuItem, onNext?: () => void) {
 		AppEvents.broadcast("UpdateSidebar", {
-			Index: 0,
-			Name: "cms",
-			Parent: parent,
-			Items: items
+			name: "cms",
+			parent: parent,
+			items: items,
+			index: 0,
 		});
 		if (onNext !== undefined) {
 			onNext();
@@ -459,7 +459,7 @@ export class PortalsCmsService extends BaseService {
 				Link: this.portalsCoreSvc.getRouterLink(contentType, "list"),
 				Params: this.portalsCoreSvc.getRouterQueryParams(contentType)
 			})),
-			{ Title: await this.configSvc.getResourceAsync("portals.sidebar.cms-contents") },
+			{ Title: await this.configSvc.getResourceAsync("portals.sidebar.titles.contents") },
 			onNext
 		);
 	}
@@ -551,7 +551,7 @@ export class PortalsCmsService extends BaseService {
 		return {
 			Parent: {
 				ID: parent === undefined ? undefined : parent.ID,
-				Title: parent === undefined ? "{{portals.sidebar.cms-categories}}" : parent.Title,
+				Title: parent === undefined ? "{{portals.sidebar.titles.categories}}" : parent.Title,
 				Link: parent === undefined ? undefined : this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", parent.ansiTitle),
 				Params: parent === undefined ? undefined : this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: parent.ID }),
 				Expanded: parent !== undefined,

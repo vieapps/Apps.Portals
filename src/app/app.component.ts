@@ -83,7 +83,7 @@ export class AppComponent implements OnInit {
 	}
 
 	get isSidebarTopMenuShown() {
-		return !(this.sidebar.Active === "portals" || this.sidebar.Active === "notifications" || this.sidebar.Active === "chat" || this.sidebar.Active === "preferences");
+		return !(this.sidebar.Active === "notifications" || this.sidebar.Active === "chat" || this.sidebar.Active === "preferences");
 	}
 
 	public ngOnInit() {
@@ -156,6 +156,7 @@ export class AppComponent implements OnInit {
 
 	private prepareSidebar() {
 		this.sidebar.Header.AvatarOnClick = () => AppEvents.broadcast("Navigate", { Type: "Profile" });
+		this.sidebar.Header.TitleOnClick = () => {};
 
 		this.sidebar.toggle = (visible?: boolean) => {
 			this.sidebar.Visible = visible !== undefined ? !!visible : !this.sidebar.Visible;
@@ -211,20 +212,23 @@ export class AppComponent implements OnInit {
 			this.sidebar.MainMenu[index].Items = items || [];
 		};
 
-		this.sidebar.updateHeader = (args: any, updateAvatar: boolean) => {
-			if (args !== undefined) {
-				this.sidebar.Header.Title = AppUtility.isNotEmpty(args.Title) ? args.Title : this.sidebar.Header.Title;
-				this.sidebar.Header.TitleOnClick = typeof args.OnClick === "function" ? args.OnClick : _ => {};
+		this.sidebar.updateHeader = (args: { title?: string; onClick?: (sidebar?: AppSidebar, event?: Event) => void; updateAvatar?: boolean; }) => {
+			args = args || {};
+			if (AppUtility.isNotEmpty(args.title)) {
+				this.sidebar.Header.Title = args.title;
 			}
-			if (updateAvatar) {
+			if (typeof args.onClick === "function") {
+				this.sidebar.Header.TitleOnClick = args.onClick;
+			}
+			if (!!args.updateAvatar) {
 				const profile = this.configSvc.getAccount().profile;
 				this.sidebar.Header.Avatar = profile !== undefined ? profile.avatarURI : undefined;
 			}
 		};
 
-		this.sidebar.updateFooter = (args: any) => {
-			const predicate: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean = typeof args.Predicate === "function"
-				? (sidebar, item) => args.Predicate(sidebar, item)
+		this.sidebar.updateFooter = (args: { items: Array<AppSidebarFooterItem>; reset?: boolean; predicate?: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean; onUpdated?: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void; }) => {
+			const predicate: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean = typeof args.predicate === "function"
+				? (sidebar, item) => args.predicate(sidebar, item)
 				: (sidebar, item) => sidebar.Footer.findIndex(icon => icon.Name === item.Name) < 0;
 			const onUpdated: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void = typeof args.onUpdated === "function"
 				? (sidebar, item) => args.onUpdated(sidebar, item)
@@ -234,9 +238,9 @@ export class AppComponent implements OnInit {
 							sidebar.Footer.move(index, index - 1);
 						}
 					};
-			this.sidebar.Footer = !!args.Reset || !!args.Clear ? [] : this.sidebar.Footer;
-			if (AppUtility.isArray(args.Items, true)) {
-				(args.Items as Array<AppSidebarFooterItem>).filter(item => predicate(this.sidebar, item)).forEach(item => {
+			this.sidebar.Footer = !!args.reset ? [] : this.sidebar.Footer;
+			if (AppUtility.isArray(args.items, true)) {
+				args.items.filter(item => predicate(this.sidebar, item)).forEach(item => {
 					this.sidebar.Footer.insert(item, item["Index"] as number);
 					onUpdated(this.sidebar, item);
 				});
@@ -246,37 +250,33 @@ export class AppComponent implements OnInit {
 
 		this.sidebar.normalizeFooter = () => {
 			if (this.configSvc.isAuthenticated && this.sidebar.Footer.length > 0) {
-				AppUtility.invoke(async () => {
-					if (this.sidebar.Footer.findIndex(item => item.Name === "preferences") < 0) {
-						this.sidebar.updateFooter({ Items: [{
-							Name: "preferences",
-							Icon: "settings",
-							Title: await this.configSvc.getResourceAsync("common.preferences.label"),
-							OnClick: (name: string, sidebar: AppSidebar) => {
-								sidebar.Active = name;
-								sidebar.active(name, true);
-							}
-						}] });
+				AppUtility.invoke(async () => this.sidebar.updateFooter({ items: [{
+					Name: "preferences",
+					Icon: "settings",
+					Title: await this.configSvc.getResourceAsync("common.preferences.label"),
+					OnClick: (name: string, sidebar: AppSidebar) => {
+						sidebar.Active = name;
+						sidebar.active(name, true);
 					}
-				}, 1234);
+				}] }), 1234);
 			}
 		};
 	}
 
-	private async updateSidebarAsync(args: any, updateTopMenu: boolean = false, onNext?: () => void) {
-		const header = args.Header;
-		if (header !== undefined) {
+	private async updateSidebarAsync(args: { header?: any; footer?: Array<AppSidebarFooterItem>; name?: string; parent?: AppSidebarMenuItem, items?: Array<AppSidebarMenuItem>; index?: number; }, updateTopMenu: boolean = false, onNext?: () => void) {
+		args = args || {};
+
+		if (AppUtility.isObject(args.header, true)) {
 			this.sidebar.Header = {
-				Avatar: header.Thumbnail || this.sidebar.Header.Avatar,
-				AvatarOnClick: header.ThumbnailOnClick || this.sidebar.Header.AvatarOnClick || (() => {}),
-				Title: header.Title || this.sidebar.Header.Title,
-				TitleOnClick: header.TitleOnClick || this.sidebar.Header.TitleOnClick || (() => {})
+				Avatar: args.header.Avatar || this.sidebar.Header.Avatar,
+				AvatarOnClick: args.header.AvatarOnClick || this.sidebar.Header.AvatarOnClick || (() => {}),
+				Title: args.header.Title || this.sidebar.Header.Title,
+				TitleOnClick: args.header.TitleOnClick || this.sidebar.Header.TitleOnClick || (() => {})
 			};
 		}
 
-		const footer = args.Footer;
-		if (AppUtility.isArray(footer, true)) {
-			this.sidebar.Footer = footer;
+		if (AppUtility.isArray(args.footer, true)) {
+			this.sidebar.Footer = args.footer;
 			this.sidebar.normalizeFooter();
 		}
 
@@ -314,25 +314,25 @@ export class AppComponent implements OnInit {
 			]);
 		}
 
-		if (args.Name !== undefined || args.Parent !== undefined || args.Items !== undefined) {
-			const parent = AppUtility.isObject(args.Parent, true)
+		if (args.name !== undefined || args.parent !== undefined || args.items !== undefined) {
+			const parent = AppUtility.isObject(args.parent, true)
 				? {
-						ID: args.Parent.ID,
-						Title: args.Parent.Title,
-						Link: args.Parent.Link,
-						Params: args.Parent.Params,
-						Expanded: !!args.Parent.Expanded,
-						Detail: !!args.Parent.Detail,
-						Thumbnail: args.Parent.Thumbnail,
-						Icon: args.Parent.Icon,
-						OnClick: typeof args.Parent.OnClick === "function" ? args.Parent.OnClick : _ => {}
+						ID: args.parent.ID,
+						Title: args.parent.Title,
+						Link: args.parent.Link,
+						Params: args.parent.Params,
+						Expanded: !!args.parent.Expanded,
+						Detail: !!args.parent.Detail,
+						Thumbnail: args.parent.Thumbnail,
+						Icon: args.parent.Icon,
+						OnClick: typeof args.parent.OnClick === "function" ? args.parent.OnClick : _ => {}
 					} as AppSidebarMenuItem
 				: undefined;
 			if (parent !== undefined && AppUtility.isNotEmpty(parent.Title) && parent.Title.startsWith("{{") && parent.Title.endsWith("}}")) {
 				parent.Title = await this.configSvc.getResourceAsync(parent.Title.substr(2, parent.Title.length - 4).trim());
 			}
-			const items = AppUtility.isArray(args.Items, true)
-				? (args.Items as Array<any>).map(item => ({
+			const items = AppUtility.isArray(args.items, true)
+				? args.items.map(item => ({
 						ID: item.ID,
 						Title: item.Title,
 						Link: item.Link,
@@ -355,7 +355,7 @@ export class AppComponent implements OnInit {
 					}
 				}));
 			}
-			this.sidebar.updateMainMenu(args.Name, parent, items, args.Index !== undefined ? args.Index as number : 0);
+			this.sidebar.updateMainMenu(args.name, parent, items, args.index);
 		}
 
 		if (onNext !== undefined) {
@@ -364,19 +364,19 @@ export class AppComponent implements OnInit {
 	}
 
 	private async updateSidebarMainMenuItemAsync(args: any) {
-		let menuIndex = args.MenuIndex !== undefined ? args.MenuIndex as number : -1;
+		let menuIndex = args.menuIndex !== undefined ? args.menuIndex as number : -1;
 		if (menuIndex < 0) {
 			menuIndex = 0;
 		}
 		else if (menuIndex >= this.sidebar.MainMenu.length) {
 			menuIndex = this.sidebar.MainMenu.length;
-			this.sidebar.MainMenu.push({ Name: undefined, Items: []});
+			this.sidebar.MainMenu.push({ Name: undefined, Parent: undefined, Items: [] });
 		}
-		const menuItem = this.getSidebarMainMenuItem(args.ItemInfo);
+		const menuItem = this.getSidebarMainMenuItem(args.itemInfo);
 		if (AppUtility.isNotEmpty(menuItem.Title) && menuItem.Title.startsWith("{{") && menuItem.Title.endsWith("}}")) {
 			menuItem.Title = await this.configSvc.getResourceAsync(menuItem.Title.substr(2, menuItem.Title.length - 4).trim());
 		}
-		this.sidebar.MainMenu[menuIndex].Items.update(menuItem, args.ItemIndex !== undefined ? args.ItemIndex as number : -1);
+		this.sidebar.MainMenu[menuIndex].Items.update(menuItem, args.itemIndex !== undefined ? args.itemIndex as number : -1);
 	}
 
 	private getSidebarMainMenuItem(args: any): AppSidebarMenuItem {
@@ -422,8 +422,8 @@ export class AppComponent implements OnInit {
 		AppEvents.on("AddSidebarItem", info => AppUtility.invoke(async () => await this.updateSidebarMainMenuItemAsync(info.args)));
 		AppEvents.on("UpdateSidebarItem", info => AppUtility.invoke(async () => await this.updateSidebarMainMenuItemAsync(info.args)));
 
-		AppEvents.on("UpdateSidebarTitle", info => this.sidebar.updateHeader(info.args, false));
-		AppEvents.on("UpdateSidebarHeader", info => this.sidebar.updateHeader(info.args, true));
+		AppEvents.on("UpdateSidebarTitle", info => this.sidebar.updateHeader(info.args));
+		AppEvents.on("UpdateSidebarHeader", info => this.sidebar.updateHeader(info.args));
 		AppEvents.on("UpdateSidebarFooter", info => this.sidebar.updateFooter(info.args));
 
 		AppEvents.on("Navigate", async info => {
@@ -458,7 +458,7 @@ export class AppComponent implements OnInit {
 		AppEvents.on("Session", info => {
 			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
 				if ("LogOut" === info.args.Type) {
-					this.sidebar.updateHeader({ Title: this.configSvc.appConfig.app.name }, true);
+					this.sidebar.updateHeader({ title: this.configSvc.appConfig.app.name, onClick: () => {}, updateAvatar: true });
 				}
 				AppUtility.invoke(async () => await this.updateSidebarAsync({}, true, () => this.sidebar.normalizeTopMenu()));
 			}
@@ -466,7 +466,7 @@ export class AppComponent implements OnInit {
 
 		AppEvents.on("Profile", info => {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode) {
-				this.sidebar.updateHeader(undefined, true);
+				this.sidebar.updateHeader({ updateAvatar: true });
 			}
 		});
 	}

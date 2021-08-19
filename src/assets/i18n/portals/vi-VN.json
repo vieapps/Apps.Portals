@@ -15,8 +15,11 @@
 			"modules": "Module nghiệp vụ",
 			"content-types": "Kiểu dữ liệu nghiệp vụ",
 			"expressions": "Biểu thức truy vấn - sắp xếp",
-			"cms-categories": "Phân loại nội dung",
-			"cms-contents": "Các nội dung"
+			"titles": {
+				"system": "Quản trị",
+				"categories": "Phân loại nội dung",
+				"contents": "Các nội dung"
+			}
 		},
 		"common": {
 			"unspecified": "Không xác định",
