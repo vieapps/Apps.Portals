@@ -159,14 +159,14 @@ export class LogsListPage implements OnInit, OnDestroy {
 				this.pageNumber++;
 				this.pagination = AppPagination.getDefault(data);
 				this.pagination.PageNumber = this.pageNumber;
-				this.configSvc.serviceLogs = this.configSvc.serviceLogs.concat(data.Objects);
+				this.configSvc.serviceLogs.merge(data.Objects);
 				await this.appFormsSvc.hideLoadingAsync(() => {
 					if (onNext !== undefined) {
 						onNext(data);
 					}
 				});
 			},
-			async _ => await this.appFormsSvc.hideLoadingAsync(async () => await TrackingUtility.trackAsync({ title: "Browse Logs (Error)", category: "ServiceLog", action: "Browse" }))
+			async _ => await this.appFormsSvc.hideLoadingAsync()
 		);
 	}
 
@@ -179,9 +179,6 @@ export class LogsListPage implements OnInit, OnDestroy {
 			undefined,
 			undefined,
 			data => {
-				if (this.configSvc.isDebug) {
-					console.log("<Logs>: Filtered", data);
-				}
 				if (AppUtility.isNotEmpty(data.CorrelationID)) {
 					this.filterBy["CorrelationID"] = data.CorrelationID;
 				}

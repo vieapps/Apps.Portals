@@ -65,7 +65,7 @@ export class PlatformUtility {
 	public static openURL(url?: string, target?: string) {
 		if (AppUtility.isNotEmpty(url)) {
 			if (this._electronService !== undefined) {
-				this._electronService.shell.openExternal(url);
+				AppUtility.invoke(async () => await this._electronService.shell.openExternal(url));
 			}
 			else if (AppConfig.isNativeApp && this._inappBrowser !== undefined) {
 				this._inappBrowser.create(url, target || "_blank", {
@@ -96,19 +96,16 @@ export class PlatformUtility {
 
 	/** Copies the value into clipboard of the native app */
 	public static copyToNativeAppClipboard(value: string, onNext?: () => void) {
-		this._clipboard.copy(value).then(
-			() => {
+		AppUtility.invoke(async () => this._clipboard.copy(value)
+			.then(() => {
 				if (AppConfig.isDebug) {
 					console.log("Copied...", value);
 				}
 				if (onNext !== undefined) {
 					onNext();
 				}
-			},
-			error => {
-				console.error(`Copy error => ${AppUtility.getErrorMessage(error)}`, AppUtility.stringify(error));
-			}
-		);
+			})
+			.catch(error => console.error(`Copy error => ${AppUtility.getErrorMessage(error)}`, AppUtility.stringify(error))));
 	}
 
 	/** Copies the value into clipboard of the web app */

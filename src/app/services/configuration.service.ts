@@ -43,9 +43,13 @@ export class ConfigurationService extends BaseService {
 		private electronSvc: ElectronService
 	) {
 		super("Configuration");
-		AppStorage.initializeAsync(this.storage, () => this.showLog(`Storage is ready. Driver: ${this.storage.driver}`));
+		AppUtility.invoke(async () => await AppStorage.initializeAsync(this.storage, () => this.showLog(`Storage is ready. Driver: ${this.storage.driver}`)));
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", async () => await this.reloadGeoMetaAsync());
-		AppEvents.on("App", async info => await ("PlatformIsReady" === info.args.Type ? this.loadGeoMetaAsync() : AppUtility.promise));
+		AppEvents.on("App", info => {
+			if ("PlatformIsReady" === info.args.Type) {
+				AppUtility.invoke(async () => await this.loadGeoMetaAsync());
+			}
+		});
 	}
 
 	private _definitions: { [key: string]: any } = {};
@@ -300,9 +304,9 @@ export class ConfigurationService extends BaseService {
 		else {
 			AppConfig.app.shell = isNativeApp ? "Cordova" : "Browser";
 			if (isCordova && isNativeApp) {
-				this.appVersion.getVersionCode()
+				AppUtility.invoke(async () => this.appVersion.getVersionCode()
 					.then(version => AppConfig.app.version = isNativeApp && !this.isRunningOnIOS ? (version + "").replace(/0/g, ".") : version + "")
-					.catch(error => this.showError("Error occurred while preparing the app version", error));
+					.catch(error => this.showError("Error occurred while preparing the app version", error)));
 				PlatformUtility.setInAppBrowser(this.inappBrowser);
 				PlatformUtility.setClipboard(this.clipboard);
 				if (!this.isRunningOnIOS) {
@@ -312,7 +316,7 @@ export class ConfigurationService extends BaseService {
 		}
 
 		if (isCordova) {
-			TrackingUtility.initializeAsync(this.googleAnalytics);
+			AppUtility.invoke(async () => await TrackingUtility.initializeAsync(this.googleAnalytics));
 			if (this.isDebug) {
 				console.log(`Device Information\n- UUID: ${this.device.uuid}\n- Manufacturer: ${this.device.manufacturer}\n- Model: ${this.device.model}\n- Serial: ${this.device.serial}\n- Platform: ${this.device.platform} ${this.device.platform !== "browser" ? this.device.version : "[" + this.device.model + " v" + this.device.version + "]"}`);
 			}
@@ -421,20 +425,16 @@ export class ConfigurationService extends BaseService {
 		if (this.isAuthenticated) {
 			AppConfig.session.account.id = AppConfig.session.token.uid;
 			if (fetch) {
-				AppAPIs.sendWebSocketRequest(
-					{
-						ServiceName: "Users",
-						ObjectName: "Account",
-						Query: AppConfig.getRelatedJson({ "x-status": "true" })
-					}
-				);
-				AppAPIs.sendWebSocketRequest(
-					{
-						ServiceName: "Users",
-						ObjectName: "Profile",
-						Query: AppConfig.getRelatedJson({ "object-identity": AppConfig.session.account.id })
-					}
-				);
+				AppAPIs.sendWebSocketRequest({
+					ServiceName: "Users",
+					ObjectName: "Account",
+					Query: AppConfig.getRelatedJson({ "x-status": "true" })
+				});
+				AppAPIs.sendWebSocketRequest({
+					ServiceName: "Users",
+					ObjectName: "Profile",
+					Query: AppConfig.getRelatedJson({ "object-identity": AppConfig.session.account.id })
+				});
 			}
 		}
 
