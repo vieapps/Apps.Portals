@@ -40,14 +40,14 @@ export class HomePage implements OnInit, OnDestroy {
 		else {
 			AppEvents.on("App", info => {
 				if ("Initialized" === info.args.Type) {
-					AppUtility.invoke(async () => await this.prepareAsync(), 13);
+					AppUtility.invoke(async () => await this.prepareAsync());
 				}
 			}, "Home:AppInitialized");
 		}
 
 		AppEvents.on("App", info => {
 			if ("LanguageChanged" === info.args.Type) {
-				AppUtility.invoke(async () => await this.setTitleAsync(), 13);
+				AppUtility.invoke(async () => await this.setTitleAsync());
 			}
 		}, "Home:LanguageChanged");
 
@@ -56,7 +56,7 @@ export class HomePage implements OnInit, OnDestroy {
 				AppUtility.invoke(async () => {
 					await this.prepareAsync("Return");
 					AppEvents.broadcast("App", { Type: "HomePageIsOpened" });
-				}, 13);
+				});
 				this.changes = new Date();
 			}
 		}, "Home:Navigated");
