@@ -282,26 +282,26 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 
 	private async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const nextAsync = async (data: any) => {
+		const onSuccess = (data: any) => {
+			AppUtility.invoke(async () => await this.trackAsync(this.title.track));
 			try {
 				this.pageNumber++;
 				this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 				this.pagination.PageNumber = this.pageNumber;
 				this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-				await this.trackAsync(this.title.track);
 			}
-			catch (e) {
-				console.error("Error occurred while searching CMS content", e);
+			catch (error) {
+				console.error("Error occurred while searching CMS content", error);
 			}
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchContent(this.request, nextAsync, async error => await Promise.all([
+			this.subscription = this.portalsCmsSvc.searchContent(this.request, onSuccess, async error => await Promise.all([
 				this.appFormsSvc.showErrorAsync(error),
 				this.trackAsync(this.title.track)
 			]));
 		}
 		else {
-			await this.portalsCmsSvc.searchContentAsync(this.request, nextAsync, async error => await Promise.all([
+			await this.portalsCmsSvc.searchContentAsync(this.request, onSuccess, async error => await Promise.all([
 				this.appFormsSvc.showErrorAsync(error),
 				this.trackAsync(this.title.track)
 			]));
@@ -314,16 +314,10 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		}
 		else {
 			const predicate: (content: Content) => boolean = obj => obj.SystemID === this.organization.ID && (this.module !== undefined ? obj.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? obj.RepositoryEntityID === this.contentType.ID : true) && (this.category !== undefined ? obj.CategoryID === this.category.ID || (obj.OtherCategories !== undefined && obj.OtherCategories.indexOf(this.category.ID) > -1) : true);
-			let objects = results === undefined
-				? Content.instances.toList(predicate)
-				: Content.toList(results).Where(predicate);
-			objects = objects.OrderByDescending(obj => obj.StartDate).ThenByDescending(obj => obj.PublishedTime).ThenByDescending(obj => obj.LastModified);
-			if (results === undefined && this.pagination !== undefined) {
-				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
-			}
-			this.contents = results === undefined
-				? objects.ToArray()
-				: this.contents.concat(objects.ToArray());
+			let objects = results === undefined ? Content.instances.toArray(predicate) : Content.toArray(results).filter(predicate);
+			objects = objects.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true });
+			objects = results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects;
+			this.contents = results === undefined ? objects : this.contents.concat(objects);
 		}
 		if (onNext !== undefined) {
 			onNext();

@@ -41,21 +41,21 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			AppUtility.invoke(async () => {
 				await this.prepareLabelAsync();
 				await this.prepareShortcutsAsync();
-			}, 13);
+			});
 		}
 		else {
 			AppEvents.on("App", info => {
 				if ("Initialized" === info.args.Type) {
-					AppUtility.invoke(async () => await this.prepareLabelAsync(), 13);
+					AppUtility.invoke(async () => await this.prepareLabelAsync());
 				}
 				else if ("FullyInitialized" === info.args.Type) {
-					AppUtility.invoke(async () => await this.prepareShortcutsAsync(), 13);
+					AppUtility.invoke(async () => await this.prepareShortcutsAsync());
 				}
 			}, "Shortcuts:AppEvents");
 		}
 		AppEvents.on("Session", info => {
 			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
-				AppUtility.invoke(async () => await this.prepareShortcutsAsync(), 13);
+				AppUtility.invoke(async () => await this.prepareShortcutsAsync());
 			}
 		}, "Shortcuts:SessionEvents");
 		AppEvents.on(this.portalsCoreSvc.name, info => {
@@ -69,7 +69,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 					}
 					this.shortcuts[1].Title = AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.module"), { module: module !== undefined ? module.Title : "N/A" });
 					this.shortcuts[3].Link = this.portalsCoreSvc.getAppURL(contentType);
-				}, 13);
+				});
 			}
 		}, "Shortcuts:ModuleEvents");
 	}
