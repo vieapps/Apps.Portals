@@ -272,21 +272,26 @@ export class CmsItemListPage implements OnInit, OnDestroy {
 
 	private async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const nextAsync = async (data: any) => {
-			this.pageNumber++;
-			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
-			this.pagination.PageNumber = this.pageNumber;
-			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await this.trackAsync(this.title.track);
+		const onSuccess = (data: any) => {
+			AppUtility.invoke(async () => await this.trackAsync(this.title.track));
+			try {
+				this.pageNumber++;
+				this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
+				this.pagination.PageNumber = this.pageNumber;
+				this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
+			}
+			catch (error) {
+				console.error("Error occurred while searching CMS item", error);
+			}
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchItem(this.request, nextAsync, async error => await Promise.all([
+			this.subscription = this.portalsCmsSvc.searchItem(this.request, onSuccess, async error => await Promise.all([
 				this.appFormsSvc.showErrorAsync(error),
 				this.trackAsync(this.title.track)
 			]));
 		}
 		else {
-			await this.portalsCmsSvc.searchItemAsync(this.request, nextAsync, async error => await Promise.all([
+			await this.portalsCmsSvc.searchItemAsync(this.request, onSuccess, async error => await Promise.all([
 				this.appFormsSvc.showErrorAsync(error),
 				this.trackAsync(this.title.track)
 			]));
@@ -299,16 +304,10 @@ export class CmsItemListPage implements OnInit, OnDestroy {
 		}
 		else {
 			const predicate: (item: Item) => boolean = obj => obj.SystemID === this.organization.ID && (this.module !== undefined ? obj.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? obj.RepositoryEntityID === this.contentType.ID : true);
-			let objects = results === undefined
-				? Item.instances.toList(predicate)
-				: Item.toList(results).Where(predicate);
-			objects = objects.OrderByDescending(obj => obj.Created);
-			if (results === undefined && this.pagination !== undefined) {
-				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
-			}
-			this.items = results === undefined
-				? objects.ToArray()
-				: this.items.concat(objects.ToArray());
+			let objects = results === undefined ? Item.instances.toArray(predicate) : Item.toArray(results).filter(predicate);
+			objects = objects.sortBy({ name: "Created", reverse: true });
+			objects = results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects;
+			this.items = results === undefined ? objects : this.items.concat(objects);
 		}
 		if (onNext !== undefined) {
 			onNext();
