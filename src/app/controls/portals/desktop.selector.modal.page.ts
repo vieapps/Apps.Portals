@@ -4,6 +4,7 @@ import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppPagination } from "@app/components/app.pagination";
 import { AppFormsService } from "@app/components/forms.service";
 import { AppDataPagination, AppDataRequest } from "@app/components/app.objects";
@@ -70,6 +71,7 @@ export class DesktopsSelectorModalPage implements OnInit, OnDestroy {
 	parentDesktop: Desktop;
 
 	ngOnInit() {
+		AppUtility.invoke(async () => await TrackingUtility.trackAsync({ title: "Lookup - Desktop", category: "Desktop", action: "Lookup" }));
 		this.multiple = this.multiple === undefined ? true : AppUtility.isTrue(this.multiple);
 		this.excludedIDs = AppUtility.isArray(this.excludedIDs, true) ? this.excludedIDs.filter(id => AppUtility.isNotEmpty(id)).map(id => id.trim()) : [];
 		this.initializeAsync();

@@ -4,6 +4,7 @@ import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppPagination } from "@app/components/app.pagination";
 import { AppFormsService } from "@app/components/forms.service";
 import { AppDataPagination, AppDataRequest } from "@app/components/app.objects";
@@ -81,6 +82,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	parentRole: Role;
 
 	ngOnInit() {
+		AppUtility.invoke(async () => await TrackingUtility.trackAsync({ title: "Lookup - Role", category: "Role", action: "Lookup" }));
 		this.multiple = this.multiple === undefined ? true : AppUtility.isTrue(this.multiple);
 		this.allowSystemRoles = this.allowSystemRoles === undefined ? true : AppUtility.isTrue(this.allowSystemRoles);
 		this.allowVisitorInContributiveSection = this.allowVisitorInContributiveSection === undefined ? false : AppUtility.isTrue(this.allowVisitorInContributiveSection);

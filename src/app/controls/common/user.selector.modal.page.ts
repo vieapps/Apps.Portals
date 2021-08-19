@@ -4,6 +4,7 @@ import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppPagination } from "@app/components/app.pagination";
 import { AppDataPagination, AppDataRequest } from "@app/components/app.objects";
 import { AppFormsService } from "@app/components/forms.service";
@@ -62,6 +63,7 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 	selected = new HashSet<string>();
 
 	ngOnInit() {
+		AppUtility.invoke(async () => await TrackingUtility.trackAsync({ title: "Users - Lookup - Account", category: "Users:Account", action: "Lookup" }, false));
 		this.multiple = this.multiple === undefined ? true : this.multiple;
 		this.hideEmails = this.hideEmails === undefined ? !this.authSvc.isSystemAdministrator() : this.hideEmails;
 		this.initializeAsync();
