@@ -10,7 +10,7 @@ declare global {
 		update(value: T, index?: number): T[];
 
 		/** Merges other values */
-		merge(values?: T[]): T[];
+		merge(values: T[]): T[];
 
 		/** Clears (Removes) a range of elements */
 		clear(start?: number, amount?: number): T[];
@@ -75,216 +75,170 @@ declare global {
 
 }
 
-if (!Array.prototype.insert) {
-	Array.prototype.insert = function<T>(this: T[], value: T, index?: number): T[] {
-		if (index !== undefined && index > -1 && index < this.length) {
-			this.splice(index, 0, value);
+Array.prototype.insert = function<T>(this: T[], value: T, index?: number): T[] {
+	if (index !== undefined && index > -1 && index < this.length) {
+		this.splice(index, 0, value);
+	}
+	else {
+		this.push(value);
+	}
+	return this;
+};
+
+Array.prototype.update = function<T>(this: T[], value: T, index?: number): T[] {
+	if (index !== undefined && index > -1 && index < this.length) {
+		this[index] = value;
+	}
+	else {
+		this.push(value);
+	}
+	return this;
+};
+
+Array.prototype.merge = function<T>(this: T[], values: T[]): T[] {
+	if (values !== undefined) {
+		values.forEach(value => this.push(value));
+	}
+	return this;
+};
+
+Array.prototype.clear = function<T>(this: T[], start?: number, amount?: number): T[] {
+	this.splice(start !== undefined && start > 0 ? start : 0, amount !== undefined && amount > 0 ? amount : this.length);
+	return this;
+};
+
+Array.prototype.remove = function<T>(this: T[], value: T, findIndex?: (value: T, array: T[]) => number): T[] {
+	return this.removeAt(findIndex !== undefined ? findIndex(value, this) : this.indexOf(value));
+};
+
+Array.prototype.removeAt = function<T>(this: T[], index: number): T[] {
+	if (index !== undefined && index > -1 && index < this.length) {
+		this.splice(index, 1);
+	}
+	return this;
+};
+
+Array.prototype.removeAll = function<T>(this: T[]): T[] {
+	return this.clear();
+};
+
+Array.prototype.move = function<T>(this: T[], from: number, to: number): T[] {
+	if (from !== undefined && to !== undefined && from !== to && from > -1 && from < this.length && to > -1 && to < this.length) {
+		const values = this.splice(from, 1);
+		if (values !== undefined && values.length > 0) {
+			this.insert(values[0], to);
 		}
-		else {
-			this.push(value);
-		}
-		return this;
-	};
-}
+	}
+	return this;
+};
 
-if (!Array.prototype.update) {
-	Array.prototype.update = function<T>(this: T[], value: T, index?: number): T[] {
-		if (index !== undefined && index > -1 && index < this.length) {
-			this[index] = value;
-		}
-		else {
-			this.push(value);
-		}
-		return this;
-	};
-}
+Array.prototype.take = function<T>(this: T[], amount: number, skip?: number): T[] {
+	const values = skip !== undefined && skip > 0 && skip < this.length
+		? this.slice(skip)
+		: this;
+	return amount !== undefined && amount > 0 && amount < values.length
+		? values.slice(0, amount)
+		: values;
+};
 
-if (!Array.prototype.merge) {
-	Array.prototype.merge = function<T>(this: T[], values?: T[]): T[] {
-		if (values !== undefined) {
-			values.forEach(value => this.push(value));
-		}
-		return this;
-	};
-}
+Array.prototype.distinct = function<T>(this: T[], comparer?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): T[] {
+	return comparer !== undefined
+		? this.filter((value, index, array) => comparer(value, index, array), thisArg)
+		: this.filter((value, index, array) => array.indexOf(value) === index, thisArg);
+};
 
-if (!Array.prototype.clear) {
-	Array.prototype.clear = function<T>(this: T[], start?: number, amount?: number): T[] {
-		this.splice(start !== undefined && start > 0 ? start : 0, amount !== undefined && amount > 0 ? amount : this.length);
-		return this;
-	};
-}
+Array.prototype.except = function<T>(this: T[], other: T[], comparer?: (value: T, array: T[]) => boolean, thisArg?: any): T[] {
+	return comparer !== undefined
+		? this.filter(value => comparer(value, other), thisArg)
+		: this.filter(value => other.indexOf(value) < 0, thisArg);
+};
 
-if (!Array.prototype.remove) {
-	Array.prototype.remove = function<T>(this: T[], value: T, findIndex?: (value: T, array: T[]) => number): T[] {
-		return this.removeAt(findIndex !== undefined ? findIndex(value, this) : this.indexOf(value));
-	};
-}
+Array.prototype.intersect = function<T>(this: T[], other: T[], comparer?: (value: T, array: T[]) => boolean, thisArg?: any): T[] {
+	return comparer !== undefined
+		? this.filter(value => comparer(value, other), thisArg)
+		: this.filter(value => other.indexOf(value) > -1, thisArg);
+};
 
-if (!Array.prototype.removeAt) {
-	Array.prototype.removeAt = function<T>(this: T[], index: number): T[] {
-		if (index !== undefined && index > -1 && index < this.length) {
-			this.splice(index, 1);
-		}
-		return this;
-	};
-}
-
-if (!Array.prototype.removeAll) {
-	Array.prototype.removeAll = function<T>(this: T[]): T[] {
-		return this.clear();
-	};
-}
-
-if (!Array.prototype.move) {
-	Array.prototype.move = function<T>(this: T[], from: number, to: number): T[] {
-		if (from !== undefined && to !== undefined && from !== to && from > -1 && from < this.length && to > -1 && to < this.length) {
-			const values = this.splice(from, 1);
-			if (values !== undefined && values.length > 0) {
-				this.insert(values[0], to);
+Array.prototype.compareFn = function<T>(this: T[], sorts: Array<{ name: string, reverse?: boolean, transformer?: (value: any) => any }>): (a: T, b: T) => number {
+	const compareFn = (a: any, b: any): number => a === b ? 0 : a < b ? -1 : 1;
+	const sortBy = sorts.map(sort => ({
+		name: sort.name,
+		compare: (a: any, b: any) => (sort.reverse ? -1 : 1) * (sort.transformer !== undefined ? compareFn(sort.transformer(a), sort.transformer(b)) : compareFn(a, b))
+	}));
+	return (a: T, b: T) => {
+		let result = 0;
+		for (let index = 0; index < sortBy.length; index++) {
+			const name = sortBy[index].name;
+			result = sortBy[index].compare(a[name], b[name]);
+			if (result !== 0) {
+				break;
 			}
 		}
-		return this;
+		return result;
 	};
-}
+};
 
-if (!Array.prototype.take) {
-	Array.prototype.take = function<T>(this: T[], amount: number, skip?: number): T[] {
-		const values = skip !== undefined && skip > 0 && skip < this.length
-			? this.slice(skip)
-			: this;
-		return amount !== undefined && amount > 0 && amount < values.length
-			? values.slice(0, amount)
-			: values;
-	};
-}
+Array.prototype.orderBy = function<T>(this: T[], sorts: Array<{ name: string, reverse?: boolean, transformer?: (value: any) => any }>): T[] {
+	return this.sort(sorts !== undefined && sorts.length > 0 ? this.compareFn(sorts) : undefined);
+};
 
-if (!Array.prototype.distinct) {
-	Array.prototype.distinct = function<T>(this: T[], comparer?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): T[] {
-		return comparer !== undefined
-			? this.filter((value, index, array) => comparer(value, index, array), thisArg)
-			: this.filter((value, index, array) => array.indexOf(value) === index, thisArg);
-	};
-}
+Array.prototype.sortBy = function<T>(this: T[], ...sorts: Array<string | { name: string, reverse?: boolean, transformer?: (value: any) => any }>): T[] {
+	return this.orderBy(sorts !== undefined && sorts.length > 0
+		? (sorts as Array<any>).filter(sort => sort !== undefined && sort !== null).map(sort => typeof sort === "string"
+				? ({
+						name: sort as string,
+						reverse: false,
+						transformer: undefined as (value: any) => any
+					})
+				: ({
+						name: sort.name as string,
+						reverse: true === sort.reverse,
+						transformer: sort.transformer as (value: any) => any
+					})
+			)
+		: undefined
+	);
+};
 
-if (!Array.prototype.except) {
-	Array.prototype.except = function<T>(this: T[], other: T[], comparer?: (value: T, array: T[]) => boolean, thisArg?: any): T[] {
-		return comparer !== undefined
-			? this.filter(value => comparer(value, other), thisArg)
-			: this.filter(value => other.indexOf(value) < 0, thisArg);
-	};
-}
-
-if (!Array.prototype.intersect) {
-	Array.prototype.intersect = function<T>(this: T[], other: T[], comparer?: (value: T, array: T[]) => boolean, thisArg?: any): T[] {
-		return comparer !== undefined
-			? this.filter(value => comparer(value, other), thisArg)
-			: this.filter(value => other.indexOf(value) > -1, thisArg);
-	};
-}
-
-if (!Array.prototype.compareFn) {
-	Array.prototype.compareFn = function<T>(this: T[], sorts: Array<{ name: string, reverse?: boolean, transformer?: (value: any) => any }>): (a: T, b: T) => number {
-		const compareFn = (a: any, b: any): number => a === b ? 0 : a < b ? -1 : 1;
-		const sortBy = sorts.map(sort => ({
-			name: sort.name,
-			compare: (a: any, b: any) => (sort.reverse ? -1 : 1) * (sort.transformer !== undefined ? compareFn(sort.transformer(a), sort.transformer(b)) : compareFn(a, b))
-		}));
-		return (a: T, b: T) => {
-			let result = 0;
-			for (let index = 0; index < sortBy.length; index++) {
-				const name = sortBy[index].name;
-				result = sortBy[index].compare(a[name], b[name]);
-				if (result !== 0) {
-					break;
-				}
-			}
-			return result;
-		};
-	};
-}
-
-if (!Array.prototype.orderBy) {
-	Array.prototype.orderBy = function<T>(this: T[], sorts: Array<{ name: string, reverse?: boolean, transformer?: (value: any) => any }>): T[] {
-		return this.sort(sorts !== undefined && sorts.length > 0 ? this.compareFn(sorts) : undefined);
-	};
-}
-
-if (!Array.prototype.sortBy) {
-	Array.prototype.sortBy = function<T>(this: T[], ...sorts: Array<string | { name: string, reverse?: boolean, transformer?: (value: any) => any }>): T[] {
-		return this.orderBy(sorts !== undefined && sorts.length > 0
-			? (sorts as Array<any>).filter(sort => sort !== undefined && sort !== null).map(sort => typeof sort === "string"
-					? ({
-							name: sort as string,
-							reverse: false,
-							transformer: undefined as (value: any) => any
-						})
-					: ({
-							name: sort.name as string,
-							reverse: true === sort.reverse,
-							transformer: sort.transformer as (value: any) => any
-						})
-				)
-			: undefined
-		);
-	};
-}
-
-if (!Array.prototype.first) {
-	Array.prototype.first = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
-		for (let index = 0; index < this.length; index++) {
-			const value = this[index];
-			if (predicate === undefined || predicate(value, index, this)) {
-				return value;
-			}
+Array.prototype.first = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
+	for (let index = 0; index < this.length; index++) {
+		const value = this[index];
+		if (predicate === undefined || predicate(value, index, this)) {
+			return value;
 		}
-		return undefined;
-	};
-}
+	}
+	return undefined;
+};
 
-if (!Array.prototype.firstOrDefault) {
-	Array.prototype.firstOrDefault = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
-		return this.first(predicate) || this.first();
-	};
-}
+Array.prototype.firstOrDefault = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
+	return this.first(predicate) || this.first();
+};
 
-if (!Array.prototype.last) {
-	Array.prototype.last = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
-		const array = predicate !== undefined ? this.filter(predicate) : this;
-		return array.length > 0 ? array[array.length - 1] : undefined;
-	};
-}
+Array.prototype.last = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
+	const array = predicate !== undefined ? this.filter(predicate) : this;
+	return array.length > 0 ? array[array.length - 1] : undefined;
+};
 
-if (!Array.prototype.lastOrDefault) {
-	Array.prototype.lastOrDefault = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
-		return this.last(predicate) || this.last();
-	};
-}
+Array.prototype.lastOrDefault = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
+	return this.last(predicate) || this.last();
+};
 
-if (!Array.prototype.previousLast) {
-	Array.prototype.previousLast = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
-		const array = predicate !== undefined ? this.filter(predicate) : this;
-		return array.length > 1 ? array[array.length - 2] : undefined;
-	};
-}
+Array.prototype.previousLast = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
+	const array = predicate !== undefined ? this.filter(predicate) : this;
+	return array.length > 1 ? array[array.length - 2] : undefined;
+};
 
-if (!Array.prototype.toList) {
-	Array.prototype.toList = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): List<T> {
-		return new List<T>(predicate !== undefined ? this.filter(predicate, thisArg) : this);
-	};
-}
+Array.prototype.toList = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): List<T> {
+	return new List<T>(predicate !== undefined ? this.filter(predicate, thisArg) : this);
+};
 
-if (!Array.prototype.toHashSet) {
-	Array.prototype.toHashSet = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): HashSet<T> {
-		return new HashSet<T>(predicate !== undefined ? this.filter(predicate, thisArg) : this);
-	};
-}
+Array.prototype.toHashSet = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): HashSet<T> {
+	return new HashSet<T>(predicate !== undefined ? this.filter(predicate, thisArg) : this);
+};
 
-if (!Array.prototype.toDictionary) {
-	Array.prototype.toDictionary = function<K, T>(this: T[], keySelector: (value: T) => K, predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): Dictionary<K, T> {
-		return new Dictionary<K, T>(predicate !== undefined ? this.filter(predicate, thisArg) : this, keySelector);
-	};
-}
+Array.prototype.toDictionary = function<K, T>(this: T[], keySelector: (value: T) => K, predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): Dictionary<K, T> {
+	return new Dictionary<K, T>(predicate !== undefined ? this.filter(predicate, thisArg) : this, keySelector);
+};
 
 /** HashSet */
 export class HashSet<T> extends Set<T>  {
@@ -313,6 +267,16 @@ export class HashSet<T> extends Set<T>  {
 				else {
 					this.add(value);
 				}
+			}
+		}
+		return this;
+	}
+
+	/** Merges other values */
+	merge(values: IterableIterator<T> | Array<T>) {
+		if (values !== undefined) {
+			for (const value of values) {
+				this.set(value);
 			}
 		}
 		return this;
@@ -409,11 +373,7 @@ export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 	/** Creates new instance of Dictionary */
 	constructor(values?: IterableIterator<TValue> | Array<TValue>, keySelector?: (value: TValue) => TKey) {
 		super();
-		if (values !== undefined && keySelector !== undefined) {
-			for (const value of values) {
-				this.update(keySelector(value), value);
-			}
-		}
+		this.merge(values, keySelector);
 	}
 
 	/** Adds the key-value pair into this collection */
@@ -429,6 +389,16 @@ export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 		}
 		else {
 			this.set(key, value);
+		}
+		return this;
+	}
+
+	/** Merges other values */
+	merge(values: IterableIterator<TValue> | Array<TValue>, keySelector?: (value: TValue) => TKey) {
+		if (values !== undefined && keySelector !== undefined) {
+			for (const value of values) {
+				this.update(keySelector(value), value);
+			}
 		}
 		return this;
 	}
