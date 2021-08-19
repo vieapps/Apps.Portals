@@ -129,7 +129,6 @@ export class BooksService extends BaseService {
 	private async updateSidebarAsync() {
 		AppEvents.broadcast("UpdateSidebar", {
 			Index: this.menuIndex,
-			Reset: true,
 			Name: "books",
 			Parent: { Title: await this.configSvc.getResourceAsync("books.home.statistics.categories") },
 			Items: this.categories.map(category => ({
