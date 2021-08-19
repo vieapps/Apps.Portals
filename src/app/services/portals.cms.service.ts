@@ -431,7 +431,7 @@ export class PortalsCmsService extends BaseService {
 			name: "cms",
 			parent: parent,
 			items: items,
-			index: 0,
+			index: 0
 		});
 		if (onNext !== undefined) {
 			onNext();

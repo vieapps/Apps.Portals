@@ -123,7 +123,7 @@ export class BooksService extends BaseService {
 				title: profile !== undefined ? profile.Name : this.configSvc.appConfig.app.name,
 				onClick: profile !== undefined ? () => AppEvents.broadcast("Navigate", { Type: "Profile" }) : undefined
 			});
-		}, 13);
+		});
 	}
 
 	private async updateSidebarAsync() {
@@ -137,7 +137,7 @@ export class BooksService extends BaseService {
 				Expanded: AppUtility.isGotData(category.Children),
 				Direction: "root"
 			})),
-			index: this.menuIndex,
+			index: this.menuIndex
 		});
 	}
 
@@ -157,7 +157,7 @@ export class BooksService extends BaseService {
 					}
 				}
 			}
-		}] });
+		}]});
 		if (onNext !== undefined) {
 			onNext();
 		}

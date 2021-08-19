@@ -1297,7 +1297,7 @@ export class PortalsCoreService extends BaseService {
 				title: organization !== undefined ? organization.Alias : this.configSvc.appConfig.app.name,
 				onClick: (organization !== undefined && this.canManageOrganization(organization) ? async _ => await this.configSvc.navigateForwardAsync(organization.routerURI) : _ => {}) as (sidebar?: AppSidebar, event?: Event) => void
 			});
-		}, 13);
+		});
 	}
 
 	private openSidebar(name: string, sidebar: AppSidebar) {
@@ -1310,7 +1310,7 @@ export class PortalsCoreService extends BaseService {
 				this.configSvc.appConfig.services.active = this.name;
 				this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 			}
-			AppUtility.invoke(() => AppEvents.broadcast("OpenSidebar"), 13);
+			AppUtility.invoke(() => AppEvents.broadcast("OpenSidebar"));
 		}
 	}
 
