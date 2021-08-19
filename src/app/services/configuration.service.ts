@@ -59,96 +59,96 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the state that determines the app is ready to go */
 	public get isReady() {
-		return this.appConfig.isReady;
+		return AppConfig.isReady;
 	}
 
 	/** Gets the state that determines the current account is authenticated or not */
 	public get isAuthenticated() {
-		return this.appConfig.isAuthenticated;
+		return AppConfig.isAuthenticated;
 	}
 
 	/** Gets the state that determines the app is running in debug mode or not */
 	public get isDebug() {
-		return this.appConfig.isDebug;
+		return AppConfig.isDebug;
 	}
 
 	/** Gets the state that determines is native app */
 	public get isNativeApp() {
-		return this.appConfig.isNativeApp;
+		return AppConfig.isNativeApp;
 	}
 
 	/** Gets the state that determines is web progressive app */
 	public get isWebApp() {
-		return this.appConfig.isWebApp;
+		return AppConfig.isWebApp;
 	}
 
 	/** Gets the state that determines the app is running on iOS (native or web browser) */
 	public get isRunningOnIOS() {
-		return this.appConfig.isRunningOnIOS;
+		return AppConfig.isRunningOnIOS;
 	}
 
 	/** Gets the available languages for working with the app */
 	public get languages() {
-		return this.appConfig.languages;
+		return AppConfig.languages;
 	}
 
 	/** Gets the current locale code for working with i18n globalization */
 	public get locale() {
-		return this.appConfig.locale;
+		return AppConfig.locale;
 	}
 
 	/** Gets the available locales for working with the app */
 	public get locales() {
-		return this.appConfig.locales;
+		return AppConfig.locales;
 	}
 
 	/** Gets the color of the theme (dark or light) */
 	public get color() {
-		return "dark" === this.appConfig.options.theme ? "dark" : undefined;
+		return "dark" === AppConfig.options.theme ? "dark" : undefined;
 	}
 
 	/** Gets the locale data for working with i18n globalization */
 	public getLocaleData(locale: string) {
-		return this.appConfig.getLocaleData(locale);
+		return AppConfig.getLocaleData(locale);
 	}
 
 	/** Gets the current working URL */
 	public getCurrentURL() {
-		return this.appConfig.URLs.stack.last();
+		return AppConfig.URLs.stack.last();
 	}
 
 	/** Gets the previous URL */
 	public getPreviousURL() {
-		return this.appConfig.URLs.stack.previousLast();
+		return AppConfig.URLs.stack.previousLast();
 	}
 
 	/** Pushs/Adds an URL into stack of routes */
 	public pushURL(url: string, params: { [key: string]: any }) {
 		url = url.indexOf("?") > 0 ? url.substr(0, url.indexOf("?")) : url;
-		if (url === this.appConfig.URLs.home) {
-			this.appConfig.URLs.stack.removeAll();
+		if (url === AppConfig.URLs.home) {
+			AppConfig.URLs.stack.removeAll();
 		}
 		const previousURL = this.getPreviousURL();
 		const currentURL = this.getCurrentURL();
 		if (previousURL !== undefined && previousURL.url.startsWith(url)) {
-			this.appConfig.URLs.stack.pop();
+			AppConfig.URLs.stack.pop();
 		}
 		else if (currentURL === undefined || !currentURL.url.startsWith(url)) {
-			this.appConfig.URLs.stack.push({ url: url, params: params });
+			AppConfig.URLs.stack.push({ url: url, params: params });
 		}
-		if (this.appConfig.URLs.stack.length > 30) {
-			this.appConfig.URLs.stack.clear(0, this.appConfig.URLs.stack.length - 30);
+		if (AppConfig.URLs.stack.length > 30) {
+			AppConfig.URLs.stack.clear(0, AppConfig.URLs.stack.length - 30);
 		}
 	}
 
 	/** Removes the current working URL from the stack, also pop the current view */
 	public popURL() {
-		this.navController.pop().then(() => this.appConfig.URLs.stack.pop());
+		this.navController.pop().then(() => AppConfig.URLs.stack.pop());
 	}
 
 	/** Gets the URL for opening the app on web-browser */
 	public getAppURL(path?: string) {
-		return (this.appConfig.isWebApp ? AppUtility.parseURI().HostURI + this.appConfig.URLs.base : this.appConfig.URIs.apps) + (AppUtility.isEmpty(path) ? "" : path[0] === "/" ? AppUtility.right(path, path.length - 1) : path);
+		return (AppConfig.isWebApp ? AppUtility.parseURI().HostURI + AppConfig.URLs.base : AppConfig.URIs.apps) + (AppUtility.isEmpty(path) ? "" : path[0] === "/" ? AppUtility.right(path, path.length - 1) : path);
 	}
 
 	/** Gets the current working URL */
@@ -168,17 +168,17 @@ export class ConfigurationService extends BaseService {
 
 	/** Sets the app title (means title of the browser) */
 	public set appTitle(value: string) {
-		this.browserTitle.setTitle(`${value} :: ${this.appConfig.app.name}`);
+		this.browserTitle.setTitle(`${value} :: ${AppConfig.app.name}`);
 	}
 
 	/** Gets the query with related service, language and host */
 	public get relatedQuery() {
-		return this.appConfig.getRelatedQuery();
+		return AppConfig.getRelatedQuery();
 	}
 
 	/** Gets the router params of the current page/view */
 	public get routerParams() {
-		return this.appConfig.URLs.routerParams;
+		return AppConfig.URLs.routerParams;
 	}
 
 	/** Gets the query params of the current page/view */
@@ -205,14 +205,14 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the file-size limits */
 	public get fileLimits() {
-		let limits = this.appConfig.options.extras.fileLimits as { avatar: number; thumbnail: number; file: number };
+		let limits = AppConfig.options.extras.fileLimits as { avatar: number; thumbnail: number; file: number };
 		if (!AppUtility.isObject(limits, true)) {
 			limits = {
 				avatar: 1024000,
 				thumbnail: 524288,
 				file: 819200000
 			};
-			this.appConfig.options.extras.fileLimits = limits;
+			AppConfig.options.extras.fileLimits = limits;
 			this.saveOptionsAsync(() => console.log("[Configuration]: file limits were updated"));
 		}
 		return limits;
@@ -238,8 +238,8 @@ export class ConfigurationService extends BaseService {
 								: "Mobile"
 				: "Desktop";
 
-		this.appConfig.app.mode = isNativeApp ? "NTA" : "PWA";
-		this.appConfig.app.os = platform !== "Desktop"
+		AppConfig.app.mode = isNativeApp ? "NTA" : "PWA";
+		AppConfig.app.os = platform !== "Desktop"
 			? platform
 			: /Windows/i.test(userAgent)
 				? "Windows"
@@ -251,7 +251,7 @@ export class ConfigurationService extends BaseService {
 
 		const uri = AppUtility.parseURI();
 		if (uri.Host.indexOf(".") < 0) {
-			this.appConfig.URLs.host = uri.Host;
+			AppConfig.URLs.host = uri.Host;
 		}
 		else {
 			let host = uri.HostNames[uri.HostNames.length - 2] + "." + uri.HostNames[uri.HostNames.length - 1];
@@ -261,30 +261,30 @@ export class ConfigurationService extends BaseService {
 			if (uri.HostNames.length > 3 && uri.HostNames[uri.HostNames.length - 4] !== "www") {
 				host = uri.HostNames[uri.HostNames.length - 4] + "." + host;
 			}
-			this.appConfig.URLs.host = host;
+			AppConfig.URLs.host = host;
 		}
 
 		if (isNativeApp) {
-			this.appConfig.URLs.base = "";
-			this.appConfig.app.platform = this.device.platform;
-			this.appConfig.session.device = `${this.device.uuid}@${this.appConfig.app.id}-${this.device.platform.toLocaleLowerCase()}`;
+			AppConfig.URLs.base = "";
+			AppConfig.app.platform = this.device.platform;
+			AppConfig.session.device = `${this.device.uuid}@${AppConfig.app.id}-${this.device.platform.toLocaleLowerCase()}`;
 		}
 
 		else {
-			this.appConfig.URLs.base = this.platformLocation.getBaseHrefFromDOM();
-			this.appConfig.app.platform = `${platform} ${this.appConfig.app.mode}`;
-			if (AppUtility.isEmpty(this.appConfig.session.device)) {
-				this.appConfig.session.device = `${AppCrypto.md5(`${userAgent}${Math.random()}`)}@${this.appConfig.app.id}-${isElectronApp ? "electron" : "pwa"}`;
+			AppConfig.URLs.base = this.platformLocation.getBaseHrefFromDOM();
+			AppConfig.app.platform = `${platform} ${AppConfig.app.mode}`;
+			if (AppUtility.isEmpty(AppConfig.session.device)) {
+				AppConfig.session.device = `${AppCrypto.md5(`${userAgent}${Math.random()}`)}@${AppConfig.app.id}-${isElectronApp ? "electron" : "pwa"}`;
 			}
 		}
 
 		if (isElectronApp) {
 			AppEvents.initializeElectronService(this.electronSvc);
 			PlatformUtility.setElectronService(this.electronSvc);
-			this.appConfig.app.shell = "Electron";
-			this.appConfig.app.mode = "Desktop";
-			this.appConfig.URLs.base = "";
-			this.appConfig.app.platform = `${this.appConfig.app.os} Desktop`;
+			AppConfig.app.shell = "Electron";
+			AppConfig.app.mode = "Desktop";
+			AppConfig.URLs.base = "";
+			AppConfig.app.platform = `${AppConfig.app.os} Desktop`;
 			if (this.electronSvc.ipcRenderer) {
 				this.electronSvc.ipcRenderer.on("electron.ipc2app", ($event: any, $info: any) => {
 					$info = $info || {};
@@ -298,10 +298,10 @@ export class ConfigurationService extends BaseService {
 			}
 		}
 		else {
-			this.appConfig.app.shell = isNativeApp ? "Cordova" : "Browser";
+			AppConfig.app.shell = isNativeApp ? "Cordova" : "Browser";
 			if (isCordova && isNativeApp) {
 				this.appVersion.getVersionCode()
-					.then(version => this.appConfig.app.version = isNativeApp && !this.isRunningOnIOS ? (version + "").replace(/0/g, ".") : version + "")
+					.then(version => AppConfig.app.version = isNativeApp && !this.isRunningOnIOS ? (version + "").replace(/0/g, ".") : version + "")
 					.catch(error => this.showError("Error occurred while preparing the app version", error));
 				PlatformUtility.setInAppBrowser(this.inappBrowser);
 				PlatformUtility.setClipboard(this.clipboard);
@@ -322,12 +322,12 @@ export class ConfigurationService extends BaseService {
 	/** Initializes the configuration settings of the app */
 	public async initializeAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontInitializeSession: boolean = false) {
 		// prepare environment
-		if (this.appConfig.app.mode === "") {
+		if (AppConfig.app.mode === "") {
 			this.prepare();
 		}
 
 		// load saved session
-		if (this.appConfig.session.token === undefined || this.appConfig.session.keys === undefined) {
+		if (AppConfig.session.token === undefined || AppConfig.session.keys === undefined) {
 			await this.loadSessionAsync();
 		}
 
@@ -341,17 +341,17 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Initializes the session with remote APIs */
-	public async initializeSessionAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.fetchAsync(
+	public initializeSessionAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.fetchAsync(
 			"users/session",
 			async data => {
 				if (this.isDebug) {
 					this.showLog("The session was initialized by APIs");
 				}
 				await this.updateSessionAsync(data, _ => {
-					this.appConfig.session.account = this.getAccount(!this.isAuthenticated);
+					AppConfig.session.account = this.getAccount(!this.isAuthenticated);
 					if (this.isAuthenticated) {
-						this.appConfig.session.account.id = this.appConfig.session.token.uid;
+						AppConfig.session.account.id = AppConfig.session.token.uid;
 					}
 					AppEvents.broadcast("Session", { Type: this.isAuthenticated ? "Registered" : "Initialized" });
 					if (onSuccess !== undefined) {
@@ -364,11 +364,11 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Registers the initialized session (anonymous) with remote APIs */
-	public async registerSessionAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.fetchAsync(
-			`users/session?register=${this.appConfig.session.id}`,
+	public registerSessionAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.fetchAsync(
+			`users/session?register=${AppConfig.session.id}`,
 			async _ => {
-				this.appConfig.session.account = this.getAccount(true);
+				AppConfig.session.account = this.getAccount(true);
 				if (this.isDebug) {
 					this.showLog("The session was registered by APIs");
 				}
@@ -380,17 +380,17 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Updates the session and stores into storage */
-	public async updateSessionAsync(session: any, onNext?: (data?: any) => void, dontStore: boolean = false, fetch: boolean = true) {
+	public updateSessionAsync(session: any, onNext?: (data?: any) => void, dontStore: boolean = false, fetch: boolean = true) {
 		if (AppUtility.isNotEmpty(session.ID)) {
-			this.appConfig.session.id = session.ID;
+			AppConfig.session.id = session.ID;
 		}
 
 		if (AppUtility.isNotEmpty(session.DeviceID)) {
-			this.appConfig.session.device = session.DeviceID;
+			AppConfig.session.device = session.DeviceID;
 		}
 
 		if (AppUtility.isObject(session.Keys, true)) {
-			this.appConfig.session.keys = {
+			AppConfig.session.keys = {
 				jwt: session.Keys.JWT,
 				aes: {
 					key: session.Keys.AES.Key,
@@ -403,49 +403,44 @@ export class ConfigurationService extends BaseService {
 					modulus: session.Keys.RSA.Modulus
 				}
 			};
-			AppCrypto.init(this.appConfig.session.keys);
+			AppCrypto.init(AppConfig.session.keys);
 		}
 
 		if (AppUtility.isNotEmpty(session.Token)) {
 			try {
-				this.appConfig.session.token = AppCrypto.jwtDecode(session.Token);
+				AppConfig.session.token = AppCrypto.jwtDecode(session.Token);
 				AppAPIs.authenticateWebSocket();
 			}
 			catch (error) {
-				this.appConfig.session.token = undefined;
+				AppConfig.session.token = undefined;
 				this.showError("Error occurred while decoding token =>" + session.Token, error);
 			}
 		}
 
-		this.appConfig.session.account = this.getAccount(!this.isAuthenticated);
+		AppConfig.session.account = this.getAccount(!this.isAuthenticated);
 		if (this.isAuthenticated) {
-			this.appConfig.session.account.id = this.appConfig.session.token.uid;
+			AppConfig.session.account.id = AppConfig.session.token.uid;
 			if (fetch) {
 				AppAPIs.sendWebSocketRequest(
 					{
 						ServiceName: "Users",
 						ObjectName: "Account",
-						Query: this.appConfig.getRelatedJson({ "x-status": "true" })
+						Query: AppConfig.getRelatedJson({ "x-status": "true" })
 					}
 				);
 				AppAPIs.sendWebSocketRequest(
 					{
 						ServiceName: "Users",
 						ObjectName: "Profile",
-						Query: this.appConfig.getRelatedJson({ "object-identity": this.appConfig.session.account.id })
+						Query: AppConfig.getRelatedJson({ "object-identity": AppConfig.session.account.id })
 					}
 				);
 			}
 		}
 
-		if (dontStore) {
-			if (onNext !== undefined) {
-				onNext(this.appConfig.session);
-			}
-		}
-		else {
-			await this.storeSessionAsync(onNext);
-		}
+		return dontStore
+			? AppUtility.execute(onNext !== undefined ? () =>  onNext(AppConfig.session) : undefined)
+			: this.storeSessionAsync(onNext);
 	}
 
 	/** Loads the session from storage */
@@ -453,11 +448,11 @@ export class ConfigurationService extends BaseService {
 		try {
 			const session = await AppStorage.getAsync("Session");
 			if (AppUtility.isObject(session, true)) {
-				this.appConfig.session = AppUtility.parse(AppUtility.stringify(session));
+				AppConfig.session = AppUtility.parse(AppUtility.stringify(session));
 				AppEvents.broadcast("Session", { Type: "Loaded", Mode: "Storage" });
-				this.appConfig.session.account = Account.deserialize(this.appConfig.session.account);
-				if (this.appConfig.session.account.id !== undefined) {
-					Account.set(this.appConfig.session.account);
+				AppConfig.session.account = Account.deserialize(AppConfig.session.account);
+				if (AppConfig.session.account.id !== undefined) {
+					Account.set(AppConfig.session.account);
 					AppEvents.broadcast("Account", { Type: "Loaded", Mode: "Storage" });
 				}
 			}
@@ -466,15 +461,15 @@ export class ConfigurationService extends BaseService {
 			this.showError("Error occurred while loading the session from storage", error);
 		}
 		if (onNext !== undefined) {
-			onNext(this.appConfig.session);
+			onNext(AppConfig.session);
 		}
 	}
 
 	/** Stores the session into storage */
 	public async storeSessionAsync(onNext?: (data?: any) => void) {
-		if (this.appConfig.app.persistence) {
+		if (AppConfig.app.persistence) {
 			try {
-				await AppStorage.setAsync("Session", AppUtility.clone(this.appConfig.session, ["jwt", "captcha"]));
+				await AppStorage.setAsync("Session", AppUtility.clone(AppConfig.session, ["jwt", "captcha"]));
 			}
 			catch (error) {
 				this.showError("Error occurred while storing the session into storage", error);
@@ -482,7 +477,7 @@ export class ConfigurationService extends BaseService {
 		}
 		AppEvents.broadcast("Session", { Type: "Updated" });
 		if (onNext !== undefined) {
-			onNext(this.appConfig.session);
+			onNext(AppConfig.session);
 		}
 	}
 
@@ -495,22 +490,22 @@ export class ConfigurationService extends BaseService {
 			this.showError("Error occurred while deleting the session from storage", error);
 		}
 		if (onNext !== undefined) {
-			onNext(this.appConfig.session);
+			onNext(AppConfig.session);
 		}
 	}
 
 	/** Resets session information and re-store into storage */
-	public async resetSessionAsync(onNext?: (data?: any) => void, doStore: boolean = true) {
-		this.appConfig.session.id = undefined;
-		this.appConfig.session.token = undefined;
-		this.appConfig.session.keys = undefined;
-		this.appConfig.session.account = this.getAccount(true);
-		await this.deleteSessionAsync(doStore ? async () => await this.storeSessionAsync(onNext) : onNext);
+	public resetSessionAsync(onNext?: (data?: any) => void, doStore: boolean = true) {
+		AppConfig.session.id = undefined;
+		AppConfig.session.token = undefined;
+		AppConfig.session.keys = undefined;
+		AppConfig.session.account = this.getAccount(true);
+		return this.deleteSessionAsync(doStore ? async () => await this.storeSessionAsync(onNext) : onNext);
 	}
 
 	/** Gets the information of the current/default account */
 	public getAccount(getDefault: boolean = false) {
-		return (getDefault ? undefined : this.appConfig.session.account) || new Account();
+		return (getDefault ? undefined : AppConfig.session.account) || new Account();
 	}
 
 	/** Updates information of the account */
@@ -549,9 +544,9 @@ export class ConfigurationService extends BaseService {
 		}
 
 		if (this.isAuthenticated && this.getAccount().id === account.id) {
-			this.appConfig.session.account = account;
+			AppConfig.session.account = account;
 			Account.set(account);
-			if (this.appConfig.app.persistence) {
+			if (AppConfig.app.persistence) {
 				this.storeSessionAsync(onNext);
 			}
 			else if (onNext !== undefined) {
@@ -574,15 +569,15 @@ export class ConfigurationService extends BaseService {
 			"auth.authResponseChange",
 			(response: any) => {
 				if (response.status === "connected") {
-					this.appConfig.facebook.token = response.authResponse.accessToken;
-					this.appConfig.facebook.id = response.authResponse.userID;
-					this.showLog("Facebook is connected", this.appConfig.isDebug ? this.appConfig.facebook : "");
-					if (this.appConfig.session.account.facebook !== undefined) {
+					AppConfig.facebook.token = response.authResponse.accessToken;
+					AppConfig.facebook.id = response.authResponse.userID;
+					this.showLog("Facebook is connected", AppConfig.isDebug ? AppConfig.facebook : "");
+					if (AppConfig.session.account.facebook !== undefined) {
 						this.getFacebookProfile();
 					}
 				}
 				else {
-					this.appConfig.facebook.token = undefined;
+					AppConfig.facebook.token = undefined;
 				}
 			}
 		);
@@ -591,15 +586,15 @@ export class ConfigurationService extends BaseService {
 	/** Get the information of Facebook profile */
 	public getFacebookProfile() {
 		FB.api(
-			`/${this.appConfig.facebook.version}/me?fields=id,name,picture&access_token=${this.appConfig.facebook.token}`,
+			`/${AppConfig.facebook.version}/me?fields=id,name,picture&access_token=${AppConfig.facebook.token}`,
 			(response: any) => {
-				this.appConfig.session.account.facebook = {
+				AppConfig.session.account.facebook = {
 					id: response.id,
 					name: response.name,
 					profileUrl: `https://www.facebook.com/app_scoped_user_id/${response.id}`,
 					pictureUrl: undefined
 				};
-				this.storeSessionAsync(() => this.showLog("Account is updated with information of Facebook profile", this.appConfig.isDebug ? this.appConfig.session.account : ""));
+				this.storeSessionAsync(() => this.showLog("Account is updated with information of Facebook profile", AppConfig.isDebug ? AppConfig.session.account : ""));
 				this.getFacebookAvatar();
 			}
 		);
@@ -607,13 +602,13 @@ export class ConfigurationService extends BaseService {
 
 	/** Get the avatar picture (large picture) of Facebook profile */
 	public getFacebookAvatar() {
-		if (this.appConfig.session.account.facebook && this.appConfig.session.account.facebook.id && this.appConfig.session.token && this.appConfig.session.token.oauths
-			&& this.appConfig.session.token.oauths["facebook"] && this.appConfig.session.token.oauths["facebook"] === this.appConfig.session.account.facebook.id) {
+		if (AppConfig.session.account.facebook && AppConfig.session.account.facebook.id && AppConfig.session.token && AppConfig.session.token.oauths
+			&& AppConfig.session.token.oauths["facebook"] && AppConfig.session.token.oauths["facebook"] === AppConfig.session.account.facebook.id) {
 			FB.api(
-				`/${this.appConfig.facebook.version}/${this.appConfig.session.account.facebook.id}/picture?type=large&redirect=false&access_token=${this.appConfig.facebook.token}`,
+				`/${AppConfig.facebook.version}/${AppConfig.session.account.facebook.id}/picture?type=large&redirect=false&access_token=${AppConfig.facebook.token}`,
 				(response: any) => {
-					this.appConfig.session.account.facebook.pictureUrl = response.data.url;
-					this.storeSessionAsync(() => this.showLog("Account is updated with information of Facebook profile (large profile picture)", this.appConfig.isDebug ? response : ""));
+					AppConfig.session.account.facebook.pictureUrl = response.data.url;
+					this.storeSessionAsync(() => this.showLog("Account is updated with information of Facebook profile (large profile picture)", AppConfig.isDebug ? response : ""));
 				}
 			);
 		}
@@ -621,54 +616,51 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the navigating URL */
 	public getNavigatingURL(url?: string, params?: { [key: string]: any }) {
-		url = url || this.appConfig.URLs.home;
+		url = url || AppConfig.URLs.home;
 		return url + (AppUtility.isGotData(params) ? `${url.indexOf("?") > 0 ? "&" : "?"}${AppUtility.toQuery(params)}` : "");
 	}
 
 	/** Sends a request to navigates to home screen */
-	public async navigateHomeAsync(url?: string, params?: { [key: string]: any }) {
-		await this.navController.navigateRoot(this.getNavigatingURL(url || this.appConfig.URLs.home, params));
+	public navigateHomeAsync(url?: string, params?: { [key: string]: any }) {
+		return this.navController.navigateRoot(this.getNavigatingURL(url || AppConfig.URLs.home, params));
 	}
 
 	/** Sends a request to navigates back one step */
-	public async navigateBackAsync(url?: string, params?: { [key: string]: any }) {
-		await this.navController.navigateBack(this.getNavigatingURL(url || this.previousURL, params));
+	public navigateBackAsync(url?: string, params?: { [key: string]: any }) {
+		return this.navController.navigateBack(this.getNavigatingURL(url || this.previousURL, params));
 	}
 
 	/** Sends a request to navigates forward one step */
-	public async navigateForwardAsync(url: string, params?: { [key: string]: any }) {
-		await this.navController.navigateForward(this.getNavigatingURL(url || this.appConfig.URLs.home, params));
+	public navigateForwardAsync(url: string, params?: { [key: string]: any }) {
+		return this.navController.navigateForward(this.getNavigatingURL(url || AppConfig.URLs.home, params));
 	}
 
 	/** Sends a request to navigates */
-	public async navigateAsync(direction?: string, url?: string, params?: { [key: string]: any }) {
+	public navigateAsync(direction?: string, url?: string, params?: { [key: string]: any }) {
 		switch ((direction || "forward").toLocaleLowerCase()) {
 			case "home":
 			case "root":
-					await this.navigateHomeAsync(url, params);
-				break;
+				return this.navigateHomeAsync(url, params);
 			case "back":
-				await this.navigateBackAsync(url, params);
-				break;
+				return this.navigateBackAsync(url, params);
 			default:
-				await this.navigateForwardAsync(url, params);
-				break;
+				return this.navigateForwardAsync(url, params);
 		}
 	}
 
 	private async loadGeoMetaAsync() {
-		this.appConfig.geoMeta.country = await AppStorage.getAsync("GeoMeta-Country") || "VN";
-		this.appConfig.geoMeta.countries = await AppStorage.getAsync("GeoMeta-Countries") || [];
-		this.appConfig.geoMeta.provinces = await AppStorage.getAsync("GeoMeta-Provinces") || {};
+		AppConfig.geoMeta.country = await AppStorage.getAsync("GeoMeta-Country") || "VN";
+		AppConfig.geoMeta.countries = await AppStorage.getAsync("GeoMeta-Countries") || [];
+		AppConfig.geoMeta.provinces = await AppStorage.getAsync("GeoMeta-Provinces") || {};
 
-		if (this.appConfig.geoMeta.provinces[this.appConfig.geoMeta.country] !== undefined) {
-			AppEvents.broadcast("App", { Type: "GeoMetaUpdated", Data: this.appConfig.geoMeta });
+		if (AppConfig.geoMeta.provinces[AppConfig.geoMeta.country] !== undefined) {
+			AppEvents.broadcast("App", { Type: "GeoMetaUpdated", Data: AppConfig.geoMeta });
 		}
 
 		await this.readAsync(
-			`statics/geo/provinces/${this.appConfig.geoMeta.country}.json`,
+			`statics/geo/provinces/${AppConfig.geoMeta.country}.json`,
 			async provinces => await this.saveGeoMetaAsync(provinces, async () => {
-				if (this.appConfig.geoMeta.countries.length < 1) {
+				if (AppConfig.geoMeta.countries.length < 1) {
 					await this.readAsync(
 						"statics/geo/countries.json",
 						async countries => await this.saveGeoMetaAsync(countries),
@@ -680,38 +672,39 @@ export class ConfigurationService extends BaseService {
 		);
 	}
 
-	private async saveGeoMetaAsync(data: any, onNext?: (data?: any) => void) {
+	private saveGeoMetaAsync(data: any, onNext?: (data?: any) => void) {
 		if (AppUtility.isObject(data, true) && AppUtility.isNotEmpty(data.code) && AppUtility.isArray(data.provinces, true)) {
-			this.appConfig.geoMeta.provinces[data.code] = data;
+			AppConfig.geoMeta.provinces[data.code] = data;
 		}
 		else if (AppUtility.isObject(data, true) && AppUtility.isArray(data.countries, true)) {
-			this.appConfig.geoMeta.countries = data.countries;
+			AppConfig.geoMeta.countries = data.countries;
 		}
-		await Promise.all([
-			AppStorage.setAsync("GeoMeta-Country", this.appConfig.geoMeta.country),
-			AppStorage.setAsync("GeoMeta-Countries", this.appConfig.geoMeta.countries),
-			AppStorage.setAsync("GeoMeta-Provinces", this.appConfig.geoMeta.provinces)
+		return Promise.all([
+			AppStorage.setAsync("GeoMeta-Country", AppConfig.geoMeta.country),
+			AppStorage.setAsync("GeoMeta-Countries", AppConfig.geoMeta.countries),
+			AppStorage.setAsync("GeoMeta-Provinces", AppConfig.geoMeta.provinces)
 		]).then(() => {
-			AppEvents.broadcast("App", { Type: "GeoMetaUpdated", Data: this.appConfig.geoMeta });
+			AppEvents.broadcast("App", { Type: "GeoMetaUpdated", Data: AppConfig.geoMeta });
 			if (onNext !== undefined) {
 				onNext(data);
 			}
 		});
 	}
 
-	private async reloadGeoMetaAsync() {
-		this.appConfig.geoMeta.countries = [];
-		this.appConfig.geoMeta.provinces = {};
-		await AppStorage.removeAsync("GeoMeta-Countries");
-		await AppStorage.removeAsync("GeoMeta-Provinces");
-		await this.loadGeoMetaAsync();
+	private reloadGeoMetaAsync() {
+		AppConfig.geoMeta.countries = [];
+		AppConfig.geoMeta.provinces = {};
+		return Promise.all([
+			AppStorage.removeAsync("GeoMeta-Countries"),
+			AppStorage.removeAsync("GeoMeta-Provinces")
+		]).then(async () => await this.loadGeoMetaAsync());
 	}
 
 	/** Loads the URI settings of the app */
 	public async loadURIsAsync(onNext?: (data?: any) => void) {
 		const uris = await AppStorage.getAsync("URIs") || {};
 		if (uris.apis !== undefined && uris.updates !== undefined && uris.files !== undefined) {
-			this.appConfig.URIs = uris;
+			AppConfig.URIs = uris;
 			await this.storeURIsAsync(onNext);
 		}
 		else if (onNext !== undefined) {
@@ -720,14 +713,14 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Stores the URI settings of the app */
-	public async storeURIsAsync(onNext?: (data?: any) => void) {
-		await AppStorage.setAsync("URIs", this.appConfig.URIs).then(() => {
+	public storeURIsAsync(onNext?: (data?: any) => void) {
+		return AppStorage.setAsync("URIs", AppConfig.URIs).then(() => {
 			AppEvents.broadcast("App", { Type: "URIsUpdated" });
 			if (this.isDebug) {
-				this.showLog("URIs are updated", this.appConfig.URIs);
+				this.showLog("URIs are updated", AppConfig.URIs);
 			}
 			if (onNext !== undefined) {
-				onNext(this.appConfig.URIs);
+				onNext(AppConfig.URIs);
 			}
 		});
 	}
@@ -736,8 +729,8 @@ export class ConfigurationService extends BaseService {
 	public async loadOptionsAsync(onNext?: (data?: any) => void) {
 		const options = await AppStorage.getAsync("Options") || {};
 		if (options.i18n !== undefined && options.timezone !== undefined && options.extras !== undefined) {
-			this.appConfig.options = options;
-			this.appConfig.options.theme = this.appConfig.options.theme || "light";
+			AppConfig.options = options;
+			AppConfig.options.theme = AppConfig.options.theme || "light";
 			await this.saveOptionsAsync(onNext);
 		}
 		else if (onNext !== undefined) {
@@ -746,49 +739,49 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Updates the options of the app */
-	public async updateOptionsAsync(options: any, onNext?: (data?: any) => void) {
-		AppUtility.toKeyValuePair(options).forEach(kvp => this.appConfig.options[kvp.key] = kvp.value);
-		await this.saveOptionsAsync(onNext);
+	public updateOptionsAsync(options: any, onNext?: (data?: any) => void) {
+		AppUtility.toKeyValuePair(options).forEach(kvp => AppConfig.options[kvp.key] = kvp.value);
+		return this.saveOptionsAsync(onNext);
 	}
 
 	/** Stores the options of the app */
-	public async storeOptionsAsync(onNext?: (data?: any) => void) {
-		await this.saveOptionsAsync(() => {
+	public storeOptionsAsync(onNext?: (data?: any) => void) {
+		return this.saveOptionsAsync(() => {
 			AppEvents.broadcast("App", { Type: "OptionsUpdated" });
 			if (onNext !== undefined) {
-				onNext(this.appConfig.options);
+				onNext(AppConfig.options);
 			}
 		});
 	}
 
 	/** Saves the options of the app into storage */
-	public async saveOptionsAsync(onNext?: (data?: any) => void) {
-		await AppStorage.setAsync("Options", this.appConfig.options).then(() => {
+	public saveOptionsAsync(onNext?: (data?: any) => void) {
+		return AppStorage.setAsync("Options", AppConfig.options).then(() => {
 			if (onNext !== undefined) {
-				onNext(this.appConfig.options);
+				onNext(AppConfig.options);
 			}
 		});
 	}
 
 	/** Prepares the UI languages */
-	public async prepareLanguagesAsync() {
+	public prepareLanguagesAsync() {
 		this.translateSvc.addLangs(this.languages.map(language => language.Value));
-		this.translateSvc.setDefaultLang(this.appConfig.language);
-		await this.setResourceLanguageAsync(this.appConfig.language);
+		this.translateSvc.setDefaultLang(AppConfig.language);
+		return this.setResourceLanguageAsync(AppConfig.language);
 	}
 
 	/** Changes the language & locale of resources to use in the app */
-	public async changeLanguageAsync(language: string, saveOptions: boolean = true) {
-		this.appConfig.options.i18n = language;
-		await Promise.all([
+	public changeLanguageAsync(language: string, saveOptions: boolean = true) {
+		AppConfig.options.i18n = language;
+		return Promise.all([
 			saveOptions ? this.saveOptionsAsync() : AppUtility.promise,
 			this.setResourceLanguageAsync(language)
 		]).then(() => AppEvents.broadcast("App", { Type: "LanguageChanged" }));
 	}
 
 	/** Sets the language & locale of resources to use in the app */
-	public async setResourceLanguageAsync(language: string) {
-		await AppUtility.toAsync(this.translateSvc.use(language));
+	public setResourceLanguageAsync(language: string) {
+		return AppUtility.toAsync<void>(this.translateSvc.use(language));
 	}
 
 	/** Gets the resource (of the current language) by a key */
@@ -837,7 +830,7 @@ export class ConfigurationService extends BaseService {
 		if (AppUtility.isObject(query, true)) {
 			path += `${AppUtility.toQuery(query)}&`;
 		}
-		return path + this.appConfig.getRelatedQuery(serviceName, undefined, json => {
+		return path + AppConfig.getRelatedQuery(serviceName, undefined, json => {
 			if (AppUtility.isNotEmpty(serviceName) && AppUtility.isEquals(serviceName, json["related-service"])) {
 				delete json["related-service"];
 				delete json["active-id"];
@@ -858,13 +851,13 @@ export class ConfigurationService extends BaseService {
 		delete this._definitions[AppCrypto.md5(path.toLowerCase())];
 	}
 
-	public async getInstructionsAsync(service: string, language?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.fetchAsync(`statics/instructions/${service.toLowerCase()}/${language || this.appConfig.language}.json`, onSuccess, onError);
+	public getInstructionsAsync(service: string, language?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.fetchAsync(`statics/instructions/${service.toLowerCase()}/${language || AppConfig.language}.json`, onSuccess, onError);
 	}
 
 	/** Gets service logs */
-	public async getServiceLogsAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = true) {
-		await this.searchAsync(this.getSearchingPath(undefined, undefined, "logs"), request, onSuccess, onError, true, useXHR);
+	public getServiceLogsAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = true) {
+		return this.searchAsync(this.getSearchingPath(undefined, undefined, "logs"), request, onSuccess, onError, true, useXHR);
 	}
 
 }
