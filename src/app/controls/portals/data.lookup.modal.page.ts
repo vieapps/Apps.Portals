@@ -4,6 +4,7 @@ import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppPagination } from "@app/components/app.pagination";
 import { AppFormsService } from "@app/components/forms.service";
 import { AppDataPagination, AppDataRequest } from "@app/components/app.objects";
@@ -93,6 +94,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	selected = new Dictionary<string, DataItem>();
 
 	ngOnInit() {
+		AppUtility.invoke(async () => await TrackingUtility.trackAsync({ title: `Lookup - ${this.objectName}`, category: this.objectName.split(".").last(), action: "Lookup" }));
 		this.nested = this.nested === undefined ? false : AppUtility.isTrue(this.nested);
 		this.multiple = this.multiple === undefined ? true : AppUtility.isTrue(this.multiple);
 		this.excludedIDs = AppUtility.isArray(this.excludedIDs, true) ? this.excludedIDs.filter(id => AppUtility.isNotEmpty(id)).map(id => id.trim()) : [];

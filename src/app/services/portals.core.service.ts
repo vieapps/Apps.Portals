@@ -428,7 +428,7 @@ export class PortalsCoreService extends BaseService {
 		return Module.active;
 	}
 
-	public setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onPreCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {
+	public setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {
 		lookupOptions.ModalOptions = lookupOptions.ModalOptions || {};
 		if (lookupModalPage !== undefined) {
 			lookupOptions.ModalOptions.Component = lookupModalPage;
@@ -443,8 +443,8 @@ export class PortalsCoreService extends BaseService {
 		if (nested !== undefined) {
 			lookupOptions.ModalOptions.ComponentProps.nested = AppUtility.isTrue(nested);
 		}
-		if (onPreCompleted !== undefined) {
-			onPreCompleted(lookupOptions);
+		if (onCompleted !== undefined) {
+			onCompleted(lookupOptions);
 		}
 	}
 
