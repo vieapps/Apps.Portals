@@ -24,8 +24,6 @@ export interface AppSidebar {
 	}>;
 	toggle: (visible?: boolean) => void;
 	active: (name?: string, open?: boolean) => void;
-	open: (name?: string) => void;
-	close: () => void;
 	updateTopMenu: (items: Array<AppSidebarMenuItem>) => void;
 	normalizeTopMenu: () => void;
 	updateMainMenu: (name: string, parent: AppSidebarMenuItem, items: Array<AppSidebarMenuItem>, index?: number) => void;

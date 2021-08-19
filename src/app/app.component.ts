@@ -69,8 +69,6 @@ export class AppComponent implements OnInit {
 		}>(),
 		toggle: undefined as (visible?: boolean) => void,
 		active: undefined as (name?: string, open?: boolean) => void,
-		open: undefined as (name?: string) => void,
-		close: undefined as () => void,
 		updateTopMenu: undefined as (items: Array<AppSidebarMenuItem>) => void,
 		normalizeTopMenu: undefined as () => void,
 		updateMainMenu: undefined as (name: string, parent: AppSidebarMenuItem, items: Array<AppSidebarMenuItem>, index?: number) => void,
@@ -184,16 +182,8 @@ export class AppComponent implements OnInit {
 			}
 		};
 
-		this.sidebar.open = (name?: string) => {
-			this.sidebar.active(name, true);
-		};
-
-		this.sidebar.close = () => {
-			this.sidebar.toggle(false);
-		};
-
 		this.sidebar.updateTopMenu = (items: Array<AppSidebarMenuItem>) => {
-			this.sidebar.TopMenu = items;
+			this.sidebar.TopMenu = items || [];
 		};
 
 		this.sidebar.normalizeTopMenu = () => {
@@ -322,56 +312,50 @@ export class AppComponent implements OnInit {
 			]);
 		}
 
-		if (args.Name === undefined && args.Parent === undefined && args.Items === undefined) {
-			if (onNext !== undefined) {
-				onNext();
+		if (args.Name !== undefined || args.Parent !== undefined || args.Items !== undefined) {
+			const parent = AppUtility.isObject(args.Parent, true)
+				? {
+						ID: args.Parent.ID,
+						Title: args.Parent.Title,
+						Link: args.Parent.Link,
+						Params: args.Parent.Params,
+						Expanded: !!args.Parent.Expanded,
+						Detail: !!args.Parent.Detail,
+						Thumbnail: args.Parent.Thumbnail,
+						Icon: args.Parent.Icon,
+						OnClick: typeof args.Parent.OnClick === "function" ? args.Parent.OnClick : _ => {}
+					} as AppSidebarMenuItem
+				: undefined;
+			if (parent !== undefined && AppUtility.isNotEmpty(parent.Title) && parent.Title.startsWith("{{") && parent.Title.endsWith("}}")) {
+				parent.Title = await this.configSvc.getResourceAsync(parent.Title.substr(2, parent.Title.length - 4).trim());
 			}
-			return;
+			const items = AppUtility.isArray(args.Items, true)
+				? (args.Items as Array<any>).map(item => ({
+						ID: item.ID,
+						Title: item.Title,
+						Link: item.Link,
+						Params: item.Params,
+						Direction: item.Direction,
+						OnClick: item.OnClick,
+						Children: item.Children,
+						Expanded: item.Expanded,
+						Detail: item.Detail,
+						Thumbnail: item.Thumbnail,
+						Icon: item.Icon
+					} as AppSidebarMenuItem))
+					.filter(item => AppUtility.isNotEmpty(item.Title))
+					.map(item => this.getSidebarMainMenuItem(item))
+				: undefined;
+			if (items !== undefined) {
+				await Promise.all(items.map(async item => {
+					if (AppUtility.isNotEmpty(item.Title) && item.Title.startsWith("{{") && item.Title.endsWith("}}")) {
+						item.Title = await this.configSvc.getResourceAsync(item.Title.substr(2, item.Title.length - 4).trim());
+					}
+				}));
+			}
+			this.sidebar.updateMainMenu(args.Name, parent, items, args.Index !== undefined ? args.Index as number : 0);
 		}
 
-		const parent = AppUtility.isObject(args.Parent, true)
-			? {
-					ID: args.Parent.ID,
-					Title: args.Parent.Title,
-					Link: args.Parent.Link,
-					Params: args.Parent.Params,
-					Expanded: !!args.Parent.Expanded,
-					Detail: !!args.Parent.Detail,
-					Thumbnail: args.Parent.Thumbnail,
-					Icon: args.Parent.Icon,
-					OnClick: typeof args.Parent.OnClick === "function" ? args.Parent.OnClick : _ => {}
-				} as AppSidebarMenuItem
-			: undefined;
-		if (parent !== undefined && AppUtility.isNotEmpty(parent.Title) && parent.Title.startsWith("{{") && parent.Title.endsWith("}}")) {
-			parent.Title = await this.configSvc.getResourceAsync(parent.Title.substr(2, parent.Title.length - 4).trim());
-		}
-
-		const items = AppUtility.isArray(args.Items, true)
-			? (args.Items as Array<any>).map(item => ({
-					ID: item.ID,
-					Title: item.Title,
-					Link: item.Link,
-					Params: item.Params,
-					Direction: item.Direction,
-					OnClick: item.OnClick,
-					Children: item.Children,
-					Expanded: item.Expanded,
-					Detail: item.Detail,
-					Thumbnail: item.Thumbnail,
-					Icon: item.Icon
-				} as AppSidebarMenuItem))
-				.filter(item => AppUtility.isNotEmpty(item.Title))
-				.map(item => this.getSidebarMainMenuItem(item))
-			: undefined;
-		if (items !== undefined) {
-			await Promise.all(items.map(async item => {
-				if (AppUtility.isNotEmpty(item.Title) && item.Title.startsWith("{{") && item.Title.endsWith("}}")) {
-					item.Title = await this.configSvc.getResourceAsync(item.Title.substr(2, item.Title.length - 4).trim());
-				}
-			}));
-		}
-
-		this.sidebar.updateMainMenu(args.Name, parent, items, args.Index !== undefined ? args.Index as number : 0);
 		if (onNext !== undefined) {
 			onNext();
 		}
@@ -429,8 +413,8 @@ export class AppComponent implements OnInit {
 	private prepareEventProcessors() {
 		AppEvents.on("ToggleSidebar", info => this.sidebar.toggle(info.args.Visible));
 		AppEvents.on("ActiveSidebar", info => this.sidebar.active(info.args.Name, info.args.Visible));
-		AppEvents.on("OpenSidebar", info => this.sidebar.open(info.args.Name));
-		AppEvents.on("CloseSidebar", _ => this.sidebar.close());
+		AppEvents.on("OpenSidebar", info => this.sidebar.active(info.args.Name, true));
+		AppEvents.on("CloseSidebar", _ => this.sidebar.toggle(false));
 
 		AppEvents.on("UpdateSidebar", info => AppUtility.invoke(async () => await this.updateSidebarAsync(info.args)));
 		AppEvents.on("AddSidebarItem", info => AppUtility.invoke(async () => await this.updateSidebarMainMenuItemAsync(info.args)));
