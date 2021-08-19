@@ -173,8 +173,8 @@ export class AuthenticationService extends BaseService {
 		}
 	}
 
-	public async logInAsync(account: string, password: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.createAsync(
+	public logInAsync(account: string, password: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			{
 				Account: AppCrypto.rsaEncrypt(account),
@@ -198,8 +198,8 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public async logInOTPAsync(id: string, info: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.updateAsync(
+	public logInOTPAsync(id: string, info: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			{
 				ID: AppCrypto.rsaEncrypt(id),
@@ -216,8 +216,8 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public async logOutAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.deleteAsync(
+	public logOutAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			async data => await this.configSvc.updateSessionAsync(data, async () => await this.configSvc.registerSessionAsync(() => {
 				this.showLog("Log out successful", this.configSvc.isDebug ? data : "");
@@ -235,8 +235,8 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public async resetPasswordAsync(account: string, captcha: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.updateAsync(
+	public resetPasswordAsync(account: string, captcha: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
 			this.getPath("account", "reset", `uri=${this.configSvc.activateURL}&${this.configSvc.relatedQuery}`, "users"),
 			{
 				Account: AppCrypto.rsaEncrypt(account)
@@ -247,8 +247,8 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public async renewPasswordAsync(account: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.updateAsync(
+	public renewPasswordAsync(account: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
 			this.getPath("account", "renew", this.configSvc.relatedQuery, "users"),
 			{
 				Account: AppCrypto.rsaEncrypt(account),
@@ -259,8 +259,8 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public async registerCaptchaAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		await this.readAsync(
+	public registerCaptchaAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.readAsync(
 			this.getPath("captcha", undefined, `register=${this.configSvc.appConfig.session.id}&${this.configSvc.relatedQuery}`, "users"),
 			data => {
 				this.configSvc.appConfig.session.captcha = {
@@ -275,8 +275,8 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	private async updateSessionWhenLogInAsync(data: any, onNext: (data?: any) => void) {
-		await this.configSvc.updateSessionAsync(data, () => {
+	private updateSessionWhenLogInAsync(data: any, onNext: (data?: any) => void) {
+		return this.configSvc.updateSessionAsync(data, () => {
 			AppEvents.broadcast("Session", { Type: "LogIn" });
 			AppEvents.sendToElectron("Users", { Type: "LogIn", Data: this.configSvc.appConfig.session });
 			if (onNext !== undefined) {
