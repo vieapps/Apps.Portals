@@ -28,32 +28,34 @@ export class TrackingUtility {
 	}
 
 	/** Tracks a screen */
-	public static async trackScreenAsync(title?: string, campaignUrl?: string, addPrefix: boolean = true) {
+	public static trackScreenAsync(title?: string, campaignUrl?: string, addPrefix: boolean = true) {
 		title = title || AppConfig.app.name;
 		campaignUrl = campaignUrl || AppUtility.getURI(AppConfig.URLs.stack.last(), AppConfig.URLs.home);
 		const promises = new Array<Promise<void>>();
 		if (this._googleAnalytics !== undefined) {
 			promises.push(this._googleAnalytics.trackView(`${addPrefix ? `${AppConfig.services.active} - ` : ""}${title}`, campaignUrl).catch(error => console.error("[AppTracking]: Error occurred while tracking a screen", error)));
 		}
-		await Promise.all(promises);
+		return Promise.all(promises);
 	}
 
 	/** Tracks an event */
-	public static async trackEventAsync(category: string, action: string, label?: string, addPrefix: boolean = true) {
+	public static trackEventAsync(category: string, action: string, label?: string, addPrefix: boolean = true) {
 		const promises = new Array<Promise<void>>();
 		if (this._googleAnalytics !== undefined) {
 			promises.push(this._googleAnalytics.trackEvent(`${addPrefix ? `${AppConfig.services.active}:` : ""}${category}`, action, label).catch(error => console.error("[AppTracking]: Error occurred while tracking an event", error)));
 		}
-		await Promise.all(promises);
+		return Promise.all(promises);
 	}
 
 	/** Tracks a screen with an event */
-	public static async trackAsync(options?: { title?: string; campaignUrl?: string; category?: string; action?: string; label?: string; }, addPrefix: boolean = true) {
+	public static trackAsync(options?: { title?: string; campaignUrl?: string; category?: string; action?: string; label?: string; }, addPrefix: boolean = true) {
 		options = options || {};
-		await Promise.all([
-			this.trackScreenAsync(options.title, options.campaignUrl, addPrefix),
-			AppUtility.isNotNull(options.category) && AppUtility.isNotNull(options.action) ? this.trackEventAsync(options.category, options.action, options.label, addPrefix) : AppUtility.promise
-		]);
+		return this.trackScreenAsync(options.title, options.campaignUrl, addPrefix)
+			.then(async () => {
+				if (AppUtility.isNotNull(options.category) && AppUtility.isNotNull(options.action)) {
+					await this.trackEventAsync(options.category, options.action, options.label, addPrefix);
+				}
+			});
 	}
 
 }
