@@ -178,7 +178,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			return;
 		}
 
-		AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebarWithContentTypes" });
+		AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebar", Mode: "ContentTypes" });
 
 		this.labels = {
 			children: await this.configSvc.getResourceAsync("portals.cms.links.list.labels.children"),

@@ -182,7 +182,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			return;
 		}
 
-		AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebarWithCategories" });
+		AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebar", Mode: "Categories" });
 
 		this.labels = {
 			edit: await this.configSvc.getResourceAsync("portals.cms.categories.list.labels.edit"),

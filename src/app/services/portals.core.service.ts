@@ -149,16 +149,16 @@ export class PortalsCoreService extends BaseService {
 			}
 		});
 
-		AppEvents.on(this.name, async info => {
+		AppEvents.on(this.name, info => {
 			if ("RequestInfo" === info.args.Type && AppUtility.isNotEmpty(info.args.ID)) {
 				if ("Organization" === info.args.Object) {
-					await this.getOrganizationAsync(info.args.ID);
+					AppUtility.invoke(async () => await this.getOrganizationAsync(info.args.ID));
 				}
 				else if ("Module" === info.args.Object) {
-					await this.getModuleAsync(info.args.ID);
+					AppUtility.invoke(async () => await this.getModuleAsync(info.args.ID));
 				}
 				else if ("ContentType" === info.args.Object) {
-					await this.getContentTypeAsync(info.args.ID);
+					AppUtility.invoke(async () => await this.getContentTypeAsync(info.args.ID));
 				}
 			}
 			else if ("Changed" === info.args.Type && "Organization" === info.args.Object) {

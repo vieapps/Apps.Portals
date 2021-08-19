@@ -101,36 +101,38 @@ export class PortalsCmsService extends BaseService {
 
 		AppAPIs.registerAsServiceScopeProcessor(this.filesSvc.name, message => this.processAttachmentUpdateMessage(message));
 
-		AppEvents.on(this.name, async info => {
-			if ("UpdateSidebarWithContentTypes" === info.args.Type) {
-				this._sidebarCategory = undefined;
-				this._sidebarContentType = undefined;
-				await this.updateSidebarWithContentTypesAsync();
-			}
-			else if ("UpdateSidebarWithCategories" === info.args.Type) {
-				if (AppUtility.isNotEmpty(info.args.ContentTypeID)) {
-					if (this._sidebarContentType === undefined || this._sidebarContentType.ID !== info.args.ContentTypeID) {
-						this._sidebarContentType = ContentType.get(info.args.ContentTypeID);
-						if (this._sidebarContentType !== undefined) {
-							await this.updateSidebarWithCategoriesAsync();
+		AppEvents.on(this.name, info => {
+			if ("UpdateSidebar" === info.args.Type) {
+				if ("ContentTypes" === info.args.Mode) {
+					this._sidebarCategory = undefined;
+					this._sidebarContentType = undefined;
+					AppUtility.invoke(async () => await this.updateSidebarWithContentTypesAsync());
+				}
+				else if ("Categories" === info.args.Mode) {
+					if (AppUtility.isNotEmpty(info.args.ContentTypeID)) {
+						if (this._sidebarContentType === undefined || this._sidebarContentType.ID !== info.args.ContentTypeID) {
+							this._sidebarContentType = ContentType.get(info.args.ContentTypeID);
+							if (this._sidebarContentType !== undefined) {
+								AppUtility.invoke(async () => await this.updateSidebarWithCategoriesAsync());
+							}
 						}
 					}
-				}
-				else if (this._sidebarContentType === undefined) {
-					await this.updateSidebarWithCategoriesAsync();
+					else if (this._sidebarContentType === undefined) {
+						AppUtility.invoke(async () => await this.updateSidebarWithCategoriesAsync());
+					}
 				}
 			}
 			else if ("Changed" === info.args.Type && ("Organization" === info.args.Object || "Module" === info.args.Object)) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
-				await this.updateSidebarAsync();
+				AppUtility.invoke(async () => await this.updateSidebarAsync());
 			}
 			else if ("FeaturedContents" === info.args.Type && "Request" === info.args.Mode) {
 				const organization = this.portalsCoreSvc.activeOrganization;
 				if (organization !== undefined && !this._noContents.contains(organization.ID)) {
 					if (organization.modules.toList().SelectMany(module => module.contentTypes.toList()).Count() > 0) {
 						this._noContents.add(organization.ID);
-						await this.prepareFeaturedContentsAsync(false);
+						AppUtility.invoke(async () => await this.prepareFeaturedContentsAsync(false));
 					}
 				}
 			}
@@ -149,7 +151,7 @@ export class PortalsCmsService extends BaseService {
 			}
 		});
 
-		AppEvents.on("Account", async info => {
+		AppEvents.on("Account", info => {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
@@ -157,7 +159,7 @@ export class PortalsCmsService extends BaseService {
 			}
 		});
 
-		AppEvents.on("Profile", async info => {
+		AppEvents.on("Profile", info => {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				if (Organization.active !== undefined && this.portalsCoreSvc.activeOrganizations.indexOf(Organization.active.ID) < 0) {
 					this._sidebarCategory = undefined;
