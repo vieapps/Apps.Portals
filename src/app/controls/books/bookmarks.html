@@ -5,7 +5,7 @@
 		</ion-label>
 	</ion-list-header>
 	<ion-item-sliding *ngFor="let bookmark of bookmarks; trackBy: trackBookmark">
-		<ion-item [color]="color" (click)="openAsync(bookmark)">
+		<ion-item [color]="color" (click)="openAsync(bookmark)" class="ion-activatable" detail="false">
 			<div>
 				<h2>
 					{{ getTitle(bookmark) }}

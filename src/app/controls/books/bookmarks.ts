@@ -83,8 +83,8 @@ export class BookmarksControl implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
+		AppUtility.invoke(() => this.prepareBookmarks());
 		await this.prepareLabelsAsync();
-		AppUtility.invoke(() => this.prepareBookmarks(), 345);
 	}
 
 	private async prepareLabelsAsync() {
