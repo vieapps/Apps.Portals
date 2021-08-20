@@ -345,7 +345,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 						ReadOnly: true,
 						Icon: {
 							Name: "copy",
-							OnClick: (_, formControl) => PlatformUtility.copyToClipboard(formControl.value, async () => await this.appFormsSvc.showToastAsync("Copied..."))
+							OnClick: (_, formControl) => PlatformUtility.copyToClipboardAsync(formControl.value, async () => await this.appFormsSvc.showToastAsync("Copied..."))
 						}
 					}
 				}, 0);

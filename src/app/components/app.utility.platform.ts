@@ -65,16 +65,16 @@ export class PlatformUtility {
 	public static openURL(url?: string, target?: string) {
 		if (AppUtility.isNotEmpty(url)) {
 			if (this._electronService !== undefined) {
-				AppUtility.invoke(async () => await this._electronService.shell.openExternal(url));
+				this._electronService.shell.openExternal(url);
 			}
 			else if (AppConfig.isNativeApp && this._inappBrowser !== undefined) {
-				this._inappBrowser.create(url, target || "_blank", {
+				AppUtility.invoke(() => this._inappBrowser.create(url, target || "_blank", {
 					allowInlineMediaPlayback: "yes",
 					location: "yes"
-				});
+				}));
 			}
 			else {
-				window.open(url, target || "_blank");
+				AppUtility.invoke(() => window.open(url, target || "_blank"));
 			}
 		}
 	}
@@ -85,18 +85,13 @@ export class PlatformUtility {
 	}
 
 	/** Copies the value into clipboard */
-	public static copyToClipboard(value: string, onNext?: () => void) {
-		if (AppConfig.isNativeApp) {
-			this.copyToNativeAppClipboard(value, onNext);
-		}
-		else {
-			this.copyToWebAppClipboard(value, onNext);
-		}
+	public static copyToClipboardAsync(value: string, onNext?: () => void) {
+		return AppConfig.isNativeApp ? this.copyToNativeAppClipboardAsync(value, onNext) : this.copyToWebAppClipboardAsync(value, onNext);
 	}
 
 	/** Copies the value into clipboard of the native app */
-	public static copyToNativeAppClipboard(value: string, onNext?: () => void) {
-		AppUtility.invoke(async () => this._clipboard.copy(value)
+	public static copyToNativeAppClipboardAsync(value: string, onNext?: () => void) {
+		return this._clipboard.copy(value)
 			.then(() => {
 				if (AppConfig.isDebug) {
 					console.log("Copied...", value);
@@ -105,24 +100,26 @@ export class PlatformUtility {
 					onNext();
 				}
 			})
-			.catch(error => console.error(`Copy error => ${AppUtility.getErrorMessage(error)}`, AppUtility.stringify(error))));
+			.catch(error => console.error(`Copy error => ${AppUtility.getErrorMessage(error)}`, AppUtility.stringify(error)));
 	}
 
 	/** Copies the value into clipboard of the web app */
-	public static copyToWebAppClipboard(value: string, onNext?: () => void) {
-		const parentNode = window.document.body;
-		const textarea = this.appendElement({ value: value }, "textarea", parentNode) as HTMLTextAreaElement;
-		textarea.style.position = "fixed";
-		textarea.style.left = "0";
-		textarea.style.top = "0";
-		textarea.style.opacity = "0";
-		textarea.focus();
-		textarea.select();
-		window.document.execCommand("copy");
-		parentNode.removeChild(textarea);
-		if (onNext !== undefined) {
-			onNext();
-		}
+	public static copyToWebAppClipboardAsync(value: string, onNext?: () => void) {
+		return AppUtility.invoke(() => {
+			const parentNode = window.document.body;
+			const textarea = this.appendElement({ value: value }, "textarea", parentNode) as HTMLTextAreaElement;
+			textarea.style.position = "fixed";
+			textarea.style.left = "0";
+			textarea.style.top = "0";
+			textarea.style.opacity = "0";
+			textarea.focus();
+			textarea.select();
+			window.document.execCommand("copy");
+			parentNode.removeChild(textarea);
+			if (onNext !== undefined) {
+				onNext();
+			}
+		});
 	}
 
 	/** Prepares environments of the PWA */

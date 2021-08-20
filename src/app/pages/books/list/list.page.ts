@@ -220,16 +220,13 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 
 		if (!this.searching) {
 			if (category === undefined && author === undefined) {
-				await Promise.all([
-					this.appFormsSvc.showToastAsync("Hmmm..."),
-					this.configSvc.navigateHomeAsync()
-				]);
+				this.appFormsSvc.showToastAsync("Hmmm...").then(() => this.configSvc.navigateHomeAsync());
 			}
 			else {
 				this.ratings = {};
 				this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 				this.pagination.PageNumber = this.pageNumber;
-				await this.searchAsync(async () => await this.prepareActionsAsync());
+				this.searchAsync(() => this.prepareActionsAsync());
 			}
 		}
 	}
@@ -271,30 +268,30 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 		}
 	}
 
-	async onInfiniteScrollAsync() {
+	onInfiniteScroll() {
 		if (this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => await this.infiniteScrollCtrl.complete());
+			this.searchAsync(() => this.infiniteScrollCtrl.complete());
 		}
 		else {
-			await this.infiniteScrollCtrl.complete();
-			this.infiniteScrollCtrl.disabled = true;
+			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
 		}
 	}
 
 	async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const nextAsync = async (data: any) => {
+		const title = this.searching ? await this.configSvc.getResourceAsync("books.list.title.search") : this.category || this.author;
+		const onSuccess = (data: any) => {
+			TrackingUtility.trackAsync({ title: title, category: "Book", action: this.searching ? "Search" : "Browse" });
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await TrackingUtility.trackAsync({ title: this.searching ? await this.configSvc.getResourceAsync("books.list.title.search") : this.category || this.author, category: "Book", action: this.searching ? "Search" : "Browse" });
 		};
 		if (this.searching) {
-			this.subscription = this.booksSvc.searchBooks(this.request, nextAsync);
+			this.subscription = this.booksSvc.searchBooks(this.request, onSuccess);
 		}
 		else {
-			await this.booksSvc.searchBooksAsync(this.request, nextAsync);
+			await this.booksSvc.searchBooksAsync(this.request, onSuccess);
 		}
 	}
 
@@ -373,9 +370,9 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 
 	async prepareActionsAsync() {
 		this.actions = [
-			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("books.list.actions.search"), "search", async () => await this.configSvc.navigateForwardAsync("/books/search")),
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("books.list.actions.search"), "search", () => this.configSvc.navigateForwardAsync("/books/search")),
 			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("books.list.actions.filter"), "funnel", () => this.showFilter()),
-			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("books.list.actions.sort"), "swap-vertical", async () => await this.showSortsAsync())
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("books.list.actions.sort"), "swap-vertical", () => this.showSortsAsync())
 		];
 
 		const pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.booksSvc.name);
@@ -383,17 +380,17 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 			this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("books.list.actions.show", { totalRecords: AppPagination.computeTotal(pagination.PageNumber, pagination) }), "eye", () => {
 				this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.booksSvc.name);
 				this.pageNumber = this.pagination.PageNumber;
-				this.prepareResults(async () => await this.prepareActionsAsync());
+				this.prepareResults(() => this.prepareActionsAsync());
 			}));
 		}
 
 		if (this.authSvc.isServiceModerator()) {
-			this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("books.list.actions.crawl"), "build", async () => await this.showCrawlAsync()));
+			this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("books.list.actions.crawl"), "build", () => this.showCrawlAsync()));
 		}
 	}
 
-	async showActionsAsync() {
-		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	showActions() {
+		this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
 	showFilter() {

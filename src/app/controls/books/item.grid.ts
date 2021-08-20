@@ -27,8 +27,8 @@ export class BookGridItemControl {
 		return `url(${this.book.Cover})`;
 	}
 
-	openAsync() {
-		return this.configSvc.navigateForwardAsync(this.book.routerURI);
+	open() {
+		this.configSvc.navigateForwardAsync(this.book.routerURI);
 	}
 
 }

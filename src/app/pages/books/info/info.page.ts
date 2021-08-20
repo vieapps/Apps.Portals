@@ -76,19 +76,15 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		this.initializeAsync();
-
+		this.initialize();
 		AppEvents.on("App", info => {
 			if ("LanguageChanged" === info.args.Type) {
 				this.prepareLabelsAsync();
 			}
 		}, "LanguageChangedEventHandlerOfViewBookInfoPage");
-
 		AppEvents.on("Books", info => {
-			if (this.book.ID === info.args.ID) {
-				if ("StatisticsUpdated" === info.args.Type) {
-					this.getStatistics();
-				}
+			if (this.book.ID === info.args.ID && "StatisticsUpdated" === info.args.Type) {
+				this.getStatistics();
 			}
 		}, "EventHandlerOfViewBookInfoPage");
 	}
@@ -105,24 +101,23 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 		};
 	}
 
-	async initializeAsync() {
+	initialize() {
 		const id = this.configSvc.requestParams["ID"];
-		await this.booksSvc.getBookAsync(id, async () => {
+		this.booksSvc.getBookAsync(id, async () => {
 			this.book = Book.get(id);
 			if (this.book !== undefined) {
-				await this.prepareLabelsAsync();
-				this.getStatistics();
+				this.prepareLabelsAsync().then(() => this.getStatistics());
 				this.title = this.configSvc.appTitle = this.book.Title + " - " + this.book.Author;
 				this.qrcode = this.configSvc.appConfig.isNativeApp
 					? AppUtility.stringify({ Service: this.booksSvc.name, Object: "Book", ID: this.book.ID, Action: "Read" })
 					: this.redirectUrl;
 				if (AppUtility.isObject(this.book.Files, true) && (this.book.Files.Epub.Size === "generating..." || this.book.Files.Mobi.Size === "generating...")) {
-					await this.booksSvc.generateEBookFilesAsync(this.book.ID);
+					this.booksSvc.generateEBookFilesAsync(this.book.ID);
 				}
-				await this.trackAsync(this.title);
+				this.trackAsync(this.title);
 			}
 			else {
-				await this.configSvc.navigateBackAsync();
+				this.configSvc.navigateBackAsync();
 			}
 		});
 	}
@@ -154,37 +149,32 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 		};
 	}
 
-	async downloadAsync(type: string) {
+	download(type: string) {
 		if (this.configSvc.isAuthenticated) {
-			await this.trackAsync(this.title, "Download", "/books/download/success");
-			PlatformUtility.openURL(`${this.book.Files[type].Url}?${AppUtility.toQuery(this.configSvc.appConfig.getAuthenticatedInfo())}`);
+			this.trackAsync(this.title, "Download", "/books/download/success").then(() => PlatformUtility.openURL(`${this.book.Files[type].Url}?${AppUtility.toQuery(this.configSvc.appConfig.getAuthenticatedInfo())}`));
 		}
 		else {
-			await Promise.all([
-				this.trackAsync(this.title, "Download", "/books/download/failed"),
-				this.appFormsSvc.showAlertAsync(
-					undefined,
-					await this.configSvc.getResourceAsync("books.info.notAuthenticated"),
-					undefined,
-					() => AppEvents.broadcast("Navigate", { Type: "LogIn" }),
-					await this.configSvc.getResourceAsync("common.buttons.login"),
-					await this.configSvc.getResourceAsync("common.buttons.later")
-				)
-			]);
+			this.trackAsync(this.title, "Download", "/books/download/failed").then(async () => await this.appFormsSvc.showAlertAsync(
+				undefined,
+				await this.configSvc.getResourceAsync("books.info.notAuthenticated"),
+				undefined,
+				() => AppEvents.broadcast("Navigate", { Type: "LogIn" }),
+				await this.configSvc.getResourceAsync("common.buttons.login"),
+				await this.configSvc.getResourceAsync("common.buttons.later")
+			));
 		}
 	}
 
-	async copyLinkAsync() {
-		PlatformUtility.copyToClipboard(this.redirectUrl);
-		await this.appFormsSvc.showToastAsync("Copied...");
+	copyLink() {
+		PlatformUtility.copyToClipboardAsync(this.redirectUrl).then(() => this.appFormsSvc.showToastAsync("Copied..."));
 	}
 
 	openSource() {
 		PlatformUtility.openURL(this.sourceUrl);
 	}
 
-	private async trackAsync(title: string, action?: string, url?: string) {
-		await TrackingUtility.trackAsync({ title: title, campaignUrl: url, category: "Book", action: action || "View" });
+	private trackAsync(title: string, action?: string, url?: string) {
+		return TrackingUtility.trackAsync({ title: title, campaignUrl: url, category: "Book", action: action || "View" });
 	}
 
 }

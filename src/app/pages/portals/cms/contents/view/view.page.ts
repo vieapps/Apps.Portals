@@ -99,11 +99,9 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		this.title.track = await this.configSvc.getResourceAsync("portals.cms.contents.title.view");
 
 		if (this.content === undefined) {
-			await Promise.all([
-				this.trackAsync(`${this.title.track} | No Content`, "Check"),
-				this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync("Hmmmmmm....")),
-				this.configSvc.navigateBackAsync()
-			]);
+			this.trackAsync(`${this.title.track} | No Content`, "Check");
+			this.appFormsSvc.showToastAsync("Hmmmmmm....");
+			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 			return;
 		}
 
@@ -127,11 +125,9 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		}
 
 		if (!canView) {
-			await Promise.all([
-				this.trackAsync(`${this.title.track} | No Permission`, "Check"),
-				this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync("Hmmmmmm....")),
-				this.configSvc.navigateBackAsync()
-			]);
+			this.trackAsync(`${this.title.track} | No Permission`, "Check");
+			this.appFormsSvc.showToastAsync("Hmmmmmm....");
+			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 			return;
 		}
 
@@ -147,15 +143,15 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 		if (this.canEdit) {
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(this.resources.update, "create", () => this.updateAsync()),
-				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderateAsync()),
-				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.deleteAsync())
+				this.appFormsSvc.getActionSheetButton(this.resources.update, "create", () => this.update()),
+				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()),
+				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.delete())
 			];
 		}
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
-		await this.trackAsync(this.title.track);
+		this.trackAsync(this.title.track);
 
 		AppEvents.on(this.portalsCoreSvc.name, info => {
 			if (info.args.Object === "CMS.Content" && this.content.ID === info.args.ID) {
@@ -164,7 +160,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 					this.prepareValues();
 				}
 				else if (info.args.Type === "Deleted") {
-					this.cancelAsync();
+					this.cancel();
 				}
 			}
 		}, "CMS.Contents:View:Refresh");
@@ -201,7 +197,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				{
 					Name: "DeleteThumbnail",
 					Label: this.resources.deleteThumbnail,
-					OnClick: async () => await this.deleteThumbnailAsync(),
+					OnClick: () => this.deleteThumbnail(),
 					Options: {
 						Fill: "clear",
 						Color: "danger",
@@ -238,7 +234,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				{
 					Name: "Delete",
 					Label: this.resources.delete,
-					OnClick: async () => await this.deleteAsync(),
+					OnClick: async () => this.delete(),
 					Options: {
 						Fill: "clear",
 						Color: "danger",
@@ -378,15 +374,15 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		});
 	}
 
-	async showActionsAsync() {
-		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	showActions() {
+		this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
-	async updateAsync() {
-		await this.configSvc.navigateForwardAsync(this.content.routerURI.replace("/view/", "/update/"));
+	update() {
+		this.configSvc.navigateForwardAsync(this.content.routerURI.replace("/view/", "/update/"));
 	}
 
-	async moderateAsync() {
+	moderate() {
 		const availableStatuses = ["Draft", "Pending"];
 		if (this.canEdit) {
 			availableStatuses.push("Rejected", "Approved");
@@ -395,12 +391,11 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			availableStatuses.push("Published", "Archieved");
 		}
 		const currentStatus = availableStatuses.indexOf(this.content.Status) > -1 ? this.content.Status : "Draft";
-		await this.portalsCoreSvc.approveAsync(this.content.contentType.ID, this.content.ID, currentStatus, availableStatuses);
+		this.portalsCoreSvc.approveAsync(this.content.contentType.ID, this.content.ID, currentStatus, availableStatuses);
 	}
 
-	async deleteAsync() {
-		await this.trackAsync(this.resources.delete, "Delete");
-		await this.appFormsSvc.showAlertAsync(
+	delete() {
+		this.trackAsync(this.resources.delete, "Delete").then(async () => await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete"),
 			undefined,
@@ -427,12 +422,11 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			},
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
+		));
 	}
 
-	async deleteThumbnailAsync() {
-		await this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail");
-		await this.appFormsSvc.showAlertAsync(
+	deleteThumbnail() {
+		this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail").then(async () => await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.deleteThumbnail"),
 			undefined,
@@ -453,15 +447,15 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			},
 			await this.configSvc.getResourceAsync("common.buttons.delete"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
+		));
 	}
 
-	async cancelAsync() {
-		await this.configSvc.navigateBackAsync();
+	cancel() {
+		this.configSvc.navigateBackAsync();
 	}
 
-	private async trackAsync(title: string, action?: string, category?: string) {
-		await TrackingUtility.trackAsync({ title: title, category: category || "Content", action: action || "View" });
+	private trackAsync(title: string, action?: string, category?: string) {
+		return TrackingUtility.trackAsync({ title: title, category: category || "Content", action: action || "View" });
 	}
 
 }

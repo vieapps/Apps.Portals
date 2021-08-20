@@ -29,8 +29,8 @@ export class BookLinearItemControl {
 		return this.configSvc.locale;
 	}
 
-	openAsync() {
-		return this.configSvc.navigateForwardAsync(this.book.routerURI);
+	open() {
+		this.configSvc.navigateForwardAsync(this.book.routerURI);
 	}
 
 }

@@ -7,10 +7,10 @@
 			<ion-button *ngIf="book && book.TotalChapters > 1 && screen > 767 && screen < 1200" (click)="openTOCs()">
 				<ion-icon name="list" slot="icon-only"></ion-icon>
 			</ion-button>
-			<ion-button *ngIf="screen > 767" (click)="openOptionsAsync()">
+			<ion-button *ngIf="screen > 767" (click)="openOptions()">
 				<ion-icon name="options" slot="icon-only"></ion-icon>
 			</ion-button>
-			<ion-button (click)="openInfoAsync()">
+			<ion-button (click)="openInfo()">
 				<ion-icon name="information-circle" slot="icon-only"></ion-icon>
 			</ion-button>
 		</ion-buttons>
@@ -27,18 +27,18 @@
 			{{ chapter | number:'':locale }} / {{ book.TotalChapters | number:'':locale : '?' }}	
 		</div>
 		<ion-buttons *ngIf="actions" slot="end">
-			<ion-button color="primary" (click)="showActionsAsync()">
+			<ion-button color="primary" (click)="showActions()">
 				<ion-icon name="ellipsis-horizontal" slot="icon-only"></ion-icon>
 			</ion-button>
 		</ion-buttons>
 		<div *ngIf="book">
 			<span>
 				<ion-buttons>
-					<ion-button fill="clear" color="primary" (click)="goPreviousAsync()">
+					<ion-button fill="clear" color="primary" (click)="goPrevious()">
 						<ion-icon name="play-back" slot="start"></ion-icon>
 						{{ labels.previous }}
 					</ion-button>
-					<ion-button fill="clear" color="primary" (click)="goNextAsync()">
+					<ion-button fill="clear" color="primary" (click)="goNext()">
 						<ion-icon name="play-forward" slot="end"></ion-icon>
 						{{ labels.next }}
 					</ion-button>

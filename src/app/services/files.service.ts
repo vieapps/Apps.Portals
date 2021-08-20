@@ -299,7 +299,7 @@ export class FilesService extends BaseService {
 				OnClick: (_, formControl) => {
 					const value = formControl.value;
 					if (value !== undefined && AppUtility.isNotEmpty(value.current)) {
-						PlatformUtility.copyToClipboard(value.current, async () => await this.appFormsSvc.showToastAsync("Copied..."));
+						PlatformUtility.copyToClipboardAsync(value.current, async () => await this.appFormsSvc.showToastAsync("Copied..."));
 					}
 				}
 			};

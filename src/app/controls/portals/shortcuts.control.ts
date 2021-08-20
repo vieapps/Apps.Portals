@@ -94,8 +94,8 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			Icon: { Name: "business" },
 			Editable: false,
 			Removable: true,
-			OnClick: async _ => await this.changeOrganizationAsync(),
-			OnRemove: async _ => await this.removeOrganizationAsync()
+			OnClick: () => this.changeOrganizationAsync(),
+			OnRemove: () => this.removeOrganizationAsync()
 		}, 0);
 
 		const module = this.configSvc.isAuthenticated ? await this.portalsCoreSvc.getActiveModuleAsync() : undefined;
@@ -104,7 +104,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			Icon: { Name: "albums" },
 			Editable: false,
 			Removable: false,
-			OnClick: async () => await this.changeModuleAsync()
+			OnClick: () => this.changeModuleAsync()
 		}, 1);
 
 		this.shortcuts.insert({
@@ -115,7 +115,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			Removable: false,
 			OnClick: shortcut => {
 				AppEvents.broadcast("OpenSidebar", { Name: "cms" });
-				AppUtility.invoke(async () => await this.configSvc.navigateForwardAsync(shortcut.Link));
+				this.configSvc.navigateForwardAsync(shortcut.Link);
 			}
 		}, 2);
 
@@ -128,7 +128,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			Removable: false,
 			OnClick: shortcut => {
 				AppEvents.broadcast("OpenSidebar", { Name: "cms" });
-				AppUtility.invoke(async () => await this.configSvc.navigateForwardAsync(shortcut.Link));
+				this.configSvc.navigateForwardAsync(shortcut.Link);
 			}
 		}, 3);
 
@@ -154,7 +154,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			shortcut.OnClick(shortcut, index, event);
 		}
 		else {
-			AppUtility.invoke(async () => await this.configSvc.navigateAsync(shortcut.Direction, shortcut.Link));
+			this.configSvc.navigateAsync(shortcut.Direction, shortcut.Link);
 		}
 	}
 

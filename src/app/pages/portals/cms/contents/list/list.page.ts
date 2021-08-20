@@ -124,8 +124,8 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 			: await this.portalsCoreSvc.getActiveOrganizationAsync();
 
 		if (this.organization === undefined) {
-			await this.trackAsync(`${this.title.track} | No Organization`, "Check");
-			await this.appFormsSvc.hideLoadingAsync(async () => await this.backAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all"));
+			this.trackAsync(`${this.title.track} | Invalid Organization`, "Check");
+			this.appFormsSvc.hideLoadingAsync(async () => this.back(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all"));
 			return;
 		}
 
@@ -146,15 +146,11 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		this.canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Content", this.module === undefined ? undefined : this.module.Privileges);
 		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Content", this.module === undefined ? undefined : this.module.Privileges);
 		if (!this.canContribute) {
-			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
-			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateBackAsync()
-			]));
+			this.trackAsync(`${this.title.track} | No Permission`, "Check");
+			this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 			return;
 		}
-
-		AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebar", Mode: "Categories" });
 
 		this.buttons = {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
@@ -177,20 +173,20 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 			this.filterBy.And.push({ CategoryID: { Equals: this.category.ID } });
 		}
 
+		AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebar", Mode: "Categories" });
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.search");
-			PlatformUtility.focus(this.searchCtrl);
-			await this.appFormsSvc.hideLoadingAsync();
+			this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.focus(this.searchCtrl));
 		}
 		else {
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.search"), "search", () => this.openSearchAsync(false))
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.create"), "create", () => this.create()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.search"), "search", () => this.openSearch(false))
 			];
 			if (this.canUpdate) {
 				this.actions.push(
-					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
-					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
+					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcel()),
+					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcel())
 				);
 			}
 
@@ -201,11 +197,11 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 			}, `CMS.Contents:${(this.category !== undefined ? ":" + this.category.ID : "")}:Refresh`);
 
 			this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: `[${(this.category === undefined ? this.organization.Title : this.organization.Title + " :: " + this.category.FullTitle)}]` });
-			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync(async () => {
+			this.startSearch(() => {
 				if (this.category !== undefined && this.category.childrenIDs === undefined) {
-					await this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, async _ => await this.appFormsSvc.showToastAsync("The category was freshen-up"));
+					this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up"));
 				}
-			}));
+			});
 		}
 	}
 
@@ -225,10 +221,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 				this.contents = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				await this.searchAsync(async () => {
-					this.infiniteScrollCtrl.disabled = false;
-					await this.appFormsSvc.hideLoadingAsync();
-				});
+				this.searchAsync(() => this.infiniteScrollCtrl.disabled = false);
 			}
 			else {
 				this.contents = this.objects.filter(Content.getFilterBy(this.filterBy.Query));
@@ -244,29 +237,26 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		this.contents = this.filtering ? this.objects.map(obj => obj) : [];
 	}
 
-	async onCancel() {
+	onCancel() {
 		if (this.searching) {
-			await this.configSvc.navigateBackAsync();
+			this.configSvc.navigateBackAsync();
 		}
 		else {
-			AppUtility.invoke(() => {
-				this.onClear();
-				this.filtering = false;
-			}, 123);
+			this.onClear();
+			this.filtering = false;
 		}
 	}
 
-	async onInfiniteScrollAsync() {
+	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => {
+			this.searchAsync(() => {
 				if (this.infiniteScrollCtrl !== undefined) {
-					await this.infiniteScrollCtrl.complete();
+					this.infiniteScrollCtrl.complete();
 				}
 			});
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
-			await this.infiniteScrollCtrl.complete();
-			this.infiniteScrollCtrl.disabled = true;
+			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
 		}
 	}
 
@@ -274,37 +264,27 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		return this.portalsCoreSvc.getPaginationPrefix("cms.content");
 	}
 
-	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
+	private startSearch(onNext?: () => void, pagination?: AppDataPagination) {
 		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
-		await this.searchAsync(onNext);
+		this.searchAsync(onNext);
 	}
 
 	private async searchAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onSuccess = (data: any) => {
-			AppUtility.invoke(async () => await this.trackAsync(this.title.track));
-			try {
-				this.pageNumber++;
-				this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
-				this.pagination.PageNumber = this.pageNumber;
-				this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			}
-			catch (error) {
-				console.error("Error occurred while searching CMS content", error);
-			}
+			this.trackAsync(this.title.track);
+			this.pageNumber++;
+			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
+			this.pagination.PageNumber = this.pageNumber;
+			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
+			this.appFormsSvc.hideLoadingAsync();
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchContent(this.request, onSuccess, async error => await Promise.all([
-				this.appFormsSvc.showErrorAsync(error),
-				this.trackAsync(this.title.track)
-			]));
+			this.subscription = this.portalsCmsSvc.searchContent(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 		else {
-			await this.portalsCmsSvc.searchContentAsync(this.request, onSuccess, async error => await Promise.all([
-				this.appFormsSvc.showErrorAsync(error),
-				this.trackAsync(this.title.track)
-			]));
+			await this.portalsCmsSvc.searchContentAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 	}
 
@@ -324,75 +304,72 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	async showActionsAsync() {
-		await this.listCtrl.closeSlidingItems();
-		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	showActions() {
+		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showActionSheetAsync(this.actions));
 	}
 
-	async openSearchAsync(filtering: boolean = true) {
-		await this.listCtrl.closeSlidingItems();
-		if (filtering) {
-			this.filtering = true;
-			PlatformUtility.focus(this.searchCtrl);
-			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
-			this.objects = this.contents.map(obj => obj);
-		}
-		else {
-			await this.configSvc.navigateForwardAsync("/portals/cms/contents/search");
-		}
+	openSearch(filtering: boolean = true) {
+		this.listCtrl.closeSlidingItems().then(async () => {
+			if (filtering) {
+				this.filtering = true;
+				PlatformUtility.focus(this.searchCtrl);
+				this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
+				this.objects = this.contents.map(obj => obj);
+			}
+			else {
+				await this.configSvc.navigateForwardAsync("/portals/cms/contents/search");
+			}
+		});
 	}
 
-	async createAsync() {
-		await this.listCtrl.closeSlidingItems();
+	create() {
+		this.listCtrl.closeSlidingItems();
 		const params: { [key: string]: string } = {};
 		if (AppUtility.isNotEmpty(this.categoryID)) {
 			params["CategoryID"] = this.categoryID;
 		}
 		if (this.contentType !== undefined) {
 			params["RepositoryEntityID"] = this.contentType.ID;
-			await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, params));
+			this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, params));
 		}
 	}
 
-	async viewAsync(event: Event, content: Content) {
+	view(event: Event, content: Content) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(content.routerURI);
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(content.routerURI));
 	}
 
-	async editAsync(event: Event, content: Content) {
+	edit(event: Event, content: Content) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		if (this.canUpdate) {
-			await this.configSvc.navigateForwardAsync(content.routerURI.replace("/view/", "/update/"));
-		}
+		this.listCtrl.closeSlidingItems().then(() => {
+			if (this.canUpdate) {
+				this.configSvc.navigateForwardAsync(content.routerURI.replace("/view/", "/update/"));
+			}
+		});
 	}
 
-	private async backAsync(message: string, url?: string) {
-		await this.listCtrl.closeSlidingItems();
-		await this.appFormsSvc.showAlertAsync(
+	private back(message: string, url?: string) {
+		this.listCtrl.closeSlidingItems().then(async () => await this.appFormsSvc.showAlertAsync(
 			undefined,
 			message,
 			undefined,
-			async () => await this.configSvc.navigateHomeAsync(url),
+			() => this.configSvc.navigateHomeAsync(url),
 			await this.configSvc.getResourceAsync("common.buttons.ok")
-		);
+		));
 	}
 
-	async exportToExcelAsync() {
-		await this.portalsCoreSvc.exportToExcelAsync("CMS.Content", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined);
-		await this.trackAsync(this.actions[2].text, "Export");
+	exportToExcel() {
+		this.trackAsync(this.actions[2].text, "Export").then(() => this.portalsCoreSvc.exportToExcelAsync("CMS.Content", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined));
 	}
 
-	async importFromExcelAsync() {
-		await this.portalsCoreSvc.importFromExcelAsync(
+	importFromExcel() {
+		this.trackAsync(this.actions[3].text, "Import").then(async () => await this.portalsCoreSvc.importFromExcelAsync(
 			"CMS.Content",
 			this.organization.ID,
 			this.module !== undefined ? this.module.ID : undefined,
 			this.contentType !== undefined ? this.contentType.ID : undefined,
-			async _ => {
-				await this.appFormsSvc.showLoadingAsync();
-				await this.trackAsync(this.actions[3].text, "Import");
+			() => {
+				this.appFormsSvc.showLoadingAsync();
 				this.contents = [];
 				this.pageNumber = 0;
 				AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination), this.paginationPrefix);
@@ -400,7 +377,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 					.toArray(content => this.contentType !== undefined ? this.contentType.ID === content.RepositoryEntityID : this.organization.ID === content.SystemID)
 					.map(content => content.ID)
 					.forEach(id => Content.instances.remove(id));
-				await this.startSearchAsync(async () => await this.appFormsSvc.showAlertAsync(
+				this.startSearch(async () => await this.appFormsSvc.showAlertAsync(
 					"Excel",
 					await this.configSvc.getResourceAsync("portals.common.excel.message.import"),
 					undefined,
@@ -408,11 +385,11 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 					await this.configSvc.getResourceAsync("common.buttons.close")
 				));
 			}
-		);
+		));
 	}
 
 	private async trackAsync(title: string, action?: string) {
-		await TrackingUtility.trackAsync({ title: title, category: "Content", action: action || (this.searching ? "Search" : "Browse") });
+		return TrackingUtility.trackAsync({ title: title, category: "Content", action: action || (this.searching ? "Search" : "Browse") });
 	}
 
 }

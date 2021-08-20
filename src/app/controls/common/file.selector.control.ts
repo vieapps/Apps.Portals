@@ -120,7 +120,7 @@ export class FilesSelectorControl implements OnInit {
 	}
 
 	copy(uri: string) {
-		PlatformUtility.copyToClipboard(uri, async () => await this.appFormsSvc.showToastAsync("Copied..."));
+		PlatformUtility.copyToClipboardAsync(uri, async () => await this.appFormsSvc.showToastAsync("Copied..."));
 	}
 
 	open(uri: string) {
