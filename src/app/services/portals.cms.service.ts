@@ -58,44 +58,36 @@ export class PortalsCmsService extends BaseService {
 
 	private initialize() {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => {
-			// check system identity with activate organizations
 			const systemID = message.Data !== undefined ? message.Data.SystemID : undefined;
-			if (systemID === undefined || this.portalsCoreSvc.activeOrganizations.indexOf(systemID) < 0) {
-				return;
-			}
-
-			// process the message
-			switch (message.Type.Object) {
-				case "Category":
-				case "CMS.Category":
-				case "Cms.Category":
-					this.processCategoryUpdateMessage(message);
-					break;
-
-				case "Content":
-				case "CMS.Content":
-				case "Cms.Content":
-					this.processContentUpdateMessage(message);
-					break;
-
-				case "Item":
-				case "CMS.Item":
-				case "Cms.Item":
-					this.processItemUpdateMessage(message);
-					break;
-
-				case "Link":
-				case "CMS.Link":
-				case "Cms.Link":
-					this.processLinkUpdateMessage(message);
-					break;
-
-				case "ContentType":
-				case "Content.Type":
-				case "Core.ContentType":
-				case "Core.Content.Type":
-					this.processContentTypeUpdateMessage(message);
-					break;
+			if (systemID !== undefined && this.portalsCoreSvc.activeOrganizations.indexOf(systemID) > -1) {
+				switch (message.Type.Object) {
+					case "Category":
+					case "CMS.Category":
+					case "Cms.Category":
+						this.processCategoryUpdateMessage(message);
+						break;
+					case "Content":
+					case "CMS.Content":
+					case "Cms.Content":
+						this.processContentUpdateMessage(message);
+						break;
+					case "Item":
+					case "CMS.Item":
+					case "Cms.Item":
+						this.processItemUpdateMessage(message);
+						break;
+					case "Link":
+					case "CMS.Link":
+					case "Cms.Link":
+						this.processLinkUpdateMessage(message);
+						break;
+					case "ContentType":
+					case "Content.Type":
+					case "Core.ContentType":
+					case "Core.Content.Type":
+						this.processContentTypeUpdateMessage(message);
+						break;
+				}
 			}
 		});
 

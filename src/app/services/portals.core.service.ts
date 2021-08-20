@@ -97,55 +97,44 @@ export class PortalsCoreService extends BaseService {
 
 	private initialize() {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => {
-			// check system identity with activate organizations
 			const systemID = message.Data !== undefined ? message.Data.SystemID : undefined;
-			if (systemID === undefined || this.activeOrganizations.indexOf(systemID) < 0) {
-				return;
-			}
-
-			// process the message
-			switch (message.Type.Object) {
-				case "Organization":
-				case "Core.Organization":
-					this.processOrganizationUpdateMessage(message);
-					break;
-
-				case "Role":
-				case "Core.Role":
-					this.processRoleUpdateMessage(message);
-					break;
-
-				case "Site":
-				case "Core.Site":
-					this.processSiteUpdateMessage(message);
-					break;
-
-				case "Desktop":
-				case "Core.Desktop":
-					this.processDesktopUpdateMessage(message);
-					break;
-
-				case "Portlet":
-				case "Core.Portlet":
-					this.processPortletUpdateMessage(message);
-					break;
-
-				case "Module":
-				case "Core.Module":
-					this.processModuleUpdateMessage(message);
-					break;
-
-				case "ContentType":
-				case "Content.Type":
-				case "Core.ContentType":
-				case "Core.Content.Type":
-					this.processContentTypeUpdateMessage(message);
-					break;
-
-				case "Expression":
-				case "Core.Expression":
-					this.processExpressionUpdateMessage(message);
-					break;
+			if (systemID !== undefined && this.activeOrganizations.indexOf(systemID) > -1) {
+				switch (message.Type.Object) {
+					case "Organization":
+					case "Core.Organization":
+						this.processOrganizationUpdateMessage(message);
+						break;
+					case "Role":
+					case "Core.Role":
+						this.processRoleUpdateMessage(message);
+						break;
+					case "Site":
+					case "Core.Site":
+						this.processSiteUpdateMessage(message);
+						break;
+					case "Desktop":
+					case "Core.Desktop":
+						this.processDesktopUpdateMessage(message);
+						break;
+					case "Portlet":
+					case "Core.Portlet":
+						this.processPortletUpdateMessage(message);
+						break;
+					case "Module":
+					case "Core.Module":
+						this.processModuleUpdateMessage(message);
+						break;
+					case "ContentType":
+					case "Content.Type":
+					case "Core.ContentType":
+					case "Core.Content.Type":
+						this.processContentTypeUpdateMessage(message);
+						break;
+					case "Expression":
+					case "Core.Expression":
+						this.processExpressionUpdateMessage(message);
+						break;
+				}
 			}
 		});
 
