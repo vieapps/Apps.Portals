@@ -167,7 +167,7 @@ export class UsersService extends BaseService {
 	public getProfileAsync(id?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, force: boolean = false, relatedQuery?: string) {
 		id = id || this.configSvc.getAccount().id;
 		return !force && UserProfile.contains(id)
-			? AppUtility.execute(onSuccess)
+			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("profile", id, relatedQuery || this.configSvc.relatedQuery),
 					data => {
@@ -252,7 +252,7 @@ export class UsersService extends BaseService {
 
 	public getServicePrivilegesAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return Account.contains(id)
-			? AppUtility.execute(onSuccess)
+			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("account", id, this.configSvc.relatedQuery),
 					data => this.configSvc.updateAccount(data, onSuccess, true),

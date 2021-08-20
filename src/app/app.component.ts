@@ -587,7 +587,7 @@ export class AppComponent implements OnInit {
 				await this.booksSvc.initializeAsync();
 			}
 
-			await this.appFormsSvc.hideLoadingAsync(async () => {
+			await this.appFormsSvc.hideLoadingAsync(() => {
 				AppEvents.broadcast("App", { Type: "FullyInitialized", Data: data });
 				AppEvents.sendToElectron("App", { Type: "FullyInitialized", Data: data});
 				if (onNext !== undefined) {
@@ -603,7 +603,7 @@ export class AppComponent implements OnInit {
 							if (appConfig.isDebug) {
 								console.warn(`<AppComponent>: Redirect to the requested URI => ${redirect}`);
 							}
-							await this.configSvc.navigateForwardAsync(redirect);
+							this.configSvc.navigateForwardAsync(redirect);
 						}
 						catch (error) {
 							console.error(`<AppComponent>: The requested URI for redirecting is not well-form => ${redirect}`, appConfig.isNativeApp ? AppUtility.stringify(error) : error);

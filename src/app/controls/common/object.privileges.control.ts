@@ -119,7 +119,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 						? this.control.Extras["PrepareRoleFunction"]
 						: typeof this.control.Extras["prepareRoleFunction"] === "function"
 							? this.control.Extras["prepareRoleFunction"]
-							: role => AppUtility.execute(() => role.Label = role.Value);
+							: role => AppUtility.invoke(() => role.Label = role.Value);
 		}
 		if (this.rolesSelector.modalComponent === undefined && this.control !== undefined && this.control.Extras !== undefined) {
 			this.rolesSelector.modalComponent = this.control.Extras["RoleModalComponent"] || this.control.Extras["roleModalComponent"];

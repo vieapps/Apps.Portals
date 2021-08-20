@@ -43,7 +43,7 @@ export class ConfigurationService extends BaseService {
 		private electronSvc: ElectronService
 	) {
 		super("Configuration");
-		AppUtility.invoke(async () => await AppStorage.initializeAsync(this.storage, () => this.showLog(`Storage is ready. Driver: ${this.storage.driver}`)));
+		AppStorage.initializeAsync(this.storage, () => this.showLog(`Storage is ready. Driver: ${this.storage.driver}`));
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", async () => await this.reloadGeoMetaAsync());
 		AppEvents.on("App", info => {
 			if ("PlatformIsReady" === info.args.Type) {
@@ -290,23 +290,23 @@ export class ConfigurationService extends BaseService {
 			AppConfig.URLs.base = "";
 			AppConfig.app.platform = `${AppConfig.app.os} Desktop`;
 			if (this.electronSvc.ipcRenderer) {
-				this.electronSvc.ipcRenderer.on("electron.ipc2app", ($event: any, $info: any) => {
+				this.electronSvc.ipcRenderer.on("electron.ipc2app", ($event: any, $info: any) => AppUtility.invoke(() => {
 					$info = $info || {};
 					if (AppUtility.isNotEmpty($info.event)) {
 						AppEvents.broadcast($info.event, $info.args);
+						if (this.isDebug) {
+							console.log("[Electron]: Got an IPC message", $event, $info);
+						}
 					}
-					if (this.isDebug) {
-						console.log("[Electron]: Got an IPC message", $event, $info);
-					}
-				});
+				}));
 			}
 		}
 		else {
 			AppConfig.app.shell = isNativeApp ? "Cordova" : "Browser";
 			if (isCordova && isNativeApp) {
-				AppUtility.invoke(async () => this.appVersion.getVersionCode()
+				this.appVersion.getVersionCode()
 					.then(version => AppConfig.app.version = isNativeApp && !this.isRunningOnIOS ? (version + "").replace(/0/g, ".") : version + "")
-					.catch(error => this.showError("Error occurred while preparing the app version", error)));
+					.catch(error => this.showError("Error occurred while preparing the app version", error));
 				PlatformUtility.setInAppBrowser(this.inappBrowser);
 				PlatformUtility.setClipboard(this.clipboard);
 				if (!this.isRunningOnIOS) {
@@ -316,7 +316,7 @@ export class ConfigurationService extends BaseService {
 		}
 
 		if (isCordova) {
-			AppUtility.invoke(async () => await TrackingUtility.initializeAsync(this.googleAnalytics));
+			TrackingUtility.initializeAsync(this.googleAnalytics);
 			if (this.isDebug) {
 				console.log(`Device Information\n- UUID: ${this.device.uuid}\n- Manufacturer: ${this.device.manufacturer}\n- Model: ${this.device.model}\n- Serial: ${this.device.serial}\n- Platform: ${this.device.platform} ${this.device.platform !== "browser" ? this.device.version : "[" + this.device.model + " v" + this.device.version + "]"}`);
 			}
@@ -439,7 +439,7 @@ export class ConfigurationService extends BaseService {
 		}
 
 		return dontStore
-			? AppUtility.execute(onNext !== undefined ? () =>  onNext(AppConfig.session) : undefined)
+			? AppUtility.invoke(onNext !== undefined ? () =>  onNext(AppConfig.session) : undefined)
 			: this.storeSessionAsync(onNext);
 	}
 

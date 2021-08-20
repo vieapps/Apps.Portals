@@ -62,7 +62,7 @@ export class BooksService extends BaseService {
 				if ("LogIn" === info.args.Type) {
 					AppUtility.invoke(() => this.prepareSidebarFooterItems(), 3456);
 				}
-				else if ("LogOut" === info.args.Type) {
+				else {
 					this.bookmarks.clear();
 					AppUtility.invoke(async () => await this.storeBookmarksAsync());
 				}
@@ -153,7 +153,7 @@ export class BooksService extends BaseService {
 					this.configSvc.appConfig.URLs.search = "/books/search";
 					this.updateSidebarTitle();
 					if (!sidebar.Visible) {
-						AppUtility.invoke(() => AppEvents.broadcast("OpenSidebar", { Name: name }), 13);
+						sidebar.active(name, true);
 					}
 				}
 			}
@@ -255,38 +255,32 @@ export class BooksService extends BaseService {
 
 	public getBookAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontUpdateCounter: boolean = false) {
 		const book = Book.get(id);
-		if (book !== undefined && (book.TOCs.length > 0 || AppUtility.isNotEmpty(book.Body))) {
-			if (!dontUpdateCounter) {
-				AppUtility.invoke(async () => await this.updateBookCounterAsync(id));
-			}
-			return AppUtility.execute(onSuccess);
-		}
-		else {
-			return this.readAsync(
-				this.getPath("book", id),
-				data => {
-					Book.update(data);
-					if (!dontUpdateCounter) {
-						AppUtility.invoke(async () => await this.updateBookCounterAsync(id));
+		return book !== undefined && (book.TOCs.length > 0 || AppUtility.isNotEmpty(book.Body))
+			? AppUtility.invoke(onSuccess).then(async () => dontUpdateCounter ? await AppUtility.promise : await this.updateBookCounterAsync(id))
+			: this.readAsync(
+					this.getPath("book", id),
+					data => {
+						Book.update(data);
+						if (!dontUpdateCounter) {
+							AppUtility.invoke(async () => await this.updateBookCounterAsync(id));
+						}
+						if (onSuccess !== undefined) {
+							onSuccess(data);
+						}
+					},
+					error => {
+						console.error(this.getError("Error occurred while reading", error));
+						if (onError !== undefined) {
+							onError(error);
+						}
 					}
-					if (onSuccess !== undefined) {
-						onSuccess(data);
-					}
-				},
-				error => {
-					console.error(this.getError("Error occurred while reading", error));
-					if (onError !== undefined) {
-						onError(error);
-					}
-				}
-			);
-		}
+				);
 	}
 
 	public async getBookChapterAsync(id: string, chapter: number, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		const book = Book.get(id);
 		return book === undefined || book.TOCs.length < 1 || chapter < 1 || chapter > book.Chapters.length || book.Chapters[chapter - 1] !== ""
-			? AppUtility.execute(onSuccess)
+			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("book", id, `chapter=${chapter}`),
 					async data => {
@@ -316,7 +310,7 @@ export class BooksService extends BaseService {
 						"action": action || "view"
 					}
 				}, data => this.updateBookCounters(data, onSuccess))
-			: AppUtility.execute(onSuccess);
+			: AppUtility.invoke(onSuccess);
 	}
 
 	private updateBookCounters(data: any, onNext?: (data?: any) => void) {
@@ -557,10 +551,10 @@ export class BooksService extends BaseService {
 				return this.storeAuthorsAsync();
 
 			case "Status":
-				return AppUtility.execute(() => this.configSvc.appConfig.extras["Books-Status"] = (message.Data.Objects as Array<any>).map(s => StatisticBase.deserialize(s)));
+				return AppUtility.invoke(() => this.configSvc.appConfig.extras["Books-Status"] = (message.Data.Objects as Array<any>).map(s => StatisticBase.deserialize(s)));
 
 			default:
-				return message.Type.Event === "All" ? AppUtility.promise : AppUtility.execute(() => console.warn(this.getMessage("Got an update message"), message));
+				return message.Type.Event === "All" ? AppUtility.promise : AppUtility.invoke(() => console.warn(this.getMessage("Got an update message"), message));
 		}
 	}
 

@@ -142,12 +142,7 @@ export class PortalsCmsService extends BaseService {
 			if (("LogIn" === info.args.Type || "LogOut" === info.args.Type) && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
-				AppUtility.invoke(async () => {
-					await this.updateSidebarAsync();
-					if ("LogIn" === info.args.Type) {
-						await this.prepareFeaturedContentsAsync();
-					}
-				});
+				AppUtility.invoke(async () => await this.updateSidebarAsync().then(async () => await ("LogIn" === info.args.Type ? this.prepareFeaturedContentsAsync() : AppUtility.promise)));
 			}
 		});
 
@@ -164,13 +159,10 @@ export class PortalsCmsService extends BaseService {
 				if (Organization.active !== undefined && this.portalsCoreSvc.activeOrganizations.indexOf(Organization.active.ID) < 0) {
 					this._sidebarCategory = undefined;
 					this._sidebarContentType = undefined;
-					AppUtility.invoke(async () => {
-						await this.portalsCoreSvc.removeActiveOrganizationAsync(Organization.active.ID);
-						await Promise.all([
-							this.prepareFeaturedContentsAsync(),
-							this.updateSidebarAsync()
-						]);
-					});
+					AppUtility.invoke(async () => await this.portalsCoreSvc.removeActiveOrganizationAsync(Organization.active.ID).then(async () => await Promise.all([
+						this.prepareFeaturedContentsAsync(),
+						this.updateSidebarAsync()
+					])));
 				}
 			}
 		});
@@ -446,7 +438,7 @@ export class PortalsCmsService extends BaseService {
 				: activeModule !== undefined
 					? this.updateSidebarWithContentTypesAsync()
 					: AppUtility.promise
-			: AppUtility.execute(() => this.updateSidebar());
+			: AppUtility.invoke(() => this.updateSidebar());
 	}
 
 	private async updateSidebarWithContentTypesAsync(definitionID?: string, onNext?: () => void) {
@@ -469,7 +461,7 @@ export class PortalsCmsService extends BaseService {
 			this._sidebarCategory = parent;
 			this._sidebarContentType = this._sidebarContentType || this.getDefaultContentTypeOfContent(parent.module);
 			const info = this.getSidebarItems(parent.Children, parent, expandedID);
-			return AppUtility.execute(() => this.updateSidebar(info.Items, info.Parent, onNext));
+			return AppUtility.invoke(() => this.updateSidebar(info.Items, info.Parent, onNext));
 		}
 		else {
 			const contentType = this.getDefaultContentTypeOfCategory(this.portalsCoreSvc.activeModule);
@@ -496,7 +488,7 @@ export class PortalsCmsService extends BaseService {
 				);
 			}
 			else {
-				return AppUtility.execute(onNext);
+				return AppUtility.invoke(onNext);
 			}
 		}
 	}
@@ -699,7 +691,7 @@ export class PortalsCmsService extends BaseService {
 	public getCategoryAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const category = Category.get(id);
 		if (category !== undefined && category.childrenIDs !== undefined) {
-			return AppUtility.execute(onSuccess);
+			return AppUtility.invoke(onSuccess);
 		}
 		else {
 			return this.readAsync(
@@ -952,7 +944,7 @@ export class PortalsCmsService extends BaseService {
 
 	public getContentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Content.contains(id)
-			? AppUtility.execute(onSuccess)
+			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("cms.content", id),
 					data => {
@@ -1114,7 +1106,7 @@ export class PortalsCmsService extends BaseService {
 
 	public async getItemAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Item.contains(id)
-			? AppUtility.execute(onSuccess)
+			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("cms.item", id),
 					data => {
@@ -1280,7 +1272,7 @@ export class PortalsCmsService extends BaseService {
 	public async getLinkAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const link = Link.get(id);
 		return link !== undefined && link.childrenIDs !== undefined
-			? AppUtility.execute(onSuccess)
+			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("cms.link", id),
 					data => {

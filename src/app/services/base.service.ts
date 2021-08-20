@@ -156,7 +156,7 @@ export class Base {
 		const pagination = processPagination ? AppPagination.get(request, paginationPrefix) : undefined;
 		const pageNumber = processPagination && request.Pagination !== undefined ? request.Pagination.PageNumber : pagination !== undefined ? pagination.PageNumber : 0;
 		if (pagination !== undefined && (pageNumber < pagination.PageNumber || pagination.TotalPages <= pagination.PageNumber)) {
-			return AppUtility.execute(onSuccess);
+			return AppUtility.invoke(onSuccess);
 		}
 		else {
 			if (request.Pagination !== undefined && request.Pagination.PageNumber !== undefined) {

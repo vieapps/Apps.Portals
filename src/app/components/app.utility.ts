@@ -13,24 +13,7 @@ export class AppUtility {
 
 	/** Gets an empty promise */
 	public static get promise() {
-		return this.execute();
-	}
-
-	/** Executes a function asynchronously and return a promise */
-	public static execute(func?: () => void) {
-		return new Promise<void>((resolve, _) => {
-			if (func !== undefined) {
-				func();
-			}
-			resolve();
-		});
-	}
-
-	/** Executes a function asynchronously by 'setTimeout' */
-	public static invoke(func: () => void, defer?: number) {
-		if (func !== undefined) {
-			setTimeout(() => func(), defer || 0);
-		}
+		return this.invoke();
 	}
 
 	/** Checks to see the object is boolean and equals to true */
@@ -298,6 +281,16 @@ export class AppUtility {
 		catch (e) {
 			return error;
 		}
+	}
+
+	/** Executes a function asynchronously (using 'setTimeout') and return a promise */
+	public static invoke(func?: () => void, defer?: number) {
+		return new Promise<void>(resolve => {
+			if (func !== undefined) {
+				setTimeout(() => func(), defer || 0);
+			}
+			resolve();
+		});
 	}
 
 	/** Gets the position of the sub-string in the string */

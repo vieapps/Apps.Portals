@@ -162,43 +162,34 @@ export class PortalsCoreService extends BaseService {
 				}
 			}
 			else if ("Changed" === info.args.Type && "Organization" === info.args.Object) {
-				this.updateSidebarTitle();
-				AppUtility.invoke(() => this.prepareSidebar());
+				AppUtility.invoke(() => this.updateSidebarTitle()).then(() => this.prepareSidebar());
 			}
 		});
 
 		AppEvents.on("Session", info => {
 			if (("LogIn" === info.args.Type || "LogOut" === info.args.Type) && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
-				AppUtility.invoke(async () => {
-					await this.prepareSidebarFooterItemsAsync();
-					this.activeSidebar();
-				});
+				AppUtility.invoke(async () => await this.prepareSidebarFooterItemsAsync().then(() => this.activeSidebar()));
+				if ("LogOut" === info.args.Type) {
+					this.configSvc.appConfig.options.extras["organizations"] = new Array<string>();
+					AppUtility.invoke(async () => await this.configSvc.saveOptionsAsync());
+				}
 			}
 		});
 
 		AppEvents.on("Account", info => {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				this.updateSidebarTitle();
-				AppUtility.invoke(async () => {
-					await this.prepareSidebarFooterItemsAsync();
-					this.prepareSidebar();
-					if ("LogOut" === info.args.Type) {
-						this.configSvc.appConfig.options.extras["organizations"] = new Array<string>();
-						await this.configSvc.saveOptionsAsync();
-					}
-				});
+				AppUtility.invoke(async () => await this.prepareSidebarFooterItemsAsync().then(() => this.prepareSidebar()));
 			}
 		});
 
 		AppEvents.on("Profile", info => {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
-				AppUtility.invoke(async () => {
-					const organizations = this.activeOrganizations;
-					const organization = this.activeOrganization;
-					if (organization === undefined || organizations.indexOf(organization.ID) < 0) {
-						await this.getOrganizationAsync(organizations.first(), async _ => await this.setActiveOrganizationAsync(Organization.get(organizations.first())));
-					}
-				});
+				const organizations = this.activeOrganizations;
+				const organization = this.activeOrganization;
+				if (organization === undefined || organizations.indexOf(organization.ID) < 0) {
+					AppUtility.invoke(async () => await this.getOrganizationAsync(organizations.first(), async _ => await this.setActiveOrganizationAsync(Organization.get(organizations.first()))));
+				}
 			}
 		});
 	}
@@ -1556,7 +1547,7 @@ export class PortalsCoreService extends BaseService {
 
 	public getOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Organization.contains(id) && Organization.get(id).modules.length > 0
-			? AppUtility.execute(onSuccess)
+			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("organization", id),
 					data => {
@@ -1738,7 +1729,7 @@ export class PortalsCoreService extends BaseService {
 	public async getRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const role = Role.get(id);
 		return role !== undefined && role.childrenIDs !== undefined
-			? AppUtility.execute(onSuccess)
+			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("role", id),
 					data => {
@@ -1926,7 +1917,7 @@ export class PortalsCoreService extends BaseService {
 	public async getDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const desktop = Desktop.get(id);
 		return desktop !== undefined && desktop.childrenIDs !== undefined
-			? AppUtility.execute(onSuccess)
+			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("desktop", id),
 					data => {
@@ -2154,7 +2145,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async getPortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Portlet.contains(id) && Portlet.get(id).otherDesktops !== undefined
-			? AppUtility.execute(onSuccess)
+			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("portlet", id),
 					data => {
@@ -2316,7 +2307,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async getSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Site.contains(id)
-			? AppUtility.execute(onSuccess)
+			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("site", id),
 					data => {
@@ -2463,7 +2454,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async getModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Module.contains(id) && Module.get(id).contentTypes.length > 0
-			? AppUtility.execute(onSuccess)
+			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("module", id),
 					data => {
@@ -2608,7 +2599,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async getContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return ContentType.contains(id)
-			? AppUtility.execute(onSuccess)
+			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("content.type", id),
 					data => {
@@ -2740,7 +2731,7 @@ export class PortalsCoreService extends BaseService {
 
 	public async getExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Expression.contains(id)
-			? AppUtility.execute(onSuccess)
+			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("expression", id),
 					data => {
