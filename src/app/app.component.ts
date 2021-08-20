@@ -258,7 +258,7 @@ export class AppComponent implements OnInit {
 						sidebar.Active = name;
 						sidebar.active(name, true);
 					}
-				}] }), 1234);
+				}]}), 1234);
 			}
 		};
 	}
