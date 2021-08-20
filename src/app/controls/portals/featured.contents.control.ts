@@ -61,7 +61,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}
 		else {
 			AppEvents.on("App", info => {
-				if ("FullyInitialized" === info.args.Type) {
+				if ("Initialized" === info.args.Type) {
 					AppUtility.invoke(async () => await this.prepareLabelsAsync().then(() => this.prepareContents()));
 				}
 			}, `FeaturedContents:AppInitialized:${this._isPublished}`);

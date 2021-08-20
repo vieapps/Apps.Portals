@@ -46,10 +46,10 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		else {
 			AppEvents.on("App", info => {
 				if ("Initialized" === info.args.Type) {
-					AppUtility.invoke(async () => await this.prepareLabelAsync());
-				}
-				else if ("FullyInitialized" === info.args.Type) {
-					AppUtility.invoke(async () => await this.prepareShortcutsAsync());
+					AppUtility.invoke(async () => await Promise.all([
+						this.prepareLabelAsync(),
+						this.prepareShortcutsAsync()
+					]));
 				}
 			}, "Shortcuts:AppEvents");
 		}

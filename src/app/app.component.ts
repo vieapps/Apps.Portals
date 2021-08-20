@@ -565,19 +565,6 @@ export class AppComponent implements OnInit {
 		this.sidebar.normalizeTopMenu();
 
 		AppAPIs.openWebSocket(async () => {
-			const data = {
-				URIs: appConfig.URIs,
-				app: appConfig.app,
-				session: appConfig.session,
-				services: appConfig.services,
-				accounts: appConfig.accounts,
-				options: appConfig.options,
-				languages: appConfig.languages
-			};
-
-			AppEvents.broadcast("App", { Type: "Initialized", Data: data });
-			AppEvents.sendToElectron("App", { Type: "Initialized", Data: data });
-
 			if (appConfig.services.all.findIndex(svc => svc.name === this.portalsCoreSvc.name) > -1) {
 				await this.portalsCoreSvc.initializeAsync();
 				await this.portalsCmsSvc.initializeAsync();
@@ -588,8 +575,18 @@ export class AppComponent implements OnInit {
 			}
 
 			await this.appFormsSvc.hideLoadingAsync(() => {
-				AppEvents.broadcast("App", { Type: "FullyInitialized", Data: data });
-				AppEvents.sendToElectron("App", { Type: "FullyInitialized", Data: data});
+				const data = {
+					URIs: appConfig.URIs,
+					app: appConfig.app,
+					session: appConfig.session,
+					services: appConfig.services,
+					accounts: appConfig.accounts,
+					options: appConfig.options,
+					languages: appConfig.languages
+				};
+				AppEvents.broadcast("App", { Type: "Initialized", Data: data });
+				AppEvents.sendToElectron("App", { Type: "Initialized", Data: data});
+
 				if (onNext !== undefined) {
 					onNext();
 				}
