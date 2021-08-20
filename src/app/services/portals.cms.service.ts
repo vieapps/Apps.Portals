@@ -194,7 +194,6 @@ export class PortalsCmsService extends BaseService {
 		}
 
 		await Promise.all(tasks);
-		AppEvents.broadcast(this.name, { Type: "CMSPortalsInitialized" });
 		if (onNext !== undefined) {
 			onNext();
 		}

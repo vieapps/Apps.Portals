@@ -198,7 +198,6 @@ export class PortalsCoreService extends BaseService {
 			this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 		}
 		await this.prepareSidebarFooterItemsAsync(onNext);
-		AppEvents.broadcast(this.name, { Type: "PortalsInitialized" });
 		this.activeSidebar();
 	}
 
