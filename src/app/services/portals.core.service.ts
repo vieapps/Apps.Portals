@@ -141,26 +141,27 @@ export class PortalsCoreService extends BaseService {
 		AppEvents.on(this.name, info => {
 			if ("RequestInfo" === info.args.Type && AppUtility.isNotEmpty(info.args.ID)) {
 				if ("Organization" === info.args.Object) {
-					AppUtility.invoke(async () => await this.getOrganizationAsync(info.args.ID));
+					this.getOrganizationAsync(info.args.ID);
 				}
 				else if ("Module" === info.args.Object) {
-					AppUtility.invoke(async () => await this.getModuleAsync(info.args.ID));
+					this.getModuleAsync(info.args.ID);
 				}
 				else if ("ContentType" === info.args.Object) {
-					AppUtility.invoke(async () => await this.getContentTypeAsync(info.args.ID));
+					this.getContentTypeAsync(info.args.ID);
 				}
 			}
 			else if ("Changed" === info.args.Type && "Organization" === info.args.Object) {
-				AppUtility.invoke(() => this.updateSidebarTitle()).then(() => this.prepareSidebar());
+				this.updateSidebarTitle();
+				this.prepareSidebar();
 			}
 		});
 
 		AppEvents.on("Session", info => {
 			if (("LogIn" === info.args.Type || "LogOut" === info.args.Type) && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
-				AppUtility.invoke(async () => await this.prepareSidebarFooterItemsAsync().then(() => this.activeSidebar()));
+				this.prepareSidebarFooterItemsAsync().then(() => this.activeSidebar());
 				if ("LogOut" === info.args.Type) {
 					this.configSvc.appConfig.options.extras["organizations"] = new Array<string>();
-					AppUtility.invoke(async () => await this.configSvc.saveOptionsAsync());
+					this.configSvc.saveOptionsAsync();
 				}
 			}
 		});
@@ -168,7 +169,7 @@ export class PortalsCoreService extends BaseService {
 		AppEvents.on("Account", info => {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				this.updateSidebarTitle();
-				AppUtility.invoke(async () => await this.prepareSidebarFooterItemsAsync().then(() => this.prepareSidebar()));
+				this.prepareSidebarFooterItemsAsync().then(() => this.prepareSidebar());
 			}
 		});
 
@@ -177,7 +178,7 @@ export class PortalsCoreService extends BaseService {
 				const organizations = this.activeOrganizations;
 				const organization = this.activeOrganization;
 				if (organization === undefined || organizations.indexOf(organization.ID) < 0) {
-					AppUtility.invoke(async () => await this.getOrganizationAsync(organizations.first(), async _ => await this.setActiveOrganizationAsync(Organization.get(organizations.first()))));
+					this.getOrganizationAsync(organizations.first(), async _ => await this.setActiveOrganizationAsync(Organization.get(organizations.first())));
 				}
 			}
 		});

@@ -36,12 +36,10 @@ export class BooksService extends BaseService {
 	private initialize() {
 		AppAPIs.registerAsServiceScopeProcessor("Scheduler", () => {
 			if (this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
-				AppUtility.invoke(async () => {
-					const profile = this.configSvc.getAccount().profile;
-					if (profile !== undefined) {
-						await this.sendBookmarksAsync(() => profile.LastSync = new Date());
-					}
-				});
+				const profile = this.configSvc.getAccount().profile;
+				if (profile !== undefined) {
+					this.sendBookmarksAsync(() => profile.LastSync = new Date());
+				}
 			}
 		});
 
@@ -51,7 +49,7 @@ export class BooksService extends BaseService {
 
 		AppEvents.on("App", info => {
 			if ("HomePageIsOpened" === info.args.Type && this._reading.ID !== undefined && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
-				AppUtility.invoke(async () => await this.updateSidebarAsync());
+				this.updateSidebarAsync();
 				this._reading.ID = undefined;
 			}
 		});
@@ -64,7 +62,7 @@ export class BooksService extends BaseService {
 				}
 				else {
 					this.bookmarks.clear();
-					AppUtility.invoke(async () => await this.storeBookmarksAsync());
+					this.storeBookmarksAsync();
 				}
 			}
 		});
@@ -80,7 +78,7 @@ export class BooksService extends BaseService {
 
 		AppEvents.on(this.name, info => {
 			if ("CategoriesUpdated" === info.args.Type) {
-				AppUtility.invoke(async () => await this.updateSidebarAsync());
+				this.updateSidebarAsync();
 			}
 			else if ("OpenBook" === info.args.Type || "OpenChapter" === info.args.Type) {
 				const book = Book.get(info.args.ID);
@@ -89,7 +87,7 @@ export class BooksService extends BaseService {
 				}
 			}
 			else if ("CloseBook" === info.args.Type && this._reading.ID !== undefined) {
-				AppUtility.invoke(async () => await this.updateSidebarAsync());
+				this.updateSidebarAsync();
 				this._reading.ID = undefined;
 				this._reading.Chapter = undefined;
 			}
