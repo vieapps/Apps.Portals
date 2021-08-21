@@ -70,8 +70,14 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}
 
 		AppEvents.on(this.portalsCmsSvc.name, info => {
-			if (("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode) || ("Changed" === info.args.Type && "Organization" === info.args.Object)) {
-				this.prepareContents(true);
+			if ("Changed" === info.args.Type && "Organization" === info.args.Object) {
+				AppUtility.invoke(() => this.prepareContents(true), 123);
+			}
+			else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode) {
+				const organization = this.portalsCoreSvc.activeOrganization;
+				if (organization !== undefined && organization.ID === info.args.ID) {
+					AppUtility.invoke(() => this.prepareContents(true), 234);
+				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
 	}

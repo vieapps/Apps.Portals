@@ -556,13 +556,16 @@ export class PortalsCmsService extends BaseService {
 			isCmsItem ? { LastModified: "Descending" } : { StartDate: "Descending", PublishedTime: "Descending", LastModified: "Descending" }
 		);
 		const onSuccess = (data?: any) => {
-			if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
-				this._noContents.remove(data.Objects.first().SystemID);
-				this.prepareFeaturedContents();
-				AppEvents.broadcast(this.name, { Type: "FeaturedContents", Mode: "Prepared" });
-			}
 			if (index < contentTypes.length - 1) {
-				AppUtility.invoke(async () => await this.getFeaturedContentsAsync(contentTypes, index + 1));
+				this.getFeaturedContentsAsync(contentTypes, index + 1);
+			}
+			if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
+				const systemID = data.Objects.first().SystemID;
+				AppUtility.invoke(() => {
+					this.prepareFeaturedContents();
+					this._noContents.remove(systemID);
+					AppEvents.broadcast(this.name, { Type: "FeaturedContents", Mode: "Prepared", ID: systemID });
+				});
 			}
 		};
 		const onError = (error?: any) => {
@@ -570,9 +573,7 @@ export class PortalsCmsService extends BaseService {
 			this.showError(`Error occurred while preparing featured contents\n${contentType.Title} @ ${organization.Title}`, error);
 			onSuccess();
 		};
-		return isCmsItem
-			? this.searchItemAsync(request, onSuccess, onError)
-			: this.searchContentAsync(request, onSuccess, onError);
+		return isCmsItem ? this.searchItemAsync(request, onSuccess, onError) : this.searchContentAsync(request, onSuccess, onError);
 	}
 
 	private prepareFeaturedContents() {
