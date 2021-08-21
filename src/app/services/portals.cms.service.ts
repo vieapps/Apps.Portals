@@ -559,12 +559,7 @@ export class PortalsCmsService extends BaseService {
 				AppUtility.invoke(() => this.getFeaturedContentsAsync(contentTypes, index + 1));
 			}
 			if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
-				const systemID = data.Objects.first().SystemID;
-				AppUtility.invoke(() => {
-					this.prepareFeaturedContents();
-					this._noContents.remove(systemID);
-					AppEvents.broadcast(this.name, { Type: "FeaturedContents", Mode: "Prepared", ID: systemID });
-				});
+				this.prepareFeaturedContents(data.Objects.first().SystemID);
 			}
 		};
 		const onError = (error?: any) => {
@@ -575,19 +570,18 @@ export class PortalsCmsService extends BaseService {
 		return isCmsItem ? this.searchItemAsync(request, onSuccess, onError) : this.searchContentAsync(request, onSuccess, onError);
 	}
 
-	private prepareFeaturedContents() {
-		const organization = this.portalsCoreSvc.activeOrganization;
-		if (organization !== undefined) {
-			const cmsItems = Item.instances.toArray(item => item.SystemID === organization.ID);
-			const cmsContents = Content.instances.toArray(item => item.SystemID === organization.ID);
-			this._featuredContents.set(organization.ID, new Dictionary<string, CmsBaseModel>()
-				.merge(cmsItems.sortBy({ name: "LastModified", reverse: true }).take(20), content => content.ID)
-				.merge(cmsItems.sortBy({ name: "Created", reverse: true }).take(20), content => content.ID)
-				.merge(cmsContents.sortBy({ name: "LastModified", reverse: true }).take(20), content => content.ID)
-				.merge(cmsContents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }).take(20), content => content.ID)
-				.toArray());
-		}
-	}
+	private prepareFeaturedContents(systemID: string) {
+		const cmsItems = Item.instances.toArray(item => item.SystemID === systemID);
+		const cmsContents = Content.instances.toArray(item => item.SystemID === systemID);
+		this._featuredContents.set(systemID, new Dictionary<string, CmsBaseModel>()
+			.merge(cmsItems.sortBy({ name: "LastModified", reverse: true }).take(20), content => content.ID)
+			.merge(cmsItems.sortBy({ name: "Created", reverse: true }).take(20), content => content.ID)
+			.merge(cmsContents.sortBy({ name: "LastModified", reverse: true }).take(20), content => content.ID)
+			.merge(cmsContents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }).take(20), content => content.ID)
+			.toArray());
+		this._noContents.remove(systemID);
+		AppEvents.broadcast(this.name, { Type: "FeaturedContents", Mode: "Prepared", ID: systemID });
+}
 
 	private async prepareFeaturedContentsAsync(allActiveOrganizations: boolean = true) {
 		if (this.configSvc.isAuthenticated) {
@@ -1026,7 +1020,7 @@ export class PortalsCmsService extends BaseService {
 				(message.Data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: categoryID }));
 			}
 			if (this.configSvc.isAuthenticated) {
-				this.prepareFeaturedContents();
+				this.prepareFeaturedContents(message.Data.SystemID);
 			}
 		}
 	}
@@ -1185,7 +1179,7 @@ export class PortalsCmsService extends BaseService {
 		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
 			AppEvents.broadcast(this.name, { Object: "CMS.Item", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
 			if (this.configSvc.isAuthenticated) {
-				this.prepareFeaturedContents();
+				this.prepareFeaturedContents(message.Data.SystemID);
 			}
 		}
 	}
