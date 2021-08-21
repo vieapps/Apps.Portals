@@ -145,14 +145,8 @@ export class AppComponent implements OnInit {
 			}
 
 			const isActivate = this.configSvc.isWebApp && AppUtility.isEquals("activate", this.configSvc.queryParams["prego"]);
-			this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "loading"}`)).then(() => {
-				if (isActivate) {
-					this.activate();
-				}
-				else {
-					this.initialize();
-				}
-			});
+			const message = await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "loading"}`);
+			this.appFormsSvc.showLoadingAsync(message).then(isActivate ? () => this.activate() : () => this.initialize());
 		});
 	}
 
@@ -162,7 +156,12 @@ export class AppComponent implements OnInit {
 
 		this.sidebar.toggle = (visible?: boolean) => {
 			this.sidebar.Visible = visible !== undefined ? !!visible : !this.sidebar.Visible;
-			AppUtility.invoke(async () => await (this.sidebar.Visible ? this.menuCtrl.open() : this.menuCtrl.close()));
+			if (this.sidebar.Visible) {
+				this.menuCtrl.open();
+			}
+			else {
+				this.menuCtrl.close();
+			}
 		};
 
 		this.sidebar.active = (name?: string, open?: boolean) => {
@@ -288,30 +287,30 @@ export class AppComponent implements OnInit {
 					Title: await this.configSvc.getResourceAsync("common.sidebar.home"),
 					Link: this.configSvc.appConfig.URLs.home,
 					Icon: { Name: "home", Color: "primary", Slot: "start" },
-					OnClick: async data => await this.configSvc.navigateHomeAsync(data.Link)
+					OnClick: data => this.configSvc.navigateHomeAsync(data.Link)
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.login"),
 					Link: this.configSvc.appConfig.URLs.users.login,
 					Icon: { Name: "log-in", Color: "success", Slot: "start" },
-					OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
+					OnClick: data => this.configSvc.navigateHomeAsync(data.Link)
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.register"),
 					Link: this.configSvc.appConfig.URLs.users.register,
 					Icon: { Name: "person-add", Color: "warning", Slot: "start" },
-					OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
+					OnClick: data => this.configSvc.navigateHomeAsync(data.Link)
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.profile"),
 					Link: `${this.configSvc.appConfig.URLs.users.profile}/my`,
 					Icon: { Name: "person", Color: "warning", Slot: "start" },
-					OnClick: async data => await this.configSvc.navigateForwardAsync(data.Link)
+					OnClick: data => this.configSvc.navigateHomeAsync(data.Link)
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.search"),
 					Icon: { Name: "search", Color: "tertiary", Slot: "start" },
-					OnClick: async _ => await this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.search)
+					OnClick: _ => this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.search)
 				}
 			]);
 		}
@@ -405,7 +404,7 @@ export class AppComponent implements OnInit {
 				? args.OnClick
 				:	(data, sidebar) => {
 						const menuItem = data.childIndex !== undefined ? sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex] : sidebar.MainMenu[data.menuIndex].Items[data.itemIndex];
-						AppUtility.invoke(async () => await this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params));
+						this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params);
 					}
 		} as AppSidebarMenuItem;
 	}
@@ -420,9 +419,8 @@ export class AppComponent implements OnInit {
 		AppEvents.on("OpenSidebar", info => this.sidebar.active(info.args.Name, true));
 		AppEvents.on("CloseSidebar", _ => this.sidebar.toggle(false));
 
-		AppEvents.on("UpdateSidebar", info => AppUtility.invoke(async () => await this.updateSidebarAsync(info.args)));
-		AppEvents.on("AddSidebarItem", info => AppUtility.invoke(async () => await this.updateSidebarMainMenuItemAsync(info.args)));
-		AppEvents.on("UpdateSidebarItem", info => AppUtility.invoke(async () => await this.updateSidebarMainMenuItemAsync(info.args)));
+		AppEvents.on("UpdateSidebar", info => this.updateSidebarAsync(info.args));
+		AppEvents.on("UpdateSidebarItem", info => this.updateSidebarMainMenuItemAsync(info.args));
 
 		AppEvents.on("UpdateSidebarTitle", info => this.sidebar.updateHeader(info.args));
 		AppEvents.on("UpdateSidebarHeader", info => this.sidebar.updateHeader(info.args));
@@ -453,7 +451,7 @@ export class AppComponent implements OnInit {
 		AppEvents.on("App", info => {
 			if ("LanguageChanged" === info.args.Type) {
 				AppEvents.sendToElectron("App", { Type: "LanguageChanged", Language: this.configSvc.appConfig.language });
-				AppUtility.invoke(async () => await this.updateSidebarAsync({}, true, () => this.sidebar.normalizeTopMenu()));
+				this.updateSidebarAsync({}, true, () => this.sidebar.normalizeTopMenu());
 			}
 		});
 
@@ -462,7 +460,7 @@ export class AppComponent implements OnInit {
 				if ("LogOut" === info.args.Type) {
 					this.sidebar.updateHeader({ title: this.configSvc.appConfig.app.name, onClick: () => {}, updateAvatar: true });
 				}
-				AppUtility.invoke(async () => await this.updateSidebarAsync({}, true, () => this.sidebar.normalizeTopMenu()));
+				this.updateSidebarAsync({}, true, () => this.sidebar.normalizeTopMenu());
 			}
 		});
 
@@ -476,48 +474,34 @@ export class AppComponent implements OnInit {
 	private activate() {
 		const mode = this.configSvc.queryParams["mode"];
 		const code = this.configSvc.queryParams["code"];
+		TrackingUtility.trackAsync({ title: "Users - Activate",  campaignUrl: "users/activate", category: "Users:Activation", action: "Activate" }, false);
 		if (AppUtility.isNotEmpty(mode) && AppUtility.isNotEmpty(code)) {
 			this.usersSvc.activateAsync(
 				mode,
 				code,
-				() => this.initialize(async () => await Promise.all([
-					TrackingUtility.trackScreenAsync(await this.configSvc.getResourceAsync("common.loading.activate"), `users/activate/${mode}`),
-					this.showActivationResultAsync({
-						Status: "OK",
-						Mode: mode
-					})
-				]), true),
-				error => this.initialize(() => this.showActivationResultAsync({
-					Status: "Error",
-					Mode: mode,
-					Error: error
+				() => this.initialize(async () => this.showActivationResult({
+					Header: await this.configSvc.getResourceAsync(`users.activate.header.${("account" === mode ? "account" : "password")}`),
+					Message: await this.configSvc.getResourceAsync(`users.activate.subHeader.success`),
+					SubMessage: await this.configSvc.getResourceAsync(`users.activate.success.${("account" === mode ? "account" : "password")}`)
+				}), true),
+				error => this.initialize(async () => this.showActivationResult({
+					Header: await this.configSvc.getResourceAsync(`users.activate.header.${("account" === mode ? "account" : "password")}`),
+					Message: await this.configSvc.getResourceAsync(`users.activate.subHeader.error`),
+					SubMessage: await this.configSvc.getResourceAsync("users.activate.messages.error.general", { error: (error ? ` (${error.Message})` : "") })
 				}))
 			);
 		}
 		else {
-			this.initialize(async () => await this.showActivationResultAsync({
-				Status: "Error",
-				Mode: mode,
-				Error: {
-					Message: await this.configSvc.getResourceAsync("users.activate.messages.error.invalid", { mode: mode, code: code })
-				}
+			this.initialize(async () => this.showActivationResult({
+				Header: await this.configSvc.getResourceAsync(`users.activate.header.${("account" === mode ? "account" : "password")}`),
+				Message: await this.configSvc.getResourceAsync(`users.activate.subHeader.error`),
+				SubMessage: await this.configSvc.getResourceAsync("users.activate.messages.error.invalid", { mode: mode, code: code })
 			}));
 		}
 	}
 
-	private async showActivationResultAsync(data: any) {
-		await this.appFormsSvc.showAlertAsync(
-			await this.configSvc.getResourceAsync(`users.activate.header.${("account" === data.Mode ? "account" : "password")}`),
-			await this.configSvc.getResourceAsync(`users.activate.subHeader.${("OK" === data.Status ? "success" : "error")}`),
-			"OK" === data.Status
-				? await this.configSvc.getResourceAsync(`users.activate.messages.success.${("account" === data.Mode ? "account" : "password")}`)
-				: await this.configSvc.getResourceAsync("users.activate.messages.error.general", { error: (data.Error ? ` (${data.Error.Message})` : "") }),
-			() => {
-				this.configSvc.appConfig.URLs.stack = [];
-				this.configSvc.navigateHomeAsync();
-				AppEvents.broadcast("Navigate", { Direction: "Home" });
-			}
-		);
+	private showActivationResult(data: any) {
+		this.appFormsSvc.showAlertAsync(data.Header, data.Message, data.SubMessage, () => this.configSvc.navigateHomeAsync());
 	}
 
 	private initialize(onNext?: () => void, noInitializeSession?: boolean) {

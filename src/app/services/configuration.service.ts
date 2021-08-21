@@ -44,10 +44,10 @@ export class ConfigurationService extends BaseService {
 	) {
 		super("Configuration");
 		AppStorage.initializeAsync(this.storage, () => this.showLog(`Storage is ready. Driver: ${this.storage.driver}`));
-		AppAPIs.registerAsServiceScopeProcessor("Refresher", async () => await this.reloadGeoMetaAsync());
+		AppAPIs.registerAsServiceScopeProcessor("Refresher", () => this.reloadGeoMetaAsync());
 		AppEvents.on("App", info => {
 			if ("PlatformIsReady" === info.args.Type) {
-				AppUtility.invoke(async () => await this.loadGeoMetaAsync());
+				this.loadGeoMetaAsync();
 			}
 		});
 	}
