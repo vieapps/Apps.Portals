@@ -50,12 +50,7 @@ export class TrackingUtility {
 	/** Tracks a screen with an event */
 	public static trackAsync(options?: { title?: string; campaignUrl?: string; category?: string; action?: string; label?: string; }, addPrefix: boolean = true) {
 		options = options || {};
-		return this.trackScreenAsync(options.title, options.campaignUrl, addPrefix)
-			.then(async () => {
-				if (AppUtility.isNotNull(options.category) && AppUtility.isNotNull(options.action)) {
-					await this.trackEventAsync(options.category, options.action, options.label, addPrefix);
-				}
-			});
+		return this.trackScreenAsync(options.title, options.campaignUrl, addPrefix).then(AppUtility.isNotNull(options.category) && AppUtility.isNotNull(options.action) ? () => this.trackEventAsync(options.category, options.action, options.label, addPrefix) : () => {});
 	}
 
 }
