@@ -2,7 +2,6 @@ import { List } from "linqts";
 
 declare global {
 	interface Array<T> {
-
 		/** Inserts an element at a specified index/position */
 		insert(value: T, index?: number): T[];
 
@@ -29,6 +28,9 @@ declare global {
 
 		/** Produces the specified number of contiguous elements */
 		take(amount: number, skip?: number): T[];
+
+		/** Produces the specified number (count from end) of contiguous elements */
+		restOf(amount: number): T[];
 
 		/** Produces the distinct elements of the collection by using the equality comparer to compare values */
 		distinct(comparer?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): T[];
@@ -72,7 +74,6 @@ declare global {
 		/** Converts to Dictionary object */
 		toDictionary<K>(keySelector: (value: T) => K, predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): Dictionary<K, T>;
 	}
-
 }
 
 Array.prototype.insert = function<T>(this: T[], value: T, index?: number): T[] {
@@ -139,6 +140,12 @@ Array.prototype.take = function<T>(this: T[], amount: number, skip?: number): T[
 	return amount !== undefined && amount > 0 && amount < values.length
 		? values.slice(0, amount)
 		: values;
+};
+
+Array.prototype.restOf = function<T>(this: T[], amount: number): T[] {
+	return amount !== undefined && amount > 0 && amount < this.length
+		? this.take(amount, this.length - amount)
+		: this;
 };
 
 Array.prototype.distinct = function<T>(this: T[], comparer?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): T[] {

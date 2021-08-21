@@ -324,35 +324,19 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Initializes the configuration settings of the app */
-	public async initializeAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontInitializeSession: boolean = false) {
-		// prepare environment
-		if (AppConfig.app.mode === "") {
-			this.prepare();
-		}
-
-		// load saved session
-		if (AppConfig.session.token === undefined || AppConfig.session.keys === undefined) {
-			await this.loadSessionAsync();
-		}
-
-		// initialize session
-		if (!dontInitializeSession) {
-			await this.initializeSessionAsync(onSuccess, onError);
-		}
-		else if (onSuccess !== undefined) {
-			onSuccess();
-		}
+	public initializeAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontInitializeSession: boolean = false) {
+		return this.loadSessionAsync().then(() => dontInitializeSession ? AppUtility.invoke(onSuccess) : this.initializeSessionAsync(onSuccess, onError));
 	}
 
 	/** Initializes the session with remote APIs */
 	public initializeSessionAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.fetchAsync(
 			"users/session",
-			async data => {
+			data => {
 				if (this.isDebug) {
 					this.showLog("The session was initialized by APIs");
 				}
-				await this.updateSessionAsync(data, _ => {
+				this.updateSessionAsync(data, _ => {
 					AppConfig.session.account = this.getAccount(!this.isAuthenticated);
 					if (this.isAuthenticated) {
 						AppConfig.session.account.id = AppConfig.session.token.uid;
@@ -371,13 +355,13 @@ export class ConfigurationService extends BaseService {
 	public registerSessionAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.fetchAsync(
 			`users/session?register=${AppConfig.session.id}`,
-			async _ => {
+			() => {
 				AppConfig.session.account = this.getAccount(true);
 				if (this.isDebug) {
 					this.showLog("The session was registered by APIs");
 				}
 				AppEvents.broadcast("Session", { Type: "Registered" });
-				await this.storeSessionAsync(onSuccess);
+				this.storeSessionAsync(onSuccess);
 			},
 			error => this.showError("Error occurred while registering the session", error, onError)
 		);
@@ -439,7 +423,7 @@ export class ConfigurationService extends BaseService {
 		}
 
 		return dontStore
-			? AppUtility.invoke(onNext !== undefined ? () =>  onNext(AppConfig.session) : undefined)
+			? AppUtility.invoke(onNext !== undefined ? () => onNext(AppConfig.session) : undefined)
 			: this.storeSessionAsync(onNext);
 	}
 
@@ -773,10 +757,13 @@ export class ConfigurationService extends BaseService {
 	/** Changes the language & locale of resources to use in the app */
 	public changeLanguageAsync(language: string, saveOptions: boolean = true) {
 		AppConfig.options.i18n = language;
-		return Promise.all([
-			saveOptions ? this.saveOptionsAsync() : AppUtility.promise,
-			this.setResourceLanguageAsync(language)
-		]).then(() => AppEvents.broadcast("App", { Type: "LanguageChanged" }));
+		return this.setResourceLanguageAsync(language)
+			.then(() => {
+				AppEvents.broadcast("App", { Type: "LanguageChanged" });
+				if (saveOptions) {
+					this.saveOptionsAsync();
+				}
+			});
 	}
 
 	/** Sets the language & locale of resources to use in the app */
