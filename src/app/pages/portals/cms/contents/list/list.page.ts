@@ -1,7 +1,7 @@
 import { Subscription } from "rxjs";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
+import { IonSearchbar, IonInfiniteScroll, IonList, ViewDidEnter } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
@@ -22,7 +22,7 @@ import { Category, Content } from "@app/models/portals.cms.all";
 	styleUrls: ["./list.page.scss"]
 })
 
-export class CmsContentListPage implements OnInit, OnDestroy {
+export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	constructor(
 		private configSvc: ConfigurationService,
@@ -113,6 +113,11 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		}
 	}
 
+	ionViewDidEnter() {
+		this.configSvc.appTitle = this.searching ? this.title.search : this.title.page;
+		this.trackAsync(this.searching ? this.title.search : this.title.track, this.searching ? "Search" : "Browse");
+	}
+
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
 		this.searching = this.configSvc.currentURL.endsWith("/search");
@@ -177,7 +182,7 @@ export class CmsContentListPage implements OnInit, OnDestroy {
 		AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebar", Mode: "Categories" });
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.search");
-			this.title.search = await this.configSvc.getResourceAsync("common.messages.searching");
+			this.configSvc.appTitle = this.title.search = await this.configSvc.getResourceAsync("common.messages.searching");
 			this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.focus(this.searchCtrl));
 		}
 		else {
