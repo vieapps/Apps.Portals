@@ -571,13 +571,13 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	private prepareFeaturedContents(systemID: string) {
-		const cmsItems = Item.instances.toArray(item => item.SystemID === systemID);
-		const cmsContents = Content.instances.toArray(item => item.SystemID === systemID);
+		const cmsItems = Item.instances.toArray(object => object.SystemID === systemID);
+		const cmsContents = Content.instances.toArray(object => object.SystemID === systemID);
 		this._featuredContents.set(systemID, new Dictionary<string, CmsBaseModel>()
-			.merge(cmsItems.sortBy({ name: "LastModified", reverse: true }).take(20), content => content.ID)
-			.merge(cmsItems.sortBy({ name: "Created", reverse: true }).take(20), content => content.ID)
-			.merge(cmsContents.sortBy({ name: "LastModified", reverse: true }).take(20), content => content.ID)
-			.merge(cmsContents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }).take(20), content => content.ID)
+			.merge(cmsItems.sortBy({ name: "LastModified", reverse: true }).take(20), object => object.ID)
+			.merge(cmsItems.sortBy({ name: "Created", reverse: true }).take(20), object => object.ID)
+			.merge(cmsContents.sortBy({ name: "LastModified", reverse: true }).take(20), object => object.ID)
+			.merge(cmsContents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }).take(20), object => object.ID)
 			.toArray());
 		this._noContents.remove(systemID);
 		AppEvents.broadcast(this.name, { Type: "FeaturedContents", Mode: "Prepared", ID: systemID });
