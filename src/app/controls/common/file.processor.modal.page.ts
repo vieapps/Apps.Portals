@@ -90,13 +90,13 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 		this.multiple = this.temporary
 			? false
 			: this.multiple !== undefined ? AppUtility.isTrue(this.multiple) : true;
-		this.allowSelect = this.handlers.onSelect !== undefined && typeof this.handlers.onSelect === "function"
+		this.allowSelect = typeof this.handlers.onSelect === "function"
 			? this.allowSelect !== undefined ? AppUtility.isTrue(this.allowSelect) : false
 			: false;
-		this.allowDelete = this.handlers.onDelete !== undefined && typeof this.handlers.onDelete === "function"
+		this.allowDelete = typeof this.handlers.onDelete === "function"
 			? this.allowDelete !== undefined ? AppUtility.isTrue(this.allowDelete) : false
 			: false;
-		this.allowEdit = this.handlers.onEdit !== undefined && typeof this.handlers.onEdit === "function"
+		this.allowEdit = typeof this.handlers.onEdit === "function"
 			? this.allowEdit !== undefined ? AppUtility.isTrue(this.allowEdit) : false
 			: false;
 		this.showIcons = this.showIcons !== undefined ? AppUtility.isTrue(this.showIcons) : false;
@@ -235,7 +235,7 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 				}
 				if (this.subscriptions === undefined || this.subscriptions.find(subscription => subscription !== undefined) === undefined) {
 					this.subscriptions = undefined;
-					if (this.handlers.onUploaded !== undefined) {
+					if (typeof this.handlers.onUploaded === "function") {
 						this.appFormsSvc.hideModalAsync(this.uploadedData, this.handlers.onUploaded);
 					}
 					else {
