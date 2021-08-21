@@ -19,7 +19,7 @@
 			[controls]="login.controls"
 			(init)="onLoginFormInitialized()"></app-form>
 		<ion-buttons class="ion-padding">
-			<ion-button fill="solid" color="primary" (click)="logInAsync()">
+			<ion-button fill="solid" color="primary" (click)="logIn()">
 				<ion-icon *ngIf="login.buttons.login.icon" [icon]="login.buttons.login.icon" slot="start"></ion-icon>
 				{{ login.buttons.login.label }}
 			</ion-button>
@@ -27,7 +27,7 @@
 				<ion-icon *ngIf="reset.button.icon" [icon]="reset.button.icon" slot="start"></ion-icon>
 				{{ reset.button.label }}
 			</ion-button>
-			<ion-button *ngIf="registrable && screenWidth > 767" fill="clear" color="primary" (click)="registerAsync()" class="ion-float-end">
+			<ion-button *ngIf="registrable && screenWidth > 767" fill="clear" color="primary" (click)="register()" class="ion-float-end">
 				<ion-icon *ngIf="login.buttons.register.icon" [icon]="login.buttons.register.icon" slot="start"></ion-icon>
 				{{ login.buttons.register.label }}
 			</ion-button>
@@ -42,7 +42,7 @@
 			[controls]="otp.controls"
 			[value]="otp.value"></app-form>
 		<ion-buttons class="ion-padding">
-			<ion-button fill="solid" color="primary" (click)="logInOTPAsync()">
+			<ion-button fill="solid" color="primary" (click)="logInOTP()">
 				<ion-icon *ngIf="otp.button.icon" [icon]="otp.button.icon" slot="start"></ion-icon>
 				{{ otp.button.label }}
 			</ion-button>
@@ -58,7 +58,7 @@
 			(init)="onResetPasswordFormInitialized()"
 			(refreshCaptcha)="onRefreshCaptcha()"></app-form>
 		<ion-buttons class="ion-padding">
-			<ion-button fill="solid" color="primary" (click)="resetPasswordAsync()">
+			<ion-button fill="solid" color="primary" (click)="resetPassword()">
 				<ion-icon *ngIf="reset.button.icon" [icon]="reset.button.icon" slot="start"></ion-icon>
 				{{ reset.button.label }}
 			</ion-button>
