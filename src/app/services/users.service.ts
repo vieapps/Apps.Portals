@@ -24,10 +24,10 @@ export class UsersService extends BaseService {
 		private datePipe: DatePipe
 	) {
 		super("Users");
-		AppAPIs.registerAsServiceScopeProcessor(this.name, async message => await this.processUpdateMessageAsync(message));
+		AppAPIs.registerAsServiceScopeProcessor(this.name, message => this.processUpdateMessage(message));
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", () => {
 			if (this.configSvc.isAuthenticated) {
-				AppUtility.invoke(async () => await Promise.all(this.configSvc.appConfig.services.all.map(service => service.name).map(service => this.getProfileAsync(this.configSvc.appConfig.session.account.id, () => AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" }), undefined, false, true, this.configSvc.appConfig.getRelatedQuery(service)))));
+				AppUtility.invoke(() => Promise.all(this.configSvc.appConfig.services.all.map(service => service.name).map(service => this.getProfileAsync(this.configSvc.appConfig.session.account.id, () => AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" }), undefined, false, true, this.configSvc.appConfig.getRelatedQuery(service)))));
 			}
 		});
 		AppEvents.on("App", info => {
@@ -36,7 +36,7 @@ export class UsersService extends BaseService {
 				if (profile !== undefined) {
 					profile.Language = this.configSvc.appConfig.options.i18n;
 					profile.Options = this.configSvc.appConfig.options;
-					AppUtility.invoke(async () => await this.updateProfileAsync(profile, async _ => await this.configSvc.storeSessionAsync()));
+					this.updateProfileAsync(profile, () => this.configSvc.storeSessionAsync());
 				}
 			}
 		});
@@ -46,7 +46,7 @@ export class UsersService extends BaseService {
 				profile.LastAccess = new Date();
 			}
 			else if (this.configSvc.isAuthenticated) {
-				AppUtility.invoke(async () => await this.getProfileAsync(undefined, () => {
+				AppUtility.invoke(() => this.getProfileAsync(undefined, () => {
 					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
 					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: this.configSvc.getAccount().profile });
 				}, undefined, false, true), 456);
@@ -271,13 +271,13 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	private async processUpdateMessageAsync(message: AppMessage) {
+	private processUpdateMessage(message: AppMessage) {
 		const account = this.configSvc.getAccount();
 		switch (message.Type.Object) {
 			case "Session":
 				switch (message.Type.Event) {
 					case "Update":
-						await this.configSvc.updateSessionAsync(message.Data, () => {
+						this.configSvc.updateSessionAsync(message.Data, () => {
 							this.showLog("The session was updated with new access token", this.configSvc.appConfig.session);
 							AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
 							AppEvents.sendToElectron("Users", { Type: "Session", Data: this.configSvc.appConfig.session });
@@ -287,10 +287,10 @@ export class UsersService extends BaseService {
 					case "Revoke":
 						if (AppUtility.isGotSecurityException(message.Data)) {
 							this.showLog("Revoke the session and register new when got a security issue", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
-							await this.configSvc.resetSessionAsync(async () => await this.configSvc.initializeSessionAsync(async () => await this.configSvc.registerSessionAsync(() => AppAPIs.reopenWebSocket("Reopens when got a security issue"))), false);
+							this.configSvc.resetSessionAsync(() => this.configSvc.initializeSessionAsync(() => this.configSvc.registerSessionAsync(() => AppAPIs.reopenWebSocket("Reopens when got a security issue"))), false);
 						}
 						else {
-							await this.configSvc.updateSessionAsync(message.Data, async () => await this.configSvc.registerSessionAsync(() => {
+							this.configSvc.updateSessionAsync(message.Data, () => this.configSvc.registerSessionAsync(() => {
 								this.showLog("The session was revoked by the APIs", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 								AppAPIs.reopenWebSocket("Reopens when the session was revoked by the APIs");
 							}), false, false);
@@ -330,16 +330,17 @@ export class UsersService extends BaseService {
 					profile.IsOnline = true;
 					profile.LastAccess = new Date();
 					if (this.configSvc.appConfig.options.i18n !== profile.Language) {
-						await this.configSvc.changeLanguageAsync(profile.Language);
+						this.configSvc.changeLanguageAsync(profile.Language);
 					}
-					await this.configSvc.updateOptionsAsync(profile.Options);
-					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
-					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: profile });
+					this.configSvc.updateOptionsAsync(profile.Options).then(() => {
+						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
+						AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: profile });
+					});
 					if (this.configSvc.appConfig.facebook.token !== undefined && this.configSvc.appConfig.facebook.id !== undefined) {
 						this.configSvc.getFacebookProfile();
 					}
 					if (this.configSvc.appConfig.app.persistence) {
-						await this.configSvc.storeSessionAsync();
+						this.configSvc.storeSessionAsync();
 					}
 				}
 				break;

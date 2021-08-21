@@ -757,13 +757,12 @@ export class ConfigurationService extends BaseService {
 	/** Changes the language & locale of resources to use in the app */
 	public changeLanguageAsync(language: string, saveOptions: boolean = true) {
 		AppConfig.options.i18n = language;
-		return this.setResourceLanguageAsync(language)
-			.then(() => {
-				AppEvents.broadcast("App", { Type: "LanguageChanged" });
-				if (saveOptions) {
-					this.saveOptionsAsync();
-				}
-			});
+		return this.setResourceLanguageAsync(language).then(() => {
+			AppEvents.broadcast("App", { Type: "LanguageChanged" });
+			if (saveOptions) {
+				this.saveOptionsAsync();
+			}
+		});
 	}
 
 	/** Sets the language & locale of resources to use in the app */
