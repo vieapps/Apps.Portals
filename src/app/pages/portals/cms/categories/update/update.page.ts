@@ -128,11 +128,11 @@ export class CmsCategoriesUpdatePage implements OnInit {
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
-		await this.trackAsync(this.title.track);
-
-		if (AppUtility.isNotEmpty(this.category.ID) && this.category.childrenIDs === undefined) {
-			this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, async _ => await this.appFormsSvc.showToastAsync("The category was freshen-up"));
-		}
+		this.trackAsync(this.title.track).then(() => {
+			if (AppUtility.isNotEmpty(this.category.ID) && this.category.childrenIDs === undefined) {
+				this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up"));
+			}
+		});
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
@@ -221,9 +221,10 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => ctrl.Name === "OpenBy");
 		control.Options.SelectOptions.AsBoxes = true;
 		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
-			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values, "#;") as Array<string>).map(value => {
-				return { Value: value, Label: `{{portals.cms.categories.controls.OpenBy.${value}}}` };
-			});
+			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values, "#;") as Array<string>).map(value => ({
+				Value: value,
+				Label: `{{portals.cms.categories.controls.OpenBy.${value}}}`
+			}));
 		}
 
 		formConfig.push(
@@ -243,6 +244,9 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => ctrl.Name === "Notifications");
 		this.portalsCoreSvc.prepareNotificationsFormControl(control, this.emailsByApprovalStatus);
 
+		control = formConfig.find(ctrl => ctrl.Name === "Title");
+		control.Options.AutoFocus = true;
+
 		if (AppUtility.isNotEmpty(this.category.ID)) {
 			formConfig.insert(
 				this.filesSvc.getThumbnailFormControl("Thumbnails", "basic", true, true, controlConfig => controlConfig.Options.FilePickerOptions.OnDelete = (_, formControl) => {
@@ -258,7 +262,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 					{
 						Name: "Delete",
 						Label: "{{portals.cms.categories.update.buttons.delete}}",
-						OnClick: async () => await this.deleteAsync(),
+						OnClick: () => this.deleteAsync(),
 						Options: {
 							Fill: "clear",
 							Color: "danger",
@@ -277,7 +281,6 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		}
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
-		formConfig.find(ctrl => ctrl.Name === "Title").Options.AutoFocus = true;
 		formConfig.find(ctrl => ctrl.Name === "Description").Options.Rows = 2;
 		formConfig.find(ctrl => ctrl.Name === "Notes").Options.Rows = 2;
 
@@ -292,7 +295,6 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		if (onCompleted !== undefined) {
 			onCompleted(formConfig);
 		}
-
 		return formConfig;
 	}
 
@@ -328,7 +330,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 	async saveAsync() {
 		if (this.appFormsSvc.validate(this.form)) {
 			if (this.hash === AppCrypto.hash(this.form.value)) {
-				await this.configSvc.navigateBackAsync();
+				this.configSvc.navigateBackAsync();
 			}
 			else {
 				this.processing = true;
@@ -345,54 +347,37 @@ export class CmsCategoriesUpdatePage implements OnInit {
 						await this.filesSvc.uploadThumbnailAsync(
 							control.value.new,
 							this.portalsCmsSvc.getFileOptions(this.category, options => options.Extras["x-attachment-id"] = control.value.identity),
-							async _ => await Promise.all([
-								this.trackAsync(this.title.track, "Upload", "Thumbnail"),
-								this.portalsCmsSvc.refreshCategoryAsync(category.ID)
-							])
+							() => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(() => this.portalsCmsSvc.refreshCategoryAsync(category.ID))
 						);
 					}
 					const oldParentID = this.category.ParentID;
 					await this.portalsCmsSvc.updateCategoryAsync(
 						category,
-						async data => {
+						data => {
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Updated", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							if (oldParentID !== data.ParentID) {
 								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Updated", ID: oldParentID });
 							}
-							await Promise.all([
-								this.trackAsync(this.title.track, "Update"),
-								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.update")),
-								this.appFormsSvc.hideLoadingAsync()
-							]);
-							await this.configSvc.navigateBackAsync();
+							this.trackAsync(this.title.track, "Update");
+							this.appFormsSvc.hideLoadingAsync(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.update"))).then(() => this.configSvc.navigateBackAsync());
 						},
-						async error => {
+						error => {
 							this.processing = false;
-							await Promise.all([
-								this.trackAsync(this.title.track, "Update"),
-								this.appFormsSvc.showErrorAsync(error)
-							]);
+							this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error));
 						}
 					);
 				}
 				else {
 					await this.portalsCmsSvc.createCategoryAsync(
 						category,
-						async data => {
+						data => {
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
-							await Promise.all([
-								this.trackAsync(this.title.track),
-								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.new")),
-								this.appFormsSvc.hideLoadingAsync()
-							]);
-							await this.configSvc.navigateBackAsync();
+							this.trackAsync(this.title.track);
+							this.appFormsSvc.hideLoadingAsync(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.new"))).then(() => this.configSvc.navigateBackAsync());
 						},
-						async error => {
+						error => {
 							this.processing = false;
-							await Promise.all([
-								this.trackAsync(this.title.track),
-								this.appFormsSvc.showErrorAsync(error)
-							]);
+							this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error));
 						}
 					);
 				}
@@ -406,7 +391,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 			undefined,
 			await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.confirm.delete"),
 			undefined,
-			() => AppUtility.invoke(async () => await this.removeAsync(), 123),
+			() => this.removeAsync(),
 			await this.configSvc.getResourceAsync("common.buttons.delete"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
@@ -461,22 +446,22 @@ export class CmsCategoriesUpdatePage implements OnInit {
 
 	async cancelAsync(message?: string, url?: string) {
 		if (message === undefined && this.hash === AppCrypto.hash(this.form.value)) {
-			await this.configSvc.navigateBackAsync();
+			this.configSvc.navigateBackAsync();
 		}
 		else {
-			await this.appFormsSvc.showAlertAsync(
+			this.appFormsSvc.showAlertAsync(
 				undefined,
 				message || await this.configSvc.getResourceAsync(`portals.cms.categories.update.messages.confirm.${AppUtility.isNotEmpty(this.category.ID) ? "cancel" : "new"}`),
 				undefined,
-				async () => await this.configSvc.navigateBackAsync(url),
+				() => this.configSvc.navigateBackAsync(url),
 				await this.configSvc.getResourceAsync("common.buttons.ok"),
 				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
 			);
 		}
 	}
 
-	private async trackAsync(title: string, action?: string, category?: string) {
-		await TrackingUtility.trackAsync({ title: title, category: category || "Category", action: action || (this.category !== undefined && AppUtility.isNotEmpty(this.category.ID) ? "Edit" : "Create") });
+	private trackAsync(title: string, action?: string, category?: string) {
+		return TrackingUtility.trackAsync({ title: title, category: category || "Category", action: action || (this.category !== undefined && AppUtility.isNotEmpty(this.category.ID) ? "Edit" : "Create") });
 	}
 
 }
