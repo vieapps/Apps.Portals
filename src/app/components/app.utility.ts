@@ -286,10 +286,14 @@ export class AppUtility {
 	/** Executes a function asynchronously (using 'setTimeout') and return a promise */
 	public static invoke(func?: () => void, defer?: number) {
 		return new Promise<void>(resolve => {
-			resolve();
 			if (func !== undefined) {
-				setTimeout(() => func(), defer || 0);
+				setTimeout(() => {
+					if (func !== undefined) {
+						func();
+					}
+				}, defer || 0);
 			}
+			resolve();
 		});
 	}
 
