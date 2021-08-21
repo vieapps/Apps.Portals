@@ -128,7 +128,7 @@ export class PortalsCmsService extends BaseService {
 			if (("LogIn" === info.args.Type || "LogOut" === info.args.Type) && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
-				this.updateSidebarAsync().then(async () => await ("LogIn" === info.args.Type ? this.prepareFeaturedContentsAsync() : AppUtility.promise));
+				this.updateSidebarAsync().then("LogIn" === info.args.Type ? () => this.prepareFeaturedContentsAsync() : () => {});
 			}
 		});
 
@@ -145,20 +145,20 @@ export class PortalsCmsService extends BaseService {
 				if (Organization.active !== undefined && this.portalsCoreSvc.activeOrganizations.indexOf(Organization.active.ID) < 0) {
 					this._sidebarCategory = undefined;
 					this._sidebarContentType = undefined;
-					this.portalsCoreSvc.removeActiveOrganizationAsync(Organization.active.ID).then(async () => await Promise.all([
-						this.prepareFeaturedContentsAsync(),
-						this.updateSidebarAsync()
-					]));
+					this.portalsCoreSvc.removeActiveOrganizationAsync(Organization.active.ID).then(() => {
+						this.prepareFeaturedContentsAsync();
+						this.updateSidebarAsync();
+					});
 				}
 			}
 		});
 	}
 
 	public async initializeAsync(onNext?: () => void) {
-		const tasks = new Array<Promise<any>>();
+		const promises = new Array<Promise<any>>();
 
 		if (this._oembedProviders === undefined) {
-			tasks.push(this.fetchAsync(
+			promises.push(this.fetchAsync(
 				"statics/oembed.providers.json",
 				data => {
 					const oembedProviders = data as Array<{ name: string; schemes: string[], pattern: { expression: string; position: number; html: string } }>;
@@ -176,18 +176,18 @@ export class PortalsCmsService extends BaseService {
 		}
 
 		if (Module.active === undefined) {
-			tasks.push(this.portalsCoreSvc.getActiveModuleAsync(undefined, true));
+			promises.push(this.portalsCoreSvc.getActiveModuleAsync(undefined, true));
 		}
 
 		if (Module.active !== undefined && Module.active.contentTypes.length < 1) {
-			tasks.push(this.portalsCoreSvc.getActiveModuleAsync(undefined, true));
+			promises.push(this.portalsCoreSvc.getActiveModuleAsync(undefined, true));
 		}
 
 		if (this.configSvc.appConfig.services.active === this.name) {
-			tasks.push(this.updateSidebarAsync());
+			promises.push(this.updateSidebarAsync());
 		}
 
-		await Promise.all(tasks);
+		await Promise.all(promises);
 		if (onNext !== undefined) {
 			onNext();
 		}

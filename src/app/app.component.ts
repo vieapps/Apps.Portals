@@ -422,7 +422,6 @@ export class AppComponent implements OnInit {
 		AppEvents.on("UpdateSidebar", info => this.updateSidebarAsync(info.args));
 		AppEvents.on("UpdateSidebarItem", info => this.updateSidebarMainMenuItemAsync(info.args));
 
-		AppEvents.on("UpdateSidebarTitle", info => this.sidebar.updateHeader(info.args));
 		AppEvents.on("UpdateSidebarHeader", info => this.sidebar.updateHeader(info.args));
 		AppEvents.on("UpdateSidebarFooter", info => this.sidebar.updateFooter(info.args));
 

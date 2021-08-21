@@ -44,8 +44,8 @@ export class BooksService extends BaseService {
 		});
 
 		AppAPIs.registerAsObjectScopeProcessor(this.name, "Book", message => this.processUpdateBookMessage(message));
-		AppAPIs.registerAsObjectScopeProcessor(this.name, "Statistic", async message => await this.processUpdateStatisticMessageAsync(message));
-		AppAPIs.registerAsObjectScopeProcessor(this.name, "Bookmarks", async message => await this.processUpdateBookmarkMessageAsync(message));
+		AppAPIs.registerAsObjectScopeProcessor(this.name, "Statistic", message => this.processUpdateStatisticMessage(message));
+		AppAPIs.registerAsObjectScopeProcessor(this.name, "Bookmarks", message => this.processUpdateBookmarkMessage(message));
 
 		AppEvents.on("App", info => {
 			if ("HomePageIsOpened" === info.args.Type && this._reading.ID !== undefined && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
@@ -71,7 +71,7 @@ export class BooksService extends BaseService {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				AppUtility.invoke(async () => await this.getBookmarksAsync());
 				if (this.configSvc.appConfig.services.active === this.name) {
-					this.updateSidebarTitle();
+					this.updateSidebarHeader();
 				}
 			}
 		});
@@ -116,13 +116,11 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	private updateSidebarTitle() {
-		AppUtility.invoke(() => {
-			const profile = this.configSvc.getAccount().profile;
-			AppEvents.broadcast("UpdateSidebarTitle", {
-				title: profile !== undefined ? profile.Name : this.configSvc.appConfig.app.name,
-				onClick: profile !== undefined ? () => AppEvents.broadcast("Navigate", { Type: "Profile" }) : undefined
-			});
+	private updateSidebarHeader() {
+		const profile = this.configSvc.getAccount().profile;
+		AppEvents.broadcast("UpdateSidebarHeader", {
+			title: profile !== undefined ? profile.Name : this.configSvc.appConfig.app.name,
+			onClick: profile !== undefined ? () => AppEvents.broadcast("Navigate", { Type: "Profile" }) : undefined
 		});
 	}
 
@@ -151,7 +149,7 @@ export class BooksService extends BaseService {
 					sidebar.Active = name;
 					this.configSvc.appConfig.services.active = this.name;
 					this.configSvc.appConfig.URLs.search = "/books/search";
-					this.updateSidebarTitle();
+					this.updateSidebarHeader();
 					if (!sidebar.Visible) {
 						sidebar.active(name, true);
 					}
@@ -538,23 +536,23 @@ export class BooksService extends BaseService {
 		]).then(() => AppUtility.invoke(onNext));
 	}
 
-	private processUpdateStatisticMessageAsync(message: AppMessage) {
+	private processUpdateStatisticMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Categories":
 				this.categories = (message.Data.Objects as Array<any>).map(s => StatisticInfo.deserialize(s));
-				return this.storeCategoriesAsync();
+				this.storeCategoriesAsync();
+				break;
 
 			case "Authors":
 				const authors = this.authors;
 				authors.set(message.Data.Char, (message.Data.Objects as Array<any>).map(s => StatisticBase.deserialize(s)));
 				this.configSvc.appConfig.extras["Books-Authors"] = authors;
-				return this.storeAuthorsAsync();
+				this.storeAuthorsAsync();
+				break;
 
 			case "Status":
-				return AppUtility.invoke(() => this.configSvc.appConfig.extras["Books-Status"] = (message.Data.Objects as Array<any>).map(s => StatisticBase.deserialize(s)));
-
-			default:
-				return message.Type.Event === "All" ? AppUtility.promise : AppUtility.invoke(() => console.warn(this.getMessage("Got an update message"), message));
+				AppUtility.invoke(() => this.configSvc.appConfig.extras["Books-Status"] = (message.Data.Objects as Array<any>).map(s => StatisticBase.deserialize(s)));
+				break;
 		}
 	}
 
@@ -663,7 +661,7 @@ export class BooksService extends BaseService {
 		);
 	}
 
-	private async processUpdateBookmarkMessageAsync(message: AppMessage) {
+	private processUpdateBookmarkMessage(message: AppMessage) {
 		const account = this.configSvc.getAccount();
 		if (this.configSvc.isAuthenticated && account.id === message.Data.ID) {
 			const profile = account.profile;
@@ -672,10 +670,10 @@ export class BooksService extends BaseService {
 			}
 			if ("Delete" === message.Type.Event) {
 				this.bookmarks.remove(message.Data.ID);
-				await this.storeBookmarksAsync();
+				this.storeBookmarksAsync();
 			}
 			else {
-				await this.updateBookmarksAsync(message.Data);
+				this.updateBookmarksAsync(message.Data);
 			}
 		}
 	}

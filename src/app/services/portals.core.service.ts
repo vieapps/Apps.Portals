@@ -151,7 +151,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			}
 			else if ("Changed" === info.args.Type && "Organization" === info.args.Object) {
-				this.updateSidebarTitle();
+				this.updateSidebarHeader();
 				this.prepareSidebar();
 			}
 		});
@@ -168,7 +168,7 @@ export class PortalsCoreService extends BaseService {
 
 		AppEvents.on("Account", info => {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
-				this.updateSidebarTitle();
+				this.updateSidebarHeader();
 				this.prepareSidebarFooterItemsAsync().then(() => this.prepareSidebar());
 			}
 		});
@@ -178,7 +178,7 @@ export class PortalsCoreService extends BaseService {
 				const organizations = this.activeOrganizations;
 				const organization = this.activeOrganization;
 				if (organization === undefined || organizations.indexOf(organization.ID) < 0) {
-					this.getOrganizationAsync(organizations.first(), async _ => await this.setActiveOrganizationAsync(Organization.get(organizations.first())));
+					this.getOrganizationAsync(organizations.first(), _ => this.setActiveOrganizationAsync(Organization.get(organizations.first())));
 				}
 			}
 		});
@@ -1270,28 +1270,26 @@ export class PortalsCoreService extends BaseService {
 		return this.readAsync(this.getPath(objectName, "refresh", `object-id=${id}`), onSuccess, onError, headers, useXHR);
 	}
 
-	private updateSidebarTitle() {
-		AppUtility.invoke(async () => {
-			const organization = this.configSvc.isAuthenticated ? this.activeOrganization : undefined;
-			AppEvents.broadcast("UpdateSidebarTitle", {
-				title: organization !== undefined ? organization.Alias : this.configSvc.appConfig.app.name,
-				onClick: (organization !== undefined && this.canManageOrganization(organization) ? async _ => await this.configSvc.navigateForwardAsync(organization.routerURI) : _ => {}) as (sidebar?: AppSidebar, event?: Event) => void
-			});
+	private updateSidebarHeader() {
+		const organization = this.configSvc.isAuthenticated ? this.activeOrganization : undefined;
+		AppEvents.broadcast("UpdateSidebarHeader", {
+			title: organization !== undefined ? organization.Alias : this.configSvc.appConfig.app.name,
+			onClick: (organization !== undefined && this.canManageOrganization(organization) ? _ => this.configSvc.navigateForwardAsync(organization.routerURI) : _ => {}) as (sidebar?: AppSidebar, event?: Event) => void
 		});
 	}
 
 	private openSidebar(name: string, sidebar: AppSidebar) {
 		if (sidebar.Active !== name) {
 			if (sidebar.Active !== "cms" && sidebar.Active !== "portals" && (name === "cms" || name === "portals")) {
-				this.updateSidebarTitle();
+				this.updateSidebarHeader();
 			}
 			sidebar.Active = name;
 			if (sidebar.Active === "cms" || sidebar.Active === "portals") {
 				this.configSvc.appConfig.services.active = this.name;
 				this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 			}
-			AppUtility.invoke(() => AppEvents.broadcast("OpenSidebar"));
 		}
+		AppEvents.broadcast("OpenSidebar", { Name: name });
 	}
 
 	private prepareSidebar(onNext?: () => void) {
