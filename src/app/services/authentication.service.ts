@@ -155,11 +155,11 @@ export class AuthenticationService extends BaseService {
 		return false;
 	}
 
-	private async processErrorAsync(error: any, message: string, onNext?: (error?: any) => void) {
+	protected processError(error: any, message: string, onNext?: (error?: any) => void) {
 		if (AppUtility.isGotSecurityException(error)) {
-			await this.configSvc.resetSessionAsync(async () =>
-				await this.configSvc.initializeSessionAsync(async () =>
-					await this.configSvc.registerSessionAsync(() => {
+			this.configSvc.resetSessionAsync(() =>
+				this.configSvc.initializeSessionAsync(() =>
+					this.configSvc.registerSessionAsync(() => {
 						this.showLog("Reregistered the session when got security issue");
 						if (onNext !== undefined) {
 							onNext(error);
@@ -169,7 +169,7 @@ export class AuthenticationService extends BaseService {
 			);
 		}
 		else {
-			this.processError(message, error, onNext);
+			super.processError(message, error, onNext);
 		}
 	}
 
@@ -180,7 +180,7 @@ export class AuthenticationService extends BaseService {
 				Account: AppCrypto.rsaEncrypt(account),
 				Password: AppCrypto.rsaEncrypt(password)
 			},
-			async data => {
+			data => {
 				if (AppUtility.isTrue(data.Require2FA)) {
 					this.showLog("Log in with static password successful, but need to verify with 2FA", this.configSvc.isDebug ? data : "");
 					if (onSuccess !== undefined) {
@@ -189,10 +189,10 @@ export class AuthenticationService extends BaseService {
 				}
 				else {
 					this.showLog("Log in successful", this.configSvc.isDebug ? data : "");
-					await this.updateSessionWhenLogInAsync(data, onSuccess);
+					this.updateSessionWhenLogInAsync(data, onSuccess);
 				}
 			},
-			async error => await this.processErrorAsync(error, "Error occurred while logging in", onError),
+			error => this.processError(error, "Error occurred while logging in", onError),
 			undefined,
 			true
 		);
@@ -206,11 +206,11 @@ export class AuthenticationService extends BaseService {
 				Info: AppCrypto.rsaEncrypt(info),
 				OTP: AppCrypto.rsaEncrypt(otp)
 			},
-			async data => {
+			data => {
 				this.showLog("Log in with OTP successful");
-				await this.updateSessionWhenLogInAsync(data, onSuccess);
+				this.updateSessionWhenLogInAsync(data, onSuccess);
 			},
-			async error => await this.processErrorAsync(error, "Error occurred while logging in with OTP", onError),
+			error => this.processError(error, "Error occurred while logging in with OTP", onError),
 			undefined,
 			true
 		);
@@ -219,7 +219,7 @@ export class AuthenticationService extends BaseService {
 	public logOutAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.deleteAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
-			async data => await this.configSvc.updateSessionAsync(data, async () => await this.configSvc.registerSessionAsync(() => {
+			data => this.configSvc.updateSessionAsync(data, () => this.configSvc.registerSessionAsync(() => {
 				this.showLog("Log out successful", this.configSvc.isDebug ? data : "");
 				AppEvents.broadcast("Account", { Type: "Updated", Mode: "Apps" });
 				AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Apps" });
@@ -229,7 +229,7 @@ export class AuthenticationService extends BaseService {
 					onSuccess(data);
 				}
 			}, onError), true),
-			async error => await this.processErrorAsync(error, "Error occurred while logging out", onError),
+			error => this.processError(error, "Error occurred while logging out", onError),
 			undefined,
 			true
 		);
@@ -242,7 +242,7 @@ export class AuthenticationService extends BaseService {
 				Account: AppCrypto.rsaEncrypt(account)
 			},
 			onSuccess,
-			async error => await this.processErrorAsync(error, "Error occurred while requesting new password", onError),
+			error => this.processError(error, "Error occurred while requesting new password", onError),
 			this.configSvc.appConfig.getCaptchaInfo(captcha)
 		);
 	}
@@ -255,7 +255,7 @@ export class AuthenticationService extends BaseService {
 				OtpCode: AppCrypto.rsaEncrypt(otp)
 			},
 			onSuccess,
-			async error => await this.processErrorAsync(error, "Error occurred while renewing password", onError)
+			error => this.processError(error, "Error occurred while renewing password", onError)
 		);
 	}
 
