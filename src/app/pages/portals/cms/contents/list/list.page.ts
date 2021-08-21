@@ -204,11 +204,11 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 			}, `CMS.Contents:${(this.category !== undefined ? ":" + this.category.ID : "")}:Refresh`);
 
 			this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: `[${(this.category === undefined ? this.organization.Title : this.organization.Title + " :: " + this.category.FullTitle)}]` });
-			this.startSearch(() => {
-				if (this.category !== undefined && this.category.childrenIDs === undefined) {
+			this.startSearch(() => this.appFormsSvc.hideLoadingAsync(() => {
+					if (this.category !== undefined && this.category.childrenIDs === undefined) {
 					this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up"));
 				}
-			});
+			}));
 		}
 	}
 
@@ -229,6 +229,8 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 					this.pageNumber = 0;
 					this.pagination = AppPagination.getDefault();
 					this.search(() => {
+						this.trackAsync(this.title.search, "Search");
+						this.appFormsSvc.hideLoadingAsync();
 						this.infiniteScrollCtrl.disabled = false;
 						if (this.contents.length < 1) {
 							PlatformUtility.focus(this.searchCtrl);
@@ -263,6 +265,8 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
 			this.search(() => {
+				this.trackAsync(this.title.track);
+				this.appFormsSvc.hideLoadingAsync();
 				if (this.infiniteScrollCtrl !== undefined) {
 					this.infiniteScrollCtrl.complete();
 				}
@@ -286,8 +290,6 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 	search(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onSuccess = (data: any) => {
-			this.trackAsync(this.title.track);
-			this.appFormsSvc.hideLoadingAsync();
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
