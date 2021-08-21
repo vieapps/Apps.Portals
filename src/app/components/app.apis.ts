@@ -413,7 +413,7 @@ export class AppAPIs {
 				else {
 					const message: AppMessage = { Type: messageType, Data: data };
 					if (AppConfig.isDebug) {
-						console.log("[AppAPIs]: Got an updating message", AppConfig.isNativeApp ? AppUtility.stringify(message) : message);
+						console.log("[AppAPIs]: Got an updating message", message);
 					}
 					this.broadcast(message);
 				}
@@ -422,7 +422,7 @@ export class AppAPIs {
 			// resend queued callbackable messages
 			if (this._onResendWebSocketMessages !== undefined) {
 				if (AppUtility.isGotData(this._callbackableMessages)) {
-					AppUtility.invoke(() => (this._onResendWebSocketMessages || (() => {}))(), Math.round(789 + (123 * Math.random())));
+					AppUtility.invoke(this._onResendWebSocketMessages, Math.round(789 + (123 * Math.random())));
 				}
 				else {
 					this._resendID = undefined;
@@ -432,9 +432,7 @@ export class AppAPIs {
 		};
 
 		// callback when done
-		if (onOpened !== undefined) {
-			AppUtility.invoke(onOpened, this.isWebSocketReady ? 13 : 567);
-		}
+		AppUtility.invoke(onOpened, this.isWebSocketReady ? 0 : 567);
 	}
 
 	private static disposeWebSocket() {
