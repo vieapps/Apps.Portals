@@ -518,7 +518,8 @@ export class AppComponent implements OnInit {
 							this.finalize(onNext);
 						},
 						error => {
-							if (AppUtility.isGotSecurityException(error)) {
+							error = AppUtility.parseError(error);
+							if (AppUtility.isGotSecurityException(error) && "UnauthorizedException" !== error.Type && "AccessDeniedException" !== error.Type) {
 								console.warn("<AppComponent>: Cannot register, the session is need to be re-initialized (anonymous)");
 								this.configSvc.resetSessionAsync(() => AppUtility.invoke(() => this.initialize(onNext, noInitializeSession), 234));
 							}
@@ -530,7 +531,8 @@ export class AppComponent implements OnInit {
 				}
 			},
 			error => {
-				if (AppUtility.isGotSecurityException(error)) {
+				error = AppUtility.parseError(error);
+				if (AppUtility.isGotSecurityException(error) && "UnauthorizedException" !== error.Type && "AccessDeniedException" !== error.Type) {
 					console.warn("<AppComponent>: Cannot initialize, the session is need to be re-initialized (anonymous)");
 					this.configSvc.resetSessionAsync(() => AppUtility.invoke(() => this.initialize(onNext, noInitializeSession), 234));
 				}

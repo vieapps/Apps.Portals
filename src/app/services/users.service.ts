@@ -287,17 +287,26 @@ export class UsersService extends BaseService {
 					case "Revoke":
 						if (AppUtility.isGotSecurityException(message.Data)) {
 							this.showLog("Revoke the session and register new when got a security issue", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
-							this.configSvc.resetSessionAsync(() => this.configSvc.initializeSessionAsync(() => this.configSvc.registerSessionAsync(() => AppAPIs.reopenWebSocket("Reopens when got a security issue"))), false);
+							this.configSvc.resetSessionAsync(() =>
+								this.configSvc.initializeSessionAsync(() =>
+									this.configSvc.registerSessionAsync(() => {
+										AppAPIs.reopenWebSocket("Reopens when got a security issue");
+										AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
+										AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
+										AppEvents.sendToElectron("Users", { Type: "LogOut" });
+									}
+								)
+							), false);
 						}
 						else {
 							this.configSvc.updateSessionAsync(message.Data, () => this.configSvc.registerSessionAsync(() => {
 								this.showLog("The session was revoked by the APIs", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 								AppAPIs.reopenWebSocket("Reopens when the session was revoked by the APIs");
+								AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
+								AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
+								AppEvents.sendToElectron("Users", { Type: "LogOut" });
 							}), false, false);
 						}
-						AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
-						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
-						AppEvents.sendToElectron("Users", { Type: "LogOut" });
 						break;
 
 					case "State":
