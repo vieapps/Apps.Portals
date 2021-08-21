@@ -96,19 +96,21 @@ export class BooksService extends BaseService {
 
 	public async initializeAsync(onNext?: () => void) {
 		this.prepareSidebarFooterItems();
-		await this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast("Books", { Type: "BooksUpdated" }));
 		if (this.configSvc.isAuthenticated) {
-			await this.loadBookmarksAsync(async () => await this.fetchBookmarksAsync());
+			await this.loadBookmarksAsync(() => AppUtility.invoke(() => this.fetchBookmarksAsync(), this.configSvc.appConfig.services.active === this.name ? 0 : 2345));
 		}
-		await Promise.all([
-			this.loadCategoriesAsync(async () => await this.fetchCategoriesAsync()),
-			this.loadInstructionsAsync(async () => await this.fetchInstructionsAsync()),
-			this.loadStatisticsAsync()
-		]);
+		AppUtility.invoke(() => {
+			this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast("Books", { Type: "BooksUpdated" }));
+			this.loadCategoriesAsync(() => this.fetchCategoriesAsync());
+			this.loadInstructionsAsync(() => this.fetchInstructionsAsync());
+			this.loadStatisticsAsync();
+		}, this.configSvc.appConfig.services.active === this.name ? 0 : 2345);
 		if (this.configSvc.appConfig.services.active === this.name) {
 			AppEvents.broadcast("ActiveSidebar", { Name: "books" });
 		}
-		AppUtility.invoke(() => this.prepareSidebarFooterItems(), 3456);
+		else {
+			AppUtility.invoke(() => this.prepareSidebarFooterItems(), 3456);
+		}
 		if (onNext !== undefined) {
 			onNext();
 		}
