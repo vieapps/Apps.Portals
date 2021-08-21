@@ -676,26 +676,23 @@ export class AppAPIs {
 	 * @param onError The callback function to handle the returning error
 	 * @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	public static async sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		if (this.canUseWebSocket(useXHR)) {
-			this.sendRequest(requestInfo, false, onSuccess, onError);
-		}
-		else {
-			try {
-				const data = await AppUtility.toAsync(this.sendRequest(requestInfo));
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			}
-			catch (error) {
-				if (onError !== undefined) {
-					onError(error);
-				}
-				else {
-					console.error("[AppAPIs]: Error occurred while sending a request to APIs", error);
-				}
-			}
-		}
+	public static sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return this.canUseWebSocket(useXHR)
+			? AppUtility.toAsync(this.sendRequest(requestInfo, false, onSuccess, onError)).then(() => {}).catch(error => console.error("[AppAPIs]: Error occurred while sending a request to APIs", error))
+			: AppUtility.toAsync(this.sendRequest(requestInfo))
+				.then(data => {
+					if (onSuccess !== undefined) {
+						onSuccess(data);
+					}
+				})
+				.catch(error => {
+					if (onError !== undefined) {
+						onError(error);
+					}
+					else {
+						console.error("[AppAPIs]: Error occurred while sending a request to APIs", error);
+					}
+				});
 	}
 
 	/** Broadcasts a message to all subscribers */
