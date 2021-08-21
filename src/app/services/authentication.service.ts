@@ -156,7 +156,8 @@ export class AuthenticationService extends BaseService {
 	}
 
 	protected processError(error: any, message: string, onNext?: (error?: any) => void) {
-		if (AppUtility.isGotSecurityException(error)) {
+		error = AppUtility.parseError(error);
+		if (AppUtility.isGotSecurityException(error) && "UnauthorizedException" !== error.Type && "AccessDeniedException" !== error.Type) {
 			this.configSvc.resetSessionAsync(() =>
 				this.configSvc.initializeSessionAsync(() =>
 					this.configSvc.registerSessionAsync(() => {
