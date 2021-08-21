@@ -52,12 +52,12 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 	}
 
 	ngOnInit() {
-		this.initializeAsync();
-		AppEvents.on("App", async info => {
+		this.initialize();
+		AppEvents.on("App", info => {
 			if ("LanguageChanged" === info.args.Type) {
-				await this.prepareResourcesAsync();
+				this.prepareResourcesAsync();
 				if (this.booksSvc.instructions[this.configSvc.appConfig.language] === undefined) {
-					await this.booksSvc.fetchInstructionsAsync(() => this.updateIntroduction());
+					this.booksSvc.fetchInstructionsAsync(() => this.updateIntroduction());
 				}
 				else {
 					this.updateIntroduction();
@@ -85,10 +85,10 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 		AppEvents.off("Books", "BookFeaturedEventHandlers");
 	}
 
-	private async initializeAsync() {
-		await this.prepareResourcesAsync();
+	private initialize() {
+		this.prepareResourcesAsync();
 		if (this.booksSvc.instructions[this.configSvc.appConfig.language] === undefined) {
-			await this.booksSvc.fetchInstructionsAsync(() => this.updateIntroduction());
+			this.booksSvc.fetchInstructionsAsync(() => this.updateIntroduction());
 		}
 		else {
 			this.updateIntroduction();

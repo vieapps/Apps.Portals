@@ -35,26 +35,26 @@ export class HomePage implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		if (this.configSvc.isReady) {
-			this.prepareAsync();
+			this.prepare();
 		}
 		else {
 			AppEvents.on("App", info => {
 				if ("Initialized" === info.args.Type) {
-					AppUtility.invoke(async () => await this.prepareAsync());
+					this.prepare();
 				}
 			}, "Home:AppInitialized");
 		}
 
 		AppEvents.on("App", info => {
 			if ("LanguageChanged" === info.args.Type) {
-				AppUtility.invoke(async () => await this.setTitleAsync());
+				this.setTitleAsync();
 			}
 		}, "Home:LanguageChanged");
 
 		AppEvents.on("Navigated", info => {
 			if (this.configSvc.appConfig.URLs.home === info.args.URL) {
-				AppUtility.invoke(async () => {
-					await this.prepareAsync("Return");
+				AppUtility.invoke(() => {
+					this.prepare("Return");
 					AppEvents.broadcast("App", { Type: "HomePageIsOpened" });
 				});
 				this.changes = new Date();
@@ -73,9 +73,8 @@ export class HomePage implements OnInit, OnDestroy {
 		AppEvents.off("SetHomepageTitleResource", "Home:SetTitle");
 	}
 
-	private async prepareAsync(action?: string) {
-		await this.setTitleAsync();
-		await TrackingUtility.trackAsync({ title: this.title, category: "Home", action: action || "Open" });
+	private prepare(action?: string) {
+		this.setTitleAsync().then(() => TrackingUtility.trackAsync({ title: this.title, category: "Home", action: action || "Open" }));
 	}
 
 	private async setTitleAsync() {

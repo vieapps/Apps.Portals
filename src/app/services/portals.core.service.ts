@@ -1366,7 +1366,7 @@ export class PortalsCoreService extends BaseService {
 			}
 
 			items.push({
-				Title: "{{portals.sidebar.cms-categories}}",
+				Title: "{{portals.sidebar.titles.categories}}",
 				Link: this.getRouterLink(undefined, "list", "all", "category"),
 				Direction: "root",
 				Icon: { Name: "logo-firebase", Color: "medium", Slot: "start" }

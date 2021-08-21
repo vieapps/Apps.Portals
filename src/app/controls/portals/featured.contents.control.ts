@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input } from "@angular/core";
+import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input, Output, EventEmitter } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -13,7 +13,7 @@ import { Category } from "@app/models/portals.cms.category";
 	styleUrls: ["./featured.contents.control.scss"]
 })
 
-export class FeaturedContentsControl implements OnInit, OnDestroy {
+export class FeaturedContentsControl implements OnInit, OnDestroy, OnChanges {
 
 	constructor(
 		private configSvc: ConfigurationService,
@@ -27,6 +27,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 	@Input() status: string;
 	@Input() orderBy: string;
 	@Input() amount: number;
+	@Output() change = new EventEmitter<any>();
 
 	contents = new Array<FeaturedContent>();
 	private _isPublished = false;
@@ -82,7 +83,12 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
 	}
 
+	ngOnChanges(_: SimpleChanges) {
+		AppUtility.invoke(() => this.prepareContents(true), 123);
+	}
+
 	ngOnDestroy() {
+		this.change.unsubscribe();
 		AppEvents.off("App", `FeaturedContents:AppInitialized:${this._isPublished}`);
 		AppEvents.off(this.portalsCmsSvc.name, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
 	}
