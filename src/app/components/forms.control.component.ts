@@ -571,12 +571,12 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		this.changeDetector.detectChanges();
 	}
 
-	private async lookupAsync() {
+	private lookup() {
 		if (this.control.Options.LookupOptions.ModalOptions.Component === undefined) {
-			await this.appFormsSvc.showAlertAsync(undefined, "Lookup component is invalid");
+			this.appFormsSvc.showAlertAsync(undefined, "Lookup component is invalid");
 		}
 		else {
-			await this.appFormsSvc.showModalAsync(
+			this.appFormsSvc.showModalAsync(
 				this.control.Options.LookupOptions.ModalOptions.Component,
 				this.control.Options.LookupOptions.ModalOptions.ComponentProps,
 				data => {
@@ -650,11 +650,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	get lookupHandlers() {
 		return {
-			add: () => {
-				if (this.isSelector && this.control.Options.LookupOptions.SelectorOptions.OnAdd !== undefined) {
-					this.control.Options.LookupOptions.SelectorOptions.OnAdd(this);
-				}
-			},
+			add: this.isSelector && this.control.Options.LookupOptions.SelectorOptions.OnAdd !== undefined ? () => this.control.Options.LookupOptions.SelectorOptions.OnAdd(this) : () => {},
 			delete: (values: Array<string>) => this.deleteValue(values)
 		};
 	}
@@ -739,7 +735,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		}
 	}
 
-	async deleteValue(value?: any, options?: Object, updateValueAndValidity: boolean = false) {
+	deleteValue(value?: any, options?: Object, updateValueAndValidity: boolean = false) {
 		if (this.isLookupControl) {
 			if (this.control.Options.LookupOptions.OnDelete !== undefined) {
 				if (this.isSelector) {
@@ -747,19 +743,12 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				}
 				else {
 					if (AppUtility.isNotEmpty(this.control.Options.LookupOptions.WarningOnDelete)) {
-						await this.appFormsSvc.showAlertAsync(
-							undefined,
-							undefined,
-							this.control.Options.LookupOptions.WarningOnDelete,
-							() => {
-								this.control.Options.LookupOptions.OnDelete(AppUtility.isArray(value) ? value : [value], this);
-								if (this.isCompleter && this.lookupMultiple) {
-									this.focus();
-								}
-							},
-							await this.appFormsSvc.getResourceAsync("common.buttons.ok"),
-							await this.appFormsSvc.getResourceAsync("common.buttons.cancel")
-						);
+						this.appFormsSvc.showAlertAsync(undefined, undefined, this.control.Options.LookupOptions.WarningOnDelete, () => {
+							this.control.Options.LookupOptions.OnDelete(AppUtility.isArray(value) ? value : [value], this);
+							if (this.isCompleter && this.lookupMultiple) {
+								this.focus();
+							}
+						});
 					}
 					else {
 						this.control.Options.LookupOptions.OnDelete(AppUtility.isArray(value) ? value : [value], this);
@@ -773,14 +762,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		else if (this.isFilePickerControl) {
 			if (this.control.Options.FilePickerOptions.OnDelete !== undefined) {
 				if (AppUtility.isNotEmpty(this.control.Options.FilePickerOptions.WarningOnDelete)) {
-					await this.appFormsSvc.showAlertAsync(
-						undefined,
-						undefined,
-						this.control.Options.FilePickerOptions.WarningOnDelete,
-						() => this.control.Options.FilePickerOptions.OnDelete(value as string, this),
-						await this.appFormsSvc.getResourceAsync("common.buttons.ok"),
-						await this.appFormsSvc.getResourceAsync("common.buttons.cancel")
-					);
+					this.appFormsSvc.showAlertAsync(undefined, undefined, this.control.Options.FilePickerOptions.WarningOnDelete, () => this.control.Options.FilePickerOptions.OnDelete(value as string, this));
 				}
 				else {
 					this.control.Options.FilePickerOptions.OnDelete(value as string, this);
@@ -836,7 +818,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return (this.control.Options.Icon.Color || "medium").trim().toLowerCase();
 	}
 
-	async clickOnIcon(event: Event) {
+	clickOnIcon(event: Event) {
 		if (this.isPasswordControl) {
 			this.showPassword = !this.showPassword;
 			if (this.showPassword) {
@@ -844,10 +826,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			}
 		}
 		else if ((this.isImagePickerControl || this.isDatePickerControl || this.isTextDatePickerControl) && this.isAllowDelete) {
-			await this.deleteValue();
+			this.deleteValue();
 		}
 		else if (this.isCompleterAllowLookupByModal || this.isModal) {
-			await this.lookupAsync();
+			this.lookup();
 		}
 		else if (this.control.Options.Icon.OnClick !== undefined) {
 			this.control.Options.Icon.OnClick(event, this);
@@ -870,7 +852,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		if (this.control.Options.OnKeyUp !== undefined) {
 			this.control.Options.OnKeyUp(event, this);
 		}
-		if (focusNextOnEnter && event.code === "Enter") {
+		else if (focusNextOnEnter && event.code === "Enter") {
 			this.focusNext();
 		}
 	}
