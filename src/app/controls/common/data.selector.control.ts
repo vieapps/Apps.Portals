@@ -141,13 +141,13 @@ export class DataSelectorControl implements OnInit, OnDestroy {
 	}
 
 	add() {
-		if (this.handlers !== undefined && this.handlers.add !== undefined && typeof this.handlers.add === "function") {
+		if (this.handlers !== undefined && typeof this.handlers.add === "function") {
 			this.handlers.add();
 		}
 	}
 
 	delete() {
-		if (this.handlers !== undefined && this.handlers.delete !== undefined && typeof this.handlers.delete === "function") {
+		if (this.handlers !== undefined && typeof this.handlers.delete === "function") {
 			this.appFormsSvc.showAlertAsync(
 				undefined,
 				undefined,

@@ -1,15 +1,15 @@
 <ion-header>
 	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
-			<ion-button color="secondary" [disabled]="processing" (click)="closeAsync()">
+			<ion-button color="secondary" [disabled]="processing" (click)="close()">
 				{{ buttons.cancel }}
 			</ion-button>
 		</ion-buttons>
 		<ion-buttons slot="end">
-			<ion-button *ngIf="mode === 'select'" color="primary" [disabled]="processing" (click)="closeAsync(selected.toArray())">
+			<ion-button *ngIf="mode === 'select'" color="primary" [disabled]="processing" (click)="close(selected.toArray())">
 				{{ buttons.select }}
 			</ion-button>
-			<ion-button *ngIf="mode === 'edit'" color="primary" [disabled]="processing" (click)="updateAsync()">
+			<ion-button *ngIf="mode === 'edit'" color="primary" [disabled]="processing" (click)="update()">
 				{{ buttons.update }}
 			</ion-button>
 			<ion-button *ngIf="mode === 'upload'" color="primary" [disabled]="processing" (click)="uploadFiles()">

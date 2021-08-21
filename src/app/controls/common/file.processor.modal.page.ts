@@ -122,11 +122,10 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 			this.initializeUpdateFormAsync();
 		}
 		else if (this.mode === "select") {
-			await this.appFormsSvc.showLoadingAsync();
-			await this.filesSvc.searchAttachmentsAsync(this.fileOptions, async attachments => {
-				this.attachments = this.handlers.predicate !== undefined ? attachments.filter(this.handlers.predicate) : attachments;
-				await this.appFormsSvc.hideLoadingAsync();
-			});
+			this.appFormsSvc.showLoadingAsync().then(() => this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => {
+				this.attachments = typeof this.handlers.predicate === "function" ? attachments.filter(this.handlers.predicate) : attachments;
+				this.appFormsSvc.hideLoadingAsync();
+			}));
 		}
 	}
 
@@ -157,12 +156,15 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 		this.handlers.onDelete(attachment);
 	}
 
-	closeAsync(ids?: Array<string>) {
-		return this.mode === "select"
-			? ids === undefined || ids.length > 0
-				? this.appFormsSvc.hideModalAsync(ids === undefined ? undefined : this.attachments.filter(attachment => ids.indexOf(attachment.ID) > -1))
-				: AppUtility.promise
-			: this.appFormsSvc.hideModalAsync();
+	close(ids?: Array<string>) {
+		if (this.mode === "select") {
+			if (ids === undefined || ids.length > 0) {
+				this.appFormsSvc.hideModalAsync(ids === undefined ? undefined : this.attachments.filter(attachment => ids.indexOf(attachment.ID) > -1));
+			}
+		}
+		else {
+			this.appFormsSvc.hideModalAsync();
+		}
 	}
 
 	private async initializeUpdateFormAsync() {
@@ -185,9 +187,9 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 		this.hash = AppCrypto.hash(this.form.value);
 	}
 
-	async updateAsync() {
+	update() {
 		if (this.hash === AppCrypto.hash(this.form.value)) {
-			await this.appFormsSvc.hideModalAsync();
+			this.appFormsSvc.hideModalAsync();
 		}
 		else {
 			this.processing = true;
@@ -196,13 +198,10 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 			attachment.Description = this.form.value.Description;
 			attachment.IsShared = this.form.value.IsShared;
 			attachment.IsTracked = this.form.value.IsTracked;
-			await this.filesSvc.updateAttachmentAsync(
+			this.filesSvc.updateAttachmentAsync(
 				attachment,
-				async _ => await this.appFormsSvc.hideModalAsync(),
-				async error => {
-					await this.appFormsSvc.showErrorAsync(error);
-					this.processing = false;
-				}
+				() => this.appFormsSvc.hideModalAsync(),
+				error => this.appFormsSvc.showErrorAsync(error).then(() => this.processing = false)
 			);
 		}
 	}
@@ -244,10 +243,7 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 					}
 				}
 			}, 13);
-			const onError: (error?: any) => void = async error => {
-				await this.appFormsSvc.showErrorAsync(error);
-				this.processing = false;
-			};
+			const onError: (error?: any) => void = error => this.appFormsSvc.showErrorAsync(error).then(() => this.processing = false);
 			const onProgress: (index: number, percentage: string) => void = (index, percentage) => this.files[index].percentage = percentage;
 			this.processing = true;
 			this.subscriptions = [];
