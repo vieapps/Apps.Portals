@@ -97,8 +97,7 @@ export class PortalsCoreService extends BaseService {
 
 	private initialize() {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => {
-			const systemID = message.Data !== undefined ? message.Data.SystemID : undefined;
-			if (systemID !== undefined && this.activeOrganizations.indexOf(systemID) > -1) {
+			if (message.Data !== undefined && message.Data.SystemID !== undefined && this.activeOrganizations.indexOf(message.Data.SystemID) > -1) {
 				switch (message.Type.Object) {
 					case "Organization":
 					case "Core.Organization":
@@ -198,8 +197,8 @@ export class PortalsCoreService extends BaseService {
 			}
 			this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 		}
-		await this.prepareSidebarFooterItemsAsync(onNext);
-		this.activeSidebar();
+		await this.prepareSidebarFooterItemsAsync();
+		this.activeSidebar(onNext);
 	}
 
 	public canManageOrganization(organization?: Organization, account?: Account) {
@@ -1394,10 +1393,10 @@ export class PortalsCoreService extends BaseService {
 					}
 				}
 				AppEvents.broadcast("ActiveSidebar", { Name: name });
-				if (onNext !== undefined) {
-					onNext();
-				}
 			}, 456);
+			if (onNext !== undefined) {
+				onNext();
+			}
 		}
 		else if (onNext !== undefined) {
 			onNext();
@@ -2800,7 +2799,7 @@ export class PortalsCoreService extends BaseService {
 				Path: this.getPath("excel", "export", "x-request=" + AppCrypto.jsonEncode(request)),
 				Header: this.configSvc.appConfig.getAuthenticatedInfo()
 			},
-			async data => {
+			data => {
 				const processID = data !== undefined ? data.ProcessID as string : undefined;
 				if (AppUtility.isNotEmpty(processID)) {
 					if (this.configSvc.isDebug) {
@@ -2809,7 +2808,7 @@ export class PortalsCoreService extends BaseService {
 					AppAPIs.registerAsObjectScopeProcessor(
 						this.name,
 						"Excel",
-						async message => {
+						message => {
 							switch (message.Data.Status || "") {
 								case "Done":
 									if (this.configSvc.isDebug) {
@@ -2820,18 +2819,17 @@ export class PortalsCoreService extends BaseService {
 										onProgress(message.Data.Percentage);
 									}
 									if (onCompleted !== undefined) {
-										await this.appFormsSvc.hideLoadingAsync();
-										onCompleted(message);
+										this.appFormsSvc.hideLoadingAsync().then(() => onCompleted(message));
 									}
 									else {
-										await this.appFormsSvc.showAlertAsync(
+										AppUtility.invoke(async () => this.appFormsSvc.showAlertAsync(
 											"Excel",
 											await this.configSvc.getResourceAsync("portals.common.excel.message.export"),
 											undefined,
 											() => PlatformUtility.openURL(this.filesSvc.getTemporaryFileURI(message)),
 											await this.configSvc.getResourceAsync("common.buttons.download"),
 											await this.configSvc.getResourceAsync("common.buttons.cancel")
-										);
+										));
 									}
 									break;
 								case "Error":
@@ -2840,11 +2838,10 @@ export class PortalsCoreService extends BaseService {
 									}
 									AppAPIs.unregisterProcessor(processID, this.name, "Excel");
 									if (onError !== undefined) {
-										await this.appFormsSvc.hideLoadingAsync();
-										onError(message.Data.Error);
+										this.appFormsSvc.hideLoadingAsync().then(() => onError(message.Data.Error));
 									}
 									else {
-										await this.appFormsSvc.showErrorAsync(message.Data.Error);
+										this.appFormsSvc.showErrorAsync(message.Data.Error);
 									}
 									break;
 								default:
@@ -2861,16 +2858,15 @@ export class PortalsCoreService extends BaseService {
 					);
 				}
 				else {
-					await this.appFormsSvc.hideLoadingAsync();
+					this.appFormsSvc.hideLoadingAsync();
 				}
 			},
-			async error => {
+			error => {
 				if (onError !== undefined) {
-					await this.appFormsSvc.hideLoadingAsync();
-					onError(error);
+					this.appFormsSvc.hideLoadingAsync().then(() => onError(error));
 				}
 				else {
-					await this.appFormsSvc.showErrorAsync(error);
+					this.appFormsSvc.showErrorAsync(error);
 				}
 			}
 		);
@@ -2903,7 +2899,7 @@ export class PortalsCoreService extends BaseService {
 						const info = uploadedData[0];
 						const nodeID = info["x-node"] as string;
 						const filename = info["x-filename"] as string;
-						await this.sendRequestAsync(
+						this.sendRequestAsync(
 							{
 								Path: this.getPath("excel", "import", "x-request=" + AppCrypto.jsonEncode({
 									SystemID: systemID,
@@ -2915,7 +2911,7 @@ export class PortalsCoreService extends BaseService {
 								})),
 								Header: this.configSvc.appConfig.getAuthenticatedInfo()
 							},
-							async data => {
+							data => {
 								const processID = data !== undefined ? data.ProcessID as string : undefined;
 								if (AppUtility.isNotEmpty(processID)) {
 									if (this.configSvc.isDebug) {
@@ -2924,7 +2920,7 @@ export class PortalsCoreService extends BaseService {
 									AppAPIs.registerAsObjectScopeProcessor(
 										this.name,
 										"Excel",
-										async message => {
+										message => {
 											switch (message.Data.Status || "") {
 												case "Done":
 													if (this.configSvc.isDebug) {
@@ -2935,17 +2931,16 @@ export class PortalsCoreService extends BaseService {
 														onProgress(message.Data.Percentage);
 													}
 													if (onCompleted !== undefined) {
-														await this.appFormsSvc.hideLoadingAsync();
-														onCompleted(message);
+														this.appFormsSvc.hideLoadingAsync().then(() => onCompleted(message));
 													}
 													else {
-														await this.appFormsSvc.showAlertAsync(
+														AppUtility.invoke(async () => this.appFormsSvc.showAlertAsync(
 															"Excel",
 															await this.configSvc.getResourceAsync("portals.common.excel.message.import"),
 															undefined,
 															undefined,
 															await this.configSvc.getResourceAsync("common.buttons.close")
-														);
+														));
 													}
 													break;
 												case "Error":
@@ -2954,11 +2949,10 @@ export class PortalsCoreService extends BaseService {
 													}
 													AppAPIs.unregisterProcessor(processID, this.name, "Excel");
 													if (onError !== undefined) {
-														await this.appFormsSvc.hideLoadingAsync();
-														onError(message.Data.Error);
+														this.appFormsSvc.hideLoadingAsync().then(() => onError(message.Data.Error));
 													}
 													else {
-														await this.appFormsSvc.showErrorAsync(message.Data.Error);
+														this.appFormsSvc.showErrorAsync(message.Data.Error);
 													}
 													break;
 												default:
@@ -2975,16 +2969,15 @@ export class PortalsCoreService extends BaseService {
 									);
 								}
 								else {
-									await this.appFormsSvc.hideLoadingAsync();
+									this.appFormsSvc.hideLoadingAsync();
 								}
 							},
-							async error => {
+							error => {
 								if (onError !== undefined) {
-									await this.appFormsSvc.hideLoadingAsync();
-									onError(error);
+									this.appFormsSvc.hideLoadingAsync().then(() => onError(error));
 								}
 								else {
-									await this.appFormsSvc.showErrorAsync(error);
+									this.appFormsSvc.showErrorAsync(error);
 								}
 							}
 						);
@@ -3034,33 +3027,32 @@ export class PortalsCoreService extends BaseService {
 
 		const contenType = ContentType.get(entityInfo);
 		if (contenType !== undefined) {
-			await TrackingUtility.trackAsync({ title: title, category: `${this.name}:${contenType.contentTypeDefinition.ObjectName}`, action: "Approve" });
+			await TrackingUtility.trackAsync({ title: title, category: contenType.contentTypeDefinition.ObjectName, action: "Approve" });
 		}
 
 		await this.appFormsSvc.showAlertAsync(
 			title,
 			undefined,
 			await this.configSvc.getResourceAsync("portals.common.approval.label", { status: await this.configSvc.getResourceAsync(`status.approval.${currentStatus}`) }),
-			async status => {
-				await this.appFormsSvc.showLoadingAsync(title);
-				await this.readAsync(
+			status => {
+				this.appFormsSvc.showLoadingAsync(title).then(() => this.readAsync(
 					this.getPath("approve", id),
 					async _ => {
 						if (contenType !== undefined) {
-							await TrackingUtility.trackAsync({ title: title, category: `${this.name}:${contenType.contentTypeDefinition.ObjectName}`, action: "Approve" });
+							await TrackingUtility.trackAsync({ title: title, category: contenType.contentTypeDefinition.ObjectName, action: "Approve" });
 						}
 						await this.appFormsSvc.showAlertAsync(title, await this.configSvc.getResourceAsync("portals.common.approval.message", { status: await this.configSvc.getResourceAsync(`status.approval.${status}`) }));
 					},
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
-						contenType !== undefined ? TrackingUtility.trackAsync({ title: title, category: `${this.name}:${contenType.contentTypeDefinition.ObjectName}`, action: "Approve" }) : AppUtility.promise
+						contenType !== undefined ? TrackingUtility.trackAsync({ title: title, category: contenType.contentTypeDefinition.ObjectName, action: "Approve" }) : AppUtility.promise
 					]),
 					{
 						"x-entity": entityInfo,
 						"x-status": status
 					},
 					useXHR
-				);
+				));
 			},
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel"),
@@ -3080,31 +3072,30 @@ export class PortalsCoreService extends BaseService {
 			move,
 			resources.firstConfirm,
 			resources.explanation,
-			async firstData => validate(firstData)
-				? await this.appFormsSvc.showAlertAsync(
+			firstData => validate(firstData)
+				? this.appFormsSvc.showAlertAsync(
 					move,
 					resources.lastConfirm,
 					resources.explanation,
-					async lastData => {
+					lastData => {
 						if (validate(lastData, firstData)) {
-							await this.appFormsSvc.showLoadingAsync(move);
-							await this.readAsync(
+							this.appFormsSvc.showLoadingAsync(move).then(() => this.readAsync(
 								this.getPath("move", objectName, "object-id=" + objectID),
 								async () => await this.appFormsSvc.showAlertAsync(move, resources.done),
 								async error => await this.appFormsSvc.showErrorAsync(error),
 								getHeaders(lastData),
 								useXHR
-							);
+							));
 						}
 						else {
-							await this.appFormsSvc.showAlertAsync(move, resources.invalidData);
+							this.appFormsSvc.showAlertAsync(move, resources.invalidData);
 						}
 					},
 					move,
 					cancel,
 					inputs
 				)
-			: await this.appFormsSvc.showAlertAsync(move, resources.noData),
+			: this.appFormsSvc.showAlertAsync(move, resources.noData),
 			move,
 			cancel,
 			inputs

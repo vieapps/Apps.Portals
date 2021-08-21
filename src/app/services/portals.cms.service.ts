@@ -52,8 +52,7 @@ export class PortalsCmsService extends BaseService {
 
 	private initialize() {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => {
-			const systemID = message.Data !== undefined ? message.Data.SystemID : undefined;
-			if (systemID !== undefined && this.portalsCoreSvc.activeOrganizations.indexOf(systemID) > -1) {
+			if (message.Data !== undefined && message.Data.SystemID !== undefined && this.portalsCoreSvc.activeOrganizations.indexOf(message.Data.SystemID) > -1) {
 				switch (message.Type.Object) {
 					case "Category":
 					case "CMS.Category":
@@ -146,8 +145,8 @@ export class PortalsCmsService extends BaseService {
 					this._sidebarCategory = undefined;
 					this._sidebarContentType = undefined;
 					this.portalsCoreSvc.removeActiveOrganizationAsync(Organization.active.ID).then(() => {
-						this.prepareFeaturedContentsAsync();
 						this.updateSidebarAsync();
+						this.prepareFeaturedContentsAsync();
 					});
 				}
 			}
@@ -491,7 +490,7 @@ export class PortalsCmsService extends BaseService {
 				};
 			}
 			else {
-				AppUtility.invoke(async () => await this.updateSidebarWithCategoriesAsync(Category.get(parentID), menuItem.ID));
+				this.updateSidebarWithCategoriesAsync(Category.get(parentID), menuItem.ID);
 			}
 		};
 
@@ -514,7 +513,7 @@ export class PortalsCmsService extends BaseService {
 						if (menuItem.Children !== undefined && menuItem.Children.length > 0) {
 							expand(menuItem, data.childIndex === undefined ? undefined : sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].ID, menuItem.Expanded);
 						}
-						AppUtility.invoke(async () => await this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params));
+						this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params);
 					}
 				}
 			};
@@ -532,7 +531,7 @@ export class PortalsCmsService extends BaseService {
 				Link: parent === undefined ? undefined : this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", parent.ansiTitle),
 				Params: parent === undefined ? undefined : this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: parent.ID }),
 				Expanded: parent !== undefined,
-				OnClick: menuItem => AppUtility.invoke(async () => await this.updateSidebarWithCategoriesAsync(this._sidebarCategory !== undefined ? this._sidebarCategory.Parent : undefined, this._sidebarCategory !== undefined ? this._sidebarCategory.ID : menuItem.ID)),
+				OnClick: menuItem => this.updateSidebarWithCategoriesAsync(this._sidebarCategory !== undefined ? this._sidebarCategory.Parent : undefined, this._sidebarCategory !== undefined ? this._sidebarCategory.ID : menuItem.ID),
 			} as AppSidebarMenuItem,
 			Items: categories.map(category => getItem(category, item => item.Children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : []))
 		};
@@ -557,7 +556,7 @@ export class PortalsCmsService extends BaseService {
 		);
 		const onSuccess = (data?: any) => {
 			if (index < contentTypes.length - 1) {
-				this.getFeaturedContentsAsync(contentTypes, index + 1);
+				AppUtility.invoke(() => this.getFeaturedContentsAsync(contentTypes, index + 1));
 			}
 			if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
 				const systemID = data.Objects.first().SystemID;
@@ -596,7 +595,7 @@ export class PortalsCmsService extends BaseService {
 			if (activeOrganization !== undefined) {
 				const activeContentTypes = new Array<ContentType>();
 				activeOrganization.modules.forEach(module => activeContentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module)));
-				AppUtility.invoke(activeContentTypes.length > 0 ? async () => await this.getFeaturedContentsAsync(activeContentTypes, 0) : undefined);
+				AppUtility.invoke(activeContentTypes.length > 0 ? () => this.getFeaturedContentsAsync(activeContentTypes, 0) : undefined);
 			}
 			if (allActiveOrganizations) {
 				const availableOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync();
@@ -605,7 +604,7 @@ export class PortalsCmsService extends BaseService {
 				}
 				const availableContentTypes = new Array<ContentType>();
 				availableOrganizations.forEach(organization => organization.modules.forEach(module => availableContentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module))));
-				AppUtility.invoke(availableContentTypes.length > 0 ? async () => await this.getFeaturedContentsAsync(availableContentTypes, 0) : undefined, 3456);
+				AppUtility.invoke(availableContentTypes.length > 0 ? () => this.getFeaturedContentsAsync(availableContentTypes, 0) : undefined, 6789);
 			}
 		}
 	}
