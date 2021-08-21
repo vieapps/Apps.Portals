@@ -46,20 +46,16 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		return `Powered by ${this.configSvc.appConfig.app.frameworks} and love from ${this.configSvc.appConfig.app.copyright.replace("©", "").trim()}`;
 	}
 
+	get downloadable() {
+		return this.configSvc.appConfig.app.shell !== "Electron" && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === "Portals") > -1;
+	}
+
 	get downloadURLs() {
 		return this.configSvc.appConfig.downloadURLs;
 	}
 
 	get languages() {
 		return this.configSvc.languages;
-	}
-
-	get appShell() {
-		return this.configSvc.appConfig.app.shell;
-	}
-
-	get totalServices() {
-		return this.configSvc.appConfig.services.all.length;
 	}
 
 	labels = {
