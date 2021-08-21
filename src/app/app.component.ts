@@ -8,6 +8,7 @@ import { AppAPIs } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
+import { AppStorage } from "@app/components/app.storage";
 import { AppFormsService } from "@app/components/forms.service";
 import { AppSidebar, AppSidebarMenuItem, AppSidebarFooterItem } from "@app/components/app.objects";
 import { PlatformUtility } from "@app/components/app.utility.platform";
@@ -104,18 +105,19 @@ export class AppComponent implements OnInit {
 		});
 
 		this.platform.ready().then(async () => {
-			await this.configSvc.loadSessionAsync(async () => await Promise.all([
-				this.configSvc.loadURIsAsync(),
-				this.configSvc.loadOptionsAsync()
-			]));
-
-			this.configSvc.prepare();
+			await this.configSvc.loadURIsAsync();
+			await this.configSvc.loadOptionsAsync();
 			await this.configSvc.prepareLanguagesAsync();
 
+			const appConfig = this.configSvc.appConfig;
+			const session = await AppStorage.getAsync("Session") || {};
+			if (AppUtility.isNotEmpty(session.device) ) {
+				appConfig.session.device = session.device;
+			}
+			this.configSvc.prepare();
 			this.prepareSidebar();
 			this.prepareEventProcessors();
 
-			const appConfig = this.configSvc.appConfig;
 			if (appConfig.isWebApp) {
 				const host = AppUtility.parseURI().Host;
 				appConfig.services.all.map((svc, index) => ({ hosts: svc.availableHosts || [], index: index })).forEach(info => {
@@ -143,14 +145,14 @@ export class AppComponent implements OnInit {
 			}
 
 			const isActivate = this.configSvc.isWebApp && AppUtility.isEquals("activate", this.configSvc.queryParams["prego"]);
-			await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "loading"}`));
-
-			if (isActivate) {
-				await this.activateAsync();
-			}
-			else {
-				await this.initializeAsync();
-			}
+			this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "loading"}`)).then(() => {
+				if (isActivate) {
+					this.activate();
+				}
+				else {
+					this.initialize();
+				}
+			});
 		});
 	}
 
@@ -471,21 +473,21 @@ export class AppComponent implements OnInit {
 		});
 	}
 
-	private async activateAsync() {
+	private activate() {
 		const mode = this.configSvc.queryParams["mode"];
 		const code = this.configSvc.queryParams["code"];
 		if (AppUtility.isNotEmpty(mode) && AppUtility.isNotEmpty(code)) {
-			await this.usersSvc.activateAsync(
+			this.usersSvc.activateAsync(
 				mode,
 				code,
-				async () => await this.initializeAsync(async () => await Promise.all([
+				() => this.initialize(async () => await Promise.all([
 					TrackingUtility.trackScreenAsync(await this.configSvc.getResourceAsync("common.loading.activate"), `users/activate/${mode}`),
 					this.showActivationResultAsync({
 						Status: "OK",
 						Mode: mode
 					})
 				]), true),
-				async error => await this.initializeAsync(async () => await this.showActivationResultAsync({
+				error => this.initialize(() => this.showActivationResultAsync({
 					Status: "Error",
 					Mode: mode,
 					Error: error
@@ -493,7 +495,7 @@ export class AppComponent implements OnInit {
 			);
 		}
 		else {
-			await this.initializeAsync(async () => await this.showActivationResultAsync({
+			this.initialize(async () => await this.showActivationResultAsync({
 				Status: "Error",
 				Mode: mode,
 				Error: {
@@ -510,46 +512,47 @@ export class AppComponent implements OnInit {
 			"OK" === data.Status
 				? await this.configSvc.getResourceAsync(`users.activate.messages.success.${("account" === data.Mode ? "account" : "password")}`)
 				: await this.configSvc.getResourceAsync("users.activate.messages.error.general", { error: (data.Error ? ` (${data.Error.Message})` : "") }),
-			_ => {
-				this.configSvc.appConfig.URLs.stack.update({ url: this.configSvc.appConfig.URLs.home, params: {} }, this.configSvc.appConfig.URLs.stack.length - 1);
+			() => {
+				this.configSvc.appConfig.URLs.stack = [];
+				this.configSvc.navigateHomeAsync();
 				AppEvents.broadcast("Navigate", { Direction: "Home" });
 			}
 		);
 	}
 
-	private initializeAsync(onNext?: () => void, noInitializeSession?: boolean) {
-		return this.configSvc.initializeAsync(
-			async _ => {
+	private initialize(onNext?: () => void, noInitializeSession?: boolean) {
+		this.configSvc.initializeAsync(
+			() => {
 				if (this.configSvc.isReady && this.configSvc.isAuthenticated) {
 					console.log("<AppComponent>: The session is initialized & registered (user)", this.configSvc.isDebug ? this.configSvc.isNativeApp ? AppUtility.stringify(this.configSvc.appConfig.session) : this.configSvc.appConfig.session : "");
 					this.finalize(onNext);
 				}
 				else {
 					console.log("<AppComponent>: Register the initialized session (anonymous)", this.configSvc.isDebug ? this.configSvc.isNativeApp ? AppUtility.stringify(this.configSvc.appConfig.session) : this.configSvc.appConfig.session : "");
-					await this.configSvc.registerSessionAsync(
+					this.configSvc.registerSessionAsync(
 						() => {
 							console.log("<AppComponent>: The session is registered (anonymous)", this.configSvc.isDebug ? this.configSvc.isNativeApp ? AppUtility.stringify(this.configSvc.appConfig.session) : this.configSvc.appConfig.session : "");
 							this.finalize(onNext);
 						},
-						async error => {
+						error => {
 							if (AppUtility.isGotSecurityException(error)) {
 								console.warn("<AppComponent>: Cannot register, the session is need to be re-initialized (anonymous)");
-								await this.configSvc.resetSessionAsync(() => AppUtility.invoke(async () => await this.initializeAsync(onNext, noInitializeSession), 234));
+								this.configSvc.resetSessionAsync(() => AppUtility.invoke(() => this.initialize(onNext, noInitializeSession), 234));
 							}
 							else {
-								await this.appFormsSvc.hideLoadingAsync(() => console.error(`<AppComponent>: Cannot initialize the app => ${AppUtility.getErrorMessage(error)}`, error));
+								this.appFormsSvc.hideLoadingAsync(() => console.error(`<AppComponent>: Cannot initialize the app => ${AppUtility.getErrorMessage(error)}`, error));
 							}
 						}
 					);
 				}
 			},
-			async error => {
+			error => {
 				if (AppUtility.isGotSecurityException(error)) {
 					console.warn("<AppComponent>: Cannot initialize, the session is need to be re-initialized (anonymous)");
-					await this.configSvc.resetSessionAsync(() => AppUtility.invoke(async () => await this.initializeAsync(onNext, noInitializeSession), 234));
+					this.configSvc.resetSessionAsync(() => AppUtility.invoke(() => this.initialize(onNext, noInitializeSession), 234));
 				}
 				else {
-					await this.appFormsSvc.hideLoadingAsync(() => console.error(`<AppComponent>: Cannot initialize the app => ${AppUtility.getErrorMessage(error)}`, error));
+					this.appFormsSvc.hideLoadingAsync(() => console.error(`<AppComponent>: Cannot initialize the app => ${AppUtility.getErrorMessage(error)}`, error));
 				}
 			},
 			noInitializeSession

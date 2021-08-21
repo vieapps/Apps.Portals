@@ -562,7 +562,7 @@ export class AppFormsService {
 	public async showActionSheetAsync(buttons: Array<{ text: string; role?: string; icon?: string; handler?: () => void }>, backdropDismiss: boolean = true, dontAddCancelButton: boolean = false) {
 		await this.hideLoadingAsync();
 		if (AppUtility.isFalse(dontAddCancelButton)) {
-			buttons.push(this.getActionSheetButton(await this.getResourceAsync("common.buttons.cancel"), "close", async () => await this.hideActionSheetAsync(), "cancel"));
+			buttons.push(this.getActionSheetButton(await this.getResourceAsync("common.buttons.cancel"), "close", () => this.hideActionSheetAsync(), "cancel"));
 		}
 		if (AppConfig.isRunningOnIOS) {
 			buttons.forEach(button => button.icon = undefined);
@@ -587,18 +587,18 @@ export class AppFormsService {
 
 	/** Shows the alert/confirmation box  */
 	public async showAlertAsync(header: string = null, message: string = null, subMessage?: string, postProcess?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string, inputs?: Array<any>, backdropDismiss: boolean = false) {
-		await this.hideLoadingAsync(async () => await this.hideAlertAsync());
-		const buttons = AppUtility.isNotEmpty(cancelButtonText)
-			? [{ text: cancelButtonText, role: "cancel", handler: async () => await this.hideAlertAsync() }]
+		await this.hideLoadingAsync(() => this.hideAlertAsync());
+		const buttons: Array<{ text: string; role: string; handler: (data?: any) => void; }> = AppUtility.isNotEmpty(cancelButtonText)
+			? [{ text: cancelButtonText, role: "cancel", handler: () => this.hideAlertAsync() }]
 			: [];
 		buttons.push({
 			text: okButtonText || await this.getResourceAsync("common.buttons.ok"),
 			role: undefined as string,
-			handler: async (data?: any) => {
+			handler: (data?: any) => {
 				if (postProcess !== undefined) {
 					postProcess(data);
 				}
-				await this.hideAlertAsync();
+				this.hideAlertAsync();
 			}
 		});
 		this._alert = await this.alertController.create({
