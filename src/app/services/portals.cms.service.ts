@@ -43,17 +43,11 @@ export class PortalsCmsService extends BaseService {
 	private _sidebarCategory: Category;
 	private _sidebarContentType: ContentType;
 	private _noContents = new HashSet<string>();
+	private _featuredContents = new Dictionary<string, Array<CmsBaseModel>>();
 
 	public get featuredContents() {
 		const organization = this.portalsCoreSvc.activeOrganization;
-		const cmsItems = organization !== undefined ? Item.instances.toArray(item => item.SystemID === organization.ID) : [];
-		const cmsContents = organization !== undefined ? Content.instances.toArray(item => item.SystemID === organization.ID) : [];
-		return new Dictionary<string, CmsBaseModel>()
-			.merge(cmsItems.sortBy({ name: "LastModified", reverse: true }).take(20), content => content.ID)
-			.merge(cmsItems.sortBy({ name: "Created", reverse: true }).take(20), content => content.ID)
-			.merge(cmsContents.sortBy({ name: "LastModified", reverse: true }).take(20), content => content.ID)
-			.merge(cmsContents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }).take(20), content => content.ID)
-			.toArray();
+		return organization !== undefined ? this._featuredContents.get(organization.ID) || [] : [];
 	}
 
 	private initialize() {
@@ -564,6 +558,7 @@ export class PortalsCmsService extends BaseService {
 		const onSuccess = (data?: any) => {
 			if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
 				this._noContents.remove(data.Objects.first().SystemID);
+				this.prepareFeaturedContents();
 				AppEvents.broadcast(this.name, { Type: "FeaturedContents", Mode: "Prepared" });
 			}
 			if (index < contentTypes.length - 1) {
@@ -578,6 +573,20 @@ export class PortalsCmsService extends BaseService {
 		return isCmsItem
 			? this.searchItemAsync(request, onSuccess, onError)
 			: this.searchContentAsync(request, onSuccess, onError);
+	}
+
+	private prepareFeaturedContents() {
+		const organization = this.portalsCoreSvc.activeOrganization;
+		if (organization !== undefined) {
+			const cmsItems = Item.instances.toArray(item => item.SystemID === organization.ID);
+			const cmsContents = Content.instances.toArray(item => item.SystemID === organization.ID);
+			this._featuredContents.set(organization.ID, new Dictionary<string, CmsBaseModel>()
+				.merge(cmsItems.sortBy({ name: "LastModified", reverse: true }).take(20), content => content.ID)
+				.merge(cmsItems.sortBy({ name: "Created", reverse: true }).take(20), content => content.ID)
+				.merge(cmsContents.sortBy({ name: "LastModified", reverse: true }).take(20), content => content.ID)
+				.merge(cmsContents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }).take(20), content => content.ID)
+				.toArray());
+		}
 	}
 
 	private async prepareFeaturedContentsAsync(allActiveOrganizations: boolean = true) {
@@ -1017,7 +1026,7 @@ export class PortalsCmsService extends BaseService {
 				(message.Data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: categoryID }));
 			}
 			if (this.configSvc.isAuthenticated) {
-				this.prepareFeaturedContentsAsync();
+				this.prepareFeaturedContents();
 			}
 		}
 	}
@@ -1176,7 +1185,7 @@ export class PortalsCmsService extends BaseService {
 		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
 			AppEvents.broadcast(this.name, { Object: "CMS.Item", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
 			if (this.configSvc.isAuthenticated) {
-				this.prepareFeaturedContentsAsync();
+				this.prepareFeaturedContents();
 			}
 		}
 	}
