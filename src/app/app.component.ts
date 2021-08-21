@@ -382,11 +382,11 @@ export class AppComponent implements OnInit {
 
 	private getSidebarMainMenuItem(args: any): AppSidebarMenuItem {
 		const gotChildren = AppUtility.isArray(args.Children, true) && AppUtility.isGotData(args.Children);
-		const isExpanded = gotChildren && !!args.Expanded;
-		const isDetail = !gotChildren && !!args.Detail;
+		const expanded = gotChildren && !!args.Expanded;
+		const detail = !gotChildren && !!args.Detail;
 		const icon = args.Icon || {};
-		if (icon.Name === undefined && (gotChildren || isDetail)) {
-			icon.Name = isDetail ? "chevron-forward" : isExpanded ? "chevron-down" : "chevron-forward",
+		if (icon.Name === undefined && (gotChildren || detail)) {
+			icon.Name = detail ? "chevron-forward" : expanded ? "chevron-down" : "chevron-forward",
 			icon.Slot = "end";
 		}
 		return {
@@ -396,13 +396,13 @@ export class AppComponent implements OnInit {
 			Params: args.Params,
 			Direction: args.Direction,
 			Children: gotChildren ? (args.Children as Array<any>).map(item => this.getSidebarMainMenuItem(item)) : [],
-			Expanded: isExpanded,
-			Detail: isDetail,
+			Expanded: expanded,
+			Detail: detail,
 			Thumbnail: args.Thumbnail,
 			Icon: icon,
 			OnClick: typeof args.OnClick === "function"
 				? args.OnClick
-				:	(data, sidebar) => {
+				: (data, sidebar) => {
 						const menuItem = data.childIndex !== undefined ? sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex] : sidebar.MainMenu[data.menuIndex].Items[data.itemIndex];
 						this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params);
 					}
@@ -507,19 +507,18 @@ export class AppComponent implements OnInit {
 		this.configSvc.initializeAsync(
 			() => {
 				if (this.configSvc.isReady && this.configSvc.isAuthenticated) {
-					console.log("<AppComponent>: The session is initialized & registered (user)", this.configSvc.isDebug ? this.configSvc.isNativeApp ? AppUtility.stringify(this.configSvc.appConfig.session) : this.configSvc.appConfig.session : "");
+					console.log("<AppComponent>: The session is initialized & registered (user)", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 					this.finalize(onNext);
 				}
 				else {
-					console.log("<AppComponent>: Register the initialized session (anonymous)", this.configSvc.isDebug ? this.configSvc.isNativeApp ? AppUtility.stringify(this.configSvc.appConfig.session) : this.configSvc.appConfig.session : "");
+					console.log("<AppComponent>: Register the initialized session (anonymous)", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 					this.configSvc.registerSessionAsync(
 						() => {
-							console.log("<AppComponent>: The session is registered (anonymous)", this.configSvc.isDebug ? this.configSvc.isNativeApp ? AppUtility.stringify(this.configSvc.appConfig.session) : this.configSvc.appConfig.session : "");
+							console.log("<AppComponent>: The session is registered (anonymous)", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 							this.finalize(onNext);
 						},
 						error => {
-							error = AppUtility.parseError(error);
-							if (AppUtility.isGotSecurityException(error) && "UnauthorizedException" !== error.Type && "AccessDeniedException" !== error.Type) {
+							if (AppUtility.isGotSecurityException(error)) {
 								console.warn("<AppComponent>: Cannot register, the session is need to be re-initialized (anonymous)");
 								this.configSvc.resetSessionAsync(() => AppUtility.invoke(() => this.initialize(onNext, noInitializeSession), 234));
 							}
@@ -531,8 +530,7 @@ export class AppComponent implements OnInit {
 				}
 			},
 			error => {
-				error = AppUtility.parseError(error);
-				if (AppUtility.isGotSecurityException(error) && "UnauthorizedException" !== error.Type && "AccessDeniedException" !== error.Type) {
+				if (AppUtility.isGotSecurityException(error)) {
 					console.warn("<AppComponent>: Cannot initialize, the session is need to be re-initialized (anonymous)");
 					this.configSvc.resetSessionAsync(() => AppUtility.invoke(() => this.initialize(onNext, noInitializeSession), 234));
 				}
@@ -557,11 +555,9 @@ export class AppComponent implements OnInit {
 				await this.portalsCoreSvc.initializeAsync();
 				await this.portalsCmsSvc.initializeAsync();
 			}
-
 			if (appConfig.services.all.findIndex(svc => svc.name === this.booksSvc.name) > -1) {
 				await this.booksSvc.initializeAsync();
 			}
-
 			await this.appFormsSvc.hideLoadingAsync(() => {
 				const data = {
 					URIs: appConfig.URIs,
