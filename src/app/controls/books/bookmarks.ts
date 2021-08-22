@@ -60,26 +60,25 @@ export class BookmarksControl implements OnInit, OnDestroy {
 		Promise.all([this.initializeAsync()]).then(() => this.init.emit(this));
 
 		AppEvents.on("App", info => {
-			if ("LanguageChanged" === info.args.Type) {
+			if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
 				this.prepareLabelsAsync();
 			}
-		}, "LanguageChangedEventHandlerOfBookmarksControl");
+		}, "BookmarkEvents");
 
-		AppEvents.on("Books", info => {
-			if ("BookmarksUpdated" === info.args.Type) {
+		AppEvents.on(this.booksSvc.name, info => {
+			if ("Bookmarks" === info.args.Type && "Updated" === info.args.Mode) {
 				this.prepareBookmarks();
 				this.emitChanges();
 			}
-		}, "BookmarksUpdatedEventHandlerOfBookmarksControl");
+		}, "BookmarkEvents");
 	}
 
 	ngOnDestroy() {
 		this.list.closeSlidingItems();
 		this.init.unsubscribe();
 		this.change.unsubscribe();
-		AppEvents.off("App", "LanguageChangedEventHandlerOfBookmarksControl");
-		AppEvents.off("Session", "SessionEventHandlerOfBookmarksControl");
-		AppEvents.off("Books", "BookmarksUpdatedEventHandlerOfBookmarksControl");
+		AppEvents.off("App", "BookmarkEvents");
+		AppEvents.off(this.booksSvc.name, "BookmarkEvents");
 	}
 
 	private async initializeAsync() {

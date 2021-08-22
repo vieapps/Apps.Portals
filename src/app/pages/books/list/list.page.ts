@@ -160,7 +160,7 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 					this.prepareActionsAsync();
 				}
 			}, `AccountEventHandlers${this.eventIdentity}`);
-			AppEvents.on("Books", info => {
+			AppEvents.on(this.booksSvc.name, info => {
 				const category = this.category;
 				const author = this.author;
 				const reprepareResults = "Deleted" === info.args.Type
@@ -183,7 +183,7 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 		this.cancelSearch(true);
 		if (!this.searching) {
 			AppEvents.off("Session", `AccountEventHandlers${this.eventIdentity}`);
-			AppEvents.off("Books", `BookEventHandlers${this.eventIdentity}`);
+			AppEvents.off(this.booksSvc.name, `BookEventHandlers${this.eventIdentity}`);
 		}
 	}
 

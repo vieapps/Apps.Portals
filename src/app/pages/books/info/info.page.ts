@@ -78,11 +78,11 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.initialize();
 		AppEvents.on("App", info => {
-			if ("LanguageChanged" === info.args.Type) {
+			if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
 				this.prepareLabelsAsync();
 			}
 		}, "LanguageChangedEventHandlerOfViewBookInfoPage");
-		AppEvents.on("Books", info => {
+		AppEvents.on(this.booksSvc.name, info => {
 			if (this.book.ID === info.args.ID && "StatisticsUpdated" === info.args.Type) {
 				this.getStatistics();
 			}
@@ -91,7 +91,7 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 
 	ngOnDestroy() {
 		AppEvents.off("App", "LanguageChangedEventHandlerOfViewBookInfoPage");
-		AppEvents.off("Books", "EventHandlerOfViewBookInfoPage");
+		AppEvents.off(this.booksSvc.name, "EventHandlerOfViewBookInfoPage");
 	}
 
 	getStatistics() {

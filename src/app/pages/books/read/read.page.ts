@@ -73,40 +73,40 @@ export class BooksReadPage implements OnInit, OnDestroy {
 		this.initialize();
 
 		AppEvents.on("App", info => {
-			if ("OptionsUpdated" === info.args.Type) {
+			if ("Options" === info.args.Type && "Changed" === info.args.Mode) {
 				this.getReadingOptions();
 			}
-			else if ("LanguageChanged" === info.args.Type) {
+			else if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
 				Promise.all([
 					this.prepareLabelsAsync(),
 					this.prepareActionsAsync()
 				]);
 			}
-		}, "AppEventHandlersOfReadBookPage");
+		}, "ReadBookEvents");
 
 		AppEvents.on("Session", info => {
 			if ("Updated" === info.args.Type) {
 				this.prepareActionsAsync();
 			}
-		}, "AppEventHandlersOfReadBookPage");
+		}, "ReadBookEvents");
 
-		AppEvents.on("Books", info => {
-			if ("OpenChapter" === info.args.Type && this.chapter !== info.args.Chapter) {
+		AppEvents.on(this.booksSvc.name, info => {
+			if ("Book" === info.args.Type && "Delete" === info.args.Mode && this.book.ID === info.args.ID) {
+				this.onClose();
+				this.configSvc.navigateBackAsync();
+			}
+			else if ("Chapter" === info.args.Type && "Open" === info.args.Mode && this.chapter !== info.args.Chapter) {
 				this.scrollOffset = 0;
 				this.chapter = info.args.Chapter || 0;
 				this.goChapter();
 			}
-			else if ("Deleted" === info.args.Type && this.book.ID === info.args.ID) {
-				this.onClose();
-				this.configSvc.navigateBackAsync();
-			}
-		}, "BookEventHandlersOfReadBookPage");
+		}, "ReadBookEvents");
 	}
 
 	ngOnDestroy() {
-		AppEvents.off("App", "AppEventHandlersOfReadBookPage");
-		AppEvents.off("Session", "AppEventHandlersOfReadBookPage");
-		AppEvents.off("Books", "BookEventHandlersOfReadBookPage");
+		AppEvents.off("App", "ReadBookEvents");
+		AppEvents.off("Session", "ReadBookEvents");
+		AppEvents.off(this.booksSvc.name, "ReadBookEvents");
 	}
 
 	getReadingOptions() {
@@ -118,7 +118,7 @@ export class BooksReadPage implements OnInit, OnDestroy {
 
 	onClose() {
 		if (this.book !== undefined && this.book.TotalChapters > 1) {
-			AppEvents.broadcast("Books", { Type: "CloseBook", ID: this.book.ID });
+			AppEvents.broadcast(this.booksSvc.name, { Type: "Book", Mode: "Close", ID: this.book.ID });
 		}
 	}
 
@@ -164,7 +164,7 @@ export class BooksReadPage implements OnInit, OnDestroy {
 				this.scrollOffset = bookmark.Position;
 			}
 		}
-		AppEvents.broadcast("Books", { Type: "OpenBook", ID: this.book.ID, Chapter: this.chapter });
+		AppEvents.broadcast(this.booksSvc.name, { Type: "Book", Mode: "Open", ID: this.book.ID, Chapter: this.chapter });
 		if (this.chapter > 0) {
 			this.goChapter();
 		}
@@ -271,7 +271,7 @@ export class BooksReadPage implements OnInit, OnDestroy {
 
 	scroll(onNext?: () => void) {
 		if (this.book.TotalChapters > 1) {
-			AppEvents.broadcast("Books", { Type: "OpenBook", ID: this.book.ID, Chapter: this.chapter });
+			AppEvents.broadcast(this.booksSvc.name, { Type: "Book", Mode: "Open", ID: this.book.ID, Chapter: this.chapter });
 		}
 		if (this.contentCtrl !== undefined) {
 			if (this.scrollOffset > 0) {

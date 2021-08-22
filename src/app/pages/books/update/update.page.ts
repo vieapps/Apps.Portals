@@ -211,7 +211,7 @@ export class BooksUpdatePage implements OnInit {
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.update.messages.success"))
 						]);
 						if (this.update.category !== this.update.form.value.Category) {
-							AppEvents.broadcast("Books", { Type: "Moved", From: this.update.category, To: this.update.form.value.Category });
+							AppEvents.broadcast(this.booksSvc.name, { Type: "Moved", From: this.update.category, To: this.update.form.value.Category });
 						}
 						await this.configSvc.navigateBackAsync();
 					},

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input, Output, EventEmitter } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { AppUtility } from "@app/components/app.utility";
 import { AppEvents } from "@app/components/app.events";
@@ -12,7 +12,7 @@ import { Book } from "@app/models/book";
 	styleUrls: ["./featured.scss"]
 })
 
-export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
+export class BookFeaturedControl implements OnInit, OnDestroy {
 
 	constructor(
 		private configSvc: ConfigurationService,
@@ -21,15 +21,7 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
 
-	/** The flag to known the parent was changed */
-	@Input() changes: any;
-
-	/** The event handler to run when the controls was initialized */
-	@Output() init: EventEmitter<any> = new EventEmitter();
-
-	/** The event handler to run when the control was changed */
-	@Output() change = new EventEmitter<any>();
-
+	books: Array<Book>;
 	introduction = "";
 	labels = {
 		latest: "Latest",
@@ -37,7 +29,6 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 		authors: "Authors: ",
 		books: "Articles & Books: "
 	};
-	books: Array<Book>;
 
 	get color() {
 		return this.configSvc.color;
@@ -52,9 +43,20 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 	}
 
 	ngOnInit() {
-		this.initialize();
+		if (this.configSvc.isReady) {
+			this.initialize();
+			this.updateBooks();
+		}
+
 		AppEvents.on("App", info => {
-			if ("LanguageChanged" === info.args.Type) {
+			if ("Initialized" === info.args.Type) {
+				this.initialize();
+				this.updateBooks();
+			}
+			else if ("HomePage" === info.args.Type && "Open" === info.args.Mode && "Return" === info.args.Source) {
+				this.updateBooks();
+			}
+			else if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
 				this.prepareResourcesAsync();
 				if (this.booksSvc.instructions[this.configSvc.appConfig.language] === undefined) {
 					this.booksSvc.fetchInstructionsAsync(() => this.updateIntroduction());
@@ -63,26 +65,21 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 					this.updateIntroduction();
 				}
 			}
-		}, "BookFeaturedEventHandlers");
-		AppEvents.on("Books", info => {
-			if ("InstructionsUpdated" === info.args.Type) {
+		}, "FeaturedBooks");
+
+		AppEvents.on(this.booksSvc.name, info => {
+			if ("Instructions" === info.args.Type && "Updated" === info.args.Mode) {
 				this.updateIntroduction();
 			}
-			else if ("BooksUpdated" === info.args.Type) {
+			else if ("Books" === info.args.Type && "Updated" === info.args.Mode) {
 				this.updateBooks();
 			}
-		}, "BookFeaturedEventHandlers");
-	}
-
-	ngOnChanges(_: SimpleChanges) {
-		this.updateBooks();
+		}, "FeaturedBooks");
 	}
 
 	ngOnDestroy() {
-		this.init.unsubscribe();
-		this.change.unsubscribe();
-		AppEvents.off("App", "BookFeaturedEventHandlers");
-		AppEvents.off("Books", "BookFeaturedEventHandlers");
+		AppEvents.off("App", "FeaturedBooks");
+		AppEvents.off(this.booksSvc.name, "FeaturedBooks");
 	}
 
 	private initialize() {
@@ -93,7 +90,6 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 		else {
 			this.updateIntroduction();
 		}
-		this.init.emit(this);
 	}
 
 	private async prepareResourcesAsync() {
@@ -107,12 +103,10 @@ export class BookFeaturedControl implements OnInit, OnDestroy, OnChanges {
 
 	private updateIntroduction() {
 		this.introduction = (this.booksSvc.instructions[this.configSvc.appConfig.language] || {}).introduction;
-		this.change.emit(this);
 	}
 
 	private updateBooks() {
 		this.books = AppUtility.getTopScores(Book.instances.toArray().sortBy({ name: "LastUpdated", reverse: true }).take(60), 12, book => Book.get(book.ID));
-		this.change.emit(this);
 	}
 
 	trackBook(index: number, book: Book) {

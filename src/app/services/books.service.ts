@@ -77,16 +77,16 @@ export class BooksService extends BaseService {
 		});
 
 		AppEvents.on(this.name, info => {
-			if ("CategoriesUpdated" === info.args.Type) {
+			if ("Categories" === info.args.Type && "Updated" === info.args.Mode) {
 				this.updateSidebarAsync();
 			}
-			else if ("OpenBook" === info.args.Type || "OpenChapter" === info.args.Type) {
+			else if (("Book" === info.args.Type && "Open" === info.args.Mode) || ("Chapter" === info.args.Type && "Open" === info.args.Mode)) {
 				const book = Book.get(info.args.ID);
 				if (book !== undefined && book.TotalChapters > 1) {
 					this.updateTOCItem(book, info.args.Chapter || 1);
 				}
 			}
-			else if ("CloseBook" === info.args.Type && this._reading.ID !== undefined) {
+			else if ("Book" === info.args.Type && "Close" === info.args.Mode && this._reading.ID !== undefined) {
 				this.updateSidebarAsync();
 				this._reading.ID = undefined;
 				this._reading.Chapter = undefined;
@@ -100,7 +100,7 @@ export class BooksService extends BaseService {
 			await this.loadBookmarksAsync(() => AppUtility.invoke(() => this.fetchBookmarksAsync(), this.configSvc.appConfig.services.active === this.name ? 0 : 2345));
 		}
 		AppUtility.invoke(() => {
-			this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast("Books", { Type: "BooksUpdated" }));
+			this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast(this.name, { Type: "Books", Mode: "Updated" }));
 			this.loadCategoriesAsync(() => this.fetchCategoriesAsync());
 			this.loadInstructionsAsync(() => this.fetchInstructionsAsync());
 			this.loadStatisticsAsync();
@@ -166,7 +166,7 @@ export class BooksService extends BaseService {
 			Title: book.TOCs[index],
 			Detail: isReading,
 			Icon: isReading ? { Name: "chevron-forward", Color: "primary", Slot: "end" } : undefined,
-			OnClick: _ => AppEvents.broadcast("Books", { Type: "OpenChapter", ID: book.ID, Chapter: index + 1 })
+			OnClick: _ => AppEvents.broadcast(this.name, { Type: "Chapter", Mode: "Open", ID: book.ID, Chapter: index + 1 })
 		} as AppSidebarMenuItem;
 	}
 
@@ -317,7 +317,7 @@ export class BooksService extends BaseService {
 			: undefined;
 		if (book !== undefined && AppUtility.isArray(data.Counters, true)) {
 			(data.Counters as Array<any>).forEach(counter => book.Counters.set(counter.Type, CounterInfo.deserialize(counter)));
-			AppEvents.broadcast("Books", { Type: "StatisticsUpdated", ID: book.ID });
+			AppEvents.broadcast(this.name, { Type: "StatisticsUpdated", ID: book.ID });
 		}
 		if (onNext !== undefined) {
 			onNext(data);
@@ -344,7 +344,7 @@ export class BooksService extends BaseService {
 			: undefined;
 		if (book !== undefined && AppUtility.isObject(data.Files, true)) {
 			book.Files = data.Files;
-			AppEvents.broadcast("Books", { Type: "FilesUpdated", ID: book.ID });
+			AppEvents.broadcast(this.name, { Type: "FilesUpdated", ID: book.ID });
 		}
 	}
 
@@ -392,12 +392,12 @@ export class BooksService extends BaseService {
 				break;
 			case "Delete":
 				Book.instances.remove(message.Data.ID);
-				AppEvents.broadcast("Books", { Type: "Deleted", ID: message.Data.ID, Category: message.Data.Category, Author: message.Data.Author });
+				AppEvents.broadcast(this.name, { Type: "Book", Mode: "Deleted", ID: message.Data.ID, Category: message.Data.Category, Author: message.Data.Author });
 				break;
 			default:
 				if (AppUtility.isNotEmpty(message.Data.ID)) {
 					Book.update(message.Data);
-					AppEvents.broadcast("Books", { Type: "Updated", ID: message.Data.ID });
+					AppEvents.broadcast(this.name, { Type: "Book", Mode: "Updated", ID: message.Data.ID });
 				}
 				else if (this.configSvc.isDebug) {
 					console.warn(this.getMessage("Got an update"), message);
@@ -414,7 +414,7 @@ export class BooksService extends BaseService {
 		const introductions = this.instructions;
 		if (instructions !== undefined) {
 			introductions[this.configSvc.appConfig.language] = instructions;
-			AppEvents.broadcast("Books", { Type: "InstructionsUpdated" });
+			AppEvents.broadcast(this.name, { Type: "Instructions", Mode: "Updated" });
 		}
 		this.configSvc.appConfig.extras["Books-Instructions"] = introductions;
 	}
@@ -458,7 +458,7 @@ export class BooksService extends BaseService {
 	private async loadCategoriesAsync(onNext?: (categories?: Array<StatisticInfo>) => void) {
 		this.categories = (await AppStorage.getAsync("Books-Categories") as Array<any> || []).map(category => StatisticInfo.deserialize(category));
 		if (this.categories.length > 0) {
-			AppEvents.broadcast("Books", { Type: "CategoriesUpdated", Mode: "Storage" });
+			AppEvents.broadcast(this.name, { Type: "Categories", Mode: "Loaded", Source: "Storage" });
 		}
 		if (onNext !== undefined) {
 			onNext(this.categories);
@@ -469,7 +469,7 @@ export class BooksService extends BaseService {
 		return this.fetchAsync("statics/books.categories.json", async data => {
 			this.categories = (data as Array<any>).map(category => StatisticInfo.deserialize(category));
 			if (this.categories.length > 0) {
-				AppEvents.broadcast("Books", { Type: "CategoriesUpdated", Mode: "APIs" });
+				AppEvents.broadcast(this.name, { Type: "Categories", Mode: "Updated", Source: "APIs" });
 				await this.storeCategoriesAsync(onNext);
 			}
 			else if (onNext !== undefined) {
@@ -497,7 +497,7 @@ export class BooksService extends BaseService {
 		}));
 		this.configSvc.appConfig.extras["Books-Authors"] = authors;
 		if (this.authors.size > 0) {
-			AppEvents.broadcast("Books", { Type: "AuthorsUpdated", Data: authors });
+			AppEvents.broadcast(this.name, { Type: "Authors", Mode: "Loaded", Data: authors });
 		}
 		if (onNext !== undefined) {
 			onNext(this.authors);
@@ -507,7 +507,7 @@ export class BooksService extends BaseService {
 	private async storeAuthorsAsync(onNext?: (authors?: Dictionary<string, Array<StatisticBase>>) => void) {
 		const authors = this.authors;
 		await Promise.all(AppUtility.getChars().map(char => AppStorage.setAsync(`Books-Authors-${char}`, authors.get(char) || [])));
-		AppEvents.broadcast("Books", { Type: "AuthorsUpdated", Data: authors });
+		AppEvents.broadcast(this.name, { Type: "Authors", Mode: "Updated", Data: authors });
 		if (onNext !== undefined) {
 			onNext(this.authors);
 		}
@@ -578,6 +578,7 @@ export class BooksService extends BaseService {
 		(await AppStorage.getAsync("Books-Bookmarks") as Array<any> || []).forEach(data => {
 			const bookmark = Bookmark.deserialize(data);
 			bookmarks.set(bookmark.ID, bookmark);
+			AppEvents.broadcast(this.name, { Type: "Bookmarks", Mode: "Loaded" });
 		});
 		this.configSvc.appConfig.extras["Books-Bookmarks"] = bookmarks;
 		if (onNext !== undefined) {
@@ -587,7 +588,7 @@ export class BooksService extends BaseService {
 
 	private async storeBookmarksAsync(onNext?: () => void) {
 		await AppStorage.setAsync("Books-Bookmarks", this.bookmarks.toArray());
-		AppEvents.broadcast("Books", { Type: "BookmarksUpdated" });
+		AppEvents.broadcast(this.name, { Type: "Bookmarks", Mode: "Updated" });
 		if (onNext !== undefined) {
 			onNext();
 		}
