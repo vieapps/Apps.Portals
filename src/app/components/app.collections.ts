@@ -208,13 +208,7 @@ Array.prototype.sortBy = function<T>(this: T[], ...sorts: Array<string | { name:
 };
 
 Array.prototype.first = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
-	for (let index = 0; index < this.length; index++) {
-		const value = this[index];
-		if (predicate === undefined || predicate(value, index, this)) {
-			return value;
-		}
-	}
-	return undefined;
+	return predicate !== undefined ? this.find(predicate) : this.length > 0 ? this[0] : undefined;
 };
 
 Array.prototype.firstOrDefault = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
