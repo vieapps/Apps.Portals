@@ -2,7 +2,7 @@
 	<ion-row>
 		<ion-col size="12" class="title ion-padding-top">
 			<span *ngIf="isAuthenticated" class="ion-float-end">
-				<ion-icon (click)="createAsync($event)" name="add" color="medium" slot="icon-only"></ion-icon>
+				<ion-icon (click)="create($event)" name="add" color="medium" slot="icon-only"></ion-icon>
 			</span>
 			{{ label }}
 		</ion-col>
@@ -13,8 +13,8 @@
 				<ion-icon *ngIf="shortcut.Icon && shortcut.Icon.Name" [name]="shortcut.Icon.Name" [color]="shortcut.Icon.Color" slot="start"></ion-icon>
 				<ion-label>
 					<span *ngIf="isAuthenticated" class="ion-float-end">
-						<ion-icon *ngIf="shortcut.Editable" (click)="updateAsync(shortcut, idx, $event)" name="create" color="medium" slot="icon-only"></ion-icon>
-						<ion-icon *ngIf="shortcut.Removable" (click)="removeAsync(shortcut, idx, $event)" name="trash" color="medium" slot="icon-only"></ion-icon>
+						<ion-icon *ngIf="shortcut.Editable" (click)="update(shortcut, idx, $event)" name="create" color="medium" slot="icon-only"></ion-icon>
+						<ion-icon *ngIf="shortcut.Removable" (click)="remove(shortcut, idx, $event)" name="trash" color="medium" slot="icon-only"></ion-icon>
 					</span>
 					{{ shortcut.Title }}
 				</ion-label>

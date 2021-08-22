@@ -30,7 +30,7 @@ export abstract class PortalCmsBase extends BaseModel {
 	public get organization() {
 		const organization = AppUtility.isNotEmpty(this.SystemID) ? Organization.get(this.SystemID) : undefined;
 		if (organization === undefined && AppUtility.isNotEmpty(this.SystemID)) {
-			AppEvents.broadcast("Portals", { Object: "Organization", Type: "RequestInfo", ID: this.SystemID });
+			AppEvents.broadcast("Portals", { Type: "Info", Mode: "Request", Object: "Organization", ID: this.SystemID });
 		}
 		return organization;
 	}
@@ -38,7 +38,7 @@ export abstract class PortalCmsBase extends BaseModel {
 	public get module() {
 		const module = AppUtility.isNotEmpty(this.RepositoryID) ? Module.get(this.RepositoryID) : undefined;
 		if (module === undefined && AppUtility.isNotEmpty(this.RepositoryID)) {
-			AppEvents.broadcast("Portals", { Object: "Module", Type: "RequestInfo", ID: this.RepositoryID });
+			AppEvents.broadcast("Portals", { Type: "Info", Mode: "Request", Object: "Module", ID: this.RepositoryID });
 		}
 		return module;
 	}
@@ -46,7 +46,7 @@ export abstract class PortalCmsBase extends BaseModel {
 	public get contentType() {
 		const contentType = AppUtility.isNotEmpty(this.RepositoryEntityID) ? ContentType.get(this.RepositoryEntityID) : undefined;
 		if (contentType === undefined && AppUtility.isNotEmpty(this.RepositoryEntityID)) {
-			AppEvents.broadcast("Portals", { Object: "ContentType", Type: "RequestInfo", ID: this.RepositoryEntityID });
+			AppEvents.broadcast("Portals", { Type: "Info", Mode: "Request", Object: "ContentType", ID: this.RepositoryEntityID });
 		}
 		return contentType;
 	}

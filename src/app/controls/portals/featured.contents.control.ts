@@ -70,7 +70,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}
 
 		AppEvents.on(this.portalsCmsSvc.name, info => {
-			if ("Changed" === info.args.Type && "Organization" === info.args.Object) {
+			if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
 				AppUtility.invoke(() => this.prepareContents(true), 123);
 			}
 			else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode) {

@@ -138,7 +138,7 @@ export class PortalsCoreService extends BaseService {
 		});
 
 		AppEvents.on(this.name, info => {
-			if ("RequestInfo" === info.args.Type && AppUtility.isNotEmpty(info.args.ID)) {
+			if ("Info" === info.args.Type && "Request" === info.args.Mode && AppUtility.isNotEmpty(info.args.ID)) {
 				if ("Organization" === info.args.Object) {
 					this.getOrganizationAsync(info.args.ID);
 				}
@@ -149,7 +149,7 @@ export class PortalsCoreService extends BaseService {
 					this.getContentTypeAsync(info.args.ID);
 				}
 			}
-			else if ("Changed" === info.args.Type && "Organization" === info.args.Object) {
+			else if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
 				this.updateSidebarHeader();
 				this.prepareSidebar();
 			}
@@ -311,7 +311,7 @@ export class PortalsCoreService extends BaseService {
 			if (Organization.active === undefined || Organization.active.ID !== organization.ID) {
 				Organization.active = organization;
 				await this.getActiveModuleAsync();
-				AppEvents.broadcast(this.name, { Object: "Organization", Type: "Changed", ID: Organization.active.ID });
+				AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
 				await this.configSvc.storeOptionsAsync(async () => {
 					if (this.configSvc.isAuthenticated && Site.instances.first(site => site.SystemID === organization.ID) === undefined) {
 						await this.searchSiteAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }), undefined, undefined, true);
@@ -388,18 +388,13 @@ export class PortalsCoreService extends BaseService {
 			return Module.active;
 		}
 
-		const store = this.activeModules[module.SystemID] !== module.ID;
-		this.activeModules[module.SystemID] = module.ID;
-		await (store ? this.configSvc.storeOptionsAsync() : this.configSvc.saveOptionsAsync());
-
 		if (Module.active === undefined || Module.active.ID !== module.ID) {
+			this.activeModules[module.SystemID] = module.ID;
 			Module.active = module;
-			AppEvents.broadcast(this.name, { Object: "Module", Type: "Changed", ID: Module.active.ID });
+			AppUtility.invoke(() => AppEvents.broadcast(this.name, { Type: "Module", Mode: "Changed", ID: Module.active.ID }));
 		}
 
-		if (this.configSvc.isDebug) {
-			this.showLog("Active module", Module.active);
-		}
+		AppUtility.invoke(() => this.configSvc.saveOptionsAsync(), 567);
 		if (onNext !== undefined) {
 			onNext();
 		}
@@ -2432,7 +2427,11 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public getModule(id: string, getActiveModuleWhenNotFound: boolean = true) {
-		return Module.get(id) || (getActiveModuleWhenNotFound ? this.activeModule : undefined);
+		const module = Module.get(id) || (getActiveModuleWhenNotFound ? this.activeModule : undefined);
+		if (module === undefined && AppUtility.isNotEmpty(id)) {
+			this.getModuleAsync(id);
+		}
+		return module;
 	}
 
 	public async getModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {

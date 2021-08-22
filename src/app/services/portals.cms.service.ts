@@ -107,7 +107,7 @@ export class PortalsCmsService extends BaseService {
 					}
 				}
 			}
-			else if ("Changed" === info.args.Type && ("Organization" === info.args.Object || "Module" === info.args.Object)) {
+			else if ("Changed" === info.args.Mode && ("Organization" === info.args.Type || "Module" === info.args.Type)) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				this.updateSidebarAsync();
