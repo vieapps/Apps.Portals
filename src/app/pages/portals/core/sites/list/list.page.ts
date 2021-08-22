@@ -147,6 +147,23 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		this.searching = this.configSvc.currentURL.endsWith("/search");
 		this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: this.isSystemAdministrator ? "" : `[${this.organization.Title}]` });
 
+		if (!this.isSystemAdministrator && this.portalsCoreSvc.activeOrganizations.length <= 20) {
+			this.configSvc.appTitle = this.title.page = this.title.track;
+			const organizations = new Array<Organization>();
+			await Promise.all(this.portalsCoreSvc.activeOrganizations.map(async id => {
+				await this.portalsCoreSvc.getOrganizationAsync(id);
+				const organization = Organization.get(id);
+				if (organization !== undefined && this.portalsCoreSvc.canModerateOrganization(organization)) {
+					organizations.push(organization);
+					if (Site.instances.find(site => site.SystemID === organization.ID) === undefined) {
+						await this.portalsCoreSvc.searchSiteAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }), undefined, undefined, true, true);
+					}
+				}
+			}));
+			this.sites = organizations.toList().SelectMany(organization => Site.instances.toList(site => site.SystemID === organization.ID)).ToArray();
+			await this.appFormsSvc.hideLoadingAsync();
+		}
+
 		this.filterBy.And = this.isSystemAdministrator && this.configSvc.requestParams["SystemID"] === undefined
 			? []
 			: [{ SystemID: { Equals: this.organization.ID } }];
@@ -156,14 +173,14 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 			PlatformUtility.focus(this.searchCtrl);
 			await this.appFormsSvc.hideLoadingAsync();
 		}
-		else {
+		else if (this.isSystemAdministrator) {
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.search"), "search", () => this.openSearchAsync(false)),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.create"), "create", () => this.create()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.sites.title.search"), "search", () => this.openSearch(false)),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcel()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcel())
 			];
-			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+			this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
 			AppEvents.on("Portals", info => {
 				if (info.args.Object === "Site" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
 					this.prepareResults();
@@ -180,7 +197,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		return `${site.SubDomain}.${site.PrimaryDomain}` + (AppUtility.isNotEmpty(site.OtherDomains) ? `;${site.OtherDomains}` : "");
 	}
 
-	async onSearch(event: any) {
+	onSearch(event: any) {
 		if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 			this.subscription = undefined;
@@ -188,14 +205,11 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
 			if (this.searching) {
-				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.messages.searching"));
+				AppUtility.invoke(async () => this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.messages.searching")));
 				this.sites = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				await this.searchAsync(async () => {
-					this.infiniteScrollCtrl.disabled = false;
-					await this.appFormsSvc.hideLoadingAsync();
-				});
+				this.search(() => this.appFormsSvc.hideLoadingAsync().then(() => this.infiniteScrollCtrl.disabled = false));
 			}
 			else {
 				this.sites = this.objects.filter(Site.getFilterBy(this.filterBy.Query));
@@ -211,29 +225,22 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		this.sites = this.filtering ? this.objects.map(obj => obj) : [];
 	}
 
-	async onCancel() {
+	onCancel() {
 		if (this.searching) {
-			await this.configSvc.navigateBackAsync();
+			this.configSvc.navigateBackAsync();
 		}
 		else {
-			AppUtility.invoke(() => {
-				this.onClear();
-				this.filtering = false;
-			}, 123);
+			this.onClear();
+			this.filtering = false;
 		}
 	}
 
-	async onInfiniteScrollAsync() {
+	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => {
-				if (this.infiniteScrollCtrl !== undefined) {
-					await this.infiniteScrollCtrl.complete();
-				}
-			});
+			this.search(() => AppUtility.invoke(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : undefined));
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
-			await this.infiniteScrollCtrl.complete();
-			this.infiniteScrollCtrl.disabled = true;
+			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
 		}
 	}
 
@@ -241,32 +248,26 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		return this.portalsCoreSvc.getPaginationPrefix("site");
 	}
 
-	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
+	private startSearch(onNext?: () => void, pagination?: AppDataPagination) {
 		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
-		await this.searchAsync(onNext);
+		this.search(onNext);
 	}
 
-	private async searchAsync(onNext?: () => void) {
+	private search(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const nextAsync = async (data: any) => {
+		const onSuccess = (data: any) => {
+			this.trackAsync(this.title.track);
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await this.trackAsync(this.title.track);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchSite(this.request, nextAsync, async error => await Promise.all([
-				this.appFormsSvc.showErrorAsync(error),
-				this.trackAsync(this.title.track)
-			]));
+			this.subscription = this.portalsCoreSvc.searchSite(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 		else {
-			await this.portalsCoreSvc.searchSiteAsync(this.request, nextAsync, async error => await Promise.all([
-				this.appFormsSvc.showErrorAsync(error),
-				this.trackAsync(this.title.track)
-			]));
+			this.portalsCoreSvc.searchSiteAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 	}
 
@@ -296,61 +297,56 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	async showActionsAsync() {
-		await this.listCtrl.closeSlidingItems();
-		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	showActions() {
+		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showActionSheetAsync(this.actions));
 	}
 
-	async createAsync() {
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync("/portals/core/sites/create");
+	create() {
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync("/portals/core/sites/create"));
 	}
 
-	async openSearchAsync(filtering: boolean = true) {
-		await this.listCtrl.closeSlidingItems();
-		if (filtering) {
-			this.filtering = true;
-			PlatformUtility.focus(this.searchCtrl);
-			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
-			this.objects = this.sites.map(obj => obj);
-		}
-		else {
-			await this.configSvc.navigateForwardAsync("/portals/core/sites/search");
-		}
+	openSearch(filtering: boolean = true) {
+		this.listCtrl.closeSlidingItems().then(() => {
+			if (filtering) {
+				this.filtering = true;
+				AppUtility.invoke(async () => this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter")).then(() => PlatformUtility.focus(this.searchCtrl));
+				this.objects = this.sites.map(obj => obj);
+			}
+			else {
+				this.configSvc.navigateForwardAsync("/portals/core/sites/search");
+			}
+		});
 	}
 
-	async editAsync(event: Event, site: Site) {
+	edit(event: Event, site: Site) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(site.routerURI);
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(site.routerURI));
 	}
 
-	async openAsync(event: Event, site: Site) {
+	open(event: Event, site: Site) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		const domain = `${site.SubDomain}.${site.PrimaryDomain}`.replace("*.", "www.").replace("www.www.", "www.");
-		const protocol = site.AlwaysUseHTTPs ? "https" : "http";
-		PlatformUtility.openURL(`${protocol}://${domain}`);
+		this.listCtrl.closeSlidingItems().then(() => {
+			const domain = `${site.SubDomain}.${site.PrimaryDomain}`.replace("*.", "www.").replace("www.www.", "www.");
+			const protocol = site.AlwaysUseHTTPs ? "https" : "http";
+			PlatformUtility.openURL(`${protocol}://${domain}`);
+		});
 	}
 
-	async clearCacheAsync(event: Event, site: Site) {
+	clearCache(event: Event, site: Site) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.portalsCoreSvc.clearCacheAsync("site", site.ID);
+		this.listCtrl.closeSlidingItems().then(() => this.portalsCoreSvc.clearCacheAsync("site", site.ID));
 	}
 
-	async exportToExcelAsync() {
-		await this.portalsCoreSvc.exportToExcelAsync("Site", this.organization.ID);
-		await this.trackAsync(this.actions[2].text, "Export");
+	exportToExcel() {
+		this.portalsCoreSvc.exportToExcelAsync("Site", this.organization.ID).then(() => this.trackAsync(this.actions[2].text, "Export"));
 	}
 
-	async importFromExcelAsync() {
-		await this.portalsCoreSvc.importFromExcelAsync("Site", this.organization.ID);
-		await this.trackAsync(this.actions[3].text, "Import");
+	importFromExcel() {
+		this.portalsCoreSvc.importFromExcelAsync("Site", this.organization.ID).then(() => this.trackAsync(this.actions[3].text, "Import"));
 	}
 
-	private async trackAsync(title: string, action?: string) {
-		await TrackingUtility.trackAsync({ title: title, category: "Site", action: action || "Browse" });
+	private trackAsync(title: string, action?: string) {
+		return TrackingUtility.trackAsync({ title: title, category: "Site", action: action || "Browse" });
 	}
 
 }
