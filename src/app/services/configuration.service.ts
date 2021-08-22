@@ -715,6 +715,7 @@ export class ConfigurationService extends BaseService {
 		if (options.i18n !== undefined && options.timezone !== undefined && options.extras !== undefined) {
 			AppConfig.options = options;
 			AppConfig.options.theme = AppConfig.options.theme || "light";
+			AppEvents.broadcast("App", { Type: "Options", Mode: "Loaded" });
 			await this.saveOptionsAsync(onNext);
 		}
 		else if (onNext !== undefined) {
@@ -731,7 +732,7 @@ export class ConfigurationService extends BaseService {
 	/** Stores the options of the app */
 	public storeOptionsAsync(onNext?: (data?: any) => void) {
 		return this.saveOptionsAsync(() => {
-			AppEvents.broadcast("App", { Type: "OptionsUpdated" });
+			AppEvents.broadcast("App", { Type: "Options", Mode: "Updated" });
 			if (onNext !== undefined) {
 				onNext(AppConfig.options);
 			}
@@ -758,7 +759,7 @@ export class ConfigurationService extends BaseService {
 	public changeLanguageAsync(language: string, saveOptions: boolean = true) {
 		AppConfig.options.i18n = language;
 		return this.setResourceLanguageAsync(language).then(() => {
-			AppEvents.broadcast("App", { Type: "LanguageChanged" });
+			AppEvents.broadcast("App", { Type: "Language", Mode: "Changed" });
 			if (saveOptions) {
 				this.saveOptionsAsync();
 			}

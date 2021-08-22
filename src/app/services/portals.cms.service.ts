@@ -123,6 +123,14 @@ export class PortalsCmsService extends BaseService {
 			}
 		});
 
+		AppEvents.on("App", info => {
+			if ("HomePage" === info.args.Type && "Open" === info.args.Mode && "Sidebar" === info.args.Source && "cms" === info.args.Active) {
+				this._sidebarCategory = undefined;
+				this._sidebarContentType = undefined;
+				this.updateSidebarAsync();
+			}
+		});
+
 		AppEvents.on("Session", info => {
 			if (("LogIn" === info.args.Type || "LogOut" === info.args.Type) && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				this._sidebarCategory = undefined;
@@ -486,7 +494,7 @@ export class PortalsCmsService extends BaseService {
 						Title: parent.Title,
 						Link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", parent.ansiTitle),
 						Params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: parent.ID }),
-						Expanded: parent.ID === expandedID,
+						Expanded: true,
 						OnClick: menuItem => this.updateSidebarWithCategoriesAsync(this._sidebarCategory !== undefined ? this._sidebarCategory.Parent : undefined, this._sidebarCategory !== undefined ? this._sidebarCategory.ID : menuItem.ID),
 					} as AppSidebarMenuItem,
 			Items: categories.map(category => this.getSidebarItem(category, expandedID))

@@ -93,14 +93,14 @@ export class AppComponent implements OnInit {
 				this.configSvc.appConfig.URLs.routerParams = (event as RoutesRecognized).state.root.params;
 				this.configSvc.pushURL((event as RoutesRecognized).url, (event as RoutesRecognized).state.root.queryParams);
 				const current = this.configSvc.getCurrentURL();
-				AppEvents.broadcast("Navigating", { URL: current.url, Params: current.params });
+				AppEvents.broadcast("App", { Type: "Router", Mode: "Navigating", URL: current.url, Params: current.params });
 				if (AppAPIs.isPingPeriodTooLarge) {
 					AppAPIs.reopenWebSocket("<AppComponent>: Ping period is too large...");
 				}
 			}
 			else if (event instanceof NavigationEnd) {
 				const current = this.configSvc.getCurrentURL();
-				AppEvents.broadcast("Navigated", { URL: current.url, Params: current.params });
+				AppEvents.broadcast("App", { Type: "Router", Mode: "Navigated", URL: current.url, Params: current.params });
 			}
 		});
 
@@ -287,30 +287,30 @@ export class AppComponent implements OnInit {
 					Title: await this.configSvc.getResourceAsync("common.sidebar.home"),
 					Link: this.configSvc.appConfig.URLs.home,
 					Icon: { Name: "home", Color: "primary", Slot: "start" },
-					OnClick: data => this.configSvc.navigateHomeAsync(data.Link)
+					OnClick: data => this.configSvc.navigateHomeAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.login"),
 					Link: this.configSvc.appConfig.URLs.users.login,
 					Icon: { Name: "log-in", Color: "success", Slot: "start" },
-					OnClick: data => this.configSvc.navigateHomeAsync(data.Link)
+					OnClick: data => this.configSvc.navigateHomeAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "LogInPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.register"),
 					Link: this.configSvc.appConfig.URLs.users.register,
 					Icon: { Name: "person-add", Color: "warning", Slot: "start" },
-					OnClick: data => this.configSvc.navigateHomeAsync(data.Link)
+					OnClick: data => this.configSvc.navigateHomeAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "RegisterPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.profile"),
 					Link: `${this.configSvc.appConfig.URLs.users.profile}/my`,
 					Icon: { Name: "person", Color: "warning", Slot: "start" },
-					OnClick: data => this.configSvc.navigateHomeAsync(data.Link)
+					OnClick: data => this.configSvc.navigateHomeAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "ProfilePage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.search"),
 					Icon: { Name: "search", Color: "tertiary", Slot: "start" },
-					OnClick: _ => this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.search)
+					OnClick: _ => this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.search).then(() => AppEvents.broadcast("App", { Type: "SearchPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
 				}
 			]);
 		}
@@ -441,8 +441,8 @@ export class AppComponent implements OnInit {
 		});
 
 		AppEvents.on("App", info => {
-			if ("LanguageChanged" === info.args.Type) {
-				AppEvents.sendToElectron("App", { Type: "LanguageChanged", Language: this.configSvc.appConfig.language });
+			if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
+				AppEvents.sendToElectron("App", { Type: "Language", Mode: "Changed", Language: this.configSvc.appConfig.language });
 				this.updateSidebarAsync({}, true, () => this.sidebar.normalizeTopMenu());
 			}
 		});

@@ -80,24 +80,20 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 	};
 
 	ngOnInit() {
-		this.prepareAsync();
-		AppEvents.on("App", async info => {
-			if (AppUtility.isEquals(info.args.Type, "Initialized") || AppUtility.isEquals(info.args.Type, "LanguageChanged")) {
-				await this.prepareLabelsAsync();
+		this.prepareLabelsAsync();
+		this.options = {
+			language: this.configSvc.appConfig.language,
+			darkTheme: "dark" === this.color
+		};
+		AppEvents.on("App", info => {
+			if ("Initialized" === info.args.Type || ("Language" === info.args.Type && "Changed" === info.args.Mode)) {
+				this.prepareLabelsAsync();
 			}
 		}, "AppPreferences");
 	}
 
 	ngOnDestroy() {
 		AppEvents.off("App", "AppPreferences");
-	}
-
-	private async prepareAsync() {
-		await this.prepareLabelsAsync();
-		this.options = {
-			language: this.configSvc.appConfig.language,
-			darkTheme: AppUtility.isEquals("dark", this.color)
-		};
 	}
 
 	private async prepareLabelsAsync() {
@@ -118,22 +114,21 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		};
 	}
 
-	async onLanguageChangedAsync(event: any) {
+	onLanguageChanged(event: any) {
 		if (this.options.language !== event.detail.value) {
 			this.configSvc.appConfig.options.i18n = this.options.language = event.detail.value;
-			await this.configSvc.changeLanguageAsync(this.options.language);
-			await this.configSvc.storeOptionsAsync();
+			this.configSvc.changeLanguageAsync(this.options.language).then(() => this.configSvc.storeOptionsAsync());
 		}
 	}
 
-	async onThemeChangedAsync(event: any) {
+	onThemeChanged(event: any) {
 		this.options.darkTheme = AppUtility.isTrue(event.detail.checked);
 		this.configSvc.appConfig.options.theme = this.options.darkTheme ? "dark" : "light";
-		await this.configSvc.storeOptionsAsync();
+		this.configSvc.storeOptionsAsync();
 	}
 
-	async openProfileAsync() {
-		await this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.users.profile + "/my");
+	openProfile() {
+		this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.users.profile + "/my");
 	}
 
 }

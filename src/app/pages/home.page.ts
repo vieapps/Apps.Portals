@@ -19,7 +19,7 @@ export class HomePage implements OnInit, OnDestroy {
 
 	title = "Home";
 	titleResource = "common.sidebar.home";
-	changes: any;
+	changes: number;
 
 	get color() {
 		return this.configSvc.color;
@@ -37,40 +37,29 @@ export class HomePage implements OnInit, OnDestroy {
 		if (this.configSvc.isReady) {
 			this.prepare();
 		}
-		else {
-			AppEvents.on("App", info => {
-				if ("Initialized" === info.args.Type) {
-					this.prepare();
-				}
-			}, "Home:AppInitialized");
-		}
 
 		AppEvents.on("App", info => {
-			if ("LanguageChanged" === info.args.Type) {
+			if ("Initialized" === info.args.Type) {
+				this.prepare();
+			}
+			else if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
 				this.setTitleAsync();
 			}
-		}, "Home:LanguageChanged");
-
-		AppEvents.on("Navigated", info => {
-			if (this.configSvc.appConfig.URLs.home === info.args.URL) {
+			else if ("Router" === info.args.Type && "Navigated" === info.args.Mode && this.configSvc.appConfig.URLs.home === info.args.URL) {
 				AppUtility.invoke(() => {
 					this.prepare("Return");
-					AppEvents.broadcast("App", { Type: "HomePageIsOpened" });
+					AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Return" });
 				});
-				this.changes = new Date();
+				this.changes = +new Date();
 			}
-		}, "Home:Navigated");
-
-		AppEvents.on("SetHomepageTitleResource", info => {
-			this.titleResource = info.args.ResourceID || "common.sidebar.home";
-		}, "Home:SetTitle");
+			else if ("HomePage" === info.args.Type && "SetTitle" === info.args.Mode) {
+				this.titleResource = info.args.ResourceID || "common.sidebar.home";
+			}
+		}, "HomePageEvents");
 	}
 
 	ngOnDestroy() {
-		AppEvents.off("App", "Home:AppInitialized");
-		AppEvents.off("App", "Home:LanguageChanged");
-		AppEvents.off("Navigated", "Home:Navigated");
-		AppEvents.off("SetHomepageTitleResource", "Home:SetTitle");
+		AppEvents.off("App", "HomePageEvents");
 	}
 
 	private prepare(action?: string) {

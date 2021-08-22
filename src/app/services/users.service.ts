@@ -31,7 +31,7 @@ export class UsersService extends BaseService {
 			}
 		});
 		AppEvents.on("App", info => {
-			if (info.args.Type === "OptionsUpdated" && this.configSvc.isAuthenticated) {
+			if ("Options" === info.args.Type && "Changed" === info.args.Mode && this.configSvc.isAuthenticated) {
 				const profile = this.configSvc.getAccount().profile;
 				if (profile !== undefined) {
 					profile.Language = this.configSvc.appConfig.options.i18n;
@@ -39,17 +39,17 @@ export class UsersService extends BaseService {
 					this.updateProfileAsync(profile, () => this.configSvc.storeSessionAsync());
 				}
 			}
-		});
-		AppEvents.on("Navigated", _ => {
-			const profile = this.configSvc.getAccount().profile;
-			if (profile !== undefined) {
-				profile.LastAccess = new Date();
-			}
-			else if (this.configSvc.isAuthenticated) {
-				AppUtility.invoke(() => this.getProfileAsync(undefined, () => {
-					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
-					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: this.configSvc.getAccount().profile });
-				}, undefined, false, true), 456);
+			else if ("Router" === info.args.Type && "Navigated" === info.args.Mode) {
+				const profile = this.configSvc.getAccount().profile;
+				if (profile !== undefined) {
+					profile.LastAccess = new Date();
+				}
+				else if (this.configSvc.isAuthenticated) {
+					AppUtility.invoke(() => this.getProfileAsync(undefined, () => {
+						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
+						AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: this.configSvc.getAccount().profile });
+					}, undefined, false, true), 456);
+				}
 			}
 		});
 	}
