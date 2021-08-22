@@ -1394,11 +1394,8 @@ export class PortalsCoreService extends BaseService {
 				}
 				AppEvents.broadcast("ActiveSidebar", { Name: name });
 			}, 456);
-			if (onNext !== undefined) {
-				onNext();
-			}
 		}
-		else if (onNext !== undefined) {
+		if (onNext !== undefined) {
 			onNext();
 		}
 	}
