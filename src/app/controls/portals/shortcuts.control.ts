@@ -47,13 +47,13 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 					this.prepareLabelAsync();
 					this.prepareShortcutsAsync();
 				}
-			}, "Shortcuts:AppEvents");
+			}, "PortalsShortcutsEvents");
 		}
 		AppEvents.on("Session", info => {
 			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
 				this.prepareShortcutsAsync();
 			}
-		}, "Shortcuts:SessionEvents");
+		}, "PortalsShortcutsEvents");
 		AppEvents.on(this.portalsCoreSvc.name, info => {
 			if (this.shortcuts.length > 0 && "Changed" === info.args.Mode && ("Organization" === info.args.Type || "Module" === info.args.Type)) {
 				AppUtility.invoke(async () => {
@@ -67,13 +67,13 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 					this.shortcuts[3].Link = this.portalsCoreSvc.getAppURL(contentType);
 				});
 			}
-		}, "Shortcuts:ModuleEvents");
+		}, "PortalsShortcutsEvents");
 	}
 
 	ngOnDestroy() {
-		AppEvents.off("App", "Shortcuts:AppEvents");
-		AppEvents.off("Session", "Shortcuts:SessionEvents");
-		AppEvents.off(this.portalsCoreSvc.name, "Shortcuts:ModuleEvents");
+		AppEvents.off("App", "PortalsShortcutsEvents");
+		AppEvents.off("Session", "PortalsShortcutsEvents");
+		AppEvents.off(this.portalsCoreSvc.name, "PortalsShortcutsEvents");
 	}
 
 	private async prepareLabelAsync() {

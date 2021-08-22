@@ -82,7 +82,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	parentRole: Role;
 
 	ngOnInit() {
-		AppUtility.invoke(async () => await TrackingUtility.trackAsync({ title: "Lookup - Role", category: "Role", action: "Lookup" }));
+		TrackingUtility.trackAsync({ title: "Lookup - Role", category: "Role", action: "Lookup" });
 		this.multiple = this.multiple === undefined ? true : AppUtility.isTrue(this.multiple);
 		this.allowSystemRoles = this.allowSystemRoles === undefined ? true : AppUtility.isTrue(this.allowSystemRoles);
 		this.allowVisitorInContributiveSection = this.allowVisitorInContributiveSection === undefined ? false : AppUtility.isTrue(this.allowVisitorInContributiveSection);
@@ -120,7 +120,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 			this.roleOfAuthorized.Title = await this.appFormsSvc.getResourceAsync("privileges.roles.systems.Authorized");
 		}
 
-		await this.startSearchAsync(async () => {
+		this.startSearch(() => {
 			if (this.allowSystemRoles) {
 				if (this.section === "Contributive" || this.section === "Viewable" || this.section === "Downloadable") {
 					this.roles.insert(this.roleOfAll, 0).insert(this.roleOfAuthorized, 1);
@@ -132,7 +132,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 					this.roles.insert(this.roleOfAuthorized, 0);
 				}
 			}
-			await this.appFormsSvc.hideLoadingAsync();
+			this.appFormsSvc.hideLoadingAsync();
 		});
 	}
 
@@ -159,7 +159,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 			this.filterBy.Query = event.detail.value;
 			this.results = [];
 			this.selected.clear();
-			this.startSearchAsync(() => this.infiniteScrollCtrl.disabled = false, AppPagination.getDefault());
+			this.startSearch(() => this.infiniteScrollCtrl.disabled = false, AppPagination.getDefault());
 		}
 	}
 
@@ -179,13 +179,12 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		];
 	}
 
-	async onInfiniteScrollAsync() {
+	onInfiniteScroll() {
 		if (this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : AppUtility.promise));
+			this.search(() => this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : () => {});
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
-			await this.infiniteScrollCtrl.complete();
-			this.infiniteScrollCtrl.disabled = true;
+			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
 		}
 	}
 
@@ -197,20 +196,20 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		return roles.sortBy("Title", { name: "LastModified", reverse: true });
 	}
 
-	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
+	private startSearch(onNext?: () => void, pagination?: AppDataPagination) {
 		if (this.organization !== undefined && AppUtility.isNotEmpty(this.organization.ID)) {
 			this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 			this.pagination.PageNumber = this.pageNumber = 0;
-			await this.searchAsync(onNext);
+			this.search(onNext);
 		}
 		else if (onNext !== undefined) {
 			onNext();
 		}
 	}
 
-	private async searchAsync(onNext?: () => void) {
+	private search(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const onSuccess = async (data: any) => {
+		const onSuccess = (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
@@ -231,7 +230,7 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 			this.subscription = this.portalsCoreSvc.searchRole(this.request, onSuccess);
 		}
 		else {
-			await this.portalsCoreSvc.searchRoleAsync(this.request, onSuccess);
+			this.portalsCoreSvc.searchRoleAsync(this.request, onSuccess);
 		}
 	}
 
@@ -257,10 +256,10 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		}
 	}
 
-	closeAsync(ids?: Array<string>) {
-		return ids === undefined || ids.length > 0
-			? this.appFormsSvc.hideModalAsync(ids)
-			: AppUtility.promise;
+	close(ids?: Array<string>) {
+		if (ids === undefined || ids.length > 0) {
+			this.appFormsSvc.hideModalAsync(ids);
+		}
 	}
 
 	back(event: Event) {

@@ -110,7 +110,6 @@ export class AppComponent implements OnInit {
 			if (AppUtility.isNotEmpty(session.device) ) {
 				appConfig.session.device = session.device;
 			}
-			this.usersSvc.initialize();
 			this.configSvc.prepare();
 			this.prepareSidebar();
 			this.prepareEventProcessors();
@@ -130,6 +129,15 @@ export class AppComponent implements OnInit {
 				}
 			}
 
+			this.usersSvc.initialize();
+			if (appConfig.services.all.findIndex(svc => svc.name === this.portalsCoreSvc.name) > -1) {
+				this.portalsCoreSvc.initialize();
+				this.portalsCmsSvc.initialize();
+			}
+			if (appConfig.services.all.findIndex(svc => svc.name === this.booksSvc.name) > -1) {
+				this.booksSvc.initialize();
+			}
+
 			this.sidebar.Header.Title = appConfig.app.name;
 			await this.updateSidebarAsync({}, true);
 
@@ -144,6 +152,14 @@ export class AppComponent implements OnInit {
 			const isActivate = this.configSvc.isWebApp && AppUtility.isEquals("activate", this.configSvc.queryParams["prego"]);
 			const message = await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "loading"}`);
 			this.appFormsSvc.showLoadingAsync(message).then(isActivate ? () => this.activate() : () => this.initialize());
+
+			if (appConfig.isDebug && !appConfig.isNativeApp) {
+				window["__vieapps"] = {
+					appComponent: this,
+					appAPIs: AppAPIs,
+					appEvents: AppEvents
+				};
+			}
 		});
 	}
 
@@ -415,7 +431,7 @@ export class AppComponent implements OnInit {
 		AppEvents.on("UpdateSidebarHeader", info => this.sidebar.updateHeader(info.args));
 		AppEvents.on("UpdateSidebarFooter", info => this.sidebar.updateFooter(info.args));
 
-		AppEvents.on("Navigate", async info => {
+		AppEvents.on("Navigate", info => {
 			const url = "LogIn" === info.args.Type
 				? this.configSvc.appConfig.URLs.users.login
 				: "Profile" === info.args.Type
@@ -426,13 +442,13 @@ export class AppComponent implements OnInit {
 			switch ((info.args.Direction as string || "Forward").toLowerCase()) {
 				case "home":
 				case "root":
-					await this.configSvc.navigateHomeAsync(url);
+					this.configSvc.navigateHomeAsync(url);
 					break;
 				case "back":
-					await this.configSvc.navigateBackAsync(url);
+					this.configSvc.navigateBackAsync(url);
 					break;
 				default:
-					await this.configSvc.navigateForwardAsync(url);
+					this.configSvc.navigateForwardAsync(url);
 					break;
 			}
 		});
@@ -462,9 +478,9 @@ export class AppComponent implements OnInit {
 	}
 
 	private activate() {
+		TrackingUtility.trackAsync({ title: "Users - Activate",  campaignUrl: "users/activate", category: "Users:Activation", action: "Activate" }, false);
 		const mode = this.configSvc.queryParams["mode"];
 		const code = this.configSvc.queryParams["code"];
-		TrackingUtility.trackAsync({ title: "Users - Activate",  campaignUrl: "users/activate", category: "Users:Activation", action: "Activate" }, false);
 		if (AppUtility.isNotEmpty(mode) && AppUtility.isNotEmpty(code)) {
 			this.usersSvc.activateAsync(
 				mode,
@@ -534,11 +550,12 @@ export class AppComponent implements OnInit {
 	}
 
 	private finalize(onNext?: () => void) {
-		const appConfig = this.configSvc.appConfig;
-		console.log("<AppComponent>: Initialized", appConfig.app);
 		if (this.configSvc.isWebApp) {
 			PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
 		}
+
+		const appConfig = this.configSvc.appConfig;
+		console.log("<AppComponent>: Initialized", appConfig.app);
 		this.sidebar.normalizeTopMenu();
 
 		AppAPIs.openWebSocket(async () => {
@@ -564,7 +581,6 @@ export class AppComponent implements OnInit {
 				};
 				AppEvents.broadcast("App", { Type: "Initialized", Data: data });
 				AppEvents.sendToElectron("App", { Type: "Initialized", Data: data});
-
 				if (onNext !== undefined) {
 					onNext();
 				}

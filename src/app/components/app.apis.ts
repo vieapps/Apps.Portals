@@ -19,8 +19,8 @@ export class AppAPIs {
 	private static _messageTypes: { [key: string]: { Service: string; Object?: string; Event?: string; } } = {};
 	private static _serviceScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
 	private static _objectScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
-	private static _serviceScopeSubject: Subject<{ service: string, message: AppMessage }>;
-	private static _objectScopeSubject: Subject<{ service: string, object: string, message: AppMessage }>;
+	private static _serviceScopeSubject = new Subject<{ service: string, message: AppMessage }>();
+	private static _objectScopeSubject = new Subject<{ service: string, object: string, message: AppMessage }>();
 	private static _nocallbackMessages: { [id: string]: string } = {};
 	private static _callbackableMessages: { [id: string]: string } = {};
 	private static _successCallbacks: { [id: string]: (data?: any) => void } = {};
@@ -66,10 +66,35 @@ export class AppAPIs {
 		return this._http;
 	}
 
-	/** Initializes the instance of the Angular HttpClient service for working with XMLHttpRequest (XHR) */
-	public static initializeHttpClient(http: HttpClient) {
+	/**
+		* Initializes
+		* @param http the instance of the Angular HttpClient service for working with XMLHttpRequest (XHR)
+	*/
+	public static initialize(http: HttpClient) {
 		if (this._http === undefined && AppUtility.isNotNull(http)) {
 			this._http = http;
+			this._serviceScopeSubject.subscribe(
+				({ service, message }) => this.getServiceHandlers(service).forEach(handler => {
+					try {
+						handler.func(message);
+					}
+					catch (error) {
+						console.error(`[AppAPIs]: Error occurred while running a handler (${handler.identity})`, error);
+					}
+				}),
+				error => console.error(`[AppAPIs]: Got an error while processing data with handlers => ${AppUtility.getErrorMessage(error)}`, error)
+			);
+			this._objectScopeSubject.subscribe(
+				({ service, object, message }) => this.getObjectHandlers(service, object).forEach(handler => {
+					try {
+						handler.func(message);
+					}
+					catch (error) {
+						console.error(`[AppAPIs]: Error occurred while running a handler (${handler.identity})`, error);
+					}
+				}),
+				error => console.error(`[AppAPIs]: Got an error while processing data with handlers => ${AppUtility.getErrorMessage(error)}`, error)
+			);
 		}
 	}
 
@@ -192,50 +217,14 @@ export class AppAPIs {
 	/** Opens the WebSocket connection */
 	public static openWebSocket(onOpened?: () => void, isReopenOrRestart: boolean = false) {
 		// check
-		if (typeof WebSocket === "undefined") {
-			console.warn("[AppAPIs]: Its requires a modern component that supports WebSocket");
+		if (typeof WebSocket === "undefined" || this._websocket !== undefined) {
+			if (this._websocket === undefined) {
+				console.warn("[AppAPIs]: Its requires a modern component that supports WebSocket");
+			}
 			if (onOpened !== undefined) {
 				onOpened();
 			}
 			return;
-		}
-
-		if (this._websocket !== undefined) {
-			if (onOpened !== undefined) {
-				onOpened();
-			}
-			return;
-		}
-
-		// initialize object for registering handlers
-		if (this._serviceScopeSubject === undefined) {
-			this._serviceScopeSubject = new Subject<{ service: string, message: AppMessage }>();
-			this._serviceScopeSubject.subscribe(
-				({ service, message }) => this.getServiceHandlers(service).forEach(handler => {
-					try {
-						handler.func(message);
-					}
-					catch (error) {
-						console.error(`[AppAPIs]: Error occurred while running a handler (${handler.identity})`, error);
-					}
-				}),
-				error => console.error(`[AppAPIs]: Got an error while processing data with handlers => ${AppUtility.getErrorMessage(error)}`, error)
-			);
-		}
-
-		if (this._objectScopeSubject === undefined) {
-			this._objectScopeSubject = new Subject<{ service: string, object: string, message: AppMessage }>();
-			this._objectScopeSubject.subscribe(
-				({ service, object, message }) => this.getObjectHandlers(service, object).forEach(handler => {
-					try {
-						handler.func(message);
-					}
-					catch (error) {
-						console.error(`[AppAPIs]: Error occurred while running a handler (${handler.identity})`, error);
-					}
-				}),
-				error => console.error(`[AppAPIs]: Got an error while processing data with handlers => ${AppUtility.getErrorMessage(error)}`, error)
-			);
 		}
 
 		// create new instance of WebSocket
