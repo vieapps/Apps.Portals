@@ -382,13 +382,6 @@ export class AppComponent implements OnInit {
 
 	private getSidebarMainMenuItem(args: any): AppSidebarMenuItem {
 		const gotChildren = AppUtility.isArray(args.Children, true) && AppUtility.isGotData(args.Children);
-		const expanded = gotChildren && !!args.Expanded;
-		const detail = !gotChildren && !!args.Detail;
-		const icon = args.Icon || {};
-		if (icon.Name === undefined && (gotChildren || detail)) {
-			icon.Name = detail ? "chevron-forward" : expanded ? "chevron-down" : "chevron-forward",
-			icon.Slot = "end";
-		}
 		return {
 			ID: args.ID,
 			Title: args.Title,
@@ -396,10 +389,10 @@ export class AppComponent implements OnInit {
 			Params: args.Params,
 			Direction: args.Direction,
 			Children: gotChildren ? (args.Children as Array<any>).map(item => this.getSidebarMainMenuItem(item)) : [],
-			Expanded: expanded,
-			Detail: detail,
+			Expanded: gotChildren && !!args.Expanded,
+			Detail: !gotChildren && !!args.Detail,
 			Thumbnail: args.Thumbnail,
-			Icon: icon,
+			Icon: args.Icon,
 			OnClick: typeof args.OnClick === "function"
 				? args.OnClick
 				: (data, sidebar) => {

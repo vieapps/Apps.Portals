@@ -83,7 +83,7 @@ export class BooksService extends BaseService {
 			else if ("OpenBook" === info.args.Type || "OpenChapter" === info.args.Type) {
 				const book = Book.get(info.args.ID);
 				if (book !== undefined && book.TotalChapters > 1) {
-					this.updateReading(book, info.args.Chapter || 1);
+					this.updateTOCItem(book, info.args.Chapter || 1);
 				}
 			}
 			else if ("CloseBook" === info.args.Type && this._reading.ID !== undefined) {
@@ -165,12 +165,12 @@ export class BooksService extends BaseService {
 		return {
 			Title: book.TOCs[index],
 			Detail: isReading,
-			Icon: { Color: "primary" },
+			Icon: isReading ? { Name: "chevron-forward", Color: "primary", Slot: "end" } : undefined,
 			OnClick: _ => AppEvents.broadcast("Books", { Type: "OpenChapter", ID: book.ID, Chapter: index + 1 })
 		} as AppSidebarMenuItem;
 	}
 
-	private updateReading(book: Book, chapter: number) {
+	private updateTOCItem(book: Book, chapter: number) {
 		if (book.ID !== this._reading.ID) {
 			this._reading.ID = book.ID;
 			this._reading.Chapter = chapter - 1;

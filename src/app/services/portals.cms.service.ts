@@ -444,8 +444,8 @@ export class PortalsCmsService extends BaseService {
 		if (parent !== undefined) {
 			this._sidebarCategory = parent;
 			this._sidebarContentType = this._sidebarContentType || this.getDefaultContentTypeOfContent(parent.module);
-			const info = this.getSidebarItems(parent.Children, parent, expandedID);
-			return AppUtility.invoke(() => this.updateSidebar(info.Items, info.Parent, onNext));
+			const sidebar = this.getSidebarItems(parent.Children, parent, expandedID);
+			return AppUtility.invoke(() => this.updateSidebar(sidebar.Items, sidebar.Parent, onNext));
 		}
 		else {
 			const contentType = this.getDefaultContentTypeOfCategory(this.portalsCoreSvc.activeModule);
@@ -466,8 +466,8 @@ export class PortalsCmsService extends BaseService {
 						const categories = data !== undefined
 							? Category.toArray(data.Objects)
 							: Category.instances.toArray(category => category.SystemID === contentType.SystemID && category.RepositoryID === contentType.RepositoryID && category.ParentID === undefined).sortBy("OrderIndex", "Title");
-						const info = this.getSidebarItems(categories, parent, expandedID);
-						this.updateSidebar(info.Items, info.Parent, onNext);
+						const sidebar = this.getSidebarItems(categories, parent, expandedID);
+						this.updateSidebar(sidebar.Items, sidebar.Parent, onNext);
 					}
 				);
 			}
@@ -478,63 +478,60 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	private getSidebarItems(categories: Array<Category>, parent?: Category, expandedID?: string): { Parent: AppSidebarMenuItem; Items: AppSidebarMenuItem[] } {
-		const expand: (menuItem: AppSidebarMenuItem, parentID?: string, dontUpdateExpaned?: boolean) => void = (menuItem, parentID, dontUpdateExpanded) => {
-			if (parentID === undefined) {
-				if (!dontUpdateExpanded) {
-					menuItem.Expanded = !menuItem.Expanded;
-				}
-				menuItem.Icon = {
-					Name: menuItem.Expanded ? "chevron-down" : "chevron-forward",
-					Color: "medium",
-					Slot: "end"
-				};
-			}
-			else {
-				this.updateSidebarWithCategoriesAsync(Category.get(parentID), menuItem.ID);
-			}
-		};
-
-		const getItem: (category: Category, onCompleted: (item: AppSidebarMenuItem) => void) => AppSidebarMenuItem = (category, onCompleted) => {
-			const item: AppSidebarMenuItem = {
-				ID: category.ID,
-				Title: category.Title,
-				Link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", category.ansiTitle),
-				Params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: category.ID }),
-				Expanded: category.ID === expandedID,
-				OnClick: (data: { menuIndex: number; itemIndex: number; childIndex?: number; expand?: boolean; }, sidebar: AppSidebar, event: Event) => {
-					const menuItem = data.childIndex !== undefined
-						? sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex]
-						: sidebar.MainMenu[data.menuIndex].Items[data.itemIndex];
-					if (AppUtility.isTrue(data.expand)) {
-						event.stopPropagation();
-						expand(menuItem, data.childIndex === undefined ? undefined : sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].ID);
-					}
-					else {
-						if (menuItem.Children !== undefined && menuItem.Children.length > 0) {
-							expand(menuItem, data.childIndex === undefined ? undefined : sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].ID, menuItem.Expanded);
-						}
-						this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params);
-					}
-				}
-			};
-			onCompleted(item);
-			return item;
-		};
-
-		const getChildren: (childrenCategories: Array<Category>) => Array<AppSidebarMenuItem>
-			= childrenCategories => childrenCategories.map(category => getItem(category, item => item.Children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : []));
-
 		return {
-			Parent: {
-				ID: parent === undefined ? undefined : parent.ID,
-				Title: parent === undefined ? "{{portals.sidebar.titles.categories}}" : parent.Title,
-				Link: parent === undefined ? undefined : this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", parent.ansiTitle),
-				Params: parent === undefined ? undefined : this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: parent.ID }),
-				Expanded: parent !== undefined,
-				OnClick: menuItem => this.updateSidebarWithCategoriesAsync(this._sidebarCategory !== undefined ? this._sidebarCategory.Parent : undefined, this._sidebarCategory !== undefined ? this._sidebarCategory.ID : menuItem.ID),
-			} as AppSidebarMenuItem,
-			Items: categories.map(category => getItem(category, item => item.Children = category.childrenIDs !== undefined && category.childrenIDs.length > 0 ? getChildren(category.Children) : []))
+			Parent: parent === undefined
+				? { Title: "{{portals.sidebar.titles.categories}}" } as AppSidebarMenuItem
+				: {
+						ID: parent.ID,
+						Title: parent.Title,
+						Link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", parent.ansiTitle),
+						Params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: parent.ID }),
+						Expanded: parent.ID === expandedID,
+						OnClick: menuItem => this.updateSidebarWithCategoriesAsync(this._sidebarCategory !== undefined ? this._sidebarCategory.Parent : undefined, this._sidebarCategory !== undefined ? this._sidebarCategory.ID : menuItem.ID),
+					} as AppSidebarMenuItem,
+			Items: categories.map(category => this.getSidebarItem(category, expandedID))
 		};
+	}
+
+	private getSidebarItem(category: Category, expandedID?: string) {
+		const gotChildren = category.childrenIDs !== undefined && category.childrenIDs.length > 0;
+		const expanded = gotChildren && category.ID === expandedID;
+		return {
+			ID: category.ID,
+			Title: category.Title,
+			Link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", category.ansiTitle),
+			Params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: category.ID }),
+			Children: gotChildren ? this.getSidebarItems(category.Children, undefined, expandedID).Items : [],
+			Icon: gotChildren ? { Name: expanded ? "chevron-down" : "chevron-forward", Color: "medium", Slot: "end" } : undefined,
+			Expanded: expanded,
+			OnClick: (data: { menuIndex: number; itemIndex: number; childIndex?: number; expand?: boolean; }, sidebar: AppSidebar, event: Event) => {
+				const menuItem = data.childIndex !== undefined
+					? sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex]
+					: sidebar.MainMenu[data.menuIndex].Items[data.itemIndex];
+				if (AppUtility.isTrue(data.expand)) {
+					event.stopPropagation();
+					this.expandSidebarItem(menuItem, data.childIndex === undefined ? undefined : sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].ID);
+				}
+				else {
+					if (menuItem.Children !== undefined && menuItem.Children.length > 0) {
+						this.expandSidebarItem(menuItem, data.childIndex === undefined ? undefined : sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].ID, menuItem.Expanded);
+					}
+					this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params);
+				}
+			}
+		} as AppSidebarMenuItem;
+	}
+
+	private expandSidebarItem(menuItem: AppSidebarMenuItem, parentID?: string, dontUpdateExpanded?: boolean) {
+		if (parentID === undefined) {
+			if (!dontUpdateExpanded) {
+				menuItem.Expanded = !menuItem.Expanded;
+				menuItem.Icon.Name = menuItem.Expanded ? "chevron-down" : "chevron-forward";
+			}
+		}
+		else {
+			this.updateSidebarWithCategoriesAsync(Category.get(parentID), menuItem.ID);
+		}
 	}
 
 	private processContentTypeUpdateMessage(message: AppMessage) {
