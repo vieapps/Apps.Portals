@@ -24,6 +24,9 @@ export class UsersService extends BaseService {
 		private datePipe: DatePipe
 	) {
 		super("Users");
+	}
+
+	public initialize() {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => this.processUpdateMessage(message));
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", () => {
 			if (this.configSvc.isAuthenticated) {
@@ -36,7 +39,7 @@ export class UsersService extends BaseService {
 				if (profile !== undefined) {
 					profile.Language = this.configSvc.appConfig.options.i18n;
 					profile.Options = this.configSvc.appConfig.options;
-					this.updateProfileAsync(profile, () => this.configSvc.storeSessionAsync());
+					this.updateProfileAsync(profile);
 				}
 			}
 			else if ("Router" === info.args.Type && "Navigated" === info.args.Mode) {

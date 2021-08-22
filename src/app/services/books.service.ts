@@ -21,7 +21,6 @@ export class BooksService extends BaseService {
 		private configSvc: ConfigurationService
 	) {
 		super("Books");
-		this.initialize();
 	}
 
 	private _reading = {
@@ -33,7 +32,7 @@ export class BooksService extends BaseService {
 		return this.configSvc.appConfig.services.all.length > 1 ? 4 : 0;
 	}
 
-	private initialize() {
+	public initialize() {
 		AppAPIs.registerAsServiceScopeProcessor("Scheduler", () => {
 			if (this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
 				const profile = this.configSvc.getAccount().profile;
@@ -47,17 +46,37 @@ export class BooksService extends BaseService {
 		AppAPIs.registerAsObjectScopeProcessor(this.name, "Statistic", message => this.processUpdateStatisticMessage(message));
 		AppAPIs.registerAsObjectScopeProcessor(this.name, "Bookmarks", message => this.processUpdateBookmarkMessage(message));
 
+		AppEvents.on(this.name, info => {
+			const args = info.args;
+			if ("Categories" === args.Type && "Updated" === args.Mode) {
+				this.updateSidebarAsync();
+			}
+			else if (("Book" === args.Type && "Open" === args.Mode) || ("Chapter" === args.Type && "Open" === args.Mode)) {
+				const book = Book.get(args.ID);
+				if (book !== undefined && book.TotalChapters > 1) {
+					this.updateTOCItem(book, args.Chapter || 1);
+				}
+			}
+			else if ("Book" === args.Type && "Close" === args.Mode && this._reading.ID !== undefined) {
+				this.updateSidebarAsync();
+				this._reading.ID = undefined;
+				this._reading.Chapter = undefined;
+			}
+		});
+
 		AppEvents.on("App", info => {
-			if ("HomePageIsOpened" === info.args.Type && this._reading.ID !== undefined && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
+			const args = info.args;
+			if ("HomePage" === args.Type && "Open" === args.Mode && this._reading.ID !== undefined) {
 				this.updateSidebarAsync();
 				this._reading.ID = undefined;
 			}
 		});
 
 		AppEvents.on("Session", info => {
-			if (("LogIn" === info.args.Type || "LogOut" === info.args.Type) && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
+			const args = info.args;
+			if (("LogIn" === args.Type || "LogOut" === args.Type)) {
 				AppUtility.invoke(() => this.prepareSidebarFooterItems(), this.configSvc.appConfig.services.active === this.name ? 456 : 789);
-				if ("LogIn" === info.args.Type) {
+				if ("LogIn" === args.Type) {
 					AppUtility.invoke(() => this.prepareSidebarFooterItems(), 3456);
 				}
 				else {
@@ -68,28 +87,12 @@ export class BooksService extends BaseService {
 		});
 
 		AppEvents.on("Profile", info => {
-			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
+			const args = info.args;
+			if ("Updated" === args.Type && "APIs" === args.Mode) {
 				AppUtility.invoke(async () => await this.getBookmarksAsync());
 				if (this.configSvc.appConfig.services.active === this.name) {
 					this.updateSidebarHeader();
 				}
-			}
-		});
-
-		AppEvents.on(this.name, info => {
-			if ("Categories" === info.args.Type && "Updated" === info.args.Mode) {
-				this.updateSidebarAsync();
-			}
-			else if (("Book" === info.args.Type && "Open" === info.args.Mode) || ("Chapter" === info.args.Type && "Open" === info.args.Mode)) {
-				const book = Book.get(info.args.ID);
-				if (book !== undefined && book.TotalChapters > 1) {
-					this.updateTOCItem(book, info.args.Chapter || 1);
-				}
-			}
-			else if ("Book" === info.args.Type && "Close" === info.args.Mode && this._reading.ID !== undefined) {
-				this.updateSidebarAsync();
-				this._reading.ID = undefined;
-				this._reading.Chapter = undefined;
 			}
 		});
 	}

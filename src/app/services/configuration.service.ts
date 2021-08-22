@@ -1,6 +1,7 @@
 declare var FB: any;
 import { Injectable } from "@angular/core";
 import { PlatformLocation } from "@angular/common";
+import { HttpClient } from "@angular/common/http";
 import { Title as BrowserTitle } from "@angular/platform-browser";
 import { Platform, NavController } from "@ionic/angular";
 import { Storage } from "@ionic/storage";
@@ -40,16 +41,14 @@ export class ConfigurationService extends BaseService {
 		private storage: Storage,
 		private browserTitle: BrowserTitle,
 		private translateSvc: TranslateService,
-		private electronSvc: ElectronService
+		private electronSvc: ElectronService,
+		http: HttpClient
 	) {
 		super("Configuration");
-		AppStorage.initializeAsync(this.storage, () => this.showLog(`Storage is ready. Driver: ${this.storage.driver}`));
+		AppEvents.initialize();
+		AppAPIs.initializeHttpClient(http);
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", () => this.reloadGeoMetaAsync());
-		AppEvents.on("App", info => {
-			if ("PlatformIsReady" === info.args.Type) {
-				this.loadGeoMetaAsync();
-			}
-		});
+		AppStorage.initializeAsync(this.storage, () => this.showLog(`Storage is ready. Driver: ${this.storage.driver}`));
 	}
 
 	private _definitions: { [key: string]: any } = {};
@@ -325,7 +324,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Initializes the configuration settings of the app */
 	public initializeAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontInitializeSession: boolean = false) {
-		return this.loadSessionAsync().then(() => dontInitializeSession ? AppUtility.invoke(onSuccess) : this.initializeSessionAsync(onSuccess, onError));
+		return this.loadSessionAsync().then(() => dontInitializeSession ? AppUtility.invoke(onSuccess) : this.initializeSessionAsync(onSuccess, onError)).then(() => this.loadGeoMetaAsync());
 	}
 
 	/** Initializes the session with remote APIs */
@@ -449,8 +448,8 @@ export class ConfigurationService extends BaseService {
 		}
 	}
 
-	/** Stores the session into storage */
-	public async storeSessionAsync(onNext?: (data?: any) => void) {
+	/** Saves the session into storage */
+	public async saveSessionAsync(onNext?: (data?: any) => void) {
 		if (AppConfig.app.persistence) {
 			try {
 				await AppStorage.setAsync("Session", AppUtility.clone(AppConfig.session, ["jwt", "captcha"]));
@@ -459,10 +458,19 @@ export class ConfigurationService extends BaseService {
 				this.showError("Error occurred while storing the session into storage", error);
 			}
 		}
-		AppEvents.broadcast("Session", { Type: "Updated" });
 		if (onNext !== undefined) {
 			onNext(AppConfig.session);
 		}
+	}
+
+	/** Stores the session into storage */
+	public storeSessionAsync(onNext?: (data?: any) => void) {
+		return this.saveSessionAsync(data => {
+			AppEvents.broadcast("Session", { Type: "Updated" });
+			if (onNext !== undefined) {
+				onNext(data);
+			}
+		});
 	}
 
 	/** Deletes the session from storage */
@@ -681,7 +689,7 @@ export class ConfigurationService extends BaseService {
 		return Promise.all([
 			AppStorage.removeAsync("GeoMeta-Countries"),
 			AppStorage.removeAsync("GeoMeta-Provinces")
-		]).then(async () => await this.loadGeoMetaAsync());
+		]).then(() => this.loadGeoMetaAsync());
 	}
 
 	/** Loads the URI settings of the app */

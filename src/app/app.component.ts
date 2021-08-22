@@ -1,6 +1,5 @@
 import { Component, OnInit, ViewChild } from "@angular/core";
 import { Router, RoutesRecognized, NavigationEnd } from "@angular/router";
-import { HttpClient } from "@angular/common/http";
 import { Platform, IonMenu } from "@ionic/angular";
 import { SplashScreen } from "@ionic-native/splash-screen/ngx";
 import { StatusBar } from "@ionic-native/status-bar/ngx";
@@ -28,7 +27,6 @@ import { BooksService } from "@app/services/books.service";
 export class AppComponent implements OnInit {
 
 	constructor(
-		private router: Router,
 		private platform: Platform,
 		private splashScreen: SplashScreen,
 		private statusBar: StatusBar,
@@ -39,10 +37,24 @@ export class AppComponent implements OnInit {
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService,
 		private booksSvc: BooksService,
-		http: HttpClient
+		router: Router
 	) {
 		console.log("<AppComponent>: Initializing...");
-		AppAPIs.initializeHttpClient(http);
+		router.events.subscribe(event => {
+			if (event instanceof RoutesRecognized) {
+				if (AppAPIs.isPingPeriodTooLarge) {
+					AppAPIs.reopenWebSocket("<AppComponent>: Ping period is too large...");
+				}
+				this.configSvc.appConfig.URLs.routerParams = (event as RoutesRecognized).state.root.params;
+				this.configSvc.pushURL((event as RoutesRecognized).url, (event as RoutesRecognized).state.root.queryParams);
+				const current = this.configSvc.getCurrentURL();
+				AppEvents.broadcast("App", { Type: "Router", Mode: "Navigating", URL: current.url, Params: current.params });
+			}
+			else if (event instanceof NavigationEnd) {
+				const current = this.configSvc.getCurrentURL();
+				AppEvents.broadcast("App", { Type: "Router", Mode: "Navigated", URL: current.url, Params: current.params });
+			}
+		});
 	}
 
 	sidebar: AppSidebar = {
@@ -88,22 +100,6 @@ export class AppComponent implements OnInit {
 	}
 
 	public ngOnInit() {
-		this.router.events.subscribe(event => {
-			if (event instanceof RoutesRecognized) {
-				this.configSvc.appConfig.URLs.routerParams = (event as RoutesRecognized).state.root.params;
-				this.configSvc.pushURL((event as RoutesRecognized).url, (event as RoutesRecognized).state.root.queryParams);
-				const current = this.configSvc.getCurrentURL();
-				AppEvents.broadcast("App", { Type: "Router", Mode: "Navigating", URL: current.url, Params: current.params });
-				if (AppAPIs.isPingPeriodTooLarge) {
-					AppAPIs.reopenWebSocket("<AppComponent>: Ping period is too large...");
-				}
-			}
-			else if (event instanceof NavigationEnd) {
-				const current = this.configSvc.getCurrentURL();
-				AppEvents.broadcast("App", { Type: "Router", Mode: "Navigated", URL: current.url, Params: current.params });
-			}
-		});
-
 		this.platform.ready().then(async () => {
 			await this.configSvc.loadURIsAsync();
 			await this.configSvc.loadOptionsAsync();
@@ -114,6 +110,7 @@ export class AppComponent implements OnInit {
 			if (AppUtility.isNotEmpty(session.device) ) {
 				appConfig.session.device = session.device;
 			}
+			this.usersSvc.initialize();
 			this.configSvc.prepare();
 			this.prepareSidebar();
 			this.prepareEventProcessors();
@@ -134,7 +131,7 @@ export class AppComponent implements OnInit {
 			}
 
 			this.sidebar.Header.Title = appConfig.app.name;
-			await this.updateSidebarAsync({}, true, () => AppEvents.broadcast("App", { Type: "PlatformIsReady" }));
+			await this.updateSidebarAsync({}, true);
 
 			if (this.platform.is("cordova")) {
 				this.splashScreen.hide();
@@ -440,6 +437,7 @@ export class AppComponent implements OnInit {
 			}
 		});
 
+
 		AppEvents.on("App", info => {
 			if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
 				AppEvents.sendToElectron("App", { Type: "Language", Mode: "Changed", Language: this.configSvc.appConfig.language });
@@ -537,7 +535,7 @@ export class AppComponent implements OnInit {
 
 	private finalize(onNext?: () => void) {
 		const appConfig = this.configSvc.appConfig;
-		console.log("<AppComponent>: The app was initialized", appConfig.isNativeApp ? AppUtility.stringify(appConfig.app) : appConfig.app);
+		console.log("<AppComponent>: Initialized", appConfig.app);
 		if (this.configSvc.isWebApp) {
 			PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
 		}
@@ -545,10 +543,13 @@ export class AppComponent implements OnInit {
 
 		AppAPIs.openWebSocket(async () => {
 			if (appConfig.services.all.findIndex(svc => svc.name === this.portalsCoreSvc.name) > -1) {
+				this.portalsCoreSvc.initialize();
+				this.portalsCmsSvc.initialize();
 				await this.portalsCoreSvc.initializeAsync();
 				await this.portalsCmsSvc.initializeAsync();
 			}
 			if (appConfig.services.all.findIndex(svc => svc.name === this.booksSvc.name) > -1) {
+				this.booksSvc.initialize();
 				await this.booksSvc.initializeAsync();
 			}
 			await this.appFormsSvc.hideLoadingAsync(() => {
@@ -580,7 +581,7 @@ export class AppComponent implements OnInit {
 							this.configSvc.navigateForwardAsync(redirect);
 						}
 						catch (error) {
-							console.error(`<AppComponent>: The requested URI for redirecting is not well-form => ${redirect}`, appConfig.isNativeApp ? AppUtility.stringify(error) : error);
+							console.error(`<AppComponent>: The requested URI for redirecting is not well-form => ${redirect}`, error);
 						}
 					}
 				}

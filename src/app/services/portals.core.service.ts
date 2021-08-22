@@ -34,7 +34,6 @@ export class PortalsCoreService extends BaseService {
 		private appFormsSvc: AppFormsService
 	) {
 		super("Portals");
-		this.initialize();
 	}
 
 	private _themes: Array<{ name: string, description: string; author: string; intro: string; screenshots: Array<string> }>;
@@ -95,7 +94,7 @@ export class PortalsCoreService extends BaseService {
 		return Module.active;
 	}
 
-	private initialize() {
+	public initialize() {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => {
 			if (message.Data !== undefined && message.Data.SystemID !== undefined && this.activeOrganizations.indexOf(message.Data.SystemID) > -1) {
 				switch (message.Type.Object) {
@@ -138,27 +137,29 @@ export class PortalsCoreService extends BaseService {
 		});
 
 		AppEvents.on(this.name, info => {
-			if ("Info" === info.args.Type && "Request" === info.args.Mode && AppUtility.isNotEmpty(info.args.ID)) {
-				if ("Organization" === info.args.Object) {
-					this.getOrganizationAsync(info.args.ID);
+			const args = info.args;
+			if ("Info" === args.Type && "Request" === args.Mode && AppUtility.isNotEmpty(args.ID)) {
+				if ("Organization" === args.Object) {
+					this.getOrganizationAsync(args.ID);
 				}
-				else if ("Module" === info.args.Object) {
-					this.getModuleAsync(info.args.ID);
+				else if ("Module" === args.Object) {
+					this.getModuleAsync(args.ID);
 				}
-				else if ("ContentType" === info.args.Object) {
-					this.getContentTypeAsync(info.args.ID);
+				else if ("ContentType" === args.Object) {
+					this.getContentTypeAsync(args.ID);
 				}
 			}
-			else if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
+			else if ("Organization" === args.Type && "Changed" === args.Mode) {
 				this.updateSidebarHeader();
 				this.prepareSidebar();
 			}
 		});
 
 		AppEvents.on("Session", info => {
-			if (("LogIn" === info.args.Type || "LogOut" === info.args.Type) && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
+			const args = info.args;
+			if (("LogIn" === args.Type || "LogOut" === args.Type)) {
 				this.prepareSidebarFooterItemsAsync().then(() => this.activeSidebar());
-				if ("LogOut" === info.args.Type) {
+				if ("LogOut" === args.Type) {
 					this.configSvc.appConfig.options.extras["organizations"] = new Array<string>();
 					this.configSvc.saveOptionsAsync();
 				}
@@ -166,14 +167,16 @@ export class PortalsCoreService extends BaseService {
 		});
 
 		AppEvents.on("Account", info => {
-			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
+			const args = info.args;
+			if ("Updated" === args.Type && "APIs" === args.Mode) {
 				this.updateSidebarHeader();
 				this.prepareSidebarFooterItemsAsync().then(() => this.prepareSidebar());
 			}
 		});
 
 		AppEvents.on("Profile", info => {
-			if ("Updated" === info.args.Type && "APIs" === info.args.Mode && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
+			const args = info.args;
+			if ("Updated" === args.Type && "APIs" === args.Mode) {
 				const organizations = this.activeOrganizations;
 				const organization = this.activeOrganization;
 				if (organization === undefined || organizations.indexOf(organization.ID) < 0) {
@@ -1283,7 +1286,9 @@ export class PortalsCoreService extends BaseService {
 				this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 			}
 		}
-		AppEvents.broadcast("OpenSidebar", { Name: name });
+		if (!sidebar.Visible) {
+			sidebar.active(name, true);
+		}
 	}
 
 	private prepareSidebar(onNext?: () => void) {

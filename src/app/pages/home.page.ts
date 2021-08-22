@@ -39,21 +39,22 @@ export class HomePage implements OnInit, OnDestroy {
 		}
 
 		AppEvents.on("App", info => {
-			if ("Initialized" === info.args.Type) {
+			const args = info.args;
+			if ("Initialized" === args.Type) {
 				this.prepare();
 			}
-			else if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
+			else if ("Language" === args.Type && "Changed" === args.Mode) {
 				this.setTitleAsync();
 			}
-			else if ("Router" === info.args.Type && "Navigated" === info.args.Mode && this.configSvc.appConfig.URLs.home === info.args.URL) {
+			else if ("Router" === args.Type && "Navigated" === args.Mode && this.configSvc.appConfig.URLs.home === args.URL) {
 				AppUtility.invoke(() => {
 					this.prepare("Return");
 					AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Return" });
 				});
 				this.changes = +new Date();
 			}
-			else if ("HomePage" === info.args.Type && "SetTitle" === info.args.Mode) {
-				this.titleResource = info.args.ResourceID || "common.sidebar.home";
+			else if ("HomePage" === args.Type && "SetTitle" === args.Mode) {
+				this.titleResource = args.ResourceID || "common.sidebar.home";
 			}
 		}, "HomePageEvents");
 	}
@@ -67,7 +68,10 @@ export class HomePage implements OnInit, OnDestroy {
 	}
 
 	private async setTitleAsync() {
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync(this.titleResource);
+		const title = await this.configSvc.getResourceAsync(this.titleResource);
+		if (this.titleResource !== title) {
+			this.title = this.configSvc.appTitle = title;
+		}
 	}
 
 }
