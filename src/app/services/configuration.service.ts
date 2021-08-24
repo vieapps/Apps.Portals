@@ -649,18 +649,20 @@ export class ConfigurationService extends BaseService {
 			AppEvents.broadcast("App", { Type: "GeoMetaUpdated", Data: AppConfig.geoMeta });
 		}
 
+		let path = `statics/geo/provinces/${AppConfig.geoMeta.country || "VN"}.json`;
 		await this.readAsync(
-			`statics/geo/provinces/${AppConfig.geoMeta.country}.json`,
-			async provinces => await this.saveGeoMetaAsync(provinces, async () => {
+			path,
+			provinces => this.saveGeoMetaAsync(provinces, () => {
 				if (AppConfig.geoMeta.countries.length < 1) {
-					await this.readAsync(
-						"statics/geo/countries.json",
-						async countries => await this.saveGeoMetaAsync(countries),
-						error => this.showError("Error occurred while fetching the meta countries", error)
+					path = "statics/geo/countries.json";
+					this.readAsync(
+						path,
+						countries => this.saveGeoMetaAsync(countries),
+						error => this.showError(`Error occurred while fetching the meta countries [${this.getPath(path)}]`, error)
 					);
 				}
 			}),
-			error => this.showError("Error occurred while fetching the meta provinces", error)
+			error => this.showError(`Error occurred while fetching the meta provinces [${this.getPath(path)}]`, error)
 		);
 	}
 

@@ -129,14 +129,9 @@ export class AppComponent implements OnInit {
 				}
 			}
 
-			this.usersSvc.initialize();
-			if (appConfig.services.all.findIndex(svc => svc.name === this.portalsCoreSvc.name) > -1) {
-				this.portalsCoreSvc.initialize();
-				this.portalsCmsSvc.initialize();
-			}
-			if (appConfig.services.all.findIndex(svc => svc.name === this.booksSvc.name) > -1) {
-				this.booksSvc.initialize();
-			}
+			[this.usersSvc, this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc]
+				.filter(service => "Users" === service.name || appConfig.services.all.findIndex(svc => svc.name === service.name) > -1)
+				.forEach(service => service.initialize());
 
 			this.sidebar.Header.Title = appConfig.app.name;
 			await this.updateSidebarAsync({}, true);
@@ -155,9 +150,12 @@ export class AppComponent implements OnInit {
 
 			if (appConfig.isDebug && !appConfig.isNativeApp) {
 				window["__vieapps"] = {
-					appComponent: this,
-					appAPIs: AppAPIs,
-					appEvents: AppEvents
+					component: this,
+					apis: AppAPIs,
+					events: AppEvents,
+					crypto: AppCrypto,
+					utils: AppUtility,
+					track: TrackingUtility
 				};
 			}
 		});
@@ -550,59 +548,44 @@ export class AppComponent implements OnInit {
 	}
 
 	private finalize(onNext?: () => void) {
-		if (this.configSvc.isWebApp) {
-			PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
-		}
-
 		const appConfig = this.configSvc.appConfig;
-		console.log("<AppComponent>: Initialized", appConfig.app);
-		this.sidebar.normalizeTopMenu();
-
-		AppAPIs.openWebSocket(async () => {
-			if (appConfig.services.all.findIndex(svc => svc.name === this.portalsCoreSvc.name) > -1) {
-				this.portalsCoreSvc.initialize();
-				this.portalsCmsSvc.initialize();
-				await this.portalsCoreSvc.initializeAsync();
-				await this.portalsCmsSvc.initializeAsync();
-			}
-			if (appConfig.services.all.findIndex(svc => svc.name === this.booksSvc.name) > -1) {
-				this.booksSvc.initialize();
-				await this.booksSvc.initializeAsync();
-			}
-			await this.appFormsSvc.hideLoadingAsync(() => {
-				const data = {
-					URIs: appConfig.URIs,
-					app: appConfig.app,
-					session: appConfig.session,
-					services: appConfig.services,
-					accounts: appConfig.accounts,
-					options: appConfig.options,
-					languages: appConfig.languages
-				};
-				AppEvents.broadcast("App", { Type: "Initialized", Data: data });
-				AppEvents.sendToElectron("App", { Type: "Initialized", Data: data});
-				if (onNext !== undefined) {
-					onNext();
-				}
-				else {
-					let redirect = this.configSvc.queryParams["redirect"] as string || appConfig.URLs.redirectToWhenReady;
-					if (AppUtility.isNotEmpty(redirect)) {
-						appConfig.URLs.redirectToWhenReady = undefined;
-						appConfig.URLs.stack.update({ url: appConfig.URLs.home, params: {} }, appConfig.URLs.stack.length - 1);
-						try {
-							redirect = AppCrypto.base64urlDecode(redirect);
-							if (appConfig.isDebug) {
-								console.warn(`<AppComponent>: Redirect to the requested URI => ${redirect}`);
+		AppUtility.invoke(() => this.sidebar.normalizeTopMenu())
+			.then(() => console.log("<AppComponent>: Initialized", appConfig.isDebug ? appConfig.app : undefined))
+			.then(this.configSvc.isWebApp ? () => PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect()) : () => {})
+			.then(() => AppAPIs.openWebSocket(() => Promise.all([this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc].filter(service => appConfig.services.all.findIndex(svc => svc.name === service.name) > -1).map(service => service.initializeAsync()))
+				.then(() => this.appFormsSvc.hideLoadingAsync())
+				.then(() => {
+					const data = {
+						URIs: appConfig.URIs,
+						app: appConfig.app,
+						session: appConfig.session,
+						services: appConfig.services,
+						accounts: appConfig.accounts,
+						options: appConfig.options,
+						languages: appConfig.languages
+					};
+					AppEvents.broadcast("App", { Type: "Initialized", Data: data });
+					AppEvents.sendToElectron("App", { Type: "Initialized", Data: data});
+					AppUtility.invoke(onNext !== undefined ? () => onNext() : () => {
+						let redirect = this.configSvc.queryParams["redirect"] as string || appConfig.URLs.redirectToWhenReady;
+						if (AppUtility.isNotEmpty(redirect)) {
+							appConfig.URLs.redirectToWhenReady = undefined;
+							appConfig.URLs.stack.update({ url: appConfig.URLs.home, params: {} }, appConfig.URLs.stack.length - 1);
+							try {
+								redirect = AppCrypto.base64urlDecode(redirect);
+								if (appConfig.isDebug) {
+									console.warn(`<AppComponent>: Redirect to the requested URI => ${redirect}`);
+								}
+								this.configSvc.navigateForwardAsync(redirect);
 							}
-							this.configSvc.navigateForwardAsync(redirect);
+							catch (error) {
+								console.error(`<AppComponent>: The requested URI for redirecting is not well-form => ${redirect}`, error);
+							}
 						}
-						catch (error) {
-							console.error(`<AppComponent>: The requested URI for redirecting is not well-form => ${redirect}`, error);
-						}
-					}
+					});
 				}
-			});
-		});
+			)
+		));
 	}
 
 }

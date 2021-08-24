@@ -586,7 +586,7 @@ export class AppAPIs {
 	) {
 		const http = this.http;
 		if (http === undefined) {
-			throw new Error("[AppAPIs]: Please call the 'initializeHttpClient' method to initialize the HttpClient instance before sending any request!");
+			throw new Error("[AppAPIs]: Please call the 'initialize' first to initialize the HttpClient instance before sending any request!");
 		}
 		switch ((verb || "GET").toUpperCase()) {
 			case "GET":
