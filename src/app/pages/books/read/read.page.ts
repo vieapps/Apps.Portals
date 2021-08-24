@@ -91,7 +91,7 @@ export class BooksReadPage implements OnInit, OnDestroy {
 		}, "ReadBookEvents");
 
 		AppEvents.on(this.booksSvc.name, info => {
-			if ("Book" === info.args.Type && "Delete" === info.args.Mode && this.book.ID === info.args.ID) {
+			if ("Book" === info.args.Type && "Deleted" === info.args.Mode && this.book.ID === info.args.ID) {
 				this.onClose();
 				this.configSvc.navigateBackAsync();
 			}
@@ -123,9 +123,9 @@ export class BooksReadPage implements OnInit, OnDestroy {
 	}
 
 	onScrollEnd() {
-		this.contentCtrl.getScrollElement().then(async element => {
+		this.contentCtrl.getScrollElement().then(element => {
 			this.scrollOffset = element.scrollTop;
-			await this.booksSvc.updateBookmarkAsync(this.book.ID, this.chapter, this.scrollOffset);
+			this.booksSvc.updateBookmarkAsync(this.book.ID, this.chapter, this.scrollOffset);
 		});
 	}
 
@@ -301,16 +301,13 @@ export class BooksReadPage implements OnInit, OnDestroy {
 	}
 
 	openRecrawl() {
-		this.trackAsync(this.title, "ReCrawl").then(async () => await this.appFormsSvc.showAlertAsync(
+		this.trackAsync(this.title, "ReCrawl").then(async () => this.appFormsSvc.showAlertAsync(
 			await this.configSvc.getResourceAsync("books.crawl.header"),
 			undefined,
 			undefined,
-			async mode => {
-				await this.booksSvc.sendRequestToReCrawlAsync(this.book.ID, this.book.SourceUrl, mode);
-				await Promise.all([
-					this.trackAsync(this.title, "ReCrawl"),
-					this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.crawl.message"), 2000)
-				]);
+			mode => {
+				this.booksSvc.sendRequestToReCrawlAsync(this.book.ID, this.book.SourceUrl, mode);
+				this.trackAsync(this.title, "ReCrawl").then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.crawl.message"), 2000));
 			},
 			await this.configSvc.getResourceAsync("books.crawl.button"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel"),
@@ -340,23 +337,14 @@ export class BooksReadPage implements OnInit, OnDestroy {
 			await this.configSvc.getResourceAsync("common.buttons.delete"),
 			undefined,
 			await this.configSvc.getResourceAsync("books.read.delete.confirm"),
-			async () => await this.booksSvc.deleteBookAsync(
+			() => this.booksSvc.deleteBookAsync(
 				this.book.ID,
-				async () => {
-					await this.booksSvc.deleteBookmarkAsync(this.book.ID);
-					await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.read.delete.message", { title: this.book.Title }));
-					await Promise.all([
-						this.trackAsync(this.title, "Delete"),
-						this.configSvc.navigateBackAsync()
-					]);
+				() => {
+					this.booksSvc.deleteBookmarkAsync(this.book.ID).then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.read.delete.message", { title: this.book.Title })));
+					this.trackAsync(this.title, "Delete").then(() => this.configSvc.navigateBackAsync());
 				},
-				async error => await Promise.all([
-					this.trackAsync(this.title, "Delete"),
-					this.appFormsSvc.showErrorAsync(error)
-				])
-			),
-			await this.configSvc.getResourceAsync("common.buttons.ok"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel")
+				error => this.trackAsync(this.title, "Delete").then(() => this.appFormsSvc.showErrorAsync(error))
+			)
 		));
 	}
 
