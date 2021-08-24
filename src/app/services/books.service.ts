@@ -167,7 +167,6 @@ export class BooksService extends BaseService {
 	private getTOCItem(book: Book, index: number, isReading: boolean) {
 		return {
 			Title: book.TOCs[index],
-			Detail: isReading,
 			Icon: isReading ? { Name: "chevron-forward", Color: "primary", Slot: "end" } : undefined,
 			OnClick: _ => AppEvents.broadcast(this.name, { Type: "Chapter", Mode: "Open", ID: book.ID, Chapter: index + 1 })
 		} as AppSidebarMenuItem;
@@ -257,24 +256,19 @@ export class BooksService extends BaseService {
 	public getBookAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontUpdateCounter: boolean = false) {
 		const book = Book.get(id);
 		return book !== undefined && (book.TOCs.length > 0 || AppUtility.isNotEmpty(book.Body))
-			? AppUtility.invoke(onSuccess).then(async () => dontUpdateCounter ? await AppUtility.promise : await this.updateBookCounterAsync(id))
+			? AppUtility.invoke(onSuccess).then(dontUpdateCounter ? () => {} : () => this.updateBookCounterAsync(id))
 			: this.readAsync(
 					this.getPath("book", id),
 					data => {
 						Book.update(data);
 						if (!dontUpdateCounter) {
-							AppUtility.invoke(async () => await this.updateBookCounterAsync(id));
+							this.updateBookCounterAsync(id);
 						}
 						if (onSuccess !== undefined) {
 							onSuccess(data);
 						}
 					},
-					error => {
-						console.error(this.getError("Error occurred while reading", error));
-						if (onError !== undefined) {
-							onError(error);
-						}
-					}
+					error => this.processError("Error occurred while reading", error, onError)
 				);
 	}
 
@@ -284,9 +278,9 @@ export class BooksService extends BaseService {
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("book", id, `chapter=${chapter}`),
-					async data => {
+					data => {
 						this.updateBookChapter(data);
-						await this.updateBookCounterAsync(id, "view", onSuccess);
+						this.updateBookCounterAsync(id, "view", onSuccess);
 					},
 					error => this.processError("Error occurred while reading a chapter", error, onError)
 				);
@@ -320,7 +314,7 @@ export class BooksService extends BaseService {
 			: undefined;
 		if (book !== undefined && AppUtility.isArray(data.Counters, true)) {
 			(data.Counters as Array<any>).forEach(counter => book.Counters.set(counter.Type, CounterInfo.deserialize(counter)));
-			AppEvents.broadcast(this.name, { Type: "StatisticsUpdated", ID: book.ID });
+			AppEvents.broadcast(this.name, { Type: "Statistics", Mode: "Updated", ID: book.ID });
 		}
 		if (onNext !== undefined) {
 			onNext(data);
@@ -347,7 +341,7 @@ export class BooksService extends BaseService {
 			: undefined;
 		if (book !== undefined && AppUtility.isObject(data.Files, true)) {
 			book.Files = data.Files;
-			AppEvents.broadcast(this.name, { Type: "FilesUpdated", ID: book.ID });
+			AppEvents.broadcast(this.name, { Type: "Files", Mode: "Updated", ID: book.ID });
 		}
 	}
 

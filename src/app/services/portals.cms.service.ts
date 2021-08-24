@@ -603,7 +603,7 @@ export class PortalsCmsService extends BaseService {
 			if (allActiveOrganizations) {
 				const availableOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync();
 				if (activeOrganization !== undefined) {
-					availableOrganizations.removeAt(availableOrganizations.findIndex(org => org.ID === activeOrganization.ID));
+					availableOrganizations.removeAt(availableOrganizations.findIndex(organization => organization.ID === activeOrganization.ID));
 				}
 				const availableContentTypes = new Array<ContentType>();
 				availableOrganizations.forEach(organization => organization.modules.forEach(module => availableContentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module))));
