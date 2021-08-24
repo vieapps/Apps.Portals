@@ -5,12 +5,12 @@ import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppMessage } from "@app/components/app.objects";
 import { AppFormsControlConfig, AppFormsControl } from "@app/components/forms.objects";
 import { AppFormsService } from "@app/components/forms.service";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AttachmentInfo } from "@app/models/base";
-import { AppMessage } from "@app/components/app.objects";
 
 @Injectable()
 export class FilesService extends BaseService {
@@ -47,18 +47,18 @@ export class FilesService extends BaseService {
 		return formData;
 	}
 
-	public getUploadHeaders(additional?: { [header: string]: string }, asBase64?: boolean) {
+	public getUploadHeaders(additional?: { [key: string]: string }, asBase64?: boolean) {
 		const headers = this.configSvc.appConfig.getAuthenticatedInfo();
-		AppUtility.getAttributes(additional).forEach(name => headers[name] = additional[name]);
-		AppUtility.getAttributes(headers, name => AppUtility.isEmpty(headers[name])).forEach(name => delete headers[name]);
+		AppUtility.toKeyValuePair(additional).filter(kvp => AppUtility.isNotNull(kvp.key) && AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
+		AppUtility.getAttributes(headers, key => AppUtility.isEmpty(headers[key])).forEach(key => delete headers[key]);
 		if (AppUtility.isTrue(asBase64)) {
 			headers["x-as-base64"] = "true";
 		}
 		return headers;
 	}
 
-	public getFileHeaders(options: FileOptions, additional?: { [header: string]: string }) {
-		const headers: { [header: string]: string } = {
+	public getFileHeaders(options: FileOptions, additional?: { [key: string]: string }) {
+		const headers: { [key: string]: string } = {
 			"x-service-name": options.ServiceName,
 			"x-object-name": options.ObjectName,
 			"x-system-id": options.SystemID,
@@ -70,8 +70,8 @@ export class FilesService extends BaseService {
 			"x-tracked": AppUtility.isTrue(options.IsTracked) ? "true" : undefined,
 			"x-temporary": AppUtility.isTrue(options.IsTemporary) ? "true" : undefined
 		};
-		AppUtility.toKeyValuePair(options.Extras).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
-		AppUtility.toKeyValuePair(additional).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
+		AppUtility.toKeyValuePair(options.Extras).filter(kvp => AppUtility.isNotNull(kvp.key) && AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
+		AppUtility.toKeyValuePair(additional).filter(kvp => AppUtility.isNotNull(kvp.key) && AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
 		return headers;
 	}
 
@@ -95,10 +95,7 @@ export class FilesService extends BaseService {
 				}
 			},
 			error => {
-				console.error(this.getError("Error occurred while uploading", error), error);
-				if (onError !== undefined) {
-					onError(AppUtility.parseError(error));
-				}
+				this.processError("Error occurred while uploading", error, onError);
 			}
 		);
 	}
@@ -119,10 +116,7 @@ export class FilesService extends BaseService {
 			}
 		}
 		catch (error) {
-			console.error(this.getError("Error occurred while uploading", error), error);
-			if (onError !== undefined) {
-				onError(AppUtility.parseError(error));
-			}
+			this.processError("Error occurred while uploading", error, onError);
 		}
 	}
 
@@ -268,7 +262,7 @@ export class FilesService extends BaseService {
 							}, { onlySelf: true });
 						},
 						this.configSvc.fileLimits.thumbnail,
-						async () => await this.appFormsSvc.showToastAsync("Too big...")
+						() => this.appFormsSvc.showToastAsync("Too big...")
 					);
 				}
 				else {
@@ -299,7 +293,7 @@ export class FilesService extends BaseService {
 				OnClick: (_, formControl) => {
 					const value = formControl.value;
 					if (value !== undefined && AppUtility.isNotEmpty(value.current)) {
-						PlatformUtility.copyToClipboardAsync(value.current, async () => await this.appFormsSvc.showToastAsync("Copied..."));
+						PlatformUtility.copyToClipboardAsync(value.current, () => this.appFormsSvc.showToastAsync("Copied..."));
 					}
 				}
 			};
@@ -356,16 +350,15 @@ export class FilesService extends BaseService {
 		};
 
 		if (allowDelete) {
-			controlConfig.Extras.settings.handlers.onDelete = async (attachment: AttachmentInfo) => await this.appFormsSvc.showAlertAsync(
+			controlConfig.Extras.settings.handlers.onDelete = async (attachment: AttachmentInfo) => this.appFormsSvc.showAlertAsync(
 				undefined,
 				await this.configSvc.getResourceAsync("files.attachments.confirm", { name: attachment.Filename }),
 				undefined,
-				async () => {
-					await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.buttons.delete"));
-					await this.deleteAttachmentAsync(
+				() => {
+					AppUtility.invoke(async () => this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.buttons.delete"))).then(() => this.deleteAttachmentAsync(
 						attachment.ID,
-						async _ => await this.appFormsSvc.hideLoadingAsync(),
-						async error => await this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showErrorAsync(error)),
+						() => this.appFormsSvc.hideLoadingAsync(),
+						error => this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showErrorAsync(error)),
 						{
 							"x-service-name": attachment.ServiceName,
 							"x-object-name": attachment.ObjectName,
@@ -373,7 +366,7 @@ export class FilesService extends BaseService {
 							"x-entity": attachment.EntityInfo,
 							"x-object-id": attachment.ObjectID
 						}
-					);
+					));
 				},
 				await this.configSvc.getResourceAsync("common.buttons.delete"),
 				await this.configSvc.getResourceAsync("common.buttons.cancel")
@@ -381,7 +374,7 @@ export class FilesService extends BaseService {
 		}
 
 		if (allowEdit && editAttachmentModalPage !== undefined) {
-			controlConfig.Extras.settings.handlers.onEdit = async (attachment: AttachmentInfo) => await this.appFormsSvc.showModalAsync(
+			controlConfig.Extras.settings.handlers.onEdit = (attachment: AttachmentInfo) => this.appFormsSvc.showModalAsync(
 				editAttachmentModalPage,
 				{
 					mode: "edit",
