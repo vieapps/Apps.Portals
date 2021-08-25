@@ -87,6 +87,7 @@ export class PortalsCmsService extends BaseService {
 
 		AppEvents.on(this.name, info => {
 			const args = info.args;
+			const organization = this.portalsCoreSvc.activeOrganization;
 			if ("UpdateSidebar" === args.Type) {
 				if ("ContentTypes" === args.Mode) {
 					this._sidebarCategory = undefined;
@@ -113,13 +114,15 @@ export class PortalsCmsService extends BaseService {
 				this.updateSidebarAsync();
 			}
 			else if ("FeaturedContents" === args.Type && "Request" === args.Mode) {
-				const organization = this.portalsCoreSvc.activeOrganization;
-				if (organization !== undefined && !this._noContents.contains(organization.ID)) {
+				if (!this._noContents.contains(organization.ID)) {
 					if (organization.modules.toList().SelectMany(module => module.contentTypes.toList()).Count() > 0) {
 						this._noContents.add(organization.ID);
 						this.prepareFeaturedContentsAsync(false);
 					}
 				}
+			}
+			else if (organization.ID === args.SystemID && ("CMS.Content" === args.Object || "CMS.Item" === args.Object) && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type)) {
+				this.prepareFeaturedContents(organization.ID);
 			}
 		});
 
@@ -1028,9 +1031,6 @@ export class PortalsCmsService extends BaseService {
 			if (AppUtility.isArray(message.Data.OtherCategories)) {
 				(message.Data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: categoryID }));
 			}
-			if (this.configSvc.isAuthenticated) {
-				this.prepareFeaturedContents(message.Data.SystemID);
-			}
 		}
 	}
 
@@ -1187,9 +1187,6 @@ export class PortalsCmsService extends BaseService {
 
 		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
 			AppEvents.broadcast(this.name, { Object: "CMS.Item", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
-			if (this.configSvc.isAuthenticated) {
-				this.prepareFeaturedContents(message.Data.SystemID);
-			}
 		}
 	}
 
