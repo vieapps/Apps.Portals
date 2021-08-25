@@ -395,59 +395,49 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	delete() {
-		this.trackAsync(this.resources.delete, "Delete").then(async () => await this.appFormsSvc.showAlertAsync(
-			undefined,
-			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete"),
-			undefined,
-			async () => {
-				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"));
-				await this.portalsCmsSvc.deleteContentAsync(
+		AppUtility.invoke(async () => {
+			const title = await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete");
+			const button = await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove");
+			const confirm = await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete");
+			const success = await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete");
+			this.portalsCoreSvc.confirmAsync(
+				confirm,
+				() => this.appFormsSvc.showLoadingAsync(title).then(() => this.portalsCmsSvc.deleteContentAsync(
 					this.content.ID,
-					async data => {
+					data => {
 						AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: data.CategoryID });
 						if (AppUtility.isArray(data.OtherCategories)) {
 							(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
 						}
-						await Promise.all([
-							this.trackAsync(this.resources.delete, "Delete"),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]);
+						this.trackAsync(title, "Delete").then(() => this.appFormsSvc.showToastAsync(success)).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
 					},
-					async error => await Promise.all([
-						this.appFormsSvc.showErrorAsync(error),
-						this.trackAsync(this.resources.delete, "Delete")
-					])
-				);
-			},
-			await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel")
-		));
+					error => this.trackAsync(title, "Delete").then(() => this.appFormsSvc.showErrorAsync(error))
+				)),
+				true,
+				button
+			);
+		});
 	}
 
 	deleteThumbnail() {
-		this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail").then(async () => await this.appFormsSvc.showAlertAsync(
-			undefined,
-			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.deleteThumbnail"),
-			undefined,
-			async () => {
-				await this.filesSvc.deleteThumbnailAsync(
+		AppUtility.invoke(async () => {
+			const button = await this.configSvc.getResourceAsync("common.buttons.delete");
+			const confirm = await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.deleteThumbnail");
+			this.portalsCoreSvc.confirmAsync(
+				confirm,
+				() => this.filesSvc.deleteThumbnailAsync(
 					this.content.thumbnails[0].ID,
-					async _ => {
+					() => {
 						this.prepareAttachments("Thumbnails", [], undefined, this.content.thumbnails[0]);
 						this.content.thumbnails.removeAll();
-						await this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail");
+						this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail");
 					},
-					async error => await Promise.all([
-						this.appFormsSvc.showErrorAsync(error),
-						this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail")
-					]),
-					this.portalsCoreSvc.getPortalFileHeaders(this.content)
-				);
-			},
-			await this.configSvc.getResourceAsync("common.buttons.delete"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel")
-		));
+					error => this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail").then(() => this.appFormsSvc.showErrorAsync(error))
+				),
+				true,
+				button
+			);
+		});
 	}
 
 	cancel() {
