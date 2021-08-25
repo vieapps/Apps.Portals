@@ -585,21 +585,22 @@ export class AppFormsService {
 		}
 	}
 
-	/** Shows the alert/confirmation box  */
-	public async showAlertAsync(header: string = null, message: string = null, subMessage?: string, postProcess?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string, inputs?: Array<any>, backdropDismiss: boolean = false) {
-		await this.hideLoadingAsync(() => this.hideAlertAsync());
+	/** Shows the alert box  */
+	public async showAlertAsync(header: string = null, message: string = null, subMessage?: string, onOkClick?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string, inputs?: Array<any>, backdropDismiss: boolean = false) {
+		await this.hideLoadingAsync();
+		await this.hideAlertAsync();
 		const buttons: Array<{ text: string; role: string; handler: (data?: any) => void; }> = AppUtility.isNotEmpty(cancelButtonText)
 			? [{ text: cancelButtonText, role: "cancel", handler: () => this.hideAlertAsync() }]
 			: [];
 		buttons.push({
 			text: okButtonText || await this.getResourceAsync("common.buttons.ok"),
 			role: undefined as string,
-			handler: (data?: any) => {
-				if (postProcess !== undefined) {
-					postProcess(data);
+			handler: (data?: any) => AppUtility.invoke(() => {
+				if (onOkClick !== undefined) {
+					onOkClick(data);
 				}
 				this.hideAlertAsync();
-			}
+			})
 		});
 		this._alert = await this.alertController.create({
 			header: header || await this.getResourceAsync("common.alert.header.general"),
@@ -612,7 +613,7 @@ export class AppFormsService {
 		await this._alert.present();
 	}
 
-	/** Hides the alert/confirmation sheet */
+	/** Hides the alert box */
 	public async hideAlertAsync(onNext?: () => void) {
 		if (this._alert !== undefined) {
 			await this._alert.dismiss();
@@ -621,6 +622,11 @@ export class AppFormsService {
 		if (onNext !== undefined) {
 			onNext();
 		}
+	}
+
+	/** Shows the confirmation box  */
+	public async showConfirmAsync(message: string = null, onOkClick?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string) {
+		await this.showAlertAsync(undefined, message, undefined, onOkClick, okButtonText, cancelButtonText || await this.configSvc.getResourceAsync("common.buttons.cancel"));
 	}
 
 	/** Shows the error message (by the alert confirmation box) */

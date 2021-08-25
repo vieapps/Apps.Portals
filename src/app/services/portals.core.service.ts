@@ -3103,4 +3103,10 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
+	public confirmAsync(message: string = null, onOkClick?: (data?: any) => void, showCancelButton: boolean = false, okButtonText?: string, cancelButtonText?: string) {
+		return showCancelButton
+			? AppUtility.invoke(async () => this.appFormsSvc.showAlertAsync(undefined, message, undefined, onOkClick, okButtonText, cancelButtonText || await this.configSvc.getResourceAsync("common.buttons.cancel")))
+			: this.appFormsSvc.showAlertAsync(undefined, message, undefined, onOkClick, okButtonText);
+	}
+
 }
