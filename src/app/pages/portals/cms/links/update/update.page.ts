@@ -572,8 +572,8 @@ export class CmsLinksUpdatePage implements OnInit {
 		}
 	}
 
-	private async trackAsync(title: string, action?: string, category?: string) {
-		await TrackingUtility.trackAsync({ title: title, category: category || "Link", action: action || (this.link !== undefined && AppUtility.isNotEmpty(this.link.ID) ? "Edit" : "Create") });
+	private trackAsync(title: string, action?: string, category?: string) {
+		return TrackingUtility.trackAsync({ title: title, category: category || "Link", action: action || (this.link !== undefined && AppUtility.isNotEmpty(this.link.ID) ? "Edit" : "Create") });
 	}
 
 }
