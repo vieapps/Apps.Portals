@@ -39,7 +39,7 @@ export class UsersService extends BaseService {
 				if (profile !== undefined) {
 					profile.Language = this.configSvc.appConfig.options.i18n;
 					profile.Options = this.configSvc.appConfig.options;
-					this.updateProfileAsync(profile);
+					AppUtility.invoke(() => this.updateProfileAsync(profile));
 				}
 			}
 			else if ("Router" === info.args.Type && "Navigated" === info.args.Mode) {
