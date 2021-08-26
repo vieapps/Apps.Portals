@@ -11,6 +11,15 @@ export class AppUtility {
 		"TokenNotFoundException", "TokenExpiredException", "TokenRevokedException", "InvalidTokenException", "InvalidTokenSignatureException"
 	];
 
+	private static _isRequestIdleCallbackAvailable: boolean = undefined;
+
+	private static get isRequestIdleCallbackAvailable() {
+		if (this._isRequestIdleCallbackAvailable === undefined) {
+			this._isRequestIdleCallbackAvailable = typeof window["requestIdleCallback"] === "function";
+		}
+		return this._isRequestIdleCallbackAvailable;
+	}
+
 	/** Gets an empty promise */
 	public static get promise() {
 		return this.invoke();
@@ -283,29 +292,26 @@ export class AppUtility {
 		}
 	}
 
-	/** Executes a function asynchronously (using 'setTimeout') */
-	public static invoke(func?: () => void, defer?: number) {
-		return new Promise<void>(resolve => {
-			if (func !== undefined) {
-				setTimeout(() => {
-					if (func !== undefined) {
-						func();
-					}
-				}, defer || 0);
-			}
-			resolve();
-		});
-	}
-
-	/** Executes a function as a worker in the background (using requestIdleCallback - fallback as setTimeout when not available) */
-	public static invokeWorker(func?: () => void, defer?: number) {
+	/** Executes a function asynchronously (using 'requestIdleCallback' to call as a background worker, using 'setTimeout' when not available) */
+	public static invoke(func?: () => void, defer?: number, asBackgroundWorker: boolean = false) {
 		return func !== undefined
-			? typeof window["requestIdleCallback"] === "function"
-				? new Promise<void>(resolve => {
-						window["requestIdleCallback"](func);
-						resolve();
-					})
-				: this.invoke(func, defer)
+			? new Promise<void>(resolve => {
+					if (asBackgroundWorker && this.isRequestIdleCallbackAvailable) {
+						window["requestIdleCallback"](() => {
+							if (func !== undefined) {
+								func();
+							}
+						}, { timeout: defer || 0 });
+					}
+					else {
+						setTimeout(() => {
+							if (func !== undefined) {
+								func();
+							}
+						}, defer || 0);
+					}
+					resolve();
+				})
 			: new Promise<void>(resolve => resolve());
 	}
 
