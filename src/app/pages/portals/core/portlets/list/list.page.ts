@@ -391,12 +391,10 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		if (this.hash !== AppCrypto.hash(this.ordered)) {
 			this.processing = true;
 			await this.appFormsSvc.showLoadingAsync(this.title.track);
-			const reordered = this.ordered.toList().Select(zone => zone.Children).SelectMany(portlets => portlets.toList()).Select(portlet => {
-				return {
-					ID: portlet.ID,
-					OrderIndex: portlet.OrderIndex
-				};
-			}).ToArray();
+			const reordered = this.ordered.map(zone => zone.Children).flatMap(portlets => portlets).map(portlet => ({
+				ID: portlet.ID,
+				OrderIndex: portlet.OrderIndex
+			}));
 			await this.portalsCoreSvc.updateDesktopAsync(
 				{
 					ID: this.desktop.ID,

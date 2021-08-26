@@ -161,7 +161,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 						}
 					}
 				}));
-				this.sites = organizations.toList().SelectMany(organization => Site.instances.toList(site => site.SystemID === organization.ID)).ToArray();
+				this.sites = organizations.flatMap(organization => Site.instances.toArray(site => site.SystemID === organization.ID));
 			}
 			await this.appFormsSvc.hideLoadingAsync();
 		}

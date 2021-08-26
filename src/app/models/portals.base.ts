@@ -13,7 +13,7 @@ export abstract class PortalBase extends BaseModel {
 
 	/** Get the collection of all content-type definition */
 	public static get contentTypeDefinitions() {
-		return (this.moduleDefinitions || []).toList().Select(definition => definition.ContentTypeDefinitions).SelectMany(definition => definition.toList()).ToArray();
+		return (this.moduleDefinitions || []).map(definition => definition.ContentTypeDefinitions).flatMap(definitions => definitions);
 	}
 
 	/** Get the collection of all approval statuses */
