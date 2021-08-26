@@ -89,7 +89,7 @@ export class BooksService extends BaseService {
 		AppEvents.on("Profile", info => {
 			const args = info.args;
 			if ("Updated" === args.Type && "APIs" === args.Mode) {
-				AppUtility.invoke(async () => await this.getBookmarksAsync());
+				this.getBookmarksAsync();
 				if (this.configSvc.appConfig.services.active === this.name) {
 					this.updateSidebarHeader();
 				}
@@ -100,19 +100,19 @@ export class BooksService extends BaseService {
 	public async initializeAsync(onNext?: () => void) {
 		this.prepareSidebarFooterItems();
 		if (this.configSvc.isAuthenticated) {
-			await this.loadBookmarksAsync(() => AppUtility.invoke(() => this.fetchBookmarksAsync(), this.configSvc.appConfig.services.active === this.name ? 0 : 2345));
+			AppUtility.invoke(() => this.loadBookmarksAsync(() => this.fetchBookmarksAsync()), this.configSvc.appConfig.services.active === this.name ? 0 : 6789);
 		}
 		AppUtility.invoke(() => {
-			this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast(this.name, { Type: "Books", Mode: "Updated" }));
 			this.loadCategoriesAsync(() => this.fetchCategoriesAsync());
 			this.loadInstructionsAsync(() => this.fetchInstructionsAsync());
+			this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast(this.name, { Type: "Books", Mode: "Updated" }));
 			this.loadStatisticsAsync();
-		}, this.configSvc.appConfig.services.active === this.name ? 0 : 2345);
+		}, this.configSvc.appConfig.services.active === this.name ? 0 : 12345);
 		if (this.configSvc.appConfig.services.active === this.name) {
 			AppEvents.broadcast("ActiveSidebar", { Name: "books" });
 		}
 		else {
-			AppUtility.invoke(() => this.prepareSidebarFooterItems(), 3456);
+			AppUtility.invoke(() => this.prepareSidebarFooterItems(), 6789);
 		}
 		if (onNext !== undefined) {
 			onNext();
@@ -599,7 +599,7 @@ export class BooksService extends BaseService {
 		return this.sendRequestAsync({
 			ServiceName: this.name,
 			ObjectName: "bookmarks"
-		}, async data => await this.updateBookmarksAsync(data, onNext));
+		}, data => this.updateBookmarksAsync(data, onNext));
 	}
 
 	private updateBookmarksAsync(data: any, onNext?: () => void) {
@@ -616,7 +616,7 @@ export class BooksService extends BaseService {
 				bookmarks.set(bookmark.ID, bookmark);
 			}
 		});
-		return this.storeBookmarksAsync(async () => await this.fetchBookmarksAsync(onNext));
+		return this.storeBookmarksAsync(() => this.fetchBookmarksAsync(onNext));
 	}
 
 	public updateBookmarkAsync(id: string, chapter: number, position: number, onNext?: () => void) {
@@ -649,12 +649,9 @@ export class BooksService extends BaseService {
 					"object-identity": id
 				}
 			},
-			async _ => {
+			() => {
 				this.bookmarks.remove(id);
-				await this.storeBookmarksAsync();
-				if (onNext !== undefined) {
-					onNext();
-				}
+				this.storeBookmarksAsync(onNext);
 			}
 		);
 	}

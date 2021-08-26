@@ -324,7 +324,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Initializes the configuration settings of the app */
 	public initializeAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontInitializeSession: boolean = false) {
-		return this.loadSessionAsync().then(() => dontInitializeSession ? AppUtility.invoke(onSuccess) : this.initializeSessionAsync(onSuccess, onError)).then(() => this.loadGeoMetaAsync());
+		return this.loadSessionAsync().then(() => dontInitializeSession ? AppUtility.invoke(onSuccess) : this.initializeSessionAsync(onSuccess, onError)).then(() => AppUtility.invoke(() => this.loadGeoMetaAsync(), 1234));
 	}
 
 	/** Initializes the session with remote APIs */

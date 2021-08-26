@@ -123,7 +123,7 @@ export class PortalsCmsService extends BaseService {
 					}
 				}
 				else if (organization.ID === args.SystemID && ("CMS.Content" === args.Object || "CMS.Item" === args.Object) && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type)) {
-					AppUtility.invokeWorker(() => this.prepareFeaturedContents(organization.ID));
+					AppUtility.invoke(() => this.prepareFeaturedContents(organization.ID));
 				}
 			}
 		});
@@ -151,7 +151,7 @@ export class PortalsCmsService extends BaseService {
 			if ("Updated" === args.Type && "APIs" === args.Mode) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
-				this.updateSidebarAsync();
+				this.updateSidebarAsync().then(() => this.prepareFeaturedContentsAsync());
 			}
 		});
 
@@ -559,15 +559,10 @@ export class PortalsCmsService extends BaseService {
 		);
 		const onSuccess = (data?: any) => {
 			if (index < contentTypes.length - 1) {
-				AppUtility.invokeWorker(() => this.getFeaturedContentsAsync(contentTypes, index + 1));
+				AppUtility.invoke(() => this.getFeaturedContentsAsync(contentTypes, index + 1), 123, true);
 			}
 			if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
-				if (index < 1) {
-					this.prepareFeaturedContents(data.Objects.first().SystemID);
-				}
-				else {
-					AppUtility.invokeWorker(() => this.prepareFeaturedContents(data.Objects.first().SystemID));
-				}
+				AppUtility.invoke(() => this.prepareFeaturedContents(data.Objects.first().SystemID), 13, true);
 			}
 		};
 		const onError = (error?: any) => {
@@ -613,8 +608,8 @@ export class PortalsCmsService extends BaseService {
 					availableContentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module));
 					categoryContentTypes.merge(this.getContentTypesOfCategory(module));
 				}));
-				AppUtility.invokeWorker(availableContentTypes.length > 0 ? () => this.getFeaturedContentsAsync(availableContentTypes, 0) : undefined, 6789);
-				categoryContentTypes.filter(contentType => contentType !== undefined).forEach(contentType => AppUtility.invokeWorker(() => this.searchCategoriesAsync(contentType), 6789));
+				AppUtility.invoke(availableContentTypes.length > 0 ? () => this.getFeaturedContentsAsync(availableContentTypes, 0) : undefined, 12345, true);
+				categoryContentTypes.filter(contentType => contentType !== undefined).forEach(contentType => AppUtility.invoke(() => this.searchCategoriesAsync(contentType), 12345, true));
 			}
 		}
 	}
