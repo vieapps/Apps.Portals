@@ -5,7 +5,7 @@
 		</ion-label>
 	</ion-list-header>
 	<ion-item-sliding *ngFor="let bookmark of bookmarks; trackBy: trackBookmark">
-		<ion-item [color]="color" (click)="openAsync(bookmark)" class="ion-activatable" detail="false">
+		<ion-item [color]="color" (click)="open(bookmark)" class="ion-activatable" detail="false">
 			<div>
 				<h2>
 					{{ getTitle(bookmark) }}
@@ -21,11 +21,11 @@
 			</div>
 		</ion-item>
 		<ion-item-options>
-			<ion-item-option color="primary" (click)="openAsync(bookmark)">
+			<ion-item-option color="primary" (click)="open(bookmark)">
 				<ion-icon name="book"></ion-icon>
 				{{ labels.buttons.read }}
 			</ion-item-option>
-			<ion-item-option color="danger" (click)="deleteAsync(bookmark)">
+			<ion-item-option color="danger" (click)="delete(bookmark)">
 				<ion-icon name="trash"></ion-icon>
 				{{ labels.buttons.delete }}
 			</ion-item-option>
@@ -37,7 +37,7 @@
 				<label>
 					{{ labels.footer }} {{ profile.LastSync | time:locale:'h:mm a @ d/M/y' }}
 				</label>
-				<ion-button fill="clear" slot="end" (click)="sendAsync()">
+				<ion-button fill="clear" slot="end" (click)="send()">
 					<ion-icon name="cloud-upload" slot="icon-only"></ion-icon>
 				</ion-button>
 			</span>

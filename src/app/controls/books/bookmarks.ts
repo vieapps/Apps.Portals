@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, Input, ViewChild } from "@angular/core";
 import { IonList } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
@@ -23,17 +23,10 @@ export class BookmarksControl implements OnInit, OnDestroy {
 	) {
 	}
 
-	/** The user profile that contains the bookmarks */
 	@Input() profile: UserProfile;
-
-	/** The event handler to run when the controls was initialized */
-	@Output() init: EventEmitter<any> = new EventEmitter();
-
-	/** The event handler to run when the control was changed */
-	@Output() change = new EventEmitter<any>();
+	@ViewChild("list", { static: true }) private list: IonList;
 
 	bookmarks = new Array<Bookmark>();
-
 	labels = {
 		header: "Readings",
 		footer: "Sync time:",
@@ -45,8 +38,6 @@ export class BookmarksControl implements OnInit, OnDestroy {
 		}
 	};
 
-	@ViewChild("list", { static: true }) private list: IonList;
-
 	get color() {
 		return this.configSvc.color;
 	}
@@ -57,7 +48,7 @@ export class BookmarksControl implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.profile = this.profile || this.configSvc.getAccount().profile;
-		Promise.all([this.initializeAsync()]).then(() => this.init.emit(this));
+		this.prepareLabelsAsync().then(() => this.prepareBookmarks());
 
 		AppEvents.on("App", info => {
 			if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
@@ -68,22 +59,14 @@ export class BookmarksControl implements OnInit, OnDestroy {
 		AppEvents.on(this.booksSvc.name, info => {
 			if ("Bookmarks" === info.args.Type && "Updated" === info.args.Mode) {
 				this.prepareBookmarks();
-				this.emitChanges();
 			}
 		}, "BookmarkEvents");
 	}
 
 	ngOnDestroy() {
 		this.list.closeSlidingItems();
-		this.init.unsubscribe();
-		this.change.unsubscribe();
 		AppEvents.off("App", "BookmarkEvents");
 		AppEvents.off(this.booksSvc.name, "BookmarkEvents");
-	}
-
-	private async initializeAsync() {
-		AppUtility.invoke(() => this.prepareBookmarks(), 123);
-		await this.prepareLabelsAsync();
 	}
 
 	private async prepareLabelsAsync() {
@@ -100,17 +83,7 @@ export class BookmarksControl implements OnInit, OnDestroy {
 	}
 
 	private prepareBookmarks() {
-		this.bookmarks = this.booksSvc.bookmarks.toArray().sortBy({ name: "Time", reverse: true });
-	}
-
-	private emitChanges() {
-		this.change.emit({
-			id: this.profile.ID,
-			bookmarks: this.bookmarks,
-			detail: {
-				value: this.bookmarks
-			}
-		});
+		AppUtility.invokeWorker(() => this.bookmarks = this.booksSvc.bookmarks.toArray().sortBy({ name: "Time", reverse: true }));
 	}
 
 	trackBookmark(index: number, bookmark: Bookmark) {
@@ -131,26 +104,18 @@ export class BookmarksControl implements OnInit, OnDestroy {
 			: `${bookmark.Chapter}#${bookmark.Position}`;
 	}
 
-	async openAsync(bookmark: Bookmark) {
-		const book = Book.get(bookmark.ID);
-		if (book !== undefined) {
-			await this.list.closeSlidingItems();
-			await this.configSvc.navigateForwardAsync(book.routerURI);
-		}
+	open(bookmark: Bookmark) {
+		this.list.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(Book.get(bookmark.ID).routerURI));
 	}
 
-	async deleteAsync(bookmark: Bookmark) {
-		await this.list.closeSlidingItems();
-		await this.booksSvc.deleteBookmarkAsync(bookmark.ID, () => {
-			this.prepareBookmarks();
-			this.emitChanges();
-		});
+	delete(bookmark: Bookmark) {
+		this.list.closeSlidingItems().then(() => this.booksSvc.deleteBookmarkAsync(bookmark.ID, () => this.prepareBookmarks()));
 	}
 
-	async sendAsync() {
-		await this.booksSvc.sendBookmarksAsync(async () => {
+	send() {
+		this.booksSvc.sendBookmarksAsync(async () => {
 			this.configSvc.getAccount().profile.LastSync = new Date();
-			await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.update.messages.sync"));
+			this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("books.update.messages.sync"));
 		});
 	}
 

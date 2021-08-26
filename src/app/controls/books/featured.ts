@@ -45,16 +45,16 @@ export class BookFeaturedControl implements OnInit, OnDestroy {
 	ngOnInit() {
 		if (this.configSvc.isReady) {
 			this.initialize();
-			this.updateBooks();
+			AppUtility.invoke(() => this.updateBooks());
 		}
 
 		AppEvents.on("App", info => {
 			if ("Initialized" === info.args.Type) {
 				this.initialize();
-				this.updateBooks();
+				AppUtility.invokeWorker(() => this.updateBooks());
 			}
 			else if ("HomePage" === info.args.Type && "Open" === info.args.Mode && "Return" === info.args.Source) {
-				this.updateBooks();
+				AppUtility.invoke(() => this.updateBooks());
 			}
 			else if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
 				this.prepareResourcesAsync();
@@ -72,7 +72,7 @@ export class BookFeaturedControl implements OnInit, OnDestroy {
 				this.updateIntroduction();
 			}
 			else if ("Books" === info.args.Type && "Updated" === info.args.Mode) {
-				this.updateBooks();
+				AppUtility.invokeWorker(() => this.updateBooks());
 			}
 		}, "FeaturedBooks");
 	}

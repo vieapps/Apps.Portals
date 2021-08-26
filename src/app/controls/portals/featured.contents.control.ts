@@ -58,25 +58,25 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 
 		if (this.configSvc.isReady) {
 			this.prepareLabelsAsync();
-			AppUtility.invoke(() => this.prepareContents(), 123);
+			AppUtility.invokeWorker(() => this.prepareContents(), 123);
 		}
 		else {
 			AppEvents.on("App", info => {
 				if ("Initialized" === info.args.Type) {
 					this.prepareLabelsAsync();
-					AppUtility.invoke(() => this.prepareContents(), 123);
+					AppUtility.invokeWorker(() => this.prepareContents(), 123);
 				}
 			}, `FeaturedContents:AppInitialized:${this._isPublished}`);
 		}
 
 		AppEvents.on(this.portalsCmsSvc.name, info => {
-			if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
-				AppUtility.invoke(() => this.prepareContents(true), 123);
-			}
-			else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode) {
-				const organization = this.portalsCoreSvc.activeOrganization;
-				if (organization !== undefined && organization.ID === info.args.ID) {
-					AppUtility.invoke(() => this.prepareContents(true), 234);
+			const organization = this.portalsCoreSvc.activeOrganization;
+			if (organization !== undefined) {
+				if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
+					AppUtility.invokeWorker(() => this.prepareContents(true), 123);
+				}
+				else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode && organization.ID === info.args.ID) {
+					AppUtility.invokeWorker(() => this.prepareContents(true), 123);
 				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);

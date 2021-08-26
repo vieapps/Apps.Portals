@@ -38,20 +38,18 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		if (this.configSvc.isReady) {
-			this.prepareLabelAsync();
-			this.prepareShortcutsAsync();
+			this.prepareLabelAsync().then(() => AppUtility.invoke(() => this.prepareShortcutsAsync()));
 		}
 		else {
 			AppEvents.on("App", info => {
 				if ("Initialized" === info.args.Type) {
-					this.prepareLabelAsync();
-					this.prepareShortcutsAsync();
+					this.prepareLabelAsync().then(() => AppUtility.invokeWorker(() => this.prepareShortcutsAsync()));
 				}
 			}, "PortalsShortcutsEvents");
 		}
 		AppEvents.on("Session", info => {
 			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
-				this.prepareShortcutsAsync();
+				AppUtility.invokeWorker(() => this.prepareShortcutsAsync());
 			}
 		}, "PortalsShortcutsEvents");
 		AppEvents.on(this.portalsCoreSvc.name, info => {
