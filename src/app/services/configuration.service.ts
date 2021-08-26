@@ -648,7 +648,7 @@ export class ConfigurationService extends BaseService {
 		AppConfig.geoMeta.provinces = await AppStorage.getAsync("GeoMeta-Provinces") || {};
 
 		if (AppConfig.geoMeta.provinces[AppConfig.geoMeta.country] !== undefined) {
-			AppEvents.broadcast("App", { Type: "GeoMetaUpdated", Data: AppConfig.geoMeta });
+			AppEvents.broadcast("App", { Type: "GeoMeta", Mode: "Updated", Data: AppConfig.geoMeta });
 		}
 
 		await this.fetchAsync(
@@ -674,7 +674,7 @@ export class ConfigurationService extends BaseService {
 			AppStorage.setAsync("GeoMeta-Countries", AppConfig.geoMeta.countries),
 			AppStorage.setAsync("GeoMeta-Provinces", AppConfig.geoMeta.provinces)
 		]).then(() => {
-			AppEvents.broadcast("App", { Type: "GeoMetaUpdated", Data: AppConfig.geoMeta });
+			AppEvents.broadcast("App", { Type: "GeoMeta", Mode: "Updated", Data: AppConfig.geoMeta });
 			if (onNext !== undefined) {
 				onNext(data);
 			}
@@ -765,10 +765,9 @@ export class ConfigurationService extends BaseService {
 	public changeLanguageAsync(language: string, saveOptions: boolean = true) {
 		AppConfig.options.i18n = language;
 		return this.setResourceLanguageAsync(language).then(() => {
-			AppEvents.broadcast("App", { Type: "Language", Mode: "Changed" });
-			if (saveOptions) {
-				this.saveOptionsAsync();
-			}
+			AppEvents.broadcast("App", { Type: "Language", Mode: "Changed", Language: language });
+			AppEvents.sendToElectron("App", { Type: "Language", Mode: "Changed", Language: language });
+			AppUtility.invoke(saveOptions ? () => this.saveOptionsAsync() : undefined);
 		});
 	}
 

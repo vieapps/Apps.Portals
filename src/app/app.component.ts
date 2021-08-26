@@ -350,12 +350,12 @@ export class AppComponent implements OnInit {
 						Link: item.Link,
 						Params: item.Params,
 						Direction: item.Direction,
-						OnClick: item.OnClick,
 						Children: item.Children,
 						Expanded: item.Expanded,
 						Detail: item.Detail,
 						Thumbnail: item.Thumbnail,
-						Icon: item.Icon
+						Icon: item.Icon,
+						OnClick: item.OnClick
 					} as AppSidebarMenuItem))
 					.filter(item => AppUtility.isNotEmpty(item.Title))
 					.map(item => this.getSidebarMainMenuItem(item))
@@ -437,23 +437,11 @@ export class AppComponent implements OnInit {
 					: "Profiles" === info.args.Type || "Accounts" === info.args.Type
 						? this.configSvc.appConfig.URLs.users.list
 						: info.args.url || this.configSvc.appConfig.URLs.home;
-			switch ((info.args.Direction as string || "Forward").toLowerCase()) {
-				case "home":
-				case "root":
-					this.configSvc.navigateHomeAsync(url);
-					break;
-				case "back":
-					this.configSvc.navigateBackAsync(url);
-					break;
-				default:
-					this.configSvc.navigateForwardAsync(url);
-					break;
-			}
+			this.configSvc.navigateAsync(info.args.Direction, url);
 		});
 
 		AppEvents.on("App", info => {
 			if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
-				AppEvents.sendToElectron("App", { Type: "Language", Mode: "Changed", Language: this.configSvc.appConfig.language });
 				this.updateSidebarAsync({}, true, () => this.sidebar.normalizeTopMenu());
 			}
 		});
