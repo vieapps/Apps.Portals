@@ -173,8 +173,20 @@ export class PortalsCmsService extends BaseService {
 	public async initializeAsync(onNext?: () => void) {
 		const promises = new Array<Promise<any>>();
 
+		if (Module.active === undefined) {
+			promises.push(this.portalsCoreSvc.getActiveModuleAsync(undefined, true));
+		}
+
+		if (Module.active !== undefined && Module.active.contentTypes.length < 1) {
+			promises.push(this.portalsCoreSvc.getActiveModuleAsync(undefined, true));
+		}
+
+		if (this.configSvc.appConfig.services.active === this.name) {
+			promises.push(this.updateSidebarAsync());
+		}
+
 		if (this._oembedProviders === undefined) {
-			promises.push(this.fetchAsync(
+			promises.push(AppUtility.invoke(() => this.fetchAsync(
 				"statics/oembed.providers.json",
 				data => {
 					const oembedProviders = data as Array<{ name: string; schemes: string[], pattern: { expression: string; position: number; html: string } }>;
@@ -188,19 +200,7 @@ export class PortalsCmsService extends BaseService {
 						}
 					}));
 				}
-			));
-		}
-
-		if (Module.active === undefined) {
-			promises.push(this.portalsCoreSvc.getActiveModuleAsync(undefined, true));
-		}
-
-		if (Module.active !== undefined && Module.active.contentTypes.length < 1) {
-			promises.push(this.portalsCoreSvc.getActiveModuleAsync(undefined, true));
-		}
-
-		if (this.configSvc.appConfig.services.active === this.name) {
-			promises.push(this.updateSidebarAsync());
+			), 1234));
 		}
 
 		await Promise.all(promises);

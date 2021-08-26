@@ -324,7 +324,9 @@ export class ConfigurationService extends BaseService {
 
 	/** Initializes the configuration settings of the app */
 	public initializeAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontInitializeSession: boolean = false) {
-		return this.loadSessionAsync().then(() => dontInitializeSession ? AppUtility.invoke(onSuccess) : this.initializeSessionAsync(onSuccess, onError)).then(() => AppUtility.invoke(() => this.loadGeoMetaAsync(), 1234));
+		return this.loadSessionAsync()
+			.then(() => dontInitializeSession ? AppUtility.invoke(onSuccess) : this.initializeSessionAsync(onSuccess, onError))
+			.then(() => AppUtility.invoke(() => this.loadGeoMetaAsync(), 1234));
 	}
 
 	/** Initializes the session with remote APIs */
@@ -649,20 +651,14 @@ export class ConfigurationService extends BaseService {
 			AppEvents.broadcast("App", { Type: "GeoMetaUpdated", Data: AppConfig.geoMeta });
 		}
 
-		let path = `statics/geo/provinces/${AppConfig.geoMeta.country || "VN"}.json`;
-		await this.readAsync(
-			path,
-			provinces => this.saveGeoMetaAsync(provinces, () => {
-				if (AppConfig.geoMeta.countries.length < 1) {
-					path = "statics/geo/countries.json";
-					this.readAsync(
-						path,
-						countries => this.saveGeoMetaAsync(countries),
-						error => this.showError(`Error occurred while fetching the meta countries [${AppConfig.URIs.apis}${path}]`, error)
-					);
-				}
-			}),
-			error => this.showError(`Error occurred while fetching the meta provinces [${AppConfig.URIs.apis}${path}]`, error)
+		await this.fetchAsync(
+			`statics/geo/provinces/${AppConfig.geoMeta.country || "VN"}.json`,
+			provinces => AppUtility.invoke(() => this.saveGeoMetaAsync(provinces, () => this.fetchAsync(
+				"statics/geo/countries.json",
+				countries => this.saveGeoMetaAsync(countries),
+				error => this.showError("Error occurred while fetching the meta countries", error)
+			)), 1234),
+			error => this.showError("Error occurred while fetching the meta provinces", error)
 		);
 	}
 

@@ -161,7 +161,7 @@ export class PortalsCoreService extends BaseService {
 				this.prepareSidebarFooterItemsAsync().then(() => this.activeSidebar());
 				if ("LogOut" === args.Type) {
 					this.configSvc.appConfig.options.extras["organizations"] = new Array<string>();
-					this.configSvc.saveOptionsAsync();
+					AppUtility.invoke(() => this.configSvc.saveOptionsAsync(), 123, true);
 				}
 			}
 		});

@@ -451,7 +451,6 @@ export class AppComponent implements OnInit {
 			}
 		});
 
-
 		AppEvents.on("App", info => {
 			if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
 				AppEvents.sendToElectron("App", { Type: "Language", Mode: "Changed", Language: this.configSvc.appConfig.language });
