@@ -319,7 +319,14 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 	open(event: Event, desktop: Desktop) {
 		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(desktop.routerURI));
+		this.listCtrl.closeSlidingItems().then(() => {
+			if (desktop.childrenIDs === undefined) {
+				this.doRefresh([desktop], 0, false, () => this.configSvc.navigateForwardAsync(desktop.routerURI));
+			}
+			else {
+				this.configSvc.navigateForwardAsync(desktop.routerURI);
+			}
+		});
 	}
 
 	showChildren(event: Event, desktop: Desktop) {
@@ -332,19 +339,40 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "list", desktop.ansiTitle, { SystemID: desktop.SystemID, DesktopID: desktop.ID }, "portlet", "core")));
 	}
 
+	doRefresh(desktops: Desktop[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
+		const refreshNext: () => void = () => {
+			if (index < desktops.length - 1) {
+				AppUtility.invoke(() => this.doRefresh(desktops, index + 1));
+			}
+			else {
+				this.appFormsSvc.hideLoadingAsync(() => {
+					this.appFormsSvc.showToastAsync(desktops.length > 1 ? "All desktops was freshen-up" : "The desktop was freshen-up");
+					if (onFreshenUp !== undefined) {
+						onFreshenUp();
+					}
+				});
+			}
+		};
+		if (index === 0 && desktops.length > 1) {
+			this.appFormsSvc.showLoadingAsync(this.actions.last().text);
+			AppUtility.invoke(() => this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("All desktops was freshen-up")), 6789 + (desktops.length * 13));
+			if (this.configSvc.isDebug) {
+				console.log(`--- Start to refresh ${desktops.length} desktops -----------------`);
+			}
+		}
+		this.portalsCoreSvc.refreshDesktopAsync(desktops[index].ID, refreshNext, refreshNext, undefined, useXHR);
+	}
+
 	refresh(event: Event, desktop: Desktop) {
 		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.portalsCoreSvc.refreshDesktopAsync(desktop.ID, () => this.appFormsSvc.showToastAsync("The desktop was freshen-up")));
+		this.listCtrl.closeSlidingItems().then(() => this.doRefresh([desktop], 0, true));
 	}
 
 	refreshAll() {
-		this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(() => AppUtility.invoke(async () => {
-			const systemID = this.portalsCoreSvc.activeOrganization.ID;
-			await Promise.all(Desktop.instances.toArray(desktop => desktop.SystemID === systemID).map(desktop => this.portalsCoreSvc.refreshDesktopAsync(desktop.ID)));
-			this.request = AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination);
-			AppPagination.remove(this.request, this.paginationPrefix);
-			this.portalsCoreSvc.searchDesktopAsync(this.request, () => this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("All desktops was freshen-up")));
-		}));
+		const desktops = Desktop.instances.toArray(desktop => desktop.SystemID === this.organization.ID);
+		if (desktops.length > 0) {
+			this.doRefresh(desktops, 0);
+		}
 	}
 
 	clearCache(event: Event, desktop: Desktop) {

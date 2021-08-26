@@ -260,6 +260,11 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, undefined, undefined, { RepositoryID: module.ID }, "expression", "core"));
 	}
 
+	refresh(event: Event, module: Module) {
+		event.stopPropagation();
+		this.listCtrl.closeSlidingItems().then(() => this.portalsCoreSvc.refreshModuleAsync(module.ID, () => this.appFormsSvc.showToastAsync("The module was freshen-up")));
+	}
+
 	async clearCacheAsync(event: Event, module: Module) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();

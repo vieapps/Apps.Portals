@@ -336,6 +336,11 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(contentType, undefined, undefined, undefined, "expression", "core"));
 	}
 
+	refresh(event: Event, contentType: ContentType) {
+		event.stopPropagation();
+		this.listCtrl.closeSlidingItems().then(() => this.portalsCoreSvc.refreshContentTypeAsync(contentType.ID, () => this.appFormsSvc.showToastAsync("The content-type was freshen-up")));
+	}
+
 	async clearCacheAsync(event: Event, contentType: ContentType) {
 		event.stopPropagation();
 		await this.listCtrl.closeSlidingItems();

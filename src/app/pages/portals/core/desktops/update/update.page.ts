@@ -525,8 +525,8 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		}
 	}
 
-	private async trackAsync(title: string, action?: string, category?: string) {
-		await TrackingUtility.trackAsync({ title: title, category: category || "Desktop", action: action || (this.desktop !== undefined && AppUtility.isNotEmpty(this.desktop.ID) ? "Edit" : "Create") });
+	private trackAsync(title: string, action?: string, category?: string) {
+		return TrackingUtility.trackAsync({ title: title, category: category || "Desktop", action: action || (this.desktop !== undefined && AppUtility.isNotEmpty(this.desktop.ID) ? "Edit" : "Create") });
 	}
 
 }

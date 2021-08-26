@@ -224,10 +224,12 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 				this.module = this.parentCategory.module;
 				this.organization = this.parentCategory.organization;
 				this.prepareCategories();
+				this.prepareFilterBy();
 				await this.prepareTitleAsync();
 				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on(this.portalsCoreSvc.name, info => {
-					if (info.args.Object === "CMS.Category") {
+					const args = info.args;
+					if (args.Object === "CMS.Category" && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type) && this.parentID === args.ParentID) {
 						this.prepareCategories();
 					}
 				}, `CMS.Categories:${this.parentCategory.ID}:Refresh`);
@@ -237,7 +239,8 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 				await this.prepareTitleAsync();
 				this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on(this.portalsCoreSvc.name, info => {
-					if (info.args.Object === "CMS.Category") {
+					const args = info.args;
+					if (info.args.Object === "CMS.Category" && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type)) {
 						this.prepareResults();
 					}
 				}, "CMS.Categories:Refresh");
@@ -256,13 +259,18 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	private prepareFilterBy() {
-		this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
-		if (this.module !== undefined) {
-			this.filterBy.And.push({ RepositoryID: { Equals: this.module.ID } });
-		}
-		if (this.contentType !== undefined) {
-			this.filterBy.And.push({ RepositoryEntityID: { Equals: this.contentType.ID } });
-		}
+		this.filterBy.And = this.contentType !== undefined
+			? [
+					{ SystemID: { Equals: this.contentType.SystemID } },
+					{ RepositoryID: { Equals: this.contentType.RepositoryID } },
+					{ RepositoryEntityID: { Equals: this.contentType.ID } }
+				]
+			: this.module !== undefined
+				? [
+						{ SystemID: { Equals: this.module.SystemID } },
+						{ RepositoryID: { Equals: this.module.ID } }
+					]
+				: [{ SystemID: { Equals: this.organization.ID } }];
 		this.filterBy.And.push({ ParentID: "IsNull" });
 	}
 
@@ -392,7 +400,14 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	open(event: Event, category: Category) {
 		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(this.canUpdate ? () => this.configSvc.navigateForwardAsync(category.routerURI) : () => {});
+		this.listCtrl.closeSlidingItems().then(this.canUpdate ? () => {
+			if (category.childrenIDs === undefined) {
+				this.doRefresh([category], 0, false, () => this.configSvc.navigateForwardAsync(category.routerURI));
+			}
+			else {
+				this.configSvc.navigateForwardAsync(category.routerURI);
+			}
+		} : () => {});
 	}
 
 	showChildren(event: Event, category: Category) {
@@ -405,17 +420,45 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module), "list", category.Title, { CategoryID: category.ID })));
 	}
 
+	doRefresh(categories: Category[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
+		const refreshNext: () => void = () => {
+			if (index < categories.length - 1) {
+				AppUtility.invoke(() => this.doRefresh(categories, index + 1));
+			}
+			else {
+				this.appFormsSvc.hideLoadingAsync(() => {
+					this.appFormsSvc.showToastAsync(categories.length > 1 ? "All categories was freshen-up" : "The category was freshen-up");
+					if (onFreshenUp !== undefined) {
+						onFreshenUp();
+					}
+				});
+			}
+		};
+		if (index === 0 && categories.length > 1) {
+			this.appFormsSvc.showLoadingAsync(this.actions.last().text);
+			AppUtility.invoke(() => this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("All categories was freshen-up")), 6789 + (categories.length * 13));
+			if (this.configSvc.isDebug) {
+				console.log(`--- Start to refresh ${categories.length} CMS categories -----------------`);
+			}
+		}
+		this.portalsCmsSvc.refreshCategoryAsync(categories[index].ID, refreshNext, refreshNext, undefined, useXHR);
+	}
+
 	refresh(event: Event, category: Category) {
 		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.portalsCmsSvc.refreshCategoryAsync(category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up")));
+		this.listCtrl.closeSlidingItems().then(() => this.doRefresh([category], 0, true));
 	}
 
 	refreshAll() {
-		this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(() => AppUtility.invoke(async () => {
-			const systemID = this.portalsCoreSvc.activeOrganization.ID;
-			await Promise.all(Category.instances.toArray(category => category.SystemID === systemID).map(category => this.portalsCmsSvc.refreshCategoryAsync(category.ID)));
-			await this.portalsCmsSvc.searchCategoriesAsync(this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.portalsCoreSvc.activeModule), () => this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("All categories was freshen-up")), undefined, true);
-		}));
+		const categories = Category.instances.toArray(category => category.SystemID === this.organization.ID);
+		if (categories.length > 0) {
+			this.doRefresh(categories, 0);
+		}
+		else {
+			Promise.all(this.organization.modules.map(module => this.portalsCmsSvc.getContentTypesOfCategory(module))
+				.flatMap(contentypes => contentypes)
+				.map(contentType => this.portalsCmsSvc.searchCategoriesAsync(contentType, undefined, undefined, true, true)));
+		}
 	}
 
 	createExpression(event: Event, category: Category) {
