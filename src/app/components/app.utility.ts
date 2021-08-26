@@ -292,8 +292,13 @@ export class AppUtility {
 		}
 	}
 
-	/** Executes a function asynchronously (using 'requestIdleCallback' to call as a background worker, using 'setTimeout' when not available) */
-	public static invoke(func?: () => void, defer?: number, asBackgroundWorker: boolean = false) {
+	/**
+		* Executes a function asynchronously (using 'requestIdleCallback' to call as a background worker, using 'setTimeout' when not available)
+	 * @param func The function to invoke
+	 * @param miliseconds The timeout miliseconds
+	 * @param asBackgroundWorker Set to true to run as background worker when the browser is idle
+	*/
+	public static invoke(func?: () => void, miliseconds?: number, asBackgroundWorker: boolean = false) {
 		return func !== undefined
 			? new Promise<void>(resolve => {
 					if (asBackgroundWorker && this.isRequestIdleCallbackAvailable) {
@@ -301,14 +306,14 @@ export class AppUtility {
 							if (func !== undefined) {
 								func();
 							}
-						}, { timeout: defer || 0 });
+						}, { timeout: miliseconds || 0 });
 					}
 					else {
 						setTimeout(() => {
 							if (func !== undefined) {
 								func();
 							}
-						}, defer || 0);
+						}, miliseconds || 0);
 					}
 					resolve();
 				})
