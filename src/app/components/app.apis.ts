@@ -462,13 +462,13 @@ export class AppAPIs {
 
 	private static updateWebSocket(options?: { message?: string; resendCallbackMessages?: boolean } ) {
 		// send all 'no callback' messages
-		if (this._websocket !== undefined) {
+		if (this.isWebSocketReady) {
 			AppUtility.getAttributes(this._nocallbackMessages).sort().forEach(id => this._websocket.send(this._nocallbackMessages[id]));
 			this._nocallbackMessages = {};
 		}
 
 		// send the message
-		if (this._websocket !== undefined && options !== undefined && AppUtility.isNotEmpty(options.message)) {
+		if (this.isWebSocketReady && options !== undefined && AppUtility.isNotEmpty(options.message)) {
 			this._websocket.send(options.message);
 		}
 
@@ -508,7 +508,7 @@ export class AppAPIs {
 		const ids = AppUtility.getAttributes(this._callbackableMessages);
 		const id = ids.sort().first();
 		if (id !== undefined) {
-			if (id !== this._resendID && this._websocket !== undefined) {
+			if (id !== this._resendID && this.isWebSocketReady) {
 				this._resendID = id;
 				this._websocket.send(this._callbackableMessages[id]);
 			}
