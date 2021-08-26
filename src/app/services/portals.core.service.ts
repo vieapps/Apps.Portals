@@ -1588,6 +1588,22 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
+	public refreshOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
+		return this.refreshAsync(
+			"organization",
+			id,
+			data => {
+				Organization.update(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			onError,
+			useXHR,
+			headers
+		);
+	}
+
 	private processOrganizationUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Create":
@@ -1949,7 +1965,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public refreshDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public refreshDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
 		return this.refreshAsync(
 			"desktop",
 			id,
@@ -1960,7 +1976,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			onError,
-			true,
+			useXHR,
 			headers
 		);
 	}
@@ -3101,12 +3117,6 @@ export class PortalsCoreService extends BaseService {
 			cancel,
 			inputs
 		);
-	}
-
-	public confirmAsync(message: string = null, onOkClick?: (data?: any) => void, showCancelButton: boolean = false, okButtonText?: string, cancelButtonText?: string) {
-		return showCancelButton
-			? AppUtility.invoke(async () => this.appFormsSvc.showAlertAsync(undefined, message, undefined, onOkClick, okButtonText, cancelButtonText || await this.configSvc.getResourceAsync("common.buttons.cancel")))
-			: this.appFormsSvc.showAlertAsync(undefined, message, undefined, onOkClick, okButtonText);
 	}
 
 }
