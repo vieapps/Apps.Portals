@@ -663,7 +663,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public searchCategoryAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchCategoryAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("cms.category", this.configSvc.relatedQuery),
 			request,
@@ -675,11 +675,12 @@ export class PortalsCmsService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError("Error occurred while searching categories", error, onError)
+			error => this.processError("Error occurred while searching categories", error, onError),
+			useXHR
 		);
 	}
 
-	public searchCategoriesAsync(contentType: ContentType, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, clearPaginationCache: boolean = false) {
+	public searchCategoriesAsync(contentType: ContentType, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, removePagination: boolean = false, useXHR: boolean = false) {
 		const request = AppPagination.buildRequest(
 			{ And: [
 				{ SystemID: { Equals: contentType.SystemID } },
@@ -689,10 +690,10 @@ export class PortalsCmsService extends BaseService {
 			]},
 			{ OrderIndex: "Ascending", Title: "Ascending" }
 		);
-		if (clearPaginationCache) {
+		if (removePagination) {
 			AppPagination.remove(request, `CMS.Category@${this.name}`.toLowerCase());
 		}
-		return this.searchCategoryAsync(request, onSuccess, onError);
+		return this.searchCategoryAsync(request, onSuccess, onError, useXHR);
 	}
 
 	public createCategoryAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
@@ -805,7 +806,7 @@ export class PortalsCmsService extends BaseService {
 				break;
 		}
 
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete" || message.Type.Event === "Refresh") {
 			AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
 			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
 				AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
