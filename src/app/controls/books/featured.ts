@@ -51,7 +51,7 @@ export class BookFeaturedControl implements OnInit, OnDestroy {
 		AppEvents.on("App", info => {
 			if ("Initialized" === info.args.Type) {
 				this.initialize();
-				AppUtility.invokeWorker(() => this.updateBooks());
+				AppUtility.invoke(() => this.updateBooks());
 			}
 			else if ("HomePage" === info.args.Type && "Open" === info.args.Mode && "Return" === info.args.Source) {
 				AppUtility.invoke(() => this.updateBooks());
@@ -72,7 +72,7 @@ export class BookFeaturedControl implements OnInit, OnDestroy {
 				this.updateIntroduction();
 			}
 			else if ("Books" === info.args.Type && "Updated" === info.args.Mode) {
-				AppUtility.invokeWorker(() => this.updateBooks());
+				AppUtility.invoke(() => this.updateBooks());
 			}
 		}, "FeaturedBooks");
 	}

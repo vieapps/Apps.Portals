@@ -58,13 +58,13 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 
 		if (this.configSvc.isReady) {
 			this.prepareLabelsAsync();
-			AppUtility.invokeWorker(() => this.prepareContents(), 123);
+			AppUtility.invoke(() => this.prepareContents(), 123);
 		}
 		else {
 			AppEvents.on("App", info => {
 				if ("Initialized" === info.args.Type) {
 					this.prepareLabelsAsync();
-					AppUtility.invokeWorker(() => this.prepareContents(), 123);
+					AppUtility.invoke(() => this.prepareContents(), 123, true);
 				}
 			}, `FeaturedContents:AppInitialized:${this._isPublished}`);
 		}
@@ -73,10 +73,10 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 			const organization = this.portalsCoreSvc.activeOrganization;
 			if (organization !== undefined) {
 				if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
-					AppUtility.invokeWorker(() => this.prepareContents(true), 123);
+					AppUtility.invoke(() => this.prepareContents(true), 123, true);
 				}
 				else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode && organization.ID === info.args.ID) {
-					AppUtility.invokeWorker(() => this.prepareContents(true), 123);
+					AppUtility.invoke(() => this.prepareContents(true), 123, true);
 				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);

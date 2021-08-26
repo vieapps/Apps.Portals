@@ -121,13 +121,10 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 
 		if (!this.isSystemAdministrator && this.organization === undefined) {
-			await this.appFormsSvc.showAlertAsync(
-				undefined,
+			this.trackAsync(`${this.title.track} | Invalid Organization`, "Check").then(async () => this.appFormsSvc.showConfirmAsync(
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
-				undefined,
-				async () => await this.configSvc.navigateHomeAsync("/portals/core/organizations/list/all"),
-				await this.configSvc.getResourceAsync("common.buttons.ok")
-			);
+				async () => await this.configSvc.navigateHomeAsync("/portals/core/organizations/list/all")
+			));
 			return;
 		}
 
@@ -136,11 +133,8 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		this.configSvc.appTitle = this.title.track = AppUtility.format(title, { info: "" });
 
 		if (!this.canModerateOrganization || this.organization === undefined) {
-			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
-			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateHomeAsync()
-			]));
+			this.trackAsync(`${this.title.track} | No Permission`, "Check").then(() => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
+			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateHomeAsync());
 			return;
 		}
 
@@ -174,16 +168,16 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.expressions.list.searchbar");
 			PlatformUtility.focus(this.searchCtrl);
-			await this.appFormsSvc.hideLoadingAsync();
+			this.appFormsSvc.hideLoadingAsync();
 		}
 		else {
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.expressions.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.expressions.title.search"), "search", () => this.openSearchAsync(false)),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.expressions.title.create"), "create", () => this.create()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.expressions.title.search"), "search", () => this.openSearch(false)),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcel()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcel())
 			];
-			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+			this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
 			AppEvents.on(this.portalsCoreSvc.name, info => {
 				if (info.args.Object === "Expression" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
 					this.prepareResults();
@@ -198,11 +192,10 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 
 	getInfo(expression: Expression) {
 		const contentType = expression.contentType;
-		return (contentType !== undefined ? `Type: ${contentType.Title}` : `Definition: ${expression.contentTypeDefinition.Title}`)
-			+ (AppUtility.isNotEmpty(expression.Description) ? ` - ${expression.Description}` : "");
+		return (contentType !== undefined ? `Type: ${contentType.Title}` : `Definition: ${expression.contentTypeDefinition.Title}`) + (AppUtility.isNotEmpty(expression.Description) ? ` - ${expression.Description}` : "");
 	}
 
-	async onSearch(event: any) {
+	onSearch(event: any) {
 		if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 			this.subscription = undefined;
@@ -210,14 +203,10 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
 			if (this.searching) {
-				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.messages.searching"));
 				this.expressions = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				await this.searchAsync(async () => {
-					this.infiniteScrollCtrl.disabled = false;
-					await this.appFormsSvc.hideLoadingAsync();
-				});
+				AppUtility.invoke(async () => this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.messages.searching"))).then(() => this.search(() => this.appFormsSvc.hideLoadingAsync()));
 			}
 			else {
 				this.expressions = this.objects.filter(Expression.getFilterBy(this.filterBy.Query));
@@ -233,29 +222,22 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		this.expressions = this.filtering ? this.objects.map(obj => obj) : [];
 	}
 
-	async onCancel() {
+	onCancel() {
 		if (this.searching) {
-			await this.configSvc.navigateBackAsync();
+			this.configSvc.navigateBackAsync();
 		}
 		else {
-			AppUtility.invoke(() => {
-				this.onClear();
-				this.filtering = false;
-			}, 123);
+			this.onClear();
+			this.filtering = false;
 		}
 	}
 
-	async onInfiniteScrollAsync() {
+	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => {
-				if (this.infiniteScrollCtrl !== undefined) {
-					await this.infiniteScrollCtrl.complete();
-				}
-			});
+			this.search(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : () => {});
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
-			await this.infiniteScrollCtrl.complete();
-			this.infiniteScrollCtrl.disabled = true;
+			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
 		}
 	}
 
@@ -263,32 +245,26 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		return this.portalsCoreSvc.getPaginationPrefix("expression");
 	}
 
-	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
+	private startSearch(onNext?: () => void, pagination?: AppDataPagination) {
 		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
-		await this.searchAsync(onNext);
+		this.search(onNext);
 	}
 
-	private async searchAsync(onNext?: () => void) {
+	private search(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const onSuccess = async (data: any) => {
+		const onSuccess = (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await this.trackAsync(this.title.track);
+			this.trackAsync(this.title.track);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchExpression(this.request, onSuccess, async error => await Promise.all([
-				this.appFormsSvc.showErrorAsync(error),
-				this.trackAsync(this.title.track)
-			]));
+			this.subscription = this.portalsCoreSvc.searchExpression(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 		else {
-			await this.portalsCoreSvc.searchExpressionAsync(this.request, onSuccess, async error => await Promise.all([
-				this.appFormsSvc.showErrorAsync(error),
-				this.trackAsync(this.title.track)
-			]));
+			this.portalsCoreSvc.searchExpressionAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 	}
 
@@ -320,53 +296,46 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	async showActionsAsync() {
-		await this.listCtrl.closeSlidingItems();
-		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	showActions() {
+		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showActionSheetAsync(this.actions));
 	}
 
-	async openSearchAsync(filtering: boolean = true) {
-		await this.listCtrl.closeSlidingItems();
+	openSearch(filtering: boolean = true) {
+		this.listCtrl.closeSlidingItems();
 		if (filtering) {
 			this.filtering = true;
-			PlatformUtility.focus(this.searchCtrl);
-			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
+			AppUtility.invoke(async () => this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter")).then(() => PlatformUtility.focus(this.searchCtrl));
 			this.objects = this.expressions.map(obj => obj);
 		}
 		else {
-			await this.configSvc.navigateForwardAsync("/portals/core/expressions/search");
+			this.configSvc.navigateForwardAsync("/portals/core/expressions/search");
 		}
 	}
 
-	async createAsync() {
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync("/portals/core/expressions/create/new");
+	create() {
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync("/portals/core/expressions/create/new"));
 	}
 
-	async editAsync(event: Event, expression: Expression) {
+	edit(event: Event, expression: Expression) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(expression.routerURI);
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(expression.routerURI));
 	}
 
-	async editInAdvancedModeAsync(event: Event, expression: Expression) {
+	editInAdvancedMode(event: Event, expression: Expression) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(expression.getRouterURI({ ID: expression.ID, Advanced: true }));
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(expression.getRouterURI({ ID: expression.ID, Advanced: true })));
 	}
 
-	async exportToExcelAsync() {
-		await this.portalsCoreSvc.exportToExcelAsync("Expression", this.organization.ID);
-		await this.trackAsync(this.actions[2].text, "Export");
+	exportToExcel() {
+		this.portalsCoreSvc.exportToExcelAsync("Expression", this.organization.ID).then(() => this.trackAsync(this.actions[2].text, "Export"));
 	}
 
-	async importFromExcelAsync() {
-		await this.portalsCoreSvc.importFromExcelAsync("Expression", this.organization.ID);
-		await this.trackAsync(this.actions[3].text, "Import");
+	importFromExcel() {
+		this.portalsCoreSvc.importFromExcelAsync("Expression", this.organization.ID).then(() => this.trackAsync(this.actions[3].text, "Import"));
 	}
 
-	private async trackAsync(title: string, action?: string) {
-		await TrackingUtility.trackAsync({ title: title, category: "Expression", action: action || "Browse" });
+	private trackAsync(title: string, action?: string) {
+		return TrackingUtility.trackAsync({ title: title, category: "Expression", action: action || "Browse" });
 	}
 
 }

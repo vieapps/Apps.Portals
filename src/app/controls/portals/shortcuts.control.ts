@@ -43,13 +43,13 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		else {
 			AppEvents.on("App", info => {
 				if ("Initialized" === info.args.Type) {
-					this.prepareLabelAsync().then(() => AppUtility.invokeWorker(() => this.prepareShortcutsAsync()));
+					this.prepareLabelAsync().then(() => AppUtility.invoke(() => this.prepareShortcutsAsync()));
 				}
 			}, "PortalsShortcutsEvents");
 		}
 		AppEvents.on("Session", info => {
 			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
-				AppUtility.invokeWorker(() => this.prepareShortcutsAsync());
+				AppUtility.invoke(() => this.prepareShortcutsAsync());
 			}
 		}, "PortalsShortcutsEvents");
 		AppEvents.on(this.portalsCoreSvc.name, info => {

@@ -83,7 +83,7 @@ export class BookmarksControl implements OnInit, OnDestroy {
 	}
 
 	private prepareBookmarks() {
-		AppUtility.invokeWorker(() => this.bookmarks = this.booksSvc.bookmarks.toArray().sortBy({ name: "Time", reverse: true }));
+		AppUtility.invoke(() => this.bookmarks = this.booksSvc.bookmarks.toArray().sortBy({ name: "Time", reverse: true }), 123, true);
 	}
 
 	trackBookmark(index: number, bookmark: Bookmark) {
