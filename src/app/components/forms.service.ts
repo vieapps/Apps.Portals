@@ -571,7 +571,7 @@ export class AppFormsService {
 			buttons: buttons,
 			backdropDismiss: backdropDismiss
 		});
-		await this._actionsheet.present();
+		await this._actionsheet.present().then(AppUtility.isFalse(dontAddCancelButton) ? () => buttons.removeAt(buttons.length - 1) : () => {});
 	}
 
 	/** Hides the action sheet */
@@ -626,7 +626,7 @@ export class AppFormsService {
 
 	/** Shows the confirmation box  */
 	public async showConfirmAsync(message: string = null, onOkClick?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string) {
-		await this.showAlertAsync(undefined, message, undefined, onOkClick, okButtonText, cancelButtonText || await this.configSvc.getResourceAsync("common.buttons.cancel"));
+		await this.showAlertAsync(undefined, message, undefined, onOkClick, okButtonText, "{{default}}" === cancelButtonText ? await this.configSvc.getResourceAsync("common.buttons.cancel") : cancelButtonText || await this.configSvc.getResourceAsync("common.buttons.cancel"));
 	}
 
 	/** Shows the error message (by the alert confirmation box) */
