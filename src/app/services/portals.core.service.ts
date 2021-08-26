@@ -2505,6 +2505,22 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
+	public refreshModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
+		return this.refreshAsync(
+			"module",
+			id,
+			data => {
+				Module.update(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			onError,
+			useXHR,
+			headers
+		);
+	}
+
 	private processModuleUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Create":
@@ -2641,6 +2657,22 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => this.processError("Error occurred while deleting a content type", error, onError)
+		);
+	}
+
+	public refreshContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
+		return this.refreshAsync(
+			"content.type",
+			id,
+			data => {
+				ContentType.update(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			onError,
+			useXHR,
+			headers
 		);
 	}
 
