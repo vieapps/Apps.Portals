@@ -304,19 +304,19 @@ export class AppComponent implements OnInit {
 					Title: await this.configSvc.getResourceAsync("common.sidebar.login"),
 					Link: this.configSvc.appConfig.URLs.users.login,
 					Icon: { Name: "log-in", Color: "success", Slot: "start" },
-					OnClick: data => this.configSvc.navigateHomeAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "LogInPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
+					OnClick: data => this.configSvc.navigateForwardAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "LogInPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.register"),
 					Link: this.configSvc.appConfig.URLs.users.register,
 					Icon: { Name: "person-add", Color: "warning", Slot: "start" },
-					OnClick: data => this.configSvc.navigateHomeAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "RegisterPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
+					OnClick: data => this.configSvc.navigateForwardAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "RegisterPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.profile"),
 					Link: `${this.configSvc.appConfig.URLs.users.profile}/my`,
 					Icon: { Name: "person", Color: "warning", Slot: "start" },
-					OnClick: data => this.configSvc.navigateHomeAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "ProfilePage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
+					OnClick: data => this.configSvc.navigateForwardAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "ProfilePage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.search"),
