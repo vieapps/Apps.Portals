@@ -116,7 +116,7 @@ export class PortalsCmsService extends BaseService {
 				}
 				else if ("FeaturedContents" === args.Type && "Request" === args.Mode) {
 					if (!this._noContents.contains(organization.ID)) {
-						if (organization.modules.toList().SelectMany(module => module.contentTypes.toList()).Count() > 0) {
+						if (organization.modules.flatMap(module => module.contentTypes).length > 0) {
 							this._noContents.add(organization.ID);
 							this.prepareFeaturedContentsAsync(false);
 						}
@@ -558,11 +558,11 @@ export class PortalsCmsService extends BaseService {
 			isCmsItem ? { LastModified: "Descending" } : { StartDate: "Descending", PublishedTime: "Descending", LastModified: "Descending" }
 		);
 		const onSuccess = (data?: any) => {
-			if (index < contentTypes.length - 1) {
-				AppUtility.invoke(() => this.getFeaturedContentsAsync(contentTypes, index + 1), 123, true);
-			}
 			if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
 				AppUtility.invoke(() => this.prepareFeaturedContents(data.Objects.first().SystemID), 13, true);
+			}
+			if (index < contentTypes.length - 1) {
+				AppUtility.invoke(() => this.getFeaturedContentsAsync(contentTypes, index + 1), 123, true);
 			}
 		};
 		const onError = (error?: any) => {
