@@ -124,12 +124,9 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 		this.organization = this.portalsCoreSvc.getOrganization(this.configSvc.requestParams["SystemID"]);
 		if (this.organization === undefined) {
-			await this.appFormsSvc.showAlertAsync(
-				undefined,
+			this.appFormsSvc.showConfirmAsync(
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
-				undefined,
-				async () => await this.configSvc.navigateHomeAsync("/portals/core/organizations/list/all"),
-				await this.configSvc.getResourceAsync("common.buttons.ok")
+				() => this.configSvc.navigateHomeAsync("/portals/core/organizations/list/all")
 			);
 			return;
 		}
@@ -139,11 +136,8 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		this.configSvc.appTitle = this.title.track = AppUtility.format(title, { info: "" });
 
 		if (!this.portalsCoreSvc.canModerateOrganization(this.organization)) {
-			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
-			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateHomeAsync()
-			]));
+			this.trackAsync(`${this.title.track} | No Permission`, "Check").then(() => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
+			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateHomeAsync());
 			return;
 		}
 
@@ -162,15 +156,20 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		if (this.searching) {
 			this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.desktops.list.searchbar");
-			PlatformUtility.focus(this.searchCtrl);
-			await this.appFormsSvc.hideLoadingAsync();
+			await this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.focus(this.searchCtrl));
 		}
 		else {
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.desktops.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.desktops.title.search"), "search", () => this.openSearchAsync(false)),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.desktops.title.create"), "create", () => this.create()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.desktops.title.search"), "search", () => this.openSearch(false)),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcel()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcel()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("common.buttons.refresh"), "refresh", () => this.refreshAll())
+			];
+
+			this.filterBy.And = [
+				{ SystemID: { Equals: this.organization.ID } },
+				{ ParentID: "IsNull" }
 			];
 
 			this.parentID = this.configSvc.requestParams["ParentID"];
@@ -188,11 +187,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			}
 			else {
 				this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: `[${this.organization.Title}]` });
-				this.filterBy.And = [
-					{ SystemID: { Equals: this.organization.ID } },
-					{ ParentID: "IsNull" }
-				];
-				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+				this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on("Portals", info => {
 					if (info.args.Object === "Desktop") {
 						this.prepareResults();
@@ -212,7 +207,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			: AppUtility.format(this.labels.children, { number: desktop.childrenIDs.length, children: `${desktop.Children[0].Title}${(desktop.childrenIDs.length > 1 ? `, ${desktop.Children[1].Title}` : "")}, ...` });
 	}
 
-	async onSearch(event: any) {
+	onSearch(event: any) {
 		if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 			this.subscription = undefined;
@@ -220,14 +215,11 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
 			if (this.searching) {
-				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.messages.searching"));
+				AppUtility.invoke(async () => this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.messages.searching")));
 				this.desktops = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				await this.searchAsync(async () => {
-					this.infiniteScrollCtrl.disabled = false;
-					await this.appFormsSvc.hideLoadingAsync();
-				});
+				this.search(() => this.appFormsSvc.hideLoadingAsync(() => this.infiniteScrollCtrl.disabled = false));
 			}
 			else {
 				this.desktops = this.objects.filter(Desktop.getFilterBy(this.filterBy.Query));
@@ -243,29 +235,22 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		this.desktops = this.filtering ? this.objects.map(obj => obj) : [];
 	}
 
-	async onCancel() {
+	onCancel() {
 		if (this.searching) {
-			await this.configSvc.navigateBackAsync();
+			this.configSvc.navigateBackAsync();
 		}
 		else {
-			AppUtility.invoke(() => {
-				this.onClear();
-				this.filtering = false;
-			}, 123);
+			this.onClear();
+			this.filtering = false;
 		}
 	}
 
-	async onInfiniteScrollAsync() {
+	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => {
-				if (this.infiniteScrollCtrl !== undefined) {
-					await this.infiniteScrollCtrl.complete();
-				}
-			});
+			this.search(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : () => {});
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
-			await this.infiniteScrollCtrl.complete();
-			this.infiniteScrollCtrl.disabled = true;
+			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
 		}
 	}
 
@@ -273,32 +258,26 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		return this.portalsCoreSvc.getPaginationPrefix("desktop");
 	}
 
-	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
+	private startSearch(onNext?: () => void, pagination?: AppDataPagination) {
 		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
-		await this.searchAsync(onNext);
+		this.search(onNext);
 	}
 
-	private async searchAsync(onNext?: () => void) {
+	private search(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const onSuccess = async (data: any) => {
+		const onSuccess = (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await this.trackAsync(this.title.track);
+			this.trackAsync(this.title.track);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchDesktop(this.request, onSuccess, async error => await Promise.all([
-				this.appFormsSvc.showErrorAsync(error),
-				this.trackAsync(this.title.track)
-			]));
+			this.subscription = this.portalsCoreSvc.searchDesktop(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 		else {
-			await this.portalsCoreSvc.searchDesktopAsync(this.request, onSuccess, async error => await Promise.all([
-				this.appFormsSvc.showErrorAsync(error),
-				this.trackAsync(this.title.track)
-			]));
+			this.portalsCoreSvc.searchDesktopAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 	}
 
@@ -318,71 +297,71 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	async showActionsAsync() {
-		await this.listCtrl.closeSlidingItems();
-		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	showActions() {
+		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showActionSheetAsync(this.actions));
 	}
 
-	async openSearchAsync(filtering: boolean = true) {
-		await this.listCtrl.closeSlidingItems();
+	openSearch(filtering: boolean = true) {
+		this.listCtrl.closeSlidingItems();
 		if (filtering) {
 			this.filtering = true;
-			PlatformUtility.focus(this.searchCtrl);
-			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
+			AppUtility.invoke(async () => this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter")).then(() => PlatformUtility.focus(this.searchCtrl));
 			this.objects = this.desktops.map(obj => obj);
 		}
 		else {
-			await this.configSvc.navigateForwardAsync("/portals/core/desktops/search");
+			this.configSvc.navigateForwardAsync("/portals/core/desktops/search");
 		}
 	}
 
-	async createAsync() {
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(`/portals/core/desktops/create${(this.parentID === undefined ? "" : "?x-request=" + AppCrypto.jsonEncode({ ParentID: this.parentID }))}`);
+	create() {
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(`/portals/core/desktops/create${(this.parentID === undefined ? "" : "?x-request=" + AppCrypto.jsonEncode({ ParentID: this.parentID }))}`));
 	}
 
-	async openAsync(event: Event, desktop: Desktop) {
+	open(event: Event, desktop: Desktop) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(desktop.routerURI);
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(desktop.routerURI));
 	}
 
-	async showChildrenAsync(event: Event, desktop: Desktop) {
+	showChildren(event: Event, desktop: Desktop) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(desktop.listURI);
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(desktop.listURI));
 	}
 
-	async showPortletsAsync(event: Event, desktop: Desktop) {
+	showPortlets(event: Event, desktop: Desktop) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "list", desktop.ansiTitle, { SystemID: desktop.SystemID, DesktopID: desktop.ID }, "portlet", "core"));
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "list", desktop.ansiTitle, { SystemID: desktop.SystemID, DesktopID: desktop.ID }, "portlet", "core")));
 	}
 
-	async refreshAsync(event: Event, desktop: Desktop) {
+	refresh(event: Event, desktop: Desktop) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.portalsCoreSvc.refreshDesktopAsync(desktop.ID, async _ => await this.appFormsSvc.showToastAsync("The desktop was freshen-up"));
+		this.listCtrl.closeSlidingItems().then(() => this.portalsCoreSvc.refreshDesktopAsync(desktop.ID, () => this.appFormsSvc.showToastAsync("The desktop was freshen-up")));
 	}
 
-	async clearCacheAsync(event: Event, desktop: Desktop) {
+	refreshAll() {
+		this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(() => AppUtility.invoke(async () => {
+			const systemID = this.portalsCoreSvc.activeOrganization.ID;
+			await Promise.all(Desktop.instances.toArray(desktop => desktop.SystemID === systemID).map(desktop => this.portalsCoreSvc.refreshDesktopAsync(desktop.ID)));
+			this.request = AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination);
+			AppPagination.remove(this.request, this.paginationPrefix);
+			this.portalsCoreSvc.searchDesktopAsync(this.request, () => this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("All desktops was freshen-up")));
+		}));
+	}
+
+	clearCache(event: Event, desktop: Desktop) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.portalsCoreSvc.clearCacheAsync("desktop", desktop.ID);
+		this.listCtrl.closeSlidingItems().then(() => this.portalsCoreSvc.clearCacheAsync("desktop", desktop.ID));
 	}
 
-	async exportToExcelAsync() {
-		await this.portalsCoreSvc.exportToExcelAsync("Desktop", this.organization.ID);
-		await this.trackAsync(this.actions[2].text, "Export");
+	exportToExcel() {
+		this.portalsCoreSvc.exportToExcelAsync("Desktop", this.organization.ID).then(() => this.trackAsync(this.actions[2].text, "Export"));
 	}
 
-	async importFromExcelAsync() {
-		await this.portalsCoreSvc.importFromExcelAsync("Desktop", this.organization.ID);
-		await this.trackAsync(this.actions[3].text, "Import");
+	importFromExcel() {
+		this.portalsCoreSvc.importFromExcelAsync("Desktop", this.organization.ID).then(() => this.trackAsync(this.actions[3].text, "Import"));
 	}
 
-	private async trackAsync(title: string, action?: string) {
-		await TrackingUtility.trackAsync({ title: title, category: "Desktop", action: action || "Browse" });
+	private trackAsync(title: string, action?: string) {
+		return TrackingUtility.trackAsync({ title: title, category: "Desktop", action: action || "Browse" });
 	}
 
 }

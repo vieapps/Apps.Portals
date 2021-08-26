@@ -558,7 +558,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 			const button = await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove");
 			const confirm = await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete");
 			const success = await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete");
-			this.portalsCoreSvc.confirmAsync(
+			this.appFormsSvc.showConfirmAsync(
 				confirm,
 				() => this.appFormsSvc.showLoadingAsync(title).then(() => this.portalsCmsSvc.deleteContentAsync(
 					this.content.ID,
@@ -571,8 +571,8 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 					},
 					error => this.trackAsync(title, "Delete").then(() => this.appFormsSvc.showErrorAsync(error))
 				)),
-				true,
-				button
+				button,
+				"{{default}}"
 			);
 		});
 	}
@@ -583,10 +583,11 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 			this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url));
 		}
 		else {
-			AppUtility.invoke(async () => this.portalsCoreSvc.confirmAsync(
+			AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
 				message || await this.configSvc.getResourceAsync(`portals.cms.contents.update.messages.confirm.${AppUtility.isNotEmpty(this.contentType.ID) ? "cancel" : "new"}`),
 				() => this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url)),
-				message !== undefined || changed || AppUtility.isEmpty(this.contentType.ID)
+				undefined,
+				message !== undefined || changed || AppUtility.isEmpty(this.contentType.ID) ? "{{default}}" : undefined
 			));
 		}
 	}

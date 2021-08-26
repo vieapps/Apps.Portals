@@ -400,7 +400,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			const button = await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove");
 			const confirm = await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete");
 			const success = await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete");
-			this.portalsCoreSvc.confirmAsync(
+			this.appFormsSvc.showConfirmAsync(
 				confirm,
 				() => this.appFormsSvc.showLoadingAsync(title).then(() => this.portalsCmsSvc.deleteContentAsync(
 					this.content.ID,
@@ -413,8 +413,8 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 					},
 					error => this.trackAsync(title, "Delete").then(() => this.appFormsSvc.showErrorAsync(error))
 				)),
-				true,
-				button
+				button,
+				"{{default}}"
 			);
 		});
 	}
@@ -423,7 +423,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		AppUtility.invoke(async () => {
 			const button = await this.configSvc.getResourceAsync("common.buttons.delete");
 			const confirm = await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.deleteThumbnail");
-			this.portalsCoreSvc.confirmAsync(
+			this.appFormsSvc.showConfirmAsync(
 				confirm,
 				() => this.filesSvc.deleteThumbnailAsync(
 					this.content.thumbnails[0].ID,
@@ -434,8 +434,8 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 					},
 					error => this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail").then(() => this.appFormsSvc.showErrorAsync(error))
 				),
-				true,
-				button
+				button,
+				"{{default}}"
 			);
 		});
 	}

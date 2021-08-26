@@ -154,8 +154,8 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			: await this.portalsCoreSvc.getActiveOrganizationAsync();
 
 		if (this.organization === undefined) {
-			await this.trackAsync(`${this.title.track} | No Organization`, "Check");
-			await this.appFormsSvc.hideLoadingAsync(async () => await this.backAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all"));
+			this.trackAsync(`${this.title.track} | No Organization`, "Check");
+			this.appFormsSvc.hideLoadingAsync(async () => this.back(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all"));
 			return;
 		}
 
@@ -174,11 +174,8 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		this.canUpdate = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
 		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
 		if (!this.canContribute) {
-			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
-			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateBackAsync()
-			]));
+			this.trackAsync(`${this.title.track} | No Permission`, "Check").then(() => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
+			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 			return;
 		}
 
@@ -207,16 +204,17 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		}
 		else {
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.search"), "search", () => this.openSearchAsync())
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.create"), "create", () => this.create()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.search"), "search", () => this.openSearch())
 			];
 			if (this.canUpdate) {
-				this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.reorder"), "swap-vertical", () => this.openReorderAsync()), 1);
+				this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.reorder"), "swap-vertical", () => this.openReorder()), 1);
 				this.actions.push(
-					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
-					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
+					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcel()),
+					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcel())
 				);
 			}
+			this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("common.buttons.refresh"), "refresh", () => this.refreshAll()));
 
 			this.parentID = this.configSvc.requestParams["ParentID"];
 			this.parentCategory = Category.get(this.parentID);
@@ -237,7 +235,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			else {
 				this.prepareFilterBy();
 				await this.prepareTitleAsync();
-				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+				this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					if (info.args.Object === "CMS.Category") {
 						this.prepareResults();
@@ -290,7 +288,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 				this.categories = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				this.searchAsync(() => this.infiniteScrollCtrl.disabled = false);
+				this.search(() => this.infiniteScrollCtrl.disabled = false);
 			}
 			else {
 				this.prepareResults();
@@ -304,17 +302,12 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		this.categories = [];
 	}
 
-	async onInfiniteScrollAsync() {
+	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => {
-				if (this.infiniteScrollCtrl !== undefined) {
-					await this.infiniteScrollCtrl.complete();
-				}
-			});
+			this.search(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : () => {});
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
-			await this.infiniteScrollCtrl.complete();
-			this.infiniteScrollCtrl.disabled = true;
+			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
 		}
 	}
 
@@ -322,32 +315,26 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		return this.portalsCoreSvc.getPaginationPrefix("cms.category");
 	}
 
-	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
+	private startSearch(onNext?: () => void, pagination?: AppDataPagination) {
 		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
-		await this.searchAsync(onNext);
+		this.search(onNext);
 	}
 
-	private async searchAsync(onNext?: () => void) {
+	private search(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const onSuccess = async (data: any) => {
+		const onSuccess = (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await this.trackAsync(this.title.track);
+			this.trackAsync(this.title.track);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchCategory(this.request, onSuccess, async error => await Promise.all([
-				this.appFormsSvc.showErrorAsync(error),
-				this.trackAsync(this.title.track)
-			]));
+			this.subscription = this.portalsCmsSvc.searchCategory(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 		else {
-			await this.portalsCmsSvc.searchCategoryAsync(this.request, onSuccess, async error => await Promise.all([
-				this.appFormsSvc.showErrorAsync(error),
-				this.trackAsync(this.title.track)
-			]));
+			this.portalsCmsSvc.searchCategoryAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 	}
 
@@ -383,55 +370,55 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	async showActionsAsync() {
-		await this.listCtrl.closeSlidingItems();
-		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	showActions() {
+		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showActionSheetAsync(this.actions));
 	}
 
-	async openSearchAsync() {
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync("/portals/cms/categories/search");
+	openSearch() {
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync("/portals/cms/categories/search"));
 	}
 
-	async createAsync() {
-		await this.listCtrl.closeSlidingItems();
+	create() {
+		this.listCtrl.closeSlidingItems();
 		const params: { [key: string]: string } = {};
 		if (AppUtility.isNotEmpty(this.parentID)) {
 			params["ParentID"] = this.parentID;
 		}
 		if (this.contentType !== undefined) {
 			params["RepositoryEntityID"] = this.contentType.ID;
-			await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, params));
+			this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, params));
 		}
 	}
 
-	async openAsync(event: Event, category: Category) {
+	open(event: Event, category: Category) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		if (this.canUpdate) {
-			await this.configSvc.navigateForwardAsync(category.routerURI);
-		}
+		this.listCtrl.closeSlidingItems().then(this.canUpdate ? () => this.configSvc.navigateForwardAsync(category.routerURI) : () => {});
 	}
 
-	async showChildrenAsync(event: Event, category: Category) {
+	showChildren(event: Event, category: Category) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(category.listURI);
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(category.listURI));
 	}
 
-	async viewAsync(event: Event, category: Category) {
+	view(event: Event, category: Category) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module), "list", category.Title, { CategoryID: category.ID }));
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module), "list", category.Title, { CategoryID: category.ID })));
 	}
 
-	async refreshAsync(event: Event, category: Category) {
+	refresh(event: Event, category: Category) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.portalsCmsSvc.refreshCategoryAsync(category.ID, async _ => await this.appFormsSvc.showToastAsync("The category was freshen-up"));
+		this.listCtrl.closeSlidingItems().then(() => this.portalsCmsSvc.refreshCategoryAsync(category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up")));
 	}
 
-	async createExpressionAsync(event: Event, category: Category) {
+	refreshAll() {
+		this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(() => AppUtility.invoke(async () => {
+			const systemID = this.portalsCoreSvc.activeOrganization.ID;
+			await Promise.all(Category.instances.toArray(category => category.SystemID === systemID).map(category => this.portalsCmsSvc.refreshCategoryAsync(category.ID)));
+			await this.portalsCmsSvc.searchCategoriesAsync(this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.portalsCoreSvc.activeModule), () => this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("All categories was freshen-up")), undefined, true);
+		}));
+	}
+
+	createExpression(event: Event, category: Category) {
 		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module);
 		const params = AppUtility.isObject(contentType, true)
 			? {
@@ -450,21 +437,14 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			}
 			: undefined;
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", category.ansiTitle, params, "expression", "core"));
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", category.ansiTitle, params, "expression", "core")));
 	}
 
-	private async backAsync(message: string, url?: string) {
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			message,
-			undefined,
-			async () => await this.configSvc.navigateHomeAsync(url),
-			await this.configSvc.getResourceAsync("common.buttons.ok")
-		);
+	private back(message: string, url?: string) {
+		this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateHomeAsync(url));
 	}
 
-	private async openReorderAsync() {
+	private openReorder() {
 		this.reorderItems = this.categories.sortBy("OrderIndex", "Title").map(c => {
 			return {
 				ID: c.ID,
@@ -481,7 +461,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		});
 		this.hash = AppCrypto.hash(this.ordered);
 		this.redordering = true;
-		await this.prepareTitleAsync();
+		this.prepareTitleAsync();
 	}
 
 	onReordered(event: any) {
@@ -494,17 +474,17 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		event.detail.complete();
 	}
 
-	async doReorderAsync() {
+	doReorder() {
 		if (this.hash !== AppCrypto.hash(this.ordered)) {
 			this.processing = true;
-			await this.appFormsSvc.showLoadingAsync(this.title.page);
+			this.appFormsSvc.showLoadingAsync(this.title.page);
 			const reordered = this.ordered.toList().Select(category => {
 				return {
 					ID: category.ID,
 					OrderIndex: category.OrderIndex
 				};
 			}).ToArray();
-			await this.portalsCmsSvc.updateCategoryAsync(
+			this.portalsCmsSvc.updateCategoryAsync(
 				{
 					CategoryID: this.parentCategory === undefined ? undefined : this.parentCategory.ID,
 					SystemID: this.organization === undefined ? undefined : this.organization.ID,
@@ -512,37 +492,32 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 					RepositoryEntityID: this.contentType === undefined ? undefined : this.contentType.ID,
 					Categories: reordered
 				},
-				async _ => {
+				() => {
 					this.categories.forEach(category => category.OrderIndex = reordered.find(i => i.ID === category.ID).OrderIndex);
 					if (this.parentCategory !== undefined) {
 						this.prepareCategories();
 					}
-					await this.cancelReorderAsync(() => this.processing = false);
+					this.cancelReorder(() => this.processing = false);
 				},
-				async error => {
-					this.processing = false;
-					await this.appFormsSvc.showErrorAsync(error);
-				},
+				error => this.appFormsSvc.showErrorAsync(error).then(() => this.processing = false),
 				{
 					"x-update": "order-index"
 				}
 			);
 		}
 		else {
-			await this.cancelReorderAsync();
+			this.cancelReorder();
 		}
 	}
 
-	async cancelReorderAsync(onNext?: () => void) {
+	cancelReorder(onNext?: () => void) {
 		this.redordering = false;
-		await this.prepareTitleAsync();
-		await this.appFormsSvc.hideLoadingAsync(onNext);
+		this.prepareTitleAsync().then(() => this.appFormsSvc.hideLoadingAsync(onNext));
 	}
 
-	async moveAsync(event: Event, category: Category) {
+	move(event: Event, category: Category) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.portalsCoreSvc.moveAsync(
+		this.listCtrl.closeSlidingItems().then(async () => this.portalsCoreSvc.moveAsync(
 			"Category",
 			category.ID,
 			{
@@ -572,46 +547,40 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 					"x-category-id": data.categoryID
 				};
 			}
-		);
-		if (this.configSvc.isDebug) {
-			console.log("<Portals>: move contents to other category", category);
-		}
+		));
 	}
 
-	async exportToExcelAsync() {
-		await this.portalsCoreSvc.exportToExcelAsync("CMS.Category", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined);
-		await this.trackAsync(this.actions[2].text, "Export");
+	exportToExcel() {
+		this.trackAsync(this.actions[3].text, "Export").then(() => this.portalsCoreSvc.exportToExcelAsync("CMS.Category", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined));
 	}
 
-	async importFromExcelAsync() {
-		await this.portalsCoreSvc.importFromExcelAsync(
+	importFromExcel() {
+		this.portalsCoreSvc.importFromExcelAsync(
 			"CMS.Category",
 			this.organization.ID,
 			this.module !== undefined ? this.module.ID : undefined,
 			this.contentType !== undefined ? this.contentType.ID : undefined,
-			async _ => {
-				await this.appFormsSvc.showLoadingAsync();
-				await this.trackAsync(this.actions[3].text, "Import");
+			() => {
 				this.categories = [];
 				this.pageNumber = 0;
 				AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination), this.paginationPrefix);
 				Category.instances
-					.toArray(category => this.contentType !== undefined ? this.contentType.ID === category.RepositoryEntityID : this.organization.ID === category.SystemID)
-					.map(category => category.ID)
-					.forEach(id => Category.instances.remove(id));
-				await this.startSearchAsync(async () => await this.appFormsSvc.showAlertAsync(
+				.toArray(category => this.contentType !== undefined ? this.contentType.ID === category.RepositoryEntityID : this.organization.ID === category.SystemID)
+				.map(category => category.ID)
+				.forEach(id => Category.instances.remove(id));
+				this.appFormsSvc.showLoadingAsync().then(() => this.trackAsync(this.actions[4].text, "Import").then(() => this.startSearch(async () => this.appFormsSvc.showAlertAsync(
 					"Excel",
 					await this.configSvc.getResourceAsync("portals.common.excel.message.import"),
 					undefined,
 					undefined,
 					await this.configSvc.getResourceAsync("common.buttons.close")
-				));
+				))));
 			}
 		);
 	}
 
-	private async trackAsync(title: string, action?: string) {
-		await TrackingUtility.trackAsync({ title: title, category: "Category", action: action || (this.searching ? "Search" : "Browse") });
+	private trackAsync(title: string, action?: string) {
+		return TrackingUtility.trackAsync({ title: title, category: "Category", action: action || (this.searching ? "Search" : "Browse") });
 	}
 
 }

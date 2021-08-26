@@ -188,7 +188,7 @@ export class CmsItemListPage implements OnInit, OnDestroy {
 			this.startSearch();
 
 			AppEvents.on(this.portalsCoreSvc.name, info => {
-				if (info.args.Object === "CMS.Item") {
+				if (info.args.Object === "CMS.Item" && info.args.SystemID === this.portalsCoreSvc.activeOrganization.ID) {
 					this.prepareResults();
 				}
 			}, "CMS.Items:Refresh");

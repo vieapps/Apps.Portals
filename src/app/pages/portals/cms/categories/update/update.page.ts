@@ -390,7 +390,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 					value: "set-null"
 				}
 			];
-			this.portalsCoreSvc.confirmAsync(
+			this.appFormsSvc.showConfirmAsync(
 				deleteMessage,
 				() => this.appFormsSvc.showAlertAsync(
 					undefined,
@@ -416,8 +416,8 @@ export class CmsCategoriesUpdatePage implements OnInit {
 						checked: mode.value === "delete"
 					}))
 				),
-				true,
-				deleteButton
+				deleteButton,
+				"{{default}}"
 			);
 		});
 	}
@@ -428,10 +428,11 @@ export class CmsCategoriesUpdatePage implements OnInit {
 			this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url));
 		}
 		else {
-			AppUtility.invoke(async () => this.portalsCoreSvc.confirmAsync(
+			AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
 				message || await this.configSvc.getResourceAsync(`portals.cms.categories.update.messages.confirm.${AppUtility.isNotEmpty(this.contentType.ID) ? "cancel" : "new"}`),
 				() => this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url)),
-				message !== undefined || changed || AppUtility.isEmpty(this.contentType.ID)
+				undefined,
+				message !== undefined || changed || AppUtility.isEmpty(this.contentType.ID) ? "{{default}}" : undefined
 			));
 		}
 	}

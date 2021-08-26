@@ -583,7 +583,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 	}
 
 	delete() {
-		AppUtility.invoke(async () => this.portalsCoreSvc.confirmAsync(
+		AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
 			await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.confirm.delete"),
 			async () => this.appFormsSvc.showAlertAsync(
 				undefined,
@@ -604,8 +604,8 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 				await this.configSvc.getResourceAsync("portals.contenttypes.update.buttons.remove"),
 				await this.configSvc.getResourceAsync("common.buttons.cancel")
 			),
-			true,
-			await this.configSvc.getResourceAsync("common.buttons.delete")
+			await this.configSvc.getResourceAsync("common.buttons.delete"),
+			"{{default}}"
 		));
 	}
 
@@ -615,10 +615,11 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 			this.trackAsync(this.title, "Cancel").then(() => this.configSvc.navigateBackAsync());
 		}
 		else {
-			AppUtility.invoke(async () => this.portalsCoreSvc.confirmAsync(
+			AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
 				message || await this.configSvc.getResourceAsync(`portals.contenttypes.update.messages.confirm.${AppUtility.isNotEmpty(this.contentType.ID) ? "cancel" : "new"}`),
 				() => this.trackAsync(this.title, "Cancel").then(() => this.configSvc.navigateBackAsync()),
-				message !== undefined || changed || AppUtility.isEmpty(this.contentType.ID)
+				undefined,
+				message !== undefined || changed || AppUtility.isEmpty(this.contentType.ID) ? "{{default}}" : undefined
 			));
 		}
 	}

@@ -116,23 +116,16 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		this.canModerateOrganization = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization);
 
 		if (!this.isSystemAdministrator && this.organization === undefined) {
-			await this.trackAsync(`${this.title.track} | Invalid Organization`, "Check");
-			await this.appFormsSvc.showAlertAsync(
-				undefined,
+			this.trackAsync(`${this.title.track} | Invalid Organization`, "Check").then(async () => this.appFormsSvc.showConfirmAsync(
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
-				undefined,
-				async () => await this.configSvc.navigateHomeAsync("/portals/core/organizations/list/all"),
-				await this.configSvc.getResourceAsync("common.buttons.ok")
-			);
+				() => this.configSvc.navigateHomeAsync("/portals/core/organizations/list/all")
+			));
 			return;
 		}
 
 		if (!this.canModerateOrganization) {
-			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
-			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateHomeAsync()
-			]));
+			this.trackAsync(`${this.title.track} | No Permission`, "Check").then(() => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
+			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateHomeAsync());
 			return;
 		}
 
@@ -147,26 +140,35 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		this.searching = this.configSvc.currentURL.endsWith("/search");
 		this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: this.isSystemAdministrator ? "" : `[${this.organization.Title}]` });
 
-		if (!this.isSystemAdministrator && this.portalsCoreSvc.activeOrganizations.length <= 20) {
-			this.configSvc.appTitle = this.title.page = this.title.track;
-			const organizations = new Array<Organization>();
-			await Promise.all(this.portalsCoreSvc.activeOrganizations.map(async id => {
-				await this.portalsCoreSvc.getOrganizationAsync(id);
-				const organization = Organization.get(id);
-				if (organization !== undefined && this.portalsCoreSvc.canModerateOrganization(organization)) {
-					organizations.push(organization);
-					if (Site.instances.find(site => site.SystemID === organization.ID) === undefined) {
-						await this.portalsCoreSvc.searchSiteAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }), undefined, undefined, true, true);
-					}
+		const systemID = this.configSvc.requestParams["SystemID"];
+		if (!this.isSystemAdministrator) {
+			if (systemID !== undefined) {
+				this.sites = Site.instances.filter(site => site.SystemID === systemID).toArray();
+				if (this.sites.length < 1) {
+					await this.portalsCoreSvc.searchSiteAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: systemID } }] }, { Title: "Ascending" }), () => this.sites = Site.instances.filter(site => site.SystemID === systemID).toArray(), undefined, true, true);
 				}
-			}));
-			this.sites = organizations.toList().SelectMany(organization => Site.instances.toList(site => site.SystemID === organization.ID)).ToArray();
+			}
+			else if (this.portalsCoreSvc.activeOrganizations.length <= 100) {
+				this.configSvc.appTitle = this.title.page = this.title.track;
+				const organizations = new Array<Organization>();
+				await Promise.all(this.portalsCoreSvc.activeOrganizations.map(async id => {
+					await this.portalsCoreSvc.getOrganizationAsync(id);
+					const organization = Organization.get(id);
+					if (organization !== undefined && this.portalsCoreSvc.canModerateOrganization(organization)) {
+						organizations.push(organization);
+						if (Site.instances.find(site => site.SystemID === organization.ID) === undefined) {
+							await this.portalsCoreSvc.searchSiteAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }), undefined, undefined, true, true);
+						}
+					}
+				}));
+				this.sites = organizations.toList().SelectMany(organization => Site.instances.toList(site => site.SystemID === organization.ID)).ToArray();
+			}
 			await this.appFormsSvc.hideLoadingAsync();
 		}
 
-		this.filterBy.And = this.isSystemAdministrator && this.configSvc.requestParams["SystemID"] === undefined
+		this.filterBy.And = this.isSystemAdministrator && systemID === undefined
 			? []
-			: [{ SystemID: { Equals: this.organization.ID } }];
+			: [{ SystemID: { Equals: systemID } }];
 
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.sites.list.search");
