@@ -283,7 +283,7 @@ export class AppUtility {
 		}
 	}
 
-	/** Executes a function asynchronously (using 'setTimeout') and return a promise */
+	/** Executes a function asynchronously (using 'setTimeout') */
 	public static invoke(func?: () => void, defer?: number) {
 		return new Promise<void>(resolve => {
 			if (func !== undefined) {
@@ -295,6 +295,18 @@ export class AppUtility {
 			}
 			resolve();
 		});
+	}
+
+	/** Executes a function as a worker in the background (using requestIdleCallback - fallback as setTimeout when not available) */
+	public static invokeWorker(func?: () => void, defer?: number) {
+		return func !== undefined
+			? typeof window["requestIdleCallback"] === "function"
+				? new Promise<void>(resolve => {
+						window["requestIdleCallback"](func);
+						resolve();
+					})
+				: this.invoke(func, defer)
+			: new Promise<void>(resolve => resolve());
 	}
 
 	/** Gets the position of the sub-string in the string */
