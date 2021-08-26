@@ -658,11 +658,11 @@ export class ConfigurationService extends BaseService {
 					this.readAsync(
 						path,
 						countries => this.saveGeoMetaAsync(countries),
-						error => this.showError(`Error occurred while fetching the meta countries [${this.getPath(path)}]`, error)
+						error => this.showError(`Error occurred while fetching the meta countries [${AppConfig.URIs.apis}${path}]`, error)
 					);
 				}
 			}),
-			error => this.showError(`Error occurred while fetching the meta provinces [${this.getPath(path)}]`, error)
+			error => this.showError(`Error occurred while fetching the meta provinces [${AppConfig.URIs.apis}${path}]`, error)
 		);
 	}
 
