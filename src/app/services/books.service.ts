@@ -98,20 +98,18 @@ export class BooksService extends BaseService {
 	}
 
 	public async initializeAsync(onNext?: () => void) {
-		this.prepareSidebarFooterItems();
+		AppUtility.invoke(() => this.prepareSidebarFooterItems(), this.configSvc.appConfig.services.active === this.name ? 0 : 456);
 		if (this.configSvc.isAuthenticated) {
-			AppUtility.invoke(() => this.loadBookmarksAsync(() => this.fetchBookmarksAsync()), this.configSvc.appConfig.services.active === this.name ? 0 : 6789);
+			AppUtility.invoke(() => this.loadBookmarksAsync(() => this.fetchBookmarksAsync()), this.configSvc.appConfig.services.active === this.name ? 0 : 5678);
 		}
-		AppUtility.invoke(() => {
-			this.loadCategoriesAsync(() => this.fetchCategoriesAsync());
-			this.loadInstructionsAsync(() => this.fetchInstructionsAsync());
-			this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast(this.name, { Type: "Books", Mode: "Updated" }));
-			this.loadStatisticsAsync();
-		}, this.configSvc.appConfig.services.active === this.name ? 0 : 12345);
+		AppUtility.invoke(() => this.loadCategoriesAsync(() => this.fetchCategoriesAsync())
+			.then(() => this.loadInstructionsAsync(() => this.fetchInstructionsAsync()))
+			.then(() => this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast(this.name, { Type: "Books", Mode: "Updated" })))
+			.then(() => this.loadStatisticsAsync()), this.configSvc.appConfig.services.active === this.name ? 0 : 6789);
 		if (this.configSvc.appConfig.services.active === this.name) {
 			AppEvents.broadcast("ActiveSidebar", { Name: "books" });
 		}
-		else {
+		else if (this.configSvc.appConfig.services.all.length > 1) {
 			AppUtility.invoke(() => this.prepareSidebarFooterItems(), 6789);
 		}
 		if (onNext !== undefined) {

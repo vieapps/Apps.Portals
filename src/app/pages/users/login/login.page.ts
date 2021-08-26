@@ -150,7 +150,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 				this.login.form.value.Account,
 				this.login.form.value.Password,
 				data => this.trackAsync(this.title).then(() => this.appFormsSvc.hideLoadingAsync(() => data.Require2FA ? this.openLoginOTPAsync(data) : this.close())),
-				error => this.trackAsync(this.title).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.login.controls.find(ctrl => ctrl.Name === "Account").focus()))
+				error => this.trackAsync(this.title).then(() => this.appFormsSvc.showErrorAsync(error, undefined, () => this.login.controls.find(ctrl => ctrl.Name === "Account").focus())))
 			);
 		}
 	}
@@ -231,7 +231,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 		this.mode = "otp";
 		this.otp.button.label = await this.configSvc.getResourceAsync("users.login.otp.button");
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("users.login.otp.title");
-		await this.trackAsync(this.title + " | OTP", this.configSvc.appConfig.URLs.users.otp, "Request", "Users:OTP");
+		await this.trackAsync(this.title, this.configSvc.appConfig.URLs.users.otp, "Request", "Users:OTP");
 	}
 
 	requestOTP(control?: AppFormsControl, account?: string, provider?: string, query?: string, object?: string) {
@@ -257,13 +257,12 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 				this.otp.form.value.ID,
 				this.otp.form.value.Provider,
 				this.otp.form.value.OTP,
-				() => this.trackAsync(this.title + " | OTP", this.configSvc.appConfig.URLs.users.otp, "Validate", "Users:OTP").then(() => this.appFormsSvc.hideLoadingAsync(() => this.close())),
-				error => this.appFormsSvc.showErrorAsync(error).then(() => {
+				() => this.trackAsync(this.title, this.configSvc.appConfig.URLs.users.otp, "Validate", "Users:OTP").then(() => this.appFormsSvc.hideLoadingAsync(() => this.close())),
+				error => this.trackAsync(this.title, this.configSvc.appConfig.URLs.users.otp, "Validate", "Users:OTP").then(() => this.appFormsSvc.showErrorAsync(error, undefined, () => {
 					const control = this.otp.controls.find(ctrl => ctrl.Name === "OTP");
 					control.controlRef.deleteValue();
 					control.focus();
-					this.trackAsync(this.title + " | OTP", this.configSvc.appConfig.URLs.users.otp, "Validate", "Users:OTP");
-				})
+				}))
 			));
 		}
 	}
@@ -357,7 +356,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 						await this.configSvc.getResourceAsync("users.login.reset.messages.sms", { account: this.reset.form.value.Account }),
 						() => this.openLoginAsync()
 					)),
-					error => this.appFormsSvc.showErrorAsync(error).then(() => {
+					error => this.appFormsSvc.showErrorAsync(error, undefined, () => {
 						control.controlRef.deleteValue();
 						control.focus(123);
 						this.trackAsync(this.title, `${this.configSvc.appConfig.URLs.users.root}/reset`, "Reset", "Users:Password");

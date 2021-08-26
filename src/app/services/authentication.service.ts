@@ -155,7 +155,7 @@ export class AuthenticationService extends BaseService {
 		return false;
 	}
 
-	protected processError(error: any, message: string, onNext?: (error?: any) => void) {
+	protected processError(message: string, error: any, onNext?: (error?: any) => void) {
 		error = AppUtility.parseError(error);
 		if (AppUtility.isGotSecurityException(error) && "UnauthorizedException" !== error.Type && "AccessDeniedException" !== error.Type) {
 			this.configSvc.resetSessionAsync(() =>
@@ -193,7 +193,7 @@ export class AuthenticationService extends BaseService {
 					this.updateSessionWhenLogInAsync(data, onSuccess);
 				}
 			},
-			error => this.processError(error, "Error occurred while logging in", onError),
+			error => this.processError("Error occurred while logging in", error, onError),
 			undefined,
 			true
 		);
@@ -211,7 +211,7 @@ export class AuthenticationService extends BaseService {
 				this.showLog("Log in with OTP successful");
 				this.updateSessionWhenLogInAsync(data, onSuccess);
 			},
-			error => this.processError(error, "Error occurred while logging in with OTP", onError),
+			error => this.processError("Error occurred while logging in with OTP", error, onError),
 			undefined,
 			true
 		);
@@ -222,15 +222,15 @@ export class AuthenticationService extends BaseService {
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			data => this.configSvc.updateSessionAsync(data, () => this.configSvc.registerSessionAsync(() => {
 				this.showLog("Log out successful", this.configSvc.isDebug ? data : "");
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
 				AppEvents.broadcast("Account", { Type: "Updated", Mode: "Apps" });
 				AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Apps" });
 				AppEvents.broadcast("Session", { Type: "LogOut" });
 				AppEvents.sendToElectron("Users", { Type: "LogOut", Data: this.configSvc.appConfig.session });
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
 			}, onError), true),
-			error => this.processError(error, "Error occurred while logging out", onError),
+			error => this.processError("Error occurred while logging out", error, onError),
 			undefined,
 			true
 		);
@@ -243,7 +243,7 @@ export class AuthenticationService extends BaseService {
 				Account: AppCrypto.rsaEncrypt(account)
 			},
 			onSuccess,
-			error => this.processError(error, "Error occurred while requesting new password", onError),
+			error => this.processError("Error occurred while requesting new password", error, onError),
 			this.configSvc.appConfig.getCaptchaInfo(captcha)
 		);
 	}
@@ -256,7 +256,7 @@ export class AuthenticationService extends BaseService {
 				OtpCode: AppCrypto.rsaEncrypt(otp)
 			},
 			onSuccess,
-			error => this.processError(error, "Error occurred while renewing password", onError)
+			error => this.processError("Error occurred while renewing password", error, onError)
 		);
 	}
 
@@ -277,13 +277,10 @@ export class AuthenticationService extends BaseService {
 	}
 
 	private updateSessionWhenLogInAsync(data: any, onNext: (data?: any) => void) {
-		return this.configSvc.updateSessionAsync(data, () => {
+		return AppUtility.invoke(onNext !== undefined ? () => onNext(data) : () => {}).then(() => this.configSvc.updateSessionAsync(data, () => {
 			AppEvents.broadcast("Session", { Type: "LogIn" });
 			AppEvents.sendToElectron("Users", { Type: "LogIn", Data: this.configSvc.appConfig.session });
-			if (onNext !== undefined) {
-				onNext(data);
-			}
-		});
+		}));
 	}
 
 }

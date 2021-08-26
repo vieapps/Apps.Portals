@@ -49,7 +49,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		}
 		AppEvents.on("Session", info => {
 			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
-				AppUtility.invoke(() => this.prepareShortcutsAsync());
+				this.prepareShortcutsAsync();
 			}
 		}, "PortalsShortcutsEvents");
 		AppEvents.on(this.portalsCoreSvc.name, info => {

@@ -142,7 +142,7 @@ export class PortalsCmsService extends BaseService {
 			if (("LogIn" === args.Type || "LogOut" === args.Type)) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
-				this.updateSidebarAsync().then("LogIn" === args.Type ? () => this.prepareFeaturedContentsAsync() : () => {});
+				AppUtility.invoke(() => this.updateSidebarAsync().then("LogIn" === args.Type ? () => this.prepareFeaturedContentsAsync() : () => {}), 123);
 			}
 		});
 
@@ -151,7 +151,7 @@ export class PortalsCmsService extends BaseService {
 			if ("Updated" === args.Type && "APIs" === args.Mode) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
-				this.updateSidebarAsync().then(() => this.prepareFeaturedContentsAsync());
+				AppUtility.invoke(() => this.updateSidebarAsync().then(() => this.prepareFeaturedContentsAsync()), 123);
 			}
 		});
 
