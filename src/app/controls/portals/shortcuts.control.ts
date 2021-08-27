@@ -38,7 +38,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		if (this.configSvc.isReady) {
-			this.prepareLabelAsync().then(() => AppUtility.invoke(() => this.prepareShortcutsAsync()));
+			this.prepareLabelAsync().then(() => AppUtility.invoke(() => this.prepareShortcutsAsync(), 123, true));
 		}
 		else {
 			AppEvents.on("App", info => {

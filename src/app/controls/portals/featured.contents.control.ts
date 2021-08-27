@@ -58,7 +58,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 
 		if (this.configSvc.isReady) {
 			this.prepareLabelsAsync();
-			AppUtility.invoke(() => this.prepareContents(), 123);
+			AppUtility.invoke(() => this.prepareContents(), 123, true);
 		}
 		else {
 			AppEvents.on("App", info => {
