@@ -115,11 +115,13 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	ionViewDidEnter() {
 		this.configSvc.appTitle = this.searching ? this.title.search : this.title.page;
-		this.trackAsync(this.searching ? this.title.search : this.title.track, this.searching ? "Search" : "Browse");
+		this.trackAsync(this.searching ? this.title.search : this.title.track);
 	}
 
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
+		AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebar", Mode: "Categories" });
+
 		this.searching = this.configSvc.currentURL.endsWith("/search");
 		const title = await this.configSvc.getResourceAsync(`portals.cms.contents.title.${(this.searching ? "search" : "list")}`);
 		this.configSvc.appTitle = this.title.page = this.title.track = AppUtility.format(title, { info: "" });
@@ -152,8 +154,7 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Content", this.module === undefined ? undefined : this.module.Privileges);
 		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Content", this.module === undefined ? undefined : this.module.Privileges);
 		if (!this.canContribute) {
-			this.trackAsync(`${this.title.track} | No Permission`, "Check");
-			this.appFormsSvc.showToastAsync("Hmmmmmm...."),
+			this.trackAsync(`${this.title.track} | No Permission`, "Check").then(() => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
 			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 			return;
 		}
@@ -168,18 +169,22 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
-		this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
-		if (this.module !== undefined) {
-			this.filterBy.And.push({ RepositoryID: { Equals: this.module.ID } });
-		}
-		if (this.contentType !== undefined) {
-			this.filterBy.And.push({ RepositoryEntityID: { Equals: this.contentType.ID } });
-		}
+		this.filterBy.And = this.contentType !== undefined
+			? [
+					{ SystemID: { Equals: this.contentType.SystemID } },
+					{ RepositoryID: { Equals: this.contentType.RepositoryID } },
+					{ RepositoryEntityID: { Equals: this.contentType.ID } }
+				]
+			: this.module !== undefined
+				? [
+						{ SystemID: { Equals: this.module.SystemID } },
+						{ RepositoryID: { Equals: this.module.ID } }
+					]
+				: [{ SystemID: { Equals: this.organization.ID } }];
 		if (this.category !== undefined) {
 			this.filterBy.And.push({ CategoryID: { Equals: this.category.ID } });
 		}
 
-		AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebar", Mode: "Categories" });
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.search");
 			this.configSvc.appTitle = this.title.search = await this.configSvc.getResourceAsync("common.messages.searching");
@@ -197,18 +202,18 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 				);
 			}
 
+			this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: `[${(this.category === undefined ? this.organization.Title : this.organization.Title + " :: " + this.category.FullTitle)}]` });
+			this.startSearch(() => this.appFormsSvc.hideLoadingAsync(() => {
+				if (this.category !== undefined && this.category.childrenIDs === undefined) {
+					this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up"));
+				}
+			}));
+
 			AppEvents.on(this.portalsCoreSvc.name, info => {
 				if (info.args.Object === "CMS.Content" && info.args.SystemID === this.portalsCoreSvc.activeOrganization.ID) {
 					this.prepareResults();
 				}
 			}, `CMS.Contents:${(this.category !== undefined ? ":" + this.category.ID : "")}:Refresh`);
-
-			this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: `[${(this.category === undefined ? this.organization.Title : this.organization.Title + " :: " + this.category.FullTitle)}]` });
-			this.startSearch(() => this.appFormsSvc.hideLoadingAsync(() => {
-					if (this.category !== undefined && this.category.childrenIDs === undefined) {
-					this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up"));
-				}
-			}));
 		}
 	}
 
@@ -228,14 +233,12 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 					this.contents = [];
 					this.pageNumber = 0;
 					this.pagination = AppPagination.getDefault();
-					this.search(() => {
-						this.trackAsync(this.title.search, "Search");
-						this.appFormsSvc.hideLoadingAsync();
+					this.search(() => this.trackAsync(this.title.search, "Search").then(() => this.appFormsSvc.hideLoadingAsync(() => {
 						this.infiniteScrollCtrl.disabled = false;
 						if (this.contents.length < 1) {
 							PlatformUtility.focus(this.searchCtrl);
 						}
-					});
+					})));
 				});
 			}
 			else {
@@ -264,13 +267,7 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			this.search(() => {
-				this.trackAsync(this.title.track);
-				this.appFormsSvc.hideLoadingAsync();
-				if (this.infiniteScrollCtrl !== undefined) {
-					this.infiniteScrollCtrl.complete();
-				}
-			});
+			this.search(() => this.trackAsync(this.title.track).then(() => this.appFormsSvc.hideLoadingAsync(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : undefined)));
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
 			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
@@ -289,17 +286,17 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	search(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const onSuccess = (data: any) => {
+		const onSuccess = (data?: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchContent(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
+			this.subscription = this.portalsCmsSvc.searchContent(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 		}
 		else {
-			this.portalsCmsSvc.searchContentAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
+			this.portalsCmsSvc.searchContentAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 		}
 	}
 
@@ -324,12 +321,11 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	openSearch(filtering: boolean = true) {
-		this.listCtrl.closeSlidingItems().then(async () => {
+		this.listCtrl.closeSlidingItems().then(() => {
 			if (filtering) {
 				this.filtering = true;
-				PlatformUtility.focus(this.searchCtrl);
-				this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
 				this.objects = this.contents.map(obj => obj);
+				AppUtility.invoke(async () => this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter")).then(() => PlatformUtility.focus(this.searchCtrl));
 			}
 			else {
 				this.configSvc.navigateForwardAsync("/portals/cms/contents/search");
@@ -377,8 +373,7 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 			this.organization.ID,
 			this.module !== undefined ? this.module.ID : undefined,
 			this.contentType !== undefined ? this.contentType.ID : undefined,
-			() => {
-				this.appFormsSvc.showLoadingAsync();
+			() => this.appFormsSvc.showLoadingAsync().then(() => {
 				this.contents = [];
 				this.pageNumber = 0;
 				AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination), this.paginationPrefix);
@@ -393,11 +388,11 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 					undefined,
 					await this.configSvc.getResourceAsync("common.buttons.close")
 				));
-			}
+			})
 		));
 	}
 
-	private async trackAsync(title: string, action?: string) {
+	private trackAsync(title: string, action?: string) {
 		return TrackingUtility.trackAsync({ title: title, category: "Content", action: action || (this.searching ? "Search" : "Browse") });
 	}
 
