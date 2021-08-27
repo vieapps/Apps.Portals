@@ -316,8 +316,8 @@ export class FilesService extends BaseService {
 			},
 			error => this.processError("Error occurred while searching thumbnails", error, onError),
 			true,
-			useXHR,
-			this.getFileHeaders(options, { "x-as-attachments": "true" })
+			this.getFileHeaders(options, { "x-as-attachments": "true" }),
+			useXHR
 		);
 	}
 
@@ -400,8 +400,8 @@ export class FilesService extends BaseService {
 			},
 			error => this.processError("Error occurred while searching attachments", error, onError),
 			true,
-			useXHR,
-			this.getFileHeaders(options)
+			this.getFileHeaders(options),
+			useXHR
 		);
 	}
 

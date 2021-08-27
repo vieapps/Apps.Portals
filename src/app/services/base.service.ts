@@ -145,10 +145,10 @@ export class Base {
 		* @param onSuccess The callback function to handle the returning data
 		* @param onError The callback function to handle the returning error
 		* @param dontProcessPagination Set to true to by-pass process pagination
-		* @param useXHR Set to true to always use XHR, false to let system decides
 		* @param headers The additional header
+		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	protected async searchAsync(path: string, request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false, headers?: { [header: string]: string }) {
+	protected async searchAsync(path: string, request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false) {
 		request = request || {};
 		const processPagination = AppUtility.isFalse(dontProcessPagination);
 		const requestInfo = processPagination ? AppAPIs.parseRequestInfo(path) : undefined;

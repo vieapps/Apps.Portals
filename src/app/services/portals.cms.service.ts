@@ -663,7 +663,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public searchCategoryAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public searchCategoryAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("cms.category", this.configSvc.relatedQuery),
 			request,
@@ -676,24 +676,28 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => this.processError("Error occurred while searching categories", error, onError),
+			dontProcessPagination,
+			headers,
 			useXHR
 		);
 	}
 
-	public searchCategoriesAsync(contentType: ContentType, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, removePagination: boolean = false, useXHR: boolean = false) {
-		const request = AppPagination.buildRequest(
+	public searchCategoriesAsync(contentType: ContentType, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false) {
+		return this.searchCategoryAsync(AppPagination.buildRequest(
 			{ And: [
 				{ SystemID: { Equals: contentType.SystemID } },
 				{ RepositoryID: { Equals: contentType.RepositoryID } },
 				{ RepositoryEntityID: { Equals: contentType.ID } },
 				{ ParentID: "IsNull" }
 			]},
-			{ OrderIndex: "Ascending", Title: "Ascending" }
-		);
-		if (removePagination) {
-			AppPagination.remove(request, `CMS.Category@${this.name}`.toLowerCase());
-		}
-		return this.searchCategoryAsync(request, onSuccess, onError, useXHR);
+			{ OrderIndex: "Ascending", Title: "Ascending" },
+			{
+				TotalRecords: -1,
+				TotalPages: 0,
+				PageSize: 0,
+				PageNumber: 0
+			}
+		), onSuccess, onError, dontProcessPagination, dontProcessPagination ? { "x-no-cache": "x" } : undefined, useXHR);
 	}
 
 	public createCategoryAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
@@ -779,8 +783,8 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			onError,
-			useXHR,
-			headers
+			headers,
+			useXHR
 		);
 	}
 
@@ -1009,7 +1013,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public refreshContentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public refreshContentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
 		return this.portalsCoreSvc.refreshAsync(
 			"cms.content",
 			id,
@@ -1020,8 +1024,8 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			onError,
-			true,
-			headers
+			headers,
+			useXHR
 		);
 	}
 
@@ -1179,8 +1183,8 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			onError,
-			true,
-			headers
+			headers,
+			true
 		);
 	}
 
@@ -1255,7 +1259,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public searchLinkAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchLinkAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("cms.link", this.configSvc.relatedQuery),
 			request,
@@ -1267,8 +1271,29 @@ export class PortalsCmsService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError("Error occurred while searching links", error, onError)
+			error => this.processError("Error occurred while searching links", error, onError),
+			dontProcessPagination,
+			headers,
+			useXHR
 		);
+	}
+
+	public searchLinksAsync(contentType: ContentType, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return this.searchLinkAsync(AppPagination.buildRequest(
+			{ And: [
+				{ SystemID: { Equals: contentType.SystemID } },
+				{ RepositoryID: { Equals: contentType.RepositoryID } },
+				{ RepositoryEntityID: { Equals: contentType.ID } },
+				{ ParentID: "IsNull" }
+			]},
+			{ OrderIndex: "Ascending", Title: "Ascending" },
+			{
+				TotalRecords: -1,
+				TotalPages: 0,
+				PageSize: 0,
+				PageNumber: 0
+			}
+		), onSuccess, onError, true, { "x-no-cache": "x" }, useXHR);
 	}
 
 	public createLinkAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
@@ -1334,7 +1359,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	public refreshLinkAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public refreshLinkAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
 		return this.portalsCoreSvc.refreshAsync(
 			"cms.link",
 			id,
@@ -1345,8 +1370,8 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			onError,
-			true,
-			headers
+			headers,
+			useXHR
 		);
 	}
 

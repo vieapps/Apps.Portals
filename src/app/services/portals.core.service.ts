@@ -1256,14 +1256,14 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public lookupAsync(objectName: string, request: AppDataRequest, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		return this.searchAsync(this.getSearchingPath(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, false, headers);
+		return this.searchAsync(this.getSearchingPath(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, headers);
 	}
 
 	public getAsync(objectName: string, id: string, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		return this.readAsync(this.getPath(objectName, id), onSuccess, onError, headers, true);
 	}
 
-	public refreshAsync(objectName: string, id: string, onSuccess?: (data: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, headers?: { [header: string]: string }) {
+	public refreshAsync(objectName: string, id: string, onSuccess?: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
 		return this.readAsync(this.getPath(objectName, "refresh", `object-id=${id}`), onSuccess, onError, headers, useXHR);
 	}
 
@@ -1599,8 +1599,8 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			onError,
-			useXHR,
-			headers
+			headers,
+			useXHR
 		);
 	}
 
@@ -1784,8 +1784,8 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			onError,
-			true,
-			headers
+			headers,
+			true
 		);
 	}
 
@@ -1890,12 +1890,15 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchDesktopAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchDesktopAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
 			request,
 			data => this.processDesktops(data, onSuccess),
-			error => this.processError("Error occurred while searching desktops", error, onError)
+			error => this.processError("Error occurred while searching desktops", error, onError),
+			dontProcessPagination,
+			headers,
+			useXHR
 		);
 	}
 
@@ -1976,8 +1979,8 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			onError,
-			useXHR,
-			headers
+			headers,
+			useXHR
 		);
 	}
 
@@ -2124,6 +2127,7 @@ export class PortalsCoreService extends BaseService {
 			},
 			error => this.processError("Error occurred while searching portlets", error, onError),
 			dontProcessPagination,
+			undefined,
 			useXHR
 		);
 	}
@@ -2286,6 +2290,7 @@ export class PortalsCoreService extends BaseService {
 			},
 			error => this.processError("Error occurred while searching sites", error, onError),
 			dontProcessPagination,
+			undefined,
 			useXHR
 		);
 	}
@@ -2425,8 +2430,8 @@ export class PortalsCoreService extends BaseService {
 			},
 			error => this.processError("Error occurred while searching modules", error, onError),
 			dontProcessPagination,
-			useXHR,
-			headers
+			headers,
+			useXHR
 		);
 	}
 
@@ -2516,8 +2521,8 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			onError,
-			useXHR,
-			headers
+			headers,
+			useXHR
 		);
 	}
 
@@ -2598,6 +2603,7 @@ export class PortalsCoreService extends BaseService {
 			},
 			error => this.processError("Error occurred while searching content-types", error, onError),
 			false,
+			undefined,
 			useXHR
 		);
 	}
@@ -2671,8 +2677,8 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			onError,
-			useXHR,
-			headers
+			headers,
+			useXHR
 		);
 	}
 
