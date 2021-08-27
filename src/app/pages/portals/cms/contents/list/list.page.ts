@@ -260,14 +260,27 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 			this.configSvc.navigateBackAsync();
 		}
 		else {
-			this.onClear();
-			this.filtering = false;
+			const defer = this.filterBy.Query !== undefined ? 345 : 0;
+			Promise.resolve()
+				.then(async () => await this.appFormsSvc.showLoadingAsync())
+				.then(() => {
+					this.onClear();
+					this.filtering = false;
+				})
+				.then(() => this.prepareResults())
+				.then(() => AppUtility.invoke(() => {
+					if (this.contents.length < 1) {
+						this.prepareResults();
+					}
+					this.objects = [];
+					this.appFormsSvc.hideLoadingAsync();
+				}, defer));
 		}
 	}
 
 	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			this.search(() => this.trackAsync(this.title.track).then(() => this.appFormsSvc.hideLoadingAsync(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : undefined)));
+			this.search(() => this.trackAsync(this.title.track).then(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : () => {}));
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
 			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
