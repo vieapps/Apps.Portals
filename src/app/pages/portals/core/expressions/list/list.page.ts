@@ -217,9 +217,18 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	onClear() {
-		this.filterBy.Query = undefined;
-		this.expressions = this.filtering ? this.objects.map(obj => obj) : [];
+	onClear(isOnCanceled: boolean = false, onNext?: () => void) {
+		if (this.searching || this.filtering) {
+			this.filterBy.Query = undefined;
+			this.expressions = this.filtering ? this.objects.map(obj => obj) : [];
+			if (isOnCanceled) {
+				this.filtering = false;
+				this.infiniteScrollCtrl.disabled = false;
+				if (onNext !== undefined) {
+					onNext();
+				}
+			}
+		}
 	}
 
 	onCancel() {
@@ -227,8 +236,7 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 			this.configSvc.navigateBackAsync();
 		}
 		else {
-			this.onClear();
-			this.filtering = false;
+			this.onClear(true, () => this.objects = []);
 		}
 	}
 
@@ -304,8 +312,9 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		this.listCtrl.closeSlidingItems();
 		if (filtering) {
 			this.filtering = true;
-			AppUtility.invoke(async () => this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter")).then(() => PlatformUtility.focus(this.searchCtrl));
 			this.objects = this.expressions.map(obj => obj);
+			this.infiniteScrollCtrl.disabled = true;
+			AppUtility.invoke(async () => this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter")).then(() => PlatformUtility.focus(this.searchCtrl));
 		}
 		else {
 			this.configSvc.navigateForwardAsync("/portals/core/expressions/search");

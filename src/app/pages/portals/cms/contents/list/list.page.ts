@@ -250,9 +250,18 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 		}
 	}
 
-	onClear() {
-		this.filterBy.Query = undefined;
-		this.contents = this.filtering ? this.objects.map(obj => obj) : [];
+	onClear(isOnCanceled: boolean = false, onNext?: () => void) {
+		if (this.searching || this.filtering) {
+			this.filterBy.Query = undefined;
+			this.contents = this.filtering ? this.objects.map(obj => obj) : [];
+			if (isOnCanceled) {
+				this.filtering = false;
+				this.infiniteScrollCtrl.disabled = false;
+				if (onNext !== undefined) {
+					onNext();
+				}
+			}
+		}
 	}
 
 	onCancel() {
@@ -260,21 +269,7 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 			this.configSvc.navigateBackAsync();
 		}
 		else {
-			const defer = this.filterBy.Query !== undefined ? 345 : 0;
-			Promise.resolve()
-				.then(async () => await this.appFormsSvc.showLoadingAsync())
-				.then(() => {
-					this.onClear();
-					this.filtering = false;
-				})
-				.then(() => this.prepareResults())
-				.then(() => AppUtility.invoke(() => {
-					if (this.contents.length < 1) {
-						this.prepareResults();
-					}
-					this.objects = [];
-					this.appFormsSvc.hideLoadingAsync();
-				}, defer));
+			this.onClear(true, () => this.objects = []);
 		}
 	}
 
@@ -338,6 +333,7 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 			if (filtering) {
 				this.filtering = true;
 				this.objects = this.contents.map(obj => obj);
+				this.infiniteScrollCtrl.disabled = true;
 				AppUtility.invoke(async () => this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter")).then(() => PlatformUtility.focus(this.searchCtrl));
 			}
 			else {
