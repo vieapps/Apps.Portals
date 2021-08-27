@@ -1,5 +1,6 @@
 import { Subject, EMPTY as EmptyObservable } from "rxjs";
 import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
+import { HashSet } from "@app/components/app.collections";
 import { AppConfig } from "@app/app.config";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
@@ -15,7 +16,6 @@ export class AppAPIs {
 	private static _onWebSocketClosed: (event: CloseEvent) => void;
 	private static _onWebSocketGotError: (event: Event) => void;
 	private static _onWebSocketGotMessage: (event: MessageEvent) => void;
-	private static _onResendWebSocketMessages: () => void;
 	private static _messageTypes: { [key: string]: { Service: string; Object?: string; Event?: string; } } = {};
 	private static _serviceScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
 	private static _objectScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
@@ -28,7 +28,10 @@ export class AppAPIs {
 	private static _ping: number;
 	private static _counter = 0;
 	private static _attempt = 0;
-	private static _resendID: string;
+	private static _resend = {
+		id: undefined as string,
+		next: undefined as () => void
+	};
 	private static _http: HttpClient;
 
 	/** Sets the action to fire when the WebSocket connection is opened */
@@ -304,6 +307,7 @@ export class AppAPIs {
 					if (AppConfig.isDebug) {
 						console.log(`[AppAPIs]: Callbackable queue still got ${totalQueuedMessages} message(s) - resend in ${defer}ms`);
 					}
+					this._resend.id = undefined;
 					AppUtility.invoke(() => this.resendWebSocketMessages(), defer);
 				}
 				return;
@@ -318,6 +322,7 @@ export class AppAPIs {
 				delete this._callbackableMessages[msg.ID];
 				delete this._successCallbacks[msg.ID];
 				delete this._errorCallbacks[msg.ID];
+				this._resend.id = msg.ID === this._resend.id ? undefined : this._resend.id;
 			}
 
 			// got an error
@@ -409,13 +414,12 @@ export class AppAPIs {
 			}
 
 			// resend queued callbackable messages
-			if (this._onResendWebSocketMessages !== undefined) {
+			if (this._resend.next !== undefined) {
 				if (AppUtility.isGotData(this._callbackableMessages)) {
-					AppUtility.invoke(this._onResendWebSocketMessages, Math.round(789 + (123 * Math.random())));
+					AppUtility.invoke(this._resend.next, Math.round(789 + (123 * Math.random())));
 				}
 				else {
-					this._resendID = undefined;
-					this._onResendWebSocketMessages = undefined;
+					this._resend.id = this._resend.next = undefined;
 				}
 			}
 		};
@@ -462,18 +466,17 @@ export class AppAPIs {
 
 	private static updateWebSocket(options?: { message?: string; resendCallbackMessages?: boolean } ) {
 		// send all 'no callback' messages
-		if (this.isWebSocketReady) {
-			AppUtility.getAttributes(this._nocallbackMessages).sort().forEach(id => this._websocket.send(this._nocallbackMessages[id]));
-			this._nocallbackMessages = {};
-		}
+		AppUtility.getAttributes(this._nocallbackMessages).sort().forEach(id => this._websocket.send(this._nocallbackMessages[id]));
+		this._nocallbackMessages = {};
 
 		// send the message
-		if (this.isWebSocketReady && options !== undefined && AppUtility.isNotEmpty(options.message)) {
+		if (options !== undefined && AppUtility.isNotEmpty(options.message)) {
 			this._websocket.send(options.message);
 		}
 
 		// resend all 'callback' messages
 		if (options !== undefined && options.resendCallbackMessages) {
+			this._resend.id = this._resend.next = undefined;
 			this.resendWebSocketMessages();
 		}
 	}
@@ -504,28 +507,26 @@ export class AppAPIs {
 	}
 
 	private static resendWebSocketMessages() {
-		this._onResendWebSocketMessages = undefined;
-		const ids = AppUtility.getAttributes(this._callbackableMessages);
-		const id = ids.sort().first();
-		if (id !== undefined) {
-			if (id !== this._resendID && this.isWebSocketReady) {
-				this._resendID = id;
-				this._websocket.send(this._callbackableMessages[id]);
-			}
-			if (ids.length > 1) {
-				this._onResendWebSocketMessages = () => {
-					if (this._resendID !== AppUtility.getAttributes(this._callbackableMessages).sort().first()) {
+		if (this.isWebSocketReady) {
+			const ids = AppUtility.getAttributes(this._callbackableMessages);
+			const id = ids.sort().first();
+			if (id !== undefined) {
+				if (id !== this._resend.id) {
+					this._resend.id = id;
+					this._websocket.send(this._callbackableMessages[id]);
+				}
+				this._resend.next = ids.length > 1 ? () => {
+					if (AppUtility.isGotData(this._callbackableMessages)) {
 						this.resendWebSocketMessages();
 					}
 					else {
-						this._resendID = undefined;
-						this._onResendWebSocketMessages = undefined;
+						this._resend.id = this._resend.next = undefined;
 					}
-				};
+				} : undefined;
 			}
-		}
-		else {
-			this._resendID = undefined;
+			else {
+				this._resend.id = this._resend.next = undefined;
+			}
 		}
 	}
 
