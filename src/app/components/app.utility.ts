@@ -293,10 +293,10 @@ export class AppUtility {
 	}
 
 	/**
-		* Executes a function asynchronously and return a promise
-	 * @param func The function to invoke
-	 * @param miliseconds The timeout miliseconds
-	 * @param asBackgroundWorker Set to true to run as background worker when the browser is idle (using 'requestIdleCallback' to call as a background worker, using 'setTimeout' when not available)
+		* Invokes a function asynchronously and return a promise
+		* @param func The function to invoke
+		* @param miliseconds The timeout miliseconds
+		* @param asBackgroundWorker Set to true to run as background worker when the browser is idle (using 'requestIdleCallback' to call as a background worker, using 'setTimeout' when not available)
 	*/
 	public static invoke(func?: () => void, miliseconds?: number, asBackgroundWorker: boolean = false) {
 		return func !== undefined
