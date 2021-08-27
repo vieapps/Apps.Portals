@@ -1,6 +1,5 @@
 import { Subject, EMPTY as EmptyObservable } from "rxjs";
 import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
-import { HashSet } from "@app/components/app.collections";
 import { AppConfig } from "@app/app.config";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
@@ -25,13 +24,10 @@ export class AppAPIs {
 	private static _callbackableMessages: { [id: string]: string } = {};
 	private static _successCallbacks: { [id: string]: (data?: any) => void } = {};
 	private static _errorCallbacks: { [id: string]: (error?: any) => void } = {};
+	private static _resend = { id: undefined as string, next: undefined as () => void };
 	private static _ping: number;
 	private static _counter = 0;
 	private static _attempt = 0;
-	private static _resend = {
-		id: undefined as string,
-		next: undefined as () => void
-	};
 	private static _http: HttpClient;
 
 	/** Sets the action to fire when the WebSocket connection is opened */
@@ -61,7 +57,7 @@ export class AppAPIs {
 
 	/** Gets state that determines the WebSocket connection is got too large ping period */
 	public static get isPingPeriodTooLarge() {
-		return +new Date() - this._ping > 300000;
+		return +new Date() - this._ping > 360000;
 	}
 
 	/** Gets the HttpClient instance for working with XMLHttpRequest (XHR) */
@@ -465,16 +461,11 @@ export class AppAPIs {
 	}
 
 	private static updateWebSocket(options?: { message?: string; resendCallbackMessages?: boolean } ) {
-		// send all 'no callback' messages
 		AppUtility.getAttributes(this._nocallbackMessages).sort().forEach(id => this._websocket.send(this._nocallbackMessages[id]));
 		this._nocallbackMessages = {};
-
-		// send the message
 		if (options !== undefined && AppUtility.isNotEmpty(options.message)) {
 			this._websocket.send(options.message);
 		}
-
-		// resend all 'callback' messages
 		if (options !== undefined && options.resendCallbackMessages) {
 			this._resend.id = this._resend.next = undefined;
 			this.resendWebSocketMessages();
