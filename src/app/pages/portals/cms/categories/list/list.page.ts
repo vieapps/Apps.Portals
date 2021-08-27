@@ -423,41 +423,30 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	doRefresh(categories: Category[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
 		const refreshNext: () => void = () => {
 			if (index < categories.length - 1) {
-				AppUtility.invoke(() => this.doRefresh(categories, index + 1));
+				AppUtility.invoke(() => this.doRefresh(categories, index + 1, useXHR, onFreshenUp));
 			}
 			else {
-				this.appFormsSvc.hideLoadingAsync(() => {
-					this.appFormsSvc.showToastAsync(categories.length > 1 ? "All categories was freshen-up" : "The category was freshen-up");
-					if (onFreshenUp !== undefined) {
-						onFreshenUp();
-					}
-				});
+				this.appFormsSvc.hideLoadingAsync(() => AppUtility.invoke(onFreshenUp !== undefined ? () => onFreshenUp() : undefined));
 			}
 		};
 		if (index === 0 && categories.length > 1) {
-			this.appFormsSvc.showLoadingAsync(this.actions.last().text);
-			AppUtility.invoke(() => this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("All categories was freshen-up")), 6789 + (categories.length * 13));
-			if (this.configSvc.isDebug) {
-				console.log(`--- Start to refresh ${categories.length} CMS categories -----------------`);
-			}
+			this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(this.configSvc.isDebug ? () => console.log(`--- Start to refresh ${categories.length} CMS categories -----------------`) : () => {});
 		}
 		this.portalsCmsSvc.refreshCategoryAsync(categories[index].ID, refreshNext, refreshNext, undefined, useXHR);
 	}
 
 	refresh(event: Event, category: Category) {
 		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.doRefresh([category], 0, true));
+		this.listCtrl.closeSlidingItems().then(() => this.doRefresh([category], 0, true, () => this.appFormsSvc.showToastAsync("The category was freshen-up")));
 	}
 
 	refreshAll() {
 		const categories = Category.instances.toArray(category => category.SystemID === this.organization.ID);
 		if (categories.length > 0) {
-			this.doRefresh(categories, 0);
-		}
-		else {
-			Promise.all(this.organization.modules.map(module => this.portalsCmsSvc.getContentTypesOfCategory(module))
+			this.doRefresh(categories, 0, false, () => Promise.all(this.organization.modules.map(module => this.portalsCmsSvc.getContentTypesOfCategory(module))
 				.flatMap(contentypes => contentypes)
-				.map(contentType => this.portalsCmsSvc.searchCategoriesAsync(contentType, undefined, undefined, true, true)));
+				.map(contentType => this.portalsCmsSvc.searchCategoriesAsync(contentType, undefined, undefined, true, true))).then(() => this.appFormsSvc.showToastAsync("All the categories were freshen-up"))
+			);
 		}
 	}
 

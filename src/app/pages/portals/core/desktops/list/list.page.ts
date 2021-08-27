@@ -342,36 +342,34 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 	doRefresh(desktops: Desktop[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
 		const refreshNext: () => void = () => {
 			if (index < desktops.length - 1) {
-				AppUtility.invoke(() => this.doRefresh(desktops, index + 1));
+				AppUtility.invoke(() => this.doRefresh(desktops, index + 1, useXHR, onFreshenUp));
 			}
 			else {
-				this.appFormsSvc.hideLoadingAsync(() => {
-					this.appFormsSvc.showToastAsync(desktops.length > 1 ? "All desktops was freshen-up" : "The desktop was freshen-up");
-					if (onFreshenUp !== undefined) {
-						onFreshenUp();
-					}
-				});
+				this.appFormsSvc.hideLoadingAsync(() => AppUtility.invoke(onFreshenUp !== undefined ? () => onFreshenUp() : undefined));
 			}
 		};
-		if (index === 0 && desktops.length > 1) {
-			this.appFormsSvc.showLoadingAsync(this.actions.last().text);
-			AppUtility.invoke(() => this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("All desktops was freshen-up")), 6789 + (desktops.length * 13));
-			if (this.configSvc.isDebug) {
-				console.log(`--- Start to refresh ${desktops.length} desktops -----------------`);
-			}
+		if (index === 0) {
+			this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(this.configSvc.isDebug && desktops.length > 1 ? () => console.log(`--- Start to refresh ${desktops.length} desktops -----------------`) : () => {});
 		}
 		this.portalsCoreSvc.refreshDesktopAsync(desktops[index].ID, refreshNext, refreshNext, undefined, useXHR);
 	}
 
 	refresh(event: Event, desktop: Desktop) {
 		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.doRefresh([desktop], 0, true));
+		this.listCtrl.closeSlidingItems().then(() => this.doRefresh([desktop], 0, true, () => this.appFormsSvc.showToastAsync("The desktop was freshen-up")));
 	}
 
 	refreshAll() {
 		const desktops = Desktop.instances.toArray(desktop => desktop.SystemID === this.organization.ID);
 		if (desktops.length > 0) {
-			this.doRefresh(desktops, 0);
+			this.doRefresh(desktops, 0, false, () => this.portalsCoreSvc.searchDesktopAsync(
+				AppPagination.buildRequest(this.filterBy, this.sortBy, { TotalRecords: -1, TotalPages: 0, PageSize: 0, PageNumber: 0 }),
+				() => this.prepareResults(() => this.appFormsSvc.showToastAsync("All the desktops were freshen-up")),
+				undefined,
+				true,
+				{ "x-no-cache": "x" },
+				true
+			));
 		}
 	}
 
