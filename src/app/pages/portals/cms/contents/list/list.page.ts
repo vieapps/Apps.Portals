@@ -364,16 +364,26 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	exportToExcel() {
-		this.trackAsync(this.actions[2].text, "Export").then(() => this.portalsCoreSvc.exportToExcelAsync("CMS.Content", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined));
-	}
-
-	importFromExcel() {
-		this.trackAsync(this.actions[3].text, "Import").then(() => this.portalsCoreSvc.importFromExcelAsync(
+		this.portalsCoreSvc.exportToExcelAsync(
 			"CMS.Content",
 			this.organization.ID,
 			this.module !== undefined ? this.module.ID : undefined,
 			this.contentType !== undefined ? this.contentType.ID : undefined,
-			() => this.appFormsSvc.showLoadingAsync().then(() => {
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			() => this.trackAsync(this.actions[2].text, "Export")
+		);
+	}
+
+	importFromExcel() {
+		this.portalsCoreSvc.importFromExcelAsync(
+			"CMS.Content",
+			this.organization.ID,
+			this.module !== undefined ? this.module.ID : undefined,
+			this.contentType !== undefined ? this.contentType.ID : undefined,
+			() => this.appFormsSvc.showLoadingAsync().then(() => this.trackAsync(this.actions[3].text, "Import")).then(() => {
 				this.contents = [];
 				this.pageNumber = 0;
 				AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination), this.paginationPrefix);
@@ -389,7 +399,7 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 					await this.configSvc.getResourceAsync("common.buttons.close")
 				));
 			})
-		));
+		);
 	}
 
 	private trackAsync(title: string, action?: string) {

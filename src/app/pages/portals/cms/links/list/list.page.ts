@@ -526,7 +526,17 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	}
 
 	exportToExcel() {
-		this.portalsCoreSvc.exportToExcelAsync("CMS.Link", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined).then(() => this.trackAsync(this.actions[2].text, "Export"));
+		this.portalsCoreSvc.exportToExcelAsync(
+			"CMS.Link",
+			this.organization.ID,
+			this.module !== undefined ? this.module.ID : undefined,
+			this.contentType !== undefined ? this.contentType.ID : undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			() => this.trackAsync(this.actions[2].text, "Export")
+		);
 	}
 
 	importFromExcel() {
@@ -535,8 +545,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			this.organization.ID,
 			this.module !== undefined ? this.module.ID : undefined,
 			this.contentType !== undefined ? this.contentType.ID : undefined,
-			() => {
-				this.trackAsync(this.actions[3].text, "Import").then(() => this.appFormsSvc.showLoadingAsync());
+			() => this.appFormsSvc.showLoadingAsync().then(() => this.trackAsync(this.actions[3].text, "Import")).then(() => {
 				this.links = [];
 				this.pageNumber = 0;
 				AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination), this.paginationPrefix);
@@ -544,18 +553,18 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 					.toArray(link => this.contentType !== undefined ? this.contentType.ID === link.RepositoryEntityID : this.organization.ID === link.SystemID)
 					.map(link => link.ID)
 					.forEach(id => Link.instances.remove(id));
-				this.startSearch(async () => await this.appFormsSvc.showAlertAsync(
+				this.startSearch(async () => this.appFormsSvc.showAlertAsync(
 					"Excel",
 					await this.configSvc.getResourceAsync("portals.common.excel.message.import"),
 					undefined,
 					undefined,
 					await this.configSvc.getResourceAsync("common.buttons.close")
 				));
-			}
+			})
 		);
 	}
 
-	private async trackAsync(title: string, action?: string) {
+	private trackAsync(title: string, action?: string) {
 		return TrackingUtility.trackAsync({ title: title, category: "Link", action: action || (this.searching ? "Search" : "Browse") });
 	}
 

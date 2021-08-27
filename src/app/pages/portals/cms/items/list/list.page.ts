@@ -1,4 +1,4 @@
-import { async, Subscription } from "rxjs";
+import { Subscription } from "rxjs";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList, ViewDidEnter } from "@ionic/angular";
@@ -355,16 +355,26 @@ export class CmsItemListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	exportToExcel() {
-		this.trackAsync(this.actions[2].text, "Export").then(() => this.portalsCoreSvc.exportToExcelAsync("CMS.Item", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined));
-	}
-
-	importFromExcel() {
-		this.trackAsync(this.actions[3].text, "Import").then(async () => await this.portalsCoreSvc.importFromExcelAsync(
+		this.portalsCoreSvc.exportToExcelAsync(
 			"CMS.Item",
 			this.organization.ID,
 			this.module !== undefined ? this.module.ID : undefined,
 			this.contentType !== undefined ? this.contentType.ID : undefined,
-			() => this.appFormsSvc.showLoadingAsync().then(() => {
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			() => this.trackAsync(this.actions[2].text, "Export")
+		);
+	}
+
+	importFromExcel() {
+		this.portalsCoreSvc.importFromExcelAsync(
+			"CMS.Item",
+			this.organization.ID,
+			this.module !== undefined ? this.module.ID : undefined,
+			this.contentType !== undefined ? this.contentType.ID : undefined,
+			() => this.appFormsSvc.showLoadingAsync().then(() => this.trackAsync(this.actions[3].text, "Import")).then(() => {
 				this.items = [];
 				this.pageNumber = 0;
 				AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination), this.paginationPrefix);
@@ -380,7 +390,7 @@ export class CmsItemListPage implements OnInit, OnDestroy, ViewDidEnter {
 					await this.configSvc.getResourceAsync("common.buttons.close")
 				));
 			})
-		));
+		);
 	}
 
 	private trackAsync(title: string, action?: string) {
