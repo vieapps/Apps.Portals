@@ -429,16 +429,16 @@ export class AppComponent implements OnInit {
 		AppEvents.on("UpdateSidebarHeader", info => this.sidebar.updateHeader(info.args));
 		AppEvents.on("UpdateSidebarFooter", info => this.sidebar.updateFooter(info.args));
 
-		AppEvents.on("Navigate", info => {
-			const url = "LogIn" === info.args.Type
+		AppEvents.on("Navigate", info => this.configSvc.navigateAsync(
+			info.args.Direction,
+			"LogIn" === info.args.Type
 				? this.configSvc.appConfig.URLs.users.login
 				: "Profile" === info.args.Type
 					? `${this.configSvc.appConfig.URLs.users.profile}/my`
 					: "Profiles" === info.args.Type || "Accounts" === info.args.Type
 						? this.configSvc.appConfig.URLs.users.list
-						: info.args.url || this.configSvc.appConfig.URLs.home;
-			this.configSvc.navigateAsync(info.args.Direction, url);
-		});
+						: info.args.url || this.configSvc.appConfig.URLs.home
+		));
 
 		AppEvents.on("App", info => {
 			if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
