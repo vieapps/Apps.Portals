@@ -57,14 +57,12 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		this.amount = this.amount !== undefined ? this.amount : (this._isPublished ? amounts.published : amounts.updated) || 7;
 
 		if (this.configSvc.isReady) {
-			this.prepareLabelsAsync();
-			AppUtility.invoke(() => this.prepareContents(), 123, true);
+			this.prepareLabelsAsync().then(() => AppUtility.invoke(() => this.prepareContents(), 123));
 		}
 		else {
 			AppEvents.on("App", info => {
 				if ("Initialized" === info.args.Type) {
-					this.prepareLabelsAsync();
-					AppUtility.invoke(() => this.prepareContents(), 123, true);
+					this.prepareLabelsAsync().then(() => AppUtility.invoke(() => this.prepareContents(), 123));
 				}
 			}, `FeaturedContents:AppInitialized:${this._isPublished}`);
 		}
@@ -73,10 +71,10 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 			const organization = this.portalsCoreSvc.activeOrganization;
 			if (organization !== undefined) {
 				if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
-					AppUtility.invoke(() => this.prepareContents(true), 123, true);
+					AppUtility.invoke(() => this.prepareContents(true), 123);
 				}
 				else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode && organization.ID === info.args.ID) {
-					AppUtility.invoke(() => this.prepareContents(true), 123, true);
+					AppUtility.invoke(() => this.prepareContents(true), 123);
 				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
