@@ -2870,10 +2870,10 @@ export class PortalsCoreService extends BaseService {
 									}
 									AppAPIs.unregisterProcessor(processID, this.name, "Excel");
 									if (onError !== undefined) {
-										this.appFormsSvc.hideLoadingAsync().then(() => onError(message.Data.Error));
+										this.appFormsSvc.hideLoadingAsync().then(() => onError(message.Data));
 									}
 									else {
-										this.appFormsSvc.showErrorAsync(message.Data.Error);
+										this.appFormsSvc.showErrorAsync(message.Data);
 									}
 									break;
 								default:
@@ -2979,10 +2979,10 @@ export class PortalsCoreService extends BaseService {
 													}
 													AppAPIs.unregisterProcessor(processID, this.name, "Excel");
 													if (onError !== undefined) {
-														this.appFormsSvc.hideLoadingAsync().then(() => onError(message.Data.Error));
+														this.appFormsSvc.hideLoadingAsync().then(() => onError(message.Data));
 													}
 													else {
-														this.appFormsSvc.showErrorAsync(message.Data.Error);
+														this.appFormsSvc.showErrorAsync(message.Data);
 													}
 													break;
 												default:

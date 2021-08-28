@@ -149,14 +149,7 @@ export class AppComponent implements OnInit {
 			this.appFormsSvc.showLoadingAsync(message).then(isActivate ? () => this.activate() : () => this.initialize());
 
 			if (appConfig.isDebug && !appConfig.isNativeApp) {
-				window["__vieapps"] = {
-					component: this,
-					apis: AppAPIs,
-					events: AppEvents,
-					crypto: AppCrypto,
-					utils: AppUtility,
-					track: TrackingUtility
-				};
+				window["__vieapps"] = { app: this, apis: AppAPIs, events: AppEvents };
 			}
 		});
 	}
