@@ -120,7 +120,7 @@ export class CmsItemListPage implements OnInit, OnDestroy, ViewDidEnter {
 		await this.appFormsSvc.showLoadingAsync();
 		AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebar", Mode: "ContentTypes" });
 
-		this.searching = this.configSvc.currentURL.endsWith("/search");
+		this.searching = this.configSvc.currentURL.indexOf("/search") > 0;
 		const title = await this.configSvc.getResourceAsync(`portals.cms.contents.title.${(this.searching ? "search" : "list")}`);
 		this.configSvc.appTitle = this.title.page = this.title.track = AppUtility.format(title, { info: "" });
 
@@ -327,7 +327,7 @@ export class CmsItemListPage implements OnInit, OnDestroy, ViewDidEnter {
 				AppUtility.invoke(async () => this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter")).then(() => PlatformUtility.focus(this.searchCtrl));
 			}
 			else {
-				this.configSvc.navigateForwardAsync("/portals/cms/items/search");
+				this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "search", undefined, Item.getParams(this.filterBy)));
 			}
 		});
 	}
