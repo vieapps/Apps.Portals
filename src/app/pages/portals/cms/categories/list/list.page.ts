@@ -380,38 +380,42 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		}
 	}
 
+	private do(action: () => void, event?: Event) {
+		if (event !== undefined) {
+			event.stopPropagation();
+		}
+		this.listCtrl.closeSlidingItems().then(() => action());
+	}
+
 	showActions() {
-		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showActionSheetAsync(this.actions));
+		this.do(() => this.appFormsSvc.showActionSheetAsync(this.actions));
 	}
 
 	openSearch() {
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "search")));
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "search")));
 	}
 
 	create() {
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, Category.getParams(this.filterBy))));
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, Category.getParams(this.filterBy))));
 	}
 
 	open(event: Event, category: Category) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(this.canUpdate ? () => {
+		this.do(this.canUpdate ? () => {
 			if (category.childrenIDs === undefined) {
 				this.doRefresh([category], 0, false, () => this.configSvc.navigateForwardAsync(category.routerURI));
 			}
 			else {
 				this.configSvc.navigateForwardAsync(category.routerURI);
 			}
-		} : () => {});
+		} : () => {}, event);
 	}
 
 	showChildren(event: Event, category: Category) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(category.listURI));
+		this.do(() => this.configSvc.navigateForwardAsync(category.listURI), event);
 	}
 
 	view(event: Event, category: Category) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module), "list", category.Title, { CategoryID: category.ID })));
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module), "list", category.Title, { CategoryID: category.ID })), event);
 	}
 
 	doRefresh(categories: Category[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
@@ -430,8 +434,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	refresh(event: Event, category: Category) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.doRefresh([category], 0, true, () => this.appFormsSvc.showToastAsync("The category was freshen-up")));
+		this.do(() => this.doRefresh([category], 0, true, () => this.appFormsSvc.showToastAsync("The category was freshen-up")), event);
 	}
 
 	refreshAll() {
@@ -462,12 +465,11 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 				}
 			}
 			: undefined;
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", category.ansiTitle, params, "expression", "core")));
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", category.ansiTitle, params, "expression", "core")), event);
 	}
 
 	private back(message: string, url?: string) {
-		this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateRootAsync(url));
+		this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateBackAsync(url));
 	}
 
 	private openReorder() {
@@ -515,9 +517,9 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 					if (this.parentCategory !== undefined) {
 						this.prepareCategories();
 					}
-					this.cancelReorder(() => this.processing = false);
+					this.trackAsync(this.title.track, "ReOrder").then(() => this.cancelReorder(() => this.processing = false));
 				},
-				error => this.appFormsSvc.showErrorAsync(error).then(() => this.processing = false),
+				error => this.trackAsync(this.title.track, "ReOrder").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false),
 				{
 					"x-update": "order-index"
 				}
@@ -534,8 +536,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	move(event: Event, category: Category) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(async () => this.portalsCoreSvc.moveAsync(
+		this.do(async () => this.portalsCoreSvc.moveAsync(
 			"Category",
 			category.ID,
 			{
@@ -565,7 +566,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 					"x-category-id": data.categoryID
 				};
 			}
-		));
+		), event);
 	}
 
 	exportToExcel() {

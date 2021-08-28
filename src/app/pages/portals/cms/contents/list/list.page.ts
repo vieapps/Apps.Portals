@@ -233,7 +233,7 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 					this.contents = [];
 					this.pageNumber = 0;
 					this.pagination = AppPagination.getDefault();
-					this.search(() => this.trackAsync(this.title.search, "Search").then(() => this.appFormsSvc.hideLoadingAsync(() => {
+					this.search(() => this.trackAsync(this.title.search).then(() => this.appFormsSvc.hideLoadingAsync(() => {
 						this.infiniteScrollCtrl.disabled = false;
 						if (this.contents.length < 1) {
 							PlatformUtility.focus(this.searchCtrl);
@@ -275,7 +275,7 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			this.search(() => this.trackAsync(this.title.track).then(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : () => {}));
+			this.search(() => this.trackAsync(this.searching ? this.title.search : this.title.track).then(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : () => {}));
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
 			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
@@ -324,12 +324,19 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 		}
 	}
 
+	private do(action: () => void, event?: Event) {
+		if (event !== undefined) {
+			event.stopPropagation();
+		}
+		this.listCtrl.closeSlidingItems().then(() => action());
+	}
+
 	showActions() {
-		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showActionSheetAsync(this.actions));
+		this.do(() => this.appFormsSvc.showActionSheetAsync(this.actions));
 	}
 
 	openSearch(filtering: boolean = true) {
-		this.listCtrl.closeSlidingItems().then(() => {
+		this.do(() => {
 			if (filtering) {
 				this.filtering = true;
 				this.objects = this.contents.map(obj => obj);
@@ -343,38 +350,32 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	create() {
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, Content.getParams(this.filterBy))));
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, Content.getParams(this.filterBy))));
 	}
 
 	view(event: Event, content: Content) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(content.routerURI));
+		this.do(() => this.configSvc.navigateForwardAsync(content.routerURI), event);
 	}
 
 	edit(event: Event, content: Content) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => {
-			if (this.canUpdate) {
-				this.configSvc.navigateForwardAsync(content.routerURI.replace("/view/", "/update/"));
-			}
-		});
+		this.do(this.canUpdate ? () => this.configSvc.navigateForwardAsync(content.routerURI.replace("/view/", "/update/")) : () => {}, event);
 	}
 
 	back(message: string, url?: string) {
-		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateRootAsync(url)));
+		this.do(() => this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateBackAsync(url)));
 	}
 
 	exportToExcel() {
-		this.portalsCoreSvc.exportToExcelAsync(
+		this.do(() => this.portalsCoreSvc.exportToExcelAsync(
 			"CMS.Content",
 			this.organization.ID,
 			this.module !== undefined ? this.module.ID : undefined,
 			this.contentType !== undefined ? this.contentType.ID : undefined
-		).then(() => this.trackAsync(this.actions[2].text, "Export"));
+		).then(() => this.trackAsync(this.actions[2].text, "Export")));
 	}
 
 	importFromExcel() {
-		this.portalsCoreSvc.importFromExcelAsync(
+		this.do(() => this.portalsCoreSvc.importFromExcelAsync(
 			"CMS.Content",
 			this.organization.ID,
 			this.module !== undefined ? this.module.ID : undefined,
@@ -389,7 +390,7 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 					.forEach(id => Content.instances.remove(id));
 				this.startSearch(async () => this.appFormsSvc.showConfirmAsync(await this.configSvc.getResourceAsync("portals.common.excel.message.import"), undefined, await this.configSvc.getResourceAsync("common.buttons.close")));
 			})
-		);
+		));
 	}
 
 	private trackAsync(title: string, action?: string) {

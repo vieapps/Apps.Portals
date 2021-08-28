@@ -373,31 +373,35 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		}
 	}
 
+	private do(action: () => void, event?: Event) {
+		if (event !== undefined) {
+			event.stopPropagation();
+		}
+		this.listCtrl.closeSlidingItems().then(() => action());
+	}
+
 	showActions() {
-		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showActionSheetAsync(this.actions));
+		this.do(() => this.appFormsSvc.showActionSheetAsync(this.actions));
 	}
 
 	openSearch() {
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "search")));
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "search")));
 	}
 
 	create() {
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, Link.getParams(this.filterBy))));
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, Link.getParams(this.filterBy))));
 	}
 
 	view(event: Event, link: Link) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(link.routerURI));
+		this.do(() => this.configSvc.navigateForwardAsync(link.routerURI), event);
 	}
 
 	edit(event: Event, link: Link) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(this.canUpdate ? () => this.configSvc.navigateForwardAsync(link.routerURI.replace("/view/", "/update/")) : () => {});
+		this.do(this.canUpdate ? () => this.configSvc.navigateForwardAsync(link.routerURI.replace("/view/", "/update/")) : () => {}, event);
 	}
 
 	showChildren(event: Event, link: Link) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(link.listURI));
+		this.do(() => this.configSvc.navigateForwardAsync(link.listURI), event);
 	}
 
 	doRefresh(links: Link[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
@@ -416,8 +420,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	}
 
 	refresh(event: Event, link: Link) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.doRefresh([link], 0, true, () => this.appFormsSvc.showToastAsync("The link was freshen-up")));
+		this.do(() => this.doRefresh([link], 0, true, () => this.appFormsSvc.showToastAsync("The link was freshen-up")), event);
 	}
 
 	refreshAll() {
@@ -448,12 +451,11 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 				}
 			}
 			: undefined;
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", link.ansiTitle, params, "expression", "core")));
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", link.ansiTitle, params, "expression", "core")), event);
 	}
 
 	private back(message: string, url?: string) {
-		this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateRootAsync(url));
+		this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateBackAsync(url));
 	}
 
 	private openReorder() {
@@ -502,9 +504,9 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 					if (this.parentLink !== undefined) {
 						this.prepareLinks();
 					}
-					this.cancelReorder(() => this.processing = false);
+					this.trackAsync(this.title.track, "ReOrder").then(() => this.cancelReorder(() => this.processing = false));
 				},
-				error => this.appFormsSvc.showErrorAsync(error).then(() => this.processing = false),
+				error => this.trackAsync(this.title.track, "ReOrder").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false),
 				{
 					"x-update": "order-index"
 				}
