@@ -417,22 +417,21 @@ export class CmsCategoriesUpdatePage implements OnInit {
 					}))
 				),
 				deleteButton,
-				"{{default}}"
+				cancelButton
 			);
 		});
 	}
 
 	cancel(message?: string, url?: string) {
-		const changed = this.hash !== AppCrypto.hash(this.form.value);
-		if (message === undefined && !changed) {
+		if (message === undefined && this.hash === AppCrypto.hash(this.form.value)) {
 			this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url));
 		}
 		else {
 			AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
-				message || await this.configSvc.getResourceAsync(`portals.cms.categories.update.messages.confirm.${AppUtility.isNotEmpty(this.contentType.ID) ? "cancel" : "new"}`),
+				message || await this.configSvc.getResourceAsync(`portals.cms.categories.update.messages.confirm.${AppUtility.isNotEmpty(this.category.ID) ? "cancel" : "new"}`),
 				() => this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url)),
 				undefined,
-				message !== undefined || changed || AppUtility.isEmpty(this.contentType.ID) ? "{{default}}" : undefined
+				message === undefined ? "{{default}}" : undefined
 			));
 		}
 	}

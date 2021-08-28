@@ -543,12 +543,8 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 					.toArray(link => this.contentType !== undefined ? this.contentType.ID === link.RepositoryEntityID : this.organization.ID === link.SystemID)
 					.map(link => link.ID)
 					.forEach(id => Link.instances.remove(id));
-					this.startSearch(async () => this.appFormsSvc.showConfirmAsync(
-						await this.configSvc.getResourceAsync("portals.common.excel.message.import"),
-						undefined,
-						await this.configSvc.getResourceAsync("common.buttons.close")
-					));
-				})
+				this.startSearch(async () => this.appFormsSvc.showConfirmAsync(await this.configSvc.getResourceAsync("portals.common.excel.message.import"), undefined, await this.configSvc.getResourceAsync("common.buttons.close")));
+			})
 		);
 	}
 

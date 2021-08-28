@@ -4,7 +4,7 @@
 			<ion-back-button text=""></ion-back-button>
 		</ion-buttons>
 		<ion-buttons *ngIf="canEdit" slot="end">
-			<ion-button fill="clear" color="primary" (click)="updateAsync()">
+			<ion-button fill="clear" color="primary" (click)="update()">
 				{{ resources.update }}
 			</ion-button>
 		</ion-buttons>
@@ -23,7 +23,7 @@
 			</span>
 		</span>
 		<ion-buttons *ngIf="actions" slot="end">
-			<ion-button color="primary" (click)="showActionsAsync()">
+			<ion-button color="primary" (click)="showActions()">
 				<ion-icon name="ellipsis-horizontal" slot="icon-only"></ion-icon>
 			</ion-button>
 		</ion-buttons>

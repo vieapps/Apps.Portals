@@ -87,10 +87,8 @@ export class CmsLinksUpdatePage implements OnInit {
 
 		this.title.track = await this.configSvc.getResourceAsync(`portals.cms.links.title.${(this.link !== undefined && AppUtility.isNotEmpty(this.link.ID) ? "update" : "create")}`);
 		if (this.organization === undefined) {
-			await Promise.all([
-				this.trackAsync(`${this.title.track} | Invalid Organization`, "Check"),
-				this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all"))
-			]);
+			this.trackAsync(`${this.title.track} | Invalid Organization`, "Check");
+			this.appFormsSvc.hideLoadingAsync(async () => this.cancel(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all"));
 			return;
 		}
 
@@ -100,10 +98,8 @@ export class CmsLinksUpdatePage implements OnInit {
 				? this.link.contentType
 				: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 			if (this.contentType === undefined) {
-				await Promise.all([
-					this.trackAsync(`${this.title.track} | Invalid Content Type`, "Check"),
-					this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all"))
-				]);
+				this.trackAsync(`${this.title.track} | Invalid Content Type`, "Check");
+				this.appFormsSvc.hideLoadingAsync(async () => this.cancel(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all"));
 				return;
 			}
 		}
@@ -116,11 +112,8 @@ export class CmsLinksUpdatePage implements OnInit {
 			canUpdate = AppUtility.isEquals(this.link.CreatedID, this.configSvc.getAccount().id);
 		}
 		if (!canUpdate) {
-			await Promise.all([
-				this.trackAsync(`${this.title.track} | No Permission`, "Check"),
-				this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync("Hmmmmmm....")),
-				this.configSvc.navigateBackAsync()
-			]);
+			this.trackAsync(`${this.title.track} | No Permission`, "Check").then(() => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
+			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 			return;
 		}
 
@@ -134,11 +127,11 @@ export class CmsLinksUpdatePage implements OnInit {
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
-		await this.trackAsync(this.title.track);
-
-		if (AppUtility.isNotEmpty(this.link.ID) && this.link.ChildrenMode === "Normal" && this.link.childrenIDs === undefined) {
-			this.portalsCmsSvc.refreshLinkAsync(this.link.ID, async _ => await this.appFormsSvc.showToastAsync("The link was freshen-up"));
-		}
+		this.trackAsync(this.title.track).then(() => {
+			if (AppUtility.isNotEmpty(this.link.ID) && this.link.ChildrenMode === "Normal" && this.link.childrenIDs === undefined) {
+				this.portalsCmsSvc.refreshLinkAsync(this.link.ID, () => this.appFormsSvc.showToastAsync("The link was freshen-up"));
+			}
+		});
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
@@ -332,7 +325,7 @@ export class CmsLinksUpdatePage implements OnInit {
 					{
 						Name: "Delete",
 						Label: "{{portals.cms.links.update.buttons.delete}}",
-						OnClick: async () => await this.deleteAsync(),
+						OnClick: () => this.delete(),
 						Options: {
 							Fill: "clear",
 							Color: "danger",
@@ -403,14 +396,14 @@ export class CmsLinksUpdatePage implements OnInit {
 		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, onCompleted);
 	}
 
-	async saveAsync() {
+	save() {
 		if (this.appFormsSvc.validate(this.form)) {
 			if (this.hash.full === AppCrypto.hash(this.form.value)) {
-				await this.configSvc.navigateBackAsync();
+				this.configSvc.navigateBackAsync();
 			}
 			else {
 				this.processing = true;
-				await this.appFormsSvc.showLoadingAsync(this.title.track);
+				this.appFormsSvc.showLoadingAsync(this.title.track);
 
 				const link = this.form.value;
 				delete link["Thumbnails"];
@@ -425,27 +418,29 @@ export class CmsLinksUpdatePage implements OnInit {
 					if (this.hash.content === AppCrypto.hash(link)) {
 						const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 						if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-							await this.filesSvc.uploadThumbnailAsync(
+							this.filesSvc.uploadThumbnailAsync(
 								control.value.new,
 								this.portalsCmsSvc.getFileOptions(this.link, options => options.Extras["x-attachment-id"] = control.value.identity),
-								async _ => await this.portalsCmsSvc.refreshLinkAsync(link.ID)
+								() => this.portalsCmsSvc.refreshLinkAsync(link.ID).then(async () => await Promise.all([
+									this.trackAsync(this.title.track, "Upload", "Thumbnail"),
+									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.update")),
+									this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
+								])),
+								error => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
 							);
 						}
-						await Promise.all([
-							this.trackAsync(this.title.track, "Upload", "Thumbnail"),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
-							this.appFormsSvc.hideLoadingAsync()
-						]);
-						await this.configSvc.navigateBackAsync();
+						else {
+							this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
+						}
 					}
 					else {
 						const oldParentID = this.link.ParentID;
-						await this.portalsCmsSvc.updateLinkAsync(
+						this.portalsCmsSvc.updateLinkAsync(
 							link,
 							async data => {
 								const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 								if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-									await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.link, options => options.Extras["x-attachment-id"] = control.value.identity));
+									await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.link, options => options.Extras["x-attachment-id"] = control.value.identity), () => this.trackAsync(this.title.track, "Upload", "Thumbnail"));
 								}
 								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Updated", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 								if (oldParentID !== data.ParentID) {
@@ -454,121 +449,96 @@ export class CmsLinksUpdatePage implements OnInit {
 								await Promise.all([
 									this.trackAsync(this.title.track, "Update"),
 									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.update")),
-									this.appFormsSvc.hideLoadingAsync()
+									this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
 								]);
-								await this.configSvc.navigateBackAsync();
 							},
-							async error => {
-								this.processing = false;
-								await Promise.all([
-									this.trackAsync(this.title.track, "Update"),
-									this.appFormsSvc.showErrorAsync(error)
-								]);
-							}
+							error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
 						);
 					}
 				}
 				else {
-					await this.portalsCmsSvc.createLinkAsync(
+					this.portalsCmsSvc.createLinkAsync(
 						link,
 						async data => {
 							const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 							if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-								await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(Link.get(data.ID)));
+								await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(Link.get(data.ID)), () => this.trackAsync(this.title.track, "Upload", "Thumbnail"));
 							}
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							await Promise.all([
 								this.trackAsync(this.title.track),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.new")),
-								this.appFormsSvc.hideLoadingAsync()
+								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
 							]);
-							await this.configSvc.navigateBackAsync();
 						},
-						async error => {
-							this.processing = false;
-							await Promise.all([
-								this.trackAsync(this.title.track),
-								this.appFormsSvc.showErrorAsync(error)
-							]);
-						}
+						error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
 					);
 				}
 			}
 		}
 	}
 
-	async deleteAsync() {
-		await this.trackAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.delete"), "Delete");
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			await this.configSvc.getResourceAsync("portals.cms.links.update.messages.confirm.delete"),
-			undefined,
-			() => AppUtility.invoke(async () => await this.removeAsync(), 123),
-			await this.configSvc.getResourceAsync("common.buttons.delete"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
-	}
-
-	async removeAsync() {
-		const modes = [
-			{
-				label: await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete-all"),
-				value: "delete"
-			},
-			{
-				label: await this.configSvc.getResourceAsync("portals.desktops.update.buttons.set-null-all"),
-				value: "set-null"
-			}
-		];
-		const button = await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.delete");
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			await this.configSvc.getResourceAsync("portals.cms.links.update.messages.confirm.delete"),
-			await this.configSvc.getResourceAsync("portals.cms.links.update.messages.confirm.remove"),
-			async mode => {
-				await this.appFormsSvc.showLoadingAsync(button);
-				await this.portalsCmsSvc.deleteLinkAsync(
-					this.link.ID,
-					async data => {
-						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
-						await Promise.all([
-							this.trackAsync(button, "Delete"),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.delete")),
-							this.appFormsSvc.hideLoadingAsync()
-						]);
-						await this.configSvc.navigateBackAsync();
+	delete() {
+		AppUtility.invoke(async () => {
+			const deleteButton = await this.configSvc.getResourceAsync("common.buttons.delete");
+			const removeButton = await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.delete");
+			const cancelButton = await this.configSvc.getResourceAsync("common.buttons.cancel");
+			const deleteMessage = await this.configSvc.getResourceAsync("portals.cms.links.update.messages.confirm.delete");
+			const removeMessage = await this.configSvc.getResourceAsync("portals.cms.links.update.messages.confirm.remove");
+			const successMessage = await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.delete");
+			const modes = [
+				{
+					label: await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete-all"),
+					value: "delete"
+				},
+				{
+					label: await this.configSvc.getResourceAsync("portals.desktops.update.buttons.set-null-all"),
+					value: "set-null"
+				}
+			];
+			this.appFormsSvc.showConfirmAsync(
+				deleteMessage,
+				() => this.appFormsSvc.showAlertAsync(
+					undefined,
+					deleteMessage,
+					removeMessage,
+					mode => {
+						this.appFormsSvc.showLoadingAsync(removeButton).then(() => this.portalsCmsSvc.deleteLinkAsync(
+							this.link.ID,
+							data => {
+								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
+								this.trackAsync(this.title.track, "Delete").then(() => this.appFormsSvc.showToastAsync(successMessage)).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
+							},
+							error => this.trackAsync(this.title.track, "Delete").then(() => this.appFormsSvc.showErrorAsync(error)),
+							{ "x-children": mode }
+						));
 					},
-					async error => await Promise.all([
-						this.appFormsSvc.showErrorAsync(error),
-						this.trackAsync(button, "Delete")
-					]),
-					{ "x-children": mode }
-				);
-			},
-			await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.remove"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel"),
-			this.link.childrenIDs === undefined || this.link.childrenIDs.length < 1 ? undefined : modes.map(mode => ({
-				type: "radio",
-				label: mode.label,
-				value: mode.value,
-				checked: mode.value === "delete"
-			}))
-		);
+					removeButton,
+					cancelButton,
+					this.link.childrenIDs === undefined || this.link.childrenIDs.length < 1 ? undefined : modes.map(mode => ({
+						type: "radio",
+						label: mode.label,
+						value: mode.value,
+						checked: mode.value === "delete"
+					}))
+				),
+				deleteButton,
+				cancelButton
+			);
+		});
 	}
 
-	async cancelAsync(message?: string, url?: string) {
+	cancel(message?: string, url?: string) {
 		if (message === undefined && this.hash.full === AppCrypto.hash(this.form.value)) {
-			await this.configSvc.navigateBackAsync(url);
+			this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url));
 		}
 		else {
-			await this.appFormsSvc.showAlertAsync(
-				undefined,
+			AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
 				message || await this.configSvc.getResourceAsync(`portals.cms.links.update.messages.confirm.${AppUtility.isNotEmpty(this.link.ID) ? "cancel" : "new"}`),
+				() => this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url)),
 				undefined,
-				async () => await this.configSvc.navigateBackAsync(url),
-				await this.configSvc.getResourceAsync("common.buttons.ok"),
-				message ? undefined : await this.configSvc.getResourceAsync("common.buttons.cancel")
-			);
+				message === undefined ? "{{default}}" : undefined
+			));
 		}
 	}
 

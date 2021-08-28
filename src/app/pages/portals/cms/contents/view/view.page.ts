@@ -432,7 +432,8 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 						this.content.thumbnails.removeAll();
 						this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail");
 					},
-					error => this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail").then(() => this.appFormsSvc.showErrorAsync(error))
+					error => this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail").then(() => this.appFormsSvc.showErrorAsync(error)),
+					this.portalsCoreSvc.getPortalFileHeaders(this.content)
 				),
 				button,
 				"{{default}}"

@@ -392,16 +392,15 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	cancel(message?: string, url?: string) {
-		const changed = this.hash.full !== AppCrypto.hash(this.form.value);
-		if (message === undefined && !changed) {
+		if (message === undefined && this.hash.full === AppCrypto.hash(this.form.value)) {
 			this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url));
 		}
 		else {
 			AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
-				message || await this.configSvc.getResourceAsync(`portals.cms.contents.update.messages.confirm.${AppUtility.isNotEmpty(this.contentType.ID) ? "cancel" : "new"}`),
+				message || await this.configSvc.getResourceAsync(`portals.cms.contents.update.messages.confirm.${AppUtility.isNotEmpty(this.item.ID) ? "cancel" : "new"}`),
 				() => this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url)),
 				undefined,
-				message !== undefined || changed || AppUtility.isEmpty(this.contentType.ID) ? "{{default}}" : undefined
+				message === undefined ? "{{default}}" : undefined
 			));
 		}
 	}

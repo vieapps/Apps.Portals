@@ -569,7 +569,12 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	exportToExcel() {
-		this.trackAsync(this.actions[3].text, "Export").then(() => this.portalsCoreSvc.exportToExcelAsync("CMS.Category", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined));
+		this.portalsCoreSvc.exportToExcelAsync(
+			"CMS.Category",
+			this.organization.ID,
+			this.module !== undefined ? this.module.ID : undefined,
+			this.contentType !== undefined ? this.contentType.ID : undefined
+		).then(() => this.trackAsync(this.actions[2].text, "Export"));
 	}
 
 	importFromExcel() {
@@ -578,20 +583,16 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			this.organization.ID,
 			this.module !== undefined ? this.module.ID : undefined,
 			this.contentType !== undefined ? this.contentType.ID : undefined,
-			() => {
+			() => this.appFormsSvc.showLoadingAsync().then(() => this.trackAsync(this.actions[4].text, "Import")).then(() => {
 				this.categories = [];
 				this.pageNumber = 0;
 				AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination), this.paginationPrefix);
 				Category.instances
-				.toArray(category => this.contentType !== undefined ? this.contentType.ID === category.RepositoryEntityID : this.organization.ID === category.SystemID)
-				.map(category => category.ID)
-				.forEach(id => Category.instances.remove(id));
-				this.appFormsSvc.showLoadingAsync().then(() => this.trackAsync(this.actions[4].text, "Import").then(() => this.startSearch(async () => this.appFormsSvc.showConfirmAsync(
-					await this.configSvc.getResourceAsync("portals.common.excel.message.import"),
-					undefined,
-					await this.configSvc.getResourceAsync("common.buttons.close")
-				))));
-			}
+					.toArray(category => this.contentType !== undefined ? this.contentType.ID === category.RepositoryEntityID : this.organization.ID === category.SystemID)
+					.map(category => category.ID)
+					.forEach(id => Category.instances.remove(id));
+				this.startSearch(async () => this.appFormsSvc.showConfirmAsync(await this.configSvc.getResourceAsync("portals.common.excel.message.import"), undefined, await this.configSvc.getResourceAsync("common.buttons.close")));
+			})
 		);
 	}
 

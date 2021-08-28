@@ -377,11 +377,7 @@ export class CmsItemListPage implements OnInit, OnDestroy, ViewDidEnter {
 					.toArray(item => this.contentType !== undefined ? this.contentType.ID === item.RepositoryEntityID : this.organization.ID === item.SystemID)
 					.map(item => item.ID)
 					.forEach(id => Item.instances.remove(id));
-				this.startSearch(async () => this.appFormsSvc.showConfirmAsync(
-					await this.configSvc.getResourceAsync("portals.common.excel.message.import"),
-					undefined,
-					await this.configSvc.getResourceAsync("common.buttons.close")
-				));
+				this.startSearch(async () => this.appFormsSvc.showConfirmAsync(await this.configSvc.getResourceAsync("portals.common.excel.message.import"), undefined, await this.configSvc.getResourceAsync("common.buttons.close")));
 			})
 		);
 	}

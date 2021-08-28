@@ -370,7 +370,7 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 			this.organization.ID,
 			this.module !== undefined ? this.module.ID : undefined,
 			this.contentType !== undefined ? this.contentType.ID : undefined
-			).then(() => this.trackAsync(this.actions[2].text, "Export"));
+		).then(() => this.trackAsync(this.actions[2].text, "Export"));
 	}
 
 	importFromExcel() {
@@ -387,12 +387,8 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 					.toArray(content => this.contentType !== undefined ? this.contentType.ID === content.RepositoryEntityID : this.organization.ID === content.SystemID)
 					.map(content => content.ID)
 					.forEach(id => Content.instances.remove(id));
-					this.startSearch(async () => this.appFormsSvc.showConfirmAsync(
-						await this.configSvc.getResourceAsync("portals.common.excel.message.import"),
-						undefined,
-						await this.configSvc.getResourceAsync("common.buttons.close")
-					));
-				})
+				this.startSearch(async () => this.appFormsSvc.showConfirmAsync(await this.configSvc.getResourceAsync("portals.common.excel.message.import"), undefined, await this.configSvc.getResourceAsync("common.buttons.close")));
+			})
 		);
 	}
 

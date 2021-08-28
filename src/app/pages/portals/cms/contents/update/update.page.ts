@@ -484,14 +484,11 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 							this.filesSvc.uploadThumbnailAsync(
 								control.value.new,
 								this.portalsCmsSvc.getFileOptions(this.content, options => options.Extras["x-attachment-id"] = control.value.identity),
-								async () => {
-									await this.portalsCmsSvc.refreshContentAsync(content.ID);
-									await Promise.all([
-										this.trackAsync(this.title.track, "Upload", "Thumbnail"),
-										this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
-										this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
-									]);
-								},
+								() => this.portalsCmsSvc.refreshContentAsync(content.ID).then(async () => await Promise.all([
+									this.trackAsync(this.title.track, "Upload", "Thumbnail"),
+									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
+									this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
+								])),
 								error => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
 							);
 						}
@@ -506,7 +503,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 							async data => {
 								const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 								if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-									await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.content, options => options.Extras["x-attachment-id"] = control.value.identity));
+									await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.content, options => options.Extras["x-attachment-id"] = control.value.identity), () => this.trackAsync(this.title.track, "Upload", "Thumbnail"));
 								}
 								AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: data.CategoryID });
 								if (oldCategoryID !== data.CategoryID) {
@@ -531,7 +528,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 						async data => {
 							const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 							if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-								await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(Content.get(data.ID)));
+								await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(Content.get(data.ID)), () => this.trackAsync(this.title.track, "Upload", "Thumbnail"));
 							}
 							AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: data.CategoryID });
 							if (AppUtility.isArray(data.OtherCategories)) {
@@ -576,16 +573,15 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	cancel(message?: string, url?: string) {
-		const changed = this.hash.full !== AppCrypto.hash(this.form.value);
-		if (message === undefined && !changed) {
+		if (message === undefined && this.hash.full === AppCrypto.hash(this.form.value)) {
 			this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url));
 		}
 		else {
 			AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
 				message || await this.configSvc.getResourceAsync(`portals.cms.contents.update.messages.confirm.${AppUtility.isNotEmpty(this.content.ID) ? "cancel" : "new"}`),
 				() => this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url)),
-				"{{default}}",
-				message !== undefined ? undefined : "{{default}}"
+				undefined,
+				message === undefined ? "{{default}}" : undefined
 			));
 		}
 	}
