@@ -1,4 +1,5 @@
 import { AppUtility } from "@app/components/app.utility";
+import { AppDataFilter } from "@app/components/app.objects";
 import { Base as BaseModel } from "@app/models/base";
 
 /** Abstract class for all portals' entity classes */
@@ -37,7 +38,7 @@ export abstract class PortalBase extends BaseModel {
 	/** The title (only ANSI characters) for working with URIs and filters */
 	public abstract ansiTitle: string;
 
-	/** Filters the collecting using 'indexOf' on ANSI Title */
+	/** Gets the predicate function to tilter a collection of objects using 'indexOf' on ANSI Title */
 	public static getFilterBy(query: string, predicate?: (object: any) => boolean) {
 		const terms = AppUtility.toANSI(query.replace(/\"/g, "")).split(" ");
 		const andTerms = terms.filter(term => term[0] === "+").map(term => term.substr(1));
@@ -65,6 +66,21 @@ export abstract class PortalBase extends BaseModel {
 		return filterBy;
 	}
 
+	/** Gets the params for navigating */
+	public static getParams(filterBy: AppDataFilter, onCompleted?: (params: { [key: string]: string }) => boolean) {
+		const params: { [key: string]: string } = {};
+		(filterBy.And || []).forEach(param => {
+			const key = AppUtility.getAttributes(param).first();
+			const value = param[key];
+			if (AppUtility.isObject(value, true) && AppUtility.isNotEmpty(value.Equals)) {
+				params[key] = value.Equals;
+			}
+		});
+		if (onCompleted !== undefined) {
+			onCompleted(params);
+		}
+		return params;
+	}
 }
 
 /** Interface of a module definition */
