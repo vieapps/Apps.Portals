@@ -2876,16 +2876,12 @@ export class PortalsCoreService extends BaseService {
 									if (onCompleted !== undefined) {
 										this.appFormsSvc.hideLoadingAsync().then(() => onCompleted(message));
 									}
-									else {
-										AppUtility.invoke(async () => this.appFormsSvc.showAlertAsync(
-											"Excel",
-											await this.configSvc.getResourceAsync("portals.common.excel.message.export"),
-											undefined,
-											() => PlatformUtility.openURL(this.filesSvc.getTemporaryFileURI(message)),
-											await this.configSvc.getResourceAsync("common.buttons.download"),
-											await this.configSvc.getResourceAsync("common.buttons.cancel")
-										));
-									}
+									AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
+										await this.configSvc.getResourceAsync("portals.common.excel.message.export"),
+										() => PlatformUtility.openURL(this.filesSvc.getTemporaryFileURI(message)),
+										await this.configSvc.getResourceAsync("common.buttons.download"),
+										await this.configSvc.getResourceAsync("common.buttons.cancel")
+									));
 									break;
 								case "Error":
 									if (this.configSvc.isDebug) {
@@ -2989,10 +2985,8 @@ export class PortalsCoreService extends BaseService {
 														this.appFormsSvc.hideLoadingAsync().then(() => onCompleted(message));
 													}
 													else {
-														AppUtility.invoke(async () => this.appFormsSvc.showAlertAsync(
-															"Excel",
+														AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
 															await this.configSvc.getResourceAsync("portals.common.excel.message.import"),
-															undefined,
 															undefined,
 															await this.configSvc.getResourceAsync("common.buttons.close")
 														));

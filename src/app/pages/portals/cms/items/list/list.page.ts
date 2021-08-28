@@ -359,13 +359,8 @@ export class CmsItemListPage implements OnInit, OnDestroy, ViewDidEnter {
 			"CMS.Item",
 			this.organization.ID,
 			this.module !== undefined ? this.module.ID : undefined,
-			this.contentType !== undefined ? this.contentType.ID : undefined,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
-			() => this.trackAsync(this.actions[2].text, "Export")
-		);
+			this.contentType !== undefined ? this.contentType.ID : undefined
+		).then(() => this.trackAsync(this.actions[2].text, "Export"));
 	}
 
 	importFromExcel() {
@@ -382,10 +377,8 @@ export class CmsItemListPage implements OnInit, OnDestroy, ViewDidEnter {
 					.toArray(item => this.contentType !== undefined ? this.contentType.ID === item.RepositoryEntityID : this.organization.ID === item.SystemID)
 					.map(item => item.ID)
 					.forEach(id => Item.instances.remove(id));
-				this.startSearch(async () => this.appFormsSvc.showAlertAsync(
-					"Excel",
+				this.startSearch(async () => this.appFormsSvc.showConfirmAsync(
 					await this.configSvc.getResourceAsync("portals.common.excel.message.import"),
-					undefined,
 					undefined,
 					await this.configSvc.getResourceAsync("common.buttons.close")
 				));
