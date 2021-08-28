@@ -606,8 +606,8 @@ export class PortalsCmsService extends BaseService {
 					availableContentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module));
 					categoryContentTypes.merge(this.getContentTypesOfCategory(module));
 				}));
-				AppUtility.invoke(availableContentTypes.length > 0 ? () => this.getFeaturedContentsAsync(availableContentTypes, 0) : undefined, 12345, true);
-				categoryContentTypes.filter(contentType => contentType !== undefined).forEach(contentType => AppUtility.invoke(() => this.searchCategoriesAsync(contentType), 12345, true));
+				AppUtility.invoke(availableContentTypes.length > 0 ? () => this.getFeaturedContentsAsync(availableContentTypes, 0) : undefined, 12345);
+				categoryContentTypes.filter(contentType => contentType !== undefined).forEach(contentType => AppUtility.invoke(() => this.searchCategoriesAsync(contentType), 12345));
 			}
 		}
 	}
