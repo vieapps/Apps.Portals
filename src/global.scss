@@ -47,8 +47,8 @@ ion-menu.menu-side-start > ion-header > ion-menu-toggle > ion-toolbar > ion-thum
 	margin: 10%;
 }
 .ios ion-menu.menu-side-start > ion-header > ion-menu-toggle > ion-toolbar > ion-thumbnail {
-	height: 36px;
-	width: 36px;
+	height: 46px;
+	width: 46px;
 }
 ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label {
 	line-height: 44px;
@@ -75,6 +75,9 @@ ion-menu > ion-content ion-list ion-item {
 ion-menu > ion-content ion-list.children > ion-item {
 	--padding-start: 74px;
 }
+.ios ion-menu > ion-content ion-list.children > ion-item {
+	--padding-start: 67px;
+}
 .md ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label {
 	text-transform: uppercase;
 }
@@ -85,18 +88,13 @@ ion-menu > ion-content > control-app-preferences img.logo {
 	width: 70px !important;
 }
 
-/* footer toolbars */
-ion-footer > ion-toolbar {
-	padding-left: 8px;
-} 
-
-/* header toolbars & searchbars on iOS */
-.plt-ios ion-header ion-toolbar:first-child {
+/* header toolbars */
+.ios ion-header > ion-toolbar:first-child {
 	padding-top: 0;
 }
 
-/* search bar on iOS */
-.plt-ios .sc-ion-searchbar-ios-h {
+/* search-bar on iOS */
+.ios .sc-ion-searchbar-ios-h {
 	padding-top: 0;
 	padding-bottom: 0;
 }
@@ -105,6 +103,23 @@ ion-footer > ion-toolbar {
 }
 .searchbar-input-container.sc-ion-searchbar-ios {
 	height: 28px;
+}
+
+/* footer toolbars */
+ion-footer > ion-toolbar {
+	padding-left: 8px;
+}
+
+/* toolbars */
+.ios ion-header ion-toolbar,
+.ios ion-footer ion-toolbar,
+.ios ion-header ion-toolbar > ion-title,
+.ios ion-footer ion-toolbar > ion-title {
+	min-height: 52px;
+}
+.ios ion-header ion-toolbar > ion-buttons,
+.ios ion-footer ion-toolbar > ion-buttons {
+	margin-top: 7px;
 }
 
 /* Dynamic forms ----------------------------------------- */

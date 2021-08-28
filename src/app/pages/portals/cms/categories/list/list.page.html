@@ -20,6 +20,7 @@
 			cancelButtonIcon="arrow-back"
 			enterkeyhint="search"
 			inputmode="search"
+			[cancelButtonText]="labels.cancel"
 			(ionChange)="onSearch($event)"
 			(ionClear)="onClear()"
 			(ionCancel)="onCancel()"></ion-searchbar>
