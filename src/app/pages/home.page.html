@@ -10,7 +10,7 @@
 </ion-header>
 
 <ion-content [color]="color">
-	<control-cms-portals-shortcuts *ngIf="activeService === 'Portals'"></control-cms-portals-shortcuts>
+	<control-cms-portals-shortcuts *ngIf="isAuthenticated && activeService === 'Portals'"></control-cms-portals-shortcuts>
 	<control-cms-portals-featured-contents *ngIf="isAuthenticated && activeService === 'Portals'" name="updated"></control-cms-portals-featured-contents>
 	<control-cms-portals-featured-contents *ngIf="isAuthenticated && activeService === 'Portals'" name="published" status="Published" orderBy="Date"></control-cms-portals-featured-contents>
 	<control-app-preferences *ngIf="!isAuthenticated && activeService === 'Portals'"></control-app-preferences>
