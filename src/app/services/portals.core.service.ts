@@ -526,8 +526,9 @@ export class PortalsCoreService extends BaseService {
 		objectName = AppUtility.isNotEmpty(objectName) ? objectName : contentType !== undefined ? contentType.getObjectName() : "unknown";
 		return `/portals/${path || "cms"}/`
 			+ (AppUtility.isEquals(objectName, "Category") ? "categories" : `${objectName}s`).toLowerCase() + "/"
-			+ (action || "list").toLowerCase() + "/"
-			+ AppUtility.toANSI(title || (contentType !== undefined ? contentType.ansiTitle : "untitled"), true);
+			+ (action || "list").toLowerCase()
+			+ ("search" === action ? "" : "/")
+			+ ("search" === action ? "" : AppUtility.toANSI(title || (contentType !== undefined ? contentType.ansiTitle : "untitled"), true));
 	}
 
 	public getRouterQueryParams(contentType: ContentType, params?: { [key: string]: any }) {
