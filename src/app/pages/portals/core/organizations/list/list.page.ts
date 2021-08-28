@@ -305,7 +305,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	setActive(event: Event, organization: Organization) {
 		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.portalsCoreSvc.setActiveOrganizationAsync(organization));
+		this.listCtrl.closeSlidingItems().then(() => this.portalsCoreSvc.setActiveOrganization(organization));
 	}
 
 	isActive(organization: Organization) {

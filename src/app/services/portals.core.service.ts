@@ -88,7 +88,7 @@ export class PortalsCoreService extends BaseService {
 				Module.active = Module.get(moduleID);
 			}
 			else if (moduleID !== undefined) {
-				this.getModuleAsync(moduleID, async _ => await this.setActiveModuleAsync(Module.get(moduleID)));
+				this.getModuleAsync(moduleID, () => this.setActiveModule(Module.get(moduleID)));
 			}
 		}
 		return Module.active;
@@ -180,7 +180,7 @@ export class PortalsCoreService extends BaseService {
 				const organizations = this.activeOrganizations;
 				const organization = this.activeOrganization;
 				if (organization === undefined || organizations.indexOf(organization.ID) < 0) {
-					this.getOrganizationAsync(organizations.first(), _ => this.setActiveOrganizationAsync(Organization.get(organizations.first())));
+					this.getOrganizationAsync(organizations.first(), () => this.setActiveOrganization(Organization.get(organizations.first())));
 				}
 			}
 		});
@@ -290,12 +290,7 @@ export class PortalsCoreService extends BaseService {
 				this.configSvc.appConfig.services.activeID = Organization.active.ID;
 			}
 			else {
-				await this.getOrganizationAsync(
-					preferID,
-					async _ => await this.setActiveOrganizationAsync(Organization.get(preferID) || Organization.instances.first()),
-					undefined,
-					useXHR
-				);
+				await this.getOrganizationAsync(preferID, () => this.setActiveOrganization(Organization.get(preferID) || Organization.instances.first()), undefined, useXHR);
 			}
 		}
 		if (onNext !== undefined) {
@@ -304,22 +299,23 @@ export class PortalsCoreService extends BaseService {
 		return Organization.active;
 	}
 
-	public async setActiveOrganizationAsync(organization: Organization, onNext?: () => void) {
+	public setActiveOrganization(organization: Organization, onNext?: () => void) {
 		if (organization !== undefined) {
 			this.configSvc.appConfig.services.activeID = organization.ID;
 			this.configSvc.appConfig.options.extras["organization"] = organization.ID;
-			if (this.activeOrganizations.indexOf(organization.ID) < 0) {
-				this.activeOrganizations.push(organization.ID);
-			}
+			this.activeOrganizations.merge([organization.ID], true);
 			if (Organization.active === undefined || Organization.active.ID !== organization.ID) {
 				Organization.active = organization;
-				await this.getActiveModuleAsync();
-				AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
-				await this.configSvc.storeOptionsAsync(async () => {
+				this.getActiveModuleAsync(undefined, organization.modules.length < 1, undefined, false).then(() => {
+					AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
+					this.configSvc.saveOptionsAsync(() => AppEvents.broadcast("App", { Type: "Options", Mode: "Changed" }));
 					if (this.configSvc.isAuthenticated && Site.instances.first(site => site.SystemID === organization.ID) === undefined) {
-						await this.searchSiteAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }), undefined, undefined, true);
+						this.searchSiteAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }));
 					}
 				});
+				if (organization.modules.length < 1) {
+					AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
+				}
 			}
 		}
 		if (onNext !== undefined) {
@@ -328,17 +324,17 @@ export class PortalsCoreService extends BaseService {
 		return Organization.active;
 	}
 
-	public removeActiveOrganizationAsync(organizationID: string, onNext?: () => void) {
+	public removeActiveOrganization(organizationID: string, onNext?: () => void) {
 		this.configSvc.appConfig.services.activeID = undefined;
 		this.configSvc.appConfig.options.extras["organization"] = undefined;
 		this.activeOrganizations.remove(organizationID);
 		delete this.activeModules[organizationID];
 		Organization.active = undefined;
 		Module.active = undefined;
-		return this.setActiveOrganizationAsync(Organization.get(this.activeOrganizations.first()), onNext);
+		return this.setActiveOrganization(Organization.get(this.activeOrganizations.first()), onNext);
 	}
 
-	public async getActiveModuleAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void) {
+	public async getActiveModuleAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void, broadcast: boolean = true) {
 		const activeOrganization = this.activeOrganization;
 		const systemID = activeOrganization !== undefined
 			? activeOrganization.ID
@@ -349,33 +345,21 @@ export class PortalsCoreService extends BaseService {
 			: undefined;
 
 		if (Module.active === undefined) {
-			preferID = AppUtility.isNotEmpty(preferID)
-				? preferID
-				: AppUtility.isNotEmpty(systemID) ? this.activeModules[systemID] : undefined;
+			preferID = AppUtility.isNotEmpty(preferID) ? preferID : AppUtility.isNotEmpty(systemID) ? this.activeModules[systemID] : undefined;
 			if (AppUtility.isNotEmpty(preferID)) {
 				if (Module.contains(preferID)) {
 					Module.active = Module.get(preferID);
 				}
 				else {
-					await this.getModuleAsync(
-						preferID,
-						async _ => await this.setActiveModuleAsync(Module.get(preferID) || (activeOrganization !== undefined ? activeOrganization.defaultModule : undefined)),
-						undefined,
-						useXHR
-					);
+					await this.getModuleAsync(preferID, () => this.setActiveModule(Module.get(preferID) || (activeOrganization !== undefined ? activeOrganization.defaultModule : undefined), undefined, broadcast), undefined, useXHR);
 				}
 			}
 			else if (activeOrganization !== undefined) {
 				if (activeOrganization.modules.length > 0) {
-					await this.setActiveModuleAsync(activeOrganization.defaultModule);
+					this.setActiveModule(activeOrganization.defaultModule, undefined, broadcast);
 				}
 				else {
-					await this.getOrganizationAsync(
-						activeOrganization.ID,
-						async _ => await this.setActiveModuleAsync(activeOrganization.defaultModule),
-						undefined,
-						useXHR
-					);
+					await this.getOrganizationAsync(activeOrganization.ID, () => this.setActiveModule(activeOrganization.defaultModule, undefined, broadcast), undefined, useXHR);
 				}
 			}
 		}
@@ -386,22 +370,18 @@ export class PortalsCoreService extends BaseService {
 		return Module.active;
 	}
 
-	public async setActiveModuleAsync(module: Module, onNext?: () => void) {
-		if (module === undefined) {
-			return Module.active;
-		}
-
-		if (Module.active === undefined || Module.active.ID !== module.ID) {
-			this.activeModules[module.SystemID] = module.ID;
+	public setActiveModule(module: Module, onNext?: () => void, broadcast: boolean = true) {
+		if (module !== undefined && (Module.active === undefined || Module.active.ID !== module.ID)) {
 			Module.active = module;
-			AppUtility.invoke(() => AppEvents.broadcast(this.name, { Type: "Module", Mode: "Changed", ID: Module.active.ID }));
+			this.activeModules[module.SystemID] = module.ID;
+			if (broadcast) {
+				AppEvents.broadcast(this.name, { Type: "Module", Mode: "Changed", ID: Module.active.ID });
+				this.configSvc.saveOptionsAsync(() => AppEvents.broadcast("App", { Type: "Options", Mode: "Changed" }));
+			}
 		}
-
-		AppUtility.invoke(() => this.configSvc.saveOptionsAsync(), 567);
 		if (onNext !== undefined) {
 			onNext();
 		}
-
 		return Module.active;
 	}
 

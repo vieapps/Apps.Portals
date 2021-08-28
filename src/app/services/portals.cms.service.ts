@@ -161,10 +161,8 @@ export class PortalsCmsService extends BaseService {
 				if (Organization.active !== undefined && this.portalsCoreSvc.activeOrganizations.indexOf(Organization.active.ID) < 0) {
 					this._sidebarCategory = undefined;
 					this._sidebarContentType = undefined;
-					this.portalsCoreSvc.removeActiveOrganizationAsync(Organization.active.ID).then(() => {
-						this.updateSidebarAsync();
-						this.prepareFeaturedContentsAsync();
-					});
+					this.portalsCoreSvc.removeActiveOrganization(Organization.active.ID);
+					this.updateSidebarAsync().then(() => this.prepareFeaturedContentsAsync());
 				}
 			}
 		});

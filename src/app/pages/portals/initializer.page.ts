@@ -62,7 +62,7 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 				await this.portalsCoreSvc.getOrganizationAsync(organizationID, _ => organization = Organization.get(organizationID), undefined, true);
 			}
 			if (organization !== undefined) {
-				await this.portalsCoreSvc.setActiveOrganizationAsync(organization);
+				this.portalsCoreSvc.setActiveOrganization(organization);
 				const objectName = this.configSvc.requestParams["ObjectName"] as string;
 				const objectID = this.configSvc.requestParams["ObjectID"] as string;
 				let object: BaseModel;
@@ -171,7 +171,7 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 						console.log("<Portals Initializer>: prepare module when no one was actived");
 					}
 					if (object !== undefined && object instanceof Module) {
-						await this.portalsCoreSvc.setActiveModuleAsync(object as Module);
+						this.portalsCoreSvc.setActiveModule(object as Module);
 					}
 					else {
 						await this.portalsCoreSvc.getActiveModuleAsync();

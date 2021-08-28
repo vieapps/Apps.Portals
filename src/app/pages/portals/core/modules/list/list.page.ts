@@ -273,8 +273,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 
 	async setActiveAsync(event: Event, module: Module) {
 		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.portalsCoreSvc.setActiveModuleAsync(module);
+		await this.listCtrl.closeSlidingItems().then(() => this.portalsCoreSvc.setActiveModule(module));
 	}
 
 	isActive(module: Module) {

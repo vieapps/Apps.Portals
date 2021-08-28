@@ -153,7 +153,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 				await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.select.organization"),
 				undefined,
 				undefined,
-				organizationID => this.portalsCoreSvc.setActiveOrganizationAsync(this.portalsCoreSvc.getOrganization(organizationID, false)),
+				organizationID => this.portalsCoreSvc.setActiveOrganization(this.portalsCoreSvc.getOrganization(organizationID, false)),
 				await this.configSvc.getResourceAsync("common.buttons.select"),
 				await this.configSvc.getResourceAsync("common.buttons.cancel"),
 				activeOrganizations.sortBy("Alias").map(organization => ({
@@ -173,7 +173,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			undefined,
 			await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.messages.removeOrganization", { name: this.portalsCoreSvc.activeOrganization.Title }),
 			undefined,
-			() => this.portalsCoreSvc.removeActiveOrganizationAsync(this.portalsCoreSvc.activeOrganization.ID),
+			() => this.portalsCoreSvc.removeActiveOrganization(this.portalsCoreSvc.activeOrganization.ID),
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
@@ -188,7 +188,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 					await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.select.module"),
 					undefined,
 					undefined,
-					moduleID => this.portalsCoreSvc.setActiveModuleAsync(this.portalsCoreSvc.getModule(moduleID, false)),
+					moduleID => this.portalsCoreSvc.setActiveModule(this.portalsCoreSvc.getModule(moduleID, false)),
 					await this.configSvc.getResourceAsync("common.buttons.select"),
 					await this.configSvc.getResourceAsync("common.buttons.cancel"),
 					activeOrganization.modules.sortBy("Title").map(module => ({
@@ -202,7 +202,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 				);
 			}
 			else if (this.portalsCoreSvc.activeModule === undefined) {
-				await this.portalsCoreSvc.setActiveModuleAsync(activeOrganization.defaultModule);
+				this.portalsCoreSvc.setActiveModule(activeOrganization.defaultModule);
 			}
 		}
 	}
