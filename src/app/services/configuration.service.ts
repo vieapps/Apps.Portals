@@ -632,11 +632,13 @@ export class ConfigurationService extends BaseService {
 	/** Sends a request to navigates */
 	public navigateAsync(direction?: string, url?: string, params?: { [key: string]: any }) {
 		switch ((direction || "forward").toLocaleLowerCase()) {
+			case "forward":
+				return this.navigateForwardAsync(url, params);
+			case "back":
+				return this.navigateBackAsync(url, params);
 			case "home":
 			case "root":
 				return this.navigateRootAsync(url, params);
-			case "back":
-				return this.navigateBackAsync(url, params);
 			default:
 				return this.navigateForwardAsync(url, params);
 		}
