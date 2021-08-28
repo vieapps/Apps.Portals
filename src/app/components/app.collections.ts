@@ -8,8 +8,8 @@ declare global {
 		/** Updates an element at a specified index/position (replaces or inserts) */
 		update(value: T, index?: number): T[];
 
-		/** Merges other values */
-		merge(values: T[]): T[];
+		/** Merges other elements */
+		merge(values: T[], distinct?: boolean, findIndex?: (value: T, array: T[]) => number): T[];
 
 		/** Clears (Removes) a range of elements */
 		clear(start?: number, amount?: number): T[];
@@ -96,9 +96,16 @@ Array.prototype.update = function<T>(this: T[], value: T, index?: number): T[] {
 	return this;
 };
 
-Array.prototype.merge = function<T>(this: T[], values: T[]): T[] {
+Array.prototype.merge = function<T>(this: T[], values: T[], distinct?: boolean, findIndex?: (value: T, array: T[]) => number): T[] {
 	if (values !== undefined) {
-		values.forEach(value => this.push(value));
+		values.forEach(value => {
+			if (!!!distinct) {
+				this.push(value);
+			}
+			else if (findIndex !== undefined ? findIndex(value, this) < 0 : this.indexOf(value) < 0) {
+				this.push(value);
+			}
+		});
 	}
 	return this;
 };
