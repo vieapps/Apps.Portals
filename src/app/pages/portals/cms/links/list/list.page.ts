@@ -135,7 +135,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
 
-		this.searching = this.configSvc.currentURL.endsWith("/search");
+		this.searching = this.configSvc.currentURL.indexOf("/search") > 0;
 		this.title.track = this.redordering
 			? await this.configSvc.getResourceAsync("portals.cms.links.title.reorder")
 			: AppUtility.format(await this.configSvc.getResourceAsync(`portals.cms.links.title.${(this.searching ? "search" : "list")}`), { info: "" });
@@ -188,13 +188,11 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		};
 
 		this.children = await this.configSvc.getResourceAsync("portals.cms.links.list.children");
-		await this.prepareTitleAsync();
 
 		if (this.searching) {
-			this.prepareFilterBy(false);
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.links.list.search");
-			PlatformUtility.focus(this.searchCtrl);
-			await this.appFormsSvc.hideLoadingAsync();
+			this.prepareFilterBy(false);
+			this.prepareTitleAsync().then(() => this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.focus(this.searchCtrl)));
 		}
 		else {
 			this.actions = [
@@ -218,10 +216,10 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 				this.module = this.parentLink.module;
 				this.organization = this.parentLink.organization;
 				this.prepareLinks();
-				await this.prepareTitleAsync();
-				await this.appFormsSvc.hideLoadingAsync();
+				this.prepareTitleAsync().then(() => this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on(this.portalsCoreSvc.name, info => {
-					if (info.args.Object === "CMS.Link") {
+					const args = info.args;
+					if (args.Object === "CMS.Link" && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type) && this.parentID === args.ParentID) {
 						this.prepareLinks();
 					}
 				}, `CMS.Links:${this.parentLink.ID}:Refresh`);
@@ -230,7 +228,8 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 				this.prepareFilterBy();
 				this.prepareTitleAsync().then(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync()));
 				AppEvents.on(this.portalsCoreSvc.name, info => {
-					if (info.args.Object === "CMS.Link") {
+					const args = info.args;
+					if (args.Object === "CMS.Link" && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type)) {
 						this.prepareResults();
 					}
 				}, "CMS.Links:Refresh");
@@ -262,7 +261,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 					]
 				: [{ SystemID: { Equals: this.organization.ID } }];
 		if (addParentID) {
-			this.filterBy.And.push({ ParentID: "IsNull" });
+			this.filterBy.And.push({ ParentID: this.parentLink !== undefined ? { Equals: this.parentLink.ID } : "IsNull" });
 		}
 	}
 
@@ -300,6 +299,10 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		this.cancelSearch();
 		this.filterBy.Query = undefined;
 		this.links = [];
+	}
+
+	onCancel() {
+		this.configSvc.navigateBackAsync();
 	}
 
 	onInfiniteScroll() {
@@ -375,19 +378,11 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	}
 
 	openSearch() {
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync("/portals/cms/links/search"));
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "search")));
 	}
 
 	create() {
-		const params: { [key: string]: string } = {};
-		if (AppUtility.isNotEmpty(this.parentID)) {
-			params["ParentID"] = this.parentID;
-		}
-		this.listCtrl.closeSlidingItems();
-		if (this.contentType !== undefined) {
-			params["RepositoryEntityID"] = this.contentType.ID;
-			this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, params));
-		}
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, Link.getParams(this.filterBy))));
 	}
 
 	view(event: Event, link: Link) {

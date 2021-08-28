@@ -1,5 +1,5 @@
 <ion-header>
-	<ion-toolbar [color]="color">
+	<ion-toolbar [color]="color" [class]="searching ? 'toolbar-searchbox' : ''">
 		<ion-buttons slot="start">
 			<ion-back-button [hidden]="searching || redordering" text=""></ion-back-button>
 			<ion-button [hidden]="!redordering" fill="clear" color="secondary" [disabled]="processing" (click)="cancelReorder()">
@@ -15,8 +15,14 @@
 			{{ title.page }}
 		</ion-title>
 		<ion-searchbar [hidden]="!searching"
+			debounce="450"
+			showCancelButton="always"
+			cancelButtonIcon="arrow-back"
+			enterkeyhint="search"
+			inputmode="search"
 			(ionChange)="onSearch($event)"
-			(ionClear)="onClear()"></ion-searchbar>
+			(ionClear)="onClear()"
+			(ionCancel)="onCancel()"></ion-searchbar>
 	</ion-toolbar>
 </ion-header>
 
