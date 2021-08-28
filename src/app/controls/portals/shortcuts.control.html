@@ -12,7 +12,7 @@
 			<ion-item [color]="color" (click)="navigate(shortcut, idx, $event)" class="ion-activatable" detail="false" lines="none">
 				<ion-icon *ngIf="shortcut.Icon && shortcut.Icon.Name" [name]="shortcut.Icon.Name" [color]="shortcut.Icon.Color" slot="start"></ion-icon>
 				<ion-label>
-					<span *ngIf="isAuthenticated" class="ion-float-end">
+					<span class="ion-float-end">
 						<ion-icon *ngIf="shortcut.Editable" (click)="update(shortcut, idx, $event)" name="create" color="medium" slot="icon-only"></ion-icon>
 						<ion-icon *ngIf="shortcut.Removable" (click)="remove(shortcut, idx, $event)" name="trash" color="medium" slot="icon-only"></ion-icon>
 					</span>

@@ -32,10 +32,6 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		return this.configSvc.color;
 	}
 
-	get isAuthenticated() {
-		return this.configSvc.isAuthenticated;
-	}
-
 	ngOnInit() {
 		if (this.configSvc.isReady) {
 			this.prepareLabelAsync().then(() => AppUtility.invoke(() => this.prepareShortcutsAsync(), 123, true));
@@ -48,22 +44,16 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			}, "PortalsShortcutsEvents");
 		}
 		AppEvents.on("Session", info => {
-			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
+			if ("LogIn" === info.args.Type) {
 				this.prepareShortcutsAsync();
 			}
 		}, "PortalsShortcutsEvents");
 		AppEvents.on(this.portalsCoreSvc.name, info => {
-			if (this.shortcuts.length > 0 && "Changed" === info.args.Mode && ("Organization" === info.args.Type || "Module" === info.args.Type)) {
-				AppUtility.invoke(async () => {
-					const organization = await this.portalsCoreSvc.getActiveOrganizationAsync();
-					const module = await this.portalsCoreSvc.getActiveModuleAsync();
-					const contentType = this.portalsCmsSvc.getDefaultContentTypeOfItem(module) || this.portalsCmsSvc.getDefaultContentTypeOfLink(module);
-					if ("Organization" === info.args.Type) {
-						this.shortcuts[0].Title = AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.organization"), { organization: organization !== undefined ? this.portalsCoreSvc.activeOrganization.Title : "N/A" });
-					}
-					this.shortcuts[1].Title = AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.module"), { module: module !== undefined ? module.Title : "N/A" });
-					this.shortcuts[3].Link = this.portalsCoreSvc.getAppURL(contentType);
-				});
+			if ("Changed" === info.args.Mode && ("Organization" === info.args.Type || "Module" === info.args.Type)) {
+				this.updateShortcutsAsync();
+			}
+			else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode) {
+				this.updateShortcutsAsync();
 			}
 		}, "PortalsShortcutsEvents");
 	}
@@ -82,11 +72,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		const shortcuts = this.configSvc.appConfig.options.extras["shortcuts"] || {};
 		this.shortcuts = (shortcuts.items as Array<AppShortcut> || []).map(shortcut => shortcut);
 
-		if (this.configSvc.isAuthenticated) {
-			await this.portalsCoreSvc.getActiveOrganizationsAsync();
-		}
-
-		const organization = this.configSvc.isAuthenticated ? await this.portalsCoreSvc.getActiveOrganizationAsync() : undefined;
+		const organization = await this.portalsCoreSvc.getActiveOrganizationAsync();
 		this.shortcuts.insert({
 			Title: AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.organization"), { organization: organization !== undefined ? organization.Title : "N/A" }),
 			Icon: { Name: "business" },
@@ -96,7 +82,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			OnRemove: () => this.removeOrganizationAsync()
 		}, 0);
 
-		const module = this.configSvc.isAuthenticated ? await this.portalsCoreSvc.getActiveModuleAsync() : undefined;
+		const module = await this.portalsCoreSvc.getActiveModuleAsync();
 		this.shortcuts.insert({
 			Title: AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.module"), { module: module !== undefined ? module.Title : "N/A" }),
 			Icon: { Name: "albums" },
@@ -111,23 +97,17 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			Icon: { Name: "logo-firebase" },
 			Editable: false,
 			Removable: false,
-			OnClick: shortcut => {
-				AppEvents.broadcast("OpenSidebar", { Name: "cms" });
-				this.configSvc.navigateForwardAsync(shortcut.Link);
-			}
+			OnClick: shortcut => this.configSvc.navigateForwardAsync(shortcut.Link).then(() => AppEvents.broadcast("OpenSidebar", { Name: "cms" }))
 		}, 2);
 
-		const contentType = this.configSvc.isAuthenticated ? this.portalsCmsSvc.getDefaultContentTypeOfItem(module) || this.portalsCmsSvc.getDefaultContentTypeOfLink(module) : undefined;
+		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfItem(module) || this.portalsCmsSvc.getDefaultContentTypeOfLink(module);
 		this.shortcuts.insert({
 			Title: shortcuts.others as string || await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.labels.others"),
 			Link: this.portalsCoreSvc.getAppURL(contentType),
 			Icon: { Name: "newspaper" },
 			Editable: false,
 			Removable: false,
-			OnClick: shortcut => {
-				AppEvents.broadcast("OpenSidebar", { Name: "cms" });
-				this.configSvc.navigateForwardAsync(shortcut.Link);
-			}
+			OnClick: shortcut => this.configSvc.navigateForwardAsync(shortcut.Link).then(() => AppEvents.broadcast("OpenSidebar", { Name: "cms" }))
 		}, 3);
 
 		this.shortcuts.forEach((shortcut, order) => {
@@ -142,12 +122,23 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		});
 	}
 
+	private async updateShortcutsAsync() {
+		if (this.shortcuts.length > 0) {
+			const organization = await this.portalsCoreSvc.getActiveOrganizationAsync();
+			this.shortcuts[0].Title = AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.organization"), { organization: organization !== undefined ? this.portalsCoreSvc.activeOrganization.Title : "N/A" });
+			const module = await this.portalsCoreSvc.getActiveModuleAsync();
+			this.shortcuts[1].Title = AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.module"), { module: module !== undefined ? module.Title : "N/A" });
+			const contentType = this.portalsCmsSvc.getDefaultContentTypeOfItem(module) || this.portalsCmsSvc.getDefaultContentTypeOfLink(module);
+			this.shortcuts[3].Link = this.portalsCoreSvc.getAppURL(contentType);
+		}
+	}
+
 	async changeOrganizationAsync() {
 		const activeOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync();
 		if (this.authSvc.isSystemAdministrator() && activeOrganizations.length < 2) {
 			await this.configSvc.navigateRootAsync(this.portalsCoreSvc.getRouterLink(undefined, "list", "all", "organization", "core"));
 		}
-		else if (this.isAuthenticated && activeOrganizations.length > 1) {
+		else if (activeOrganizations.length > 1) {
 			const activeOrganizationID = this.portalsCoreSvc.activeOrganization !== undefined ? this.portalsCoreSvc.activeOrganization.ID : undefined;
 			await this.appFormsSvc.showAlertAsync(
 				await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.select.organization"),
@@ -159,7 +150,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 				activeOrganizations.sortBy("Alias").map(organization => ({
 					name: "organizationID",
 					type: "radio",
-					label: organization.Alias + " - " + organization.Title,
+					label: `${organization.Alias} - ${organization.Title}`,
 					value: organization.ID,
 					checked: organization.ID === activeOrganizationID
 				})),
@@ -169,10 +160,8 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 	}
 
 	async removeOrganizationAsync() {
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
+		await this.appFormsSvc.showConfirmAsync(
 			await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.messages.removeOrganization", { name: this.portalsCoreSvc.activeOrganization.Title }),
-			undefined,
 			() => this.portalsCoreSvc.removeActiveOrganization(this.portalsCoreSvc.activeOrganization.ID),
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
@@ -181,7 +170,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 
 	async changeModuleAsync() {
 		const activeOrganization = this.portalsCoreSvc.activeOrganization;
-		if (this.isAuthenticated && activeOrganization !== undefined) {
+		if (activeOrganization !== undefined) {
 			if (activeOrganization.modules.length > 1) {
 				const activeModuleID = this.portalsCoreSvc.activeModule !== undefined ? this.portalsCoreSvc.activeModule.ID : undefined;
 				await this.appFormsSvc.showAlertAsync(
