@@ -128,7 +128,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
 				undefined,
-				async () => await this.configSvc.navigateHomeAsync("/portals/core/organizations/list/all"),
+				async () => await this.configSvc.navigateRootAsync("/portals/core/organizations/list/all"),
 				await this.configSvc.getResourceAsync("common.buttons.ok")
 			);
 			return;
@@ -138,7 +138,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
 			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateHomeAsync()
+				this.configSvc.navigateRootAsync()
 			]));
 			return;
 		}

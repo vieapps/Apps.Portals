@@ -129,7 +129,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 				undefined,
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
 				undefined,
-				async () => await this.configSvc.navigateHomeAsync("/portals/core/organizations/list/all"),
+				async () => await this.configSvc.navigateRootAsync("/portals/core/organizations/list/all"),
 				await this.configSvc.getResourceAsync("common.buttons.ok")
 			);
 			return;

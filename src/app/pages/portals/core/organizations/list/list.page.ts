@@ -119,7 +119,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			}));
 			if (this.organizations.length < 1) {
 				this.trackAsync(`${this.title} | No Permission`, "Check").then(() => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
-				this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateHomeAsync());
+				this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateRootAsync());
 				return;
 			}
 			else {
@@ -314,7 +314,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	viewSites(event: Event, organization: Organization) {
 		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateHomeAsync(this.portalsCoreSvc.getAppURL(undefined, "list", organization.ansiTitle, { SystemID: organization.ID }, "site", "core")));
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateRootAsync(this.portalsCoreSvc.getAppURL(undefined, "list", organization.ansiTitle, { SystemID: organization.ID }, "site", "core")));
 	}
 
 	refresh(event: Event, organization: Organization) {

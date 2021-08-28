@@ -88,7 +88,7 @@ export class UsersUpdatePage implements OnInit {
 				if (this.profile === undefined || (this.profile.ID !== this.configSvc.getAccount().id && !this.authSvc.isSystemAdministrator())) {
 					await Promise.all([
 						this.appFormsSvc.showToastAsync("Hmmm..."),
-						this.configSvc.navigateHomeAsync()
+						this.configSvc.navigateRootAsync()
 					]);
 				}
 				else {

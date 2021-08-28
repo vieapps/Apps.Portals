@@ -220,7 +220,7 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 
 		if (!this.searching) {
 			if (category === undefined && author === undefined) {
-				this.appFormsSvc.showToastAsync("Hmmm...").then(() => this.configSvc.navigateHomeAsync());
+				this.appFormsSvc.showToastAsync("Hmmm...").then(() => this.configSvc.navigateRootAsync());
 			}
 			else {
 				this.ratings = {};

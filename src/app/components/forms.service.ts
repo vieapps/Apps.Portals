@@ -626,7 +626,14 @@ export class AppFormsService {
 
 	/** Shows the confirmation box  */
 	public async showConfirmAsync(message: string = null, onOkClick?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string) {
-		await this.showAlertAsync(undefined, message, undefined, onOkClick, okButtonText, "{{default}}" === cancelButtonText ? await this.configSvc.getResourceAsync("common.buttons.cancel") : cancelButtonText);
+		await this.showAlertAsync(
+			undefined,
+			message,
+			undefined,
+			onOkClick,
+			"{{default}}" === okButtonText ? await this.configSvc.getResourceAsync("common.buttons.ok") : okButtonText,
+			"{{default}}" === cancelButtonText ? await this.configSvc.getResourceAsync("common.buttons.cancel") : cancelButtonText
+		);
 	}
 
 	/** Shows the error message (by the alert confirmation box) */

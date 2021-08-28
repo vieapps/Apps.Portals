@@ -317,7 +317,7 @@ export class UsersProfilePage implements OnInit {
 					async () => await Promise.all([
 						this.trackAsync(button, `${this.configSvc.appConfig.URLs.users.root}/logout`, "LogOut", "Users:Account"),
 						this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.logout.success"))),
-						this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync()
+						this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.root) ? this.configSvc.navigateRootAsync() : this.configSvc.navigateBackAsync()
 					]),
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),

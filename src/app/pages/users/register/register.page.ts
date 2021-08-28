@@ -205,7 +205,7 @@ export class UsersRegisterPage implements OnInit {
 						await this.configSvc.getResourceAsync("users.register.alert.header"),
 						undefined,
 						await this.configSvc.getResourceAsync("users.register.alert.message", { email: this.register.form.value.Email }),
-						async () => await (this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.root) ? this.configSvc.navigateHomeAsync() : this.configSvc.navigateBackAsync())
+						async () => await (this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.root) ? this.configSvc.navigateRootAsync() : this.configSvc.navigateBackAsync())
 					)
 				]),
 				async error => await Promise.all([

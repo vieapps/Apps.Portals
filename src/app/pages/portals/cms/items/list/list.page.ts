@@ -150,7 +150,7 @@ export class CmsItemListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Item", this.contentType === undefined ? undefined : this.contentType.Privileges);
 		if (!this.canContribute) {
 			this.trackAsync(`${this.title.track} | No Permission`, "Check").then(() => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
-			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateHomeAsync());
+			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateRootAsync());
 			return;
 		}
 
@@ -333,16 +333,7 @@ export class CmsItemListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	create() {
-		this.listCtrl.closeSlidingItems().then(() => {
-			const params: { [key: string]: string } = {
-				SystemID: this.organization.ID,
-				RepositoryID: this.module.ID
-			};
-			if (this.contentType !== undefined) {
-				params["RepositoryEntityID"] = this.contentType.ID;
-				this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, params));
-			}
-		});
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, Item.getParams(this.filterBy))));
 	}
 
 	view(event: Event, item: Item) {
@@ -360,7 +351,7 @@ export class CmsItemListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	back(message: string, url?: string) {
-		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showAlertAsync(undefined, message, undefined, () => this.configSvc.navigateHomeAsync(url)));
+		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateRootAsync(url)));
 	}
 
 	exportToExcel() {

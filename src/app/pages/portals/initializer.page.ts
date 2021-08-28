@@ -183,7 +183,7 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 	}
 
 	private async navigateAsync(url?: string, forward: boolean = true) {
-		await (forward ? this.configSvc.navigateForwardAsync(url) : this.configSvc.navigateHomeAsync(url));
+		await (forward ? this.configSvc.navigateForwardAsync(url) : this.configSvc.navigateRootAsync(url));
 	}
 
 }

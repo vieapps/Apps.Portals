@@ -298,7 +298,7 @@ export class AppComponent implements OnInit {
 					Title: await this.configSvc.getResourceAsync("common.sidebar.home"),
 					Link: this.configSvc.appConfig.URLs.home,
 					Icon: { Name: "home", Color: "primary", Slot: "start" },
-					OnClick: data => this.configSvc.navigateHomeAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
+					OnClick: data => this.configSvc.navigateRootAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.login"),
@@ -492,7 +492,7 @@ export class AppComponent implements OnInit {
 	}
 
 	private showActivationResult(data: any) {
-		this.appFormsSvc.showAlertAsync(data.Header, data.Message, data.SubMessage, () => this.configSvc.navigateHomeAsync());
+		this.appFormsSvc.showAlertAsync(data.Header, data.Message, data.SubMessage, () => this.configSvc.navigateRootAsync());
 	}
 
 	private initialize(onNext?: () => void, noInitializeSession?: boolean) {

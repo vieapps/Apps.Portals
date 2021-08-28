@@ -67,7 +67,7 @@ export class UsersListPage implements OnInit, OnDestroy {
 		else {
 			Promise.all([
 				this.appFormsSvc.showToastAsync("Hmmm..."),
-				this.configSvc.navigateHomeAsync()
+				this.configSvc.navigateRootAsync()
 			]);
 		}
 	}

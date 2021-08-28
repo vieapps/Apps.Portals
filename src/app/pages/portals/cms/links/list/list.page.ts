@@ -458,7 +458,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	}
 
 	private back(message: string, url?: string) {
-		this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateHomeAsync(url));
+		this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateRootAsync(url));
 	}
 
 	private openReorder() {

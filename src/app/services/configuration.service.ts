@@ -614,8 +614,8 @@ export class ConfigurationService extends BaseService {
 		return url + (AppUtility.isGotData(params) ? `${url.indexOf("?") > 0 ? "&" : "?"}${AppUtility.toQuery(params)}` : "");
 	}
 
-	/** Sends a request to navigates to home screen */
-	public navigateHomeAsync(url?: string, params?: { [key: string]: any }) {
+	/** Sends a request to navigates as root */
+	public navigateRootAsync(url?: string, params?: { [key: string]: any }) {
 		return this.navController.navigateRoot(this.getNavigatingURL(url || AppConfig.URLs.home, params));
 	}
 
@@ -634,7 +634,7 @@ export class ConfigurationService extends BaseService {
 		switch ((direction || "forward").toLocaleLowerCase()) {
 			case "home":
 			case "root":
-				return this.navigateHomeAsync(url, params);
+				return this.navigateRootAsync(url, params);
 			case "back":
 				return this.navigateBackAsync(url, params);
 			default:

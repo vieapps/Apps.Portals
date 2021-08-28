@@ -343,15 +343,7 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	create() {
-		this.listCtrl.closeSlidingItems();
-		const params: { [key: string]: string } = {};
-		if (AppUtility.isNotEmpty(this.categoryID)) {
-			params["CategoryID"] = this.categoryID;
-		}
-		if (this.contentType !== undefined) {
-			params["RepositoryEntityID"] = this.contentType.ID;
-			this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, params));
-		}
+		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.contentType, "create", undefined, Content.getParams(this.filterBy))));
 	}
 
 	view(event: Event, content: Content) {
@@ -369,7 +361,7 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	back(message: string, url?: string) {
-		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showAlertAsync(undefined, message, undefined, () => this.configSvc.navigateHomeAsync(url)));
+		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateRootAsync(url)));
 	}
 
 	exportToExcel() {

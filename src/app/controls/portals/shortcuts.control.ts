@@ -145,7 +145,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 	async changeOrganizationAsync() {
 		const activeOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync();
 		if (this.authSvc.isSystemAdministrator() && activeOrganizations.length < 2) {
-			await this.configSvc.navigateHomeAsync(this.portalsCoreSvc.getRouterLink(undefined, "list", "all", "organization", "core"));
+			await this.configSvc.navigateRootAsync(this.portalsCoreSvc.getRouterLink(undefined, "list", "all", "organization", "core"));
 		}
 		else if (this.isAuthenticated && activeOrganizations.length > 1) {
 			const activeOrganizationID = this.portalsCoreSvc.activeOrganization !== undefined ? this.portalsCoreSvc.activeOrganization.ID : undefined;

@@ -126,7 +126,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		if (this.organization === undefined) {
 			this.appFormsSvc.showConfirmAsync(
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
-				() => this.configSvc.navigateHomeAsync("/portals/core/organizations/list/all")
+				() => this.configSvc.navigateRootAsync("/portals/core/organizations/list/all")
 			);
 			return;
 		}
@@ -137,7 +137,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 		if (!this.portalsCoreSvc.canModerateOrganization(this.organization)) {
 			this.trackAsync(`${this.title.track} | No Permission`, "Check").then(() => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
-			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateHomeAsync());
+			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateRootAsync());
 			return;
 		}
 

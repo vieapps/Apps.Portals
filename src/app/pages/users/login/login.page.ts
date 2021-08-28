@@ -413,16 +413,16 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 	close() {
 		if (AppUtility.isNotEmpty(this.configSvc.queryParams["next"])) {
 			try {
-				this.configSvc.navigateHomeAsync(AppCrypto.base64urlDecode(this.configSvc.queryParams["next"]));
+				this.configSvc.navigateRootAsync(AppCrypto.base64urlDecode(this.configSvc.queryParams["next"]));
 			}
 			catch (error) {
 				console.error("<Login>: Error occurred while redirecting", error);
-				this.configSvc.navigateHomeAsync();
+				this.configSvc.navigateRootAsync();
 			}
 		}
 		else {
 			if (this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.root)) {
-				this.configSvc.navigateHomeAsync();
+				this.configSvc.navigateRootAsync();
 			}
 			else {
 				this.configSvc.navigateBackAsync();

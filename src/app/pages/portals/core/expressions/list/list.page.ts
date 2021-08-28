@@ -123,7 +123,7 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		if (!this.isSystemAdministrator && this.organization === undefined) {
 			this.trackAsync(`${this.title.track} | Invalid Organization`, "Check").then(async () => this.appFormsSvc.showConfirmAsync(
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
-				async () => await this.configSvc.navigateHomeAsync("/portals/core/organizations/list/all")
+				async () => await this.configSvc.navigateRootAsync("/portals/core/organizations/list/all")
 			));
 			return;
 		}
@@ -134,7 +134,7 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 
 		if (!this.canModerateOrganization || this.organization === undefined) {
 			this.trackAsync(`${this.title.track} | No Permission`, "Check").then(() => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
-			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateHomeAsync());
+			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateRootAsync());
 			return;
 		}
 

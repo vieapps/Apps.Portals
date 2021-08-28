@@ -101,10 +101,8 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 
 		this.title.track = await this.configSvc.getResourceAsync(`portals.cms.contents.title.${this.content !== undefined && AppUtility.isNotEmpty(this.content.ID) ? "update" : "create"}`);
 		if (this.organization === undefined) {
-			await Promise.all([
-				this.trackAsync(`${this.title.track} | Invalid Organization`, "Check"),
-				this.appFormsSvc.hideLoadingAsync(async () => this.cancel(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all"))
-			]);
+			this.trackAsync(`${this.title.track} | Invalid Organization`, "Check").then(() =>  this.appFormsSvc.hideLoadingAsync());
+			this.cancel(await this.configSvc.getResourceAsync("portals.organizations.list.invalid"), "/portals/core/organizations/list/all");
 			return;
 		}
 
@@ -114,8 +112,8 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 				? this.content.contentType
 				: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"]);
 			if (this.contentType === undefined) {
-				this.trackAsync(`${this.title.track} | Invalid Content Type`, "Check");
-				this.appFormsSvc.hideLoadingAsync(async () => this.cancel(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all"));
+				this.trackAsync(`${this.title.track} | Invalid Content Type`, "Check").then(() => this.appFormsSvc.hideLoadingAsync());
+				this.cancel(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"), "/portals/core/content.types/list/all");
 				return;
 			}
 		}
@@ -130,8 +128,8 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		if (!canUpdate) {
-			this.trackAsync(`${this.title.track} | No Permission`, "Check");
-			this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("Hmmmmmm....")).then(() => this.configSvc.navigateBackAsync());
+			this.trackAsync(`${this.title.track} | No Permission`, "Check").then(() => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
+			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 			return;
 		}
 
@@ -584,10 +582,10 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		}
 		else {
 			AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
-				message || await this.configSvc.getResourceAsync(`portals.cms.contents.update.messages.confirm.${AppUtility.isNotEmpty(this.contentType.ID) ? "cancel" : "new"}`),
+				message || await this.configSvc.getResourceAsync(`portals.cms.contents.update.messages.confirm.${AppUtility.isNotEmpty(this.content.ID) ? "cancel" : "new"}`),
 				() => this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url)),
-				undefined,
-				message !== undefined || changed || AppUtility.isEmpty(this.contentType.ID) ? "{{default}}" : undefined
+				"{{default}}",
+				message !== undefined ? undefined : "{{default}}"
 			));
 		}
 	}
