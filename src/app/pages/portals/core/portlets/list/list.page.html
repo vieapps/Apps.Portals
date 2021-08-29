@@ -2,15 +2,15 @@
 	<ion-toolbar [color]="color">
 		<ion-buttons slot="start">
 			<ion-back-button [hidden]="filtering || redordering" text=""></ion-back-button>
-			<ion-button [hidden]="!redordering" fill="clear" color="secondary" [disabled]="processing" (click)="cancelReorderAsync()">
+			<ion-button [hidden]="!redordering" fill="clear" color="secondary" [disabled]="processing" (click)="cancelReorder()">
 				{{ buttons.cancel }}
 			</ion-button>
 		</ion-buttons>
 		<ion-buttons slot="end">
-			<ion-button [hidden]="filtering" (click)="openSearchAsync()">
+			<ion-button [hidden]="filtering" (click)="openSearch()">
 				<ion-icon name="search" slot="icon-only"></ion-icon>
 			</ion-button>
-			<ion-button [hidden]="!redordering" fill="clear" color="primary" [disabled]="processing" (click)="doReorderAsync()">
+			<ion-button [hidden]="!redordering" fill="clear" color="primary" [disabled]="processing" (click)="doReorder()">
 				{{ buttons.save }}
 			</ion-button>
 		</ion-buttons>
@@ -37,7 +37,7 @@
 			</span>
 		</span>
 		<ion-buttons *ngIf="actions" slot="end">
-			<ion-button color="primary" (click)="showActionsAsync()">
+			<ion-button color="primary" (click)="showActions()">
 				<ion-icon name="ellipsis-horizontal" slot="icon-only"></ion-icon>
 			</ion-button>
 		</ion-buttons>
@@ -46,15 +46,15 @@
 
 <ion-content [color]="color">
 	<ion-fab *ngIf="!redordering" vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="createAsync()">
+    <ion-fab-button (click)="create()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 	<ion-list *ngIf="!redordering" class="ion-padding-end" #originalItems>
 		<ion-item-sliding *ngFor="let portlet of portlets; trackBy: track">
-			<ion-item [color]="color" (click)="editAsync($event, portlet)" class="ion-activatable" detail="false">
+			<ion-item [color]="color" (click)="edit($event, portlet)" class="ion-activatable" detail="false">
 				<ion-buttons slot="end">
-					<ion-button [title]="labels.advancedEdit" fill="clear" color="medium" (click)="editAsync($event, portlet, true)">
+					<ion-button [title]="labels.advancedEdit" fill="clear" color="medium" (click)="edit($event, portlet, true)">
 						<ion-icon name="settings" slot="icon-only"></ion-icon>
 					</ion-button>
 				</ion-buttons>
@@ -71,29 +71,29 @@
 				</ion-label>
 			</ion-item>
 			<ion-item-options>
-				<ion-item-option color="dark" [title]="labels.advancedEdit" (click)="editAsync($event, portlet, true)">
+				<ion-item-option color="dark" [title]="labels.advancedEdit" (click)="edit($event, portlet, true)">
 					<ion-icon name="settings" slot="icon-only"></ion-icon>
 				</ion-item-option>
-				<ion-item-option color="primary" [title]="labels.edit" (click)="editAsync($event, portlet)">
+				<ion-item-option color="primary" [title]="labels.edit" (click)="edit($event, portlet)">
 					<ion-icon name="create" slot="icon-only"></ion-icon>
 				</ion-item-option>
 			</ion-item-options>
 		</ion-item-sliding>
 	</ion-list>
-	<ion-infinite-scroll *ngIf="!redordering" threshold="288px" position="bottom" (ionInfinite)="onInfiniteScrollAsync()">
+	<ion-infinite-scroll *ngIf="!redordering" threshold="288px" position="bottom" (ionInfinite)="onInfiniteScroll()">
 		<ion-infinite-scroll-content></ion-infinite-scroll-content>
 	</ion-infinite-scroll>
 	<div *ngIf="redordering">
-		<ion-list *ngFor="let zone of zones; trackBy: trackReorderItem" #reorderingIems>
+		<ion-list *ngFor="let zone of redorderingZones; trackBy: trackReorderingItem" #reorderingIems>
 			<ion-list-header [color]="color">
 				<ion-label>
 					{{ zone.Title }}
 				</ion-label>
 			</ion-list-header>
 			<ion-reorder-group (ionItemReorder)="onReordered($event, zone.ID)" disabled="false">
-				<ion-item *ngFor="let item of zone.Children; trackBy: trackReorderItem" [color]="color">
+				<ion-item *ngFor="let portlet of zone.Children; trackBy: trackReorderingItem" [color]="color">
 					<ion-label>
-						{{ item.Title }}
+						{{ portlet.Title }}
 					</ion-label>
 					<ion-reorder slot="end"></ion-reorder>
 				</ion-item>
