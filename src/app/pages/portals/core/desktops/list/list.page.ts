@@ -341,6 +341,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 	doRefresh(desktops: Desktop[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
 		const refreshNext: () => void = () => {
+			this.trackAsync(this.title.track, "Refresh");
 			if (index < desktops.length - 1) {
 				AppUtility.invoke(() => this.doRefresh(desktops, index + 1, useXHR, onFreshenUp));
 			}

@@ -420,6 +420,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	doRefresh(categories: Category[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
 		const refreshNext: () => void = () => {
+			this.trackAsync(this.title.track, "Refresh");
 			if (index < categories.length - 1) {
 				AppUtility.invoke(() => this.doRefresh(categories, index + 1, useXHR, onFreshenUp));
 			}

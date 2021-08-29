@@ -406,6 +406,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 
 	doRefresh(links: Link[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
 		const refreshNext: () => void = () => {
+			this.trackAsync(this.title.track, "Refresh");
 			if (index < links.length - 1) {
 				AppUtility.invoke(() => this.doRefresh(links, index + 1, useXHR, onFreshenUp));
 			}
