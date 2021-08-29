@@ -123,23 +123,16 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 
 		this.organization = this.portalsCoreSvc.getOrganization(this.configSvc.requestParams["SystemID"]);
 		if (this.organization === undefined) {
-			await this.trackAsync(`${this.title.track} | Invalid Organization`, "Check");
-			await this.appFormsSvc.showAlertAsync(
-				undefined,
+			this.trackAsync(`${this.title.track} | Invalid Organization`, "Check").then(async () => this.appFormsSvc.showConfirmAsync(
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
-				undefined,
-				async () => await this.configSvc.navigateRootAsync("/portals/core/organizations/list/all"),
-				await this.configSvc.getResourceAsync("common.buttons.ok")
-			);
+				async () => await this.configSvc.navigateRootAsync("/portals/core/organizations/list/all")
+			));
 			return;
 		}
 
 		if (!this.portalsCoreSvc.canModerateOrganization(this.organization)) {
-			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
-			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateRootAsync()
-			]));
+			this.trackAsync(`${this.title.track} | No Permission`, "Check").then(() => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
+			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateRootAsync());
 			return;
 		}
 
@@ -151,15 +144,15 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		if (this.searching) {
 			this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.roles.list.searchbar");
-			PlatformUtility.focus(this.searchCtrl);
-			await this.appFormsSvc.hideLoadingAsync();
+			this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.focus(this.searchCtrl));
 		}
 		else {
 			this.actions = [
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.roles.title.create"), "create", () => this.createAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.roles.title.search"), "search", () => this.openSearchAsync(false)),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.roles.title.create"), "create", () => this.create()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.roles.title.search"), "search", () => this.openSearch(false)),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcel()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcel()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("common.buttons.refresh"), "refresh", () => this.refreshAll())
 			];
 
 			this.parentID = this.configSvc.requestParams["ParentID"];
@@ -168,8 +161,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 			if (this.parentRole !== undefined) {
 				this.roles = this.parentRole.Children;
 				this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: `[${this.parentRole.FullTitle}]` });
-				await this.trackAsync(this.title.track);
-				await this.appFormsSvc.hideLoadingAsync();
+				this.trackAsync(this.title.track).then(() => this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on("Portals", info => {
 					if (info.args.Object === "Role" && (this.parentRole.ID === info.args.ID || this.parentRole.ID === info.args.ParentID)) {
 						this.roles = this.parentRole.Children;
@@ -182,7 +174,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 					{ SystemID: { Equals: this.organization.ID } },
 					{ ParentID: "IsNull" }
 				];
-				await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+				this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on("Portals", info => {
 					if (info.args.Object === "Role" && info.args.ParentID === undefined) {
 						this.prepareResults();
@@ -202,7 +194,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 			: AppUtility.format(this.children, { number: role.childrenIDs.length, children: `${role.Children[0].Title}${(role.childrenIDs.length > 1 ? `, ${role.Children[1].Title}` : "")}, ...` });
 	}
 
-	async onSearch(event: any) {
+	onSearch(event: any) {
 		if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 			this.subscription = undefined;
@@ -210,13 +202,12 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
 			if (this.searching) {
-				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.messages.searching"));
-				this.roles = [];
-				this.pageNumber = 0;
-				this.pagination = AppPagination.getDefault();
-				await this.searchAsync(async () => {
-					this.infiniteScrollCtrl.disabled = false;
-					await this.appFormsSvc.hideLoadingAsync();
+				AppUtility.invoke(async () => {
+					await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.messages.searching"));
+					this.roles = [];
+					this.pageNumber = 0;
+					this.pagination = AppPagination.getDefault();
+					this.search(() => this.appFormsSvc.hideLoadingAsync(() => this.infiniteScrollCtrl.disabled = false));
 				});
 			}
 			else {
@@ -228,34 +219,33 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	onClear() {
-		this.filterBy.Query = undefined;
-		this.roles = this.filtering ? this.objects.map(obj => obj) : [];
+	onClear(isOnCanceled?: boolean) {
+		if (this.searching || this.filtering) {
+			this.filterBy.Query = undefined;
+			this.roles = this.filtering ? this.objects.map(object => object) : [];
+			if (isOnCanceled) {
+				this.filtering = false;
+				this.infiniteScrollCtrl.disabled = false;
+				this.objects = [];
+			}
+		}
 	}
 
-	async onCancel() {
+	onCancel() {
 		if (this.searching) {
-			await this.configSvc.navigateBackAsync();
+			this.configSvc.navigateBackAsync();
 		}
 		else {
-			AppUtility.invoke(() => {
-				this.onClear();
-				this.filtering = false;
-			}, 123);
+			this.onClear(true);
 		}
 	}
 
-	async onInfiniteScrollAsync() {
+	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => {
-				if (this.infiniteScrollCtrl !== undefined) {
-					await this.infiniteScrollCtrl.complete();
-				}
-			});
+			this.search(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : () => {});
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
-			await this.infiniteScrollCtrl.complete();
-			this.infiniteScrollCtrl.disabled = true;
+			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
 		}
 	}
 
@@ -263,107 +253,117 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		return this.portalsCoreSvc.getPaginationPrefix("role");
 	}
 
-	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
+	private startSearch(onNext?: () => void, pagination?: AppDataPagination) {
 		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
-		await this.searchAsync(onNext);
+		this.search(onNext);
 	}
 
-	private async searchAsync(onNext?: () => void) {
+	private search(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		const onSuccess = async (data: any) => {
+		const onSuccess = (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await this.trackAsync(this.title.track);
+			this.trackAsync(this.title.track);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchRole(this.request, onSuccess, async error => await Promise.all([
-				this.appFormsSvc.showErrorAsync(error),
-				this.trackAsync(this.title.track)
-			]));
+			this.subscription = this.portalsCoreSvc.searchRole(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 		}
 		else {
-			await this.portalsCoreSvc.searchRoleAsync(this.request, onSuccess, async error => await Promise.all([
-				this.appFormsSvc.showErrorAsync(error),
-				this.trackAsync(this.title.track)
-			]));
+			this.portalsCoreSvc.searchRoleAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 		}
 	}
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.roles.push(Role.get(o.ID) || Role.deserialize(o, Role.get(o.ID))));
+			this.roles.merge((results || []).map(object => Role.get(object.ID) || Role.deserialize(object, Role.get(object.ID))));
 		}
 		else {
-			const predicate: (role: Role) => boolean = obj => obj.SystemID === this.organization.ID && obj.ParentID === this.parentID;
-			let objects = results === undefined
-				? Role.instances.toList(predicate)
-				: Role.toList(results).Where(predicate);
-			objects = objects.OrderBy(o => o.Title).ThenByDescending(o => o.LastModified);
-			this.roles = results === undefined && this.pagination !== undefined
-				? objects.Take(this.pageNumber * this.pagination.PageSize).ToArray()
-				: this.roles.concat(objects.ToArray());
+			const predicate: (role: Role) => boolean = object => object.SystemID === this.organization.ID && object.ParentID === this.parentID;
+			const objects = (results === undefined ? Role.instances.toArray(predicate) : Role.toArray(results).filter(predicate))
+				.sortBy("Title", { name: "LastModified", reverse: true })
+				.take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
+			this.roles = results === undefined ? objects : this.roles.concat(objects);
 		}
 		if (onNext !== undefined) {
 			onNext();
 		}
 	}
 
-	async showActionsAsync() {
-		await this.listCtrl.closeSlidingItems();
-		await this.appFormsSvc.showActionSheetAsync(this.actions);
-	}
-
-	async openSearchAsync(filtering: boolean = true) {
-		await this.listCtrl.closeSlidingItems();
-		if (filtering) {
-			this.filtering = true;
-			PlatformUtility.focus(this.searchCtrl);
-			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
-			this.objects = this.roles.map(obj => obj);
+	private doRefresh(roles: Role[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
+		const refreshNext: () => void = () => {
+			this.trackAsync(this.title.track, "Refresh");
+			if (index < roles.length - 1) {
+				AppUtility.invoke(() => this.doRefresh(roles, index + 1, useXHR, onFreshenUp));
+			}
+			else {
+				this.appFormsSvc.hideLoadingAsync(() => AppUtility.invoke(onFreshenUp !== undefined ? () => onFreshenUp() : undefined));
+			}
+		};
+		if (index === 0 && roles.length > 1) {
+			this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(this.configSvc.isDebug ? () => console.log(`--- Start to refresh ${roles.length} roles -----------------`) : () => {});
 		}
-		else {
-			await this.configSvc.navigateForwardAsync("/portals/core/roles/search");
+		this.portalsCoreSvc.refreshRoleAsync(roles[index].ID, refreshNext, refreshNext, undefined, useXHR);
+	}
+
+	private do(action: () => void, event?: Event) {
+		if (event !== undefined) {
+			event.stopPropagation();
 		}
+		this.listCtrl.closeSlidingItems().then(() => action());
 	}
 
-	async createAsync() {
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(`/portals/core/roles/create${(this.parentID === undefined ? "" : "?x-request=" + AppCrypto.jsonEncode({ ParentID: this.parentID }))}`);
+	showActions() {
+		this.do(() => this.appFormsSvc.showActionSheetAsync(this.actions));
 	}
 
-	async openAsync(event: Event, role: Role) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(role.routerURI);
+	openSearch(filtering: boolean = true) {
+		this.do(async () => {
+			if (filtering) {
+				this.filtering = true;
+				this.objects = this.roles.map(obj => obj);
+				this.infiniteScrollCtrl.disabled = true;
+				this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
+				PlatformUtility.focus(this.searchCtrl);
+			}
+			else {
+				this.configSvc.navigateForwardAsync("/portals/core/roles/search");
+			}
+		});
 	}
 
-	async showChildrenAsync(event: Event, role: Role) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(role.listURI);
+	create() {
+		this.do(() => this.configSvc.navigateForwardAsync(`/portals/core/roles/create${(this.parentID === undefined ? "" : "?x-request=" + AppCrypto.jsonEncode({ ParentID: this.parentID }))}`));
 	}
 
-	async refreshAsync(event: Event, role: Role) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.portalsCoreSvc.refreshRoleAsync(role.ID, async _ => await this.appFormsSvc.showToastAsync("The role was freshen-up"));
+	open(event: Event, role: Role) {
+		this.do(() => this.configSvc.navigateForwardAsync(role.routerURI), event);
 	}
 
-	async exportToExcelAsync() {
-		await this.portalsCoreSvc.exportToExcelAsync("Role", this.organization.ID);
-		await this.trackAsync(this.actions[2].text, "Export");
+	showChildren(event: Event, role: Role) {
+		this.do(() => this.configSvc.navigateForwardAsync(role.listURI), event);
 	}
 
-	async importFromExcelAsync() {
-		await this.portalsCoreSvc.importFromExcelAsync("Role", this.organization.ID);
-		await this.trackAsync(this.actions[3].text, "Import");
+	refresh(event: Event, role: Role) {
+		this.do(() => this.doRefresh([role], 0, true, () => this.appFormsSvc.showToastAsync("The role was freshen-up")), event);
 	}
 
-	private async trackAsync(title: string, action?: string) {
-		await TrackingUtility.trackAsync({ title: title, category: "Role", action: action || "Browse" });
+	refreshAll() {
+		this.doRefresh(this.roles, 0, false, () => this.appFormsSvc.showToastAsync("All the roles were freshen-up"));
+	}
+
+	exportToExcel() {
+		this.portalsCoreSvc.exportToExcelAsync("Role", this.organization.ID).then(() => this.trackAsync(this.actions[2].text, "Export"));
+	}
+
+	importFromExcel() {
+		this.portalsCoreSvc.importFromExcelAsync("Role", this.organization.ID).then(() => this.trackAsync(this.actions[3].text, "Import"));
+	}
+
+	private trackAsync(title: string, action?: string) {
+		return TrackingUtility.trackAsync({ title: title, category: "Role", action: action || "Browse" });
 	}
 
 }

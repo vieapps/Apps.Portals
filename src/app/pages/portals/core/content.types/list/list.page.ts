@@ -182,12 +182,14 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: titleInfo !== undefined ? `[${titleInfo}]` : "" });
 
 		this.actions = [
-			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.contenttypes.title.create"), "create", () => this.createAsync()),
-			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
-			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.contenttypes.title.create"), "create", () => this.create()),
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcel()),
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcel()),
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("common.buttons.refresh"), "refresh", () => this.refreshAll())
 		];
 
-		await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+		this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
+
 		const identity = this.definition !== undefined
 			? `ContentTypes:${this.definitionID}:Refresh`
 			: AppUtility.isNotEmpty(this.repositoryID)
@@ -220,33 +222,31 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 			this.contentTypes = this.objects.filter(ContentType.getFilterBy(this.filterBy.Query));
 		}
 		else {
-			this.contentTypes = this.objects.map(obj => obj);
+			this.onClear();
 		}
 	}
 
-	onClear() {
-		this.filterBy.Query = undefined;
-		this.contentTypes = this.objects.map(obj => obj);
+	onClear(isOnCanceled?: boolean) {
+		if (this.filtering) {
+			this.filterBy.Query = undefined;
+			this.contentTypes = this.objects.map(object => object);
+			if (isOnCanceled) {
+				this.filtering = false;
+				this.objects = [];
+			}
+		}
 	}
 
-	async onCancel() {
-		AppUtility.invoke(() => {
-			this.onClear();
-			this.filtering = false;
-		}, 123);
+	onCancel() {
+		this.onClear(true);
 	}
 
-	async onInfiniteScrollAsync() {
+	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => {
-				if (this.infiniteScrollCtrl !== undefined) {
-					await this.infiniteScrollCtrl.complete();
-				}
-			});
+			this.search(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : () => {});
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
-			await this.infiniteScrollCtrl.complete();
-			this.infiniteScrollCtrl.disabled = true;
+			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
 		}
 	}
 
@@ -254,103 +254,110 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		return this.portalsCoreSvc.getPaginationPrefix("content.type");
 	}
 
-	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
+	private startSearch(onNext?: () => void, pagination?: AppDataPagination) {
 		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
-		await this.searchAsync(onNext);
+		this.search(onNext);
 	}
 
-	private async searchAsync(onNext?: () => void) {
+	private search(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination);
-		const nextAsync = async (data: any) => {
+		const onSuccess = (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await this.trackAsync(this.title.track);
+			this.trackAsync(this.title.track);
 		};
-		await this.portalsCoreSvc.searchContentTypeAsync(this.request, nextAsync, async error => await Promise.all([
-			this.appFormsSvc.showErrorAsync(error),
-			this.trackAsync(this.title.track)
-		]));
+		this.portalsCoreSvc.searchContentTypeAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 	}
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		const predicate: (contentType:  ContentType) => boolean = AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.repositoryID) && AppUtility.isNotEmpty(this.definitionID)
-			? obj => obj.SystemID === this.systemID && obj.RepositoryID === this.repositoryID && obj.ContentTypeDefinitionID === this.definitionID
+			? object => object.SystemID === this.systemID && object.RepositoryID === this.repositoryID && object.ContentTypeDefinitionID === this.definitionID
 			: AppUtility.isNotEmpty(this.definitionID)
 				? this.isSystemAdministrator
-					? obj => obj.ContentTypeDefinitionID === this.definitionID
-					: obj => obj.SystemID === this.systemID && obj.ContentTypeDefinitionID === this.definitionID
+					? object => object.ContentTypeDefinitionID === this.definitionID
+					: object => object.SystemID === this.systemID && object.ContentTypeDefinitionID === this.definitionID
 				: AppUtility.isNotEmpty(this.repositoryID)
-					? obj => obj.RepositoryID === this.repositoryID
-					: obj => obj.SystemID === this.systemID;
-		let objects = results === undefined
-			? ContentType.instances.toList(predicate)
-			: ContentType.toList(results).Where(predicate);
-		objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
-		if (results === undefined && this.pagination !== undefined) {
-			objects = objects.Take(this.pageNumber * this.pagination.PageSize);
-		}
-		this.contentTypes = results === undefined
-			? objects.ToArray()
-			: this.contentTypes.concat(objects.ToArray());
+					? object => object.RepositoryID === this.repositoryID
+					: object => object.SystemID === this.systemID;
+		const objects = (results === undefined ? ContentType.instances.toArray(predicate) : ContentType.toArray(results).filter(predicate))
+			.sortBy("Title", { name: "LastModified", reverse: true })
+			.take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
+		this.contentTypes = results === undefined ? objects : this.contentTypes.concat(objects);
 		if (onNext !== undefined) {
 			onNext();
 		}
 	}
 
-	async showActionsAsync() {
-		await this.listCtrl.closeSlidingItems();
-		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	private doRefresh(contentTypes: ContentType[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
+		const refreshNext: () => void = () => {
+			this.trackAsync(this.title.track, "Refresh");
+			if (index < contentTypes.length - 1) {
+				AppUtility.invoke(() => this.doRefresh(contentTypes, index + 1, useXHR, onFreshenUp));
+			}
+			else {
+				this.appFormsSvc.hideLoadingAsync(() => AppUtility.invoke(onFreshenUp !== undefined ? () => onFreshenUp() : undefined));
+			}
+		};
+		if (index === 0 && contentTypes.length > 1) {
+			this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(this.configSvc.isDebug ? () => console.log(`--- Start to refresh ${contentTypes.length} content-types -----------------`) : () => {});
+		}
+		this.portalsCoreSvc.refreshContentTypeAsync(contentTypes[index].ID, refreshNext, refreshNext, undefined, useXHR);
 	}
 
-	async openSearchAsync() {
-		await this.listCtrl.closeSlidingItems();
-		this.filtering = true;
-		PlatformUtility.focus(this.searchCtrl);
-		this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
-		this.objects = this.contentTypes.map(obj => obj);
+	private do(action: () => void, event?: Event) {
+		if (event !== undefined) {
+			event.stopPropagation();
+		}
+		this.listCtrl.closeSlidingItems().then(() => action());
 	}
 
-	async createAsync() {
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync("/portals/core/content.types/create");
+	showActions() {
+		this.do(() => this.appFormsSvc.showActionSheetAsync(this.actions));
 	}
 
-	async editAsync(event: Event, contentType: ContentType, isAdvancedMode: boolean = false) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(contentType.getRouterURI({ ID: contentType.ID, Advanced: isAdvancedMode }));
+	openSearch() {
+		this.do(async () => {
+			this.filtering = true;
+			this.objects = this.contentTypes.map(obj => obj);
+			this.infiniteScrollCtrl.disabled = true;
+			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter");
+			PlatformUtility.focus(this.searchCtrl);
+		});
 	}
 
-	async showContentsAsync(event: Event, contentType: ContentType) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(contentType));
+	create() {
+		this.do(() => this.configSvc.navigateForwardAsync("/portals/core/content.types/create"));
 	}
 
-	async showExpressionsAsync(event: Event, contentType: ContentType) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(contentType, undefined, undefined, undefined, "expression", "core"));
+	edit(event: Event, contentType: ContentType, isAdvancedMode: boolean = false) {
+		this.do(() => this.configSvc.navigateForwardAsync(contentType.getRouterURI({ ID: contentType.ID, Advanced: isAdvancedMode })), event);
+	}
+
+	showContents(event: Event, contentType: ContentType) {
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(contentType)), event);
+	}
+
+	showExpressions(event: Event, contentType: ContentType) {
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(contentType, undefined, undefined, undefined, "expression", "core")), event);
 	}
 
 	refresh(event: Event, contentType: ContentType) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.portalsCoreSvc.refreshContentTypeAsync(contentType.ID, () => this.appFormsSvc.showToastAsync("The content-type was freshen-up")));
+		this.do(() => this.doRefresh([contentType], 0, true, () => this.appFormsSvc.showToastAsync("The content-type was freshen-up")), event);
 	}
 
-	async clearCacheAsync(event: Event, contentType: ContentType) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.portalsCoreSvc.clearCacheAsync("content.type", contentType.ID);
+	refreshAll() {
+		this.doRefresh(this.contentTypes, 0, false, () => this.appFormsSvc.showToastAsync("All the content-types were freshen-up"));
 	}
 
-	async moveAsync(event: Event, contentType: ContentType) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.portalsCoreSvc.moveAsync(
+	clearCache(event: Event, contentType: ContentType) {
+		this.do(() => this.portalsCoreSvc.clearCacheAsync("content.type", contentType.ID), event);
+	}
+
+	move(event: Event, contentType: ContentType) {
+		this.do(async () => this.portalsCoreSvc.moveAsync(
 			"ContentType",
 			contentType.ID,
 			{
@@ -370,24 +377,19 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 			data => {
 				return { "x-module-id": data.moduleID };
 			}
-		);
-		if (this.configSvc.isDebug) {
-			console.log("<Portals>: move content-type and belong contents to other module", contentType);
-		}
+		).then(() => this.trackAsync(this.title.track, "Move")));
 	}
 
-	async exportToExcelAsync() {
-		await this.portalsCoreSvc.exportToExcelAsync("Content.Type", this.organization.ID);
-		await this.trackAsync(this.actions[2].text, "Export");
+	exportToExcel() {
+		this.portalsCoreSvc.exportToExcelAsync("Content.Type", this.organization.ID).then(() => this.trackAsync(this.actions[2].text, "Export"));
 	}
 
-	async importFromExcelAsync() {
-		await this.portalsCoreSvc.importFromExcelAsync("Content.Type", this.organization.ID);
-		await this.trackAsync(this.actions[3].text, "Import");
+	importFromExcel() {
+		this.portalsCoreSvc.importFromExcelAsync("Content.Type", this.organization.ID).then(() => this.trackAsync(this.actions[3].text, "Import"));
 	}
 
-	private async trackAsync(title: string, action?: string) {
-		await TrackingUtility.trackAsync({ title: title, category: "ContentType", action: action || "Browse" });
+	private trackAsync(title: string, action?: string) {
+		return TrackingUtility.trackAsync({ title: title, category: "ContentType", action: action || "Browse" });
 	}
 
 }

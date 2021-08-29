@@ -4,7 +4,7 @@
 			<ion-menu-button></ion-menu-button>
 		</ion-buttons>
 		<ion-buttons [hidden]="filtering" slot="end">
-			<ion-button [title]="labels.filter" (click)="openSearchAsync()">
+			<ion-button [title]="labels.filter" (click)="openSearch()">
 				<ion-icon name="search" slot="icon-only"></ion-icon>
 			</ion-button>
 		</ion-buttons>
@@ -15,6 +15,8 @@
 			debounce="450"
 			showCancelButton="always"
 			cancelButtonIcon="arrow-back"
+			enterkeyhint="search"
+			inputmode="search"
 			[cancelButtonText]="labels.cancel"
 			(ionChange)="onSearch($event)"
 			(ionClear)="onClear()"
@@ -31,7 +33,7 @@
 			</span>
 		</span>
 		<ion-buttons *ngIf="actions" slot="end">
-			<ion-button color="primary" (click)="showActionsAsync()">
+			<ion-button color="primary" (click)="showActions()">
 				<ion-icon name="ellipsis-horizontal" slot="icon-only"></ion-icon>
 			</ion-button>
 		</ion-buttons>
@@ -40,18 +42,18 @@
 
 <ion-content [color]="color">
 	<ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="createAsync()">
+    <ion-fab-button (click)="create()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 	<ion-list class="ion-padding-end">
 		<ion-item-sliding *ngFor="let contentType of contentTypes; trackBy: track">
-			<ion-item [color]="color" (click)="editAsync($event, contentType)" class="ion-activatable" detail="false">
+			<ion-item [color]="color" (click)="edit($event, contentType)" class="ion-activatable" detail="false">
 				<ion-buttons slot="end">
-					<ion-button fill="clear" color="secondary" [title]="labels.contents" (click)="showContentsAsync($event, contentType)">
+					<ion-button fill="clear" color="secondary" [title]="labels.contents" (click)="showContents($event, contentType)">
 						<ion-icon name="newspaper" slot="icon-only"></ion-icon>
 					</ion-button>
-					<ion-button fill="clear" color="primary" [title]="labels.edit" (click)="editAsync($event, contentType)">
+					<ion-button fill="clear" color="primary" [title]="labels.edit" (click)="edit($event, contentType)">
 						<ion-icon name="create" slot="icon-only"></ion-icon>
 					</ion-button>
 				</ion-buttons>
@@ -68,31 +70,31 @@
 				</ion-label>
 			</ion-item>
 			<ion-item-options>
-				<ion-item-option color="secondary" [title]="labels.expressions" (click)="showExpressionsAsync($event, contentType)">
+				<ion-item-option color="secondary" [title]="labels.expressions" (click)="showExpressions($event, contentType)">
 					<ion-icon name="construct" slot="icon-only"></ion-icon>
 				</ion-item-option>
-				<ion-item-option *ngIf="canMove(contentType)" color="danger" [title]="labels.move" (click)="moveAsync($event, contentType)">
+				<ion-item-option *ngIf="canMove(contentType)" color="danger" [title]="labels.move" (click)="move($event, contentType)">
 					<ion-icon name="shuffle" slot="icon-only"></ion-icon>
 				</ion-item-option>
 				<ion-item-option color="warning" [title]="labels.refresh" (click)="refresh($event, contentType)">
 					<ion-icon name="refresh" slot="icon-only"></ion-icon>
 				</ion-item-option>
-				<ion-item-option color="medium" [title]="labels.cache" (click)="clearCacheAsync($event, contentType)">
+				<ion-item-option color="medium" [title]="labels.cache" (click)="clearCache($event, contentType)">
 					<ion-icon name="dice" slot="icon-only"></ion-icon>
 				</ion-item-option>
-				<ion-item-option color="dark" [title]="labels.advancedEdit" (click)="editAsync($event, contentType, true)">
+				<ion-item-option color="dark" [title]="labels.advancedEdit" (click)="edit($event, contentType, true)">
 					<ion-icon name="settings" slot="icon-only"></ion-icon>
 				</ion-item-option>
-				<ion-item-option color="secondary" [title]="labels.contents" (click)="showContentsAsync($event, contentType)">
+				<ion-item-option color="secondary" [title]="labels.contents" (click)="showContents($event, contentType)">
 					<ion-icon name="file-tray-full" slot="icon-only"></ion-icon>
 				</ion-item-option>
-				<ion-item-option color="primary" [title]="labels.edit" (click)="editAsync($event, contentType)">
+				<ion-item-option color="primary" [title]="labels.edit" (click)="edit($event, contentType)">
 					<ion-icon name="create" slot="icon-only"></ion-icon>
 				</ion-item-option>
 			</ion-item-options>
 		</ion-item-sliding>
 	</ion-list>
-	<ion-infinite-scroll threshold="288px" position="bottom" (ionInfinite)="onInfiniteScrollAsync()">
+	<ion-infinite-scroll threshold="288px" position="bottom" (ionInfinite)="onInfiniteScroll()">
 		<ion-infinite-scroll-content></ion-infinite-scroll-content>
 	</ion-infinite-scroll>
 </ion-content>

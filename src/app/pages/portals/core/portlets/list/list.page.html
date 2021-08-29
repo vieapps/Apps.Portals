@@ -84,14 +84,14 @@
 		<ion-infinite-scroll-content></ion-infinite-scroll-content>
 	</ion-infinite-scroll>
 	<div *ngIf="redordering">
-		<ion-list *ngFor="let zone of redorderingZones; trackBy: trackReorderingItem" #reorderingIems>
+		<ion-list *ngFor="let segment of reorderingSegments; trackBy: trackReorderingItem" #reorderingIems>
 			<ion-list-header [color]="color">
 				<ion-label>
-					{{ zone.Title }}
+					{{ segment.Title }}
 				</ion-label>
 			</ion-list-header>
 			<ion-reorder-group (ionItemReorder)="onReordered($event, zone.ID)" disabled="false">
-				<ion-item *ngFor="let portlet of zone.Children; trackBy: trackReorderingItem" [color]="color">
+				<ion-item *ngFor="let portlet of segment.Children; trackBy: trackReorderingItem" [color]="color">
 					<ion-label>
 						{{ portlet.Title }}
 					</ion-label>

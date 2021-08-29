@@ -230,9 +230,16 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	onClear() {
-		this.filterBy.Query = undefined;
-		this.desktops = this.filtering ? this.objects.map(obj => obj) : [];
+	onClear(isOnCanceled?: boolean) {
+		if (this.searching || this.filtering) {
+			this.filterBy.Query = undefined;
+			this.desktops = this.filtering ? this.objects.map(object => object) : [];
+			if (isOnCanceled) {
+				this.filtering = false;
+				this.objects = [];
+				this.infiniteScrollCtrl.disabled = false;
+			}
+		}
 	}
 
 	onCancel() {
@@ -240,8 +247,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			this.configSvc.navigateBackAsync();
 		}
 		else {
-			this.onClear();
-			this.filtering = false;
+			this.onClear(true);
 		}
 	}
 
@@ -283,7 +289,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.desktops.push(Desktop.get(o.ID) || Desktop.deserialize(o, Desktop.get(o.ID))));
+			this.desktops.merge((results || []).map(object => Desktop.get(object.ID) || Desktop.deserialize(object, Desktop.get(object.ID))));
 		}
 		else {
 			const predicate: (dekstop: Desktop) => boolean = obj => obj.SystemID === this.organization.ID && obj.ParentID === this.parentID;
@@ -297,49 +303,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	showActions() {
-		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showActionSheetAsync(this.actions));
-	}
-
-	openSearch(filtering: boolean = true) {
-		this.listCtrl.closeSlidingItems();
-		if (filtering) {
-			this.filtering = true;
-			AppUtility.invoke(async () => this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter")).then(() => PlatformUtility.focus(this.searchCtrl));
-			this.objects = this.desktops.map(obj => obj);
-		}
-		else {
-			this.configSvc.navigateForwardAsync("/portals/core/desktops/search");
-		}
-	}
-
-	create() {
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(`/portals/core/desktops/create${(this.parentID === undefined ? "" : "?x-request=" + AppCrypto.jsonEncode({ ParentID: this.parentID }))}`));
-	}
-
-	open(event: Event, desktop: Desktop) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => {
-			if (desktop.childrenIDs === undefined) {
-				this.doRefresh([desktop], 0, false, () => this.configSvc.navigateForwardAsync(desktop.routerURI));
-			}
-			else {
-				this.configSvc.navigateForwardAsync(desktop.routerURI);
-			}
-		});
-	}
-
-	showChildren(event: Event, desktop: Desktop) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(desktop.listURI));
-	}
-
-	showPortlets(event: Event, desktop: Desktop) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "list", desktop.ansiTitle, { SystemID: desktop.SystemID, DesktopID: desktop.ID }, "portlet", "core")));
-	}
-
-	doRefresh(desktops: Desktop[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
+	private doRefresh(desktops: Desktop[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
 		const refreshNext: () => void = () => {
 			this.trackAsync(this.title.track, "Refresh");
 			if (index < desktops.length - 1) {
@@ -355,28 +319,72 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		this.portalsCoreSvc.refreshDesktopAsync(desktops[index].ID, refreshNext, refreshNext, undefined, useXHR);
 	}
 
+	private do(action: () => void, event?: Event) {
+		if (event !== undefined) {
+			event.stopPropagation();
+		}
+		this.listCtrl.closeSlidingItems().then(() => action());
+	}
+
+	showActions() {
+		this.do(() => this.appFormsSvc.showActionSheetAsync(this.actions));
+	}
+
+	openSearch(filtering: boolean = true) {
+		this.do(() => {
+			if (filtering) {
+				this.filtering = true;
+				this.objects = this.desktops.map(obj => obj);
+				this.infiniteScrollCtrl.disabled = true;
+				AppUtility.invoke(async () => this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter")).then(() => PlatformUtility.focus(this.searchCtrl));
+			}
+			else {
+				this.configSvc.navigateForwardAsync("/portals/core/desktops/search");
+			}
+		});
+	}
+
+	create() {
+		this.do(() => this.configSvc.navigateForwardAsync(`/portals/core/desktops/create${(this.parentID === undefined ? "" : "?x-request=" + AppCrypto.jsonEncode({ ParentID: this.parentID }))}`));
+	}
+
+	open(event: Event, desktop: Desktop) {
+		this.do(() => {
+			if (desktop.childrenIDs === undefined) {
+				this.doRefresh([desktop], 0, false, () => this.configSvc.navigateForwardAsync(desktop.routerURI));
+			}
+			else {
+				this.configSvc.navigateForwardAsync(desktop.routerURI);
+			}
+		}, event);
+	}
+
+	showChildren(event: Event, desktop: Desktop) {
+		this.do(() => this.configSvc.navigateForwardAsync(desktop.listURI), event);
+	}
+
+	showPortlets(event: Event, desktop: Desktop) {
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "list", desktop.ansiTitle, { SystemID: desktop.SystemID, DesktopID: desktop.ID }, "portlet", "core")), event);
+	}
+
 	refresh(event: Event, desktop: Desktop) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.doRefresh([desktop], 0, true, () => this.appFormsSvc.showToastAsync("The desktop was freshen-up")));
+		this.do(() => this.doRefresh([desktop], 0, true, () => this.appFormsSvc.showToastAsync("The desktop was freshen-up")), event);
 	}
 
 	refreshAll() {
 		const desktops = Desktop.instances.toArray(desktop => desktop.SystemID === this.organization.ID);
-		if (desktops.length > 0) {
-			this.doRefresh(desktops, 0, false, () => this.portalsCoreSvc.searchDesktopAsync(
-				AppPagination.buildRequest(this.filterBy, this.sortBy, { TotalRecords: -1, TotalPages: 0, PageSize: 0, PageNumber: 0 }),
-				() => this.prepareResults(() => this.appFormsSvc.showToastAsync("All the desktops were freshen-up")),
-				undefined,
-				true,
-				{ "x-no-cache": "x" },
-				true
-			));
-		}
+		this.do(desktops.length > 0 ? () => this.doRefresh(desktops, 0, false, () => this.portalsCoreSvc.searchDesktopAsync(
+			AppPagination.buildRequest(this.filterBy, this.sortBy, { TotalRecords: -1, TotalPages: 0, PageSize: 0, PageNumber: 0 }),
+			() => this.prepareResults(() => this.appFormsSvc.showToastAsync("All the desktops were freshen-up")),
+			undefined,
+			true,
+			{ "x-no-cache": "x" },
+			true
+		)) : () => {});
 	}
 
 	clearCache(event: Event, desktop: Desktop) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.portalsCoreSvc.clearCacheAsync("desktop", desktop.ID));
+		this.do(() => this.portalsCoreSvc.clearCacheAsync("desktop", desktop.ID), event);
 	}
 
 	exportToExcel() {

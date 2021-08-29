@@ -122,9 +122,6 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 				this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateRootAsync());
 				return;
 			}
-			else {
-				this.fetchOwners();
-			}
 		}
 
 		this.labels = {
@@ -156,6 +153,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			}, "Organizations:Refresh");
 		}
 		else {
+			this.organizations.forEach(organization => this.fetchOwner(organization));
 			this.appFormsSvc.hideLoadingAsync().then(() => this.trackAsync(this.title));
 		}
 	}
@@ -192,9 +190,16 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	onClear() {
-		this.filterBy.Query = undefined;
-		this.organizations = this.filtering ? this.objects.map(obj => obj) : [];
+	onClear(isOnCanceled?: boolean) {
+		if (this.searching || this.filtering) {
+			this.filterBy.Query = undefined;
+			this.organizations = this.filtering ? this.objects.map(object => object) : [];
+			if (isOnCanceled) {
+				this.filtering = false;
+				this.objects = [];
+				this.infiniteScrollCtrl.disabled = false;
+			}
+		}
 	}
 
 	onCancel() {
@@ -202,8 +207,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			this.configSvc.navigateBackAsync();
 		}
 		else {
-			this.onClear();
-			this.filtering = false;
+			this.onClear(true);
 		}
 	}
 
@@ -245,32 +249,38 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.organizations.push(Organization.get(o.ID) || Organization.deserialize(o, Organization.get(o.ID))));
+			this.organizations.merge(results || []).map(organization => Organization.get(organization.ID) || Organization.deserialize(organization, Organization.get(organization.ID)));
 		}
 		else {
-			let objects = results === undefined
-				? Organization.instances.toList()
-				: Organization.toList(results);
-			objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
-			if (results === undefined && this.pagination !== undefined) {
-				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
-			}
-			this.organizations = results === undefined
-				? objects.ToArray()
-				: this.organizations.concat(objects.ToArray());
+			const objects = (results === undefined ? Organization.instances.toArray() : Organization.toArray(results))
+				.sortBy("Title", { name: "LastModified", reverse: true })
+				.take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
+			this.organizations = results === undefined ? objects : this.organizations.concat(objects);
 		}
-		this.fetchOwners();
+		this.organizations.forEach(organization => this.fetchOwner(organization));
 		if (onNext !== undefined) {
 			onNext();
 		}
 	}
 
-	private fetchOwners() {
-		this.organizations.forEach(organization => {
-			if (AppUtility.isEmpty(organization.owner) && AppUtility.isNotEmpty(organization.OwnerID)) {
-				this.usersSvc.getProfileAsync(organization.OwnerID, _ => organization.owner = (UserProfile.get(organization.OwnerID) || new UserProfile("Unknonwn")).Name);
+	private fetchOwner(organization: Organization) {
+		AppUtility.invoke(AppUtility.isEmpty(organization.owner) && AppUtility.isNotEmpty(organization.OwnerID) ? () => this.usersSvc.getProfileAsync(organization.OwnerID, () => organization.owner = (UserProfile.get(organization.OwnerID) || new UserProfile("Unknonwn")).Name) : undefined);
+	}
+
+	private doRefresh(organizations: Organization[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
+		const refreshNext: () => void = () => {
+			this.trackAsync(this.title, "Refresh").then(() => this.fetchOwner(organizations[index]));
+			if (index < organizations.length - 1) {
+				AppUtility.invoke(() => this.doRefresh(organizations, index + 1, useXHR, onFreshenUp));
 			}
-		});
+			else {
+				this.appFormsSvc.hideLoadingAsync(() => AppUtility.invoke(onFreshenUp !== undefined ? () => onFreshenUp() : undefined));
+			}
+		};
+		if (index === 0 && organizations.length > 1) {
+			this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(this.configSvc.isDebug ? () => console.log(`--- Start to refresh ${organizations.length} organizations -----------------`) : () => {});
+		}
+		this.portalsCoreSvc.refreshOrganizationAsync(organizations[index].ID, refreshNext, refreshNext, undefined, useXHR);
 	}
 
 	private do(action: () => void, event?: Event) {
@@ -288,8 +298,9 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 		this.do(() => {
 			if (filtering) {
 				this.filtering = true;
-				AppUtility.invoke(async () => this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter")).then(() => PlatformUtility.focus(this.searchCtrl));
 				this.objects = this.organizations.map(object => object);
+				this.infiniteScrollCtrl.disabled = true;
+				AppUtility.invoke(async () => this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter")).then(() => PlatformUtility.focus(this.searchCtrl));
 			}
 			else {
 				this.configSvc.navigateForwardAsync("/portals/core/organizations/search");
@@ -315,22 +326,6 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	viewSites(event: Event, organization: Organization) {
 		this.do(() => this.configSvc.navigateRootAsync(this.portalsCoreSvc.getAppURL(undefined, "list", organization.ansiTitle, { SystemID: organization.ID }, "site", "core")), event);
-	}
-
-	doRefresh(organizations: Organization[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
-		const refreshNext: () => void = () => {
-			this.trackAsync(this.title, "Refresh");
-			if (index < organizations.length - 1) {
-				AppUtility.invoke(() => this.doRefresh(organizations, index + 1, useXHR, onFreshenUp));
-			}
-			else {
-				this.appFormsSvc.hideLoadingAsync(() => AppUtility.invoke(onFreshenUp !== undefined ? () => onFreshenUp() : undefined));
-			}
-		};
-		if (index === 0 && organizations.length > 1) {
-			this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(this.configSvc.isDebug ? () => console.log(`--- Start to refresh ${organizations.length} organizations -----------------`) : () => {});
-		}
-		this.portalsCoreSvc.refreshOrganizationAsync(organizations[index].ID, refreshNext, refreshNext, undefined, useXHR);
 	}
 
 	refresh(event: Event, organization: Organization) {

@@ -1754,7 +1754,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public refreshRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	public refreshRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
 		return this.refreshAsync(
 			"role",
 			id,
@@ -1766,7 +1766,7 @@ export class PortalsCoreService extends BaseService {
 			},
 			onError,
 			headers,
-			true
+			useXHR
 		);
 	}
 

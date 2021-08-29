@@ -85,9 +85,9 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	};
 	processing = false;
 	redordering = false;
-	reorderItems: Array<NestedObject>;
+	redorderingItems: Array<NestedObject>;
+	private orderedItems: Array<NestedObject>;
 	private hash = "";
-	private ordered: Array<NestedObject>;
 
 	get locale() {
 		return this.configSvc.locale;
@@ -450,22 +450,20 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	createExpression(event: Event, category: Category) {
 		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module);
-		const params = AppUtility.isObject(contentType, true)
-			? {
-				Title: `Contents of ${category.Title}`,
-				RepositoryID: contentType.RepositoryID,
-				RepositoryEntityID: contentType.ID,
-				ContentTypeDefinitionID: contentType.ContentTypeDefinitionID,
-				Filter: {
-					Operator: "And",
-					Children: [{
-						Attribute: "CategoryID",
-						Operator: "Equals",
-						Value: category.ID
-					}]
-				}
+		const params = AppUtility.isObject(contentType, true) ? {
+			Title: `Contents of ${category.Title}`,
+			RepositoryID: contentType.RepositoryID,
+			RepositoryEntityID: contentType.ID,
+			ContentTypeDefinitionID: contentType.ContentTypeDefinitionID,
+			Filter: {
+				Operator: "And",
+				Children: [{
+					Attribute: "CategoryID",
+					Operator: "Equals",
+					Value: category.ID
+				}]
 			}
-			: undefined;
+		} : undefined;
 		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", category.ansiTitle, params, "expression", "core")), event);
 	}
 
@@ -474,23 +472,23 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	private openReorder() {
-		this.reorderItems = this.categories.sortBy("OrderIndex", "Title").map(c => ({
-			ID: c.ID,
-			Title: c.Title,
-			OrderIndex: c.OrderIndex
+		this.redorderingItems = this.categories.sortBy("OrderIndex", "Title").map(category => ({
+			ID: category.ID,
+			Title: category.Title,
+			OrderIndex: category.OrderIndex
 		} as NestedObject));
-		this.ordered = this.reorderItems.map(c => ({
-			ID: c.ID,
-			Title: c.Title,
-			OrderIndex: c.OrderIndex
+		this.orderedItems = this.redorderingItems.map(category => ({
+			ID: category.ID,
+			Title: category.Title,
+			OrderIndex: category.OrderIndex
 		} as NestedObject));
-		this.hash = AppCrypto.hash(this.ordered);
+		this.hash = AppCrypto.hash(this.orderedItems);
 		this.prepareTitleAsync().then(() => this.redordering = true);
 	}
 
 	onReordered(event: any) {
 		try {
-			this.ordered.move(event.detail.from as number, event.detail.to as number).forEach((category, orderIndex) => category.OrderIndex = orderIndex);
+			this.orderedItems.move(event.detail.from as number, event.detail.to as number).forEach((category, orderIndex) => category.OrderIndex = orderIndex);
 		}
 		catch (error) {
 			console.error("Error occurred while reordering", error);
@@ -499,8 +497,8 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	doReorder() {
-		if (this.hash !== AppCrypto.hash(this.ordered)) {
-			const reordered = this.ordered.toList().Select(category => ({
+		if (this.hash !== AppCrypto.hash(this.orderedItems)) {
+			const orderedItems = this.orderedItems.toList().Select(category => ({
 				ID: category.ID,
 				OrderIndex: category.OrderIndex
 			})).ToArray();
@@ -511,10 +509,10 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 					SystemID: this.organization === undefined ? undefined : this.organization.ID,
 					RepositoryID: this.module === undefined ? undefined : this.module.ID,
 					RepositoryEntityID: this.contentType === undefined ? undefined : this.contentType.ID,
-					Categories: reordered
+					Categories: orderedItems
 				},
 				() => {
-					this.categories.forEach(category => category.OrderIndex = reordered.find(i => i.ID === category.ID).OrderIndex);
+					this.categories.forEach(category => category.OrderIndex = orderedItems.find(item => item.ID === category.ID).OrderIndex);
 					if (this.parentCategory !== undefined) {
 						this.prepareCategories();
 					}
@@ -533,7 +531,11 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	cancelReorder(onNext?: () => void) {
 		this.redordering = false;
-		this.prepareTitleAsync().then(() => this.appFormsSvc.hideLoadingAsync(onNext));
+		this.prepareTitleAsync().then(() => {
+			this.redorderingItems = [];
+			this.orderedItems = [];
+			this.appFormsSvc.hideLoadingAsync(onNext);
+		});
 	}
 
 	move(event: Event, category: Category) {

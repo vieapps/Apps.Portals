@@ -110,23 +110,17 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 
 		this.title.track = await this.configSvc.getResourceAsync("portals.modules.title.list", { info: "" });
 		if (!this.isSystemAdministrator && this.organization === undefined) {
-			await this.trackAsync(`${this.title.track} | Invalid Organization`, "Check");
-			await this.appFormsSvc.showAlertAsync(
-				undefined,
+			this.trackAsync(`${this.title.track} | Invalid Organization`, "Check");
+			this.appFormsSvc.showConfirmAsync(
 				await this.configSvc.getResourceAsync("portals.organizations.list.invalid"),
-				undefined,
-				async () => await this.configSvc.navigateRootAsync("/portals/core/organizations/list/all"),
-				await this.configSvc.getResourceAsync("common.buttons.ok")
+				() => this.configSvc.navigateRootAsync("/portals/core/organizations/list/all")
 			);
 			return;
 		}
 
 		if (!this.canModerateOrganization) {
-			await this.trackAsync(`${this.title.track} | No Permission`, "Check");
-			await this.appFormsSvc.hideLoadingAsync(async () => await Promise.all([
-				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateRootAsync()
-			]));
+			this.trackAsync(`${this.title.track} | No Permission`, "Check").then(() => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
+			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateRootAsync());
 			return;
 		}
 
@@ -151,11 +145,13 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 
 		this.configSvc.appTitle = this.title.page = await this.configSvc.getResourceAsync("portals.modules.title.list", { info: `[${this.organization.Title}]` });
 		this.actions = [
-			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.create"), "create", () => this.createAsync()),
-			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcelAsync()),
-			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcelAsync())
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.modules.title.create"), "create", () => this.create()),
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcel()),
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcel()),
+			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("common.buttons.refresh"), "refresh", () => this.refreshAll())
 		];
-		await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+
+		this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
 		AppEvents.on("Portals", info => {
 			if (info.args.Object === "Module" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
 				this.prepareResults();
@@ -172,25 +168,20 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		return `Definition: ${moduleDefinition.Title}${(AppUtility.isNotEmpty(modul.Description) ? " - " + modul.Description : "")}`;
 	}
 
-	async showActionsAsync() {
-		await this.appFormsSvc.showActionSheetAsync(this.actions);
+	showActions() {
+		this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
-	async createAsync() {
-		await this.configSvc.navigateForwardAsync("/portals/core/modules/create");
+	create() {
+		this.do(() => this.configSvc.navigateForwardAsync("/portals/core/modules/create"));
 	}
 
-	async onInfiniteScrollAsync() {
+	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => {
-				if (this.infiniteScrollCtrl !== undefined) {
-					await this.infiniteScrollCtrl.complete();
-				}
-			});
+			this.search(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : () => {});
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
-			await this.infiniteScrollCtrl.complete();
-			this.infiniteScrollCtrl.disabled = true;
+			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
 		}
 	}
 
@@ -198,100 +189,106 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		return this.portalsCoreSvc.getPaginationPrefix("module");
 	}
 
-	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
+	private startSearch(onNext?: () => void, pagination?: AppDataPagination) {
 		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
-		await this.searchAsync(onNext);
+		this.search(onNext);
 	}
 
-	private async searchAsync(onNext?: () => void) {
+	private search(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination);
-		const onSuccess = async (data: any) => {
+		const onSuccess = (data: any) => {
 			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			this.pagination.PageNumber = this.pageNumber;
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			await this.trackAsync(this.title.track);
+			this.trackAsync(this.title.track);
 		};
-		await this.portalsCoreSvc.searchModuleAsync(this.request, onSuccess, async error => await Promise.all([
-			this.appFormsSvc.showErrorAsync(error),
-			this.trackAsync(this.title.track)
-		]));
+		this.portalsCoreSvc.searchModuleAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 	}
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		const predicate: (module: Module) => boolean = AppUtility.isNotEmpty(this.systemID) && AppUtility.isNotEmpty(this.definitionID)
-			? obj => obj.SystemID === this.systemID && obj.ModuleDefinitionID === this.definitionID
+			? object => object.SystemID === this.systemID && object.ModuleDefinitionID === this.definitionID
 			: AppUtility.isNotEmpty(this.definitionID)
 				? this.isSystemAdministrator
-					? obj => obj.ModuleDefinitionID === this.definitionID
-					: obj => obj.SystemID === this.systemID && obj.ModuleDefinitionID === this.definitionID
-				: obj => obj.SystemID === this.systemID;
-		let objects = results === undefined
-			? Module.instances.toList(predicate)
-			: Module.toList(results).Where(predicate);
-		objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
-		if (results === undefined && this.pagination !== undefined) {
-			objects = objects.Take(this.pageNumber * this.pagination.PageSize);
-		}
-		this.modules = results === undefined
-			? objects.ToArray()
-			: this.modules.concat(objects.ToArray());
+					? object => object.ModuleDefinitionID === this.definitionID
+					: object => object.SystemID === this.systemID && object.ModuleDefinitionID === this.definitionID
+				: object => object.SystemID === this.systemID;
+		const objects = (results === undefined ? Module.instances.toArray(predicate) : Module.toArray(results).filter(predicate))
+			.sortBy("Title", { name: "LastModified", reverse: true })
+			.take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
+		this.modules = results === undefined ? objects : this.modules.concat(objects);
 		if (onNext !== undefined) {
 			onNext();
 		}
 	}
 
-	async openAsync(event: Event, module: Module) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(module.routerURI);
+	private doRefresh(modules: Module[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
+		const refreshNext: () => void = () => {
+			this.trackAsync(this.title.track, "Refresh");
+			if (index < modules.length - 1) {
+				AppUtility.invoke(() => this.doRefresh(modules, index + 1, useXHR, onFreshenUp));
+			}
+			else {
+				this.appFormsSvc.hideLoadingAsync(() => AppUtility.invoke(onFreshenUp !== undefined ? () => onFreshenUp() : undefined));
+			}
+		};
+		if (index === 0 && modules.length > 1) {
+			this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(this.configSvc.isDebug ? () => console.log(`--- Start to refresh ${modules.length} modules -----------------`) : () => {});
+		}
+		this.portalsCoreSvc.refreshModuleAsync(modules[index].ID, refreshNext, refreshNext, undefined, useXHR);
 	}
 
-	async showContentTypesAsync(event: Event, module: Module) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "list", module.ansiTitle, { SystemID: module.SystemID, RepositoryID: module.ID }, "content.type", "core"));
+	private do(action: () => void, event?: Event) {
+		if (event !== undefined) {
+			event.stopPropagation();
+		}
+		this.listCtrl.closeSlidingItems().then(() => action());
 	}
 
-	async showExpressionsAsync(event: Event, module: Module) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, undefined, undefined, { RepositoryID: module.ID }, "expression", "core"));
+	open(event: Event, module: Module) {
+		this.do(() => this.configSvc.navigateForwardAsync(module.routerURI), event);
+	}
+
+	showContentTypes(event: Event, module: Module) {
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "list", module.ansiTitle, { SystemID: module.SystemID, RepositoryID: module.ID }, "content.type", "core")), event);
+	}
+
+	showExpressions(event: Event, module: Module) {
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, undefined, undefined, { RepositoryID: module.ID }, "expression", "core")), event);
 	}
 
 	refresh(event: Event, module: Module) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.portalsCoreSvc.refreshModuleAsync(module.ID, () => this.appFormsSvc.showToastAsync("The module was freshen-up")));
+		this.do(() => this.doRefresh([module], 0, true, () => this.appFormsSvc.showToastAsync("The module was freshen-up")), event);
 	}
 
-	async clearCacheAsync(event: Event, module: Module) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems();
-		await this.portalsCoreSvc.clearCacheAsync("module", module.ID);
+	refreshAll() {
+		this.doRefresh(this.modules, 0, false, () => this.appFormsSvc.showToastAsync("All the modules were freshen-up"));
 	}
 
-	async setActiveAsync(event: Event, module: Module) {
-		event.stopPropagation();
-		await this.listCtrl.closeSlidingItems().then(() => this.portalsCoreSvc.setActiveModule(module));
+	clearCache(event: Event, module: Module) {
+		this.do(() => this.portalsCoreSvc.clearCacheAsync("module", module.ID), event);
+	}
+
+	setActive(event: Event, module: Module) {
+		this.do(() => this.portalsCoreSvc.setActiveModule(module), event);
 	}
 
 	isActive(module: Module) {
 		return module !== undefined && Module.active !== undefined && AppUtility.isEquals(module.ID, Module.active.ID);
 	}
 
-	async exportToExcelAsync() {
-		await this.portalsCoreSvc.exportToExcelAsync("Module", this.organization.ID);
-		await this.trackAsync(this.actions[2].text, "Export");
+	exportToExcel() {
+		this.portalsCoreSvc.exportToExcelAsync("Module", this.organization.ID).then(() => this.trackAsync(this.actions[2].text, "Export"));
 	}
 
-	async importFromExcelAsync() {
-		await this.portalsCoreSvc.importFromExcelAsync("Module", this.organization.ID);
-		await this.trackAsync(this.actions[3].text, "Import");
+	importFromExcel() {
+		this.portalsCoreSvc.importFromExcelAsync("Module", this.organization.ID).then(() => this.trackAsync(this.actions[3].text, "Import"));
 	}
 
-	private async trackAsync(title: string, action?: string) {
-		await TrackingUtility.trackAsync({ title: title, category: "Module", action: action || "Browse" });
+	private trackAsync(title: string, action?: string) {
+		return TrackingUtility.trackAsync({ title: title, category: "Module", action: action || "Browse" });
 	}
 
 }
