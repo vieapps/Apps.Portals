@@ -75,13 +75,13 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	};
 	processing = false;
 	redordering = false;
-	redorderingZones: Array<NestedObject>;
+	redorderingZones = new Array<NestedObject>();
 	buttons = {
 		save: "Save",
 		cancel: "Cancel"
 	};
 	private hash = "";
-	private orderedPortlets: Array<NestedObject>;
+	private orderedPortlets = new Array<NestedObject>();
 	private objects = new Array<Portlet>();
 
 	get locale() {
@@ -190,9 +190,9 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	private preparePortlets(portlets?: Array<Portlet>) {
-		portlets = (portlets || this.desktop.portlets || []).sortBy("Zone", "OrderIndex");
-		this.portlets = [];
+	private preparePortlets() {
+		const portlets = (this.desktop.portlets || []).sortBy("Zone", "OrderIndex");
+		this.portlets.clear();
 		this.allZones.forEach(zone => this.portlets.merge(portlets.filter(portlet => portlet.Zone === zone)));
 	}
 
@@ -210,17 +210,19 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	onClear() {
+	onClear(isOnCanceled?: boolean) {
 		if (this.filtering) {
 			this.filterBy.Query = undefined;
 			this.portlets = this.objects.map(obj => obj);
+			if (isOnCanceled) {
+				this.filtering = false;
+				this.objects = [];
+			}
 		}
 	}
 
 	onCancel() {
-		this.onClear();
-		this.filtering = false;
-		this.objects = [];
+		this.onClear(true);
 	}
 
 	onInfiniteScroll() {
@@ -256,21 +258,12 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		const predicate: (portlet: Portlet) => boolean = this.desktop !== undefined
-			? obj => obj.DesktopID === this.desktop.ID
-			: obj => obj.SystemID === this.organization.ID;
-		let objects = results === undefined
-			? Portlet.instances.toList(predicate)
-			: Portlet.toList(results).Where(predicate);
-		if (this.desktop === undefined) {
-			objects = objects.OrderBy(obj => obj.DesktopID);
-		}
-		objects = objects.OrderBy(obj => obj.Zone).ThenBy(obj => obj.OrderIndex);
-		if (results === undefined && this.pagination !== undefined) {
-			objects = objects.Take(this.pageNumber * this.pagination.PageSize);
-		}
-		this.portlets = results === undefined
-			? objects.ToArray()
-			: this.portlets.concat(objects.ToArray());
+			? object => object.DesktopID === this.desktop.ID
+			: object => object.SystemID === this.organization.ID;
+		let objects = results === undefined ? Portlet.instances.toArray(predicate) : Portlet.toArray(results).filter(predicate);
+		objects = this.desktop === undefined ? objects.sortBy("DesktopID", "Zone", "OrderIndex") : objects.sortBy("Zone", "OrderIndex");
+		objects = results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects;
+		this.portlets = results === undefined ? objects : this.portlets.concat(objects);
 		if (onNext !== undefined) {
 			onNext();
 		}
@@ -385,10 +378,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 				data => {
 					this.desktop.portlets.forEach(portlet => portlet.OrderIndex = orderedPortlets.find(p => p.ID === portlet.ID).OrderIndex);
 					AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Desktop", Type: "Updated", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
-					this.trackAsync(this.title.track, "ReOrder").then(() => this.cancelReorder(() => {
-						this.processing = false;
-						this.orderedPortlets = [];
-					}));
+					this.trackAsync(this.title.track, "ReOrder").then(() => this.cancelReorder());
 				},
 				error => this.trackAsync(this.title.track, "ReOrder").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false),
 				{
@@ -402,7 +392,10 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	}
 
 	cancelReorder(onNext?: () => void) {
+		this.processing = false;
 		this.redordering = false;
+		this.redorderingZones = [];
+		this.orderedPortlets = [];
 		this.preparePortlets();
 		this.prepareTitleAsync().then(() => this.appFormsSvc.hideLoadingAsync(onNext));
 	}
