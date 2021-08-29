@@ -222,13 +222,13 @@ export class AuthenticationService extends BaseService {
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			data => this.configSvc.updateSessionAsync(data, () => this.configSvc.registerSessionAsync(() => {
 				this.showLog("Log out successful", this.configSvc.isDebug ? data : "");
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
 				AppEvents.broadcast("Account", { Type: "Updated", Mode: "Apps" });
 				AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Apps" });
 				AppEvents.broadcast("Session", { Type: "LogOut" });
 				AppEvents.sendToElectron("Users", { Type: "LogOut", Data: this.configSvc.appConfig.session });
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
 			}, onError), true),
 			error => this.processError("Error occurred while logging out", error, onError),
 			undefined,

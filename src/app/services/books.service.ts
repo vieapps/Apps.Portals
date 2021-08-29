@@ -28,8 +28,12 @@ export class BooksService extends BaseService {
 		Chapter: undefined as number
 	};
 
-	private get menuIndex() {
-		return this.configSvc.appConfig.services.all.length > 1 ? 4 : 0;
+	public get menuIndex() {
+		if (this.configSvc.appConfig.services.all.length > 1) {
+			const menuIndex = this.configSvc.appConfig.services.all.find(svc => svc.name === this.name).menuIndex;
+			return menuIndex !== undefined ? menuIndex : 0;
+		}
+		return 0;
 	}
 
 	public initialize() {
@@ -73,16 +77,9 @@ export class BooksService extends BaseService {
 		});
 
 		AppEvents.on("Session", info => {
-			const args = info.args;
-			if (("LogIn" === args.Type || "LogOut" === args.Type)) {
-				AppUtility.invoke(() => this.prepareSidebarFooterItems(), this.configSvc.appConfig.services.active === this.name ? 456 : 789);
-				if ("LogIn" === args.Type) {
-					AppUtility.invoke(() => this.prepareSidebarFooterItems(), 3456);
-				}
-				else {
-					this.bookmarks.clear();
-					this.storeBookmarksAsync();
-				}
+			if ("LogOut" === info.args.Type) {
+				this.bookmarks.clear();
+				this.storeBookmarksAsync();
 			}
 		});
 
@@ -98,7 +95,7 @@ export class BooksService extends BaseService {
 	}
 
 	public async initializeAsync(onNext?: () => void) {
-		AppUtility.invoke(() => this.prepareSidebarFooterItems(), this.configSvc.appConfig.services.active === this.name ? 0 : 456);
+		this.prepareSidebarFooterItems();
 		if (this.configSvc.isAuthenticated) {
 			AppUtility.invoke(() => this.loadBookmarksAsync(() => this.fetchBookmarksAsync()), this.configSvc.appConfig.services.active === this.name ? 0 : 5678);
 		}
@@ -108,9 +105,6 @@ export class BooksService extends BaseService {
 			.then(() => this.loadStatisticsAsync()), this.configSvc.appConfig.services.active === this.name ? 0 : 6789);
 		if (this.configSvc.appConfig.services.active === this.name) {
 			AppEvents.broadcast("ActiveSidebar", { Name: "books" });
-		}
-		else if (this.configSvc.appConfig.services.all.length > 1) {
-			AppUtility.invoke(() => this.prepareSidebarFooterItems(), 6789);
 		}
 		if (onNext !== undefined) {
 			onNext();
@@ -155,7 +149,8 @@ export class BooksService extends BaseService {
 						sidebar.active(name, true);
 					}
 				}
-			}
+			},
+			Position: this.menuIndex
 		}]});
 		if (onNext !== undefined) {
 			onNext();

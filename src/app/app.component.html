@@ -20,7 +20,7 @@
 			<ion-footer>
 				<ion-toolbar [color]="color">
 					<ion-buttons *ngIf="sidebar.Footer.length > 0" slot="start">
-						<ion-button *ngFor="let item of sidebar.Footer; trackBy: trackSidebarItem" fill="clear" [title]="item.Title" [color]="sidebar.Active === item.Name ? 'primary' : 'medium'" (click)="item.OnClick(item.Name, sidebar, $event)">
+						<ion-button *ngFor="let item of sidebarFooter; trackBy: trackSidebarItem" fill="clear" [title]="item.Title" [color]="sidebar.Active === item.Name ? 'primary' : 'medium'" (click)="item.OnClick(item.Name, sidebar, $event)">
 							<ion-icon [name]="item.Icon" slot="icon-only"></ion-icon>
 						</ion-button>
 					</ion-buttons>

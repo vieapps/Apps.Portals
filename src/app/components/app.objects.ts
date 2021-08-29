@@ -52,6 +52,7 @@ export interface AppSidebarFooterItem {
 	Icon: string;
 	Title?: string;
 	OnClick?: (name: string, sidebar: AppSidebar, event?: Event) => void;
+	Position?: number;
 }
 
 /** Presents a shortcut of the app */

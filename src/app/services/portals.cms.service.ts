@@ -422,7 +422,7 @@ export class PortalsCmsService extends BaseService {
 			name: "cms",
 			parent: parent,
 			items: items,
-			index: 0
+			index: this.portalsCoreSvc.menuIndex
 		});
 		if (onNext !== undefined) {
 			onNext();

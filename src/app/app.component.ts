@@ -57,6 +57,8 @@ export class AppComponent implements OnInit {
 		});
 	}
 
+	@ViewChild(IonMenu, { static: true }) private menuCtrl: IonMenu;
+
 	sidebar: AppSidebar = {
 		Visible: true,
 		Profile: false,
@@ -85,7 +87,9 @@ export class AppComponent implements OnInit {
 		normalizeFooter: undefined
 	};
 
-	@ViewChild(IonMenu, { static: true }) private menuCtrl: IonMenu;
+	get sidebarFooter() {
+		return this.sidebar.Footer.filter(btn => !!btn.Name && !!btn.Icon);
+	}
 
 	get color() {
 		return this.configSvc.color;
@@ -237,16 +241,14 @@ export class AppComponent implements OnInit {
 				: (sidebar, item) => sidebar.Footer.findIndex(icon => icon.Name === item.Name) < 0;
 			const onUpdated: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void = typeof args.onUpdated === "function"
 				? (sidebar, item) => args.onUpdated(sidebar, item)
-				: (sidebar, item) => {
-						const index = item.Name === "preferences" ? 0 : sidebar.Footer.findIndex(icon => icon.Name === item.Name);
-						if (index > 0 && sidebar.Footer[index - 1].Name === "preferences") {
-							sidebar.Footer.move(index, index - 1);
-						}
-					};
-			this.sidebar.Footer = !!args.reset ? [] : this.sidebar.Footer;
+				: () => {};
 			if (AppUtility.isArray(args.items, true)) {
 				args.items.filter(item => predicate(this.sidebar, item)).forEach(item => {
-					this.sidebar.Footer.insert(item, item["Index"] as number);
+					const position = item.Position !== undefined ? item.Position : this.sidebar.Footer.length;
+					while (this.sidebar.Footer.length <= position) {
+						this.sidebar.Footer.push({ Name: undefined, Icon: undefined });
+					}
+					this.sidebar.Footer[position] = item;
 					onUpdated(this.sidebar, item);
 				});
 				this.sidebar.normalizeFooter();
@@ -254,7 +256,7 @@ export class AppComponent implements OnInit {
 		};
 
 		this.sidebar.normalizeFooter = () => {
-			if (this.configSvc.isAuthenticated && this.sidebar.Footer.length > 0) {
+			if (this.configSvc.isAuthenticated && this.sidebar.Footer.findIndex(icon => icon.Name === "preferences") < 0) {
 				AppUtility.invoke(async () => this.sidebar.updateFooter({ items: [{
 					Name: "preferences",
 					Icon: "settings",
@@ -262,7 +264,8 @@ export class AppComponent implements OnInit {
 					OnClick: (name: string, sidebar: AppSidebar) => {
 						sidebar.Active = name;
 						sidebar.active(name, true);
-					}
+					},
+					Position: this.sidebar.Footer.length
 				}]}), 1234);
 			}
 		};
