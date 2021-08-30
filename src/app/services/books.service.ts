@@ -104,6 +104,7 @@ export class BooksService extends BaseService {
 			.then(() => this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast(this.name, { Type: "Books", Mode: "Updated" })))
 			.then(() => this.loadStatisticsAsync()), this.configSvc.appConfig.services.active.service === this.name ? 0 : 6789);
 		if (this.configSvc.appConfig.services.active.service === this.name) {
+			this.configSvc.appConfig.URLs.search = "/books/search";
 			AppEvents.broadcast("ActiveSidebar", { Name: "books" });
 		}
 		return AppUtility.invoke(onNext);
