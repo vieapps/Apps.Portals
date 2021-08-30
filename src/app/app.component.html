@@ -22,6 +22,7 @@
 					<ion-buttons slot="start">
 						<ion-button *ngFor="let item of sidebarFooter; trackBy: trackSidebarItem" fill="clear" [title]="item.Title" [color]="sidebar.State.Active === item.Name ? 'primary' : 'medium'" (click)="item.OnClick(item.Name, sidebar, $event)">
 							<ion-icon [name]="item.Icon" slot="icon-only"></ion-icon>
+							<ion-badge *ngIf="!!item.Badge" [class.big]="item.Badge > 9" color="danger">{{ item.Badge > 9 ? '9+' : item.Badge }}</ion-badge>
 						</ion-button>
 					</ion-buttons>
 					<ion-buttons slot="end">

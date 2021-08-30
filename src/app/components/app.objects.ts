@@ -53,6 +53,7 @@ export interface AppSidebarFooterItem {
 	Name: string;
 	Icon: string;
 	Title?: string;
+	Badge?: number;
 	OnClick?: (name: string, sidebar: AppSidebar, event?: Event) => void;
 	Position?: number;
 }

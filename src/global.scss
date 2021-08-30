@@ -105,12 +105,10 @@ ion-menu > ion-content > control-app-preferences img.logo {
 	height: 28px;
 }
 
-/* footer toolbars */
-ion-footer > ion-toolbar {
+/* toolbars */
+ion-footer ion-toolbar {
 	padding-left: 8px;
 }
-
-/* toolbars */
 .ios ion-header ion-toolbar,
 .ios ion-footer ion-toolbar,
 .ios ion-header ion-toolbar > ion-title,
@@ -120,6 +118,21 @@ ion-footer > ion-toolbar {
 .ios ion-header ion-toolbar > ion-buttons,
 .ios ion-footer ion-toolbar > ion-buttons {
 	margin-top: 7px;
+}
+
+/* Badges on toolbars */
+ion-header ion-toolbar ion-badge,
+ion-footer ion-toolbar ion-badge {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  font-size: 0.6em;
+  --padding-start: 5px;
+  --padding-end: 5px;
+}
+ion-header ion-toolbar ion-badge.big,
+ion-footer ion-toolbar ion-badge.big {
+  --padding-end: 3px;
 }
 
 /* Dynamic forms ----------------------------------------- */
