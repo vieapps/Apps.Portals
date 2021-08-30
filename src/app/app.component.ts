@@ -121,12 +121,15 @@ export class AppComponent implements OnInit {
 			this.prepareSidebar();
 			this.prepareEventProcessors();
 
-			if (appConfig.isWebApp) {
-				const host = AppUtility.parseURI().Host;
+			if (!appConfig.isNativeApp) {
+				const uri = AppUtility.parseURI();
 				appConfig.services.all.map((svc, index) => ({ hosts: svc.availableHosts || [], index: index })).forEach(info => {
-					if (info.hosts.length > 0 && info.hosts.indexOf(host) < 0) {
+					if (info.hosts.length > 0 && info.hosts.indexOf(uri.Host) < 0) {
 						appConfig.services.all.removeAt(info.index);
 					}
+				});
+				AppUtility.toArray(uri.QueryParams["disabled"]).filter(name => AppUtility.isNotEmpty(name)).forEach(name => {
+					appConfig.services.all.removeAt(appConfig.services.all.findIndex(svc => svc.name === name));
 				});
 			}
 
