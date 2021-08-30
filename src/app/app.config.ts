@@ -33,7 +33,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "4.2108.10",
+		version: "4.2109.1",
 		frameworks: "ionic 5.6 - angular 11.2 - cordova 10.0",
 		mode: "",
 		platform: "",
@@ -71,12 +71,11 @@ export class AppConfig {
 
 	/** App services */
 	public static services = {
-		active: "Portals",
-		activeID: "",
 		all: [
 			{
 				name: "Portals",
 				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Item", "Link", "Form"],
+				sidebar: "cms",
 				availableHosts: [],
 			},
 			{
@@ -87,7 +86,11 @@ export class AppConfig {
 				appName: "NGX Books",
 				appDescription: "Free online books & EPUB/MOBI e-books"
 			}
-		] as Array<{ name: string; objects: Array<string>; menuIndex?: number; availableHosts?: Array<string>; canSetPrivilegs?: boolean; appName?: string; appDescription?: string; }>
+		] as Array<{ name: string; objects: Array<string>; menuIndex?: number; sidebar?: string; availableHosts?: Array<string>; canSetPrivilegs?: boolean; appName?: string; appDescription?: string; }>,
+		active: {
+			service: "",
+			system: ""
+		}
 	};
 
 	/** App accounts */
@@ -102,7 +105,7 @@ export class AppConfig {
 		setServicePrivilegs: false,
 		setServicePrivilegsRole: "ServiceAdministrator",
 		setObjectPrivilegs: true,
-		phoneIsAllowed: true
+		phoneIsAllowed: false
 	};
 
 	/** Geographic meta */
@@ -278,8 +281,8 @@ export class AppConfig {
 	public static getRelatedJson(additional?: { [key: string]: string }, service?: string, activeID?: string, onCompleted?: (json: { [key: string]: string }) => void) {
 		const json: { [key: string]: string } = {
 			"language": this.language,
-			"related-service": (AppUtility.isNotEmpty(service) ? service : this.services.active || "").trim().toLowerCase(),
-			"active-id": (AppUtility.isNotEmpty(activeID) ? activeID : this.services.activeID || "").trim().toLowerCase()
+			"related-service": (AppUtility.isNotEmpty(service) ? service : this.services.active.service || "").trim().toLowerCase(),
+			"active-id": (AppUtility.isNotEmpty(activeID) ? activeID : this.services.active.system || "").trim().toLowerCase()
 		};
 		AppUtility.toKeyValuePair(additional, kvp => AppUtility.isNotNull(kvp.value)).forEach(kvp => json[kvp.key.toString()] = kvp.value.toString());
 		if (onCompleted !== undefined) {
