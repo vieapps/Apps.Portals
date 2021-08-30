@@ -272,8 +272,7 @@ export class AppComponent implements OnInit {
 					OnClick: (name: string, sidebar: AppSidebar) => {
 						sidebar.State.Active = name;
 						sidebar.active(name, true);
-					},
-					Position: this.sidebar.Footer.length
+					}
 				}]}), 1234);
 			}
 		};
@@ -418,9 +417,9 @@ export class AppComponent implements OnInit {
 			OnClick: typeof args.OnClick === "function"
 				? args.OnClick
 				: (data, sidebar) => {
-						const menuItem = data.childIndex !== undefined ? sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex] : sidebar.MainMenu[data.menuIndex].Items[data.itemIndex];
-						this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params);
-					}
+					const menuItem = data.childIndex !== undefined ? sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex] : sidebar.MainMenu[data.menuIndex].Items[data.itemIndex];
+					this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params);
+				}
 		} as AppSidebarMenuItem;
 	}
 
