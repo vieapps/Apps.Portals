@@ -27,6 +27,7 @@ export interface AppSidebar {
 	updateHeader: (args: { title?: string; onClick?: (sidebar?: AppSidebar, event?: Event) => void; updateAvatar?: boolean; }) => void;
 	updateFooter: (args: { items: Array<AppSidebarFooterItem>; reset?: boolean; predicate?: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean; onUpdated?: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void; }) => void;
 	normalizeFooter: () => void;
+	updateBadge: (name: string, badge: number) => void;
 }
 
 /** Presents an item in the app side bar main menu */

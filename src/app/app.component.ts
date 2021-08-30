@@ -86,7 +86,8 @@ export class AppComponent implements OnInit {
 		updateMainMenu: undefined,
 		updateHeader: undefined,
 		updateFooter: undefined,
-		normalizeFooter: undefined
+		normalizeFooter: undefined,
+		updateBadge: undefined
 	};
 
 	get sidebarFooter() {
@@ -274,6 +275,13 @@ export class AppComponent implements OnInit {
 					},
 					Position: this.sidebar.Footer.length
 				}]}), 1234);
+			}
+		};
+
+		this.sidebar.updateBadge = (name: string, badge: number) => {
+			const item = !!name ? this.sidebar.Footer.find(btn => btn.Name === name) : undefined;
+			if (item !== undefined) {
+				item.Badge = badge;
 			}
 		};
 	}
