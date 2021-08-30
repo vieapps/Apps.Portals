@@ -268,6 +268,9 @@ export class AppComponent implements OnInit {
 					Position: this.sidebar.Footer.length
 				}]}), 1234);
 			}
+			else if (!this.configSvc.isAuthenticated && this.sidebar.Footer.findIndex(item => item.Name === "preferences") > 0) {
+				this.sidebar.Footer.removeAt(this.sidebar.Footer.findIndex(item => item.Name === "preferences"));
+			}
 		};
 	}
 
