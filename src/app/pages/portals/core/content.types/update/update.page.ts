@@ -105,7 +105,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 				{ Title: "Ascending" },
 				{ TotalRecords: -1, TotalPages: 0, PageSize: 0, PageNumber: 1 }
 			);
-			await this.portalsCoreSvc.searchModuleAsync(request, undefined, undefined, true, true);
+			await this.portalsCoreSvc.searchModulesAsync(request, undefined, undefined, true, true);
 		}
 
 		if (Module.instances.toArray(o => o.SystemID === this.organization.ID).length < 1) {

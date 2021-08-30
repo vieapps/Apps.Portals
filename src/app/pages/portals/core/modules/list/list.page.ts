@@ -204,7 +204,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 			this.trackAsync(this.title.track);
 		};
-		this.portalsCoreSvc.searchModuleAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
+		this.portalsCoreSvc.searchModulesAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 	}
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {

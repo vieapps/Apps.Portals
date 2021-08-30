@@ -291,10 +291,10 @@ export class CmsItemListPage implements OnInit, OnDestroy, ViewDidEnter {
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchItem(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
+			this.subscription = this.portalsCmsSvc.searchItems(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 		}
 		else {
-			this.portalsCmsSvc.searchItemAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
+			this.portalsCmsSvc.searchItemsAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 		}
 	}
 

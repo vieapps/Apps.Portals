@@ -280,10 +280,10 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			this.trackAsync(this.title.track);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchDesktop(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
+			this.subscription = this.portalsCoreSvc.searchDesktops(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 		else {
-			this.portalsCoreSvc.searchDesktopAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
+			this.portalsCoreSvc.searchDesktopsAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 	}
 
@@ -373,7 +373,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 	refreshAll() {
 		const desktops = Desktop.instances.toArray(desktop => desktop.SystemID === this.organization.ID);
-		this.do(desktops.length > 0 ? () => this.doRefresh(desktops, 0, false, () => this.portalsCoreSvc.searchDesktopAsync(
+		this.do(desktops.length > 0 ? () => this.doRefresh(desktops, 0, false, () => this.portalsCoreSvc.searchDesktopsAsync(
 			AppPagination.buildRequest(this.filterBy, this.sortBy, { TotalRecords: -1, TotalPages: 0, PageSize: 0, PageNumber: 0 }),
 			() => this.prepareResults(() => this.appFormsSvc.showToastAsync("All the desktops were freshen-up")),
 			undefined,

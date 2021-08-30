@@ -301,10 +301,10 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchContent(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
+			this.subscription = this.portalsCmsSvc.searchContents(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 		}
 		else {
-			this.portalsCmsSvc.searchContentAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
+			this.portalsCmsSvc.searchContentsAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 		}
 	}
 

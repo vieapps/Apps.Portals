@@ -101,7 +101,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 					{ Zone: "Ascending", OrderIndex: "Ascending" },
 					{ TotalRecords: -1, TotalPages: 0, PageSize: 0, PageNumber: 1 }
 				);
-				await this.portalsCoreSvc.searchPortletAsync(request, data => this.desktop.portlets = (data as Array<any>).map(portlet => Portlet.get(portlet.ID) || Portlet.deserialize(portlet, Portlet.get(portlet.ID))), undefined, true, true);
+				await this.portalsCoreSvc.searchPortletsAsync(request, data => this.desktop.portlets = (data as Array<any>).map(portlet => Portlet.get(portlet.ID) || Portlet.deserialize(portlet, Portlet.get(portlet.ID))), undefined, true, true);
 			}
 			this.portlet = this.desktop.portlets.find(portlet => portlet.ID === portletID);
 		}

@@ -269,7 +269,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 			this.trackAsync(this.title.track);
 		};
-		this.portalsCoreSvc.searchContentTypeAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
+		this.portalsCoreSvc.searchContentTypesAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 	}
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {

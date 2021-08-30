@@ -253,7 +253,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 			this.trackAsync(this.title.track);
 		};
-		this.portalsCoreSvc.searchPortletAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
+		this.portalsCoreSvc.searchPortletsAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 	}
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {

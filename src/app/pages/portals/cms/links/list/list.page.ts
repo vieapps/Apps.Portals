@@ -334,10 +334,10 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			this.trackAsync(this.title.track);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchLink(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
+			this.subscription = this.portalsCmsSvc.searchLinks(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 		else {
-			this.portalsCmsSvc.searchLinkAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
+			this.portalsCmsSvc.searchLinksAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 	}
 
@@ -429,7 +429,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		if (links.length > 0) {
 			this.doRefresh(links, 0, false, () => Promise.all(this.organization.modules.map(module => this.portalsCmsSvc.getContentTypesOfLink(module))
 				.flatMap(contentypes => contentypes)
-				.map(contentType => this.portalsCmsSvc.searchLinksAsync(contentType, undefined, undefined, true))).then(() => this.appFormsSvc.showToastAsync("All links was freshen-up"))
+				.map(contentType => this.portalsCmsSvc.searchSpecifiedLinksAsync(contentType, undefined, undefined, true))).then(() => this.appFormsSvc.showToastAsync("All links was freshen-up"))
 			);
 		}
 	}

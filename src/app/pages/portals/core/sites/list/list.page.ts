@@ -145,7 +145,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 			if (systemID !== undefined) {
 				this.sites = Site.instances.filter(site => site.SystemID === systemID).toArray();
 				if (this.sites.length < 1) {
-					await this.portalsCoreSvc.searchSiteAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: systemID } }] }, { Title: "Ascending" }), () => this.sites = Site.instances.filter(site => site.SystemID === systemID).toArray(), undefined, true, true);
+					await this.portalsCoreSvc.searchSitesAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: systemID } }] }, { Title: "Ascending" }), () => this.sites = Site.instances.filter(site => site.SystemID === systemID).toArray(), undefined, true, true);
 				}
 			}
 			else if (this.portalsCoreSvc.activeOrganizations.length <= 100) {
@@ -157,7 +157,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 					if (organization !== undefined && this.portalsCoreSvc.canModerateOrganization(organization)) {
 						organizations.push(organization);
 						if (Site.instances.find(site => site.SystemID === organization.ID) === undefined) {
-							await this.portalsCoreSvc.searchSiteAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }), undefined, undefined, true, true);
+							await this.portalsCoreSvc.searchSitesAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }), undefined, undefined, true, true);
 						}
 					}
 				}));
@@ -266,10 +266,10 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchSite(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
+			this.subscription = this.portalsCoreSvc.searchSites(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 		else {
-			this.portalsCoreSvc.searchSiteAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
+			this.portalsCoreSvc.searchSitesAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 	}
 

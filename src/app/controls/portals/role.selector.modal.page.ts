@@ -227,10 +227,10 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 			}
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchRole(this.request, onSuccess);
+			this.subscription = this.portalsCoreSvc.searchRoles(this.request, onSuccess);
 		}
 		else {
-			this.portalsCoreSvc.searchRoleAsync(this.request, onSuccess);
+			this.portalsCoreSvc.searchRolesAsync(this.request, onSuccess);
 		}
 	}
 

@@ -240,10 +240,10 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			this.trackAsync(this.title);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchOrganization(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title)));
+			this.subscription = this.portalsCoreSvc.searchOrganizations(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title)));
 		}
 		else {
-			this.portalsCoreSvc.searchOrganizationAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title)));
+			this.portalsCoreSvc.searchOrganizationsAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title)));
 		}
 	}
 

@@ -320,7 +320,7 @@ export class PortalsCoreService extends BaseService {
 					AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
 					this.configSvc.saveOptionsAsync(() => AppEvents.broadcast("App", { Type: "Options", Mode: "Changed" }));
 					if (this.configSvc.isAuthenticated && Site.instances.first(site => site.SystemID === organization.ID) === undefined) {
-						this.searchSiteAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }));
+						this.searchSitesAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }));
 					}
 				});
 				if (organization.modules.length < 1) {
@@ -1469,7 +1469,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchOrganization(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchOrganizations(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("organization", this.configSvc.relatedQuery),
 			request,
@@ -1478,7 +1478,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchOrganizationAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchOrganizationsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.searchAsync(
 			this.getSearchingPath("organization", this.configSvc.relatedQuery),
 			request,
@@ -1636,7 +1636,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchRole(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchRoles(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("role", this.configSvc.relatedQuery),
 			request,
@@ -1660,7 +1660,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchRoleAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchRolesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.searchAsync(
 			this.getSearchingPath("role", this.configSvc.relatedQuery),
 			request,
@@ -1854,7 +1854,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchDesktop(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchDesktops(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
 			request,
@@ -1863,7 +1863,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchDesktopAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false) {
+	public searchDesktopsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
 			request,
@@ -2062,7 +2062,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchPortlet(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchPortlets(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("portlet", this.configSvc.relatedQuery),
 			request,
@@ -2082,7 +2082,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchPortletAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
+	public searchPortletsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("portlet", this.configSvc.relatedQuery),
 			request,
@@ -2225,7 +2225,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchSite(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchSites(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("site", this.configSvc.relatedQuery),
 			request,
@@ -2245,7 +2245,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchSiteAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false) {
+	public searchSitesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("site", this.configSvc.relatedQuery),
 			request,
@@ -2365,7 +2365,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchModule(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchModules(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("module", this.configSvc.relatedQuery),
 			request,
@@ -2385,7 +2385,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchModuleAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
+	public searchModulesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
 		return this.searchAsync(
 			this.getSearchingPath("module", this.configSvc.relatedQuery),
 			request,
@@ -2538,7 +2538,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchContentType(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchContentTypes(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("content.type", this.configSvc.relatedQuery),
 			request,
@@ -2558,7 +2558,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchContentTypeAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	public searchContentTypesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("content.type", this.configSvc.relatedQuery),
 			request,
@@ -2697,7 +2697,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchExpression(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchExpressions(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("expression", this.configSvc.relatedQuery),
 			request,
@@ -2713,7 +2713,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchExpressionAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	public searchExpressionsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.searchAsync(
 			this.getSearchingPath("expression", this.configSvc.relatedQuery),
 			request,

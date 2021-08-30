@@ -193,10 +193,10 @@ export class DesktopsSelectorModalPage implements OnInit, OnDestroy {
 			}
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCoreSvc.searchDesktop(this.request, onSuccess);
+			this.subscription = this.portalsCoreSvc.searchDesktops(this.request, onSuccess);
 		}
 		else {
-			await this.portalsCoreSvc.searchDesktopAsync(this.request, onSuccess);
+			await this.portalsCoreSvc.searchDesktopsAsync(this.request, onSuccess);
 		}
 	}
 

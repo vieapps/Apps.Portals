@@ -341,10 +341,10 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			this.trackAsync(this.title.track);
 		};
 		if (this.searching) {
-			this.subscription = this.portalsCmsSvc.searchCategory(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
+			this.subscription = this.portalsCmsSvc.searchCategories(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 		else {
-			this.portalsCmsSvc.searchCategoryAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
+			this.portalsCmsSvc.searchCategoriesAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 	}
 
@@ -443,7 +443,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		if (categories.length > 0) {
 			this.doRefresh(categories, 0, false, () => Promise.all(this.organization.modules.map(module => this.portalsCmsSvc.getContentTypesOfCategory(module))
 				.flatMap(contentypes => contentypes)
-				.map(contentType => this.portalsCmsSvc.searchCategoriesAsync(contentType, undefined, undefined, true, true))).then(() => this.appFormsSvc.showToastAsync("All the categories were freshen-up"))
+				.map(contentType => this.portalsCmsSvc.searchSpecifiedCategoriesAsync(contentType, undefined, undefined, true, true))).then(() => this.appFormsSvc.showToastAsync("All the categories were freshen-up"))
 			);
 		}
 	}
