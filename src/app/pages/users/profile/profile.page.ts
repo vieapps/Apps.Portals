@@ -97,7 +97,7 @@ export class UsersProfilePage implements OnInit {
 	}
 
 	get activeService() {
-		return this.configSvc.appConfig.services.active;
+		return this.configSvc.appConfig.services.active.service;
 	}
 
 	ngOnInit() {
@@ -173,7 +173,7 @@ export class UsersProfilePage implements OnInit {
 				this.appFormsSvc.hideLoadingAsync(onNext)
 			]);
 		};
-		const force = this.configSvc.appConfig.services.active === "Books" && (this.profile === undefined || this.profile.LastSync === undefined);
+		const force = this.configSvc.appConfig.services.active.service === "Books" && (this.profile === undefined || this.profile.LastSync === undefined);
 		if (this.profile === undefined || force) {
 			await this.appFormsSvc.showLoadingAsync();
 			await this.usersSvc.getProfileAsync(

@@ -179,7 +179,7 @@ export class PortalsCmsService extends BaseService {
 			promises.push(this.portalsCoreSvc.getActiveModuleAsync(undefined, true));
 		}
 
-		if (this.configSvc.appConfig.services.active === this.name) {
+		if (this.configSvc.appConfig.services.active.service === this.name) {
 			promises.push(this.updateSidebarAsync());
 		}
 

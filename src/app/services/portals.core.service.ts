@@ -204,7 +204,7 @@ export class PortalsCoreService extends BaseService {
 		if (Organization.active !== undefined && Organization.active.modules.length < 1) {
 			await this.getActiveOrganizationAsync(undefined, true);
 		}
-		if (this.configSvc.appConfig.services.active === this.name) {
+		if (this.configSvc.appConfig.services.active.service === this.name) {
 			if (Organization.active === undefined) {
 				this.prepareSidebar();
 			}
@@ -297,7 +297,7 @@ export class PortalsCoreService extends BaseService {
 			: this.configSvc.appConfig.options.extras["organization"];
 		if (AppUtility.isNotEmpty(preferID)) {
 			if (Organization.active !== undefined && AppUtility.isEquals(Organization.active.ID, preferID)) {
-				this.configSvc.appConfig.services.activeID = Organization.active.ID;
+				this.configSvc.appConfig.services.active.system = Organization.active.ID;
 			}
 			else {
 				await this.getOrganizationAsync(preferID, () => this.setActiveOrganization(Organization.get(preferID) || Organization.instances.first()), undefined, useXHR);
@@ -311,7 +311,7 @@ export class PortalsCoreService extends BaseService {
 
 	public setActiveOrganization(organization: Organization, onNext?: () => void) {
 		if (organization !== undefined) {
-			this.configSvc.appConfig.services.activeID = organization.ID;
+			this.configSvc.appConfig.services.active.system = organization.ID;
 			this.configSvc.appConfig.options.extras["organization"] = organization.ID;
 			this.activeOrganizations.merge([organization.ID], true);
 			if (Organization.active === undefined || Organization.active.ID !== organization.ID) {
@@ -335,7 +335,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public removeActiveOrganization(organizationID: string, onNext?: () => void) {
-		this.configSvc.appConfig.services.activeID = undefined;
+		this.configSvc.appConfig.services.active.system = undefined;
 		this.configSvc.appConfig.options.extras["organization"] = undefined;
 		this.activeOrganizations.remove(organizationID);
 		delete this.activeModules[organizationID];
@@ -1267,17 +1267,17 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	private openSidebar(name: string, sidebar: AppSidebar) {
-		if (sidebar.Active !== name) {
-			if (sidebar.Active !== "cms" && sidebar.Active !== "portals" && (name === "cms" || name === "portals")) {
+		if (sidebar.State.Active !== name) {
+			if (sidebar.State.Active !== "cms" && sidebar.State.Active !== "portals" && (name === "cms" || name === "portals")) {
 				this.updateSidebarHeader();
 			}
-			sidebar.Active = name;
-			if (sidebar.Active === "cms" || sidebar.Active === "portals") {
-				this.configSvc.appConfig.services.active = this.name;
+			sidebar.State.Active = name;
+			if (sidebar.State.Active === "cms" || sidebar.State.Active === "portals") {
+				this.configSvc.appConfig.services.active.service = this.name;
 				this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 			}
 		}
-		if (!sidebar.Visible) {
+		if (!sidebar.State.Visible) {
 			sidebar.active(name, true);
 		}
 	}
@@ -1374,7 +1374,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	private activeSidebar(onNext?: () => void) {
-		if (this.configSvc.appConfig.services.active === this.name) {
+		if (this.configSvc.appConfig.services.active.service === this.name) {
 			AppUtility.invoke(() => {
 				let name = "cms";
 				if (this.configSvc.isAuthenticated && this.activeOrganization !== undefined) {

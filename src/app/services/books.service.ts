@@ -87,7 +87,7 @@ export class BooksService extends BaseService {
 			const args = info.args;
 			if ("Updated" === args.Type && "APIs" === args.Mode) {
 				this.getBookmarksAsync();
-				if (this.configSvc.appConfig.services.active === this.name) {
+				if (this.configSvc.appConfig.services.active.service === this.name) {
 					this.updateSidebarHeader();
 				}
 			}
@@ -97,13 +97,13 @@ export class BooksService extends BaseService {
 	public async initializeAsync(onNext?: () => void) {
 		this.prepareSidebarFooterItems();
 		if (this.configSvc.isAuthenticated) {
-			AppUtility.invoke(() => this.loadBookmarksAsync(() => this.fetchBookmarksAsync()), this.configSvc.appConfig.services.active === this.name ? 0 : 5678);
+			AppUtility.invoke(() => this.loadBookmarksAsync(() => this.fetchBookmarksAsync()), this.configSvc.appConfig.services.active.service === this.name ? 0 : 5678);
 		}
 		AppUtility.invoke(() => this.loadCategoriesAsync(() => this.fetchCategoriesAsync())
 			.then(() => this.loadInstructionsAsync(() => this.fetchInstructionsAsync()))
 			.then(() => this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast(this.name, { Type: "Books", Mode: "Updated" })))
-			.then(() => this.loadStatisticsAsync()), this.configSvc.appConfig.services.active === this.name ? 0 : 6789);
-		if (this.configSvc.appConfig.services.active === this.name) {
+			.then(() => this.loadStatisticsAsync()), this.configSvc.appConfig.services.active.service === this.name ? 0 : 6789);
+		if (this.configSvc.appConfig.services.active.service === this.name) {
 			AppEvents.broadcast("ActiveSidebar", { Name: "books" });
 		}
 		if (onNext !== undefined) {
@@ -140,12 +140,12 @@ export class BooksService extends BaseService {
 			Icon: "library",
 			Title: "eBooks",
 			OnClick: (name: string, sidebar: AppSidebar) => {
-				if (sidebar.Active !== name) {
-					sidebar.Active = name;
-					this.configSvc.appConfig.services.active = this.name;
+				if (sidebar.State.Active !== name) {
+					sidebar.State.Active = name;
+					this.configSvc.appConfig.services.active.service = this.name;
 					this.configSvc.appConfig.URLs.search = "/books/search";
 					this.updateSidebarHeader();
-					if (!sidebar.Visible) {
+					if (!sidebar.State.Visible) {
 						sidebar.active(name, true);
 					}
 				}

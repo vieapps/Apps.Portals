@@ -30,7 +30,7 @@ export class HomePage implements OnInit, OnDestroy {
 	}
 
 	get activeService() {
-		return this.configSvc.appConfig.services.active;
+		return this.configSvc.appConfig.services.active.service;
 	}
 
 	ngOnInit() {

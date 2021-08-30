@@ -20,7 +20,7 @@
 			<ion-footer>
 				<ion-toolbar [color]="color">
 					<ion-buttons slot="start">
-						<ion-button *ngFor="let item of sidebarFooter; trackBy: trackSidebarItem" fill="clear" [title]="item.Title" [color]="sidebar.Active === item.Name ? 'primary' : 'medium'" (click)="item.OnClick(item.Name, sidebar, $event)">
+						<ion-button *ngFor="let item of sidebarFooter; trackBy: trackSidebarItem" fill="clear" [title]="item.Title" [color]="sidebar.State.Active === item.Name ? 'primary' : 'medium'" (click)="item.OnClick(item.Name, sidebar, $event)">
 							<ion-icon [name]="item.Icon" slot="icon-only"></ion-icon>
 						</ion-button>
 					</ion-buttons>
@@ -45,7 +45,7 @@
 						</ion-item>
 					</ion-menu-toggle>
 
-					<ion-menu-toggle *ngFor="let menu of sidebar.MainMenu; let menuIndex=index; trackBy: trackSidebarItem" [hidden]="sidebar.Active !== menu.Name" [class]="'menu-' + menu.Name" auto-hide="false">
+					<ion-menu-toggle *ngFor="let menu of sidebar.MainMenu; let menuIndex=index; trackBy: trackSidebarItem" [hidden]="sidebar.State.Active !== menu.Name" [class]="'menu-' + menu.Name" auto-hide="false">
 						<ion-list-header *ngIf="!!menu.Parent && !!menu.Parent.Title" [color]="color" (click)="menu.Parent.OnClick(menu.Parent, sidebar, $event)" class="ion-padding-top">
 							<ion-label [class]="!!menu.Parent.Thumbnail ? 'thumbnail' : ''">
 								<ion-icon *ngIf="menu.Parent.Expanded" name="chevron-back" slot="start"></ion-icon>
@@ -75,7 +75,7 @@
 
 				</ion-list>
 
-				<control-app-preferences *ngIf="sidebar.Active === 'preferences'"></control-app-preferences>
+				<control-app-preferences *ngIf="sidebar.State.Active === 'preferences'"></control-app-preferences>
 
 			</ion-content>
 

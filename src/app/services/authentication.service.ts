@@ -55,7 +55,7 @@ export class AuthenticationService extends BaseService {
 	 */
 	public isAdministrator(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
 		account = account || this.configSvc.getAccount();
-		return this.isSystemAdministrator(account) || account.isAdministrator(serviceName || this.configSvc.appConfig.services.active, objectName, privileges);
+		return this.isSystemAdministrator(account) || account.isAdministrator(serviceName || this.configSvc.appConfig.services.active.service, objectName, privileges);
 	}
 
 	/**
@@ -67,7 +67,7 @@ export class AuthenticationService extends BaseService {
 	 */
 	public isModerator(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
 		account = account || this.configSvc.getAccount();
-		return this.isSystemAdministrator(account) || account.isModerator(serviceName || this.configSvc.appConfig.services.active, objectName, privileges);
+		return this.isSystemAdministrator(account) || account.isModerator(serviceName || this.configSvc.appConfig.services.active.service, objectName, privileges);
 	}
 
 	/**
@@ -79,7 +79,7 @@ export class AuthenticationService extends BaseService {
 	 */
 	public isEditor(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
 		account = account || this.configSvc.getAccount();
-		return this.isSystemAdministrator(account) || account.isEditor(serviceName || this.configSvc.appConfig.services.active, objectName, privileges);
+		return this.isSystemAdministrator(account) || account.isEditor(serviceName || this.configSvc.appConfig.services.active.service, objectName, privileges);
 	}
 
 	/**
@@ -91,7 +91,7 @@ export class AuthenticationService extends BaseService {
 	 */
 	public isContributor(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
 		account = account || this.configSvc.getAccount();
-		return this.isSystemAdministrator(account) || account.isContributor(serviceName || this.configSvc.appConfig.services.active, objectName, privileges);
+		return this.isSystemAdministrator(account) || account.isContributor(serviceName || this.configSvc.appConfig.services.active.service, objectName, privileges);
 	}
 
 	/**
@@ -103,7 +103,7 @@ export class AuthenticationService extends BaseService {
 	 */
 	public isViewer(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
 		account = account || this.configSvc.getAccount();
-		return this.isSystemAdministrator(account) || account.isViewer(serviceName || this.configSvc.appConfig.services.active, objectName, privileges);
+		return this.isSystemAdministrator(account) || account.isViewer(serviceName || this.configSvc.appConfig.services.active.service, objectName, privileges);
 	}
 
 	/**
@@ -115,7 +115,7 @@ export class AuthenticationService extends BaseService {
 	 */
 	public isDownloader(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
 		account = account || this.configSvc.getAccount();
-		return this.isSystemAdministrator(account) || account.isDownloader(serviceName || this.configSvc.appConfig.services.active, objectName, privileges);
+		return this.isSystemAdministrator(account) || account.isDownloader(serviceName || this.configSvc.appConfig.services.active.service, objectName, privileges);
 	}
 
 	private canDo(role: string, serviceName?: string, account?: Account) {
@@ -145,10 +145,10 @@ export class AuthenticationService extends BaseService {
 		const account = this.configSvc.getAccount();
 		if (account !== undefined) {
 			if (this.configSvc.appConfig.accounts.setServicePrivilegs) {
-				return this.canDo(this.configSvc.appConfig.accounts.setServicePrivilegsRole, this.configSvc.appConfig.services.active, account);
+				return this.canDo(this.configSvc.appConfig.accounts.setServicePrivilegsRole, this.configSvc.appConfig.services.active.service, account);
 			}
 			else {
-				const service = this.configSvc.appConfig.services.all.first(svc => svc.name === this.configSvc.appConfig.services.active);
+				const service = this.configSvc.appConfig.services.all.first(svc => svc.name === this.configSvc.appConfig.services.active.service);
 				return service !== undefined && AppUtility.isTrue(service.canSetPrivilegs) && this.canDo(this.configSvc.appConfig.accounts.setServicePrivilegsRole, service.name, account);
 			}
 		}

@@ -60,7 +60,7 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		this.service = this.service || this.configSvc.appConfig.services.active;
+		this.service = this.service || this.configSvc.appConfig.services.active.service;
 		this.privileges = this.privileges || [];
 		this.labelPosition = (this.labelPosition || "stacked").trim().toLowerCase();
 		this.selectInterface = (this.selectInterface || "popover").trim().toLowerCase();

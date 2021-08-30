@@ -1,9 +1,5 @@
 /** Presents the side bar of the app */
 export interface AppSidebar {
-	Visible: boolean;
-	Profile: boolean;
-	Search: boolean;
-	Active: string;
 	Header: {
 		Avatar: string;
 		AvatarOnClick: (sidebar?: AppSidebar, event?: Event) => void;
@@ -17,6 +13,12 @@ export interface AppSidebar {
 		Parent?: AppSidebarMenuItem;
 		Items: Array<AppSidebarMenuItem>
 	}>;
+	State: {
+		Profile: boolean;
+		Search: boolean;
+		Visible: boolean;
+		Active: string;
+	};
 	toggle: (visible?: boolean) => void;
 	active: (name?: string, open?: boolean) => void;
 	updateTopMenu: (items: Array<AppSidebarMenuItem>) => void;

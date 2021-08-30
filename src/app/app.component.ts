@@ -60,10 +60,6 @@ export class AppComponent implements OnInit {
 	@ViewChild(IonMenu, { static: true }) private menuCtrl: IonMenu;
 
 	sidebar: AppSidebar = {
-		Visible: true,
-		Profile: false,
-		Search: true,
-		Active: "cms",
 		Header: {
 			Avatar: undefined,
 			AvatarOnClick: undefined,
@@ -77,6 +73,12 @@ export class AppComponent implements OnInit {
 			Parent?: AppSidebarMenuItem;
 			Items: Array<AppSidebarMenuItem>
 		}>(),
+		State: {
+			Profile: false,
+			Search: true,
+			Visible: true,
+			Active: ""
+		},
 		toggle: undefined,
 		active: undefined,
 		updateTopMenu: undefined,
@@ -96,11 +98,11 @@ export class AppComponent implements OnInit {
 	}
 
 	get isSidebarShown() {
-		return this.sidebar.Visible && this.configSvc.screenWidth >= 1200;
+		return this.sidebar.State.Visible && this.configSvc.screenWidth >= 1200;
 	}
 
 	get isSidebarTopMenuShown() {
-		return !(this.sidebar.Active === "notifications" || this.sidebar.Active === "chat" || this.sidebar.Active === "preferences");
+		return !(this.sidebar.State.Active === "notifications" || this.sidebar.State.Active === "chat" || this.sidebar.State.Active === "preferences");
 	}
 
 	public ngOnInit() {
@@ -125,12 +127,14 @@ export class AppComponent implements OnInit {
 						appConfig.services.all.removeAt(info.index);
 					}
 				});
-				if (appConfig.services.all.findIndex(svc => svc.name === appConfig.services.active) < 0) {
-					const service = appConfig.services.all.first();
-					appConfig.services.active = service.name;
-					appConfig.app.name = service.appName || appConfig.app.name;
-					appConfig.app.description = service.appDescription || appConfig.app.description;
-				}
+			}
+
+			if (appConfig.services.all.findIndex(svc => svc.name === appConfig.services.active.service) < 0) {
+				const service = appConfig.services.all.first();
+				appConfig.services.active.service = service.name;
+				appConfig.app.name = service.appName || appConfig.app.name;
+				appConfig.app.description = service.appDescription || appConfig.app.description;
+				this.sidebar.State.Active = service.sidebar || service.name.toLowerCase();
 			}
 
 			[this.usersSvc, this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc]
@@ -163,8 +167,8 @@ export class AppComponent implements OnInit {
 		this.sidebar.Header.TitleOnClick = () => {};
 
 		this.sidebar.toggle = (visible?: boolean) => {
-			this.sidebar.Visible = visible !== undefined ? !!visible : !this.sidebar.Visible;
-			if (this.sidebar.Visible) {
+			this.sidebar.State.Visible = visible !== undefined ? !!visible : !this.sidebar.State.Visible;
+			if (this.sidebar.State.Visible) {
 				this.menuCtrl.open();
 			}
 			else {
@@ -173,12 +177,12 @@ export class AppComponent implements OnInit {
 		};
 
 		this.sidebar.active = (name?: string, open?: boolean) => {
-			if (!!name && name !== this.sidebar.Active) {
-				const button = this.sidebar.Footer.find(btn => btn.Name === name);
-				if (button !== undefined && typeof button.OnClick === "function") {
-					button.OnClick(name, this.sidebar);
+			if (!!name && name !== this.sidebar.State.Active) {
+				const onClick = (this.sidebar.Footer.find(item => item.Name === name) || {}).OnClick;
+				if (typeof onClick === "function") {
+					onClick(name, this.sidebar);
 				}
-				this.sidebar.Active = name;
+				this.sidebar.State.Active = name;
 			}
 			if (!!open) {
 				this.sidebar.toggle(true);
@@ -190,13 +194,13 @@ export class AppComponent implements OnInit {
 		};
 
 		this.sidebar.normalizeTopMenu = () => {
-			if (!this.sidebar.Search) {
-				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.length - 1);
+			if (!this.sidebar.State.Search) {
+				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.indexOf("/search") > 0));
 			}
 			if (this.configSvc.isAuthenticated) {
 				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.login)));
 				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.register)));
-				if (!this.sidebar.Profile) {
+				if (!this.sidebar.State.Profile) {
 					this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.profile)));
 				}
 			}
@@ -216,7 +220,7 @@ export class AppComponent implements OnInit {
 			while (this.sidebar.MainMenu.length < index + 1) {
 				this.sidebar.MainMenu.push({ Name: undefined, Parent: undefined, Items: [] });
 			}
-			this.sidebar.MainMenu[index].Name = name || "cms";
+			this.sidebar.MainMenu[index].Name = name || this.sidebar.State.Active;
 			this.sidebar.MainMenu[index].Parent = parent;
 			this.sidebar.MainMenu[index].Items = items || [];
 		};
@@ -256,20 +260,20 @@ export class AppComponent implements OnInit {
 		};
 
 		this.sidebar.normalizeFooter = () => {
-			if (this.configSvc.isAuthenticated && this.sidebar.Footer.findIndex(item => item.Name === "preferences") < 0) {
+			if (!this.configSvc.isAuthenticated) {
+				this.sidebar.Footer.removeAt(this.sidebar.Footer.findIndex(item => item.Name === "preferences"));
+			}
+			else if (this.sidebar.Footer.findIndex(item => item.Name === "preferences") < 0) {
 				AppUtility.invoke(async () => this.sidebar.updateFooter({ items: [{
 					Name: "preferences",
 					Icon: "settings",
 					Title: await this.configSvc.getResourceAsync("common.preferences.label"),
 					OnClick: (name: string, sidebar: AppSidebar) => {
-						sidebar.Active = name;
+						sidebar.State.Active = name;
 						sidebar.active(name, true);
 					},
 					Position: this.sidebar.Footer.length
 				}]}), 1234);
-			}
-			else if (!this.configSvc.isAuthenticated && this.sidebar.Footer.findIndex(item => item.Name === "preferences") > 0) {
-				this.sidebar.Footer.removeAt(this.sidebar.Footer.findIndex(item => item.Name === "preferences"));
 			}
 		};
 	}
@@ -297,30 +301,30 @@ export class AppComponent implements OnInit {
 					Title: await this.configSvc.getResourceAsync("common.sidebar.home"),
 					Link: this.configSvc.appConfig.URLs.home,
 					Icon: { Name: "home", Color: "primary", Slot: "start" },
-					OnClick: data => this.configSvc.navigateRootAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
+					OnClick: data => this.configSvc.navigateRootAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.State.Active }))
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.login"),
 					Link: this.configSvc.appConfig.URLs.users.login,
 					Icon: { Name: "log-in", Color: "success", Slot: "start" },
-					OnClick: data => this.configSvc.navigateForwardAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "LogInPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
+					OnClick: data => this.configSvc.navigateForwardAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "LogInPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.State.Active }))
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.register"),
 					Link: this.configSvc.appConfig.URLs.users.register,
 					Icon: { Name: "person-add", Color: "warning", Slot: "start" },
-					OnClick: data => this.configSvc.navigateForwardAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "RegisterPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
+					OnClick: data => this.configSvc.navigateForwardAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "RegisterPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.State.Active }))
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.profile"),
 					Link: `${this.configSvc.appConfig.URLs.users.profile}/my`,
 					Icon: { Name: "person", Color: "warning", Slot: "start" },
-					OnClick: data => this.configSvc.navigateForwardAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "ProfilePage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
+					OnClick: data => this.configSvc.navigateForwardAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "ProfilePage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.State.Active }))
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.search"),
 					Icon: { Name: "search", Color: "tertiary", Slot: "start" },
-					OnClick: _ => this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.search).then(() => AppEvents.broadcast("App", { Type: "SearchPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.Active }))
+					OnClick: _ => this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.search).then(() => AppEvents.broadcast("App", { Type: "SearchPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.State.Active }))
 				}
 			]);
 		}
@@ -535,9 +539,9 @@ export class AppComponent implements OnInit {
 
 	private finalize(onNext?: () => void) {
 		const appConfig = this.configSvc.appConfig;
-		AppUtility.invoke(() => this.sidebar.normalizeTopMenu())
-			.then(() => console.log("<AppComponent>: Initialized", appConfig.isDebug ? appConfig.app : undefined))
+		AppUtility.invoke(() => console.log("<AppComponent>: Initialized", appConfig.isDebug ? appConfig.app : undefined))
 			.then(this.configSvc.isWebApp ? () => PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect()) : () => {})
+			.then(() => this.sidebar.normalizeTopMenu())
 			.then(() => AppAPIs.openWebSocket(() => Promise.all([this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc].filter(service => appConfig.services.all.findIndex(svc => svc.name === service.name) > -1).map(service => service.initializeAsync()))
 				.then(() => this.appFormsSvc.hideLoadingAsync())
 				.then(() => {
