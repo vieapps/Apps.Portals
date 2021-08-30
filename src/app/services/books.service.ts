@@ -106,9 +106,7 @@ export class BooksService extends BaseService {
 		if (this.configSvc.appConfig.services.active.service === this.name) {
 			AppEvents.broadcast("ActiveSidebar", { Name: "books" });
 		}
-		if (onNext !== undefined) {
-			onNext();
-		}
+		return AppUtility.invoke(onNext);
 	}
 
 	private updateSidebarHeader() {
