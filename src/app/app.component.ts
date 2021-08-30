@@ -248,7 +248,7 @@ export class AppComponent implements OnInit {
 					while (this.sidebar.Footer.length <= position) {
 						this.sidebar.Footer.push({ Name: undefined, Icon: undefined });
 					}
-					this.sidebar.Footer[position] = item;
+					this.sidebar.Footer.update(item, position);
 					onUpdated(this.sidebar, item);
 				});
 				this.sidebar.normalizeFooter();
@@ -256,7 +256,7 @@ export class AppComponent implements OnInit {
 		};
 
 		this.sidebar.normalizeFooter = () => {
-			if (this.configSvc.isAuthenticated && this.sidebar.Footer.findIndex(icon => icon.Name === "preferences") < 0) {
+			if (this.configSvc.isAuthenticated && this.sidebar.Footer.findIndex(item => item.Name === "preferences") < 0) {
 				AppUtility.invoke(async () => this.sidebar.updateFooter({ items: [{
 					Name: "preferences",
 					Icon: "settings",
