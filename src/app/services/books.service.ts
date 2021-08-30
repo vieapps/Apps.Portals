@@ -94,7 +94,7 @@ export class BooksService extends BaseService {
 		});
 	}
 
-	public async initializeAsync(onNext?: () => void) {
+	public initializeAsync(onNext?: () => void) {
 		this.prepareSidebarFooterItems();
 		if (this.configSvc.isAuthenticated) {
 			AppUtility.invoke(() => this.loadBookmarksAsync(() => this.fetchBookmarksAsync()), this.configSvc.appConfig.services.active.service === this.name ? 0 : 5678);
