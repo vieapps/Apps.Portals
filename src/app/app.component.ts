@@ -133,13 +133,14 @@ export class AppComponent implements OnInit {
 				});
 			}
 
-			if (appConfig.services.all.findIndex(svc => svc.name === appConfig.services.active.service) < 0) {
-				const service = appConfig.services.all.first();
-				appConfig.services.active.service = service.name;
-				appConfig.app.name = service.appName || appConfig.app.name;
-				appConfig.app.description = service.appDescription || appConfig.app.description;
-				this.sidebar.State.Active = service.sidebar || service.name.toLowerCase();
+			let activeService = appConfig.services.all.first(svc => svc.name === appConfig.services.active.service);
+			if (activeService === undefined) {
+				activeService = appConfig.services.all.first();
+				appConfig.services.active.service = activeService.name;
+				appConfig.app.name = activeService.appName || appConfig.app.name;
+				appConfig.app.description = activeService.appDescription || appConfig.app.description;
 			}
+			this.sidebar.State.Active = activeService.sidebar || activeService.name.toLowerCase();
 
 			[this.usersSvc, this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc]
 				.filter(service => "Users" === service.name || appConfig.services.all.findIndex(svc => svc.name === service.name) > -1)
@@ -224,9 +225,7 @@ export class AppComponent implements OnInit {
 			while (this.sidebar.MainMenu.length < index + 1) {
 				this.sidebar.MainMenu.push({ Name: undefined, Parent: undefined, Items: [] });
 			}
-			this.sidebar.MainMenu[index].Name = name || this.sidebar.State.Active;
-			this.sidebar.MainMenu[index].Parent = parent;
-			this.sidebar.MainMenu[index].Items = items || [];
+			this.sidebar.MainMenu.update({ Name: name || this.sidebar.State.Active, Parent: parent, Items: items || [] }, index);
 		};
 
 		this.sidebar.updateHeader = (args: { title?: string; onClick?: (sidebar?: AppSidebar, event?: Event) => void; updateAvatar?: boolean; }) => {
@@ -247,9 +246,7 @@ export class AppComponent implements OnInit {
 			const predicate: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean = typeof args.predicate === "function"
 				? (sidebar, item) => args.predicate(sidebar, item)
 				: (sidebar, item) => sidebar.Footer.findIndex(icon => icon.Name === item.Name) < 0;
-			const onUpdated: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void = typeof args.onUpdated === "function"
-				? (sidebar, item) => args.onUpdated(sidebar, item)
-				: () => {};
+			const onUpdated: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void = typeof args.onUpdated === "function" ? args.onUpdated : () => {};
 			if (AppUtility.isArray(args.items, true)) {
 				args.items.filter(item => predicate(this.sidebar, item)).forEach(item => {
 					const position = item.Position !== undefined ? item.Position : this.sidebar.Footer.length;
