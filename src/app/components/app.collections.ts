@@ -200,16 +200,16 @@ Array.prototype.sortBy = function<T>(this: T[], ...sorts: Array<string | { name:
 	return this.orderBy(sorts !== undefined && sorts.length > 0
 		? (sorts as Array<any>).filter(sort => sort !== undefined && sort !== null).map(sort => typeof sort === "string"
 			? ({
-					name: sort as string,
-					reverse: false,
-					transformer: undefined as (value: any) => any
-				})
+				name: sort as string,
+				reverse: false,
+				transformer: undefined as (value: any) => any
+			})
 			: ({
-					name: sort.name as string,
-					reverse: true === sort.reverse,
-					transformer: sort.transformer as (value: any) => any
-				})
-			)
+				name: sort.name as string,
+				reverse: true === sort.reverse,
+				transformer: sort.transformer as (value: any) => any
+			})
+		)
 		: undefined
 	);
 };
@@ -349,16 +349,8 @@ export class HashSet<T> extends Set<T>  {
 
 	/** Converts the values of this collection to array */
 	toArray(predicate?: (value: T) => boolean) {
-		if (this.size > 0 && predicate !== undefined) {
-			const array = new Array<T>();
-			this.forEach(value => {
-				if (predicate(value)) {
-					array.push(value);
-				}
-			});
-			return array;
-		}
-		return Array.from(this.values());
+		const array = Array.from(this.values());
+		return predicate !== undefined ? array.filter(predicate) : array;
 	}
 
 	/** Converts the values of this collection to List object (for working with LINQ) */
@@ -475,16 +467,8 @@ export class Dictionary<TKey, TValue> extends Map<TKey, TValue> {
 
 	/** Converts the values of this collection to array */
 	toArray(predicate?: (value: TValue) => boolean) {
-		if (this.size > 0 && predicate !== undefined) {
-			const array = new Array<TValue>();
-			this.forEach((value, _) => {
-				if (predicate(value)) {
-					array.push(value);
-				}
-			});
-			return array;
-		}
-		return Array.from(this.values());
+		const array = Array.from(this.values());
+		return predicate !== undefined ? array.filter(predicate) : array;
 	}
 
 	/** Converts the values of this collection to List object (for working with LINQ) */
