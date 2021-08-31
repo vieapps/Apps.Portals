@@ -205,10 +205,10 @@ export class PortalsCoreService extends BaseService {
 			await this.getActiveOrganizationAsync(undefined, true);
 		}
 		if (this.configSvc.appConfig.services.active.service === this.name) {
+			this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 			if (Organization.active === undefined) {
 				this.prepareSidebar();
 			}
-			this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
 		}
 		await this.prepareSidebarFooterItemsAsync();
 		this.activeSidebar(onNext);

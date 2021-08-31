@@ -488,10 +488,10 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	doReorder() {
 		if (this.hash !== AppCrypto.hash(this.ordered)) {
 			this.processing = true;
-			const reordered = this.ordered.toList().Select(category => ({
+			const reordered = this.ordered.map(category => ({
 				ID: category.ID,
 				OrderIndex: category.OrderIndex
-			})).ToArray();
+			}));
 			this.appFormsSvc.showLoadingAsync(this.title.page).then(() => this.portalsCmsSvc.updateLinkAsync(
 				{
 					LinkID: this.parentLink === undefined ? undefined : this.parentLink.ID,

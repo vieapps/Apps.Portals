@@ -52,7 +52,7 @@ export class BooksService extends BaseService {
 
 		AppEvents.on(this.name, info => {
 			const args = info.args;
-			if ("Categories" === args.Type && "Updated" === args.Mode) {
+			if ("Categories" === args.Type && ("Loaded" === args.Mode || "Updated" === args.Mode)) {
 				this.updateSidebarAsync();
 			}
 			else if (("Book" === args.Type && "Open" === args.Mode) || ("Chapter" === args.Type && "Open" === args.Mode)) {
@@ -95,17 +95,16 @@ export class BooksService extends BaseService {
 	}
 
 	public initializeAsync(onNext?: () => void) {
-		this.prepareSidebarFooterItems();
+		this.loadCategoriesAsync().then(() => this.prepareSidebarFooterItems());
 		if (this.configSvc.isAuthenticated) {
-			AppUtility.invoke(() => this.loadBookmarksAsync(() => this.fetchBookmarksAsync()), this.configSvc.appConfig.services.active.service === this.name ? 0 : 5678);
+			AppUtility.invoke(() => this.loadBookmarksAsync(() => this.fetchBookmarksAsync()), this.configSvc.appConfig.services.active.service === this.name ? 0 : this.configSvc.isAuthenticated ? 5678 : 123);
 		}
-		AppUtility.invoke(() => this.loadCategoriesAsync(() => this.fetchCategoriesAsync())
+		AppUtility.invoke(() => this.fetchCategoriesAsync()
 			.then(() => this.loadInstructionsAsync(() => this.fetchInstructionsAsync()))
 			.then(() => this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast(this.name, { Type: "Books", Mode: "Updated" })))
-			.then(() => this.loadStatisticsAsync()), this.configSvc.appConfig.services.active.service === this.name ? 0 : 6789);
+			.then(() => this.loadStatisticsAsync()), this.configSvc.appConfig.services.active.service === this.name ? 0 : this.configSvc.isAuthenticated ? 6789 : 456);
 		if (this.configSvc.appConfig.services.active.service === this.name) {
 			this.configSvc.appConfig.URLs.search = "/books/search";
-			AppEvents.broadcast("ActiveSidebar", { Name: "books" });
 		}
 		return AppUtility.invoke(onNext);
 	}

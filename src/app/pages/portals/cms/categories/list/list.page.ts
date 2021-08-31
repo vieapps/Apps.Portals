@@ -498,10 +498,10 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	doReorder() {
 		if (this.hash !== AppCrypto.hash(this.orderedItems)) {
-			const orderedItems = this.orderedItems.toList().Select(category => ({
+			const orderedItems = this.orderedItems.map(category => ({
 				ID: category.ID,
 				OrderIndex: category.OrderIndex
-			})).ToArray();
+			}));
 			this.processing = true;
 			this.appFormsSvc.showLoadingAsync(this.title.page).then(() => this.portalsCmsSvc.updateCategoryAsync(
 				{
