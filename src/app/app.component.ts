@@ -339,16 +339,16 @@ export class AppComponent implements OnInit {
 		if (args.name !== undefined || args.parent !== undefined || args.items !== undefined) {
 			const parent = AppUtility.isObject(args.parent, true)
 				? {
-						ID: args.parent.ID,
-						Title: args.parent.Title,
-						Link: args.parent.Link,
-						Params: args.parent.Params,
-						Expanded: !!args.parent.Expanded,
-						Detail: !!args.parent.Detail,
-						Thumbnail: args.parent.Thumbnail,
-						Icon: args.parent.Icon,
-						OnClick: typeof args.parent.OnClick === "function" ? args.parent.OnClick : _ => {}
-					} as AppSidebarMenuItem
+					ID: args.parent.ID,
+					Title: args.parent.Title,
+					Link: args.parent.Link,
+					Params: args.parent.Params,
+					Expanded: !!args.parent.Expanded,
+					Detail: !!args.parent.Detail,
+					Thumbnail: args.parent.Thumbnail,
+					Icon: args.parent.Icon,
+					OnClick: typeof args.parent.OnClick === "function" ? args.parent.OnClick : _ => {}
+				} as AppSidebarMenuItem
 				: undefined;
 			if (parent !== undefined && AppUtility.isNotEmpty(parent.Title) && parent.Title.startsWith("{{") && parent.Title.endsWith("}}")) {
 				parent.Title = await this.configSvc.getResourceAsync(parent.Title.substr(2, parent.Title.length - 4).trim());
