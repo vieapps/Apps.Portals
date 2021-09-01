@@ -34,7 +34,7 @@ export class AppConfig {
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
 		version: "4.2109.1",
-		frameworks: "ionic 5.6 - angular 11.2 - cordova 10.0",
+		frameworks: "ionic 5.7 - angular 11.2 - cordova 10.0",
 		mode: "",
 		platform: "",
 		os: "",
