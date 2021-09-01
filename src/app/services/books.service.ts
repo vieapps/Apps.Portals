@@ -38,11 +38,9 @@ export class BooksService extends BaseService {
 
 	public initialize() {
 		AppAPIs.registerAsServiceScopeProcessor("Scheduler", () => {
-			if (this.configSvc.appConfig.services.all.findIndex(svc => svc.name === this.name) > -1) {
-				const profile = this.configSvc.getAccount().profile;
-				if (profile !== undefined) {
-					this.sendBookmarksAsync(() => profile.LastSync = new Date());
-				}
+			const profile = this.configSvc.getAccount().profile;
+			if (profile !== undefined) {
+				this.sendBookmarksAsync(() => profile.LastSync = new Date());
 			}
 		});
 
@@ -96,13 +94,11 @@ export class BooksService extends BaseService {
 
 	public initializeAsync(onNext?: () => void) {
 		this.loadCategoriesAsync().then(() => this.prepareSidebarFooterItems());
-		if (this.configSvc.isAuthenticated) {
-			AppUtility.invoke(() => this.loadBookmarksAsync(() => this.fetchBookmarksAsync()), this.configSvc.appConfig.services.active.service === this.name ? 0 : this.configSvc.isAuthenticated ? 5678 : 123);
-		}
 		AppUtility.invoke(() => this.fetchCategoriesAsync()
 			.then(() => this.loadInstructionsAsync(() => this.fetchInstructionsAsync()))
 			.then(() => this.searchBooksAsync({ FilterBy: { And: [{ Status: { NotEquals: "Inactive" } }] }, SortBy: { LastUpdated: "Descending" } }, () => AppEvents.broadcast(this.name, { Type: "Books", Mode: "Updated" })))
-			.then(() => this.loadStatisticsAsync()), this.configSvc.appConfig.services.active.service === this.name ? 0 : this.configSvc.isAuthenticated ? 6789 : 456);
+			.then(() => this.loadStatisticsAsync())
+			.then(() => AppUtility.invoke(this.configSvc.isAuthenticated ? () => this.loadBookmarksAsync(() => this.fetchBookmarksAsync()) : undefined, this.configSvc.appConfig.services.active.service === this.name ? 0 : 789)), this.configSvc.appConfig.services.active.service === this.name ? 0 : 789);
 		if (this.configSvc.appConfig.services.active.service === this.name) {
 			this.configSvc.appConfig.URLs.search = "/books/search";
 		}
