@@ -33,7 +33,7 @@ export class TrackingUtility {
 		campaignUrl = campaignUrl || AppUtility.getURI(AppConfig.URLs.stack.last(), AppConfig.URLs.home);
 		const promises = new Array<Promise<void>>();
 		if (this._googleAnalytics !== undefined) {
-			promises.push(this._googleAnalytics.trackView(`${addPrefix ? `${AppConfig.services.active} - ` : ""}${title}`, campaignUrl).catch(error => console.error("[AppTracking]: Error occurred while tracking a screen", error)));
+			promises.push(this._googleAnalytics.trackView(`${addPrefix ? `${AppConfig.services.active.service} - ` : ""}${title}`, campaignUrl).catch(error => console.error("[AppTracking]: Error occurred while tracking a screen", error)));
 		}
 		return Promise.all(promises);
 	}
@@ -42,7 +42,7 @@ export class TrackingUtility {
 	public static trackEventAsync(category: string, action: string, label?: string, addPrefix: boolean = true) {
 		const promises = new Array<Promise<void>>();
 		if (this._googleAnalytics !== undefined) {
-			promises.push(this._googleAnalytics.trackEvent(`${addPrefix ? `${AppConfig.services.active}:` : ""}${category}`, action, label).catch(error => console.error("[AppTracking]: Error occurred while tracking an event", error)));
+			promises.push(this._googleAnalytics.trackEvent(`${addPrefix ? `${AppConfig.services.active.service}:` : ""}${category}`, action, label).catch(error => console.error("[AppTracking]: Error occurred while tracking an event", error)));
 		}
 		return Promise.all(promises);
 	}

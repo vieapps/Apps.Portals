@@ -87,7 +87,7 @@
 		"@types/crypto-js": "4.0.2",
 		"@types/node": "^16.7.10",
 		"codelyzer": "^6.0.2",
-		"electron": "^14.0.0",
+		"electron": "^13.3.0",
 		"protractor": "^7.0.0",
 		"ts-node": "^10.2.1",
 		"tslint": "^6.1.3",

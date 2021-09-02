@@ -76,7 +76,7 @@ export class AppConfig {
 				name: "Portals",
 				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Item", "Link", "Form"],
 				sidebar: "cms",
-				availableHosts: [],
+				availableHosts: []
 			},
 			{
 				name: "Books",
@@ -105,7 +105,7 @@ export class AppConfig {
 		setServicePrivilegs: false,
 		setServicePrivilegsRole: "ServiceAdministrator",
 		setObjectPrivilegs: true,
-		phoneIsAllowed: false
+		phoneIsAllowed: true
 	};
 
 	/** Geographic meta */
