@@ -46,10 +46,7 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
-		if (this.configSvc.isDebug) {
-			console.log("Initialize CMS Portals", this.configSvc.requestParams);
-		}
-		await TrackingUtility.trackScreenAsync("Initialize and open a view of CMS Portals", "/portals/initializer");
+		TrackingUtility.trackAsync({ title: "Initialize and open a view of CMS Portals", campaignUrl: "/portals/initializer", category: "Home", action: "Initialize" }).then(() => console.log("Initialize CMS Portals", this.configSvc.requestParams));
 		const organizationID = this.configSvc.requestParams["SystemID"];
 		let forward = false;
 		let url: string;
@@ -179,11 +176,7 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 				}
 			}
 		}
-		await this.navigateAsync(url, forward);
-	}
-
-	private async navigateAsync(url?: string, forward: boolean = true) {
-		await (forward ? this.configSvc.navigateForwardAsync(url) : this.configSvc.navigateRootAsync(url));
+		this.configSvc.navigateAsync(forward ? "forward" : "root", url);
 	}
 
 }
