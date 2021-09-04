@@ -21,13 +21,13 @@
 					<ion-icon name="time" slot="icon-only" color="medium"></ion-icon>
 					{{ content.StartDate | date:'d/M/y' }}
 				</span>
-				<span *ngIf="content.Category && content.Status === 'Published'">
+				<span *ngIf="content.Status === 'Published'">
 					<ion-icon name="alarm" slot="icon-only" color="medium"></ion-icon>
 					{{ content.PublishedTime | date:'h:mm a @ d/M/y' }}
 				</span>
-				<span *ngIf="content.Category">
+				<span *ngIf="!!content.ContentType || !!content.Category">
 					<ion-icon name="color-filter" slot="icon-only" color="medium"></ion-icon>
-					{{ content.Category.FullTitle }}
+					{{ content.ContentType || content.Category.FullTitle }}
 				</span>
 			</div>
 		</ion-label>

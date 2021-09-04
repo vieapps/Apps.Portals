@@ -108,19 +108,24 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 					? [{ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }]
 					: [];
 				orderBy.push({ name: "LastModified", reverse: true });
-				this.contents = this.portalsCmsSvc.featuredContents.map(content => ({
-					ID: content.ID,
-					Title: content.Title,
-					Status: content.Status,
-					ThumbnailURI: content.thumbnailURI,
-					Created: new Date(content.Created),
-					LastModified: new Date(content.LastModified),
-					StartDate: new Date(content["StartDate"] || content.Created),
-					PublishedTime: new Date(content["PublishedTime"] || content.Created),
-					SystemID: content.SystemID,
-					Category: content["category"],
-					OriginalObject: content
-				} as FeaturedContent)).filter(filterBy).orderBy(orderBy).take(this.amount);
+				this.contents = this.portalsCmsSvc.featuredContents.map(content => {
+					const category = content["category"];
+					const contentType = content.contentType;
+					return {
+						ID: content.ID,
+						Title: content.Title,
+						Status: content.Status,
+						ThumbnailURI: content.thumbnailURI,
+						Created: new Date(content.Created),
+						LastModified: new Date(content.LastModified),
+						StartDate: new Date(content["StartDate"] || content.Created),
+						PublishedTime: new Date(content["PublishedTime"] || content.LastModified),
+						SystemID: content.SystemID,
+						Category: category,
+						ContentType: !!category ? undefined : !!contentType ? contentType.Title : undefined,
+						OriginalObject: content
+					} as FeaturedContent;
+				}).filter(filterBy).orderBy(orderBy).take(this.amount);
 			}
 			if (this.contents.length < 1) {
 				AppEvents.broadcast(this.portalsCoreSvc.name, { Type: "FeaturedContents", Mode: "Request" });
@@ -156,5 +161,6 @@ interface FeaturedContent {
 	PublishedTime: Date;
 	SystemID: string;
 	Category: Category;
+	ContentType: string;
 	OriginalObject: CmsBaseModel;
 }
