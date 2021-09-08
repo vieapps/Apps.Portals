@@ -108,9 +108,11 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 					? [{ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }]
 					: [];
 				orderBy.push({ name: "LastModified", reverse: true });
+				const gotModules = organization !== undefined && organization.modules.length > 1;
 				this.contents = this.portalsCmsSvc.featuredContents.map(content => {
-					const category = content["category"];
+					const module = gotModules && !!content.module ? `${content.module.Title} > ` : "";
 					const contentType = content.contentType;
+					const category = content["category"] as Category;
 					return {
 						ID: content.ID,
 						Title: content.Title,
@@ -121,8 +123,9 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 						StartDate: new Date(content["StartDate"] || content.Created),
 						PublishedTime: new Date(content["PublishedTime"] || content.LastModified),
 						SystemID: content.SystemID,
-						Category: category,
-						ContentType: !!category ? undefined : !!contentType ? contentType.Title : undefined,
+						Category: !!category ? `${module}${category.FullTitle}` : undefined,
+						CategoryTitle: !!category ? category.Title : undefined,
+						ContentType: !!category || !!!contentType ? undefined : module + contentType.Title,
 						OriginalObject: content
 					} as FeaturedContent;
 				}).filter(filterBy).orderBy(orderBy).take(this.amount);
@@ -145,7 +148,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		if (this.portalsCoreSvc.activeModule === undefined || this.portalsCoreSvc.activeModule.ID !== object.OriginalObject.RepositoryID) {
 			await this.portalsCoreSvc.getActiveModuleAsync(object.OriginalObject.RepositoryID);
 		}
-		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(object.OriginalObject.contentType, "view", object.Category ? object.Category.Title : undefined, { ID: object.ID }));
+		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(object.OriginalObject.contentType, "view", object.Category ? object.CategoryTitle : undefined, { ID: object.ID }));
 	}
 
 }
@@ -160,7 +163,8 @@ interface FeaturedContent {
 	StartDate: Date;
 	PublishedTime: Date;
 	SystemID: string;
-	Category: Category;
+	Category: string;
+	CategoryTitle: string;
 	ContentType: string;
 	OriginalObject: CmsBaseModel;
 }
