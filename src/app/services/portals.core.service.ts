@@ -1323,7 +1323,7 @@ export class PortalsCoreService extends BaseService {
 				Title: "{{portals.sidebar.content-types}}",
 				Link: this.getRouterLink(undefined, "list", "all", "content.type", "core"),
 				Direction: "root",
-				Icon: { Name: "git-compare", Color: "medium", Slot: "start" }
+				Icon: { Name: "git-branch", Color: "medium", Slot: "start" }
 			});
 
 			if (canModerateOrganization) {
@@ -1331,7 +1331,7 @@ export class PortalsCoreService extends BaseService {
 					Title: "{{portals.sidebar.expressions}}",
 					Link: this.getRouterLink(undefined, "list", "all", "expression", "core"),
 					Direction: "root",
-					Icon: { Name: "construct", Color: "medium", Slot: "start" }
+					Icon: { Name: "extension-puzzle", Color: "medium", Slot: "start" }
 				});
 			}
 
