@@ -1,8 +1,9 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
+import { CounterInfo } from "@app/models/counters";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
-export class Item extends CmsBaseModel {
+export class Form extends CmsBaseModel {
 
 	constructor(
 		systemID?: string,
@@ -11,20 +12,30 @@ export class Item extends CmsBaseModel {
 		status?: string
 	) {
 		super();
-		this.SystemID = AppUtility.isNotEmpty(systemID) ? systemID : "";
-		this.RepositoryID = AppUtility.isNotEmpty(repositoryID) ? repositoryID : "";
-		this.RepositoryEntityID = AppUtility.isNotEmpty(repositoryEntityID) ? repositoryEntityID : "";
+		this.SystemID = AppUtility.isNotEmpty(systemID) ? systemID : undefined as string;
+		this.RepositoryID = AppUtility.isNotEmpty(repositoryID) ? repositoryID : undefined as string;
+		this.RepositoryEntityID = AppUtility.isNotEmpty(repositoryEntityID) ? repositoryEntityID : undefined as string;
 		this.Status = AppUtility.isNotEmpty(status) ? status : "Published";
 	}
 
-	public static instances = new Dictionary<string, Item>();
+	public static instances = new Dictionary<string, Form>();
 
 	Title = undefined as string;
-	Summary = undefined as string;
-	Tags = undefined as string;
+	Details = undefined as string;
+	Name = undefined as string;
+	Phone = undefined as string;
+	Email = undefined as string;
+	Address = undefined as string;
+	County = undefined as string;
+	Province = undefined as string;
+	Postal = undefined as string;
+	Country = undefined as string;
+	Notes = undefined as string;
+	IPAddress = undefined as string;
+	Profiles = undefined as Dictionary<string, string>;
+	Counters = undefined as Dictionary<string, CounterInfo>;
 	Status = undefined as string;
 	AllowComments = false;
-	Alias = undefined as string;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;
@@ -36,20 +47,16 @@ export class Item extends CmsBaseModel {
 
 	ansiTitle: string;
 
-	/** Deserializes data to object */
-	public static deserialize(json: any, item?: Item) {
-		item = item || new Item();
-		item.copy(json, data => {
-			item.normalizeExtendedProperties(data);
-			if (AppUtility.isArray(data.Thumbnails, true)) {
-				item.updateThumbnails(data.Thumbnails);
-			}
-			if (AppUtility.isArray(data.Attachments, true)) {
-				item.updateAttachments(data.Attachments);
-			}
+	public static deserialize(json: any, form?: Form) {
+		form = form || new Form();
+		AppUtility.copy(json, form, data => {
+			form.Profiles = new Dictionary<string, string>();
+			AppUtility.toKeyValuePair(data.Profiles).forEach(kvp => form.Profiles.add(kvp.key, kvp.value));
+			form.Counters = new Dictionary<string, CounterInfo>();
+			AppUtility.toKeyValuePair(data.Counters).forEach(kvp => form.Counters.add(kvp.value.Type, CounterInfo.deserialize(kvp.value)));
 		});
-		item.ansiTitle = AppUtility.toANSI(item.Title).toLowerCase();
-		return item;
+		form.ansiTitle = AppUtility.toANSI(form.Title).toLowerCase();
+		return form;
 	}
 
 	/** Gets by identity */
@@ -60,14 +67,14 @@ export class Item extends CmsBaseModel {
 	}
 
 	/** Sets by identity */
-	public static set(item: Item) {
+	public static set(item: Form) {
 		return item === undefined ? undefined : this.instances.add(item.ID, item);
 	}
 
 	/** Updates into dictionary */
 	public static update(data: any) {
 		return AppUtility.isObject(data, true)
-			? this.set(data instanceof Item ? data as Item : this.deserialize(data, this.get(data.ID)))
+			? this.set(data instanceof Form ? data as Form : this.deserialize(data, this.get(data.ID)))
 			: undefined;
 	}
 
@@ -87,7 +94,7 @@ export class Item extends CmsBaseModel {
 	}
 
 	public get routerLink() {
-		return `/portals/cms/items/view/${AppUtility.toURI(this.ansiTitle)}`;
+		return `/portals/cms/forms/view/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
 }

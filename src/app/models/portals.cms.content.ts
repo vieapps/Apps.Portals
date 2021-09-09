@@ -20,7 +20,6 @@ export class Content extends CmsBaseModel {
 		this.StartDate = startDate !== undefined ? new Date(startDate) : undefined;
 	}
 
-	/** All instances of first 60 contents */
 	public static instances = new Dictionary<string, Content>();
 
 	Status = "Pending";

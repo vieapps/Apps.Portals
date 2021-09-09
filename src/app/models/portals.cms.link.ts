@@ -21,7 +21,6 @@ export class Link extends CmsBaseModel implements NestedObject {
 		this.Status = AppUtility.isNotEmpty(status) ? status : "Published";
 	}
 
-	/** All instances of first 60 links */
 	public static instances = new Dictionary<string, Link>();
 
 	ParentID = undefined as string;

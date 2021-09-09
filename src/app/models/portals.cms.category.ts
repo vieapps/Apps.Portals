@@ -19,7 +19,6 @@ export class Category extends CmsBaseModel implements NestedObject {
 		this.ParentID = AppUtility.isNotEmpty(parentID) ? parentID : "";
 	}
 
-	/** All instances of category */
 	public static instances = new Dictionary<string, Category>();
 
 	Status = undefined as string;
