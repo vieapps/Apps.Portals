@@ -45,7 +45,6 @@ export var RSA = function() {
 		var isNeg = s.charAt(0) == '-';
 		var i = isNeg ? 1 : 0;
 		var result;
-		// Skip leading zeros.
 		while (i < s.length && s.charAt(i) == '0') ++i;
 		if (i == s.length) {
 			result = new BigInt();
