@@ -54,7 +54,7 @@ export class Category extends CmsBaseModel implements NestedObject {
 	}
 
 	/** Gets by identity */
-	public static get(id: string) {
+	public static get(id: string): Category {
 		return AppUtility.isNotEmpty(id)
 			? this.instances.get(id)
 			: undefined;
