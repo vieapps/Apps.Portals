@@ -1,6 +1,5 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
-import { CounterInfo } from "@app/models/counters";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
 export class Form extends CmsBaseModel {
@@ -33,7 +32,6 @@ export class Form extends CmsBaseModel {
 	Notes = undefined as string;
 	IPAddress = undefined as string;
 	Profiles = undefined as Dictionary<string, string>;
-	Counters = undefined as Dictionary<string, CounterInfo>;
 	Status = undefined as string;
 	AllowComments = false;
 	Created = undefined as Date;
@@ -52,8 +50,6 @@ export class Form extends CmsBaseModel {
 		AppUtility.copy(json, form, data => {
 			form.Profiles = new Dictionary<string, string>();
 			AppUtility.toKeyValuePair(data.Profiles).forEach(kvp => form.Profiles.add(kvp.key, kvp.value));
-			form.Counters = new Dictionary<string, CounterInfo>();
-			AppUtility.toKeyValuePair(data.Counters).forEach(kvp => form.Counters.add(kvp.value.Type, CounterInfo.deserialize(kvp.value)));
 		});
 		form.ansiTitle = AppUtility.toANSI(form.Title).toLowerCase();
 		return form;

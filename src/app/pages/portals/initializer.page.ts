@@ -7,7 +7,7 @@ import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { Base as BaseModel } from "@app/models/base";
 import { Organization, Role, Site, Desktop, Portlet, Module, ContentType, Expression } from "@app/models/portals.core.all";
-import { Category, Content, Item, Link } from "@app/models/portals.cms.all";
+import { Category, Content, Item, Link, Form } from "@app/models/portals.cms.all";
 
 @Component({
 	selector: "page-portal-initializer",
@@ -154,6 +154,14 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							object = Link.get(objectID);
 							if (object === undefined) {
 								await this.portalsCmsSvc.getLinkAsync(objectID, _ => object = Link.get(objectID), undefined, true);
+							}
+							break;
+						case "form":
+						case "cms.form":
+							forward = true;
+							object = Form.get(objectID);
+							if (object === undefined) {
+								await this.portalsCmsSvc.getFormAsync(objectID, _ => object = Form.get(objectID), undefined, true);
 							}
 							break;
 					}

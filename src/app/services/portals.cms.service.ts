@@ -22,7 +22,7 @@ import { Account } from "@app/models/account";
 import { AttachmentInfo } from "@app/models/base";
 import { Organization, Module, ContentType, Desktop } from "@app/models/portals.core.all";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
-import { Category, Content, Item, Link } from "@app/models/portals.cms.all";
+import { Category, Content, Item, Link, Form } from "@app/models/portals.cms.all";
 
 @Injectable()
 export class PortalsCmsService extends BaseService {
@@ -72,6 +72,11 @@ export class PortalsCmsService extends BaseService {
 					case "CMS.Link":
 					case "Cms.Link":
 						this.processLinkUpdateMessage(message);
+						break;
+					case "Form":
+					case "CMS.Form":
+					case "Cms.Form":
+						this.processFormUpdateMessage(message);
 						break;
 					case "ContentType":
 					case "Content.Type":
@@ -1449,6 +1454,162 @@ export class PortalsCmsService extends BaseService {
 			}
 			Link.instances.toArray(link => link.ParentID === id).forEach(link => this.deleteLink(link.ID));
 			Link.instances.remove(id);
+		}
+	}
+
+	public getContentTypesOfForm(module: Module) {
+		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000005");
+	}
+
+	public getDefaultContentTypeOfForm(module: Module) {
+		return this.getContentTypesOfForm(module).first();
+	}
+
+	public get formCompleterDataSource() {
+		const convertToCompleterForm = (data: any) => {
+			const form = data !== undefined
+				? data instanceof Form
+					? data as Form
+					: Form.deserialize(data)
+				: undefined;
+			return form !== undefined
+				? { title: form.Title, description: form.Name, originalObject: form }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(this.getSearchingPath("cms.form", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => convertToCompleterForm(obj)),
+			convertToCompleterForm
+		);
+	}
+
+	public searchForms(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.search(
+			this.getSearchingPath("cms.form", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => Form.update(obj));
+				}
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while searching form items", error, onError)
+		);
+	}
+
+	public searchFormsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.searchAsync(
+			this.getSearchingPath("cms.form", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
+					(data.Objects as Array<any>).forEach(obj => Form.update(obj));
+					this._noContents.remove(data.Objects.first().SystemID);
+				}
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while searching form items", error, onError)
+		);
+	}
+
+	public createFormAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
+			this.getPath("cms.form"),
+			body,
+			data => {
+				Form.update(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while creating a form item", error, onError)
+		);
+	}
+
+	public async getFormAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return Form.contains(id)
+			? AppUtility.invoke(onSuccess)
+			: this.readAsync(
+					this.getPath("cms.form", id),
+					data => {
+						Form.update(data);
+						if (onSuccess !== undefined) {
+							onSuccess(data);
+						}
+					},
+					error => this.processError("Error occurred while getting a form item", error, onError),
+					undefined,
+					useXHR
+				);
+	}
+
+	public updateFormAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
+			this.getPath("cms.form", body.ID),
+			body,
+			data => {
+				Form.update(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while updating a form item", error, onError)
+		);
+	}
+
+	public deleteFormAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		return this.deleteAsync(
+			this.getPath("cms.form", id),
+			data => {
+				Form.instances.remove(data.ID);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while deleting a form item", error, onError),
+			headers
+		);
+	}
+
+	public refreshFormAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		return this.portalsCoreSvc.refreshAsync(
+			"cms.form",
+			id,
+			data => {
+				Form.update(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			onError,
+			headers,
+			true
+		);
+	}
+
+	private processFormUpdateMessage(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				Form.update(message.Data);
+				this._noContents.remove(message.Data.SystemID);
+				break;
+
+			case "Delete":
+				Form.instances.remove(message.Data.ID);
+				break;
+
+			default:
+				this.showLog("Got an update message of a CMS form", message);
+				break;
+		}
+
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+			AppEvents.broadcast(this.name, { Object: "CMS.Form", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
 		}
 	}
 
