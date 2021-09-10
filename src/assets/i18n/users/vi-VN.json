@@ -6,7 +6,7 @@
 				"title": "Đăng nhập",
 				"buttons": {
 					"login": "Đăng nhập",
-					"forgot": "Quên mật khẩu",
+					"forgot": "Quên mật khẩu?",
 					"register": "Đăng ký tài khoản"
 				},
 				"controls": {
@@ -19,7 +19,8 @@
 						"placeholder": "Địa chỉ email ..."
 					},
 					"Password": "Mật khẩu",
-					"SaveLogins": "Lưu đăng nhập"
+					"SaveLogins": "Lưu đăng nhập",
+					"OAuths": "Hoặc đăng nhập bằng"
 				}
 			},
 			"otp": {
@@ -39,6 +40,7 @@
 			"reset": {
 				"title": "Lấy mật khẩu mới",
 				"button": "Lấy mật khẩu",
+				"renew": "Đặt lại mật khẩu",
 				"controls": {
 					"Captcha": {
 						"label": "Mã xác thực",
@@ -47,9 +49,14 @@
 					}
 				},
 				"messages": {
-					"account": "Vui lòng kiểm tra email ({{account}}) và làm theo hướng dẫn để lấy mật khẩu mới!",
-					"sms": "Mật khẩu mới đã được thiết đặt và gửi qua SMS đến {{account}}"
+					"account": "Vui lòng kiểm tra email ({{account}}) và làm theo hướng dẫn để đặt lại mật khẩu đăng nhập!",
+					"sms": "Mật khẩu mới đã được thiết đặt và gửi qua SMS đến {{account}}",
+					"password": "Cần nhập lại đúng mật khẩu đăng nhập mới!"
 				}
+			},
+			"hints": {
+				"otp": "Nhập mã OTP",
+				"reset": "Điền thông tin tài khoản để đặt lại mật khẩu đăng nhập mới"
 			}
 		},
 		"register": {
@@ -100,11 +107,13 @@
 			},
 			"messages": {
 				"success": {
-					"account": "Tài khoản đã được kích hoạt thành công",
-					"password": "Mật khẩu đã được kích hoạt thành công"
+					"account": "Tài khoản đã được kích hoạt thành công!",
+					"password": "Mật khẩu đã được kích hoạt thành công!",
+					"email": "Email đã được kích hoạt thành công!",
+					"phone": "Số điện thoại đã được kích hoạt thành công!"
 				},
 				"error": {
-					"general": "Đã xảy ra lỗi, không thể kích hoạt{{error})",
+					"general": "Đã xảy ra lỗi, không thể kích hoạt {{error})",
 					"invalid": "Thông tin kích hoạt không hợp lệ {{mode}} - {{code}}]"
 				}
 			}

@@ -6,7 +6,7 @@
 				"title": "Login",
 				"buttons": {
 					"login": "Login",
-					"forgot": "Forgot password",
+					"forgot": "Forgot password?",
 					"register": "Register an account"
 				},
 				"controls": {
@@ -19,7 +19,8 @@
 						"placeholder": "Email address ..."
 					},
 					"Password": "Password",
-					"SaveLogins": "Save logins"
+					"SaveLogins": "Save logins",
+					"OAuths": "Or log in by"
 				}
 			},
 			"otp": {
@@ -39,6 +40,7 @@
 			"reset": {
 				"title": "Reset your password",
 				"button": "Reset",
+				"renew": "Reset password",
 				"controls": {
 					"Captcha": {
 						"label": "Captcha",
@@ -47,9 +49,14 @@
 					}
 				},
 				"messages": {
-					"account": "Please check your email ({{email}}) and follow the instructions to reset your password!",
-					"sms": "Please check SMS of ({{account}}) phone to known the new password!"
+					"account": "Please check your email ({{email}}) and follow the instructions to reset your new password!",
+					"sms": "Please check SMS of ({{account}}) phone to known the new password!",
+					"password": "Please re-type your new password correctly!"
 				}
+			},
+			"hints": {
+				"otp": "Enter the OTP code",
+				"reset": "Enter information to reset your password"
 			}
 		},
 		"register": {
@@ -100,11 +107,13 @@
 			},
 			"messages": {
 				"success": {
-					"account": "The account is activated",
-					"password": "The password is activated"
+					"account": "Your account was activated!",
+					"password": "Your password was activated!",
+					"email": "Your email was activated!",
+					"phone": "Your phone was activated!"
 				},
 				"error": {
-					"general": "Cannot activate{{error})",
+					"general": "Cannot activate {{error})",
 					"invalid": "Activating information is invalid {{mode}} - {{code}}]"
 				}
 			}
