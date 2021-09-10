@@ -310,14 +310,12 @@ export class CmsContentListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.contents.push(Content.get(o.ID) || Content.deserialize(o, Content.get(o.ID))));
+			this.contents.merge((results || []).map(object => Content.get(object.ID) || Content.deserialize(object, Content.get(object.ID))), true, (object, array) => array.findIndex(item => item.ID === object.ID));
 		}
 		else {
-			const predicate: (content: Content) => boolean = obj => obj.SystemID === this.organization.ID && (this.module !== undefined ? obj.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? obj.RepositoryEntityID === this.contentType.ID : true) && (this.category !== undefined ? obj.CategoryID === this.category.ID || (obj.OtherCategories !== undefined && obj.OtherCategories.indexOf(this.category.ID) > -1) : true);
-			let objects = results === undefined ? Content.instances.toArray(predicate) : Content.toArray(results).filter(predicate);
-			objects = objects.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true });
-			objects = results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects;
-			this.contents = results === undefined ? objects : this.contents.concat(objects);
+			const predicate: (content: Content) => boolean = object => object.SystemID === this.organization.ID && (this.module !== undefined ? object.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? object.RepositoryEntityID === this.contentType.ID : true) && (this.category !== undefined ? object.CategoryID === this.category.ID || (object.OtherCategories !== undefined && object.OtherCategories.indexOf(this.category.ID) > -1) : true);
+			const objects: Content[] = (results === undefined ? Content.instances.toArray(predicate) : Content.toArray(results).filter(predicate)).sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true });
+			this.contents.merge(results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects, true, (object, array) => array.findIndex(item => item.ID === object.ID));
 		}
 		if (onNext !== undefined) {
 			onNext();

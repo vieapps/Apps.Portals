@@ -250,15 +250,15 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	private prepareFilterBy(addParentID: boolean = true) {
 		this.filterBy.And = this.contentType !== undefined
 			? [
-					{ SystemID: { Equals: this.contentType.SystemID } },
-					{ RepositoryID: { Equals: this.contentType.RepositoryID } },
-					{ RepositoryEntityID: { Equals: this.contentType.ID } }
-				]
+				{ SystemID: { Equals: this.contentType.SystemID } },
+				{ RepositoryID: { Equals: this.contentType.RepositoryID } },
+				{ RepositoryEntityID: { Equals: this.contentType.ID } }
+			]
 			: this.module !== undefined
 				? [
-						{ SystemID: { Equals: this.module.SystemID } },
-						{ RepositoryID: { Equals: this.module.ID } }
-					]
+					{ SystemID: { Equals: this.module.SystemID } },
+					{ RepositoryID: { Equals: this.module.ID } }
+				]
 				: [{ SystemID: { Equals: this.organization.ID } }];
 		if (addParentID) {
 			this.filterBy.And.push({ ParentID: this.parentLink !== undefined ? { Equals: this.parentLink.ID } : "IsNull" });
@@ -353,20 +353,12 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.links.push(Link.get(o.ID) || Link.deserialize(o, Link.get(o.ID))));
+			this.links.merge((results || []).map(object => Link.get(object.ID) || Link.deserialize(object, Link.get(object.ID))), true, (object, array) => array.findIndex(item => item.ID === object.ID));
 		}
 		else {
-			const predicate: (link: Link) => boolean = obj => obj.SystemID === this.organization.ID && (this.module !== undefined ? obj.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? obj.RepositoryEntityID === this.contentType.ID : true) && obj.ParentID === this.parentID;
-			let objects = results === undefined
-				? Link.instances.toArray(predicate)
-				: Link.toArray(results).filter(predicate);
-			objects = objects.sortBy("OrderIndex", "Title");
-			if (results === undefined && this.pagination !== undefined) {
-				objects = objects.take(this.pageNumber * this.pagination.PageSize);
-			}
-			this.links = results === undefined
-				? objects
-				: this.links.concat(objects);
+			const predicate: (link: Link) => boolean = object => object.SystemID === this.organization.ID && (this.module !== undefined ? object.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? object.RepositoryEntityID === this.contentType.ID : true) && object.ParentID === this.parentID;
+			const objects: Link[] = (results === undefined ? Link.instances.toArray(predicate) : Link.toArray(results).filter(predicate)).sortBy("OrderIndex", "Title");
+			this.links.merge(results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects, true, (object, array) => array.findIndex(item => item.ID === object.ID));
 		}
 		if (onNext !== undefined) {
 			onNext();

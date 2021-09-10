@@ -300,14 +300,12 @@ export class CmsItemListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.items.push(Item.get(o.ID) || Item.deserialize(o, Item.get(o.ID))));
+			this.items.merge((results || []).map(object => Item.get(object.ID) || Item.deserialize(object, Item.get(object.ID))), true, (object, array) => array.findIndex(item => item.ID === object.ID));
 		}
 		else {
-			const predicate: (item: Item) => boolean = obj => obj.SystemID === this.organization.ID && (this.module !== undefined ? obj.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? obj.RepositoryEntityID === this.contentType.ID : true);
-			let objects = results === undefined ? Item.instances.toArray(predicate) : Item.toArray(results).filter(predicate);
-			objects = objects.sortBy({ name: "Created", reverse: true });
-			objects = results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects;
-			this.items = results === undefined ? objects : this.items.concat(objects);
+			const predicate: (item: Item) => boolean = object => object.SystemID === this.organization.ID && (this.module !== undefined ? object.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? object.RepositoryEntityID === this.contentType.ID : true);
+			const objects: Item[] = (results === undefined ? Item.instances.toArray(predicate) : Item.toArray(results).filter(predicate)).sortBy({ name: "Created", reverse: true });
+			this.items.merge(results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects, true, (object, array) => array.findIndex(item => item.ID === object.ID));
 		}
 		if (onNext !== undefined) {
 			onNext();

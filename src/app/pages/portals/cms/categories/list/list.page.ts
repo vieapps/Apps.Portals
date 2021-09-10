@@ -359,20 +359,12 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	private prepareResults(onNext?: () => void, results?: Array<any>) {
 		if (this.searching) {
-			(results || []).forEach(o => this.categories.push(Category.get(o.ID) || Category.deserialize(o, Category.get(o.ID))));
+			this.categories.merge((results || []).map(object => Category.get(object.ID) || Category.deserialize(object, Category.get(object.ID))), true, (object, array) => array.findIndex(item => item.ID === object.ID));
 		}
 		else {
 			const predicate: (category: Category) => boolean = obj => obj.SystemID === this.organization.ID && (this.module !== undefined ? obj.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? obj.RepositoryEntityID === this.contentType.ID : true) && obj.ParentID === this.parentID;
-			let objects = results === undefined
-				? Category.instances.toArray(predicate)
-				: Category.toArray(results).filter(predicate);
-			objects = objects.sortBy("OrderIndex", "Title");
-			if (results === undefined && this.pagination !== undefined) {
-				objects = objects.take(this.pageNumber * this.pagination.PageSize);
-			}
-			this.categories = results === undefined
-				? objects
-				: this.categories.concat(objects);
+			const objects: Category[] = (results === undefined ? Category.instances.toArray(predicate) : Category.toArray(results).filter(predicate)).sortBy("OrderIndex", "Title");
+			this.categories.merge(results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects, true, (object, array) => array.findIndex(item => item.ID === object.ID));
 		}
 		if (onNext !== undefined) {
 			onNext();
