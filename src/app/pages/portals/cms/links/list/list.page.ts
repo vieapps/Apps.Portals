@@ -210,6 +210,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 
 			this.parentID = this.configSvc.requestParams["ParentID"];
 			this.parentLink = Link.get(this.parentID);
+			this.prepareFilterBy();
 
 			if (this.parentLink !== undefined) {
 				this.contentType = this.parentLink.contentType;
@@ -225,7 +226,6 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 				}, `CMS.Links:${this.parentLink.ID}:Refresh`);
 			}
 			else {
-				this.prepareFilterBy();
 				this.prepareTitleAsync().then(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync()));
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					const args = info.args;

@@ -216,13 +216,13 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 			this.parentID = this.configSvc.requestParams["ParentID"];
 			this.parentCategory = Category.get(this.parentID);
+			this.prepareFilterBy();
 
 			if (this.parentCategory !== undefined) {
 				this.contentType = this.parentCategory.contentType;
 				this.module = this.parentCategory.module;
 				this.organization = this.parentCategory.organization;
 				this.prepareCategories();
-				this.prepareFilterBy();
 				this.prepareTitleAsync().then(() => this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					const args = info.args;
@@ -232,7 +232,6 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 				}, `CMS.Categories:${this.parentCategory.ID}:Refresh`);
 			}
 			else {
-				this.prepareFilterBy();
 				this.prepareTitleAsync().then(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync()));
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					const args = info.args;
