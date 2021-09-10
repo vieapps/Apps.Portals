@@ -382,6 +382,7 @@ export class AppComponent implements OnInit {
 			Children: gotChildren ? (args.Children as Array<any>).map(item => this.getSidebarMainMenuItem(item)) : [],
 			Expanded: expanded !== undefined ? expanded : gotChildren && !!args.Expanded,
 			Detail: !gotChildren && !!args.Detail,
+			Badge: args.Badge !== undefined && +args.Badge > 0 ? +args.Badge : 0,
 			Thumbnail: args.Thumbnail,
 			Icon: args.Icon,
 			OnClick: typeof args.OnClick === "function"

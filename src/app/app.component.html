@@ -42,6 +42,7 @@
 							<ion-icon *ngIf="!!item.Icon && !!item.Icon.Name" [name]="item.Icon.Name" [color]="item.Icon.Color" [slot]="item.Icon.Slot"></ion-icon>
 							<ion-label>
 								{{ item.Title }}
+								<ion-badge *ngIf="!!item.Badge" [class.big]="item.Badge > 9" color="danger">{{ item.Badge > 9 ? '9+' : item.Badge }}</ion-badge>
 							</ion-label>
 						</ion-item>
 					</ion-menu-toggle>
@@ -54,6 +55,7 @@
 									<img [src]="menu.Parent.Thumbnail" />
 								</ion-thumbnail>
 								{{ menu.Parent.Title }}
+								<ion-badge *ngIf="!!menu.Parent.Badge" [class.big]="menu.Parent.Badge > 9" color="danger">{{ menu.Parent.Badge > 9 ? '9+' : menu.Parent.Badge }}</ion-badge>
 							</ion-label>
 						</ion-list-header>
 						<div *ngFor="let item of menu.Items; let itemIndex=index; trackBy: trackSidebarItem">
@@ -61,6 +63,7 @@
 								<ion-icon *ngIf="!!item.Icon && !!item.Icon.Name" [name]="item.Icon.Name" [color]="item.Icon.Color" [slot]="item.Icon.Slot" (click)="item.OnClick({ menuIndex: menuIndex, itemIndex: itemIndex, expand: true }, sidebar, $event)"></ion-icon>
 								<ion-label>
 									{{ item.Title }}
+									<ion-badge *ngIf="!!item.Badge" [class.big]="item.Badge > 9" color="danger">{{ item.Badge > 9 ? '9+' : item.Badge }}</ion-badge>
 								</ion-label>
 							</ion-item>
 							<ion-list *ngIf="!!item.Children && item.Children.length > 0" [hidden]="!item.Expanded" class="children">
@@ -68,6 +71,7 @@
 									<ion-icon *ngIf="!!child.Icon && !!child.Icon.Name" [name]="child.Icon.Name" [color]="child.Icon.Color" [slot]="child.Icon.Slot" (click)="child.OnClick({ menuIndex: menuIndex, itemIndex: itemIndex, childIndex: childIndex, expand: true }, sidebar, $event)"></ion-icon>
 									<ion-label>
 										{{ child.Title }}
+										<ion-badge *ngIf="!!child.Badge" [class.big]="child.Badge > 9" color="danger">{{ child.Badge > 9 ? '9+' : child.Badge }}</ion-badge>
 									</ion-label>
 								</ion-item>
 							</ion-list>

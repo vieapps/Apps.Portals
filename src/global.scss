@@ -109,8 +109,9 @@ ion-footer ion-toolbar {
 	margin-top: 7px;
 }
 
-/* badges on toolbars */
-ion-toolbar ion-badge {
+/* badges */
+ion-toolbar ion-badge,
+ion-menu > ion-content > ion-list ion-badge {
   position: absolute;
   top: -5px;
   right: -6px;
@@ -118,7 +119,8 @@ ion-toolbar ion-badge {
   --padding-start: 5px;
   --padding-end: 5px;
 }
-ion-toolbar ion-badge.big {
+ion-toolbar ion-badge.big,
+ion-menu > ion-content > ion-list ion-badge.big {
   --padding-end: 3px;
 }
 

@@ -40,6 +40,7 @@ export interface AppSidebarMenuItem {
 	Children?: Array<AppSidebarMenuItem>;
 	Expanded?: boolean;
 	Detail?: boolean;
+	Badge?: number;
 	ID?: string;
 	Thumbnail?: string;
 	Icon?: {
