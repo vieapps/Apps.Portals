@@ -21,8 +21,7 @@ import { FilesProcessorModalPage } from "@app/controls/common/file.processor.mod
 import { Account } from "@app/models/account";
 import { AttachmentInfo } from "@app/models/base";
 import { Organization, Module, ContentType, Desktop } from "@app/models/portals.core.all";
-import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
-import { Category, Content, Item, Link, Form } from "@app/models/portals.cms.all";
+import { Category, Content, Item, Link, Form, PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.all";
 
 @Injectable()
 export class PortalsCmsService extends BaseService {

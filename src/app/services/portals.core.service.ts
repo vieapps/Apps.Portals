@@ -7,7 +7,7 @@ import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppCustomCompleter } from "@app/components/app.completer";
 import { AppPagination } from "@app/components/app.pagination";
-import { AppSidebar, AppSidebarMenuItem, AppSidebarFooterItem, AppMessage, AppDataRequest, AppDataPagination } from "@app/components/app.objects";
+import { AppSidebar, AppSidebarMenuItem, AppMessage, AppDataRequest, AppDataPagination } from "@app/components/app.objects";
 import { AppFormsControlConfig, AppFormsControlLookupOptionsConfig, AppFormsLookupValue, AppFormsControl } from "@app/components/forms.objects";
 import { AppFormsControlComponent } from "@app/components/forms.control.component";
 import { AppFormsService } from "@app/components/forms.service";
