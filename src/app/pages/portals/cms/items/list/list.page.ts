@@ -22,7 +22,7 @@ import { Item } from "@app/models/portals.cms.item";
 	styleUrls: ["./list.page.scss"]
 })
 
-export class CmsItemListPage implements OnInit, OnDestroy, ViewDidEnter {
+export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	constructor(
 		private configSvc: ConfigurationService,
