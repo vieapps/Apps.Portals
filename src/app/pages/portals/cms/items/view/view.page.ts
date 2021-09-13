@@ -353,7 +353,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 						.then(() => this.trackAsync(this.resources.delete, "Delete"))
 						.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
 				},
-				error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.resources.deleteThumbnail, "Delete"))
+				error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.resources.delete, "Delete"))
 			)),
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
