@@ -39,7 +39,8 @@
 			"continue": "Tiếp theo",
 			"later": "Để sau",
 			"login": "Đăng nhập",
-			"logout": "Đăng xuất"
+			"logout": "Đăng xuất",
+			"submit": "Gửi"
 		},
 		"messages": {
 			"loading": "Tải dữ liệu...",

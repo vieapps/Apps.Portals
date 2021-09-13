@@ -400,6 +400,66 @@
 						"remove": "Đồng ý xoá"
 					}
 				}
+			},
+			"forms": {
+				"title": {
+					"list": "Thông tin yêu cầu",
+					"search": "Tìm kiếm thông tin yêu cầu",
+					"create": "Tạo mới yêu cầu",
+					"update": "Cập nhật yêu cầu",
+					"view": "Chi tiết yêu cầu"
+				},
+				"controls": {
+					"Name": {
+						"label": "Họ Tên",
+						"placeholder": "",
+						"description": ""
+					},
+					"Phone": {
+						"label": "Điện thoại",
+						"placeholder": "",
+						"description": ""
+					},
+					"Email": {
+						"label": "Email",
+						"placeholder": "",
+						"description": ""
+					},
+					"Address": {
+						"label": "Địa chỉ",
+						"placeholder": "",
+						"description": ""
+					},
+					"Postal": {
+						"label": "Mã bưu chính",
+						"placeholder": "",
+						"description": ""
+					},
+					"Notes": {
+						"label": "Ghi chú",
+						"placeholder": "",
+						"description": ""
+					},
+					"Title": {
+						"label": "Tiêu đề",
+						"placeholder": "",
+						"description": ""
+					},
+					"Details": {
+						"label": "Chi tiết",
+						"placeholder": "",
+						"description": ""
+					},
+					"Profiles": {
+						"label": "Tài khoản",
+						"placeholder": "",
+						"description": ""
+					}
+				},
+				"messages": {
+					"success": "Yêu cầu đã được gửi thành công!",
+					"error": "Đã xảy ra lỗi!"
+				}
 			}
 		}
 	}

@@ -39,7 +39,8 @@
 			"continue": "Continue",
 			"later": "Later",
 			"login": "Log In",
-			"logout": "Log Out"
+			"logout": "Log Out",
+			"submit": "Submit"
 		},
 		"messages": {
 			"loading": "Loading...",
