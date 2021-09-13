@@ -49,7 +49,6 @@ export class UserProfileBase extends BaseModel {
 	IsOnline = false;
 
 	ansiTitle = "";
-	fullAddress = "";
 
 	/** Deserializes data to object */
 	public static deserialize(json: any, profile?: UserProfileBase) {
@@ -98,15 +97,18 @@ export class UserProfileBase extends BaseModel {
 		return `${AppConfig.URLs.users.profile}/${AppUtility.toANSI(this.Name, true)}`;
 	}
 
+	public get fullAddress() {
+		return this.Address
+			+ (AppUtility.isNotEmpty(this.Province) ? (AppUtility.isNotEmpty(this.Address) ? ", " : "")
+			+ this.County + ", " + this.Province + ", " + this.Country : "");
+	}
+
 	public copy(source: any, onCompleted?: (data: any) => void) {
 		super.copy(source, data => {
 			if (AppUtility.isNotEmpty(this.BirthDay)) {
 				this.BirthDay = this.BirthDay.replace(/--/g, "01").replace(/\//g, "-");
 			}
-			this.fullAddress = this.Address
-				+ (AppUtility.isNotEmpty(this.Province) ? (AppUtility.isNotEmpty(this.Address) ? ", " : "")
-				+ this.County + ", " + this.Province + ", " + this.Country : "");
-				this.ansiTitle = AppUtility.toANSI(this.Name + " " + this.fullAddress + " " + this.Email + " " + this.Mobile).toLowerCase();
+			this.ansiTitle = AppUtility.toANSI(this.Name + " " + this.fullAddress + " " + this.Email + " " + this.Mobile).toLowerCase();
 			if (onCompleted !== undefined) {
 				onCompleted(data);
 			}
