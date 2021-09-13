@@ -259,6 +259,7 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 		}
 		modalProperties["section"] = section;
 		modalProperties["multiple"] = true;
+		modalProperties["allowVisitorInContributiveSection"] = true;
 
 		return this.appFormsSvc.showModalAsync(this.rolesSelector.modalComponent, modalProperties, async roles => {
 			this.privileges.getRoles(section).update(roles as Array<string>);
