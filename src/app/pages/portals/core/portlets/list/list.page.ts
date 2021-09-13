@@ -174,8 +174,9 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		}
 
 		AppEvents.on(this.portalsCoreSvc.name, info => {
-			if (info.args.Object === "Portlet") {
-				this.do(this.desktop !== undefined && this.desktop.ID === info.args.DesktopID ? () => this.preparePortlets() : () => this.prepareResults());
+			const args = info.args;
+			if (args.Object === "Portlet") {
+				this.do(this.desktop !== undefined && this.desktop.ID === args.DesktopID ? () => this.preparePortlets() : () => this.prepareResults());
 			}
 		}, "Portlets:Refresh");
 	}

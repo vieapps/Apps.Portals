@@ -2173,16 +2173,7 @@ export class PortalsCoreService extends BaseService {
 				const portlet = Portlet.update(message.Data);
 				desktop = Desktop.get(message.Data.DesktopID);
 				if (desktop !== undefined && desktop.portlets !== undefined) {
-					const index = desktop.portlets.findIndex(p => p.ID === message.Data.ID);
-					if (index < 0) {
-						desktop.portlets.push(portlet);
-					}
-					else {
-						desktop.portlets[index] = portlet;
-					}
-				}
-				if  (this.configSvc.appConfig.isDebug) {
-					console.log(`Update a portlet into a desktop [Portlet: ${message.Data.ID} (${portlet.Title}) - Desktop: ${(desktop !== undefined ? desktop.FullTitle : "None")}]`, portlet, desktop);
+					desktop.portlets.update(portlet, desktop.portlets.findIndex(p => p.ID === portlet.ID));
 				}
 				break;
 
@@ -2191,9 +2182,6 @@ export class PortalsCoreService extends BaseService {
 				desktop = Desktop.get(message.Data.DesktopID);
 				if (desktop !== undefined && desktop.portlets !== undefined) {
 					desktop.portlets.removeAt(desktop.portlets.findIndex(p => p.ID === message.Data.ID));
-				}
-				if  (this.configSvc.appConfig.isDebug) {
-					console.log(`Delete a portlet from a desktop [Portlet ID: ${message.Data.ID} - Desktop: ${(desktop !== undefined ? desktop.FullTitle : "None")}]`, desktop);
 				}
 				break;
 
