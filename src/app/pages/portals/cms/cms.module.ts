@@ -19,6 +19,10 @@ export const routes: Routes = [
 	{
 		path: "links",
 		loadChildren: "@app/pages/portals/cms/links/links.module#CmsLinksModule"
+	},
+	{
+		path: "forms",
+		loadChildren: "@app/pages/portals/cms/forms/forms.module#CmsFormsModule"
 	}
 ];
 

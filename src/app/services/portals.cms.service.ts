@@ -550,7 +550,8 @@ export class PortalsCmsService extends BaseService {
 
 	private getFeaturedContentsAsync(contentTypes: Array<ContentType>, index: number) {
 		const contentType = contentTypes[index];
-		const isCmsItem = contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000002";
+		const isCmsItem = contentType.ContentTypeDefinitionID === "B0000000000000000000000000000003";
+		const isCmsForm = contentType.ContentTypeDefinitionID === "B0000000000000000000000000000005";
 		const request = AppPagination.buildRequest(
 			{ And: [
 				{ SystemID: { Equals: contentType.SystemID } },
@@ -572,13 +573,20 @@ export class PortalsCmsService extends BaseService {
 			this.showError(`Error occurred while preparing featured contents\n${contentType.Title} @ ${organization.Title}`, error);
 			onSuccess();
 		};
-		return isCmsItem ? this.searchItemsAsync(request, onSuccess, onError) : this.searchContentsAsync(request, onSuccess, onError);
+		return isCmsItem
+			? this.searchItemsAsync(request, onSuccess, onError)
+			: isCmsForm
+				? this.searchFormsAsync(request, onSuccess, onError)
+				: this.searchContentsAsync(request, onSuccess, onError);
 	}
 
 	private prepareFeaturedContents(systemID: string) {
+		const cmsForms = Form.instances.toArray(object => object.SystemID === systemID);
 		const cmsItems = Item.instances.toArray(object => object.SystemID === systemID);
 		const cmsContents = Content.instances.toArray(object => object.SystemID === systemID);
 		this._featuredContents.set(systemID, new Dictionary<string, CmsBaseModel>()
+			.merge(cmsForms.sortBy({ name: "LastModified", reverse: true }).take(20), object => object.ID)
+			.merge(cmsForms.sortBy({ name: "Created", reverse: true }).take(20), object => object.ID)
 			.merge(cmsItems.sortBy({ name: "LastModified", reverse: true }).take(20), object => object.ID)
 			.merge(cmsItems.sortBy({ name: "Created", reverse: true }).take(20), object => object.ID)
 			.merge(cmsContents.sortBy({ name: "LastModified", reverse: true }).take(20), object => object.ID)
@@ -586,7 +594,7 @@ export class PortalsCmsService extends BaseService {
 			.toArray());
 		this._noContents.remove(systemID);
 		AppEvents.broadcast(this.name, { Type: "FeaturedContents", Mode: "Prepared", ID: systemID });
-}
+	}
 
 	private async prepareFeaturedContentsAsync(allActiveOrganizations: boolean = true) {
 		if (this.configSvc.isAuthenticated) {
@@ -595,7 +603,7 @@ export class PortalsCmsService extends BaseService {
 			if (activeOrganization !== undefined) {
 				const activeContentTypes = new Array<ContentType>();
 				activeOrganization.modules.forEach(module => {
-					activeContentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module));
+					activeContentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module)).merge(this.getContentTypesOfForm(module));
 					categoryContentTypes.merge(this.getContentTypesOfCategory(module));
 				});
 				AppUtility.invoke(activeContentTypes.length > 0 ? () => this.getFeaturedContentsAsync(activeContentTypes, 0) : undefined);
@@ -607,7 +615,7 @@ export class PortalsCmsService extends BaseService {
 				}
 				const availableContentTypes = new Array<ContentType>();
 				availableOrganizations.forEach(organization => organization.modules.forEach(module => {
-					availableContentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module));
+					availableContentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module)).merge(this.getContentTypesOfForm(module));
 					categoryContentTypes.merge(this.getContentTypesOfCategory(module));
 				}));
 				AppUtility.invoke(availableContentTypes.length > 0 ? () => this.getFeaturedContentsAsync(availableContentTypes, 0) : undefined, 12345);
