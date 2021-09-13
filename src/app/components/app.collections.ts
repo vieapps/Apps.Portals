@@ -206,7 +206,7 @@ Array.prototype.sortBy = function<T>(this: T[], ...sorts: Array<string | { name:
 };
 
 Array.prototype.first = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
-	return predicate !== undefined ? this.find(predicate) : this.length > 0 ? this[0] : undefined;
+	return predicate !== undefined ? this.find(predicate) : this.slice(0, 1).pop();
 };
 
 Array.prototype.firstOrDefault = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
@@ -214,8 +214,7 @@ Array.prototype.firstOrDefault = function<T>(this: T[], predicate?: (value: T, i
 };
 
 Array.prototype.last = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
-	const array = predicate !== undefined ? this.filter(predicate) : this;
-	return array.length > 0 ? array[array.length - 1] : undefined;
+	return (predicate !== undefined ? this.filter(predicate) : this).slice(-1).pop();
 };
 
 Array.prototype.lastOrDefault = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
@@ -223,8 +222,8 @@ Array.prototype.lastOrDefault = function<T>(this: T[], predicate?: (value: T, in
 };
 
 Array.prototype.previousLast = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean): T {
-	const array = predicate !== undefined ? this.filter(predicate) : this;
-	return array.length > 1 ? array[array.length - 2] : undefined;
+	const array = (predicate !== undefined ? this.filter(predicate) : this).slice(-2);
+	return array.length > 1 ? array.first() : undefined;
 };
 
 Array.prototype.toList = function<T>(this: T[], predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): List<T> {
