@@ -424,160 +424,138 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 				this.configSvc.navigateBackAsync();
 			}
 			else {
-				this.processing = true;
-				this.appFormsSvc.showLoadingAsync(this.title);
+				this.appFormsSvc.showLoadingAsync(this.title).then(() => {
+					this.processing = true;
+					const contentType = this.form.value;
+					contentType.OriginalPrivileges = Privileges.getPrivileges(contentType.OriginalPrivileges);
+					this.portalsCoreSvc.normalizeNotificationSettings(contentType.Notifications, this.emailsByApprovalStatus);
+					this.portalsCoreSvc.normalizeEmailSettings(contentType.EmailSettings);
 
-				const contentType = this.form.value;
-				contentType.OriginalPrivileges = Privileges.getPrivileges(contentType.OriginalPrivileges);
-				this.portalsCoreSvc.normalizeNotificationSettings(contentType.Notifications, this.emailsByApprovalStatus);
-				this.portalsCoreSvc.normalizeEmailSettings(contentType.EmailSettings);
-
-				if (this.extendable && this.isAdvancedMode) {
-					if (AppUtility.isNotEmpty(contentType.ExtendedPropertyDefinitions)) {
-						try {
-							contentType.ExtendedPropertyDefinitions = AppUtility.parse(contentType.ExtendedPropertyDefinitions);
-							if (!AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
-								throw new Error("JSON is not array");
+					if (this.extendable && this.isAdvancedMode) {
+						if (AppUtility.isNotEmpty(contentType.ExtendedPropertyDefinitions)) {
+							try {
+								contentType.ExtendedPropertyDefinitions = AppUtility.parse(contentType.ExtendedPropertyDefinitions);
+								if (!AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
+									throw new Error("JSON is not array");
+								}
+							}
+							catch (error) {
+								this.processing = false;
+								console.error("Error occurred while parsing JSON of extended property definitions", error);
+								AppUtility.invoke(async () => this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.json.extendedProperty") }, undefined, _ => {
+									const control = this.formControls.find(ctrl => ctrl.Name === "ExtendedPropertyDefinitions");
+									this.formSegments.current = control.Segment;
+									control.focus();
+								}));
+								return;
 							}
 						}
-						catch (error) {
-							this.processing = false;
-							console.error("Error occurred while parsing JSON of extended property definitions", error);
-							AppUtility.invoke(async () => this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.json.extendedProperty") }, undefined, _ => {
-								const control = this.formControls.find(ctrl => ctrl.Name === "ExtendedPropertyDefinitions");
-								this.formSegments.current = control.Segment;
-								control.focus();
-							}));
-							return;
+						else {
+							contentType.ExtendedPropertyDefinitions = undefined;
 						}
+
+						if (AppUtility.isNotEmpty(contentType.ExtendedControlDefinitions)) {
+							try {
+								contentType.ExtendedControlDefinitions = AppUtility.parse(contentType.ExtendedControlDefinitions);
+								if (!AppUtility.isArray(contentType.ExtendedControlDefinitions, true)) {
+									throw new Error("JSON is not array");
+								}
+							}
+							catch (error) {
+								this.processing = false;
+								console.error("Error occurred while parsing JSON of extended control definitions", error);
+								AppUtility.invoke(async () => this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.json.extendedControl") }, undefined, _ => {
+									const control = this.formControls.find(ctrl => ctrl.Name === "ExtendedControlDefinitions");
+									this.formSegments.current = control.Segment;
+									control.focus();
+								}));
+								return;
+							}
+						}
+						else {
+							contentType.ExtendedControlDefinitions = undefined;
+						}
+
+						if (contentType.ExtendedPropertyDefinitions !== undefined) {
+							const extendedPropertyDefinitions: Array<ExtendedPropertyDefinition> = contentType.ExtendedPropertyDefinitions;
+							const extendedControlDefinitions: Array<ExtendedControlDefinition> = contentType.ExtendedControlDefinitions;
+
+							let gotError = false;
+							if (extendedControlDefinitions === undefined || extendedControlDefinitions.length !== extendedPropertyDefinitions.length) {
+								gotError = true;
+							}
+
+							if (!gotError) {
+								const names = new HashSet<string>(extendedPropertyDefinitions.map(definition => definition.Name));
+								let index = 0;
+								while (!gotError && index < extendedControlDefinitions.length) {
+									gotError = !names.contains(extendedControlDefinitions[index].Name);
+									index++;
+								}
+							}
+
+							if (gotError) {
+								this.processing = false;
+								console.error("JSON of extended property definition is not matched with JSON of extended control definitions");
+								AppUtility.invoke(async () => this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.json.extendedNotMatched") }, undefined, _ => {
+									const control = this.formControls.find(ctrl => ctrl.Name === "ExtendedPropertyDefinitions");
+									this.formSegments.current = control.Segment;
+									control.focus();
+								}));
+								return;
+							}
+						}
+
+						if (AppUtility.isNotEmpty(contentType.StandardControlDefinitions)) {
+							try {
+								contentType.StandardControlDefinitions = AppUtility.parse(contentType.StandardControlDefinitions);
+								if (!AppUtility.isArray(contentType.StandardControlDefinitions, true)) {
+									throw new Error("JSON is not array");
+								}
+							}
+							catch (error) {
+								this.processing = false;
+								console.error("Error occurred while parsing JSON of standard control definitions", error);
+								AppUtility.invoke(async () => this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.json.standardControl") }, undefined, _ => {
+									const control = this.formControls.find(ctrl => ctrl.Name === "StandardControlDefinitions");
+									this.formSegments.current = control.Segment;
+									control.focus();
+								}));
+								return;
+							}
+						}
+						else {
+							contentType.StandardControlDefinitions = undefined;
+						}
+					}
+
+					if (AppUtility.isNotEmpty(contentType.ID)) {
+						this.portalsCoreSvc.updateContentTypeAsync(
+							contentType,
+							data => {
+								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Updated", ID: data.ID });
+								this.configSvc.removeDefinition(this.portalsCoreSvc.name, ContentType.get(data.ID).getObjectName(true), undefined, { "x-content-type-id": data.ID });
+								this.configSvc.removeDefinition(this.portalsCoreSvc.name, ContentType.get(data.ID).getObjectName(true), undefined, { "x-content-type-id": data.ID, "x-view-controls": "x" });
+								this.trackAsync(this.title, "Update")
+									.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.update")))
+									.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
+							},
+							error => this.trackAsync(this.title, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
+						);
 					}
 					else {
-						contentType.ExtendedPropertyDefinitions = undefined;
+						this.portalsCoreSvc.createContentTypeAsync(
+							contentType,
+							data => {
+								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Created", ID: data.ID });
+								this.trackAsync(this.title)
+									.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.new")))
+									.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
+							},
+							error => this.trackAsync(this.title).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
+						);
 					}
-
-					if (AppUtility.isNotEmpty(contentType.ExtendedControlDefinitions)) {
-						try {
-							contentType.ExtendedControlDefinitions = AppUtility.parse(contentType.ExtendedControlDefinitions);
-							if (!AppUtility.isArray(contentType.ExtendedControlDefinitions, true)) {
-								throw new Error("JSON is not array");
-							}
-						}
-						catch (error) {
-							this.processing = false;
-							console.error("Error occurred while parsing JSON of extended control definitions", error);
-							AppUtility.invoke(async () => this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.json.extendedControl") }, undefined, _ => {
-								const control = this.formControls.find(ctrl => ctrl.Name === "ExtendedControlDefinitions");
-								this.formSegments.current = control.Segment;
-								control.focus();
-							}));
-							return;
-						}
-					}
-					else {
-						contentType.ExtendedControlDefinitions = undefined;
-					}
-
-					if (contentType.ExtendedPropertyDefinitions !== undefined) {
-						const extendedPropertyDefinitions: Array<ExtendedPropertyDefinition> = contentType.ExtendedPropertyDefinitions;
-						const extendedControlDefinitions: Array<ExtendedControlDefinition> = contentType.ExtendedControlDefinitions;
-
-						let gotError = false;
-						if (extendedControlDefinitions === undefined || extendedControlDefinitions.length !== extendedPropertyDefinitions.length) {
-							gotError = true;
-						}
-
-						if (!gotError) {
-							const names = new HashSet<string>(extendedPropertyDefinitions.map(definition => definition.Name));
-							let index = 0;
-							while (!gotError && index < extendedControlDefinitions.length) {
-								gotError = !names.contains(extendedControlDefinitions[index].Name);
-								index++;
-							}
-						}
-
-						if (gotError) {
-							this.processing = false;
-							console.error("JSON of extended property definition is not matched with JSON of extended control definitions");
-							AppUtility.invoke(async () => this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.json.extendedNotMatched") }, undefined, _ => {
-								const control = this.formControls.find(ctrl => ctrl.Name === "ExtendedPropertyDefinitions");
-								this.formSegments.current = control.Segment;
-								control.focus();
-							}));
-							return;
-						}
-					}
-
-					if (AppUtility.isNotEmpty(contentType.StandardControlDefinitions)) {
-						try {
-							contentType.StandardControlDefinitions = AppUtility.parse(contentType.StandardControlDefinitions);
-							if (!AppUtility.isArray(contentType.StandardControlDefinitions, true)) {
-								throw new Error("JSON is not array");
-							}
-						}
-						catch (error) {
-							this.processing = false;
-							console.error("Error occurred while parsing JSON of standard control definitions", error);
-							AppUtility.invoke(async () => this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.json.standardControl") }, undefined, _ => {
-								const control = this.formControls.find(ctrl => ctrl.Name === "StandardControlDefinitions");
-								this.formSegments.current = control.Segment;
-								control.focus();
-							}));
-							return;
-						}
-					}
-					else {
-						contentType.StandardControlDefinitions = undefined;
-					}
-
-					if (contentType.StandardControlDefinitions !== undefined) {
-						let gotError = false;
-						const standardControlDefinitions: Array<StandardControlDefinition> = contentType.StandardControlDefinitions;
-						const names = new HashSet<string>(this.formControls.filter(ctrl => !ctrl.Hidden).map(ctrl => ctrl.Name));
-						let index = 0;
-						while (!gotError && index < standardControlDefinitions.length) {
-							gotError = !names.contains(standardControlDefinitions[index].Name);
-							index++;
-						}
-
-						if (gotError) {
-							this.processing = false;
-							console.error("JSON of standard control definitions is not matched with form controls");
-							AppUtility.invoke(async () => this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.json.standardNotMatched") }, undefined, _ => {
-								const control = this.formControls.find(ctrl => ctrl.Name === "StandardControlDefinitions");
-								this.formSegments.current = control.Segment;
-								control.focus();
-							}));
-							return;
-						}
-					}
-				}
-
-				if (AppUtility.isNotEmpty(contentType.ID)) {
-					this.portalsCoreSvc.updateContentTypeAsync(
-						contentType,
-						data => {
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Updated", ID: data.ID });
-							this.configSvc.removeDefinition(this.portalsCoreSvc.name, ContentType.get(data.ID).getObjectName(true), undefined, { "x-content-type-id": data.ID });
-							this.configSvc.removeDefinition(this.portalsCoreSvc.name, ContentType.get(data.ID).getObjectName(true), undefined, { "x-content-type-id": data.ID, "x-view-controls": "x" });
-							this.trackAsync(this.title, "Update")
-								.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.update")))
-								.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
-						},
-						error => this.trackAsync(this.title, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
-					);
-				}
-				else {
-					this.portalsCoreSvc.createContentTypeAsync(
-						contentType,
-						data => {
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Created", ID: data.ID });
-							this.trackAsync(this.title)
-								.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.new")))
-								.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
-						},
-						error => this.trackAsync(this.title).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
-					);
-				}
+				});
 			}
 		}
 	}
