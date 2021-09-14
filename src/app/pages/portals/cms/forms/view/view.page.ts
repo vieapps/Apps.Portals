@@ -204,23 +204,14 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 				: this.item[control.Name];
 			control.Hidden = AppUtility.isEmpty(control.value);
 			if (!control.Hidden) {
-				if (AppUtility.isEquals(control.Type, "TextEditor")) {
+				if (control.Type === "TextEditor") {
+					control.value = this.portalsCmsSvc.normalizeRichHtml(control.value);
+				}
+				else if (control.Type === "TextArea") {
 					control.value = (control.value || "").replaceAll("\r", "").replaceAll("\n", "<br/>");
 				}
-				else {
-					switch (control.Name) {
-						case "Status":
-							control.value = await this.appFormsSvc.getResourceAsync(`status.approval.${control.value}`);
-							break;
-
-						case "AllowComments":
-							control.Hidden = !this.item.contentType.AllowComments;
-							break;
-
-						case "Summary":
-							control.value = AppUtility.normalizeHtml(control.value, true);
-							break;
-					}
+				else if (control.Type === "Status") {
+					control.value = await this.appFormsSvc.getResourceAsync(`status.approval.${control.value}`);
 				}
 			}
 		});

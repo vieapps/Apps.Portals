@@ -298,8 +298,11 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 				: this.item[control.Name];
 			control.Hidden = AppUtility.isEmpty(control.value);
 			if (!control.Hidden) {
-				if (AppUtility.isEquals(control.Type, "TextEditor")) {
+				if (control.Type === "TextEditor") {
 					control.value = this.portalsCmsSvc.normalizeRichHtml(control.value);
+				}
+				else if (control.Type === "TextArea") {
+					control.value = (control.value || "").replaceAll("\r", "").replaceAll("\n", "<br/>");
 				}
 				else {
 					switch (control.Name) {

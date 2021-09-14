@@ -8,7 +8,6 @@ import { AppFormsControlConfig, AppFormsControl } from "@app/components/forms.ob
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
-import { FilesService } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { Organization, Module, ContentType } from "@app/models/portals.core.all";
@@ -25,7 +24,6 @@ export class CmsFormsUpdatePage implements OnInit {
 	constructor(
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
-		private filesSvc: FilesService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService
@@ -116,7 +114,6 @@ export class CmsFormsUpdatePage implements OnInit {
 
 		this.item = this.item || new Form(this.organization.ID, this.module.ID, this.contentType.ID);
 		this.configSvc.appTitle = this.title.page = this.title.track + (AppUtility.isNotEmpty(this.item.ID) ? ` [${this.item.Title}]` : "");
-		this.trackAsync(this.title.track);
 
 		this.buttons = {
 			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.item.ID) ? "save" : "create")}`),
@@ -124,43 +121,56 @@ export class CmsFormsUpdatePage implements OnInit {
 		};
 
 		this.formConfig = await this.getFormControlsAsync();
+		this.trackAsync(this.title.track);
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.form", undefined, { "x-content-type-id": this.contentType.ID });
-		formConfig.find(ctrl => ctrl.Name === "Name").Options.AutoFocus = true;
 
-		formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "County"));
-		formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Province"));
-		formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Country"));
+		let control = formConfig.find(ctrl => ctrl.Name === "Name");
+		if (!!control) {
+			control.Options.AutoFocus = true;
+		}
 
-		formConfig.insert({
-			Name: "Addresses",
-			Type: "Lookup",
-			Options: {
-				Type: "Address",
-				PlaceHolder: await this.configSvc.getResourceAsync("users.register.controls.Address.placeholder"),
-				MinLength: 2,
-				LookupOptions: {
-					Multiple: false,
-					AsModal: false,
-					AsCompleter: true
+		control = formConfig.find(ctrl => ctrl.Name === "Address");
+		if (!!control) {
+			formConfig.insert({
+				Name: "Addresses",
+				Type: "Lookup",
+				Options: {
+					Type: "Address",
+					PlaceHolder: await this.configSvc.getResourceAsync("users.register.controls.Address.placeholder"),
+					MinLength: 2,
+					LookupOptions: {
+						Multiple: false,
+						AsModal: false,
+						AsCompleter: true
+					}
 				}
-			}
-		}, formConfig.findIndex(ctrl => ctrl.Name === "Address") + 1);
+			}, control.Order + 1);
+			formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "County"));
+			formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Province"));
+			formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Country"));
+		}
 
-		let control = formConfig.find(ctrl => ctrl.Name === "Notes");
-		control.Type = "TextArea";
-		control.Options.Rows = 5;
+		formConfig.filter(ctrl => ctrl.Name === "TextArea").forEach(ctrl => ctrl.Options.Rows = 7);
+
+		control = formConfig.find(ctrl => ctrl.Name === "Notes");
+		if (!!control) {
+			control.Type = "TextArea";
+			control.Options.Rows = 3;
+		}
 
 		control = formConfig.find(ctrl => ctrl.Name === "Details");
-		control.Type = "TextArea";
-		control.Options.Rows = 15;
+		if (!!control) {
+			control.Type = "TextArea";
+			control.Options.Rows = 10;
+		}
 
 		if (AppUtility.isNotEmpty(this.item.ID)) {
 			formConfig.push(
-				this.portalsCmsSvc.getPermanentLinkFormControl(this.item, "basic"),
-				this.portalsCoreSvc.getAuditFormControl(this.item, "basic"),
+				this.portalsCmsSvc.getPermanentLinkFormControl(this.item),
+				this.portalsCoreSvc.getAuditFormControl(this.item),
 				this.appFormsSvc.getButtonControls("basic", {
 					Name: "Delete",
 					Label: "{{portals.cms.contents.update.buttons.delete}}",
@@ -182,7 +192,6 @@ export class CmsFormsUpdatePage implements OnInit {
 		if (AppUtility.isNotEmpty(this.item.ID)) {
 			control = formConfig.find(ctrl => ctrl.Name === "ID");
 			control.Order = formConfig.find(ctrl => ctrl.Name === "Audits").Order + 1;
-			control.Segment = "basic";
 			control.Hidden = false;
 			control.Options.Label = "{{common.audits.identity}}";
 			control.Options.ReadOnly = true;
@@ -207,43 +216,32 @@ export class CmsFormsUpdatePage implements OnInit {
 				this.configSvc.navigateBackAsync();
 			}
 			else {
-				this.processing = true;
-				this.appFormsSvc.showLoadingAsync(this.title.track);
-
-				const item = this.form.value;
-				delete item["Thumbnails"];
-				delete item["Attachments"];
-				delete item["Upload"];
-
-				if (AppUtility.isNotEmpty(item.ID)) {
-					this.portalsCmsSvc.updateFormAsync(
-						item,
-						async data => {
-							const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
-							if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-								await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.item, options => options.Extras["x-attachment-id"] = control.value.identity));
-							}
-							AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Form", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
-							await this.trackAsync(this.title.track, "Update");
-							await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update"));
-							await this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
-						},
-						error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error))
-					);
-				}
-				else {
-					item.Alias = AppUtility.toANSI(this.item.Title, true);
-					this.portalsCmsSvc.createFormAsync(
-						item,
-						async data => {
-							AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Form", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
-							await this.trackAsync(this.title.track);
-							await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new"));
-							await this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
-						},
-						error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error))
-					);
-				}
+				this.appFormsSvc.showLoadingAsync(this.title.track).then(() => {
+					this.processing = true;
+					const item = this.form.value;
+					if (AppUtility.isNotEmpty(item.ID)) {
+						this.portalsCmsSvc.updateFormAsync(
+							item,
+							data => {
+								AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Form", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
+								this.trackAsync(this.title.track, "Update").then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")));
+								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
+							},
+							error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error))
+						);
+					}
+					else {
+						this.portalsCmsSvc.createFormAsync(
+							item,
+							data => {
+								AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Form", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
+								this.trackAsync(this.title.track).then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new")));
+								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
+							},
+							error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error))
+						);
+					}
+				});
 			}
 		}
 	}
