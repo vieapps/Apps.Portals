@@ -68,13 +68,17 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}
 
 		AppEvents.on(this.portalsCmsSvc.name, info => {
+			const args = info.args;
 			const organization = this.portalsCoreSvc.activeOrganization;
 			if (organization !== undefined) {
-				if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
+				if ("Organization" === args.Type && "Changed" === args.Mode) {
 					AppUtility.invoke(() => this.prepareContents(true), 123);
 				}
-				else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode && organization.ID === info.args.ID) {
+				else if ("FeaturedContents" === args.Type && "Prepared" === args.Mode && organization.ID === args.ID) {
 					AppUtility.invoke(() => this.prepareContents(true), 123);
+				}
+				else if (("CMS.Content" === args.Object || "CMS.Item" === args.Object || "CMS.Form" === args.Object) && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type)) {
+					AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "FeaturedContents", Mode: "Refresh", ID: organization.ID })
 				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);

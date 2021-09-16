@@ -118,12 +118,15 @@ export class PortalsCmsService extends BaseService {
 					this._sidebarContentType = undefined;
 					this.updateSidebarAsync();
 				}
-				else if ("FeaturedContents" === args.Type && "Request" === args.Mode) {
-					if (!this._noContents.contains(organization.ID)) {
+				else if ("FeaturedContents" === args.Type) {
+					if ("Request" === args.Mode && !this._noContents.contains(organization.ID)) {
 						if (organization.modules.flatMap(module => module.contentTypes).length > 0) {
 							this._noContents.add(organization.ID);
 							this.prepareFeaturedContentsAsync(false);
 						}
+					}
+					else if ("Refresh" === args.Mode) {
+						this.prepareFeaturedContents(organization.ID)
 					}
 				}
 				else if (organization.ID === args.SystemID && ("CMS.Content" === args.Object || "CMS.Item" === args.Object) && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type)) {
@@ -1508,7 +1511,7 @@ export class PortalsCmsService extends BaseService {
 
 	public searchFormsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.searchAsync(
-			this.getSearchingPath("cms.form", this.configSvc.relatedQuery),
+			this.getSearchingPath("CMS.Form", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
@@ -1525,10 +1528,11 @@ export class PortalsCmsService extends BaseService {
 
 	public createFormAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
-			this.getPath("cms.form"),
+			this.getPath("CMS.Form"),
 			body,
 			data => {
 				Form.update(data);
+				AppEvents.broadcast(this.name, { Object: "CMS.Form", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1541,7 +1545,7 @@ export class PortalsCmsService extends BaseService {
 		return Form.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
-					this.getPath("cms.form", id),
+					this.getPath("CMS.Form", id),
 					data => {
 						Form.update(data);
 						if (onSuccess !== undefined) {
@@ -1556,10 +1560,11 @@ export class PortalsCmsService extends BaseService {
 
 	public updateFormAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
-			this.getPath("cms.form", body.ID),
+			this.getPath("CMS.Form", body.ID),
 			body,
 			data => {
 				Form.update(data);
+				AppEvents.broadcast(this.name, { Object: "CMS.Form", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1570,9 +1575,10 @@ export class PortalsCmsService extends BaseService {
 
 	public deleteFormAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		return this.deleteAsync(
-			this.getPath("cms.form", id),
+			this.getPath("CMS.Form", id),
 			data => {
 				Form.instances.remove(data.ID);
+				AppEvents.broadcast(this.name, { Object: "CMS.Form", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
