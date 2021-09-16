@@ -238,23 +238,22 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 	}
 
 	delete() {
-		this.trackAsync(this.resources.delete, "Delete").then(async () => this.appFormsSvc.showAlertAsync(
-			undefined,
-			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete"),
-			undefined,
-			async () => this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete")).then(() => this.portalsCmsSvc.deleteFormAsync(
-				this.item.ID,
-				async data => {
-					AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Form", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
-					this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete"))
-						.then(() => this.trackAsync(this.resources.delete, "Delete"))
-						.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
-				},
-				error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.resources.delete, "Delete"))
-			)),
-			await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel")
-		));
+		AppUtility.invoke(async () => {
+			const deleteButton = await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete");
+			const removeButton = await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove");
+			const confirmMessage = await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete");
+			const successMessage = await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete");
+			this.appFormsSvc.showConfirmAsync(
+				confirmMessage,
+				() => this.appFormsSvc.showLoadingAsync(deleteButton).then(() => this.portalsCmsSvc.deleteFormAsync(
+					this.item.ID,
+					() => this.trackAsync(deleteButton, "Delete").then(() => this.appFormsSvc.showToastAsync(successMessage)).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
+					error => this.trackAsync(this.title.track, "Delete").then(() => this.appFormsSvc.showErrorAsync(error))
+				)),
+				removeButton,
+				"{{default}}"
+			);
+		});
 	}
 
 	cancel() {

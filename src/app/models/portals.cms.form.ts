@@ -47,7 +47,8 @@ export class Form extends CmsBaseModel {
 
 	public static deserialize(json: any, form?: Form) {
 		form = form || new Form();
-		AppUtility.copy(json, form, data => {
+		form.copy(json, data => {
+			form.normalizeExtendedProperties(data);
 			form.Profiles = new Dictionary<string, string>();
 			AppUtility.toKeyValuePair(data.Profiles).forEach(kvp => form.Profiles.add(kvp.key, kvp.value));
 		});

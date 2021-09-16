@@ -222,22 +222,14 @@ export class CmsFormsUpdatePage implements OnInit {
 					if (AppUtility.isNotEmpty(item.ID)) {
 						this.portalsCmsSvc.updateFormAsync(
 							item,
-							data => {
-								AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Form", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
-								this.trackAsync(this.title.track, "Update").then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")));
-								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
-							},
+							() => this.trackAsync(this.title.track, "Update").then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update"))).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
 							error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error))
 						);
 					}
 					else {
 						this.portalsCmsSvc.createFormAsync(
 							item,
-							data => {
-								AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Form", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
-								this.trackAsync(this.title.track).then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new")));
-								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
-							},
+							() => this.trackAsync(this.title.track).then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new"))).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
 							error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error))
 						);
 					}
@@ -256,10 +248,7 @@ export class CmsFormsUpdatePage implements OnInit {
 				confirmMessage,
 				() => this.appFormsSvc.showLoadingAsync(deleteButton).then(() => this.portalsCmsSvc.deleteFormAsync(
 					this.item.ID,
-					data => {
-						AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Form", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
-						this.trackAsync(deleteButton, "Delete").then(() => this.appFormsSvc.showToastAsync(successMessage)).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
-					},
+					() => this.trackAsync(deleteButton, "Delete").then(() => this.appFormsSvc.showToastAsync(successMessage)).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
 					error => this.trackAsync(this.title.track, "Delete").then(() => this.appFormsSvc.showErrorAsync(error))
 				)),
 				removeButton,
