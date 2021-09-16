@@ -608,25 +608,26 @@ export class ConfigurationService extends BaseService {
 		}
 	}
 
-	/** Gets the navigating URL */
-	public getNavigatingURL(url?: string, params?: { [key: string]: any }) {
-		url = url || AppConfig.URLs.home;
-		return url + (AppUtility.isGotData(params) ? `${url.indexOf("?") > 0 ? "&" : "?"}${AppUtility.toQuery(params)}` : "");
-	}
-
 	/** Sends a request to navigates as root */
-	public navigateRootAsync(url?: string, params?: { [key: string]: any }) {
-		return this.navController.navigateRoot(this.getNavigatingURL(url || AppConfig.URLs.home, params));
+	public async navigateRootAsync(url?: string, params?: { [key: string]: any }) {
+		url = !!url ? AppUtility.getURI({ url: url, params: params }) : AppConfig.URLs.home;
+		await this.navController.navigateRoot(url);
 	}
 
 	/** Sends a request to navigates back one step */
-	public navigateBackAsync(url?: string, params?: { [key: string]: any }) {
-		return this.navController.navigateBack(this.getNavigatingURL(url || this.previousURL, params));
+	public async navigateBackAsync(url?: string, params?: { [key: string]: any }) {
+		if (!!url) {
+			await this.navController.navigateBack(AppUtility.getURI({ url: url, params: params }));
+		}
+		else {
+			this.popURL();
+		}
 	}
 
 	/** Sends a request to navigates forward one step */
-	public navigateForwardAsync(url: string, params?: { [key: string]: any }) {
-		return this.navController.navigateForward(this.getNavigatingURL(url || AppConfig.URLs.home, params));
+	public async navigateForwardAsync(url: string, params?: { [key: string]: any }) {
+		url = !!url ? AppUtility.getURI({ url: url, params: params }) : AppConfig.URLs.home;
+		await this.navController.navigateForward(url);
 	}
 
 	/** Sends a request to navigates */
