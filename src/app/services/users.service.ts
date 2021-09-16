@@ -383,11 +383,21 @@ export class UsersService extends BaseService {
 	public async getAuditInfoAsync(created: Date, createdID: string, lastModified: Date, lastModifiedID: string) {
 		let creator = UserProfile.get(createdID);
 		if (creator === undefined) {
-			await this.getProfileAsync(createdID, _ => creator = UserProfile.get(createdID) || new UserProfile("Unknown"), _ => creator = new UserProfile("Unknown"), true);
+			if (AppUtility.isNotEmpty(createdID)) {
+				await this.getProfileAsync(createdID, _ => creator = UserProfile.get(createdID) || new UserProfile("Unknown"), _ => creator = new UserProfile("Unknown"), true);
+			}
+			else {
+				creator = new UserProfile("Unknown");
+			}
 		}
 		let modifier = UserProfile.get(lastModifiedID);
 		if (modifier === undefined) {
-			await this.getProfileAsync(lastModifiedID, _ => modifier = UserProfile.get(lastModifiedID) || new UserProfile("Unknown"), _ => modifier = new UserProfile("Unknown"), true);
+			if (AppUtility.isNotEmpty(lastModifiedID)) {
+				await this.getProfileAsync(lastModifiedID, _ => modifier = UserProfile.get(lastModifiedID) || new UserProfile("Unknown"), _ => modifier = new UserProfile("Unknown"), true);
+			}
+			else {
+				modifier = new UserProfile("Unknown");
+			}
 		}
 		const params = {
 			creator: creator.Name,
