@@ -1,3 +1,4 @@
+export * from "@app/models/portals.base";
 export * from "@app/models/portals.cms.base";
 export * from "@app/models/portals.cms.category";
 export * from "@app/models/portals.cms.content";
