@@ -198,8 +198,14 @@ export class CmsFormsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
 
 			AppEvents.on(this.portalsCoreSvc.name, info => {
-				if (info.args.Object === "CMS.Form" && info.args.SystemID === this.portalsCoreSvc.activeOrganization.ID) {
-					this.prepareResults();
+				const args = info.args;
+				if (args.Object === "CMS.Form" && args.SystemID === this.portalsCoreSvc.activeOrganization.ID) {
+					if (args.Type === "Deleted") {
+						this.items.removeAt(this.items.findIndex(item => item.ID === args.ID));
+					}
+					else {
+						this.prepareResults(() => this.items = this.items.sortBy({ name: "Created", reverse: true }));
+					}
 				}
 			}, "CMS.Forms:Refresh");
 		}

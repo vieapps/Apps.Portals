@@ -1426,10 +1426,12 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	public prepareApprovalStatusControl(controlConfig: AppFormsControlConfig, selectInterface?: string) {
-		controlConfig.Options.SelectOptions.Interface = selectInterface || "popover";
-		controlConfig.Options.SelectOptions.Values = AppUtility.isNotEmpty(controlConfig.Options.SelectOptions.Values)
-			? (AppUtility.toArray(controlConfig.Options.SelectOptions.Values, "#;") as Array<string>).map(value => ({ Value: value, Label: `{{status.approval.${value}}}` }))
-			: BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{status.approval.${value}}}` }));
+		this.appFormsSvc.prepareSelectControl(controlConfig, controlConfig.Options.SelectOptions.Values, _ => {
+			controlConfig.Options.SelectOptions.Interface = selectInterface || "popover";
+			controlConfig.Options.SelectOptions.Values = AppUtility.isGotData(controlConfig.Options.SelectOptions.Values)
+				? (controlConfig.Options.SelectOptions.Values as AppFormsLookupValue[]).map(kvp => ({ Value: kvp.Value, Label: `{{status.approval.${kvp.Value}}}` }) as AppFormsLookupValue)
+				: BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{status.approval.${value}}}` }) as AppFormsLookupValue);
+		});
 		return controlConfig;
 	}
 
@@ -3027,43 +3029,45 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async approveAsync(entityInfo: string, id: string, currentStatus: string, availableStatuses: string[], useXHR: boolean = false) {
-		const title = await this.configSvc.getResourceAsync("common.buttons.moderate");
-		const statuses = availableStatuses.map(status => ({ label: "", value: status }));
-		await Promise.all(statuses.map(async status => status.label = await this.configSvc.getResourceAsync(`portals.common.approval.${status.value}`)));
+	public async approveAsync(entityInfo: string, id: string, status: string, title: string, message: string, onNext?: () => void) {
+		const contentType = ContentType.get(entityInfo);
+		return this.readAsync(
+			this.getPath("approve", id),
+			() => {
+				if (contentType !== undefined) {
+					TrackingUtility.trackAsync({ title: title, category: contentType.contentTypeDefinition.ObjectName, action: "Approve" });
+				}
+				this.appFormsSvc.showAlertAsync(title, message);
+				if (onNext !== undefined) {
+					onNext();
+				}
+			},
+			error => AppUtility.invoke(contentType !== undefined ? () => TrackingUtility.trackAsync({ title: title, category: contentType.contentTypeDefinition.ObjectName, action: "Approve" }) : undefined).then(() => this.appFormsSvc.showErrorAsync(error)),
+			{
+				"x-entity": entityInfo,
+				"x-status": status
+			}
+		);
+	}
+
+	public async showApprovalDialogAsync(entityInfo: string, id: string, currentStatus: string, availableStatuses: string[], statuses?: Array<{ label: string; value: string }>, options?: { title?: string; pending?: string; message?: string }, onNext?: () => void) {
+		const title = options !== undefined && AppUtility.isNotEmpty(options.title)
+			? await this.appFormsSvc.normalizeResourceAsync(options.title)
+			: await this.configSvc.getResourceAsync("common.buttons.moderate");
+		if (statuses === undefined) {
+			statuses = availableStatuses.map(status => ({ label: "{{portals.common.approval." + status + "}}", value: status }));
+		}
+		await Promise.all(statuses.map(async status => status.label = await this.appFormsSvc.normalizeResourceAsync(status.label)));
 		if (statuses.findIndex(status => status.value === "Published") > 0) {
-			statuses.find(status => status.value === "Pending").label = await this.configSvc.getResourceAsync("portals.common.approval.Pending2");
+			statuses.find(status => status.value === "Pending").label = options !== undefined && AppUtility.isNotEmpty(options.pending)
+				? await this.appFormsSvc.normalizeResourceAsync(options.pending)
+				: await this.configSvc.getResourceAsync("portals.common.approval.Pending2");
 		}
-
-		const contenType = ContentType.get(entityInfo);
-		if (contenType !== undefined) {
-			await TrackingUtility.trackAsync({ title: title, category: contenType.contentTypeDefinition.ObjectName, action: "Approve" });
-		}
-
 		await this.appFormsSvc.showAlertAsync(
 			title,
 			undefined,
 			await this.configSvc.getResourceAsync("portals.common.approval.label", { status: await this.configSvc.getResourceAsync(`status.approval.${currentStatus}`) }),
-			status => {
-				this.appFormsSvc.showLoadingAsync(title).then(() => this.readAsync(
-					this.getPath("approve", id),
-					async _ => {
-						if (contenType !== undefined) {
-							await TrackingUtility.trackAsync({ title: title, category: contenType.contentTypeDefinition.ObjectName, action: "Approve" });
-						}
-						await this.appFormsSvc.showAlertAsync(title, await this.configSvc.getResourceAsync("portals.common.approval.message", { status: await this.configSvc.getResourceAsync(`status.approval.${status}`) }));
-					},
-					async error => await Promise.all([
-						this.appFormsSvc.showErrorAsync(error),
-						contenType !== undefined ? TrackingUtility.trackAsync({ title: title, category: contenType.contentTypeDefinition.ObjectName, action: "Approve" }) : AppUtility.promise
-					]),
-					{
-						"x-entity": entityInfo,
-						"x-status": status
-					},
-					useXHR
-				));
-			},
+			status => this.appFormsSvc.showLoadingAsync(title).then(async () => this.approveAsync(entityInfo, id, status, title, options !== undefined && AppUtility.isNotEmpty(options.message) ? await this.appFormsSvc.normalizeResourceAsync(options.message, { status: statuses.find(s => s.value === status).label }) : await this.configSvc.getResourceAsync("portals.common.approval.message", { status: statuses.find(s => s.value === status).label }), () => AppUtility.invoke(onNext))),
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel"),
 			statuses.map(status => ({

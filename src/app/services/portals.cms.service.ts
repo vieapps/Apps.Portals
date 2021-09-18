@@ -126,11 +126,11 @@ export class PortalsCmsService extends BaseService {
 						}
 					}
 					else if ("Refresh" === args.Mode) {
-						this.prepareFeaturedContents(organization.ID)
+						AppUtility.invoke(() => this.prepareFeaturedContents(organization.ID), 123, true);
 					}
 				}
-				else if (organization.ID === args.SystemID && ("CMS.Content" === args.Object || "CMS.Item" === args.Object) && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type)) {
-					AppUtility.invoke(() => this.prepareFeaturedContents(organization.ID));
+				else if (organization.ID === args.SystemID && ("CMS.Content" === args.Object || "CMS.Item" === args.Object || "CMS.Form" === args.Object) && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type)) {
+					AppUtility.invoke(() => this.prepareFeaturedContents(organization.ID), 123, true);
 				}
 			}
 		});
@@ -719,6 +719,7 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				this.updateCategory(data);
+				AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -761,6 +762,7 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				this.updateCategory(data, parentID);
+				AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -776,6 +778,7 @@ export class PortalsCmsService extends BaseService {
 			this.getPath("cms.category", id),
 			data => {
 				this.deleteCategory(data.ID, parentID);
+				AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -973,6 +976,7 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				Content.update(data);
+				AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1004,6 +1008,7 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				Content.update(data);
+				AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1017,6 +1022,7 @@ export class PortalsCmsService extends BaseService {
 			this.getPath("cms.content", id),
 			data => {
 				Content.instances.remove(data.ID);
+				AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1132,6 +1138,7 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				Item.update(data);
+				AppEvents.broadcast(this.name, { Object: "CMS.Item", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1163,6 +1170,7 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				Item.update(data);
+				AppEvents.broadcast(this.name, { Object: "CMS.Item", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1176,6 +1184,7 @@ export class PortalsCmsService extends BaseService {
 			this.getPath("cms.item", id),
 			data => {
 				Item.instances.remove(data.ID);
+				AppEvents.broadcast(this.name, { Object: "CMS.Item", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1315,6 +1324,7 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				this.updateLink(data);
+				AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1348,6 +1358,7 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				this.updateLink(data, parentID);
+				AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1363,6 +1374,7 @@ export class PortalsCmsService extends BaseService {
 			this.getPath("cms.link", id),
 			data => {
 				this.deleteLink(data.ID, parentID);
+				AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}

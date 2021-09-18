@@ -16,6 +16,12 @@
 
 <ion-footer>
 	<ion-toolbar [color]="color">
+		<ion-buttons *ngIf="change" slot="start">
+			<ion-button (click)="moderate(change.status)">
+				<ion-icon name="shield-checkmark" slot="start"></ion-icon>
+				{{ change.button }}
+			</ion-button>
+		</ion-buttons>
 		<ion-buttons *ngIf="actions" slot="end">
 			<ion-button color="primary" (click)="showActions()">
 				<ion-icon name="ellipsis-horizontal" slot="icon-only"></ion-icon>

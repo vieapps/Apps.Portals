@@ -8,7 +8,7 @@ import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
-import { Form } from "@app/models/portals.cms.form";
+import { PortalBase as BaseModel, Form } from "@app/models/portals.cms.all";
 
 @Component({
 	selector: "page-portals-cms-items-view",
@@ -30,6 +30,7 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 	private item: Form;
 	canModerate = false;
 	canEdit = false;
+	processing = false;
 	title = {
 		page: "Item",
 		track: "Item"
@@ -53,6 +54,10 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 		icon?: string,
 		handler: () => void
 	}>;
+	change = {
+		status: "Published",
+		button: "Change"
+	};
 
 	get locale() {
 		return this.configSvc.locale;
@@ -90,14 +95,14 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 		const account = this.configSvc.getAccount();
 		this.canModerate = this.portalsCoreSvc.canModerateOrganization(this.item.organization, account) || this.portalsCmsSvc.canModerate(this.item, account);
 
-		if (AppUtility.isEquals(this.item.Status, "Draft") || AppUtility.isEquals(this.item.Status, "Pending") || AppUtility.isEquals(this.item.Status, "Rejected")) {
+		if (this.item.Status === "Draft" || this.item.Status === "Pending" || this.item.Status === "Rejected") {
 			this.canEdit = canView = this.canModerate || this.portalsCmsSvc.canEdit(this.item, account) || AppUtility.isEquals(this.item.CreatedID, account.id);
 		}
-		else if (AppUtility.isEquals(this.item.Status, "Approved")) {
+		else if (this.item.Status === "Approved") {
 			this.canEdit = this.canModerate || this.portalsCmsSvc.canEdit(this.item, account);
 			canView = this.canEdit || AppUtility.isEquals(this.item.CreatedID, account.id);
 		}
-		else if (AppUtility.isEquals(this.item.Status, "Published")) {
+		else if (this.item.Status === "Published") {
 			this.canEdit = this.canModerate || this.portalsCmsSvc.canEdit(this.item, account);
 			canView = this.portalsCmsSvc.canView(this.item, account);
 		}
@@ -114,9 +119,9 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 		this.configSvc.appTitle = this.title.page = this.title.track + ` [${this.item.Title}]`;
 
 		this.resources = {
-			status: await this.configSvc.getResourceAsync("portals.cms.contents.controls.Status.label"),
+			status: await this.configSvc.getResourceAsync("portals.cms.forms.controls.Status.label"),
 			update: await this.configSvc.getResourceAsync("common.buttons.update"),
-			moderate: await this.configSvc.getResourceAsync("common.buttons.approve"),
+			moderate: await this.configSvc.getResourceAsync("portals.cms.forms.buttons.change"),
 			delete: await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete")
 		};
 
@@ -126,6 +131,7 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()),
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.delete())
 			];
+			this.prepareStatus();
 		}
 
 		this.formConfig = await this.getFormControlsAsync();
@@ -138,7 +144,7 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 					this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => cfg.Name === control.Name).Hidden ? true : false);
 					this.prepareValues();
 				}
-				else if (args.Type === "Deleted") {
+				else if (args.Type === "Deleted" && !this.processing) {
 					this.cancel();
 				}
 			}
@@ -159,6 +165,13 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 		formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Province"));
 		formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Country"));
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
+
+		control = formConfig.find(ctrl => ctrl.Name === "Status");
+		if (!!control) {
+			control.Hidden = false;
+			control.Options.Label = "{{portals.cms.forms.controls.Status.label}}";
+			control.Options.SelectOptions.Values = BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{portals.cms.forms.controls.Status.${value}}}` }));
+		}
 
 		control = formConfig.find(ctrl => ctrl.Name === "ID");
 		control.Order = formConfig.find(ctrl => ctrl.Name === "Audits").Order + 1;
@@ -210,8 +223,8 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 				else if (control.Type === "TextArea") {
 					control.value = (control.value || "").replaceAll("\r", "").replaceAll("\n", "<br/>");
 				}
-				else if (control.Type === "Status") {
-					control.value = await this.appFormsSvc.getResourceAsync(`status.approval.${control.value}`);
+				else if (control.Name === "Status") {
+					control.value = await this.appFormsSvc.getResourceAsync(`portals.cms.forms.controls.Status.${control.value}`);
 				}
 			}
 		});
@@ -225,16 +238,52 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 		this.configSvc.navigateForwardAsync(this.item.routerURI.replace("/view/", "/update/"));
 	}
 
-	moderate() {
-		const availableStatuses = ["Draft", "Pending"];
-		if (this.canEdit) {
-			availableStatuses.push("Rejected", "Approved");
+	prepareStatus() {
+		const status = this.item.Status === "Published"
+			? "Archieved"
+			: this.item.Status === "Approved"
+				? "Published"
+					: this.item.Status === "Pending"
+						? "Approved"
+						: undefined;
+		AppUtility.invoke(async () => {
+			this.change = status !== undefined
+				? { status: status, button: await this.configSvc.getResourceAsync(`portals.cms.forms.buttons.${status.toLowerCase()}`) }
+				: undefined;
+		});
+	}
+
+	moderate(status?: string) {
+		if (status !== undefined) {
+			AppUtility.invoke(async () => {
+				const title = await this.appFormsSvc.getResourceAsync("portals.cms.forms.controls.Status.label");
+				const message = await this.appFormsSvc.getResourceAsync("portals.cms.forms.messages.status", { status: await this.appFormsSvc.getResourceAsync(`portals.cms.forms.controls.Status.${status}`) });
+				await this.portalsCoreSvc.approveAsync(this.item.contentType.ID, this.item.ID, status, title, message, () => this.prepareStatus());
+			});
 		}
-		if (this.canModerate) {
-			availableStatuses.push("Published", "Archieved");
+		else {
+			const availableStatuses = ["Draft", "Pending"];
+			if (this.canEdit) {
+				availableStatuses.push("Rejected", "Approved");
+			}
+			if (this.canModerate) {
+				availableStatuses.push("Published", "Archieved");
+			}
+			const currentStatus = availableStatuses.indexOf(this.item.Status) > -1 ? this.item.Status : "Draft";
+			this.portalsCoreSvc.showApprovalDialogAsync(
+				this.item.contentType.ID,
+				this.item.ID,
+				currentStatus,
+				availableStatuses,
+				BaseModel.approvalStatus.map(value => ({ value: value, label: `{{portals.cms.forms.controls.Status.${value}}}` })),
+				{
+					title: "{{portals.cms.forms.controls.Status.label}}",
+					pending: "{{portals.cms.forms.controls.Status.Pending}}",
+					message: "{{portals.cms.forms.messages.status}}"
+				},
+				() => this.prepareStatus()
+			);
 		}
-		const currentStatus = availableStatuses.indexOf(this.item.Status) > -1 ? this.item.Status : "Draft";
-		this.portalsCoreSvc.approveAsync(this.item.contentType.ID, this.item.ID, currentStatus, availableStatuses);
 	}
 
 	delete() {
@@ -243,6 +292,7 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 			const removeButton = await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove");
 			const confirmMessage = await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete");
 			const successMessage = await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete");
+			this.processing = true;
 			this.appFormsSvc.showConfirmAsync(
 				confirmMessage,
 				() => this.appFormsSvc.showLoadingAsync(deleteButton).then(() => this.portalsCmsSvc.deleteFormAsync(

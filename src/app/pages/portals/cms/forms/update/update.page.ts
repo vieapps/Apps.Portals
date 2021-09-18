@@ -1,7 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@app/components/app.crypto";
-import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsControlConfig, AppFormsControl } from "@app/components/forms.objects";
@@ -11,7 +10,7 @@ import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { Organization, Module, ContentType } from "@app/models/portals.core.all";
-import { Form } from "@app/models/portals.cms.form";
+import { PortalBase as BaseModel, Form } from "@app/models/portals.cms.all";
 
 @Component({
 	selector: "page-portals-cms-forms-update",
@@ -161,10 +160,23 @@ export class CmsFormsUpdatePage implements OnInit {
 			control.Options.Rows = 3;
 		}
 
+		control = formConfig.find(ctrl => ctrl.Name === "Title");
+		if (!!control) {
+			control.Hidden = false;
+		}
+
 		control = formConfig.find(ctrl => ctrl.Name === "Details");
 		if (!!control) {
+			control.Hidden = false;
 			control.Type = "TextArea";
 			control.Options.Rows = 10;
+		}
+
+		control = formConfig.find(ctrl => ctrl.Name === "Status");
+		if (!!control) {
+			control.Hidden = false;
+			control.Options.Label = "{{portals.cms.forms.controls.Status.label}}";
+			control.Options.SelectOptions.Values = BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{portals.cms.forms.controls.Status.${value}}}` }));
 		}
 
 		if (AppUtility.isNotEmpty(this.item.ID)) {
@@ -223,14 +235,14 @@ export class CmsFormsUpdatePage implements OnInit {
 						this.portalsCmsSvc.updateFormAsync(
 							item,
 							() => this.trackAsync(this.title.track, "Update").then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update"))).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
-							error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error))
+							error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
 						);
 					}
 					else {
 						this.portalsCmsSvc.createFormAsync(
 							item,
 							() => this.trackAsync(this.title.track).then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new"))).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
-							error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error))
+							error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
 						);
 					}
 				});
