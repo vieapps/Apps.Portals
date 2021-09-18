@@ -146,7 +146,7 @@ export class PortalsCmsService extends BaseService {
 
 		AppEvents.on("Session", info => {
 			const args = info.args;
-			if (("LogIn" === args.Type || "LogOut" === args.Type)) {
+			if ("LogIn" === args.Type || "LogOut" === args.Type) {
 				this._sidebarCategory = undefined;
 				this._sidebarContentType = undefined;
 				AppUtility.invoke(() => this.updateSidebarAsync().then("LogIn" === args.Type ? () => this.prepareFeaturedContentsAsync() : () => {}), 123);

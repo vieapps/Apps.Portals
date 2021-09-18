@@ -40,6 +40,10 @@ export class AppFormsService {
 		[key: string]: Array<{ County: string, Province: string, Country: string, Title: string, TitleANSI: string}>
 	} = {};
 
+	private get canModifyDatePickers() {
+		return !AppConfig.isNativeApp && AppConfig.app.platform.indexOf("Desktop") > -1 && !AppUtility.isAppleSafari();
+	}
+
 	public async normalizeResourceAsync(resource: string, interpolateParams?: object) {
 		return AppUtility.isNotEmpty(resource) && resource.startsWith("{{") && resource.endsWith("}}")
 			? await this.getResourceAsync(resource.substr(2, resource.length - 4).trim(), interpolateParams)
@@ -49,7 +53,7 @@ export class AppFormsService {
 	public prepareSelectControl(formControl: AppFormsControlConfig, selectValues?: string | string[] | AppFormsLookupValue[], onCompleted?: (formControl: AppFormsControlConfig) => void) {
 		const values = selectValues || formControl.Options.SelectOptions.Values;
 		formControl.Options.SelectOptions.Values = AppUtility.isArray(values, true) && AppUtility.isGotData(values)
-			? typeof values[0] === "string"
+			? typeof (values as Array<any>).first() === "string"
 				? (values as Array<string>).map(value => ({ Value: value, Label: value }) as AppFormsLookupValue)
 				: (values as Array<any>).map(data => formControl.Options.SelectOptions.RemoteURIConverter !== undefined ? formControl.Options.SelectOptions.RemoteURIConverter(data) : ({ Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value, Description: data.Description || data.description }) as AppFormsLookupValue)
 			: AppUtility.isNotEmpty(values)
@@ -146,10 +150,6 @@ export class AppFormsService {
 		}));
 	}
 
-	private prepareControls(formControls: Array<AppFormsControl>, modifyDatePickers?: boolean) {
-		this.prepareControlsAsync(formControls, modifyDatePickers);
-	}
-
 	/** Gets the definition of all controls */
 	public getControls(formConfig: Array<AppFormsControlConfig> = [], formControls?: Array<AppFormsControl>, formSegments?: { items: Array<AppFormsSegment>, default: string, current: string }) {
 		formControls = formControls || new Array<AppFormsControl>();
@@ -172,7 +172,7 @@ export class AppFormsService {
 			formControl.Order = order;
 			formControls.push(formControl);
 		});
-		this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.indexOf("Desktop") > -1 && !AppUtility.isAppleSafari());
+		this.prepareControlsAsync(formControls, this.canModifyDatePickers);
 		return formControls;
 	}
 
@@ -218,11 +218,11 @@ export class AppFormsService {
 		this.getFormGroup(formControls, form, validators, asyncValidators);
 		if (value !== undefined) {
 			this.updateControls(formControls, value);
-			this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.indexOf("Desktop") > -1 && !AppUtility.isAppleSafari());
+			this.prepareControlsAsync(formControls, this.canModifyDatePickers);
 			form.patchValue(value);
 		}
 		else {
-			this.prepareControls(formControls, !AppConfig.isNativeApp && AppConfig.app.platform.indexOf("Desktop") > -1 && !AppUtility.isAppleSafari());
+			this.prepareControlsAsync(formControls, this.canModifyDatePickers);
 		}
 	}
 
@@ -603,12 +603,12 @@ export class AppFormsService {
 		buttons.push({
 			text: okButtonText || await this.getResourceAsync("common.buttons.ok"),
 			role: undefined as string,
-			handler: (data?: any) => AppUtility.invoke(() => {
+			handler: (data?: any) => {
 				if (onOkClick !== undefined) {
 					onOkClick(data);
 				}
 				this.hideAlertAsync();
-			})
+			}
 		});
 		this._alert = await this.alertController.create({
 			header: header || await this.getResourceAsync("common.alert.header.general"),
