@@ -25,8 +25,8 @@
 					},
 					"labels": {
 						"shortcuts": "Lối tắt quản trị nội dung",
-						"contents": "Quản trị tin - bài",
-						"others": "Quản trị các nội dung khác"
+						"contents": "Quản trị nội dung",
+						"others": "Quản trị các thông tin khác"
 					},
 					"select": {
 						"organization": "Chọn đơn vị - tổ chức",
@@ -454,11 +454,28 @@
 						"label": "Tài khoản",
 						"placeholder": "",
 						"description": ""
+					},
+					"Status": {
+						"label": "Trạng thái xử lý",
+						"Draft": "Bản nháp",
+						"Pending": "Đợi xử lý",
+						"Rejected": "Bị từ chối",
+						"Approved": "Đang xử lý",
+						"Published": "Đã xử lý",
+						"Archieved": "Đã hoàn thành"
 					}
+				},
+				"buttons": {
+					"change": "Đổi trạng thái xử lý",
+					"approved": "Chỉ định đang xử lý",
+					"published": "Chỉ định đã xử lý",
+					"archieved": "Chỉ định đã hoàn thành"
+
 				},
 				"messages": {
 					"success": "Yêu cầu đã được gửi thành công!",
-					"error": "Đã xảy ra lỗi!"
+					"error": "Đã xảy ra lỗi!",
+					"status": "Đã thay đổi trạng thái xử lý ({{status}}) thành công"
 				}
 			}
 		}

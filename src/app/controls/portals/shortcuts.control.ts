@@ -100,7 +100,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			OnClick: shortcut => this.configSvc.navigateForwardAsync(shortcut.Link).then(() => AppEvents.broadcast("OpenSidebar", { Name: "cms" }))
 		}, 2);
 
-		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfItem(module) || this.portalsCmsSvc.getDefaultContentTypeOfLink(module);
+		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfForm(module) || this.portalsCmsSvc.getDefaultContentTypeOfItem(module) || this.portalsCmsSvc.getDefaultContentTypeOfLink(module);
 		this.shortcuts.insert({
 			Title: shortcuts.others as string || await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.labels.others"),
 			Link: this.portalsCoreSvc.getAppURL(contentType),
@@ -128,7 +128,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			this.shortcuts[0].Title = AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.organization"), { organization: organization !== undefined ? this.portalsCoreSvc.activeOrganization.Title : "N/A" });
 			const module = await this.portalsCoreSvc.getActiveModuleAsync();
 			this.shortcuts[1].Title = AppUtility.format(await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.active.module"), { module: module !== undefined ? module.Title : "N/A" });
-			const contentType = this.portalsCmsSvc.getDefaultContentTypeOfItem(module) || this.portalsCmsSvc.getDefaultContentTypeOfLink(module);
+			const contentType = this.portalsCmsSvc.getDefaultContentTypeOfForm(module) || this.portalsCmsSvc.getDefaultContentTypeOfItem(module) || this.portalsCmsSvc.getDefaultContentTypeOfLink(module);
 			this.shortcuts[3].Link = this.portalsCoreSvc.getAppURL(contentType);
 		}
 	}
