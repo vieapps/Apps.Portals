@@ -33,6 +33,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 	private item: Item;
 	canModerate = false;
 	canEdit = false;
+	processing = false;
 	title = {
 		page: "Item",
 		track: "Item"
@@ -157,7 +158,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 					this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => cfg.Name === control.Name).Hidden ? true : false);
 					this.prepareValues();
 				}
-				else if (args.Type === "Deleted") {
+				else if (args.Type === "Deleted" && !this.processing) {
 					this.cancel();
 				}
 			}
@@ -340,26 +341,24 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 			availableStatuses.push("Published", "Archieved");
 		}
 		const currentStatus = availableStatuses.indexOf(this.item.Status) > -1 ? this.item.Status : "Draft";
-		this.portalsCoreSvc.approveAsync(this.item.contentType.ID, this.item.ID, currentStatus, availableStatuses);
+		this.portalsCoreSvc.showApprovalDialogAsync(this.item.contentType.ID, this.item.ID, currentStatus, availableStatuses);
 	}
 
 	delete() {
-		this.trackAsync(this.resources.delete, "Delete").then(async () => this.appFormsSvc.showAlertAsync(
-			undefined,
+		AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete"),
-			undefined,
-			async () => this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete")).then(() => this.portalsCmsSvc.deleteItemAsync(
-				this.item.ID,
-				async data => {
-					AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Item", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
-					this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete"))
-						.then(() => this.trackAsync(this.resources.delete, "Delete"))
-						.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
-				},
-				error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.resources.delete, "Delete"))
-			)),
+			async () => {
+				this.processing = true;
+				this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete")).then(() => this.portalsCmsSvc.deleteItemAsync(
+					this.item.ID,
+					() => this.trackAsync(this.resources.delete, "Delete")
+						.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete"))
+						.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
+					error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.resources.delete, "Delete"))
+				)));
+			},
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel")
+			"{{default}}"
 		));
 	}
 

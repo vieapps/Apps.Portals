@@ -394,7 +394,7 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 			availableStatuses.push("Published", "Archieved");
 		}
 		const currentStatus = availableStatuses.indexOf(this.link.Status) > -1 ? this.link.Status : "Draft";
-		this.portalsCoreSvc.approveAsync(this.link.contentType.ID, this.link.ID, currentStatus, availableStatuses);
+		this.portalsCoreSvc.showApprovalDialogAsync(this.link.contentType.ID, this.link.ID, currentStatus, availableStatuses);
 	}
 
 	delete() {

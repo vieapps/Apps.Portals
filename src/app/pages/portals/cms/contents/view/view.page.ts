@@ -391,7 +391,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			availableStatuses.push("Published", "Archieved");
 		}
 		const currentStatus = availableStatuses.indexOf(this.content.Status) > -1 ? this.content.Status : "Draft";
-		this.portalsCoreSvc.approveAsync(this.content.contentType.ID, this.content.ID, currentStatus, availableStatuses);
+		this.portalsCoreSvc.showApprovalDialogAsync(this.content.contentType.ID, this.content.ID, currentStatus, availableStatuses);
 	}
 
 	delete() {
