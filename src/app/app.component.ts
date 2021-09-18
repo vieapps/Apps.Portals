@@ -340,13 +340,13 @@ export class AppComponent implements OnInit {
 			const parent = AppUtility.isObject(args.parent, true)
 				? this.getSidebarMainMenuItem(args.parent, !!args.parent.Expanded, args.parent.OnClick || (_ => {}))
 				: undefined;
-			if (parent !== undefined && AppUtility.isNotEmpty(parent.Title) && parent.Title.startsWith("{{") && parent.Title.endsWith("}}")) {
-				parent.Title = await this.configSvc.getResourceAsync(parent.Title.substr(2, parent.Title.length - 4).trim());
+			if (parent !== undefined) {
+				parent.Title = await this.appFormsSvc.normalizeResourceAsync(parent.Title);
 			}
 			const items = AppUtility.isArray(args.items, true)
 				? args.items.map(item => this.getSidebarMainMenuItem(item)).filter(item => AppUtility.isNotEmpty(item.Title))
 				: undefined;
-			await Promise.all((items || []).filter(item => item.Title.startsWith("{{") && item.Title.endsWith("}}")).map(async item => item.Title = await this.configSvc.getResourceAsync(item.Title.substr(2, item.Title.length - 4).trim())));
+			await Promise.all((items || []).map(async item => item.Title = await this.appFormsSvc.normalizeResourceAsync(item.Title)));
 			this.sidebar.updateMainMenu(args.name, parent, items, args.index);
 		}
 
@@ -365,9 +365,7 @@ export class AppComponent implements OnInit {
 			this.sidebar.MainMenu.push({ Name: undefined, Parent: undefined, Items: [] });
 		}
 		const menuItem = this.getSidebarMainMenuItem(args.itemInfo);
-		if (AppUtility.isNotEmpty(menuItem.Title) && menuItem.Title.startsWith("{{") && menuItem.Title.endsWith("}}")) {
-			menuItem.Title = await this.configSvc.getResourceAsync(menuItem.Title.substr(2, menuItem.Title.length - 4).trim());
-		}
+		menuItem.Title = await this.appFormsSvc.normalizeResourceAsync(menuItem.Title);
 		this.sidebar.MainMenu[menuIndex].Items.update(menuItem, args.itemIndex !== undefined ? args.itemIndex as number : -1);
 	}
 

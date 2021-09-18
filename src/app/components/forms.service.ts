@@ -6,7 +6,7 @@ import { TranslateService } from "@ngx-translate/core";
 import { AppConfig } from "@app/app.config";
 import { AppAPIs } from "@app/components/app.apis";
 import { AppUtility } from "@app/components/app.utility";
-import { AppFormsControlConfig, AppFormsSegment, AppFormsControl } from "@app/components/forms.objects";
+import { AppFormsControlConfig, AppFormsSegment, AppFormsControl, AppFormsLookupValue } from "@app/components/forms.objects";
 import { ConfigurationService } from "@app/services/configuration.service";
 
 /** Provides the servicing operations of the dynamic forms */
@@ -40,10 +40,26 @@ export class AppFormsService {
 		[key: string]: Array<{ County: string, Province: string, Country: string, Title: string, TitleANSI: string}>
 	} = {};
 
-	private async normalizeResourceAsync(resource: string) {
+	public async normalizeResourceAsync(resource: string, interpolateParams?: object) {
 		return AppUtility.isNotEmpty(resource) && resource.startsWith("{{") && resource.endsWith("}}")
-			? await this.getResourceAsync(resource.substr(2, resource.length - 4).trim())
+			? await this.getResourceAsync(resource.substr(2, resource.length - 4).trim(), interpolateParams)
 			: resource;
+	}
+
+	public prepareSelectControl(formControl: AppFormsControlConfig, selectValues?: string | string[] | AppFormsLookupValue[], onCompleted?: (formControl: AppFormsControlConfig) => void) {
+		const values = selectValues || formControl.Options.SelectOptions.Values;
+		formControl.Options.SelectOptions.Values = AppUtility.isArray(values, true) && AppUtility.isGotData(values)
+			? typeof values[0] === "string"
+				? (values as Array<string>).map(value => ({ Value: value, Label: value }) as AppFormsLookupValue)
+				: (values as Array<any>).map(data => formControl.Options.SelectOptions.RemoteURIConverter !== undefined ? formControl.Options.SelectOptions.RemoteURIConverter(data) : ({ Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value, Description: data.Description || data.description }) as AppFormsLookupValue)
+			: AppUtility.isNotEmpty(values)
+				? ((values as string).indexOf("#;") > 0 ? (values as string).split("#;") : (values as string).split(";")).map(value => value.split("|")).map(data => ({ Value: data.first(), Label: data.last() }) as AppFormsLookupValue)
+				: AppUtility.isNotNull(values)
+					? [{ Value: values.toString(), Label: values.toString() } as AppFormsLookupValue]
+					: [];
+		if (onCompleted !== undefined) {
+			onCompleted(formControl);
+		}
 	}
 
 	private async prepareControlsAsync(formControls: Array<AppFormsControl>, modifyDatePickers?: boolean) {
@@ -60,28 +76,20 @@ export class AppFormsService {
 				if (AppUtility.isNotEmpty(formControl.Options.SelectOptions.RemoteURI)) {
 					const url = AppAPIs.getURL(formControl.Options.SelectOptions.RemoteURI) + (formControl.Options.SelectOptions.RemoteURI.indexOf("?") < 0 ? "?" : "&") + AppConfig.getRelatedQuery();
 					try {
-						if (formControl.Options.SelectOptions.RemoteURIProcessor !== undefined) {
-							formControl.Options.SelectOptions.Values = await formControl.Options.SelectOptions.RemoteURIProcessor(url, formControl.Options.SelectOptions.RemoteURIConverter);
-						}
-						else {
-							const values = url.indexOf("discovery/definitions?") > 0
-								? await this.configSvc.fetchDefinitionAsync(url)
-								: await AppAPIs.sendXMLHttpRequestAsync("GET", url);
-							formControl.Options.SelectOptions.Values = AppUtility.isArray(values, true)
-								? (values as Array<string>).length > 0 && typeof values[0] === "string"
-									? (values as Array<string>).map(value => ({ Value: value, Label: value }))
-									: (values as Array<any>).map(data => formControl.Options.SelectOptions.RemoteURIConverter !== undefined ? formControl.Options.SelectOptions.RemoteURIConverter(data) : ({ Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value, Description: data.Description || data.description }))
-								: AppUtility.isNotEmpty(values)
-									? ((AppUtility.indexOf(values, "#;") > 0 ? AppUtility.toArray(values, "#;") : AppUtility.toArray(values, ";")) as Array<string>).map(value => ({ Value: value, Label: value }))
-									: AppUtility.isNotNull(values)
-										? [values.toString()]
-										: [];
-						}
+						this.prepareSelectControl(
+							formControl,
+							formControl.Options.SelectOptions.RemoteURIProcessor !== undefined
+								? await formControl.Options.SelectOptions.RemoteURIProcessor(url, formControl.Options.SelectOptions.RemoteURIConverter)
+								: url.indexOf("discovery/definitions?") > 0 ? await this.configSvc.fetchDefinitionAsync(url) : await AppAPIs.sendXMLHttpRequestAsync("GET", url)
+						);
 					}
 					catch (error) {
 						console.error("[Forms]: Error occurred while preparing the selecting values from a remote URI", error);
 						formControl.Options.SelectOptions.Values = [];
 					}
+				}
+				else {
+					this.prepareSelectControl(formControl);
 				}
 				if (AppUtility.isArray(formControl.Options.SelectOptions.Values, true)) {
 					await Promise.all(formControl.Options.SelectOptions.Values.map(async selectValue => {
