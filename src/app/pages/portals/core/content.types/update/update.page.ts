@@ -99,7 +99,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 			return;
 		}
 
-		if (Module.instances.toArray(o => o.SystemID === this.organization.ID).length < 1) {
+		if (!!!this.organization.modules.length) {
 			const request = AppPagination.buildRequest(
 				{ And: [{ SystemID: { Equals: this.organization.ID } }] },
 				{ Title: "Ascending" },
@@ -108,7 +108,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 			await this.portalsCoreSvc.searchModulesAsync(request, undefined, undefined, true, true);
 		}
 
-		if (Module.instances.toArray(o => o.SystemID === this.organization.ID).length < 1) {
+		if (!!!this.organization.modules.length) {
 			this.trackAsync(`${this.title} | Invalid Organization`, "Check").then(() => this.appFormsSvc.hideLoadingAsync(async () => this.cancel(await this.configSvc.getResourceAsync("portals.contenttypes.list.invalid"))));
 			return;
 		}
@@ -131,8 +131,8 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 	}
 
 	private getModuleDefinition(moduleID: string) {
-		const current = Module.instances.first(o => o.ID === moduleID);
-		return this.definitions.find(definition => definition.ID === current.ModuleDefinitionID);
+		const current = Module.instances.first(module => module.ID === moduleID);
+		return current !== undefined ? this.definitions.find(definition => definition.ID === current.ModuleDefinitionID) : undefined;
 	}
 
 	private getContentTypeDefinitions(moduleID: string) {
@@ -180,6 +180,13 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
+		const repository = AppUtility.isNotEmpty(this.contentType.ID)
+			? this.getRepositories().find(repo => repo.Value === this.contentType.RepositoryID)
+			: undefined;
+		const contentTypeDefinition = AppUtility.isNotEmpty(this.contentType.ID)
+			? this.getDefinitions(this.contentType.RepositoryID).find(definition => definition.Value === this.contentType.ContentTypeDefinitionID)
+			: undefined;
+
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "content.type");
 		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.contenttypes.controls.Organization}}", this.organization);
@@ -198,7 +205,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 					Name: "Repository",
 					Type: "Text",
 					Segment: "basic",
-					Extras: { Text: this.getRepositories().find(repository => repository.Value === this.contentType.RepositoryID).Label },
+					Extras: { Text: repository !== undefined ? repository.Label : "" },
 					Options: {
 						Label: control.Options.Label,
 						ReadOnly: true
@@ -211,10 +218,11 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 			control.Options.SelectOptions.Values = this.getRepositories();
 			control.Options.OnChanged = (_, formControl) => {
 				const definitions = this.getDefinitions(formControl.value, true);
+				const definition = definitions.first();
 				formControl.control.next.Options.SelectOptions.Values = definitions;
-				formControl.control.next.controlRef.setValue(definitions[0].Value, { onlySelf: true });
-				this.form.controls.Title.setValue(definitions[0].Label, { onlySelf: true });
-				this.form.controls.Description.setValue(definitions[0].Description, { onlySelf: true });
+				formControl.control.next.controlRef.setValue(definition.Value, { onlySelf: true });
+				this.form.controls.Title.setValue(definition.Label, { onlySelf: true });
+				this.form.controls.Description.setValue(definition.Description, { onlySelf: true });
 			};
 		}
 
@@ -225,7 +233,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 				Name: "ContentTypeDefinition",
 				Type: "Text",
 				Segment: "basic",
-				Extras: { Text: this.getDefinitions(this.contentType.RepositoryID).find(definition => definition.Value === this.contentType.ContentTypeDefinitionID).Label },
+				Extras: { Text: contentTypeDefinition !== undefined ? contentTypeDefinition.Label : "" },
 				Options: {
 					Label: control.Options.Label,
 					ReadOnly: true
@@ -233,7 +241,8 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 			}, formConfig.findIndex(ctrl => ctrl.Name === control.Name));
 		}
 		else {
-			control.Options.SelectOptions.Values = this.getDefinitions(Module.instances.size > 0 ? Module.instances.toArray()[0].ID : undefined, true);
+			const module = this.portalsCoreSvc.activeModule || Module.instances.first(mod => mod.SystemID === this.organization.ID);
+			control.Options.SelectOptions.Values = this.getDefinitions(module !== undefined ? module.ID : undefined, true);
 			control.Options.OnChanged = (_, formControl) => {
 				if (formControl.selectOptions.length > 0) {
 					this.form.controls.Title.setValue(formControl.selectOptions.find(o => o.Value === formControl.value).Label, { onlySelf: true });

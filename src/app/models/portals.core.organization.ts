@@ -123,7 +123,7 @@ export class Organization extends CoreBaseModel {
 	}
 
 	public get modules() {
-		return Module.instances.toArray(module => module.SystemID === this.ID).sortBy({ name: "LastModified", reverse: true }, "Title");
+		return Module.instances.toArray(module => module.SystemID === this.ID).sortBy("Title");
 	}
 
 	public get contentTypes() {
