@@ -6,7 +6,6 @@ import { AppDataPagination, AppDataFilter, AppDataRequest } from "@app/component
 /** Servicing component for working with paginations */
 export class AppPagination {
 
-	/** All pagination instances */
 	public static instances = new Dictionary<string, AppDataPagination>();
 
 	private static cloneFilterBy(filterBy: AppDataFilter) {
@@ -50,17 +49,17 @@ export class AppPagination {
 		const pagination = info !== undefined ? info.Pagination : undefined;
 		return AppUtility.isObject(pagination, true)
 			? {
-					TotalRecords: pagination.TotalRecords !== undefined ? pagination.TotalRecords : -1,
-					TotalPages: pagination.TotalPages !== undefined ? pagination.TotalPages : 0,
-					PageSize: pagination.PageSize !== undefined ? pagination.PageSize : 20,
-					PageNumber: pagination.PageNumber !== undefined ? pagination.PageNumber : 0
-				}
+				TotalRecords: pagination.TotalRecords !== undefined ? pagination.TotalRecords : -1,
+				TotalPages: pagination.TotalPages !== undefined ? pagination.TotalPages : 0,
+				PageSize: pagination.PageSize !== undefined ? pagination.PageSize : 20,
+				PageNumber: pagination.PageNumber !== undefined ? pagination.PageNumber : 0
+			}
 			: {
-					TotalRecords: -1,
-					TotalPages: 0,
-					PageSize: 20,
-					PageNumber: 0
-				};
+				TotalRecords: -1,
+				TotalPages: 0,
+				PageSize: 20,
+				PageNumber: 0
+			};
 	}
 
 	/** Gets a pagination */
@@ -69,11 +68,11 @@ export class AppPagination {
 		const pagination = AppUtility.isNotEmpty(key) ? this.instances.get(key) : undefined;
 		return pagination !== undefined
 			? {
-					TotalRecords: pagination.TotalRecords,
-					TotalPages: pagination.TotalPages,
-					PageSize: pagination.PageSize,
-					PageNumber: pagination.PageNumber
-				}
+				TotalRecords: pagination.TotalRecords,
+				TotalPages: pagination.TotalPages,
+				PageSize: pagination.PageSize,
+				PageNumber: pagination.PageNumber
+			}
 			: undefined;
 	}
 

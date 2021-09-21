@@ -333,9 +333,11 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	private search(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onSuccess = (data: any) => {
-			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
-			this.pagination.PageNumber = this.pageNumber;
+			if (this.pagination !== undefined) {
+				this.pageNumber++;
+				this.pagination.PageNumber = this.pageNumber;
+			}
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 			this.trackAsync(this.title.track);
 		};

@@ -265,7 +265,9 @@
 				},
 				"list": {
 					"search": "cho từ khoá vào \"..\" để tìm kiếm chính xác trong phân loại, đặt dấu + ở đầu nếu bắt buộc phải có",
-					"filter": "nhập từ khoá (không dấu cũng được) để lọc theo tiêu đề, đặt dấu + ở đầu nếu bắt buộc phải có"
+					"filter": "nhập từ khoá (không dấu cũng được) để lọc theo tiêu đề, đặt dấu + ở đầu nếu bắt buộc phải có",
+					"current": "Kiểu dữ liệu nghiệp vụ",
+					"change": "Đổi kiểu dữ liệu nghiệp vụ"
 				},
 				"update": {
 					"segments": {
@@ -457,6 +459,8 @@
 					},
 					"Status": {
 						"label": "Trạng thái xử lý",
+						"placeholder": "",
+						"description": "",
 						"Draft": "Bản nháp",
 						"Pending": "Đợi xử lý",
 						"Rejected": "Bị từ chối",

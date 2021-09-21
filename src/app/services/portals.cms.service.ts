@@ -710,7 +710,7 @@ export class PortalsCmsService extends BaseService {
 				PageSize: 0,
 				PageNumber: 0
 			}
-		), onSuccess, onError, dontProcessPagination, dontProcessPagination ? { "x-no-cache": "x" } : undefined, useXHR);
+		), onSuccess, onError, dontProcessPagination, !!dontProcessPagination ? { "x-no-cache": "x" } : undefined, useXHR);
 	}
 
 	public createCategoryAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
