@@ -182,7 +182,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.search"), "search", () => this.openSearch(false))
 			];
 
-			if (this.module !== undefined && this.portalsCmsSvc.getContentTypesOfContent(this.module).length > 0) {
+			if (this.module !== undefined && this.portalsCmsSvc.getContentTypesOfContent(this.module).length > 1) {
 				this.actions.push(
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.list.change"), "git-branch", () => this.changeContentType())
 				);
