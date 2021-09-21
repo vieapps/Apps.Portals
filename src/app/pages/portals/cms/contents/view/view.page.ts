@@ -219,38 +219,46 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			this.portalsCoreSvc.getAuditFormControl(this.content, "management")
 		);
 
-		formConfig.forEach((ctrl, index) => ctrl.Order = index);
+		formConfig.insert({
+			Name: "RepositoryEntity",
+			Type: "Text",
+			Segment: "management",
+			Extras: { Text: this.content.contentType !== undefined ? this.content.contentType.Title : "" },
+			Options: {
+				Label: "{{portals.cms.contents.list.current}}",
+				ReadOnly: true
+			}
+		}, formConfig.findIndex(ctrl => ctrl.Name === "Audits") + 1);
 
-		const control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
-		control.Order = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Audits")).Order + 1;
+		formConfig.forEach((ctrl, index) => ctrl.Order = index);
+		const control = formConfig.find(ctrl => ctrl.Name === "ID");
+		control.Order = formConfig.find(ctrl => ctrl.Name === "Audits").Order + 1;
 		control.Segment = "management";
 		control.Hidden = false;
 		control.Options.Label = "{{common.audits.identity}}";
 		control.Options.ReadOnly = true;
 
 		if (this.canEdit) {
-			formConfig.push(this.appFormsSvc.getButtonControls(
-				"management",
-				{
-					Name: "Delete",
-					Label: this.resources.delete,
-					OnClick: async () => this.delete(),
-					Options: {
-						Fill: "clear",
-						Color: "danger",
-						Css: "ion-float-end",
-						Icon: {
-							Name: "trash",
-							Slot: "start"
-						}
+			formConfig.push(this.appFormsSvc.getButtonControls("management", {
+				Name: "Delete",
+				Label: this.resources.delete,
+				OnClick: async () => this.delete(),
+				Options: {
+					Fill: "clear",
+					Color: "danger",
+					Css: "ion-float-end",
+					Icon: {
+						Name: "trash",
+						Slot: "start"
 					}
 				}
-			));
+			}));
 		}
 
 		if (onCompleted !== undefined) {
 			onCompleted(formConfig);
 		}
+
 		return formConfig;
 	}
 

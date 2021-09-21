@@ -375,23 +375,20 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 				this.portalsCmsSvc.getUploadFormControl(this.content, "attachments"),
 				this.portalsCmsSvc.getPermanentLinkFormControl(this.content, "management"),
 				this.portalsCoreSvc.getAuditFormControl(this.content, "management"),
-				this.appFormsSvc.getButtonControls(
-					"management",
-					{
-						Name: "Delete",
-						Label: "{{portals.cms.contents.update.buttons.delete}}",
-						OnClick: () => this.delete(),
-						Options: {
-							Fill: "clear",
-							Color: "danger",
-							Css: "ion-float-end",
-							Icon: {
-								Name: "trash",
-								Slot: "start"
-							}
+				this.appFormsSvc.getButtonControls("management", {
+					Name: "Delete",
+					Label: "{{portals.cms.contents.update.buttons.delete}}",
+					OnClick: () => this.delete(),
+					Options: {
+						Fill: "clear",
+						Color: "danger",
+						Css: "ion-float-end",
+						Icon: {
+							Name: "trash",
+							Slot: "start"
 						}
 					}
-				)
+				})
 			);
 		}
 		else {
@@ -400,14 +397,35 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
-
 		if (AppUtility.isNotEmpty(this.content.ID)) {
+			formConfig.insert({
+				Name: "RepositoryEntity",
+				Type: "Text",
+				Segment: "management",
+				Extras: { Text: this.contentType !== undefined ? this.contentType.Title : "" },
+				Options: {
+					Label: "{{portals.cms.contents.list.current}}",
+					ReadOnly: true
+				}
+			}, formConfig.findIndex(ctrl => ctrl.Name === "Audits") + 1);
 			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
-			control.Order = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Audits")).Order + 1;
+			control.Order = formConfig.find(ctrl => ctrl.Name === "Audits").Order + 1;
 			control.Segment = "management";
 			control.Hidden = false;
 			control.Options.Label = "{{common.audits.identity}}";
 			control.Options.ReadOnly = true;
+		}
+		else {
+			formConfig.insert({
+				Name: "RepositoryEntity",
+				Type: "Text",
+				Segment: "management",
+				Extras: { Text: this.contentType !== undefined ? this.contentType.Title : "" },
+				Options: {
+					Label: "{{portals.cms.contents.list.current}}",
+					ReadOnly: true
+				}
+			}, formConfig.findIndex(ctrl => ctrl.Name === "ID"));
 		}
 
 		if (onCompleted !== undefined) {

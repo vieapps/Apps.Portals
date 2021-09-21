@@ -169,21 +169,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
-		this.filterBy.And = this.contentType !== undefined
-			? [
-					{ SystemID: { Equals: this.contentType.SystemID } },
-					{ RepositoryID: { Equals: this.contentType.RepositoryID } },
-					{ RepositoryEntityID: { Equals: this.contentType.ID } }
-				]
-			: this.module !== undefined
-				? [
-						{ SystemID: { Equals: this.module.SystemID } },
-						{ RepositoryID: { Equals: this.module.ID } }
-					]
-				: [{ SystemID: { Equals: this.organization.ID } }];
-		if (this.category !== undefined) {
-			this.filterBy.And.push({ CategoryID: { Equals: this.category.ID } });
-		}
+		this.prepareFilterBy();
 
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.search");
@@ -195,6 +181,13 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.create"), "create", () => this.create()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.search"), "search", () => this.openSearch(false))
 			];
+
+			if (this.module !== undefined && this.portalsCmsSvc.getContentTypesOfContent(this.module).length > 0) {
+				this.actions.push(
+					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.list.change"), "git-branch", () => this.changeContentType())
+				);
+			}
+
 			if (this.canUpdate) {
 				this.actions.push(
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcel()),
@@ -283,7 +276,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	get paginationPrefix() {
-		return this.portalsCoreSvc.getPaginationPrefix("cms.content");
+		return (this.contentType !== undefined ? `${this.contentType.ID}#` : "") + this.portalsCoreSvc.getPaginationPrefix("cms.content");
 	}
 
 	startSearch(onNext?: () => void, pagination?: AppDataPagination) {
@@ -295,9 +288,11 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	search(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onSuccess = (data?: any) => {
-			this.pageNumber++;
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
-			this.pagination.PageNumber = this.pageNumber;
+			if (this.pagination !== undefined) {
+				this.pageNumber++;
+				this.pagination.PageNumber = this.pageNumber;
+			}
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 		};
 		if (this.searching) {
@@ -319,6 +314,24 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		}
 		if (onNext !== undefined) {
 			onNext();
+		}
+	}
+
+	private prepareFilterBy() {
+		this.filterBy.And = this.contentType !== undefined
+			? [
+				{ SystemID: { Equals: this.contentType.SystemID } },
+				{ RepositoryID: { Equals: this.contentType.RepositoryID } },
+				{ RepositoryEntityID: { Equals: this.contentType.ID } }
+			]
+			: this.module !== undefined
+				? [
+					{ SystemID: { Equals: this.module.SystemID } },
+					{ RepositoryID: { Equals: this.module.ID } }
+				]
+				: [{ SystemID: { Equals: this.organization.ID } }];
+		if (this.category !== undefined) {
+			this.filterBy.And.push({ CategoryID: { Equals: this.category.ID } });
 		}
 	}
 
@@ -361,6 +374,32 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	back(message: string, url?: string) {
 		this.do(() => this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateBackAsync(url)));
+	}
+
+	changeContentType() {
+		AppUtility.invoke(async () => this.appFormsSvc.showAlertAsync(
+			await this.configSvc.getResourceAsync("portals.cms.contents.list.change"),
+			undefined,
+			undefined,
+			data => {
+				if (this.contentType.ID !== data) {
+					this.contentType = this.module.contentTypes.first(contentType => contentType.ID === data);
+					this.prepareFilterBy();
+					this.contents = [];
+					this.pageNumber = 0;
+					this.pagination = undefined;
+					this.appFormsSvc.showLoadingAsync().then(() => this.prepareResults(() => this.appFormsSvc.hideLoadingAsync()));
+				}
+			},
+			await this.configSvc.getResourceAsync("common.buttons.select"),
+			await this.configSvc.getResourceAsync("common.buttons.cancel"),
+			this.portalsCmsSvc.getContentTypesOfContent(this.module).map(contentType => ({
+				type: "radio",
+				label: contentType.Title,
+				value: contentType.ID,
+				checked: this.contentType.ID === contentType.ID
+			}))
+		));
 	}
 
 	exportToExcel() {
