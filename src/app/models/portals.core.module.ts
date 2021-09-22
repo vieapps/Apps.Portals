@@ -2,8 +2,7 @@ import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { Privileges } from "@app/models/privileges";
 import { PortalBase as BaseModel, NotificationSettings, EmailSettings } from "@app/models/portals.base";
-import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
-import { ContentType } from "@app/models/portals.core.content.type";
+import { ContentType, PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.all";
 
 export class Module extends CoreBaseModel {
 

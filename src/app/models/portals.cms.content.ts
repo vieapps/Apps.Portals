@@ -1,7 +1,6 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
-import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
-import { Category } from "@app/models/portals.cms.category";
+import { Category, PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.all";
 
 export class Content extends CmsBaseModel {
 

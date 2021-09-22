@@ -10,19 +10,19 @@ export class AppConfig {
 	/** App URIs (remote APIs and related resources) */
 	public static URIs = {
 		/** APIs */
-		apis: "https://apis.vieapps.net/",
+		apis: "https://apis.vieapps.com/",
 
 		/** Files HTTP service */
-		files: "https://fs.vieapps.net/",
+		files: "https://fs.vieapps.com/",
 
 		/** Portals HTTP service */
-		portals: "https://portals.vieapps.net/",
+		portals: "https://portals.vieapps.com/",
 
 		/** Apps on the web to perform activation or other business process */
-		apps: "https://cms.vieapps.net/",
+		apps: "https://cms.vieapps.com/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
-		medias: ["fs.vieportal.net"] as Array<string>
+		medias: [] as Array<string>
 	};
 
 	/** App information */
@@ -31,10 +31,10 @@ export class AppConfig {
 		description: "Manage information and related services of CMS Portals",
 		copyright: "© VIEApps.net",
 		license: "Apache-2.0",
-		homepage: "https://cms.vieapps.net",
+		homepage: "https://cms.vieapps.com",
 		id: "vieapps-ngx",
-		version: "4.2109.1",
-		frameworks: "ionic 5.7 - angular 11.2 - cordova 10.0",
+		version: "4.2109.7",
+		frameworks: "ionic 5.8 - angular 11.2 - cordova 10.0",
 		mode: "",
 		platform: "",
 		os: "",
@@ -81,7 +81,7 @@ export class AppConfig {
 			{
 				name: "Books",
 				objects: ["Book", "Category", "Statistic"],
-				menuIndex: 2,
+				menuIndex: 3,
 				canSetPrivilegs: true,
 				appName: "NGX Books",
 				appDescription: "Free online books & EPUB/MOBI e-books"
