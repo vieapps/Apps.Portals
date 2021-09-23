@@ -7,7 +7,7 @@
 			</ion-button>
 		</ion-buttons>
 		<ion-buttons slot="end">
-			<ion-button [hidden]="filtering" (click)="openSearch()">
+			<ion-button [hidden]="filtering || redordering" (click)="openSearch()">
 				<ion-icon name="search" slot="icon-only"></ion-icon>
 			</ion-button>
 			<ion-button [hidden]="!redordering" fill="clear" color="primary" [disabled]="processing" (click)="doReorder()">
@@ -84,14 +84,14 @@
 		<ion-infinite-scroll-content></ion-infinite-scroll-content>
 	</ion-infinite-scroll>
 	<div *ngIf="redordering">
-		<ion-list *ngFor="let segment of reorderingSegments; trackBy: trackReorderingItem" #reorderingIems>
+		<ion-list *ngFor="let zone of reorderingPortlets; trackBy: trackReorderingItem" #reorderingIems>
 			<ion-list-header [color]="color">
 				<ion-label>
-					{{ segment.Title }}
+					{{ zone.Title }}
 				</ion-label>
 			</ion-list-header>
 			<ion-reorder-group (ionItemReorder)="onReordered($event, zone.ID)" disabled="false">
-				<ion-item *ngFor="let portlet of segment.Children; trackBy: trackReorderingItem" [color]="color">
+				<ion-item *ngFor="let portlet of zone.Children; trackBy: trackReorderingItem" [color]="color">
 					<ion-label>
 						{{ portlet.Title }}
 					</ion-label>

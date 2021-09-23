@@ -75,7 +75,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	};
 	processing = false;
 	redordering = false;
-	reorderingSegments = new Array<NestedObject>();
+	reorderingPortlets = new Array<NestedObject>();
 	orderedPortlets = new Array<NestedObject>();
 	buttons = {
 		save: "Save",
@@ -305,7 +305,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 			let zoneIndex = -1;
 			let itemIndex = 0;
 			const zoneTitle = await this.configSvc.getResourceAsync("portals.portlets.update.reorder");
-			this.reorderingSegments = [];
+			this.reorderingPortlets = [];
 			this.portlets.forEach(portlet => {
 				if (zoneName !== portlet.Zone) {
 					if (zoneName !== "" ) {
@@ -327,12 +327,12 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 				} as NestedObject);
 			});
 			this.updateReorderSegment(zoneName, zoneItems, AppUtility.format(zoneTitle, { zone: zoneName }), zoneIndex);
-			this.zones.filter(zone => this.reorderingSegments.findIndex(segment => segment.ID === zone) > -1).forEach((zone, orderIndex) => this.reorderingSegments.find(segment => segment.ID === zone).OrderIndex = orderIndex);
-			this.orderedPortlets = this.reorderingSegments.map(segment => ({
-				ID: segment.ID,
-				Title: segment.Title,
-				OrderIndex: segment.OrderIndex,
-				Children: segment.Children.map(portlet => ({
+			this.zones.filter(name => this.reorderingPortlets.findIndex(zone => zone.ID === name) > -1).forEach((name, orderIndex) => this.reorderingPortlets.find(zone => zone.ID === name).OrderIndex = orderIndex);
+			this.orderedPortlets = this.reorderingPortlets.map(zone => ({
+				ID: zone.ID,
+				Title: zone.Title,
+				OrderIndex: zone.OrderIndex,
+				Children: zone.Children.map(portlet => ({
 					ID: portlet.ID,
 					Title: portlet.Title,
 					OrderIndex: portlet.OrderIndex
@@ -346,7 +346,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	}
 
 	private updateReorderSegment(zoneName: string, zoneItems: Array<NestedObject>, zoneTitle: string, zoneIndex: number) {
-		this.reorderingSegments.push({
+		this.reorderingPortlets.push({
 			ID: zoneName,
 			Title: zoneTitle,
 			OrderIndex: zoneIndex,
@@ -395,7 +395,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	cancelReorder(onNext?: () => void) {
 		this.processing = false;
 		this.redordering = false;
-		this.reorderingSegments = [];
+		this.reorderingPortlets = [];
 		this.orderedPortlets = [];
 		this.preparePortlets();
 		this.prepareTitleAsync().then(() => this.appFormsSvc.hideLoadingAsync(onNext));
