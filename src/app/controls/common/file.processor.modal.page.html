@@ -19,6 +19,15 @@
 	</ion-toolbar>
 </ion-header>
 
+<ion-footer *ngIf="headers && headers.length">
+	<ion-toolbar [color]="color">
+		<span *ngFor="let header of headers; let idx=index; trackBy: track" [slot]="idx === 0 ? 'start' : idx === 2 ? 'end' : ''">
+			<ion-checkbox slot="start" (ionChange)="onChanged($event, idx)"></ion-checkbox>
+			<span>{{ header.label }}</span>
+		</span>
+	</ion-toolbar>
+</ion-footer>
+
 <ion-content [color]="color">
 
 	<ion-list *ngIf="mode === 'select'" class="select">

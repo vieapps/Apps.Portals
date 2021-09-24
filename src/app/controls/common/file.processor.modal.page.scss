@@ -1,3 +1,9 @@
+ion-footer > ion-toolbar > span > span {
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 5px;
+	margin-top: -10px;
+}
 ion-list.select > ion-item > ion-label > span {
 	line-height: 20px;
 } 

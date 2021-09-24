@@ -2894,6 +2894,9 @@ export class PortalsCoreService extends BaseService {
 				temporary: true,
 				multiple: false,
 				accept: ".xls,.xlsx",
+				buttonLabels: {
+					upload: await this.configSvc.getResourceAsync("portals.common.excel.button")
+				},
 				fileOptions: {
 					ServiceName: this.name,
 					ObjectName: objectName,
@@ -2904,15 +2907,19 @@ export class PortalsCoreService extends BaseService {
 					IsTracked: false,
 					IsTemporary: true
 				},
-				buttonLabels: {
-					upload: await this.configSvc.getResourceAsync("portals.common.excel.button")
-				},
+				headerOptions: [{
+					name: "x-regenerate-id",
+					value: "x",
+					label: await this.configSvc.getResourceAsync("portals.common.controls.notifications.webhooks.generateIdentity.label")
+				}],
 				handlers: {
-					onUploaded: async (uploadedData: Array<any>) => {
+					onUploaded: async (uploadedInfo: { data: Array<any>; headers: { [key: string]: string } }) => {
 						await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.common.excel.action.import"));
-						const info = uploadedData[0];
+						const info = uploadedInfo.data.first();
 						const nodeID = info["x-node"] as string;
 						const filename = info["x-filename"] as string;
+						const headers = this.configSvc.appConfig.getAuthenticatedInfo();
+						AppUtility.toKeyValuePair(uploadedInfo.headers).filter(kvp => AppUtility.isNotNull(kvp.key) && AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
 						this.sendRequestAsync(
 							{
 								Path: this.getPath("excel", "import", "x-request=" + AppCrypto.jsonEncode({
@@ -2923,7 +2930,7 @@ export class PortalsCoreService extends BaseService {
 									NodeID: nodeID,
 									Filename: filename
 								})),
-								Header: this.configSvc.appConfig.getAuthenticatedInfo()
+								Header: headers
 							},
 							data => {
 								const processID = data !== undefined ? data.ProcessID as string : undefined;
