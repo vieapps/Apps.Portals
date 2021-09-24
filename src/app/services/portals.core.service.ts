@@ -2815,7 +2815,7 @@ export class PortalsCoreService extends BaseService {
 		await this.sendRequestAsync(
 			{
 				Path: this.getPath("excel", "export", "x-request=" + AppCrypto.jsonEncode(request)),
-				Header: this.configSvc.appConfig.getAuthenticatedInfo()
+				Header: this.configSvc.getHeaders()
 			},
 			data => {
 				const processID = data !== undefined ? data.ProcessID as string : undefined;
@@ -2918,8 +2918,6 @@ export class PortalsCoreService extends BaseService {
 						const info = uploadedInfo.data.first();
 						const nodeID = info["x-node"] as string;
 						const filename = info["x-filename"] as string;
-						const headers = this.configSvc.appConfig.getAuthenticatedInfo();
-						AppUtility.toKeyValuePair(uploadedInfo.headers).filter(kvp => AppUtility.isNotNull(kvp.key) && AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
 						this.sendRequestAsync(
 							{
 								Path: this.getPath("excel", "import", "x-request=" + AppCrypto.jsonEncode({
@@ -2930,7 +2928,7 @@ export class PortalsCoreService extends BaseService {
 									NodeID: nodeID,
 									Filename: filename
 								})),
-								Header: headers
+								Header: this.configSvc.getHeaders(uploadedInfo.headers)
 							},
 							data => {
 								const processID = data !== undefined ? data.ProcessID as string : undefined;

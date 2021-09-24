@@ -48,13 +48,12 @@ export class FilesService extends BaseService {
 	}
 
 	public getUploadHeaders(additional?: { [key: string]: string }, asBase64?: boolean) {
-		const headers = this.configSvc.appConfig.getAuthenticatedInfo();
-		AppUtility.toKeyValuePair(additional).filter(kvp => AppUtility.isNotNull(kvp.key) && AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
-		AppUtility.getAttributes(headers, key => AppUtility.isEmpty(headers[key])).forEach(key => delete headers[key]);
-		if (AppUtility.isTrue(asBase64)) {
-			headers["x-as-base64"] = "true";
-		}
-		return headers;
+		return this.configSvc.getHeaders(additional, headers => {
+			AppUtility.getAttributes(headers, key => AppUtility.isEmpty(headers[key])).forEach(key => delete headers[key]);
+			if (AppUtility.isTrue(asBase64)) {
+				headers["x-as-base64"] = "true";
+			}
+		});
 	}
 
 	public getFileHeaders(options: FileOptions, additional?: { [key: string]: string }) {
@@ -149,10 +148,10 @@ export class FilesService extends BaseService {
 	}
 
 	public getTemporaryFileURI(message: AppMessage) {
-		const query = this.configSvc.appConfig.getAuthenticatedInfo();
-		query["x-node"] = message.Data.NodeID;
-		query["x-filename"] = message.Data.Filename;
-		return `${this.configSvc.appConfig.URIs.apis}temp.download?${AppUtility.toQuery(query)}`;
+		return `${this.configSvc.appConfig.URIs.apis}temp.download?` + AppUtility.toQuery(this.configSvc.getHeaders(undefined, query => {
+			query["x-node"] = message.Data.NodeID;
+			query["x-filename"] = message.Data.Filename;
+		}));
 	}
 
 	public prepareAttachment(attachment: AttachmentInfo) {

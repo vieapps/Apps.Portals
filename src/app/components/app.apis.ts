@@ -102,13 +102,13 @@ export class AppAPIs {
 		return (url.startsWith("http://") || url.startsWith("https://") ? "" : endpoint || AppConfig.URIs.apis) + url;
 	}
 
-	/**
-		* Gets the headers that include the authenticated headers
-		* @param data The initialize data, could be an object or an array of key-value pair
-	*/
-	public static getHeaders(data?: any) {
+	/** Gets the headers that include the authenticated information */
+	public static getHeaders(additional?: any, onCompleted?: (headers: { [key: string]: string }) => void) {
 		const headers = AppConfig.getAuthenticatedInfo();
-		AppUtility.toKeyValuePair(data, kvp => AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
+		AppUtility.toKeyValuePair(additional, kvp => AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
+		if (onCompleted !== undefined) {
+			onCompleted(headers);
+		}
 		return headers;
 	}
 
@@ -490,7 +490,7 @@ export class AppAPIs {
 				"x-session-id": AppCrypto.aesEncrypt(AppConfig.session.id),
 				"x-device-id": AppCrypto.aesEncrypt(AppConfig.session.device)
 			},
-			Body: AppConfig.getAuthenticatedInfo()
+			Body: this.getHeaders()
 		});
 		if (this.isWebSocketReady) {
 			this.updateWebSocket({ resendCallbackMessages: true });

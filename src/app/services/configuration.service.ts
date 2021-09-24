@@ -789,6 +789,11 @@ export class ConfigurationService extends BaseService {
 		return await AppUtility.toAsync<{ [key: string]: string }>(this.translateSvc.get(key));
 	}
 
+	/** Gets the headers that include the authenticated information */
+	public getHeaders(additional?: any, onCompleted?: (headers: { [key: string]: string }) => void) {
+		return AppAPIs.getHeaders(additional, onCompleted);
+	}
+
 	/** Definitions (forms, views, resources, ...) */
 	public addDefinition(path: string, definition: any) {
 		this._definitions[AppCrypto.md5(path.toLowerCase())] = definition;
