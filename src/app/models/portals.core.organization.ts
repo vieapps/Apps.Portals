@@ -2,7 +2,9 @@ import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { Privileges } from "@app/models/privileges";
 import { NotificationSettings, EmailSettings, WebHookSettings } from "@app/models/portals.base";
-import { Module, ContentType, PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.all";
+import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
 
 export class Organization extends CoreBaseModel {
 

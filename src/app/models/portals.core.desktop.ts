@@ -1,7 +1,9 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { NestedObject, ElementUISettings } from "@app/models/portals.base";
-import { Organization, Portlet, PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.all";
+import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
+import { Organization } from "@app/models/portals.core.organization";
+import { Portlet } from "@app/models/portals.core.portlet";
 
 export class Desktop extends CoreBaseModel implements NestedObject {
 
