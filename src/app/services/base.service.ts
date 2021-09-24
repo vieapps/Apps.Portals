@@ -24,6 +24,11 @@ export class Base {
 		return this._name;
 	}
 
+	/** Gets the headers that include the authenticated information */
+	public getHeaders(additional?: any, onCompleted?: (headers: { [key: string]: string }) => void) {
+		return AppAPIs.getHeaders(additional, onCompleted);
+	}
+
 	/**
 		* Gets the URI path for working with APIs
 		* @param objectName The name of the object
@@ -86,7 +91,7 @@ export class Base {
 		* @param useXHR Set to true to always use XHR
 	*/
 	protected sendRequest(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		requestInfo.Header = AppAPIs.getHeaders(requestInfo.Header);
+		requestInfo.Header = this.getHeaders(requestInfo.Header);
 		const subscription = useXHR
 			? AppAPIs.sendRequest(requestInfo).subscribe(onSuccess, onError)
 			: AppAPIs.sendRequest(requestInfo, false, onSuccess, onError).subscribe();
@@ -104,7 +109,7 @@ export class Base {
 		* @param useXHR Set to true to always use XHR
 	*/
 	protected sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		requestInfo.Header = AppAPIs.getHeaders(requestInfo.Header);
+		requestInfo.Header = this.getHeaders(requestInfo.Header);
 		return AppAPIs.sendRequestAsync(requestInfo, onSuccess, onError, useXHR);
 	}
 

@@ -151,7 +151,7 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 
 	download(type: string) {
 		if (this.configSvc.isAuthenticated) {
-			this.trackAsync(this.title, "Download", "/books/download/success").then(() => PlatformUtility.openURL(`${this.book.Files[type].Url}?${AppUtility.toQuery(this.configSvc.getHeaders())}`));
+			this.trackAsync(this.title, "Download", "/books/download/success").then(() => PlatformUtility.openURL(`${this.book.Files[type].Url}?${AppUtility.toQuery(this.booksSvc.getHeaders())}`));
 		}
 		else {
 			this.trackAsync(this.title, "Download", "/books/download/failed").then(async () => await this.appFormsSvc.showAlertAsync(
