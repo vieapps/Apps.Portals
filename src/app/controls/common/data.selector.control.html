@@ -1,19 +1,4 @@
 <ion-list>
-	<ion-list-header [color]="color">
-		<ion-label>
-			<span *ngIf="resources && resources.header">
-				{{ resources.header }}
-			</span>
-			<ion-buttons *ngIf="allowAdd || allowDelete" class="ion-float-end">
-				<ion-button *ngIf="allowAdd" fill="clear" color="medium" tabindex="-1" (click)="add()">
-					<ion-icon name="add" slot="icon-only"></ion-icon>
-				</ion-button>
-				<ion-button *ngIf="allowDelete" fill="clear" color="medium" tabindex="-1" [disabled]="disabled" (click)="delete()">
-					<ion-icon name="close" slot="icon-only"></ion-icon>
-				</ion-button>
-			</ion-buttons>
-		</ion-label>
-	</ion-list-header>
 	<ion-item *ngFor="let item of items; trackBy: track" [color]="color">
 		<ion-checkbox slot="end" [checked]="checked(item.Value)" (ionChange)="select($event, item.Value)"></ion-checkbox>
 		<ion-label>

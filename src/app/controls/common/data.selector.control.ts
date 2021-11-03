@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from "@angu
 import { HashSet } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { AppFormsControl, AppFormsLookupValue } from "@app/components/forms.objects";
-import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 
 @Component({
@@ -14,8 +13,7 @@ import { ConfigurationService } from "@app/services/configuration.service";
 export class DataSelectorControl implements OnInit, OnDestroy {
 
 	constructor(
-		private configSvc: ConfigurationService,
-		private appFormsSvc: AppFormsService
+		private configSvc: ConfigurationService
 	) {
 	}
 
@@ -25,23 +23,15 @@ export class DataSelectorControl implements OnInit, OnDestroy {
 	/** The current items for displying */
 	@Input() items: Array<AppFormsLookupValue>;
 
-	/** The resources of header, delete confirmation and buttons */
-	@Input() resources: { header: string; confirm: string; ok: string; cancel: string; };
-
-	/** The handlers to process the request on add/delete */
-	@Input() private handlers: { add: () => void; delete: (selected: Array<string>) => void; };
+	/** The settings (allow add/delete, show show item's image/description, position of desscription) */
+	@Input() private settings: { [key: string]: any };
 
 	/** Set to 'true' to allow select multiple item */
 	@Input() private multiple: boolean;
 
-	/** The settings (allow add/delete, show show item's image/description, position of desscription) */
-	@Input() private settings: { [key: string]: any };
-
 	/** The event handler to run when the controls was initialized */
 	@Output() init = new EventEmitter<DataSelectorControl>();
 
-	private _allowAdd: boolean;
-	private _allowDelete: boolean;
 	private _showImage: boolean;
 	private _showDescription: boolean;
 	private _descriptionAtRight: boolean;
@@ -49,18 +39,6 @@ export class DataSelectorControl implements OnInit, OnDestroy {
 
 	get color() {
 		return this.configSvc.color;
-	}
-
-	get disabled() {
-		return this._selected.size < 1;
-	}
-
-	get allowAdd() {
-		return this._allowAdd;
-	}
-
-	get allowDelete() {
-		return this._allowDelete;
 	}
 
 	get showImage() {
@@ -78,28 +56,17 @@ export class DataSelectorControl implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.items = this.items || [];
 
-		this.resources = this.resources || {
-			header: undefined,
-			confirm: "Are you sure?",
-			ok: "OK",
-			cancel: "Cancel"
-		};
-
-		this.multiple = this.multiple !== undefined ? AppUtility.isTrue(this.multiple) : true;
-
 		this.settings = AppUtility.isObject(this.settings, true)
 			? this.settings
 			: this.control !== undefined && this.control.Extras !== undefined
 				? this.control.Extras["Settings"] || this.control.Extras["settings"] || {}
 				: {};
 
-		this._allowAdd = this.settings.AllowAdd !== undefined || this.settings.allowAdd !== undefined
-			? !!(this.settings.AllowAdd || this.settings.allowAdd)
-			: true;
+		this.multiple = this.multiple !== undefined
+			? AppUtility.isTrue(this.multiple)
+			: this.settings.multiple !== undefined ? AppUtility.isTrue(this.settings.multiple) : true;
 
-		this._allowDelete = this.settings.AllowDelete !== undefined || this.settings.allowDelete !== undefined
-			? !!(this.settings.AllowDelete || this.settings.allowDelete)
-			: true;
+		this._selected = new HashSet<string>(AppUtility.isObject(this.settings.selected, true) && this.settings.selected instanceof Set ? this.settings.selected.values() : new Array<string>());
 
 		this._showImage = this.settings.ShowImage !== undefined || this.settings.showImage !== undefined
 			? !!(this.settings.ShowImage || this.settings.showImage)
@@ -138,27 +105,8 @@ export class DataSelectorControl implements OnInit, OnDestroy {
 		else {
 			this._selected.remove(value);
 		}
-	}
-
-	add() {
-		if (this.handlers !== undefined && typeof this.handlers.add === "function") {
-			this.handlers.add();
-		}
-	}
-
-	delete() {
-		if (this.handlers !== undefined && typeof this.handlers.delete === "function") {
-			this.appFormsSvc.showAlertAsync(
-				undefined,
-				undefined,
-				this.resources.confirm,
-				() => {
-					this.handlers.delete(this._selected.toArray());
-					this._selected.clear();
-				},
-				this.resources.ok,
-				this.resources.cancel
-			);
+		if (typeof this.settings.onSelect === "function") {
+			this.settings.onSelect(value, event.detail.checked);
 		}
 	}
 
