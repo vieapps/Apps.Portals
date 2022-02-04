@@ -1,0 +1,21 @@
+<ion-header>
+	<ion-toolbar [color]="color">
+		<ion-buttons slot="start">
+			<ion-button color="secondary" (click)="closeAsync()">
+				{{ labels.cancel }}
+			</ion-button>
+		</ion-buttons>
+		<ion-buttons slot="end">
+			<ion-button color="primary" (click)="closeAsync(selected.toArray())">
+				{{ labels.select }}
+			</ion-button>
+		</ion-buttons>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content [color]="color">
+	<control-data-item
+		[items]="items"
+		[multiple]="multiple"
+		[settings]="settings"></control-data-item>
+</ion-content>

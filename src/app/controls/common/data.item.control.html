@@ -1,0 +1,22 @@
+<ion-list>
+	<ion-item *ngFor="let item of items; trackBy: track" [color]="color">
+		<ion-checkbox *ngIf="allowSelect" slot="end" [checked]="checked(item.Value)" (ionChange)="select($event, item.Value)"></ion-checkbox>
+		<ion-button *ngIf="allowClick" slot="end" fill="clear" (click)="click($event, item.Value)">
+			<ion-icon slot="icon-only" [name]="icon"></ion-icon>
+		</ion-button>
+		<ion-label>
+			<ion-thumbnail *ngIf="showImage && item.Image" class="ion-float-start ion-padding-end">
+				<img [src]="item.Image" />
+			</ion-thumbnail>
+			<span [ngClass]="{ 'one': !showDescription || descriptionAtRight, 'atRight': showDescription && descriptionAtRight }">
+				{{ item.Label }}
+				<span *ngIf="showDescription && descriptionAtRight && item.Description">
+					{{ item.Description }}
+				</span>
+			</span>
+			<div *ngIf="showDescription && !descriptionAtRight && item.Description">
+				{{ item.Description }}
+			</div>
+		</ion-label>
+	</ion-item>
+</ion-list>
