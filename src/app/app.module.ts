@@ -37,7 +37,9 @@ import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { BooksService } from "@app/services/books.service";
 
 import { AppPreferencesControlModule } from "@app/controls/common/app.preferences.module";
+import { DataItemModalPageModule } from "@app/controls/common/data.item.modal.module";
 import { FilesProcessorModalPageModule } from "@app/controls/common/file.processor.modal.module";
+import { UsersSelectorModalPageModule } from "@app/controls/common/user.selector.modal.module";
 import { DataLookupModalPageModule } from "@app/controls/portals/data.lookup.modal.module";
 
 // ngx-translate factories
@@ -99,7 +101,9 @@ export class HammerConfig extends HammerGestureConfig {
 			deps: [HttpClient]
 		}}),
 		AppPreferencesControlModule,
+		DataItemModalPageModule,
 		FilesProcessorModalPageModule,
+		UsersSelectorModalPageModule,
 		DataLookupModalPageModule,
 		TimePipeModule,
 		AppFormsModule,

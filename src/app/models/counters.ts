@@ -16,7 +16,7 @@ export class CounterBase {
 	Type = "";
 	Total = 0;
 
-	public static deserialize(json: any, counter?: CounterBase) {
+	static deserialize(json: any, counter?: CounterBase) {
 		counter = counter || new CounterBase();
 		AppUtility.copy(json, counter);
 		return counter;
@@ -38,7 +38,7 @@ export class CounterInfo extends CounterBase {
 	Month = 0;
 	Week = 0;
 
-	public static deserialize(json: any, counter?: CounterInfo) {
+	static deserialize(json: any, counter?: CounterInfo) {
 		counter = counter || new CounterInfo();
 		AppUtility.copy(json, counter);
 		return counter;

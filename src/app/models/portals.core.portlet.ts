@@ -25,7 +25,7 @@ export class Portlet extends CoreBaseModel {
 	}
 
 	/** All instances of portlet */
-	public static instances = new Dictionary<string, Portlet>();
+	static instances = new Dictionary<string, Portlet>();
 
 	Title = undefined as string;
 	Action = undefined as string;
@@ -95,7 +95,7 @@ export class Portlet extends CoreBaseModel {
 	otherDesktops: Array<string>;
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, portlet?: Portlet) {
+	static deserialize(json: any, portlet?: Portlet) {
 		portlet = portlet || new Portlet();
 		portlet.copy(json, data => {
 			if (AppUtility.isNotEmpty(data.OriginalPortletID)) {
@@ -133,71 +133,71 @@ export class Portlet extends CoreBaseModel {
 	}
 
 	/** Gets by identity */
-	public static get(id: string) {
+	static get(id: string) {
 		return AppUtility.isNotEmpty(id)
 			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
-	public static set(portlet: Portlet) {
+	static set(portlet: Portlet) {
 		return portlet === undefined ? undefined : this.instances.add(portlet.ID, portlet);
 	}
 
 	/** Updates into dictionary */
-	public static update(data: any) {
+	static update(data: any) {
 		return AppUtility.isObject(data, true)
 			? this.set(data instanceof Portlet ? data as Portlet : this.deserialize(data, this.get(data.ID)))
 			: undefined;
 	}
 
 	/** Checks to see the dictionary is contains the object by identity or not */
-	public static contains(id: string) {
+	static contains(id: string) {
 		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
 	}
 
 	/** Deserializes the collection of objects to array */
-	public static toArray(objects: Array<any>) {
+	static toArray(objects: Array<any>) {
 		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
 	}
 
 	/** Deserializes the collection of objects to list */
-	public static toList(objects: Array<any>) {
+	static toList(objects: Array<any>) {
 		return this.toArray(objects).toList();
 	}
 
-	public get organization() {
+	get organization() {
 		return AppUtility.isNotEmpty(this.SystemID)
 			? Organization.get(this.SystemID)
 			: undefined;
 	}
 
-	public get contentType() {
+	get contentType() {
 		return AppUtility.isNotEmpty(this.RepositoryEntityID)
 			? ContentType.get(this.RepositoryEntityID)
 			: undefined;
 	}
 
-	public get desktop() {
+	get desktop() {
 		return Desktop.get(this.DesktopID);
 	}
 
-	public get originalPortlet() {
+	get originalPortlet() {
 		return AppUtility.isNotEmpty(this.OriginalPortletID)
 			? Portlet.get(this.OriginalPortletID)
 			: this;
 	}
 
-	public get originalDesktop() {
+	get originalDesktop() {
 		const originalPortlet = this.originalPortlet;
 		return originalPortlet !== undefined ? originalPortlet.desktop : this.desktop;
 	}
 
-	public get routerLink() {
+	get routerLink() {
 		return `/portals/core/portlets/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
-	public get listingInfo() {
+	get listingInfo() {
 		const originalPortlet = this.originalPortlet;
 		const originalDesktop = this.originalDesktop;
 		const contentType = originalPortlet !== undefined ? originalPortlet.contentType : this.contentType;

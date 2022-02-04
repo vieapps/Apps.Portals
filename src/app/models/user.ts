@@ -17,7 +17,7 @@ export class UserProfileBase extends BaseModel {
 	}
 
 	/** All user profile instances */
-	public static instances = new Dictionary<string, UserProfileBase>();
+	static instances = new Dictionary<string, UserProfileBase>();
 
 	// standard properties
 	ID = "";
@@ -51,10 +51,11 @@ export class UserProfileBase extends BaseModel {
 	ansiTitle = "";
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, profile?: UserProfileBase) {
+	static deserialize(json: any, profile?: UserProfileBase) {
 		profile = profile || new UserProfileBase();
 		profile.copy(json, data => {
 			profile.Status = data.Status || "Activated";
+			profile.Mobile = AppUtility.isNotEmpty(profile.Mobile) ? profile.Mobile : undefined;
 			if (AppUtility.isNotEmpty(data.Options)) {
 				profile.Options = AppUtility.parse(data.Options);
 			}
@@ -65,45 +66,45 @@ export class UserProfileBase extends BaseModel {
 	}
 
 	/** Gets by identity */
-	public static get(id: string) {
+	static get(id: string) {
 		return id !== undefined ? this.instances.get(id) : undefined;
 	}
 
 	/** Sets by identity */
-	public static set(profile: UserProfileBase) {
+	static set(profile: UserProfileBase) {
 		return profile === undefined ? undefined : this.instances.add(profile.ID, profile);
 	}
 
 	/** Checks to see the dictionary is contains the object by identity or not */
-	public static contains(id: string) {
+	static contains(id: string) {
 		return id !== undefined && this.instances.contains(id);
 	}
 
 	/** Deserializes the collection of objects to array */
-	public static toArray(objects: Array<any>) {
+	static toArray(objects: Array<any>) {
 		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
 	}
 
 	/** Deserializes the collection of objects to list */
-	public static toList(objects: Array<any>) {
+	static toList(objects: Array<any>) {
 		return this.toArray(objects).toList();
 	}
 
-	public get avatarURI() {
+	get avatarURI() {
 		return AppUtility.isNotEmpty(this.Avatar) ? this.Avatar : this.Gravatar;
 	}
 
-	public get routerLink() {
+	get routerLink() {
 		return `${AppConfig.URLs.users.profile}/${AppUtility.toANSI(this.Name, true)}`;
 	}
 
-	public get fullAddress() {
+	get fullAddress() {
 		return this.Address
 			+ (AppUtility.isNotEmpty(this.Province) ? (AppUtility.isNotEmpty(this.Address) ? ", " : "")
 			+ this.County + ", " + this.Province + ", " + this.Country : "");
 	}
 
-	public copy(source: any, onCompleted?: (data: any) => void) {
+	copy(source: any, onCompleted?: (data: any) => void) {
 		super.copy(source, data => {
 			if (AppUtility.isNotEmpty(this.BirthDay)) {
 				this.BirthDay = this.BirthDay.replace(/--/g, "01").replace(/\//g, "-");
@@ -115,7 +116,7 @@ export class UserProfileBase extends BaseModel {
 		});
 	}
 
-	public getEmail(hideEmail: boolean = true) {
+	getEmail(hideEmail: boolean = true) {
 		return hideEmail ? `${this.Email.substr(0, this.Email.indexOf("@") - 2)}**@**${this.Email.substr(this.Email.indexOf("@") + 3)}` : this.Email;
 	}
 
@@ -142,51 +143,42 @@ export class UserProfile extends UserProfileBase {
 	LastSync = new Date();
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, profile?: UserProfile) {
-		profile = profile || new UserProfile();
-		profile.copy(json, data => {
-			profile.Status = data.Status || "Activated";
-			if (AppUtility.isNotEmpty(data.Options)) {
-				profile.Options = AppUtility.parse(data.Options);
-			}
-			delete profile["Privileges"];
-			delete profile["OriginalPrivileges"];
-		});
-		return profile;
+	static deserialize(json: any, profile?: UserProfile) {
+		return super.deserialize(json, profile || new UserProfile()) as UserProfile;
 	}
 
 	/** Gets by identity */
-	public static get(id: string) {
+	static get(id: string) {
 		return super.get(id) as UserProfile;
 	}
 
 	/** Sets by identity */
-	public static set(profile: UserProfile) {
+	static set(profile: UserProfile) {
 		return super.set(profile) as UserProfile;
 	}
 
 	/** Updates into dictionary */
-	public static update(data: any) {
+	static update(data: any) {
 		return AppUtility.isObject(data, true)
 			? this.set(data instanceof UserProfile ? data as UserProfile : this.deserialize(data, this.get(data.ID)))
 			: undefined;
 	}
 
 	/** Deserializes the collection of objects to array */
-	public static toArray(objects: Array<any>) {
+	static toArray(objects: Array<any>) {
 		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
 	}
 
 	/** Deserializes the collection of objects to list */
-	public static toList(objects: Array<any>) {
+	static toList(objects: Array<any>) {
 		return this.toArray(objects).toList();
 	}
 
-	public copy(source: any, onCompleted?: (data: any) => void) {
+	copy(source: any, onCompleted?: (data: any) => void) {
 		super.copy(source, data => {
 			this.RatingPoints = new Dictionary<string, RatingPoint>();
 			if (AppUtility.isArray(data.RatingPoints, true)) {
-				(data.RatingPoints as Array<any>).forEach(o => this.RatingPoints.set(o.Type, RatingPoint.deserialize(o)));
+				(data.RatingPoints as Array<any>).forEach(obj => this.RatingPoints.set(obj.Type, RatingPoint.deserialize(obj)));
 			}
 			if (onCompleted !== undefined) {
 				onCompleted(data);

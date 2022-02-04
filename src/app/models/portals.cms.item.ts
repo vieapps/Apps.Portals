@@ -17,7 +17,7 @@ export class Item extends CmsBaseModel {
 		this.Status = AppUtility.isNotEmpty(status) ? status : "Published";
 	}
 
-	public static instances = new Dictionary<string, Item>();
+	static instances = new Dictionary<string, Item>();
 
 	Title = undefined as string;
 	Summary = undefined as string;
@@ -37,7 +37,7 @@ export class Item extends CmsBaseModel {
 	ansiTitle: string;
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, item?: Item) {
+	static deserialize(json: any, item?: Item) {
 		item = item || new Item();
 		item.copy(json, data => {
 			item.normalizeExtendedProperties(data);
@@ -53,40 +53,40 @@ export class Item extends CmsBaseModel {
 	}
 
 	/** Gets by identity */
-	public static get(id: string) {
+	static get(id: string) {
 		return AppUtility.isNotEmpty(id)
 			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
-	public static set(item: Item) {
+	static set(item: Item) {
 		return item === undefined ? undefined : this.instances.add(item.ID, item);
 	}
 
 	/** Updates into dictionary */
-	public static update(data: any) {
+	static update(data: any) {
 		return AppUtility.isObject(data, true)
 			? this.set(data instanceof Item ? data as Item : this.deserialize(data, this.get(data.ID)))
 			: undefined;
 	}
 
 	/** Checks to see the dictionary is contains the object by identity or not */
-	public static contains(id: string) {
+	static contains(id: string) {
 		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
 	}
 
 	/** Deserializes the collection of objects to array */
-	public static toArray(objects: Array<any>) {
+	static toArray(objects: Array<any>) {
 		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
 	}
 
 	/** Deserializes the collection of objects to list */
-	public static toList(objects: Array<any>) {
+	static toList(objects: Array<any>) {
 		return this.toArray(objects).toList();
 	}
 
-	public get routerLink() {
+	get routerLink() {
 		return `/portals/cms/items/view/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 

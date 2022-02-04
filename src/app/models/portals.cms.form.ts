@@ -17,7 +17,7 @@ export class Form extends CmsBaseModel {
 		this.Status = AppUtility.isNotEmpty(status) ? status : "Published";
 	}
 
-	public static instances = new Dictionary<string, Form>();
+	static instances = new Dictionary<string, Form>();
 
 	Title = undefined as string;
 	Details = undefined as string;
@@ -45,7 +45,7 @@ export class Form extends CmsBaseModel {
 
 	ansiTitle: string;
 
-	public static deserialize(json: any, form?: Form) {
+	static deserialize(json: any, form?: Form) {
 		form = form || new Form();
 		form.copy(json, data => {
 			form.normalizeExtendedProperties(data);
@@ -57,44 +57,44 @@ export class Form extends CmsBaseModel {
 	}
 
 	/** Gets by identity */
-	public static get(id: string) {
+	static get(id: string) {
 		return AppUtility.isNotEmpty(id)
 			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
-	public static set(item: Form) {
+	static set(item: Form) {
 		return item === undefined ? undefined : this.instances.add(item.ID, item);
 	}
 
 	/** Updates into dictionary */
-	public static update(data: any) {
+	static update(data: any) {
 		return AppUtility.isObject(data, true)
 			? this.set(data instanceof Form ? data as Form : this.deserialize(data, this.get(data.ID)))
 			: undefined;
 	}
 
 	/** Checks to see the dictionary is contains the object by identity or not */
-	public static contains(id: string) {
+	static contains(id: string) {
 		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
 	}
 
 	/** Deserializes the collection of objects to array */
-	public static toArray(objects: Array<any>) {
+	static toArray(objects: Array<any>) {
 		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
 	}
 
 	/** Deserializes the collection of objects to list */
-	public static toList(objects: Array<any>) {
+	static toList(objects: Array<any>) {
 		return this.toArray(objects).toList();
 	}
 
-	public get routerLink() {
+	get routerLink() {
 		return `/portals/cms/forms/view/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
-	public get fullAddress() {
+	get fullAddress() {
 		return this.Address
 			+ (AppUtility.isNotEmpty(this.Province) ? (AppUtility.isNotEmpty(this.Address) ? ", " : "")
 			+ this.County + ", " + this.Province + ", " + this.Country : "");

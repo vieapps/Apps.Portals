@@ -143,8 +143,17 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			? await this.configSvc.getResourceAsync("portals.cms.categories.title.reorder")
 			: AppUtility.format(await this.configSvc.getResourceAsync(`portals.cms.categories.title.${(this.searching ? "search" : "list")}`), { info: "" });
 
-		const contentTypeID = this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"];
-		this.contentType = ContentType.get(contentTypeID);
+		this.parentID = this.configSvc.requestParams["ParentID"];
+		this.parentCategory = this.searching
+			? undefined
+			: Category.get(this.parentID);
+
+		const contentTypeID = this.parentCategory !== undefined
+			? this.parentCategory.RepositoryEntityID
+			: this.configSvc.requestParams["RepositoryEntityID"] || this.configSvc.requestParams["ContentTypeID"];
+		this.contentType = this.parentCategory !== undefined
+			? this.parentCategory.contentType
+			: ContentType.get(contentTypeID);
 		if (this.contentType === undefined && AppUtility.isNotEmpty(contentTypeID)) {
 			await this.portalsCoreSvc.getContentTypeAsync(contentTypeID, _ => this.contentType = ContentType.get(contentTypeID), undefined, true);
 		}
@@ -201,6 +210,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			this.prepareTitleAsync().then(() => this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.focus(this.searchCtrl)));
 		}
 		else {
+			this.prepareFilterBy();
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.create"), "create", () => this.create()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.categories.title.search"), "search", () => this.openSearch())
@@ -213,10 +223,6 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 				);
 			}
 			this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("common.buttons.refresh"), "refresh", () => this.refreshAll()));
-
-			this.parentID = this.configSvc.requestParams["ParentID"];
-			this.parentCategory = Category.get(this.parentID);
-			this.prepareFilterBy();
 
 			if (this.parentCategory !== undefined) {
 				this.contentType = this.parentCategory.contentType;

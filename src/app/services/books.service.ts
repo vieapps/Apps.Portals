@@ -28,7 +28,7 @@ export class BooksService extends BaseService {
 		Chapter: undefined as number
 	};
 
-	public get menuIndex() {
+	get menuIndex() {
 		if (this.configSvc.appConfig.services.all.length > 1) {
 			const menuIndex = this.configSvc.appConfig.services.all.find(svc => svc.name === this.name).menuIndex;
 			return menuIndex !== undefined ? menuIndex : 0;
@@ -36,7 +36,7 @@ export class BooksService extends BaseService {
 		return 0;
 	}
 
-	public initialize() {
+	initialize() {
 		AppAPIs.registerAsServiceScopeProcessor("Scheduler", () => {
 			const profile = this.configSvc.getAccount().profile;
 			if (profile !== undefined) {
@@ -92,7 +92,7 @@ export class BooksService extends BaseService {
 		});
 	}
 
-	public initializeAsync(onNext?: () => void) {
+	initializeAsync(onNext?: () => void) {
 		this.loadCategoriesAsync().then(() => this.prepareSidebarFooterItems());
 		AppUtility.invoke(() => this.fetchCategoriesAsync()
 			.then(() => this.loadInstructionsAsync(() => this.fetchInstructionsAsync()))
@@ -188,7 +188,7 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	public get completerDataSource() {
+	get completerDataSource() {
 		const convertFn = (data: any) => {
 			const book = data instanceof Book ? data as Book : Book.deserialize(data);
 			return {
@@ -208,7 +208,7 @@ export class BooksService extends BaseService {
 		);
 	}
 
-	public searchBooks(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchBooks(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("book", this.configSvc.relatedQuery),
 			request,
@@ -224,7 +224,7 @@ export class BooksService extends BaseService {
 		);
 	}
 
-	public searchBooksAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchBooksAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.searchAsync(
 			this.getSearchingPath("book", this.configSvc.relatedQuery),
 			request,
@@ -240,7 +240,7 @@ export class BooksService extends BaseService {
 		);
 	}
 
-	public getBookAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontUpdateCounter: boolean = false) {
+	getBookAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontUpdateCounter: boolean = false) {
 		const book = Book.get(id);
 		return book !== undefined && (book.TOCs.length > 0 || AppUtility.isNotEmpty(book.Body))
 			? AppUtility.invoke(onSuccess).then(dontUpdateCounter ? () => {} : () => this.updateBookCounterAsync(id))
@@ -259,7 +259,7 @@ export class BooksService extends BaseService {
 				);
 	}
 
-	public async getBookChapterAsync(id: string, chapter: number, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	async getBookChapterAsync(id: string, chapter: number, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		const book = Book.get(id);
 		return book === undefined || book.TOCs.length < 1 || chapter < 1 || chapter > book.Chapters.length || book.Chapters[chapter - 1] !== ""
 			? AppUtility.invoke(onSuccess)
@@ -280,7 +280,7 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	public updateBookCounterAsync(id: string, action?: string, onSuccess?: (data?: any) => void) {
+	updateBookCounterAsync(id: string, action?: string, onSuccess?: (data?: any) => void) {
 		return Book.instances.contains(id)
 			? this.sendRequestAsync({
 					ServiceName: this.name,
@@ -308,7 +308,7 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	public async generateEBookFilesAsync(id: string) {
+	async generateEBookFilesAsync(id: string) {
 		return Book.instances.contains(id)
 			? this.sendRequestAsync({
 					ServiceName: this.name,
@@ -332,7 +332,7 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	public requestUpdateBookAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	requestUpdateBookAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
 			this.getPath("book", body.ID),
 			body,
@@ -341,7 +341,7 @@ export class BooksService extends BaseService {
 		);
 	}
 
-	public updateBookAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	updateBookAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("book", body.ID),
 			body,
@@ -350,7 +350,7 @@ export class BooksService extends BaseService {
 	);
 	}
 
-	public deleteBookAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	deleteBookAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.deleteBookAsync(
 			this.getPath("book", id),
 			data => {
@@ -390,7 +390,7 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	public get instructions(): { [key: string]: { [key: string]: string } } {
+	get instructions(): { [key: string]: { [key: string]: string } } {
 		return this.configSvc.appConfig.extras["Books-Instructions"] || {};
 	}
 
@@ -410,7 +410,7 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	public fetchInstructionsAsync(onNext?: () => void) {
+	fetchInstructionsAsync(onNext?: () => void) {
 		return this.configSvc.getInstructionsAsync(
 			this.name,
 			this.configSvc.appConfig.language,
@@ -429,11 +429,11 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	public get categories(): Array<StatisticInfo> {
+	get categories(): Array<StatisticInfo> {
 		return this.configSvc.appConfig.extras["Books-Categories"] || [];
 	}
 
-	public set categories(value: Array<StatisticInfo>) {
+	set categories(value: Array<StatisticInfo>) {
 		if (value !== undefined && value.length > 0) {
 			this.configSvc.appConfig.extras["Books-Categories"] = value;
 		}
@@ -469,7 +469,7 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	public get authors(): Dictionary<string, Array<StatisticBase>> {
+	get authors(): Dictionary<string, Array<StatisticBase>> {
 		return this.configSvc.appConfig.extras["Books-Authors"] || new Dictionary<string, Array<StatisticBase>>();
 	}
 
@@ -497,7 +497,7 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	public get status() {
+	get status() {
 		const status = this.configSvc.appConfig.extras["Books-Status"] !== undefined
 			? this.configSvc.appConfig.extras["Books-Status"] as Array<StatisticBase>
 			: new Array<StatisticBase>();
@@ -523,24 +523,24 @@ export class BooksService extends BaseService {
 	private processUpdateStatisticMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Categories":
-				this.categories = (message.Data.Objects as Array<any>).map(s => StatisticInfo.deserialize(s));
+				this.categories = (message.Data.Objects as Array<any>).map(obj => StatisticInfo.deserialize(obj));
 				this.storeCategoriesAsync();
 				break;
 
 			case "Authors":
 				const authors = this.authors;
-				authors.set(message.Data.Char, (message.Data.Objects as Array<any>).map(s => StatisticBase.deserialize(s)));
+				authors.set(message.Data.Char, (message.Data.Objects as Array<any>).map(obj => StatisticBase.deserialize(obj)));
 				this.configSvc.appConfig.extras["Books-Authors"] = authors;
 				this.storeAuthorsAsync();
 				break;
 
 			case "Status":
-				AppUtility.invoke(() => this.configSvc.appConfig.extras["Books-Status"] = (message.Data.Objects as Array<any>).map(s => StatisticBase.deserialize(s)));
+				AppUtility.invoke(() => this.configSvc.appConfig.extras["Books-Status"] = (message.Data.Objects as Array<any>).map(obj => StatisticBase.deserialize(obj)));
 				break;
 		}
 	}
 
-	public get readingOptions() {
+	get readingOptions() {
 		this.configSvc.appConfig.options.extras[this.name] =
 			this.configSvc.appConfig.options.extras[this.name] || {
 				font: "default",
@@ -552,7 +552,7 @@ export class BooksService extends BaseService {
 		return this.configSvc.appConfig.options.extras[this.name] as { font: string, size: string, color: string, paragraph: string, align: string };
 	}
 
-	public get bookmarks() {
+	get bookmarks() {
 		this.configSvc.appConfig.extras["Books-Bookmarks"] = this.configSvc.appConfig.extras["Books-Bookmarks"] || new Dictionary<string, Bookmark>();
 		return this.configSvc.appConfig.extras["Books-Bookmarks"] as Dictionary<string, Bookmark>;
 	}
@@ -606,7 +606,7 @@ export class BooksService extends BaseService {
 		return this.storeBookmarksAsync(() => this.fetchBookmarksAsync(onNext));
 	}
 
-	public updateBookmarkAsync(id: string, chapter: number, position: number, onNext?: () => void) {
+	updateBookmarkAsync(id: string, chapter: number, position: number, onNext?: () => void) {
 		const bookmarks = this.bookmarks;
 		const bookmark = bookmarks.get(id) || new Bookmark();
 		bookmark.ID = id;
@@ -617,7 +617,7 @@ export class BooksService extends BaseService {
 		return this.storeBookmarksAsync(onNext);
 	}
 
-	public sendBookmarksAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	sendBookmarksAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.sendRequestAsync({
 			ServiceName: this.name,
 			ObjectName: "bookmarks",
@@ -626,7 +626,7 @@ export class BooksService extends BaseService {
 		}, onSuccess, onError);
 	}
 
-	public deleteBookmarkAsync(id: string, onNext?: () => void) {
+	deleteBookmarkAsync(id: string, onNext?: () => void) {
 		return this.sendRequestAsync(
 			{
 				ServiceName: this.name,
@@ -660,7 +660,7 @@ export class BooksService extends BaseService {
 		}
 	}
 
-	public sendRequestToCrawlAsync(url: string, onNext?: () => void) {
+	sendRequestToCrawlAsync(url: string, onNext?: () => void) {
 		return this.sendRequestAsync({
 			ServiceName: this.name,
 			ObjectName: "crawl",
@@ -670,7 +670,7 @@ export class BooksService extends BaseService {
 		}, onNext);
 	}
 
-	public sendRequestToReCrawlAsync(id: string, url: string, mode: string) {
+	sendRequestToReCrawlAsync(id: string, url: string, mode: string) {
 		return this.sendRequestAsync({
 			ServiceName: this.name,
 			ObjectName: "book",

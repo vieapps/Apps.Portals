@@ -106,7 +106,7 @@ export class AppComponent implements OnInit {
 		return !(this.sidebar.State.Active === "notifications" || this.sidebar.State.Active === "chat" || this.sidebar.State.Active === "preferences");
 	}
 
-	public ngOnInit() {
+	ngOnInit() {
 		this.platform.ready().then(async () => {
 			await this.configSvc.loadURIsAsync();
 			await this.configSvc.loadOptionsAsync();
@@ -394,7 +394,7 @@ export class AppComponent implements OnInit {
 		} as AppSidebarMenuItem;
 	}
 
-	public trackSidebarItem(index: number, item: any) {
+	trackSidebarItem(index: number, item: any) {
 		return `${item.ID || item.Name || item.Title}@${index}`;
 	}
 
@@ -437,7 +437,7 @@ export class AppComponent implements OnInit {
 		});
 
 		AppEvents.on("Profile", info => {
-			if ("Updated" === info.args.Type && "APIs" === info.args.Mode) {
+			if ("Updated" === info.args.Type && ("APIs" === info.args.Mode || "Avatar" === info.args.Mode)) {
 				this.sidebar.updateHeader({ updateAvatar: true });
 			}
 		});

@@ -14,7 +14,7 @@
 	<div *ngFor="let log of logs; trackBy: track">
 		<section>
 			<span>
-				Info: {{ log.ServiceName }} / {{ log.ObjectName }} - Correlation ID: {{ log.CorrelationID }}
+				Info: {{ log.ServiceName }} / {{ log.ObjectName }} - Correlation ID: {{ log.CorrelationID }} - Node ID: {{ log.NodeID }}
 			</span>
 			<span>
 				&nbsp;

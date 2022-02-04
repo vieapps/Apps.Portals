@@ -38,15 +38,15 @@ export class PortalsCoreService extends BaseService {
 
 	private _themes: Array<{ name: string, description: string; author: string; intro: string; screenshots: Array<string> }>;
 
-	public get moduleDefinitions() {
+	get moduleDefinitions() {
 		return BaseModel.moduleDefinitions;
 	}
 
-	public get contentTypeDefinitions() {
+	get contentTypeDefinitions() {
 		return BaseModel.contentTypeDefinitions;
 	}
 
-	public get activeOrganizations() {
+	get activeOrganizations() {
 		let organizations = this.configSvc.appConfig.options.extras["organizations"] as Array<string>;
 		if (organizations === undefined) {
 			organizations = new Array<string>();
@@ -56,7 +56,7 @@ export class PortalsCoreService extends BaseService {
 		return organizations;
 	}
 
-	public get activeOrganization() {
+	get activeOrganization() {
 		if (Organization.active === undefined) {
 			Organization.active = Organization.instances.first();
 			if (Organization.active !== undefined && Organization.active.modules.length < 1) {
@@ -66,7 +66,7 @@ export class PortalsCoreService extends BaseService {
 		return Organization.active;
 	}
 
-	public get activeModules() {
+	get activeModules() {
 		let modules: { [key: string]: string } = this.configSvc.appConfig.options.extras["modules"];
 		if (modules === undefined) {
 			modules = {};
@@ -76,7 +76,7 @@ export class PortalsCoreService extends BaseService {
 		return modules;
 	}
 
-	public get activeModule() {
+	get activeModule() {
 		if (Module.active === undefined) {
 			const systemID = this.activeOrganization !== undefined
 				? this.activeOrganization.ID
@@ -94,7 +94,7 @@ export class PortalsCoreService extends BaseService {
 		return Module.active;
 	}
 
-	public get menuIndex() {
+	get menuIndex() {
 		if (this.configSvc.appConfig.services.all.length > 1) {
 			const menuIndex = this.configSvc.appConfig.services.all.find(svc => svc.name === this.name).menuIndex;
 			return menuIndex !== undefined ? menuIndex : 0;
@@ -102,7 +102,7 @@ export class PortalsCoreService extends BaseService {
 		return 0;
 	}
 
-	public initialize() {
+	initialize() {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => {
 			if (message.Data !== undefined && message.Data.SystemID !== undefined && this.activeOrganizations.indexOf(message.Data.SystemID) > -1) {
 				switch (message.Type.Object) {
@@ -196,7 +196,7 @@ export class PortalsCoreService extends BaseService {
 		});
 	}
 
-	public async initializeAsync(onNext?: () => void) {
+	async initializeAsync(onNext?: () => void) {
 		await this.getDefinitionsAsync();
 		if (Organization.active === undefined) {
 			await this.getActiveOrganizationAsync(undefined, true);
@@ -214,21 +214,21 @@ export class PortalsCoreService extends BaseService {
 		this.activeSidebar(onNext);
 	}
 
-	public canManageOrganization(organization?: Organization, account?: Account) {
+	canManageOrganization(organization?: Organization, account?: Account) {
 		account = account || this.configSvc.getAccount();
 		return organization !== undefined && AppUtility.isNotEmpty(organization.ID)
 			? AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isAdministrator(this.name, "Organization", organization.Privileges, account)
 			: this.authSvc.isAdministrator(this.name, "Organization", undefined, account);
 	}
 
-	public canModerateOrganization(organization?: Organization, account?: Account) {
+	canModerateOrganization(organization?: Organization, account?: Account) {
 		account = account || this.configSvc.getAccount();
 		return organization !== undefined && AppUtility.isNotEmpty(organization.ID)
 			? AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isModerator(this.name, "Organization", organization.Privileges, account)
 			: this.authSvc.isModerator(this.name, "Organization", undefined, account);
 	}
 
-	public async getDefinitionsAsync(onNext?: () => void) {
+	async getDefinitionsAsync(onNext?: () => void) {
 		if (BaseModel.moduleDefinitions === undefined) {
 			const path = this.configSvc.getDefinitionPath(this.name, "module.definitions");
 			BaseModel.moduleDefinitions = this.configSvc.getDefinition(path);
@@ -246,7 +246,7 @@ export class PortalsCoreService extends BaseService {
 		return BaseModel.moduleDefinitions;
 	}
 
-	public async getThemesAsync(onNext?: () => void) {
+	async getThemesAsync(onNext?: () => void) {
 		if (this._themes === undefined) {
 			const path = this.configSvc.getDefinitionPath(this.name, "themes");
 			this._themes = this.configSvc.getDefinition(path) || await this.configSvc.fetchDefinitionAsync(path, false);
@@ -257,7 +257,7 @@ export class PortalsCoreService extends BaseService {
 		return this._themes;
 	}
 
-	public getActiveOrganizations() {
+	getActiveOrganizations() {
 		const organizations = new Array<Organization>();
 		const organizationIDs = this.activeOrganizations;
 		organizationIDs.forEach(organizationID => {
@@ -276,7 +276,7 @@ export class PortalsCoreService extends BaseService {
 		return organizations;
 	}
 
-	public async getActiveOrganizationsAsync(useXHR: boolean = true) {
+	async getActiveOrganizationsAsync(useXHR: boolean = true) {
 		const organizations = new Array<Organization>();
 		const organizationIDs = this.activeOrganizations;
 		await Promise.all((organizationIDs || []).filter(id => AppUtility.isNotEmpty(id)).map(async id => {
@@ -291,7 +291,7 @@ export class PortalsCoreService extends BaseService {
 		return organizations.sortBy("Title");
 	}
 
-	public async getActiveOrganizationAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void) {
+	async getActiveOrganizationAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void) {
 		preferID = AppUtility.isNotEmpty(preferID)
 			? preferID
 			: this.configSvc.appConfig.options.extras["organization"];
@@ -309,7 +309,7 @@ export class PortalsCoreService extends BaseService {
 		return Organization.active;
 	}
 
-	public setActiveOrganization(organization: Organization, onNext?: () => void) {
+	setActiveOrganization(organization: Organization, onNext?: () => void) {
 		if (organization !== undefined) {
 			this.configSvc.appConfig.services.active.system = organization.ID;
 			this.configSvc.appConfig.options.extras["organization"] = organization.ID;
@@ -334,7 +334,7 @@ export class PortalsCoreService extends BaseService {
 		return Organization.active;
 	}
 
-	public removeActiveOrganization(organizationID: string, onNext?: () => void) {
+	removeActiveOrganization(organizationID: string, onNext?: () => void) {
 		this.configSvc.appConfig.services.active.system = undefined;
 		this.configSvc.appConfig.options.extras["organization"] = undefined;
 		this.activeOrganizations.remove(organizationID);
@@ -344,7 +344,7 @@ export class PortalsCoreService extends BaseService {
 		return this.setActiveOrganization(Organization.get(this.activeOrganizations.first()), onNext);
 	}
 
-	public async getActiveModuleAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void, broadcast: boolean = true) {
+	async getActiveModuleAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void, broadcast: boolean = true) {
 		const activeOrganization = this.activeOrganization;
 		const systemID = activeOrganization !== undefined
 			? activeOrganization.ID
@@ -380,7 +380,7 @@ export class PortalsCoreService extends BaseService {
 		return Module.active;
 	}
 
-	public setActiveModule(module: Module, onNext?: () => void, broadcast: boolean = true) {
+	setActiveModule(module: Module, onNext?: () => void, broadcast: boolean = true) {
 		if (module !== undefined && (Module.active === undefined || Module.active.ID !== module.ID)) {
 			Module.active = module;
 			this.activeModules[module.SystemID] = module.ID;
@@ -395,7 +395,7 @@ export class PortalsCoreService extends BaseService {
 		return Module.active;
 	}
 
-	public setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {
+	setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {
 		lookupOptions.ModalOptions = lookupOptions.ModalOptions || {};
 		if (lookupModalPage !== undefined) {
 			lookupOptions.ModalOptions.Component = lookupModalPage;
@@ -406,6 +406,7 @@ export class PortalsCoreService extends BaseService {
 		lookupOptions.ModalOptions.ComponentProps.contentTypeID = contentType === undefined ? undefined : contentType.ID;
 		if (multiple !== undefined) {
 			lookupOptions.ModalOptions.ComponentProps.multiple = AppUtility.isTrue(multiple);
+			lookupOptions.Multiple = AppUtility.isTrue(multiple);
 		}
 		if (nested !== undefined) {
 			lookupOptions.ModalOptions.ComponentProps.nested = AppUtility.isTrue(nested);
@@ -415,7 +416,7 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	public setUISettingsControlOptions(controlConfig: AppFormsControlConfig, replacePattern: string, fileOptions: FileOptions) {
+	setUISettingsControlOptions(controlConfig: AppFormsControlConfig, replacePattern: string, fileOptions: FileOptions) {
 		controlConfig.Options.Label = controlConfig.Options.Label === undefined ? undefined : controlConfig.Options.Label.replace(replacePattern, "portals.common.controls.UISettings");
 		controlConfig.Options.Description = controlConfig.Options.Description === undefined ? undefined : controlConfig.Options.Description.replace(replacePattern, "portals.common.controls.UISettings");
 		controlConfig.Options.PlaceHolder = controlConfig.Options.PlaceHolder === undefined ? undefined : controlConfig.Options.PlaceHolder.replace(replacePattern, "portals.common.controls.UISettings");
@@ -455,7 +456,7 @@ export class PortalsCoreService extends BaseService {
 		};
 	}
 
-	public setTemplateControlOptions(control: AppFormsControlConfig | AppFormsControl, name: string, theme?: string, mainDirectory?: string, subDirectory?: string) {
+	setTemplateControlOptions(control: AppFormsControlConfig | AppFormsControl, name: string, theme?: string, mainDirectory?: string, subDirectory?: string) {
 		control.Options.Rows = 18;
 		control.Options.Icon = {
 			Name: "color-wand",
@@ -463,19 +464,19 @@ export class PortalsCoreService extends BaseService {
 		};
 	}
 
-	public async getTemplateAsync(name: string, theme?: string, mainDirectory?: string, subDirectory?: string) {
+	async getTemplateAsync(name: string, theme?: string, mainDirectory?: string, subDirectory?: string) {
 		let template: string;
 		await this.fetchAsync(this.getPath("definitions", "template", "x-request=" + AppCrypto.jsonEncode({ Name: name, Theme: theme, MainDirectory: mainDirectory, SubDirectory: subDirectory })), data => template = data.Template);
 		return template || "";
 	}
 
-	public async getTemplateZonesAsync(dekstopID: string) {
+	async getTemplateZonesAsync(dekstopID: string) {
 		let zones: Array<string>;
 		await this.fetchAsync(this.getPath("definitions", "template", "x-request=" + AppCrypto.jsonEncode({ Mode: "Zones", DesktopID: dekstopID })), data => zones = data);
 		return zones || [];
 	}
 
-	public getTheme(object: BaseModel) {
+	getTheme(object: BaseModel) {
 		let organization: Organization;
 		let site: Site;
 		let desktop: Desktop;
@@ -512,7 +513,7 @@ export class PortalsCoreService extends BaseService {
 		return theme;
 	}
 
-	public getRouterLink(contentType: ContentType, action?: string, title?: string, objectName?: string, path?: string) {
+	getRouterLink(contentType: ContentType, action?: string, title?: string, objectName?: string, path?: string) {
 		objectName = AppUtility.isNotEmpty(objectName) ? objectName : contentType !== undefined ? contentType.getObjectName() : "unknown";
 		return `/portals/${path || "cms"}/`
 			+ (AppUtility.isEquals(objectName, "Category") ? "categories" : `${objectName}s`).toLowerCase() + "/"
@@ -521,15 +522,15 @@ export class PortalsCoreService extends BaseService {
 			+ ("search" === action ? "" : AppUtility.toANSI(title || (contentType !== undefined ? contentType.ansiTitle : "untitled"), true));
 	}
 
-	public getRouterQueryParams(contentType: ContentType, params?: { [key: string]: any }) {
+	getRouterQueryParams(contentType: ContentType, params?: { [key: string]: any }) {
 		return { "x-request": AppCrypto.jsonEncode(params || { RepositoryEntityID: contentType !== undefined ? contentType.ID : undefined }) };
 	}
 
-	public getAppURL(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }, objectName?: string, path?: string) {
+	getAppURL(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }, objectName?: string, path?: string) {
 		return this.getRouterLink(contentType, action, title, objectName, path) + "?x-request=" + this.getRouterQueryParams(contentType, params)["x-request"];
 	}
 
-	public getPortalURL(object: CmsBaseModel, parent?: CmsBaseModel) {
+	getPortalURL(object: CmsBaseModel, parent?: CmsBaseModel) {
 		let uri: string = parent !== undefined ? this.getPortalURL(parent) : undefined;
 		if (uri === undefined) {
 			const organization = Organization.get(object.SystemID);
@@ -543,7 +544,7 @@ export class PortalsCoreService extends BaseService {
 			: uri + "/" + (object["Alias"] || object.ID);
 	}
 
-	public getPermanentURL(object: CmsBaseModel) {
+	getPermanentURL(object: CmsBaseModel) {
 		const organization = object.organization;
 		const site = organization !== undefined ? Site.instances.first(s => s.SystemID === organization.ID) : undefined;
 		const url = site !== undefined
@@ -552,11 +553,11 @@ export class PortalsCoreService extends BaseService {
 		return `${url}_permanentlink/${object.RepositoryEntityID}/${object.ID}`;
 	}
 
-	public getPaginationPrefix(objectName: string) {
+	getPaginationPrefix(objectName: string) {
 		return `${objectName}@${this.name}`.toLowerCase();
 	}
 
-	public getEmailNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, name?: string, replacement?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	getEmailNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, name?: string, replacement?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const placeholder = "{{portals.common.controls.notifications.emails.toAddresses.placeholder}}";
 		const controlConfig: AppFormsControlConfig = {
 			Name: name || "Emails",
@@ -732,7 +733,7 @@ export class PortalsCoreService extends BaseService {
 		return controlConfig;
 	}
 
-	public getWebHookNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	getWebHookNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const controlConfig = this.getWebHookFormControl("WebHooks", "{{portals.common.controls.notifications.webhooks.label}}");
 		controlConfig.SubControls.Controls.forEach(ctrl => ctrl.Hidden = inheritFromParent);
 
@@ -786,7 +787,7 @@ export class PortalsCoreService extends BaseService {
 		return controlConfig;
 	}
 
-	public get defaultEmailNotificationSettings() {
+	get defaultEmailNotificationSettings() {
 		return {
 			ToAddresses: undefined as string,
 			CcAddresses: undefined as string,
@@ -796,7 +797,7 @@ export class PortalsCoreService extends BaseService {
 		} as EmailNotificationSettings;
 	}
 
-	public get defaultWebHookNotificationSettings() {
+	get defaultWebHookNotificationSettings() {
 		return {
 			EndpointURLs: [],
 			SignAlgorithm: "SHA256",
@@ -806,7 +807,7 @@ export class PortalsCoreService extends BaseService {
 		} as WebHookNotificationSettings;
 	}
 
-	public getNotificationsFormControl(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true, inheritStates?: { inheritEventsAndMethods: boolean, inheritEmails: boolean, inheritEmailsByApprovalStatus: boolean, inheritEmailsWhenPublish: boolean, inheritWebHooks: boolean }, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	getNotificationsFormControl(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true, inheritStates?: { inheritEventsAndMethods: boolean, inheritEmails: boolean, inheritEmailsByApprovalStatus: boolean, inheritEmailsWhenPublish: boolean, inheritWebHooks: boolean }, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const inheritEventsAndMethods = AppUtility.isNotNull(inheritStates) && AppUtility.isTrue(inheritStates.inheritEventsAndMethods);
 		const inheritEmails = AppUtility.isNotNull(inheritStates) && AppUtility.isTrue(inheritStates.inheritEmails);
 		const inheritEmailsByApprovalStatus = AppUtility.isNotNull(inheritStates) && AppUtility.isTrue(inheritStates.inheritEmailsByApprovalStatus);
@@ -889,7 +890,7 @@ export class PortalsCoreService extends BaseService {
 		return controlConfig;
 	}
 
-	public prepareNotificationsFormControl(notificationsControl: AppFormsControlConfig, emailsByApprovalStatus: { [status: string]: EmailNotificationSettings }, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	prepareNotificationsFormControl(notificationsControl: AppFormsControlConfig, emailsByApprovalStatus: { [status: string]: EmailNotificationSettings }, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const emailsByApprovalStatusControls = notificationsControl.SubControls.Controls.find(ctrl => ctrl.Name === "EmailsByApprovalStatus").SubControls.Controls;
 		emailsByApprovalStatusControls.find(ctrl => ctrl.Name === "Status").Options.OnChanged = (event, formControl) => {
 			const approvalStatusEmail = emailsByApprovalStatus[event.detail.value] || {};
@@ -912,7 +913,7 @@ export class PortalsCoreService extends BaseService {
 		return notificationsControl;
 	}
 
-	public getNotificationInheritStates(notificationSettings: NotificationSettings) {
+	getNotificationInheritStates(notificationSettings: NotificationSettings) {
 		return {
 			inheritEventsAndMethods: AppUtility.isNull(notificationSettings) || (AppUtility.isNull(notificationSettings.Events) && AppUtility.isNull(notificationSettings.Methods)),
 			inheritEmails: AppUtility.isNull(notificationSettings) || AppUtility.isNull(notificationSettings.Emails),
@@ -922,7 +923,7 @@ export class PortalsCoreService extends BaseService {
 		};
 	}
 
-	public getNotificationSettings(notificationSettings: NotificationSettings, emailsByApprovalStatus?: { [status: string]: EmailNotificationSettings }, allowInheritFromParent: boolean = true, onCompleted?: (notifications: any) => void) {
+	getNotificationSettings(notificationSettings: NotificationSettings, emailsByApprovalStatus?: { [status: string]: EmailNotificationSettings }, allowInheritFromParent: boolean = true, onCompleted?: (notifications: any) => void) {
 		const notifications = AppUtility.clone(notificationSettings || {});
 		notifications.Events = notifications.Events || [];
 		notifications.Methods = notifications.Methods || [];
@@ -974,7 +975,7 @@ export class PortalsCoreService extends BaseService {
 		return notifications;
 	}
 
-	public normalizeNotificationSettings(notifications: any, emailsByApprovalStatus: { [status: string]: EmailNotificationSettings }, onCompleted?: (notifications: any) => void) {
+	normalizeNotificationSettings(notifications: any, emailsByApprovalStatus: { [status: string]: EmailNotificationSettings }, onCompleted?: (notifications: any) => void) {
 		if (AppUtility.isNotNull(notifications)) {
 			if (notifications.InheritFromParent) {
 				notifications.Events = undefined;
@@ -1022,7 +1023,7 @@ export class PortalsCoreService extends BaseService {
 		return notifications;
 	}
 
-	public getEmailSettingsFormControl(name: string, segment?: string, allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	getEmailSettingsFormControl(name: string, segment?: string, allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const buttonsConfig = this.appFormsSvc.getButtonControls(
 			undefined,
 			{
@@ -1147,7 +1148,7 @@ export class PortalsCoreService extends BaseService {
 		return controlConfig;
 	}
 
-	public getEmailSettings(emailSettings: EmailSettings, allowInheritFromParent: boolean = true, onCompleted?: (settings: any) => void) {
+	getEmailSettings(emailSettings: EmailSettings, allowInheritFromParent: boolean = true, onCompleted?: (settings: any) => void) {
 		const settings = AppUtility.clone(emailSettings || {});
 		settings.Smtp = settings.Smtp || { Smtp: { Port: 25, EnableSsl: false } };
 		if (AppUtility.isTrue(allowInheritFromParent)) {
@@ -1159,7 +1160,7 @@ export class PortalsCoreService extends BaseService {
 		return settings;
 	}
 
-	public normalizeEmailSettings(settings: any, onCompleted?: (settings: any) => void) {
+	normalizeEmailSettings(settings: any, onCompleted?: (settings: any) => void) {
 		if (settings && settings.InheritFromParent) {
 			settings = undefined;
 		}
@@ -1169,7 +1170,7 @@ export class PortalsCoreService extends BaseService {
 		return settings;
 	}
 
-	public getWebHookSettingsFormControl(name: string, segment?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	getWebHookSettingsFormControl(name: string, segment?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const controlConfig = this.getWebHookFormControl(name || "WebHookSettings", "{{portals.common.controls.webhooks.label}}");
 		controlConfig.Segment = segment;
 		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
@@ -1179,7 +1180,7 @@ export class PortalsCoreService extends BaseService {
 		return controlConfig;
 	}
 
-	public getWebHookSettings(webhookSettings: WebHookSettings, onCompleted?: (settings: any) => void) {
+	getWebHookSettings(webhookSettings: WebHookSettings, onCompleted?: (settings: any) => void) {
 		const settings = AppUtility.clone(webhookSettings || {
 			SignAlgorithm: "SHA256",
 			SignatureAsHex: true,
@@ -1191,7 +1192,7 @@ export class PortalsCoreService extends BaseService {
 		return settings;
 	}
 
-	public getUploadFormControl(fileOptions: FileOptions, segment?: string, label?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	getUploadFormControl(fileOptions: FileOptions, segment?: string, label?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const controlConfig: AppFormsControlConfig = this.appFormsSvc.getButtonControls(
 			segment || "attachments",
 			{
@@ -1221,15 +1222,15 @@ export class PortalsCoreService extends BaseService {
 		return controlConfig;
 	}
 
-	public getAuditFormControl(ojbect: BaseModel, segment?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	getAuditFormControl(ojbect: BaseModel, segment?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		return this.usersSvc.getAuditFormControl(ojbect.Created, ojbect.CreatedID, ojbect.LastModified, ojbect.LastModifiedID, segment, onCompleted);
 	}
 
-	public getAuditInfoAsync(ojbect: BaseModel) {
+	getAuditInfoAsync(ojbect: BaseModel) {
 		return this.usersSvc.getAuditInfoAsync(ojbect.Created, ojbect.CreatedID, ojbect.LastModified, ojbect.LastModifiedID);
 	}
 
-	public getRolesSelector(modalComponent: any, modalComponentProperties?: { [key: string]: any }) {
+	getRolesSelector(modalComponent: any, modalComponentProperties?: { [key: string]: any }) {
 		return {
 			prepare: async (role: AppFormsLookupValue) => {
 				if (!Role.contains(role.Value)) {
@@ -1242,19 +1243,19 @@ export class PortalsCoreService extends BaseService {
 		};
 	}
 
-	public lookup(objectName: string, request: AppDataRequest, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	lookup(objectName: string, request: AppDataRequest, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		return this.search(this.getSearchingPath(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, headers);
 	}
 
-	public lookupAsync(objectName: string, request: AppDataRequest, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	lookupAsync(objectName: string, request: AppDataRequest, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		return this.searchAsync(this.getSearchingPath(objectName, this.configSvc.relatedQuery), request, onSuccess, onError, true, headers);
 	}
 
-	public getAsync(objectName: string, id: string, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	getAsync(objectName: string, id: string, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		return this.readAsync(this.getPath(objectName, id), onSuccess, onError, headers, true);
 	}
 
-	public refreshAsync(objectName: string, id: string, onSuccess?: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+	refreshAsync(objectName: string, id: string, onSuccess?: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
 		return this.readAsync(this.getPath(objectName, "refresh", `object-id=${id}`), onSuccess, onError, headers, useXHR);
 	}
 
@@ -1333,6 +1334,15 @@ export class PortalsCoreService extends BaseService {
 					Direction: "root",
 					Icon: { Name: "extension-puzzle", Color: "medium", Slot: "start" }
 				});
+				const service = this.configSvc.appConfig.services.all.first(svc => svc.name === this.name);
+				if (!!service.specials && service.specials.indexOf("Crawler") > -1) {
+					items.push({
+						Title: "{{portals.sidebar.crawlers}}",
+						Link: this.getRouterLink(undefined, "list", "all", "crawler"),
+						Direction: "root",
+						Icon: { Name: "sparkles", Color: "medium", Slot: "start" }
+					});
+				}
 			}
 
 			if (canManageOrganization) {
@@ -1411,7 +1421,7 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	public addOrganizationControl(controls: AppFormsControlConfig[], label: string, organization?: Organization, readOnly: boolean = true, position: number = 0) {
+	addOrganizationControl(controls: AppFormsControlConfig[], label: string, organization?: Organization, readOnly: boolean = true, position: number = 0) {
 		controls.insert({
 			Name: "Organization",
 			Type: "Text",
@@ -1425,7 +1435,7 @@ export class PortalsCoreService extends BaseService {
 		return controls;
 	}
 
-	public prepareApprovalStatusControl(controlConfig: AppFormsControlConfig, selectInterface?: string) {
+	prepareApprovalStatusControl(controlConfig: AppFormsControlConfig, selectInterface?: string) {
 		this.appFormsSvc.prepareSelectControl(controlConfig, controlConfig.Options.SelectOptions.Values, _ => {
 			controlConfig.Options.SelectOptions.Interface = selectInterface || "popover";
 			controlConfig.Options.SelectOptions.Values = AppUtility.isGotData(controlConfig.Options.SelectOptions.Values)
@@ -1435,7 +1445,7 @@ export class PortalsCoreService extends BaseService {
 		return controlConfig;
 	}
 
-	public async prepareLanguageControlAsync(controlConfig: AppFormsControlConfig, required: boolean = false, addUnspecified: boolean = true, selectInterface?: string) {
+	async prepareLanguageControlAsync(controlConfig: AppFormsControlConfig, required: boolean = false, addUnspecified: boolean = true, selectInterface?: string) {
 		controlConfig.Required = required;
 		controlConfig.Options.SelectOptions.Interface = selectInterface || "popover";
 		controlConfig.Options.SelectOptions.Values = this.configSvc.languages.map(language => ({ Value: language.Value, Label: language.Label }));
@@ -1445,7 +1455,7 @@ export class PortalsCoreService extends BaseService {
 		return controlConfig;
 	}
 
-	public async prepareThemeControlAsync(controlConfig: AppFormsControlConfig, selectInterface?: string) {
+	async prepareThemeControlAsync(controlConfig: AppFormsControlConfig, selectInterface?: string) {
 		const themes = await this.getThemesAsync();
 		controlConfig.Options.SelectOptions.Interface = selectInterface || "alert";
 		controlConfig.Options.SelectOptions.Values = themes.map(theme => ({ Value: theme.name, Label: theme.name }));
@@ -1453,7 +1463,7 @@ export class PortalsCoreService extends BaseService {
 		return controlConfig;
 	}
 
-	public get organizationCompleterDataSource() {
+	get organizationCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const organization = data !== undefined
 				? data instanceof Organization
@@ -1471,7 +1481,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchOrganizations(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchOrganizations(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("organization", this.configSvc.relatedQuery),
 			request,
@@ -1480,7 +1490,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchOrganizationsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchOrganizationsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.searchAsync(
 			this.getSearchingPath("organization", this.configSvc.relatedQuery),
 			request,
@@ -1489,7 +1499,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public createOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	createOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
 			this.getPath("organization"),
 			body,
@@ -1503,7 +1513,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public getOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Organization.contains(id) && Organization.get(id).modules.length > 0
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -1528,7 +1538,7 @@ export class PortalsCoreService extends BaseService {
 				);
 	}
 
-	public getOrganization(id: string, getActiveOrganizationWhenNotFound: boolean = true) {
+	getOrganization(id: string, getActiveOrganizationWhenNotFound: boolean = true) {
 		const organization = Organization.get(id);
 		if (organization !== undefined && organization.modules.length < 1) {
 			this.getOrganizationAsync(organization.ID);
@@ -1536,7 +1546,7 @@ export class PortalsCoreService extends BaseService {
 		return organization || (getActiveOrganizationWhenNotFound ? this.activeOrganization : undefined);
 	}
 
-	public updateOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	updateOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("organization", body.ID),
 			body,
@@ -1550,7 +1560,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public deleteOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	deleteOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.deleteAsync(
 			this.getPath("organization", id),
 			data => {
@@ -1563,7 +1573,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public refreshOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
+	refreshOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
 		return this.refreshAsync(
 			"organization",
 			id,
@@ -1613,7 +1623,7 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	public get roleCompleterDataSource() {
+	get roleCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const role = data !== undefined
 				? data instanceof Role
@@ -1638,7 +1648,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchRoles(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchRoles(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("role", this.configSvc.relatedQuery),
 			request,
@@ -1662,7 +1672,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchRolesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchRolesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.searchAsync(
 			this.getSearchingPath("role", this.configSvc.relatedQuery),
 			request,
@@ -1686,7 +1696,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public createRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	createRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
 			this.getPath("role"),
 			body,
@@ -1700,7 +1710,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async getRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	async getRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const role = Role.get(id);
 		return role !== undefined && role.childrenIDs !== undefined
 			? AppUtility.invoke(onSuccess)
@@ -1718,7 +1728,7 @@ export class PortalsCoreService extends BaseService {
 				);
 	}
 
-	public updateRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	updateRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		const parentID = Role.contains(body.ID) ? Role.get(body.ID).ParentID : undefined;
 		return this.updateAsync(
 			this.getPath("role", body.ID),
@@ -1733,7 +1743,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public deleteRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	deleteRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Role.contains(id) ? Role.get(id).ParentID : undefined;
 		return this.deleteAsync(
 			this.getPath("role", id),
@@ -1748,7 +1758,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public refreshRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
+	refreshRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
 		return this.refreshAsync(
 			"role",
 			id,
@@ -1831,7 +1841,7 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	public get desktopCompleterDataSource() {
+	get desktopCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const desktop = data !== undefined
 				? data instanceof Desktop
@@ -1856,7 +1866,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchDesktops(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchDesktops(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
 			request,
@@ -1865,7 +1875,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchDesktopsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false) {
+	searchDesktopsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
 			request,
@@ -1877,7 +1887,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public createDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	createDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
 			this.getPath("desktop"),
 			body,
@@ -1891,7 +1901,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async getDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	async getDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const desktop = Desktop.get(id);
 		return desktop !== undefined && desktop.childrenIDs !== undefined
 			? AppUtility.invoke(onSuccess)
@@ -1912,7 +1922,7 @@ export class PortalsCoreService extends BaseService {
 				);
 	}
 
-	public updateDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	updateDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Desktop.contains(body.ID) ? Desktop.get(body.ID).ParentID : undefined;
 		return this.updateAsync(
 			this.getPath("desktop", body.ID),
@@ -1928,7 +1938,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public deleteDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	deleteDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		const parentID = Desktop.contains(id) ? Desktop.get(id).ParentID : undefined;
 		return this.deleteAsync(
 			this.getPath("desktop", id),
@@ -1943,7 +1953,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public refreshDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
+	refreshDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
 		return this.refreshAsync(
 			"desktop",
 			id,
@@ -2046,7 +2056,7 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	public get portletCompleterDataSource() {
+	get portletCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const portlet = data !== undefined
 				? data instanceof Portlet
@@ -2064,7 +2074,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchPortlets(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchPortlets(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("portlet", this.configSvc.relatedQuery),
 			request,
@@ -2084,7 +2094,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchPortletsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
+	searchPortletsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("portlet", this.configSvc.relatedQuery),
 			request,
@@ -2107,7 +2117,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public createPortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	createPortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
 			this.getPath("portlet"),
 			body,
@@ -2121,7 +2131,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async getPortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	async getPortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Portlet.contains(id) && Portlet.get(id).otherDesktops !== undefined
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -2138,7 +2148,7 @@ export class PortalsCoreService extends BaseService {
 				);
 	}
 
-	public updatePortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+	updatePortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
 		return this.updateAsync(
 			this.getPath("portlet", body.ID),
 			body,
@@ -2154,7 +2164,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public deletePortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	deletePortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.deleteAsync(
 			this.getPath("portlet", id),
 			data => {
@@ -2197,7 +2207,7 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	public get siteCompleterDataSource() {
+	get siteCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const site = data !== undefined
 				? data instanceof Site
@@ -2215,7 +2225,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchSites(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchSites(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("site", this.configSvc.relatedQuery),
 			request,
@@ -2235,7 +2245,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchSitesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false) {
+	searchSitesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("site", this.configSvc.relatedQuery),
 			request,
@@ -2258,7 +2268,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public createSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	createSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
 			this.getPath("site"),
 			body,
@@ -2272,7 +2282,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async getSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	async getSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Site.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -2289,7 +2299,7 @@ export class PortalsCoreService extends BaseService {
 				);
 	}
 
-	public updateSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	updateSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("site", body.ID),
 			body,
@@ -2303,7 +2313,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public deleteSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	deleteSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.deleteAsync(
 			this.getPath("site", id),
 			data => {
@@ -2337,7 +2347,7 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	public get moduleCompleterDataSource() {
+	get moduleCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const module = data !== undefined
 				? data instanceof Module
@@ -2355,7 +2365,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchModules(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchModules(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("module", this.configSvc.relatedQuery),
 			request,
@@ -2375,7 +2385,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchModulesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
+	searchModulesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
 		return this.searchAsync(
 			this.getSearchingPath("module", this.configSvc.relatedQuery),
 			request,
@@ -2398,7 +2408,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public createModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	createModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
 			this.getPath("module"),
 			body,
@@ -2415,7 +2425,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public getModule(id: string, getActiveModuleWhenNotFound: boolean = true) {
+	getModule(id: string, getActiveModuleWhenNotFound: boolean = true) {
 		const module = Module.get(id) || (getActiveModuleWhenNotFound ? this.activeModule : undefined);
 		if (module === undefined && AppUtility.isNotEmpty(id)) {
 			this.getModuleAsync(id);
@@ -2423,7 +2433,7 @@ export class PortalsCoreService extends BaseService {
 		return module;
 	}
 
-	public async getModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	async getModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Module.contains(id) && Module.get(id).contentTypes.length > 0
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -2443,7 +2453,7 @@ export class PortalsCoreService extends BaseService {
 				);
 	}
 
-	public updateModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	updateModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("module", body.ID),
 			body,
@@ -2460,7 +2470,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public deleteModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	deleteModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.deleteAsync(
 			this.getPath("module", id),
 			data => {
@@ -2473,7 +2483,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public refreshModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
+	refreshModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
 		return this.refreshAsync(
 			"module",
 			id,
@@ -2510,7 +2520,7 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	public get contentTypeCompleterDataSource() {
+	get contentTypeCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const contentType = data !== undefined
 				? data instanceof ContentType
@@ -2528,7 +2538,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchContentTypes(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchContentTypes(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("content.type", this.configSvc.relatedQuery),
 			request,
@@ -2548,7 +2558,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchContentTypesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	searchContentTypesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("content.type", this.configSvc.relatedQuery),
 			request,
@@ -2571,7 +2581,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public createContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	createContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
 			this.getPath("content.type"),
 			body,
@@ -2585,7 +2595,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async getContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	async getContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return ContentType.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -2602,7 +2612,7 @@ export class PortalsCoreService extends BaseService {
 				);
 	}
 
-	public updateContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	updateContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("content.type", body.ID),
 			body,
@@ -2616,7 +2626,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public deleteContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	deleteContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.deleteAsync(
 			this.getPath("content.type", id),
 			data => {
@@ -2629,7 +2639,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public refreshContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
+	refreshContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
 		return this.refreshAsync(
 			"content.type",
 			id,
@@ -2669,7 +2679,7 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	public get expressionCompleterDataSource() {
+	get expressionCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const expression = data !== undefined
 				? data instanceof Expression
@@ -2687,7 +2697,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchExpressions(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchExpressions(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("expression", this.configSvc.relatedQuery),
 			request,
@@ -2703,7 +2713,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public searchExpressionsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchExpressionsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.searchAsync(
 			this.getSearchingPath("expression", this.configSvc.relatedQuery),
 			request,
@@ -2719,7 +2729,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public createExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	createExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
 			this.getPath("expression"),
 			body,
@@ -2733,7 +2743,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async getExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	async getExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Expression.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -2750,7 +2760,7 @@ export class PortalsCoreService extends BaseService {
 				);
 	}
 
-	public updateExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	updateExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("expression", body.ID),
 			body,
@@ -2764,7 +2774,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public deleteExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	deleteExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.deleteAsync(
 			this.getPath("expression", id),
 			data => {
@@ -2800,7 +2810,7 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	public async exportToExcelAsync(objectName: string, systemID?: string, repositoryID?: string, repositoryEntityID?: string, filterBy?: any, sortBy?: any, pagination?: AppDataPagination, maxPages?: number, onCompleted?: (message: AppMessage) => void, onProgress?: (percentage: string) => void, onError?: (error?: any) => void) {
+	async exportToExcelAsync(objectName: string, systemID?: string, repositoryID?: string, repositoryEntityID?: string, filterBy?: any, sortBy?: any, pagination?: AppDataPagination, maxPages?: number, onCompleted?: (message: AppMessage) => void, onProgress?: (percentage: string) => void, onError?: (error?: any) => void) {
 		await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.common.excel.action.export"));
 		const request = {
 			SystemID: systemID,
@@ -2886,7 +2896,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async importFromExcelAsync(objectName: string, systemID?: string, repositoryID?: string, repositoryEntityID?: string, onCompleted?: (message: AppMessage) => void, onProgress?: (percentage: string) => void, onError?: (error?: any) => void) {
+	async importFromExcelAsync(objectName: string, systemID?: string, repositoryID?: string, repositoryEntityID?: string, onCompleted?: (message: AppMessage) => void, onProgress?: (percentage: string) => void, onError?: (error?: any) => void) {
 		await this.appFormsSvc.showModalAsync(
 			FilesProcessorModalPage,
 			{
@@ -3004,7 +3014,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public getPortalFileHeaders(object: CmsBaseModel) {
+	getPortalFileHeaders(object: CmsBaseModel) {
 		return {
 			"x-service-name": this.name,
 			"x-object-name": object.contentType.getObjectName(),
@@ -3014,7 +3024,7 @@ export class PortalsCoreService extends BaseService {
 		};
 	}
 
-	public async clearCacheAsync(objectName: string, objectID: string, useXHR: boolean = false) {
+	async clearCacheAsync(objectName: string, objectID: string, useXHR: boolean = false) {
 		await this.appFormsSvc.showAlertAsync(
 			"Cache",
 			await this.configSvc.getResourceAsync("portals.common.cache.confirm"),
@@ -3034,7 +3044,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async approveAsync(entityInfo: string, id: string, status: string, title: string, message: string, onNext?: () => void) {
+	async approveAsync(entityInfo: string, id: string, status: string, title: string, message: string, onNext?: () => void) {
 		const contentType = ContentType.get(entityInfo);
 		return this.readAsync(
 			this.getPath("approve", id),
@@ -3055,7 +3065,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async showApprovalDialogAsync(entityInfo: string, id: string, currentStatus: string, availableStatuses: string[], statuses?: Array<{ label: string; value: string }>, options?: { title?: string; pending?: string; message?: string }, onNext?: () => void) {
+	async showApprovalDialogAsync(entityInfo: string, id: string, currentStatus: string, availableStatuses: string[], statuses?: Array<{ label: string; value: string }>, options?: { title?: string; pending?: string; message?: string }, onNext?: () => void) {
 		const title = options !== undefined && AppUtility.isNotEmpty(options.title)
 			? await this.appFormsSvc.normalizeResourceAsync(options.title)
 			: await this.configSvc.getResourceAsync("common.buttons.moderate");
@@ -3084,7 +3094,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	public async moveAsync(objectName: string, objectID: string, resources: { firstConfirm: string; lastConfirm: string; explanation: string; noData: string; invalidData: string; done: string; }, validate: (data: any, previousData?: any) => boolean, inputs: any[], getHeaders: (data: any) => { [key: string]: string }, useXHR: boolean = false) {
+	async moveAsync(objectName: string, objectID: string, resources: { firstConfirm: string; lastConfirm: string; explanation: string; noData: string; invalidData: string; done: string; }, validate: (data: any, previousData?: any) => boolean, inputs: any[], getHeaders: (data: any) => { [key: string]: string }, useXHR: boolean = false) {
 		const move = await this.configSvc.getResourceAsync("common.buttons.move");
 		const cancel = await this.configSvc.getResourceAsync("common.buttons.cancel");
 		await this.appFormsSvc.showAlertAsync(

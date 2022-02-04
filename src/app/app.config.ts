@@ -8,33 +8,33 @@ import en_US from "@angular/common/locales/en";
 export class AppConfig {
 
 	/** App URIs (remote APIs and related resources) */
-	public static URIs = {
+	static URIs = {
 		/** APIs */
-		apis: "https://apis.vieapps.com/",
+		apis: "https://apis.vieapps.net/",
 
 		/** Files HTTP service */
-		files: "https://fs.vieapps.com/",
+		files: "https://fs.vieapps.net/",
 
 		/** Portals HTTP service */
-		portals: "https://portals.vieapps.com/",
+		portals: "https://portals.vieapps.net/",
 
 		/** Apps on the web to perform activation or other business process */
-		apps: "https://cms.vieapps.com/",
+		apps: "https://cms.vieapps.net/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
-		medias: [] as Array<string>
+		medias: [/*"fs.vieportal.net"/**/] as Array<string>
 	};
 
 	/** App information */
-	public static app = {
+	static app = {
 		name: "NGX Portals",
 		description: "Manage information and related services of CMS Portals",
 		copyright: "© VIEApps.net",
 		license: "Apache-2.0",
-		homepage: "https://cms.vieapps.com",
+		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "4.2109.7",
-		frameworks: "ionic 5.8 - angular 11.2 - cordova 10.0",
+		version: "4.2202.1",
+		frameworks: "ionic 5.9 - angular 11.2 - cordova 10.0",
 		mode: "",
 		platform: "",
 		os: "",
@@ -45,7 +45,7 @@ export class AppConfig {
 	};
 
 	/** App session */
-	public static session = {
+	static session = {
 		id: undefined as string,
 		token: undefined as { [key: string]: any },
 		account: undefined as Account,
@@ -70,13 +70,14 @@ export class AppConfig {
 	};
 
 	/** App services */
-	public static services = {
+	static services = {
 		all: [
 			{
 				name: "Portals",
-				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Item", "Link", "Form"],
+				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Item", "Link", "Form", "Crawler"],
+				specials: [/*"Crawler"/**/],
 				sidebar: "cms",
-				availableHosts: []
+				availableHosts: [/*"cms.vieapps.net"/**/]
 			},
 			{
 				name: "Books",
@@ -86,7 +87,7 @@ export class AppConfig {
 				appName: "NGX Books",
 				appDescription: "Free online books & EPUB/MOBI e-books"
 			}
-		] as Array<{ name: string; objects: Array<string>; menuIndex?: number; sidebar?: string; availableHosts?: Array<string>; canSetPrivilegs?: boolean; appName?: string; appDescription?: string; }>,
+		] as Array<{ name: string; objects: Array<string>; specials?: Array<string>; menuIndex?: number; sidebar?: string; availableHosts?: Array<string>; canSetPrivilegs?: boolean; appName?: string; appDescription?: string; }>,
 		active: {
 			service: "",
 			system: ""
@@ -94,7 +95,7 @@ export class AppConfig {
 	};
 
 	/** App accounts */
-	public static accounts = {
+	static accounts = {
 		registrable: true,
 		registration: {
 			required: [],
@@ -105,11 +106,11 @@ export class AppConfig {
 		setServicePrivilegs: false,
 		setServicePrivilegsRole: "ServiceAdministrator",
 		setObjectPrivilegs: true,
-		phoneIsAllowed: true
+		phoneIsAllowed: false
 	};
 
 	/** Geographic meta */
-	public static geoMeta = {
+	static geoMeta = {
 		country: "VN",
 		countries: new Array<{ name: string, code: string, code3: string, telcode: string }>(),
 		provinces: {} as {
@@ -134,7 +135,7 @@ export class AppConfig {
 	};
 
 	/** App options */
-	public static options = {
+	static options = {
 		i18n: "vi-VN",
 		theme: "light",
 		timezone: +7.00,
@@ -142,7 +143,7 @@ export class AppConfig {
 	};
 
 	/** App URLs (stack, host, ...) */
-	public static URLs = {
+	static URLs = {
 		stack: [] as Array<{ url: string, params: { [key: string]: any } }>,
 		home: "/home",
 		search: "/search",
@@ -167,7 +168,7 @@ export class AppConfig {
 	};
 
 	/** URLs for downloading desktop apps */
-	public static get downloadURLs() {
+	static get downloadURLs() {
 		const baseURL = `${this.URIs.apps}releases/${this.app.name.replace(/\s/g, "%20")}`;
 		return {
 			Windows: `${baseURL}%20Setup%20${this.app.version}.exe`,
@@ -177,66 +178,66 @@ export class AppConfig {
 	}
 
 	/** Tracking information */
-	public static tracking = {
-		google: [] as Array<string>,
+	static tracking = {
+		google: [/*"UA-3060572-8"/**/] as Array<string>,
 		facebook: [] as Array<string>,
 		domains: [] as Array<string>,
 	};
 
 	/** Facebook integration */
-	public static facebook = {
+	static facebook = {
 		id: undefined as string,
 		token: undefined as string,
 		url: undefined as string,
-		version: "v11.0",
+		version: "v12.0",
 	};
 
 	/** Refer informaion */
-	public static refer = {
+	static refer = {
 		id: undefined as string,
 		section: undefined as string
 	};
 
 	/** Extra configuration */
-	public static extras: { [key: string]: any } = {};
+	static extras: { [key: string]: any } = {};
 
 	/** Gets the state that determines the app is ready to go */
-	public static get isReady() {
+	static get isReady() {
 		return AppUtility.isObject(this.session.keys, true) && AppUtility.isObject(this.session.token, true);
 	}
 
 	/** Gets the state that determines the current account is authenticated or not */
-	public static get isAuthenticated() {
+	static get isAuthenticated() {
 		return this.isReady && AppUtility.isNotEmpty(this.session.token.uid);
 	}
 
 	/** Gets the state that determines is native app */
-	public static get isNativeApp() {
+	static get isNativeApp() {
 		return this.app.mode === "NTA";
 	}
 
 	/** Gets the state that determines is web progressive app */
-	public static get isWebApp() {
+	static get isWebApp() {
 		return !this.isNativeApp && this.app.shell !== "Electron";
 	}
 
 	/** Gets the state that determines the app is running on iOS (native or web browser) */
-	public static get isRunningOnIOS() {
+	static get isRunningOnIOS() {
 		return this.app.platform.startsWith("iOS");
 	}
 
 	/** Gets the state that determines the app is running in debug mode */
-	public static get isDebug() {
+	static get isDebug() {
 		return this.app.debug;
 	}
 
 	/** Gets the state that determines the app is running in offline mode */
-	public static get isOffline() {
+	static get isOffline() {
 		return this.app.offline;
 	}
 
 	/** Gets the language for working with the app */
-	public static get language() {
+	static get language() {
 		const profile = this.session.account !== undefined ? this.session.account.profile : undefined;
 		return profile !== undefined
 			? profile.Language || this.options.i18n
@@ -244,7 +245,7 @@ export class AppConfig {
 	}
 
 	/** Gets the available languages for working with the app */
-	public static get languages() {
+	static get languages() {
 		return [
 			{
 				Value: "en-US",
@@ -258,17 +259,17 @@ export class AppConfig {
 	}
 
 	/** Gets the locale code for working with i18n globalization */
-	public static get locale() {
+	static get locale() {
 		return this.language.replace("-", "_");
 	}
 
 	/** Gets the available locales for working with the app */
-	public static get locales() {
+	static get locales() {
 		return this.languages.map(language => language.Value.replace("-", "_"));
 	}
 
 	/** Gets the locale data for working with i18n globalization */
-	public static getLocaleData(locale: string) {
+	static getLocaleData(locale: string) {
 		switch (locale || this.locale) {
 			case "vi_VN":
 				return vi_VN;
@@ -278,7 +279,7 @@ export class AppConfig {
 	}
 
 	/** Gets the related JSON with active/related service, culture language and host */
-	public static getRelatedJson(additional?: { [key: string]: string }, service?: string, activeID?: string, onCompleted?: (json: { [key: string]: string }) => void) {
+	static getRelatedJson(additional?: { [key: string]: string }, service?: string, activeID?: string, onCompleted?: (json: { [key: string]: string }) => void) {
 		const json: { [key: string]: string } = {
 			"language": this.language,
 			"related-service": (AppUtility.isNotEmpty(service) ? service : this.services.active.service || "").trim().toLowerCase(),
@@ -292,12 +293,12 @@ export class AppConfig {
 	}
 
 	/** Gets the related query with active/related service, culture language and host */
-	public static getRelatedQuery(service?: string, activeID?: string, onCompleted?: (json: any) => void) {
+	static getRelatedQuery(service?: string, activeID?: string, onCompleted?: (json: any) => void) {
 		return AppUtility.toQuery(this.getRelatedJson(undefined, service, activeID, onCompleted));
 	}
 
 	/** Gets the authenticated information for making requests to APIs */
-	public static getAuthenticatedInfo(addToken: boolean = true, addAppInfo: boolean = true, addDeviceID: boolean = true) {
+	static getAuthenticatedInfo(addToken: boolean = true, addAppInfo: boolean = true, addDeviceID: boolean = true) {
 		const info: { [key: string]: string } = {};
 		if (addToken && AppUtility.isObject(this.session.token, true) && AppUtility.isObject(this.session.keys, true) && AppUtility.isNotEmpty(this.session.keys.jwt)) {
 			info["x-app-token"] = AppCrypto.jwtEncode(this.session.token, this.session.keys.jwt);
@@ -313,7 +314,7 @@ export class AppConfig {
 	}
 
 	/** Gets the captcha information for making requests to APIs */
-	public static getCaptchaInfo(captcha: string) {
+	static getCaptchaInfo(captcha: string) {
 		return {
 			"x-captcha": "true",
 			"x-captcha-registered": AppCrypto.aesEncrypt(this.session.captcha.code),

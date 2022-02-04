@@ -19,7 +19,7 @@ export class ContentType extends CoreBaseModel {
 	}
 
 	/** All instances of contentType */
-	public static instances = new Dictionary<string, ContentType>();
+	static instances = new Dictionary<string, ContentType>();
 
 	Title = undefined as string;
 	Description = undefined as string;
@@ -48,7 +48,7 @@ export class ContentType extends CoreBaseModel {
 	ansiTitle: string;
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, contentType?: ContentType) {
+	static deserialize(json: any, contentType?: ContentType) {
 		contentType = contentType || new ContentType();
 		contentType.copy(json);
 		contentType.ansiTitle = AppUtility.toANSI(contentType.Title).toLowerCase();
@@ -56,50 +56,50 @@ export class ContentType extends CoreBaseModel {
 	}
 
 	/** Gets by identity */
-	public static get(id: string) {
+	static get(id: string) {
 		return AppUtility.isNotEmpty(id)
 			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
-	public static set(contentType: ContentType) {
+	static set(contentType: ContentType) {
 		return contentType === undefined ? undefined : this.instances.add(contentType.ID, contentType);
 	}
 
 	/** Updates into dictionary */
-	public static update(data: any) {
+	static update(data: any) {
 		return AppUtility.isObject(data, true)
 			? this.set(data instanceof ContentType ? data as ContentType : this.deserialize(data, this.get(data.ID)))
 			: undefined;
 	}
 
 	/** Checks to see the dictionary is contains the object by identity or not */
-	public static contains(id: string) {
+	static contains(id: string) {
 		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
 	}
 
 	/** Deserializes the collection of objects to array */
-	public static toArray(objects: Array<any>) {
+	static toArray(objects: Array<any>) {
 		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
 	}
 
 	/** Deserializes the collection of objects to list */
-	public static toList(objects: Array<any>) {
+	static toList(objects: Array<any>) {
 		return this.toArray(objects).toList();
 	}
 
-	public get contentTypeDefinition() {
+	get contentTypeDefinition() {
 		return AppUtility.isNotEmpty(this.ContentTypeDefinitionID)
 			? (BaseModel.contentTypeDefinitions || []).find(definition => definition.ID === this.ContentTypeDefinitionID)
 			: undefined;
 	}
 
-	public get routerLink() {
+	get routerLink() {
 		return `/portals/core/content.types/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
-	public getObjectName(includePrefixAndSuffix: boolean = false) {
+	getObjectName(includePrefixAndSuffix: boolean = false) {
 		const definition = this.contentTypeDefinition;
 		return definition !== undefined
 			? includePrefixAndSuffix

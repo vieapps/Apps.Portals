@@ -8,22 +8,22 @@ import { CounterInfo } from "@app/models/counters";
 export abstract class Base {
 
 	/** The identity */
-	public ID: string;
+	ID: string;
 
 	/** The working privileges */
-	public Privileges: Privileges;
+	Privileges: Privileges;
 
 	/** The original privileges */
-	public OriginalPrivileges: Privileges;
+	OriginalPrivileges: Privileges;
 
 	/** Gets the link for working with router */
-	public abstract get routerLink(): string;
+	abstract get routerLink(): string;
 
 	/** The params for working with router */
 	protected _routerParams: { [key: string]: any };
 
 	/** Gets the params for working with router */
-	public get routerParams() {
+	get routerParams() {
 		this._routerParams = this._routerParams || {
 			"x-request": AppCrypto.jsonEncode({ ID: this.ID })
 		};
@@ -31,15 +31,15 @@ export abstract class Base {
 	}
 
 	/** Gets the URI (means link with 'x-request' param) for working with router */
-	public get routerURI() {
+	get routerURI() {
 		return this.getRouterURI();
 	}
 
 	/** The title (only ANSI characters) for working with URIs and filters */
-	public abstract ansiTitle: string;
+	abstract ansiTitle: string;
 
 	/** Gets the predicate function to tilter a collection of objects using 'indexOf' on ANSI Title */
-	public static getFilterBy(query: string, predicate?: (object: any) => boolean) {
+	static getFilterBy(query: string, predicate?: (object: any) => boolean) {
 		const terms = AppUtility.toANSI(query.replace(/\"/g, "")).split(" ");
 		const andTerms = terms.filter(term => term[0] === "+").map(term => term.substr(1));
 		const orTerms = terms.except(terms.filter(term => term[0] === "+"));
@@ -67,7 +67,7 @@ export abstract class Base {
 	}
 
 	/** Gets the params for navigating */
-	public static getParams(filterBy: AppDataFilter, onCompleted?: (params: { [key: string]: string }) => boolean) {
+	static getParams(filterBy: AppDataFilter, onCompleted?: (params: { [key: string]: string }) => boolean) {
 		const params: { [key: string]: string } = {};
 		(filterBy.And || []).forEach(param => {
 			const key = AppUtility.getAttributes(param).first();
@@ -83,12 +83,12 @@ export abstract class Base {
 	}
 
 	/** Gets the URI (means link with 'x-request' param) for working with router */
-	public getRouterURI(params?: { [key: string]: any }) {
+	getRouterURI(params?: { [key: string]: any }) {
 		return `${this.routerLink}?x-request=${(params !== undefined ? AppCrypto.jsonEncode(params) : this.routerParams["x-request"])}`;
 	}
 
 	/** Copies data from source (object or JSON) and fill into this objects' properties */
-	public copy(source: any, onCompleted?: (data: any) => void) {
+	copy(source: any, onCompleted?: (data: any) => void) {
 		AppUtility.copy(source, this, data => {
 			if (AppUtility.isNotEmpty(data.Created)) {
 				this["Created"] = new Date(data.Created);

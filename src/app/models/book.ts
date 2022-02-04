@@ -14,7 +14,7 @@ export class Book extends BaseModel {
 	}
 
 	/** All instances of book */
-	public static instances = new Dictionary<string, Book>();
+	static instances = new Dictionary<string, Book>();
 
 	ID = "";
 	Title = "";
@@ -53,7 +53,7 @@ export class Book extends BaseModel {
 	ansiTitle = "";
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, book?: Book) {
+	static deserialize(json: any, book?: Book) {
 		book = book || new Book();
 		book.copy(json, data => {
 			book.Counters = new Dictionary<string, CounterInfo>();
@@ -76,7 +76,7 @@ export class Book extends BaseModel {
 	}
 
 	/** Gets by identity */
-	public static get(id: string) {
+	static get(id: string) {
 		return id !== undefined
 			? this.instances.get(id)
 			: undefined;
@@ -84,33 +84,33 @@ export class Book extends BaseModel {
 
 
 	/** Sets by identity */
-	public static set(book: Book) {
+	static set(book: Book) {
 		return book !== undefined ? this.instances.add(book.ID, book) : book;
 	}
 
 	/** Updates into dictionary */
-	public static update(data: any) {
+	static update(data: any) {
 		return AppUtility.isObject(data, true)
 			? this.set(data instanceof Book ? data as Book : this.deserialize(data, this.get(data.ID)))
 			: undefined;
 	}
 
 	/** Checks to see the dictionary is contains the object by identity or not */
-	public static contains(id: string) {
+	static contains(id: string) {
 		return id !== undefined && this.instances.contains(id);
 	}
 
 	/** Deserializes the collection of objects to array */
-	public static toArray(objects: Array<any>) {
+	static toArray(objects: Array<any>) {
 		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
 	}
 
 	/** Converts the array of objects to list */
-	public static toList(objects: Array<any>) {
+	static toList(objects: Array<any>) {
 		return this.toArray(objects).toList();
 	}
 
-	public get routerLink() {
+	get routerLink() {
 		return `/books/read/${(AppUtility.isNotEmpty(this.ansiTitle) ? AppUtility.toURI(this.ansiTitle) : AppUtility.toANSI(`${this.Title}-${this.Author}`, true))}`;
 	}
 

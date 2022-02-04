@@ -19,10 +19,10 @@ export class Module extends CoreBaseModel {
 	}
 
 	/** All instances of module */
-	public static instances = new Dictionary<string, Module>();
+	static instances = new Dictionary<string, Module>();
 
 	/** Active module */
-	public static active: Module;
+	static active: Module;
 
 	Title = undefined as string;
 	Description = undefined as string;
@@ -43,7 +43,7 @@ export class Module extends CoreBaseModel {
 	ansiTitle: string;
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, module?: Module) {
+	static deserialize(json: any, module?: Module) {
 		module = module || new Module();
 		module.copy(json);
 		module.ansiTitle = AppUtility.toANSI(module.Title).toLowerCase();
@@ -51,50 +51,50 @@ export class Module extends CoreBaseModel {
 	}
 
 	/** Gets by identity */
-	public static get(id: string) {
+	static get(id: string) {
 		return AppUtility.isNotEmpty(id)
 			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
-	public static set(module: Module) {
+	static set(module: Module) {
 		return module === undefined ? undefined : this.instances.add(module.ID, module);
 	}
 
 	/** Updates into dictionary */
-	public static update(data: any) {
+	static update(data: any) {
 		return AppUtility.isObject(data, true)
 			? this.set(data instanceof Module ? data as Module : this.deserialize(data, this.get(data.ID)))
 			: undefined;
 	}
 
 	/** Checks to see the dictionary is contains the object by identity or not */
-	public static contains(id: string) {
+	static contains(id: string) {
 		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
 	}
 
 	/** Deserializes the collection of objects to array */
-	public static toArray(objects: Array<any>) {
+	static toArray(objects: Array<any>) {
 		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
 	}
 
 	/** Deserializes the collection of objects to list */
-	public static toList(objects: Array<any>) {
+	static toList(objects: Array<any>) {
 		return this.toArray(objects).toList();
 	}
 
-	public get moduleDefinition() {
+	get moduleDefinition() {
 		return AppUtility.isNotEmpty(this.ModuleDefinitionID)
 			? (BaseModel.moduleDefinitions || []).find(definition => definition.ID === this.ModuleDefinitionID)
 			: undefined;
 	}
 
-	public get contentTypes() {
+	get contentTypes() {
 		return ContentType.instances.toArray(contentType => contentType.RepositoryID === this.ID).sortBy("Title");
 	}
 
-	public get routerLink() {
+	get routerLink() {
 		return `/portals/core/modules/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 

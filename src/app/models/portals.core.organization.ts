@@ -18,13 +18,13 @@ export class Organization extends CoreBaseModel {
 		this.Privileges = privileges;
 	}
 
-	public static instructionElements = ["Account", "Invite", "Reset", "Password", "Email"];
+	static instructionElements = ["Account", "Invite", "Reset", "Password", "Email"];
 
 	/** All instances of organization */
-	public static instances = new Dictionary<string, Organization>();
+	static instances = new Dictionary<string, Organization>();
 
 	/** Active organization */
-	public static active: Organization;
+	static active: Organization;
 
 	Title = undefined as string;
 	Description = undefined as string;
@@ -81,7 +81,7 @@ export class Organization extends CoreBaseModel {
 	owner: string;
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, organization?: Organization) {
+	static deserialize(json: any, organization?: Organization) {
 		organization = organization || new Organization();
 		organization.copy(json);
 		organization.ansiTitle = AppUtility.toANSI(organization.Title).toLowerCase();
@@ -89,52 +89,52 @@ export class Organization extends CoreBaseModel {
 	}
 
 	/** Gets by identity */
-	public static get(id: string) {
+	static get(id: string) {
 		return AppUtility.isNotEmpty(id)
 			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
-	public static set(organization: Organization) {
+	static set(organization: Organization) {
 		return organization === undefined ? undefined : this.instances.add(organization.ID, organization);
 	}
 
 	/** Updates into dictionary */
-	public static update(data: any) {
+	static update(data: any) {
 		return AppUtility.isObject(data, true)
 			? this.set(data instanceof Organization ? data as Organization : this.deserialize(data, this.get(data.ID)))
 			: undefined;
 	}
 
 	/** Checks to see the dictionary is contains the object by identity or not */
-	public static contains(id: string) {
+	static contains(id: string) {
 		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
 	}
 
 	/** Deserializes the collection of objects to array */
-	public static toArray(objects: Array<any>) {
+	static toArray(objects: Array<any>) {
 		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
 	}
 
 	/** Deserializes the collection of objects to list */
-	public static toList(objects: Array<any>) {
+	static toList(objects: Array<any>) {
 		return this.toArray(objects).toList();
 	}
 
-	public get modules() {
+	get modules() {
 		return Module.instances.toArray(module => module.SystemID === this.ID).sortBy("Title");
 	}
 
-	public get contentTypes() {
+	get contentTypes() {
 		return ContentType.instances.toArray(contentType => contentType.SystemID === this.ID).sortBy("Title");
 	}
 
-	public get routerLink() {
+	get routerLink() {
 		return `/portals/core/organizations/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
-	public get defaultModule() {
+	get defaultModule() {
 		const modules = this.modules;
 		return modules.first(module => module.ModuleDefinitionID === "A0000000000000000000000000000001") || modules.first();
 	}

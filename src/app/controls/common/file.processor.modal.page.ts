@@ -239,7 +239,7 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 
 	uploadFiles() {
 		if (this.files.length > 0) {
-			const onSuccess: (index: number, data?: any) => void = (index, data) => AppUtility.invoke(() => {
+			const onSuccess: (index: number, data?: any) => void = (index, data) => {
 				this.uploadedInfo.data.push(data);
 				if (this.subscriptions !== undefined && this.subscriptions.length > index && this.subscriptions[index] !== undefined) {
 					this.subscriptions[index].unsubscribe();
@@ -254,13 +254,19 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 						this.appFormsSvc.hideModalAsync();
 					}
 				}
-			}, 13);
+			};
 			const onError: (error?: any) => void = error => this.appFormsSvc.showErrorAsync(error).then(() => this.processing = false);
 			const onProgress: (index: number, percentage: string) => void = (index, percentage) => this.files[index].percentage = percentage;
-			const uploadFile = this.temporary ? this.filesSvc.uploadTemporaryFile : this.filesSvc.uploadFile;
 			this.processing = true;
 			this.subscriptions = [];
-			this.files.forEach((file, index) => this.subscriptions.push(uploadFile(this.filesSvc.getFormData(file.data), this.fileOptions, data => onSuccess(index, data), onError, percentage => onProgress(index, percentage))));
+			this.files.forEach((file, index) => {
+				if (this.temporary) {
+					this.subscriptions.push(this.filesSvc.uploadTemporaryFile(this.filesSvc.getFormData(file.data), this.fileOptions, data => onSuccess(index, data), onError, percentage => onProgress(index, percentage)));
+				}
+				else {
+					this.subscriptions.push(this.filesSvc.uploadFile(this.filesSvc.getFormData(file.data), this.fileOptions, data => onSuccess(index, data), onError, percentage => onProgress(index, percentage)));
+				}
+			});
 		}
 	}
 

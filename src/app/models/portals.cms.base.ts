@@ -12,22 +12,22 @@ export abstract class PortalCmsBase extends BaseModel {
 		super();
 	}
 
-	public static get ModuleDefinitions() {
+	static get ModuleDefinitions() {
 		return BaseModel.moduleDefinitions;
 	}
 
-	public static get ContentTypeDefinitions() {
+	static get ContentTypeDefinitions() {
 		return BaseModel.contentTypeDefinitions;
 	}
 
-	public abstract SystemID: string;
-	public abstract RepositoryID: string;
-	public abstract RepositoryEntityID: string;
-	public abstract Status: string;
+	abstract SystemID: string;
+	abstract RepositoryID: string;
+	abstract RepositoryEntityID: string;
+	abstract Status: string;
 	protected _thumbnails: AttachmentInfo[];
 	protected _attachments: AttachmentInfo[];
 
-	public get organization() {
+	get organization() {
 		const organization = AppUtility.isNotEmpty(this.SystemID) ? Organization.get(this.SystemID) : undefined;
 		if (organization === undefined && AppUtility.isNotEmpty(this.SystemID)) {
 			AppEvents.broadcast("Portals", { Type: "Info", Mode: "Request", Object: "Organization", ID: this.SystemID });
@@ -35,7 +35,7 @@ export abstract class PortalCmsBase extends BaseModel {
 		return organization;
 	}
 
-	public get module() {
+	get module() {
 		const module = AppUtility.isNotEmpty(this.RepositoryID) ? Module.get(this.RepositoryID) : undefined;
 		if (module === undefined && AppUtility.isNotEmpty(this.RepositoryID)) {
 			AppEvents.broadcast("Portals", { Type: "Info", Mode: "Request", Object: "Module", ID: this.RepositoryID });
@@ -43,7 +43,7 @@ export abstract class PortalCmsBase extends BaseModel {
 		return module;
 	}
 
-	public get contentType() {
+	get contentType() {
 		const contentType = AppUtility.isNotEmpty(this.RepositoryEntityID) ? ContentType.get(this.RepositoryEntityID) : undefined;
 		if (contentType === undefined && AppUtility.isNotEmpty(this.RepositoryEntityID)) {
 			AppEvents.broadcast("Portals", { Type: "Info", Mode: "Request", Object: "ContentType", ID: this.RepositoryEntityID });
@@ -51,15 +51,15 @@ export abstract class PortalCmsBase extends BaseModel {
 		return contentType;
 	}
 
-	public get moduleDefinition() {
+	get moduleDefinition() {
 		return (this.module || new Module()).moduleDefinition;
 	}
 
-	public get contentTypeDefinition() {
+	get contentTypeDefinition() {
 		return (this.contentType || new ContentType()).contentTypeDefinition;
 	}
 
-	public get thumbnailURI() {
+	get thumbnailURI() {
 		return this.thumbnails !== undefined && this.thumbnails.length > 0
 			? AppUtility.isObject(this.thumbnails[0].URIs, true)
 				? this.thumbnails[0].URIs.Direct
@@ -69,15 +69,15 @@ export abstract class PortalCmsBase extends BaseModel {
 			: `${AppConfig.URIs.files}thumbnails/no-image.png`;
 	}
 
-	public get thumbnails() {
+	get thumbnails() {
 		return this._thumbnails;
 	}
 
-	public get attachments() {
+	get attachments() {
 		return this._attachments;
 	}
 
-	public static normalizeClonedProperties(original: PortalCmsBase, copy: any, onCompleted?: () => void) {
+	static normalizeClonedProperties(original: PortalCmsBase, copy: any, onCompleted?: () => void) {
 		const tags = original["Tags"];
 		if (AppUtility.isNotEmpty(tags)) {
 			copy["Tags"] = AppUtility.toStr(AppUtility.toArray(tags, ","), ", ");
@@ -116,7 +116,7 @@ export abstract class PortalCmsBase extends BaseModel {
 		}
 	}
 
-	public normalizeExtendedProperties(data: any, onCompleted?: () => void) {
+	normalizeExtendedProperties(data: any, onCompleted?: () => void) {
 		const contentType = this.contentType;
 		if (contentType !== undefined && AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
 			contentType.ExtendedPropertyDefinitions.forEach(definition => {
@@ -146,11 +146,11 @@ export abstract class PortalCmsBase extends BaseModel {
 		}
 	}
 
-	public updateThumbnails(thumbnails: AttachmentInfo[]) {
+	updateThumbnails(thumbnails: AttachmentInfo[]) {
 		this._thumbnails = thumbnails;
 	}
 
-	public updateAttachments(attachments: AttachmentInfo[]) {
+	updateAttachments(attachments: AttachmentInfo[]) {
 		this._attachments = attachments;
 	}
 

@@ -201,9 +201,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		items.forEach(item => item.Info = AppUtility.isArray(item.Children, true) && item.Children.length > 0 ? AppUtility.format(this.children, { number: item.Children.length, children: `${item.Children[0].Title}, ...` }) : "");
 		const orderBy = this.prepareSortBy();
 		return doSort
-			? items.orderBy(Object.keys(orderBy).map(key => {
-					return { name: key, reverse: AppUtility.isEquals("Descending", orderBy[key]) };
-				}))
+			? items.orderBy(Object.keys(orderBy).map(key => ({ name: key, reverse: AppUtility.isEquals("Descending", orderBy[key]) })))
 			: items;
 	}
 

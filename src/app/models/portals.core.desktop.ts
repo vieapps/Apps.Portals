@@ -21,7 +21,7 @@ export class Desktop extends CoreBaseModel implements NestedObject {
 	}
 
 	/** All instances of desktop */
-	public static instances = new Dictionary<string, Desktop>();
+	static instances = new Dictionary<string, Desktop>();
 
 	ParentID = undefined as string;
 	Title = undefined as string;
@@ -60,7 +60,7 @@ export class Desktop extends CoreBaseModel implements NestedObject {
 	portlets: Array<Portlet>;
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, desktop?: Desktop) {
+	static deserialize(json: any, desktop?: Desktop) {
 		desktop = desktop || new Desktop();
 		desktop.copy(json);
 		desktop.ansiTitle = AppUtility.toANSI(desktop.Title).toLowerCase();
@@ -68,67 +68,67 @@ export class Desktop extends CoreBaseModel implements NestedObject {
 	}
 
 	/** Gets by identity */
-	public static get(id: string) {
+	static get(id: string) {
 		return AppUtility.isNotEmpty(id)
 			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
-	public static set(desktop: Desktop) {
+	static set(desktop: Desktop) {
 		return desktop === undefined ? undefined : this.instances.add(desktop.ID, desktop);
 	}
 
 	/** Updates into dictionary */
-	public static update(data: any) {
+	static update(data: any) {
 		return AppUtility.isObject(data, true)
 			? this.set(data instanceof Desktop ? data as Desktop : this.deserialize(data, this.get(data.ID)))
 			: undefined;
 	}
 
 	/** Checks to see the dictionary is contains the object by identity or not */
-	public static contains(id: string) {
+	static contains(id: string) {
 		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
 	}
 
 	/** Deserializes the collection of objects to array */
-	public static toArray(objects: Array<any>) {
+	static toArray(objects: Array<any>) {
 		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
 	}
 
 	/** Deserializes the collection of objects to list */
-	public static toList(objects: Array<any>) {
+	static toList(objects: Array<any>) {
 		return this.toArray(objects).toList();
 	}
 
-	public get Parent() {
+	get Parent() {
 		return Desktop.get(this.ParentID);
 	}
 
-	public get Children() {
+	get Children() {
 		return (AppUtility.isArray(this.childrenIDs, true) ? this.childrenIDs.map(id => Desktop.get(id)) : Desktop.instances.toArray(desktop => desktop.ParentID === this.ID)).sortBy("Title");
 	}
 
-	public get FullTitle(): string {
+	get FullTitle(): string {
 		const parent = this.Parent;
 		return (parent !== undefined ? `${parent.FullTitle} > ` : "") + this.Title;
 	}
 
-	public get OrderIndex() {
+	get OrderIndex() {
 		return 0;
 	}
 
-	public get organization() {
+	get organization() {
 		return AppUtility.isNotEmpty(this.SystemID)
 			? Organization.get(this.SystemID)
 			: undefined;
 	}
 
-	public get routerLink() {
+	get routerLink() {
 		return `/portals/core/desktops/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
-	public get listURI() {
+	get listURI() {
 		return this.getRouterURI({ ParentID: this.ID }).replace("/update/", "/list/");
 	}
 

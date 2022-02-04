@@ -11,12 +11,13 @@
 		<ion-title [hidden]="searching || filtering">
 			{{ title.page }}
 		</ion-title>
-		<ion-searchbar [hidden]="!searching && !filtering"
+		<ion-searchbar
 			debounce="450"
 			showCancelButton="always"
 			cancelButtonIcon="arrow-back"
 			enterkeyhint="search"
 			inputmode="search"
+			[hidden]="!searching && !filtering"
 			[cancelButtonText]="labels.cancel"
 			(ionChange)="onSearch($event)"
 			(ionClear)="onClear()"
@@ -89,6 +90,9 @@
 				</ion-label>
 			</ion-item>
 			<ion-item-options>
+				<ion-item-option *ngIf="canUpdate" color="warning" [title]="labels.refresh" (click)="refresh($event, content)">
+					<ion-icon name="refresh" slot="icon-only"></ion-icon>
+				</ion-item-option>
 				<ion-item-option color="secondary" [title]="buttons.view" (click)="view($event, content)">
 					<ion-icon name="eye" slot="icon-only"></ion-icon>
 				</ion-item-option>

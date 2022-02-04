@@ -20,7 +20,7 @@ export class AuthenticationService extends BaseService {
 	 * Determines the account is system administrator or not
 	 * @param account The account to check (default is current logged in account)
 	*/
-	public isSystemAdministrator(account?: Account) {
+	isSystemAdministrator(account?: Account) {
 		return (account || this.configSvc.getAccount()).isInRole("SystemAdministrator");
 	}
 
@@ -31,7 +31,7 @@ export class AuthenticationService extends BaseService {
 	 * @param privileges The role privileges to check with this accounts' privileges
 	 * @param account The account to check (default is current logged in account)
 	 */
-	public isServiceAdministrator(serviceName?: string, privileges?: Privileges, account?: Account) {
+	isServiceAdministrator(serviceName?: string, privileges?: Privileges, account?: Account) {
 		return this.isAdministrator(serviceName, "", privileges, account);
 	}
 
@@ -42,7 +42,7 @@ export class AuthenticationService extends BaseService {
 	 * @param privileges The role privileges to check with this accounts' privileges
 	 * @param account The account to check (default is current logged in account)
 	 */
-	public isServiceModerator(serviceName?: string, privileges?: Privileges, account?: Account) {
+	isServiceModerator(serviceName?: string, privileges?: Privileges, account?: Account) {
 		return this.isModerator(serviceName, "", privileges, account);
 	}
 
@@ -53,7 +53,7 @@ export class AuthenticationService extends BaseService {
 	 * @param privileges The role privileges to check with this accounts' privileges
 	 * @param account The account to check (default is current logged in account)
 	 */
-	public isAdministrator(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
+	isAdministrator(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
 		account = account || this.configSvc.getAccount();
 		return this.isSystemAdministrator(account) || account.isAdministrator(serviceName || this.configSvc.appConfig.services.active.service, objectName, privileges);
 	}
@@ -65,7 +65,7 @@ export class AuthenticationService extends BaseService {
 	 * @param privileges The role privileges to check with this accounts' privileges
 	 * @param account The account to check (default is current logged in account)
 	 */
-	public isModerator(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
+	isModerator(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
 		account = account || this.configSvc.getAccount();
 		return this.isSystemAdministrator(account) || account.isModerator(serviceName || this.configSvc.appConfig.services.active.service, objectName, privileges);
 	}
@@ -77,7 +77,7 @@ export class AuthenticationService extends BaseService {
 	 * @param privileges The role privileges to check with this accounts' privileges
 	 * @param account The account to check (default is current logged in account)
 	 */
-	public isEditor(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
+	isEditor(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
 		account = account || this.configSvc.getAccount();
 		return this.isSystemAdministrator(account) || account.isEditor(serviceName || this.configSvc.appConfig.services.active.service, objectName, privileges);
 	}
@@ -89,7 +89,7 @@ export class AuthenticationService extends BaseService {
 	 * @param privileges The role privileges to check with this accounts' privileges
 	 * @param account The account to check (default is current logged in account)
 	 */
-	public isContributor(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
+	isContributor(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
 		account = account || this.configSvc.getAccount();
 		return this.isSystemAdministrator(account) || account.isContributor(serviceName || this.configSvc.appConfig.services.active.service, objectName, privileges);
 	}
@@ -101,7 +101,7 @@ export class AuthenticationService extends BaseService {
 	 * @param privileges The role privileges to check with this accounts' privileges
 	 * @param account The account to check (default is current logged in account)
 	 */
-	public isViewer(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
+	isViewer(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
 		account = account || this.configSvc.getAccount();
 		return this.isSystemAdministrator(account) || account.isViewer(serviceName || this.configSvc.appConfig.services.active.service, objectName, privileges);
 	}
@@ -113,7 +113,7 @@ export class AuthenticationService extends BaseService {
 	 * @param privileges The role privileges to check with this accounts' privileges
 	 * @param account The account to check (default is current logged in account)
 	 */
-	public isDownloader(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
+	isDownloader(serviceName?: string, objectName?: string, privileges?: Privileges, account?: Account) {
 		account = account || this.configSvc.getAccount();
 		return this.isSystemAdministrator(account) || account.isDownloader(serviceName || this.configSvc.appConfig.services.active.service, objectName, privileges);
 	}
@@ -131,17 +131,17 @@ export class AuthenticationService extends BaseService {
 	}
 
 	/** Checks to see the visitor can register new account or not */
-	public get canRegisterNewAccounts() {
+	get canRegisterNewAccounts() {
 		return this.configSvc.appConfig.accounts.registrable;
 	}
 
 	/** Checks to see the user can send invitations or not */
-	public get canSendInvitations() {
+	get canSendInvitations() {
 		return this.canDo(this.configSvc.appConfig.accounts.sendInvitationRole);
 	}
 
 	/** Checks to see the user can set privileges of current service or not */
-	public get canSetServicePrivileges() {
+	get canSetServicePrivileges() {
 		const account = this.configSvc.getAccount();
 		if (account !== undefined) {
 			if (this.configSvc.appConfig.accounts.setServicePrivilegs) {
@@ -174,7 +174,7 @@ export class AuthenticationService extends BaseService {
 		}
 	}
 
-	public logInAsync(account: string, password: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	logInAsync(account: string, password: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			{
@@ -199,7 +199,7 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public logInOTPAsync(id: string, info: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	logInOTPAsync(id: string, info: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			{
@@ -217,7 +217,7 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public logOutAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	logOutAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.deleteAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			data => this.configSvc.updateSessionAsync(data, () => this.configSvc.registerSessionAsync(() => {
@@ -236,7 +236,7 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public resetPasswordAsync(account: string, captcha: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	resetPasswordAsync(account: string, captcha: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("account", "reset", `uri=${this.configSvc.activateURL}&${this.configSvc.relatedQuery}`, "users"),
 			{
@@ -248,7 +248,7 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public renewPasswordAsync(account: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	renewPasswordAsync(account: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("account", "renew", this.configSvc.relatedQuery, "users"),
 			{
@@ -260,7 +260,7 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	public registerCaptchaAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	registerCaptchaAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.readAsync(
 			this.getPath("captcha", undefined, `register=${this.configSvc.appConfig.session.id}&${this.configSvc.relatedQuery}`, "users"),
 			data => {

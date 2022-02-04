@@ -20,7 +20,7 @@ export class Content extends CmsBaseModel {
 		this.StartDate = startDate !== undefined ? new Date(startDate) : undefined;
 	}
 
-	public static instances = new Dictionary<string, Content>();
+	static instances = new Dictionary<string, Content>();
 
 	Status = "Pending";
 	CategoryID = undefined as string;
@@ -53,7 +53,7 @@ export class Content extends CmsBaseModel {
 	ansiTitle: string;
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, content?: Content) {
+	static deserialize(json: any, content?: Content) {
 		content = content || new Content();
 		content.copy(json, data => {
 			content.StartDate = AppUtility.isNotEmpty(data.StartDate) ? new Date(data.StartDate) : undefined;
@@ -72,48 +72,48 @@ export class Content extends CmsBaseModel {
 	}
 
 	/** Gets by identity */
-	public static get(id: string) {
+	static get(id: string) {
 		return AppUtility.isNotEmpty(id)
 			? this.instances.get(id)
 			: undefined;
 	}
 
 	/** Sets by identity */
-	public static set(content: Content) {
+	static set(content: Content) {
 		return content === undefined ? undefined : this.instances.add(content.ID, content);
 	}
 
 	/** Updates into dictionary */
-	public static update(data: any) {
+	static update(data: any) {
 		return AppUtility.isObject(data, true)
 			? this.set(data instanceof Content ? data as Content : this.deserialize(data, this.get(data.ID)))
 			: undefined;
 	}
 
 	/** Checks to see the dictionary is contains the object by identity or not */
-	public static contains(id: string) {
+	static contains(id: string) {
 		return AppUtility.isNotEmpty(id) && this.instances.contains(id);
 	}
 
 	/** Deserializes the collection of objects to array */
-	public static toArray(objects: Array<any>) {
+	static toArray(objects: Array<any>) {
 		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
 	}
 
 	/** Deserializes the collection of objects to list */
-	public static toList(objects: Array<any>) {
+	static toList(objects: Array<any>) {
 		return this.toArray(objects).toList();
 	}
 
-	public get category() {
+	get category() {
 		return Category.get(this.CategoryID);
 	}
 
-	public get routerLink() {
+	get routerLink() {
 		return `/portals/cms/contents/view/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
-	public async preloadAsync(getCategoryAsync: (id: string) => Promise<void>, getContentAsync: (id: string) => Promise<void>) {
+	async preloadAsync(getCategoryAsync: (id: string) => Promise<void>, getContentAsync: (id: string) => Promise<void>) {
 		if (getCategoryAsync !== undefined && AppUtility.isArray(this.OtherCategories, true)) {
 			await Promise.all(this.OtherCategories.filter(id => !Category.contains(id)).map(id => getCategoryAsync(id)));
 		}

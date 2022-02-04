@@ -481,6 +481,144 @@
 					"error": "Đã xảy ra lỗi!",
 					"status": "Đã thay đổi trạng thái xử lý ({{status}}) thành công"
 				}
+			},
+			"crawlers": {
+				"title": {
+					"search": "Tìm kiếm nguồn dữ liệu",
+					"filter": "Tìm nhanh theo từ khoá",
+					"list": "Danh sách nguồn dữ liệu {{info}}",
+					"create": "Tạo mới nguồn dữ liệu",
+					"update": "Cập nhật nguồn dữ liệu",
+					"view": "Xem chi tiết nguồn dữ liệu"
+				},
+				"controls": {
+					"Status": {
+						"label": "Trạng thái",
+						"placeholder": "",
+						"description": "Nguồn dữ liệu sẽ chỉ bắt đầu được sử dụng khi trạng thái là 'Xuất bản'"
+					},
+					"Title": {
+						"label": "Tiêu đề",
+						"placeholder": "",
+						"description": ""
+					},
+					"Description": {
+						"label": "Ghi chú",
+						"placeholder": "",
+						"description": ""
+					},
+					"Type": {
+						"label": "Kiểu  nguồn dữ liệu",
+						"placeholder": "",
+						"description": ""
+					},
+					"URL": {
+						"label": "Địa chỉ web",
+						"placeholder": "vd: https://domain.com",
+						"description": "Địa chỉ web gốc của nguồn dữ liệu"
+					},
+					"RepositoryID": {
+						"label": "Module nghiệp vụ",
+						"placeholder": "",
+						"description": "Chỉ định module nghiệp vụ sẽ nhận dữ liệu"
+					},
+					"RepositoryEntityID": {
+						"label": "Kiểu dữ liệu nghiệp vụ",
+						"placeholder": "",
+						"description": "Chỉ định kiểu dữ liệu nghiệp vụ sẽ nhận dữ liệu"
+					},
+					"SetAuthor": {
+						"label": "Lấy thông tin 'Tác giả'",
+						"placeholder": "",
+						"description": ""
+					},
+					"SetSource": {
+						"label": "Lấy thông tin 'Nguồn'",
+						"placeholder": "",
+						"description": ""
+					},
+					"NormalizingAdapter": {
+						"label": "Tên thành phần chuẩn hoá dữ liệu",
+						"placeholder": "",
+						"description": "Chỉ định tên của thành phần chuẩn hoá dữ liệu - vd: net.vieapps.Services.Portals.Crawlers.NormalizingAdapter,VIEApps.Services.Portals"
+					},
+					"DefaultStatus": {
+						"label": "Trạng thái mặc định",
+						"placeholder": "",
+						"description": "Chỉ định trạng thái xuất bản mặt định của nội dung được lấy từ nguồn dữ liệu"
+					},
+					"MaxPages": {
+						"label": "Số trang tối đa",
+						"placeholder": "",
+						"description": "Chỉ định số trang tối đa sẽ lấy từ nguồn dữ liệu, đặt là không (0) để chỉ định lấy toàn bộ các trang dữ liệu"
+					},
+					"Interval": {
+						"label": "Thời gian lấy dữ liệu định kỳ (phút)",
+						"placeholder": "",
+						"description": "Chỉ định thời gian lấy dữ liệu định kỳ - tính theo phút"
+					},
+					"LastActivity": {
+						"label": "Thời gian hoạt động cuối",
+						"placeholder": "",
+						"description": ""
+					},
+					"SelectedCategories": {
+						"label": "Lấy nội dung của",
+						"placeholder": "",
+						"description": "Chỉ định các phân loại mà sẽ lấy nội dung từ nguồn",
+						"fetch": "Lấy danh sách"
+					},
+					"DefaultCategoryID": {
+						"label": "Phân loại mặc định",
+						"placeholder": "",
+						"description": "Chỉ định phân loại mặc định mà nội dung sẽ sử dụng khi không xác định được phân loại cụ thể"
+					},
+					"CategoryMappings": {
+						"label": "Ánh xạ phân loại",
+						"placeholder": "",
+						"description": "Chỉ định ánh xạ phân loại nội dung giữa hệ thống và nguồn dữ liệu"
+					},
+					"Options": {
+						"label": "Tuỳ chỉnh",
+						"placeholder": "",
+						"description": "Thiết đặt tuỳ chỉnh lấy dữ liệu và điều chỉnh dữ liệu của nguồn"
+					}
+				},
+				"list": {
+					"search": "cho từ khoá vào \"..\" để tìm kiếm chính xác, đặt dấu + ở đầu nếu bắt buộc phải có",
+					"filter": "nhập từ khoá (không dấu cũng được) để lọc theo tiêu đề, đặt dấu + ở đầu nếu bắt buộc phải có"
+				},
+				"update": {
+					"segments": {
+						"basic": "Cơ bản",
+						"categories": "Phân loại",
+						"options": "Thiết đặt tuỳ chỉnh"
+					},
+					"messages": {
+						"confirm": {
+							"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo nội dung?",
+							"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của nội dung?",
+							"delete": "Chắc chắn muốn xoá bỏ nội dung?",
+							"deleteThumbnail": "Chắc chắn muốn xoá ảnh đại diện?"
+						},
+						"success": {
+							"new": "Đã khởi tạo nội dung thành công",
+							"update": "Đã cập nhật các thay đổi của nội dung thành công",
+							"delete": "Đã xoá nội dung (chuyển vào thùng rác) thành công"
+						}
+					},
+					"buttons": {
+						"delete": "Xoá nội dung",
+						"remove": "Đồng ý xoá",
+						"deleteThumbnail": "Xoá ảnh đại diện"
+					}
+				},
+				"view": {
+					"segments": {
+						"management": "Thông tin quản trị",
+						"basic": "Nội dung"
+					}
+				}
 			}
 		}
 	}

@@ -8,30 +8,30 @@ export abstract class PortalBase extends BaseModel {
 	}
 
 	/** Get the collection of all module definitions */
-	public static moduleDefinitions: ModuleDefinition[];
+	static moduleDefinitions: ModuleDefinition[];
 
 	/** Get the collection of all content-type definition */
-	public static get contentTypeDefinitions() {
+	static get contentTypeDefinitions() {
 		return (this.moduleDefinitions || []).map(definition => definition.ContentTypeDefinitions).flatMap(definitions => definitions);
 	}
 
 	/** Get the collection of all approval statuses */
-	public static approvalStatus = ["Draft", "Pending", "Rejected", "Approved", "Published", "Archieved"];
+	static approvalStatus = ["Draft", "Pending", "Rejected", "Approved", "Published", "Archieved"];
 
 	/** The title */
-	public abstract Title: string;
+	abstract Title: string;
 
 	/** The time when the object was created */
-	public abstract Created: Date;
+	abstract Created: Date;
 
 	/** The identity of user who was created the object */
-	public abstract CreatedID: string;
+	abstract CreatedID: string;
 
 	/** The last time when the object was modified */
-	public abstract LastModified: Date;
+	abstract LastModified: Date;
 
 	/** The identity of user who was modified the object at the last time */
-	public abstract LastModifiedID: string;
+	abstract LastModifiedID: string;
 }
 
 /** Interface of a module definition */

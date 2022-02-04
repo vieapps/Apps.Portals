@@ -20,12 +20,12 @@ export class Base {
 	}
 
 	/** Gets name of the service (for working with paginations as prefix, display logs/errors, ...) */
-	public get name() {
+	get name() {
 		return this._name;
 	}
 
 	/** Gets the headers that include the authenticated information */
-	public getHeaders(additional?: any, onCompleted?: (headers: { [key: string]: string }) => void) {
+	getHeaders(additional?: any, onCompleted?: (headers: { [key: string]: string }) => void) {
 		return AppAPIs.getHeaders(additional, onCompleted);
 	}
 
@@ -312,6 +312,7 @@ export interface ServiceLog {
 	CorrelationID: string;
 	DeveloperID?: string;
 	AppID?: string;
+	NodeID?: string;
 	ServiceName: string;
 	ObjectName: string;
 	Logs: string;

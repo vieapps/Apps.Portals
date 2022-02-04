@@ -27,17 +27,17 @@ export class Privilege {
 	Actions = new Array<string>();
 
 	/** Gets the collection of privilege roles */
-	public static get privilegeRoles() {
+	static get privilegeRoles() {
 		return ["Administrator", "Moderator", "Editor", "Contributor", "Viewer"];
 	}
 
 	/** Gets the collection of system roles */
-	public static get systemRoles() {
+	static get systemRoles() {
 		return ["All", "Authorized", "SystemAdministrator"];
 	}
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, privilege?: Privilege) {
+	static deserialize(json: any, privilege?: Privilege) {
 		privilege = privilege || new Privilege();
 		AppUtility.copy(json, privilege);
 		return privilege;
@@ -70,12 +70,12 @@ export class Privileges {
 	DownloadableUsers = new HashSet<string>();
 
 	/** Gets the collection of privilege section names */
-	public static get sections() {
+	static get sections() {
 		return ["Administrative", "Moderate", "Editable", "Contributive", "Viewable", "Downloadable"];
 	}
 
 	/** Deserializes data to object */
-	public static deserialize(json: any, privileges?: Privileges) {
+	static deserialize(json: any, privileges?: Privileges) {
 		privileges = privileges || new Privileges();
 		AppUtility.getProperties(privileges, true).map(info => info.name).forEach(property => {
 			const data = json[property];
@@ -87,7 +87,7 @@ export class Privileges {
 	}
 
 	/** Gets the arrays of privileges */
-	public static getPrivileges(privileges: Privileges, sections?: Array<string>) {
+	static getPrivileges(privileges: Privileges, sections?: Array<string>) {
 		privileges = privileges || new Privileges();
 		const arraysOfPrivileges: { [key: string]: Array<string> } = {};
 		(sections || this.sections).forEach(section => {
@@ -98,7 +98,7 @@ export class Privileges {
 	}
 
 	/** Resets the privileges from the arrays of privileges */
-	public static resetPrivileges(privileges: Privileges, arraysOfPrivileges: { [key: string]: Array<string> }) {
+	static resetPrivileges(privileges: Privileges, arraysOfPrivileges: { [key: string]: Array<string> }) {
 		privileges = privileges || new Privileges();
 		arraysOfPrivileges = arraysOfPrivileges || {};
 		this.sections.forEach(section => {
@@ -109,17 +109,17 @@ export class Privileges {
 	}
 
 	/** Clones the privileges */
-	public static clonePrivileges(privileges: Privileges) {
+	static clonePrivileges(privileges: Privileges) {
 		return this.resetPrivileges(undefined, this.getPrivileges(privileges));
 	}
 
 	/** Gets the collection of roles */
-	public getRoles(section: string) {
+	getRoles(section: string) {
 		return (AppUtility.isNotEmpty(section) ? this[`${section}Roles`] as HashSet<string> : undefined) || new HashSet<string>();
 	}
 
 	/** Gets the collection of users */
-	public getUsers(section: string) {
+	getUsers(section: string) {
 		return (AppUtility.isNotEmpty(section) ? this[`${section}Users`] as HashSet<string> : undefined) || new HashSet<string>();
 	}
 
@@ -128,7 +128,7 @@ export class Privileges {
 	}
 
 	/** Gets the state that determines is inherit from parent or not */
-	public get isInheritFromParent() {
+	get isInheritFromParent() {
 		return this.isEmpty(this.AdministrativeRoles, this.AdministrativeUsers)
 			&& this.isEmpty(this.ModerateRoles, this.ModerateUsers)
 			&& this.isEmpty(this.EditableRoles, this.EditableUsers)

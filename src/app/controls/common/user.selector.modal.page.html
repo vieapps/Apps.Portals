@@ -16,7 +16,11 @@
 				{{ labels.search }}
 			</ion-button>
 		</ion-title>
-		<ion-searchbar showCancelButton="always"
+		<ion-searchbar
+			showCancelButton="always"
+			cancelButtonIcon="arrow-back"
+			enterkeyhint="search"
+			inputmode="search"
 			[cancelButtonText]="labels.cancel"
 			[hidden]="!searching"
 			(ionChange)="onStartSearch($event)"

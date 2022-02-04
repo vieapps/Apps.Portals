@@ -15,6 +15,7 @@
 			"modules": "Module nghiệp vụ",
 			"content-types": "Kiểu dữ liệu nghiệp vụ",
 			"expressions": "Biểu thức truy vấn - sắp xếp",
+			"crawlers": "Nguồn dữ liệu tự động",
 			"titles": {
 				"system": "Quản trị",
 				"categories": "Phân loại nội dung",

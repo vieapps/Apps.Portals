@@ -26,7 +26,7 @@ export class UsersService extends BaseService {
 		super("Users");
 	}
 
-	public initialize() {
+	initialize() {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => this.processUpdateMessage(message));
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", () => {
 			if (this.configSvc.isAuthenticated) {
@@ -57,7 +57,7 @@ export class UsersService extends BaseService {
 		});
 	}
 
-	public get completerDataSource() {
+	get completerDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const profile = data === undefined
 				? undefined
@@ -75,7 +75,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public searchProfiles(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchProfiles(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("profile", this.configSvc.relatedQuery),
 			request,
@@ -95,7 +95,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public searchProfilesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchProfilesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.searchAsync(
 			this.getSearchingPath("profile", this.configSvc.relatedQuery),
 			request,
@@ -115,7 +115,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public registerAsync(registerInfo: any, captcha: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	registerAsync(registerInfo: any, captcha: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
 			this.getPath("account", undefined, `uri=${this.configSvc.activateURL}&${this.configSvc.relatedQuery}`),
 			AppUtility.clone(registerInfo, ["ConfirmEmail", "ConfirmPassword", "Captcha"], undefined, body => {
@@ -130,7 +130,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public sendInvitationAsync(name: string, email: string, privileges?: Array<Privilege>, relatedInfo?: { [key: string]: any }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	sendInvitationAsync(name: string, email: string, privileges?: Array<Privilege>, relatedInfo?: { [key: string]: any }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		const body = {
 			Name: name,
 			Email: AppCrypto.rsaEncrypt(email),
@@ -151,7 +151,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public activateAsync(mode: string, code: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	activateAsync(mode: string, code: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		const uri = this.configSvc.appConfig.URIs.apis + this.getPath("activate", undefined, `mode=${mode}&code=${code}&${this.configSvc.relatedQuery}`);
 		return this.readAsync(
 			uri,
@@ -167,7 +167,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public getProfileAsync(id?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, force: boolean = false, relatedQuery?: string) {
+	getProfileAsync(id?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, force: boolean = false, relatedQuery?: string) {
 		id = id || this.configSvc.getAccount().id;
 		return !force && UserProfile.contains(id)
 			? AppUtility.invoke(onSuccess)
@@ -185,7 +185,7 @@ export class UsersService extends BaseService {
 				);
 	}
 
-	public updateProfileAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	updateProfileAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("profile", body.ID || this.configSvc.getAccount().id, this.configSvc.relatedQuery),
 			body,
@@ -199,7 +199,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public updatePasswordAsync(password: string, newPassword: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	updatePasswordAsync(password: string, newPassword: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("account", "password", this.configSvc.relatedQuery),
 			{
@@ -211,7 +211,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public updateEmailAsync(password: string, newEmail: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	updateEmailAsync(password: string, newEmail: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("account", "email", this.configSvc.relatedQuery),
 			{
@@ -223,7 +223,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public prepare2FAMethodAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, query?: string) {
+	prepare2FAMethodAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, query?: string) {
 		return this.readAsync(
 			this.getPath("otp", undefined, `${AppUtility.isNotEmpty(query) ? `${query}&` : ""}${this.configSvc.relatedQuery}`),
 			onSuccess,
@@ -231,7 +231,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public add2FAMethodAsync(password: string, provisioning: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	add2FAMethodAsync(password: string, provisioning: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("otp", undefined, this.configSvc.relatedQuery),
 			{
@@ -244,7 +244,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public delete2FAMethodAsync(password: string, info: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	delete2FAMethodAsync(password: string, info: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.deleteAsync(
 			this.getPath("otp", undefined, `info=${info}&${this.configSvc.relatedQuery}`),
 			data => this.configSvc.updateAccount(data, onSuccess),
@@ -253,7 +253,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	public getServicePrivilegesAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	getServicePrivilegesAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return Account.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -263,7 +263,7 @@ export class UsersService extends BaseService {
 				);
 	}
 
-	public updateServicePrivilegesAsync(id: string, privileges: { [key: string]: Array<Privilege> }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	updateServicePrivilegesAsync(id: string, privileges: { [key: string]: Array<Privilege> }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("account", id, this.configSvc.relatedQuery),
 			{
@@ -363,7 +363,7 @@ export class UsersService extends BaseService {
 		}
 	}
 
-	public getAuditFormControl(created: Date, createdID: string, lastModified: Date, lastModifiedID: string, segment?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	getAuditFormControl(created: Date, createdID: string, lastModified: Date, lastModifiedID: string, segment?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const controlConfig: AppFormsControlConfig = {
 			Name: "Audits",
 			Type: "Text",
@@ -380,7 +380,7 @@ export class UsersService extends BaseService {
 		return controlConfig;
 	}
 
-	public async getAuditInfoAsync(created: Date, createdID: string, lastModified: Date, lastModifiedID: string) {
+	async getAuditInfoAsync(created: Date, createdID: string, lastModified: Date, lastModifiedID: string) {
 		let creator = UserProfile.get(createdID);
 		if (creator === undefined) {
 			if (AppUtility.isNotEmpty(createdID)) {

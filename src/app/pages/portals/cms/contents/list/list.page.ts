@@ -76,7 +76,8 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	filtering = false;
 	labels = {
 		filter: "Quick filter",
-		cancel: "Cancel"
+		cancel: "Cancel",
+		refresh: "Refresh"
 	};
 	private objects = new Array<Content>();
 
@@ -120,7 +121,6 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
-		AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebar", Mode: "Categories" });
 
 		this.searching = this.configSvc.currentURL.indexOf("/search") > 0;
 		const title = await this.configSvc.getResourceAsync(`portals.cms.contents.title.${(this.searching ? "search" : "list")}`);
@@ -147,6 +147,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			: await this.portalsCoreSvc.getActiveModuleAsync();
 
 		this.contentType = this.contentType || this.portalsCmsSvc.getDefaultContentTypeOfContent(this.module);
+		AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebar", Mode: "Categories", ContentTypeID: this.contentType !== undefined ? this.contentType.ID : undefined });
 
 		this.categoryID = this.configSvc.requestParams["CategoryID"];
 		this.category = Category.get(this.categoryID);
@@ -166,7 +167,8 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 		this.labels = {
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
-			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
+			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh")
 		};
 
 		this.prepareFilterBy();
@@ -372,6 +374,10 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.do(this.canUpdate ? () => this.configSvc.navigateForwardAsync(content.routerURI.replace("/view/", "/update/")) : () => {}, event);
 	}
 
+	refresh(event: Event, content: Content) {
+		this.do(() => this.portalsCmsSvc.refreshContentAsync(content.ID, () => this.appFormsSvc.showToastAsync("The content was freshen-up")), event);
+	}
+
 	back(message: string, url?: string) {
 		this.do(() => this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateBackAsync(url)));
 	}
@@ -388,7 +394,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 					this.contents = [];
 					this.pageNumber = 0;
 					this.pagination = undefined;
-					this.appFormsSvc.showLoadingAsync().then(() => this.prepareResults(() => this.appFormsSvc.hideLoadingAsync()));
+					this.appFormsSvc.showLoadingAsync().then(() => this.prepareResults(() => this.appFormsSvc.hideLoadingAsync(() => AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebar", Mode: "Categories", ContentTypeID: this.contentType !== undefined ? this.contentType.ID : undefined }))));
 				}
 			},
 			await this.configSvc.getResourceAsync("common.buttons.select"),

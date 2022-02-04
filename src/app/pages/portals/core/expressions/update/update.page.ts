@@ -211,9 +211,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				const contentTypeDefinitionID = formControl.value;
 				const contentTypes = module.contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === contentTypeDefinitionID);
 				const contentTypeControl = this.formControls.find(ctrl => ctrl.Name === "RepositoryEntityID");
-				contentTypeControl.Options.SelectOptions.Values = contentTypes.map(contentType => {
-					return { Value: contentType.ID, Label: contentType.Title };
-				});
+				contentTypeControl.Options.SelectOptions.Values = contentTypes.map(contentType => ({ Value: contentType.ID, Label: contentType.Title }));
 				contentTypeControl.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
 				contentTypeControl.controlRef.setValue(contentTypes.length > 0 ? contentTypes.first().ID : "-", { onlySelf: true });
 			};
@@ -243,9 +241,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				? this.expression.ContentTypeDefinitionID
 				: this.getContentTypeDefinitions(module.ID)[0].ID;
 			const contentTypes = module.contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === contentTypeDefinitionID);
-			control.Options.SelectOptions.Values = contentTypes.map(contentType => {
-				return { Value: contentType.ID, Label: contentType.Title };
-			});
+			control.Options.SelectOptions.Values = contentTypes.map(contentType => ({ Value: contentType.ID, Label: contentType.Title }));
 			control.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
 		}
 

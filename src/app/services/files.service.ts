@@ -27,7 +27,7 @@ export class FilesService extends BaseService {
 		return AppAPIs.http;
 	}
 
-	public readAsDataURL(file: File, onRead: (data: string) => void, limitSize?: number, onLimitExceeded?: (fileSize?: number, limitSize?: number) => void) {
+	readAsDataURL(file: File, onRead: (data: string) => void, limitSize?: number, onLimitExceeded?: (fileSize?: number, limitSize?: number) => void) {
 		if (limitSize !== undefined && file.size > limitSize) {
 			this.showLog(`Limit size exceeded - Max allowed size: ${limitSize} bytes - Actual size: ${file.size} bytes`);
 			if (onLimitExceeded !== undefined) {
@@ -41,13 +41,13 @@ export class FilesService extends BaseService {
 		}
 	}
 
-	public getFormData(file: File) {
+	getFormData(file: File) {
 		const formData = new FormData();
 		formData.append("files[]", file, file.name);
 		return formData;
 	}
 
-	public getUploadHeaders(additional?: { [key: string]: string }, asBase64?: boolean) {
+	getUploadHeaders(additional?: { [key: string]: string }, asBase64?: boolean) {
 		return this.getHeaders(additional, headers => {
 			AppUtility.getAttributes(headers, key => AppUtility.isEmpty(headers[key])).forEach(key => delete headers[key]);
 			if (AppUtility.isTrue(asBase64)) {
@@ -56,7 +56,7 @@ export class FilesService extends BaseService {
 		});
 	}
 
-	public getFileHeaders(options: FileOptions, additional?: { [key: string]: string }) {
+	getFileHeaders(options: FileOptions, additional?: { [key: string]: string }) {
 		const headers: { [key: string]: string } = {
 			"x-service-name": options.ServiceName,
 			"x-object-name": options.ObjectName,
@@ -74,7 +74,7 @@ export class FilesService extends BaseService {
 		return headers;
 	}
 
-	public upload(path: string, data: string | Array<string> | FormData, headers: { [key: string]: string }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
+	upload(path: string, data: string | Array<string> | FormData, headers: { [key: string]: string }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
 		const asBase64 = !(data instanceof FormData);
 		return this.http.post(
 			AppAPIs.getURL(path, this.configSvc.appConfig.URIs.files),
@@ -99,7 +99,7 @@ export class FilesService extends BaseService {
 		);
 	}
 
-	public async uploadAsync(path: string, data: string | Array<string> | FormData, headers: { [key: string]: string }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	async uploadAsync(path: string, data: string | Array<string> | FormData, headers: { [key: string]: string }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		try {
 			const asBase64 = !(data instanceof FormData);
 			const response = await AppUtility.toAsync(this.http.post(
@@ -119,42 +119,42 @@ export class FilesService extends BaseService {
 		}
 	}
 
-	public uploadAvatarAsync(data: string | Array<string> | FormData, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	uploadAvatarAsync(data: string | Array<string> | FormData, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.uploadAsync("avatars", data, undefined, onSuccess, onError);
 	}
 
-	public uploadThumbnail(data: string | Array<string> | FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
+	uploadThumbnail(data: string | Array<string> | FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
 		return this.upload("thumbnails", data, this.getFileHeaders(options), onSuccess, onError, onProgress);
 	}
 
-	public uploadThumbnailAsync(data: string | Array<string> | FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	uploadThumbnailAsync(data: string | Array<string> | FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.uploadAsync("thumbnails", data, this.getFileHeaders(options), onSuccess, onError);
 	}
 
-	public uploadFile(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
+	uploadFile(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
 		return this.upload("files", data, this.getFileHeaders(options), onSuccess, onError, onProgress);
 	}
 
-	public uploadFileAsync(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	uploadFileAsync(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.uploadAsync("files", data, this.getFileHeaders(options), onSuccess, onError);
 	}
 
-	public uploadTemporaryFile(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
+	uploadTemporaryFile(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
 		return this.upload("temp.file", data, this.getFileHeaders(options), onSuccess, onError, onProgress);
 	}
 
-	public uploadTemporaryFileAsync(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	uploadTemporaryFileAsync(data: FormData, options: FileOptions, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.uploadAsync("temp.file", data, this.getFileHeaders(options), onSuccess, onError);
 	}
 
-	public getTemporaryFileURI(message: AppMessage) {
+	getTemporaryFileURI(message: AppMessage) {
 		return `${this.configSvc.appConfig.URIs.apis}temp.download?` + AppUtility.toQuery(this.getHeaders(undefined, query => {
 			query["x-node"] = message.Data.NodeID;
 			query["x-filename"] = message.Data.Filename;
 		}));
 	}
 
-	public prepareAttachment(attachment: AttachmentInfo) {
+	prepareAttachment(attachment: AttachmentInfo) {
 		if (attachment.Created !== undefined) {
 			attachment.Created = new Date(attachment.Created);
 		}
@@ -182,7 +182,7 @@ export class FilesService extends BaseService {
 		return attachment;
 	}
 
-	public getThumbnailURI(attachment: AttachmentInfo) {
+	getThumbnailURI(attachment: AttachmentInfo) {
 		return AppUtility.isObject(attachment.URIs, true)
 			? attachment.URIs.Direct
 			: AppUtility.isNotEmpty(attachment.URI)
@@ -190,7 +190,7 @@ export class FilesService extends BaseService {
 				: this.configSvc.appConfig.URIs.files + "thumbnails/no-image.png";
 	}
 
-	public prepareAttachmentsFormControl(formControl: AppFormsControl, isThumbnails: boolean, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo, onCompleted?: (control: AppFormsControl) => void) {
+	prepareAttachmentsFormControl(formControl: AppFormsControl, isThumbnails: boolean, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo, onCompleted?: (control: AppFormsControl) => void) {
 		if (formControl !== undefined) {
 			if (isThumbnails) {
 				if (AppUtility.isArray(attachments, true) && attachments.length > 0) {
@@ -229,7 +229,7 @@ export class FilesService extends BaseService {
 		return formControl;
 	}
 
-	public getThumbnailFormControl(name: string, segment: string, allowSelectNew: boolean = false, useDefaultHandlers: boolean = true, onCompleted?: (controlConfig: AppFormsControlConfig) => void, showCopyToClipboard: boolean = true) {
+	getThumbnailFormControl(name: string, segment: string, allowSelectNew: boolean = false, useDefaultHandlers: boolean = true, onCompleted?: (controlConfig: AppFormsControlConfig) => void, showCopyToClipboard: boolean = true) {
 		const controlConfig: AppFormsControlConfig = {
 			Name: name || "Thumbnails",
 			Segment: segment || "attachments",
@@ -304,7 +304,7 @@ export class FilesService extends BaseService {
 		return controlConfig;
 	}
 
-	public searchThumbnailsAsync(options: FileOptions, onSuccess?: (thumbnails: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	searchThumbnailsAsync(options: FileOptions, onSuccess?: (thumbnails: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("thumbnails", this.configSvc.relatedQuery),
 			undefined,
@@ -320,7 +320,7 @@ export class FilesService extends BaseService {
 		);
 	}
 
-	public deleteThumbnailAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	deleteThumbnailAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		return this.deleteAsync(
 			this.getPath("thumbnail", id),
 			onSuccess,
@@ -329,7 +329,7 @@ export class FilesService extends BaseService {
 		);
 	}
 
-	public getAttachmentsFormControl(name: string, segment: string, label: string, allowSelect: boolean = false, allowDelete: boolean = false, allowEdit: boolean = false, editAttachmentModalPage?: any, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	getAttachmentsFormControl(name: string, segment: string, label: string, allowSelect: boolean = false, allowDelete: boolean = false, allowEdit: boolean = false, editAttachmentModalPage?: any, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const controlConfig: AppFormsControlConfig = {
 			Name: name || "Attachments",
 			Segment: segment || "attachments",
@@ -388,7 +388,7 @@ export class FilesService extends BaseService {
 		return controlConfig;
 	}
 
-	public searchAttachmentsAsync(options: FileOptions, onSuccess?: (attachments: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	searchAttachmentsAsync(options: FileOptions, onSuccess?: (attachments: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("attachments", this.configSvc.relatedQuery),
 			undefined,
@@ -404,7 +404,7 @@ export class FilesService extends BaseService {
 		);
 	}
 
-	public updateAttachmentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	updateAttachmentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("attachment", body.ID),
 			body,
@@ -413,7 +413,7 @@ export class FilesService extends BaseService {
 		);
 	}
 
-	public deleteAttachmentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+	deleteAttachmentAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		return this.deleteAsync(
 			this.getPath("attachment", id),
 			onSuccess,

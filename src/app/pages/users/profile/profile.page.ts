@@ -157,8 +157,8 @@ export class UsersProfilePage implements OnInit {
 		}
 	}
 
-	showActionsAsync() {
-		return this.appFormsSvc.showActionSheetAsync(this.actions);
+	showActions() {
+		this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
 	async showProfileAsync(onNext?: () => void) {
@@ -226,7 +226,7 @@ export class UsersProfilePage implements OnInit {
 						Avatar: imageURI || ""
 					},
 					async () => {
-						AppEvents.broadcast("Profile", { Type: "Updated" });
+						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Avatar" });
 						await this.configSvc.storeSessionAsync(async () => await Promise.all([
 							this.trackAsync("Avatar", `${this.configSvc.appConfig.URLs.users.update}/avatar`, !!imageURI ? "Upload" : "Update", "Users:Avatar"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.avatar.message"))
@@ -311,27 +311,19 @@ export class UsersProfilePage implements OnInit {
 			button,
 			undefined,
 			await this.configSvc.getResourceAsync("users.profile.logout.confirm"),
-			async () => {
-				await this.appFormsSvc.showLoadingAsync(button);
-				await this.authSvc.logOutAsync(
-					async () => await Promise.all([
-						this.trackAsync(button, `${this.configSvc.appConfig.URLs.users.root}/logout`, "LogOut", "Users:Account"),
-						this.appFormsSvc.hideLoadingAsync(async () => await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.logout.success"))),
-						this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.root) ? this.configSvc.navigateRootAsync() : this.configSvc.navigateBackAsync()
-					]),
-					async error => await Promise.all([
-						this.appFormsSvc.showErrorAsync(error),
-						this.trackAsync(button, `${this.configSvc.appConfig.URLs.users.root}/logout`, "LogOut", "Users:Account")
-					])
-				);
-			},
+			() => this.appFormsSvc.showLoadingAsync(button).then(() => this.authSvc.logOutAsync(
+				() => this.trackAsync(button, `${this.configSvc.appConfig.URLs.users.root}/logout`, "LogOut", "Users:Account")
+					.then(() => this.appFormsSvc.hideLoadingAsync(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("users.profile.logout.success"))))
+					.then(() => this.configSvc.navigateAsync(this.configSvc.previousURL.startsWith(this.configSvc.appConfig.URLs.users.root) ? "root" : "back"))),
+				error => this.trackAsync(button, `${this.configSvc.appConfig.URLs.users.root}/logout`, "LogOut", "Users:Account").then(() => this.appFormsSvc.showErrorAsync(error))
+			),
 			button,
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
 	}
 
-	private async trackAsync(title: string, url?: string, action?: string, category?: string) {
-		await TrackingUtility.trackAsync({ title: `Users - ${title}`, campaignUrl: url || this.configSvc.appConfig.URLs.users.profile, category: category || "Users:Profile", action: action || "View" }, false);
+	private trackAsync(title: string, url?: string, action?: string, category?: string) {
+		return TrackingUtility.trackAsync({ title: `Users - ${title}`, campaignUrl: url || this.configSvc.appConfig.URLs.users.profile, category: category || "Users:Profile", action: action || "View" }, false);
 	}
 
 }
