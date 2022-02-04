@@ -394,85 +394,85 @@ export class AppFormsControl {
 	};
 
 	/** Gets uri of the captcha image */
-	public get captchaURI() {
+	get captchaURI() {
 		return this.Extras["_captchaURI"];
 	}
 
 	/** Sets uri of the captcha image */
-	public set captchaURI(value: string) {
+	set captchaURI(value: string) {
 		this.Extras["_captchaURI"] = value;
 	}
 
 	/** Gets the reference to the UI element */
-	public get elementRef() {
+	get elementRef() {
 		return this.Extras["_elementRef"];
 	}
 
 	/** Sets the reference to the UI element */
-	public set elementRef(value: any) {
+	set elementRef(value: any) {
 		this.Extras["_elementRef"] = value;
 	}
 
 	/** Gets the reference to the form control */
-	public get formControlRef() {
+	get formControlRef() {
 		return this.Extras["_formRef"];
 	}
 
 	/** Sets the reference to the form control */
-	public set formControlRef(value: AbstractControl) {
+	set formControlRef(value: AbstractControl) {
 		this.Extras["_formRef"] = value;
 	}
 
 	/** Gets the reference to the form control component */
-	public get controlRef() {
+	get controlRef() {
 		return this.Extras["_controlRef"];
 	}
 
 	/** Sets the reference to the form control component */
-	public set controlRef(value: AppFormsControlComponent) {
+	set controlRef(value: AppFormsControlComponent) {
 		this.Extras["_controlRef"] = value;
 	}
 
 	/** Gets the reference to the next sibling */
-	public get next() {
+	get next() {
 		return this.Extras["_nextControl"];
 	}
 
 	/** Sets the reference to the next sibling */
-	public set next(value: AppFormsControl) {
+	set next(value: AppFormsControl) {
 		this.Extras["_nextControl"] = value;
 	}
 
 	/** Gets the reference to the parent sibling */
-	public get parent() {
+	get parent() {
 		return this.Extras["_parentControl"];
 	}
 
 	/** Sets the reference to the parent sibling */
-	public set parent(value: AppFormsControl) {
+	set parent(value: AppFormsControl) {
 		this.Extras["_parentControl"] = value;
 	}
 
 	/** Gets the index of segment (if has) */
-	public get segmentIndex() {
+	get segmentIndex() {
 		const index = this.Extras["_segmentIndex"];
 		return index !== undefined ? index as number : 0;
 	}
 
 	/** Sets the index of segment (if has) */
-	public set segmentIndex(value: number) {
+	set segmentIndex(value: number) {
 		this.Extras["_segmentIndex"] = value;
 	}
 
 	/** Gets the value of the control */
-	public get value() {
+	get value() {
 		return AppUtility.isEquals(this.Type, "Text")
 			? this.Extras["Text"] || this.Extras["text"] || this.Extras["_value"]
 			: this.formControlRef !== undefined ? this.formControlRef.value : this.Extras["_value"];
 	}
 
 	/** Sets the value of the control */
-	public set value(value: any) {
+	set value(value: any) {
 		if (this.formControlRef !== undefined) {
 			this.formControlRef.setValue(value, { onlySelf: true });
 		}
@@ -699,7 +699,7 @@ export class AppFormsControl {
 	}
 
 	/** Sets focus into this control */
-	public focus(defer?: number) {
+	focus(defer?: number) {
 		PlatformUtility.focus(this.elementRef, defer);
 	}
 

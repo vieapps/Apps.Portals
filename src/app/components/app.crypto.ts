@@ -35,53 +35,53 @@ export class AppCrypto {
 	}
 
 	/** Gets MD5 hash of the string */
-	public static md5(text: string) {
+	static md5(text: string) {
 		return CryptoJS.MD5(text).toString();
 	}
 
 	/** Gets MD5 hash of the object */
-	public static hash(object: any) {
+	static hash(object: any) {
 		return this.md5(AppUtility.stringify(object));
 	}
 
 	/** Signs the string with the specified key using HMAC SHA256 */
-	public static sign(text: string, key?: string | CryptoJS.lib.WordArray, asBase64Url: boolean = true) {
+	static sign(text: string, key?: string | CryptoJS.lib.WordArray, asBase64Url: boolean = true) {
 		const signature = CryptoJS.enc.Base64.stringify(CryptoJS.HmacSHA256(text, key || this._jwt));
 		return asBase64Url ? this.toBase64Url(signature) : signature;
 	}
 
 	/** Encodes the plain text to base64 */
-	public static base64Encode(text: string) {
+	static base64Encode(text: string) {
 		return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(text));
 	}
 
 	/** Decodes the base64 text */
-	public static base64Decode(text: string) {
+	static base64Decode(text: string) {
 		return CryptoJS.enc.Utf8.stringify(CryptoJS.enc.Base64.parse(text));
 	}
 
 	/** Encodes the plain text to base64-url */
-	public static base64urlEncode(text: string) {
+	static base64urlEncode(text: string) {
 		return this.toBase64Url(this.base64Encode(text));
 	}
 
 	/** Decodes the base64-url text */
-	public static base64urlDecode(base64url: string) {
+	static base64urlDecode(base64url: string) {
 		return this.base64Decode(this.toBase64(base64url));
 	}
 
 	/** Encodes the object to base64-url */
-	public static jsonEncode(object: any) {
+	static jsonEncode(object: any) {
 		return this.base64urlEncode(AppUtility.stringify(object));
 	}
 
 	/** Decodes the object from base64-url */
-	public static jsonDecode(base64url: string) {
+	static jsonDecode(base64url: string) {
 		return AppUtility.parse(this.base64urlDecode(base64url));
 	}
 
 	/** Encodes the JSON Web Token */
-	public static jwtEncode(payload: any, key?: string | CryptoJS.lib.WordArray, updateIssuedAt: boolean = true) {
+	static jwtEncode(payload: any, key?: string | CryptoJS.lib.WordArray, updateIssuedAt: boolean = true) {
 		if (updateIssuedAt) {
 			payload.iat = Math.round(+new Date() / 1000);
 		}
@@ -90,7 +90,7 @@ export class AppCrypto {
 	}
 
 	/** Decodes the JSON Web Token */
-	public static jwtDecode(jwt: string, key?: string | CryptoJS.lib.WordArray, verify: boolean = true) {
+	static jwtDecode(jwt: string, key?: string | CryptoJS.lib.WordArray, verify: boolean = true) {
 		const elements = jwt.split(".");
 		return !verify || (elements.length > 2 && this.sign(`${elements[0]}.${elements[1]}`, key) === elements[2])
 			? this.jsonDecode(elements[1])
@@ -98,29 +98,29 @@ export class AppCrypto {
 	}
 
 	/** Encrypts the string - using AES */
-	public static aesEncrypt(text: string, toHex: boolean = false) {
+	static aesEncrypt(text: string, toHex: boolean = false) {
 		const encrypted = CryptoJS.AES.encrypt(text, this._aes.key, { iv: this._aes.iv }).toString();
 		return toHex ? this.toHex(encrypted) : encrypted;
 	}
 
 	/** Decrypts the string - using AES */
-	public static aesDecrypt(text: string) {
+	static aesDecrypt(text: string) {
 		return CryptoJS.AES.decrypt(text, this._aes.key, { iv: this._aes.iv }).toString(CryptoJS.enc.Utf8);
 	}
 
 	/** Encrypts the string - using RSA */
-	public static rsaEncrypt(text: string, toHex: boolean = false) {
+	static rsaEncrypt(text: string, toHex: boolean = false) {
 		const encrypted = this._rsa.encrypt(text);
 		return toHex ? this.toHex(encrypted) : encrypted;
 	}
 
 	/** Decrypts the string - using RSA */
-	public static rsaDecrypt(text: string) {
+	static rsaDecrypt(text: string) {
 		return this._rsa.decrypt(text);
 	}
 
 	/** Initializes all keys for encrypting/decrypting/signing */
-	public static init(keys: { aes: { key: string; iv: string; isBase64?: boolean; }; rsa: { encryptionExponent?: string; decryptionExponent?: string; exponent: string; modulus: string; isBase64?: boolean; }; jwt: string; }) {
+	static init(keys: { aes: { key: string; iv: string; isBase64?: boolean; }; rsa: { encryptionExponent?: string; decryptionExponent?: string; exponent: string; modulus: string; isBase64?: boolean; }; jwt: string; }) {
 		if (AppUtility.isObject(keys.aes, true)) {
 			this._aes.key = CryptoJS.enc.Hex.parse(AppUtility.isTrue(keys.aes.isBase64) ? this.toHex(keys.aes.key) : keys.aes.key);
 			this._aes.iv = CryptoJS.enc.Hex.parse(AppUtility.isTrue(keys.aes.isBase64) ? this.toHex(keys.aes.iv) : keys.aes.iv);

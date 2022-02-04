@@ -31,37 +31,37 @@ export class AppAPIs {
 	private static _http: HttpClient;
 
 	/** Sets the action to fire when the WebSocket connection is opened */
-	public static set onWebSocketOpened(func: (event: Event) => void) {
+	static set onWebSocketOpened(func: (event: Event) => void) {
 		this._onWebSocketOpened = func;
 	}
 
 	/** Sets the action to fire when the WebSocket connection is closed */
-	public static set onWebSocketClosed(func: (event: CloseEvent) => void) {
+	static set onWebSocketClosed(func: (event: CloseEvent) => void) {
 		this._onWebSocketClosed = func;
 	}
 
 	/** Sets the action to fire when the WebSocket connection got any error */
-	public static set onWebSocketGotError(func: (event: Event) => void) {
+	static set onWebSocketGotError(func: (event: Event) => void) {
 		this._onWebSocketGotError = func;
 	}
 
 	/** Sets the action to fire when the WebSocket connection got any message */
-	public static set onWebSocketGotMessage(func: (event: MessageEvent) => void) {
+	static set onWebSocketGotMessage(func: (event: MessageEvent) => void) {
 		this._onWebSocketGotMessage = func;
 	}
 
 	/** Gets state that determines the WebSocket connection is ready or not */
-	public static get isWebSocketReady() {
+	static get isWebSocketReady() {
 		return this._websocket !== undefined && this._websocketStatus === "ready";
 	}
 
 	/** Gets state that determines the WebSocket connection is got too large ping period */
-	public static get isPingPeriodTooLarge() {
+	static get isPingPeriodTooLarge() {
 		return +new Date() - this._ping > 360000;
 	}
 
 	/** Gets the HttpClient instance for working with XMLHttpRequest (XHR) */
-	public static get http() {
+	static get http() {
 		return this._http;
 	}
 
@@ -69,7 +69,7 @@ export class AppAPIs {
 		* Initializes
 		* @param http the instance of the Angular HttpClient service for working with XMLHttpRequest (XHR)
 	*/
-	public static initialize(http: HttpClient) {
+	static initialize(http: HttpClient) {
 		if (this._http === undefined && AppUtility.isNotNull(http)) {
 			this._http = http;
 			this._serviceScopeSubject.subscribe(
@@ -98,12 +98,12 @@ export class AppAPIs {
 	}
 
 	/** Gets the absolute URL to send a request to APIs */
-	public static getURL(url: string, endpoint?: string) {
+	static getURL(url: string, endpoint?: string) {
 		return (url.startsWith("http://") || url.startsWith("https://") ? "" : endpoint || AppConfig.URIs.apis) + url;
 	}
 
 	/** Gets the headers that include the authenticated information */
-	public static getHeaders(additional?: any, onCompleted?: (headers: { [key: string]: string }) => void) {
+	static getHeaders(additional?: any, onCompleted?: (headers: { [key: string]: string }) => void) {
 		const headers = AppConfig.getAuthenticatedInfo();
 		AppUtility.toKeyValuePair(additional, kvp => AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
 		if (onCompleted !== undefined) {
@@ -113,7 +113,7 @@ export class AppAPIs {
 	}
 
 	/** Parses the requesting information */
-	public static parseRequestInfo(path: string) {
+	static parseRequestInfo(path: string) {
 		const uri = AppUtility.parseURI(path);
 		const requestInfo = {
 			ServiceName: uri.PathSegments.length > 0 ? uri.PathSegments[0] : "",
@@ -167,7 +167,7 @@ export class AppAPIs {
 	  * @param handler The function for processing when got a message from APIs
 	  * @param identity The string that presents identity of the handler for unregistering later
 	*/
-	public static registerAsServiceScopeProcessor(service: string, handler: (message: AppMessage) => void, identity?: string) {
+	static registerAsServiceScopeProcessor(service: string, handler: (message: AppMessage) => void, identity?: string) {
 		if (AppUtility.isNotEmpty(service) && handler !== undefined) {
 			this.getServiceHandlers(service).push({
 				func: handler,
@@ -183,7 +183,7 @@ export class AppAPIs {
 	  * @param handler The function for processing when got a message from APIs
 	  * @param identity The string that presents identity of the handler for unregistering later
 	*/
-	public static registerAsObjectScopeProcessor(service: string, object: string, handler: (message: AppMessage) => void, identity?: string) {
+	static registerAsObjectScopeProcessor(service: string, object: string, handler: (message: AppMessage) => void, identity?: string) {
 		if (AppUtility.isNotEmpty(service) && handler !== undefined) {
 			this.getObjectHandlers(service, object).push({
 				func: handler,
@@ -198,7 +198,7 @@ export class AppAPIs {
 	  * @param service The string that presents type of a message
 	  * @param object The string that presents name of an object in the service
 	*/
-	public static unregisterProcessor(identity: string, service: string, object?: string) {
+	static unregisterProcessor(identity: string, service: string, object?: string) {
 		if (AppUtility.isNotEmpty(identity) && AppUtility.isNotEmpty(service)) {
 			let handlers = this.getServiceHandlers(service);
 			let index = handlers.findIndex(handler => AppUtility.isEquals(identity, handler.identity));
@@ -214,7 +214,7 @@ export class AppAPIs {
 	}
 
 	/** Opens the WebSocket connection */
-	public static openWebSocket(onOpened?: () => void, isReopenOrRestart: boolean = false) {
+	static openWebSocket(onOpened?: () => void, isReopenOrRestart: boolean = false) {
 		// check
 		if (typeof WebSocket === "undefined" || this._websocket !== undefined) {
 			if (this._websocket === undefined) {
@@ -432,7 +432,7 @@ export class AppAPIs {
 	}
 
 	/** Closes the WebSocket connection */
-	public static closeWebSocket(onClosed?: () => void) {
+	static closeWebSocket(onClosed?: () => void) {
 		this.disposeWebSocket();
 		this._websocketURL = undefined;
 		this._websocketStatus = "close";
@@ -442,7 +442,7 @@ export class AppAPIs {
 	}
 
 	/** Reopens the WebSocket connection */
-	public static reopenWebSocket(reason?: string, defer?: number) {
+	static reopenWebSocket(reason?: string, defer?: number) {
 		if (this._websocketStatus !== "restarting") {
 			this.disposeWebSocket();
 			this._websocketStatus = "restarting";
@@ -482,7 +482,7 @@ export class AppAPIs {
 	}
 
 	/** Sends a message to APIs to authenticate the WebSocket connection */
-	public static authenticateWebSocket() {
+	static authenticateWebSocket() {
 		this._nocallbackMessages["0"] = AppUtility.stringify({
 			ServiceName: "Session",
 			Verb: "AUTH",
@@ -527,7 +527,7 @@ export class AppAPIs {
 		* @param onSuccess The callback function to handle the returning data
 		* @param onError The callback function to handle the returning error
 	*/
-	public static sendWebSocketRequest(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	static sendWebSocketRequest(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		this._counter++;
 		const id = AppUtility.right(`000000000${this._counter}`, 10);
 		const request = {
@@ -565,7 +565,7 @@ export class AppAPIs {
 		* @param body The JSON object that contains the body to perform the request
 		* @param options The options to perform the request
 	*/
-	public static sendXMLHttpRequest(
+	static sendXMLHttpRequest(
 		verb: string,
 		url: string,
 		options?: {
@@ -605,7 +605,7 @@ export class AppAPIs {
 		* @param headers Additional headers to perform the request
 		* @param body The JSON object that contains the body to perform the request
 	*/
-	public static sendXMLHttpRequestAsync(verb: string, url: string, headers?: any, body?: any) {
+	static sendXMLHttpRequestAsync(verb: string, url: string, headers?: any, body?: any) {
 		return AppUtility.toAsync(this.sendXMLHttpRequest(verb, url, { headers: this.getHeaders(headers) }, body));
 	}
 
@@ -616,7 +616,7 @@ export class AppAPIs {
 		* @param onSuccess The callback function to handle the returning data
 		* @param onError The callback function to handle the returning error
 	*/
-	public static sendRequest(requestInfo: AppRequestInfo, useXHR: boolean = true, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	static sendRequest(requestInfo: AppRequestInfo, useXHR: boolean = true, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		if (this.canUseWebSocket(useXHR)) {
 			const request = AppUtility.isNotEmpty(requestInfo.Path) ? this.parseRequestInfo(requestInfo.Path) : undefined;
 			const requestMsg = {
@@ -657,7 +657,7 @@ export class AppAPIs {
 	 * @param onError The callback function to handle the returning error
 	 * @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	public static sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	static sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.canUseWebSocket(useXHR)
 			? AppUtility.toAsync(this.sendRequest(requestInfo, false, onSuccess, onError)).then(() => {}).catch(error => console.error("[AppAPIs]: Error occurred while sending a request to APIs", error))
 			: AppUtility.toAsync(this.sendRequest(requestInfo))
@@ -677,7 +677,7 @@ export class AppAPIs {
 	}
 
 	/** Broadcasts a message to all subscribers */
-	public static broadcast(message: AppMessage) {
+	static broadcast(message: AppMessage) {
 		this._serviceScopeSubject.next({ "service": message.Type.Service, "message": message });
 		if (AppUtility.isNotEmpty(message.Type.Object)) {
 			this._objectScopeSubject.next({ "service": message.Type.Service, "object": message.Type.Object, "message": message });

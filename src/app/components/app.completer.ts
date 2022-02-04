@@ -34,7 +34,7 @@ export class AppCustomCompleter extends Subject<CompleterItem[]> implements Comp
 					: [];
 	}
 
-	public convertToItem(data: any) {
+	convertToItem(data: any) {
 		return this.convertItem !== undefined
 			? this.convertItem(data)
 			: {
@@ -43,7 +43,7 @@ export class AppCustomCompleter extends Subject<CompleterItem[]> implements Comp
 				} as CompleterItem;
 	}
 
-	public search(term: string) {
+	search(term: string) {
 		this.cancel();
 		this.subscription = AppAPIs.sendXMLHttpRequest("GET", AppAPIs.getURL(this.queryBuilder(term)), { headers: AppAPIs.getHeaders() }).subscribe(
 			response => this.next(this.convert(response)),
@@ -51,7 +51,7 @@ export class AppCustomCompleter extends Subject<CompleterItem[]> implements Comp
 		);
 	}
 
-	public cancel() {
+	cancel() {
 		if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 			this.subscription = undefined;

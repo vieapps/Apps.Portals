@@ -60,7 +60,7 @@ export class TimePipe implements PipeTransform, OnDestroy {
 
 	private timer: Subscription;
 
-	public ngOnDestroy() {
+	ngOnDestroy() {
 		this.removeTimer();
 	}
 
@@ -85,7 +85,7 @@ export class TimePipe implements PipeTransform, OnDestroy {
 		}
 	}
 
-	public transform(value: string | number | Date, locale?: string, format?: string) {
+	transform(value: string | number | Date, locale?: string, format?: string) {
 		const time = new Date(value);
 		const ticks = new Date().getTime() - time.getTime();
 		const seconds = Math.round(Math.abs(ticks / 1000));

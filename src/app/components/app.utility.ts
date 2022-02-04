@@ -21,90 +21,90 @@ export class AppUtility {
 	}
 
 	/** Gets an empty promise */
-	public static get promise() {
+	static get promise() {
 		return this.invoke();
 	}
 
 	/** Checks to see the object is boolean and equals to true */
-	public static isTrue(object?: any) {
+	static isTrue(object?: any) {
 		return object !== undefined && typeof object === "boolean" && object === true;
 	}
 
 	/** Checks to see the object is boolean (or not defined) and equals to false */
-	public static isFalse(object?: any) {
+	static isFalse(object?: any) {
 		return object === undefined || (typeof object === "boolean" && object === false);
 	}
 
 	/** Checks to see the object is null or not */
-	public static isNull(object?: any) {
+	static isNull(object?: any) {
 		return object === undefined || object === null;
 	}
 
 	/** Checks to see the object is defined and null or not */
-	public static isNotNull(object?: any) {
+	static isNotNull(object?: any) {
 		return object !== undefined && object !== null;
 	}
 
 	/** Checks to see the string is undefined or empty */
-	public static isEmpty(object?: any) {
+	static isEmpty(object?: any) {
 		return this.isNull(object) || (typeof object === "string" && (object as string).trim() === "");
 	}
 
 	/** Checks to see the string is defined and not empty */
-	public static isNotEmpty(object?: any) {
+	static isNotEmpty(object?: any) {
 		return this.isNotNull(object) && typeof object === "string" && (object as string).trim() !== "";
 	}
 
 	/** Compares two strings to see is equals or not */
-	public static isEquals(str1: string, str2: string) {
+	static isEquals(str1: string, str2: string) {
 		return this.isNotNull(str1) && this.isNotNull(str2) && str1.toLowerCase() === str2.toLowerCase();
 	}
 
 	/** Checks to see the object is really object or not */
-	public static isObject(object?: any, notNull?: boolean) {
+	static isObject(object?: any, notNull?: boolean) {
 		return object !== undefined && typeof object === "object" && (this.isTrue(notNull) ? object !== null : true);
 	}
 
 	/** Checks to see the object is array or not */
-	public static isArray(object?: any, notNull?: boolean) {
+	static isArray(object?: any, notNull?: boolean) {
 		return object !== undefined && Array.isArray(object) && (this.isTrue(notNull) ? object !== null : true);
 	}
 
 	/** Checks to see the object is date or not */
-	public static isDate(object?: any) {
+	static isDate(object?: any) {
 		return object !== undefined && object instanceof Date;
 	}
 
 	/** Checks to see the object is set/hashset or not */
-	public static isSet(object?: any) {
+	static isSet(object?: any) {
 		return object !== undefined && object instanceof Set;
 	}
 
 	/** Checks to see the object is map/dictionary or not */
-	public static isMap(object?: any) {
+	static isMap(object?: any) {
 		return object !== undefined && object instanceof Map;
 	}
 
 	/** Gets the state that determines the email address is valid or not */
-	public static isEmail(email?: string) {
+	static isEmail(email?: string) {
 		const regex = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 		return regex.test(String(email).trim().replace(/\s+/g, "").replace(/#/g, ""));
 	}
 
 	/** Gets the state that determines the phone number is valid or not */
-	public static isPhone(phone?: string) {
+	static isPhone(phone?: string) {
 		const regex = /^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$/i;
 		return regex.test(String(phone).trim().replace(/\s+/g, "").replace(/-/g, "").replace(/\./g, ""));
 	}
 
 	/** Gets the state to determines the working browser is Apple Safari */
-	public static isAppleSafari(userAgent?: string) {
+	static isAppleSafari(userAgent?: string) {
 		userAgent = userAgent || navigator.userAgent;
 		return userAgent.indexOf("Macintosh") > 0 && userAgent.indexOf("AppleWebKit") > 0 && userAgent.indexOf("Chrome") < 0 && userAgent.indexOf("Edge") < 0 && userAgent.indexOf("Edg") < 0;
 	}
 
 	/** Checks the error to see that is security exception or not */
-	public static isGotSecurityException(error?: any) {
+	static isGotSecurityException(error?: any) {
 		error = this.parseError(error);
 		return this.isObject(error, true) && this.isNotEmpty(error.Type)
 			? this._exceptions.find(exception => exception === error.Type) !== undefined
@@ -112,31 +112,35 @@ export class AppUtility {
 	}
 
 	/** Checks the error to see that is wrong account or password exception or not */
-	public static isGotWrongAccountOrPasswordException(error?: any) {
+	static isGotWrongAccountOrPasswordException(error?: any) {
 		return this.isObject(error, true) && "WrongAccountException" === error.Type;
 	}
 
 	/** Checks the error to see that is captcha exception or not */
-	public static isGotCaptchaException(error?: any) {
+	static isGotCaptchaException(error?: any) {
 		return this.isObject(error, true) && this.isNotEmpty(error.Type) && this.isNotEmpty(error.Message)
 			? error.Message.indexOf("Captcha code is invalid") > -1
 			: false;
 	}
 
 	/** Checks the error to see that is OTP exception or not */
-	public static isGotOTPException(error?: any) {
+	static isGotOTPException(error?: any) {
 		return this.isObject(error, true) && this.isNotEmpty(error.Type) && this.isNotEmpty(error.Message)
 			? error.Type === "OTPLoginFailedException" && error.Message.indexOf("Bad OTP") > -1
 			: false;
 	}
 
 	/** Gets the state to determines the object is got data or not (means the object has any attribute or not) */
-	public static isGotData(object: any, length: number = 1) {
-		return (this.isArray(object, true) ? object.length : object instanceof Set || object instanceof Map ? object.size : this.getAttributes(object).length) >= length;
+	static isGotData(object: any, length: number = 1) {
+		return (this.isArray(object, true)
+			? object.length
+			: object instanceof Set || object instanceof Map
+				? object.size
+				: this.getAttributes(object).length) >= length;
 	}
 
 	/** Gets the error message */
-	public static getErrorMessage(error: any) {
+	static getErrorMessage(error: any) {
 		error = this.parseError(error);
 		return this.isObject(error, true) && error.Type !== undefined && error.Message !== undefined
 			? `Error: ${error.Message}\nType: ${error.Type}\nCorrelation ID: ${error.CorrelationID}`
@@ -146,12 +150,14 @@ export class AppUtility {
 	}
 
 	/** Gets the collection of objects' attributes */
-	public static getAttributes(object: any, predicate?: (name: string) => boolean) {
-		return predicate !== undefined ? Object.keys(object || {}).filter(predicate) : Object.keys(object || {});
+	static getAttributes(object: any, predicate?: (name: string) => boolean) {
+		return predicate !== undefined
+			? Object.keys(object || {}).filter(predicate)
+			: Object.keys(object || {});
 	}
 
 	/** Gets their own properties of an object */
-	public static getProperties<T>(object: T, onlyWritable: boolean = false) {
+	static getProperties<T>(object: T, onlyWritable: boolean = false) {
 		const ownProperties = Object.getOwnPropertyDescriptors(object);
 		const objProperties = this.getAttributes(ownProperties).map(name => ({
 			name: name,
@@ -163,7 +169,7 @@ export class AppUtility {
 	}
 
 	/** Gets the sub-sequence the sequence that ordering by the random scoring number */
-	public static getTopScores<T>(sequence: Array<any>, amount?: number, converter?: (element: any) => T): T[] | any[] {
+	static getTopScores<T>(sequence: Array<any>, amount?: number, converter?: (element: any) => T): T[] | any[] {
 		const results = sequence.map(element => this.clone(element, undefined, undefined, obj => obj["Score"] = Math.random())).sortBy({ name: "Score", reverse: true }).take(amount);
 		return converter === undefined
 			? results
@@ -171,7 +177,7 @@ export class AppUtility {
 	}
 
 	/** Gets all the available characters (0 and A-Z) */
-	public static getChars() {
+	static getChars() {
 		const chars = new Array<string>("0");
 		for (let code = 65; code < 91; code++) {
 			chars.push(String.fromCharCode(code));
@@ -180,7 +186,7 @@ export class AppUtility {
 	}
 
 	/** Gets an URI */
-	public static getURI(info: { url: string, params: { [key: string]: any } }, alternativeURL?: string) {
+	static getURI(info: { url: string, params: { [key: string]: any } }, alternativeURL?: string) {
 		if (info === undefined) {
 			return alternativeURL || "/";
 		}
@@ -191,7 +197,7 @@ export class AppUtility {
 	}
 
 	/** Parses an URI */
-	public static parseURI(uri?: string) {
+	static parseURI(uri?: string) {
 		uri = uri || (location ? location.href : "scheme://service.as.host/path?query=#?hash=");
 
 		let scheme = "http", host = "local", relativeURI = "";
@@ -281,7 +287,7 @@ export class AppUtility {
 	}
 
 	/** Parses the error */
-	public static parseError(error: any) {
+	static parseError(error: any) {
 		try {
 			return error instanceof HttpErrorResponse
 				? error.error
@@ -298,7 +304,7 @@ export class AppUtility {
 	 * @param miliseconds The timeout miliseconds
 	 * @param asBackgroundWorker Set to true to run as background worker when the browser is idle (using 'requestIdleCallback' to call as a background worker, if not available then 'setTimeout' will be used as fallback)
 	*/
-	public static invoke(func?: () => void, miliseconds?: number, asBackgroundWorker: boolean = false) {
+	static invoke(func?: () => void, miliseconds?: number, asBackgroundWorker: boolean = false) {
 		return func !== undefined
 			? new Promise<void>(resolve => {
 					if (asBackgroundWorker && this.isRequestIdleCallbackAvailable) {
@@ -321,28 +327,28 @@ export class AppUtility {
 	}
 
 	/** Gets the position of the sub-string in the string */
-	public static indexOf(str: string, substr: string, start?: number) {
+	static indexOf(str: string, substr: string, start?: number) {
 		return this.isNotEmpty(str) && this.isNotEmpty(substr)
 			? str.indexOf(substr, start)
 			: -1;
 	}
 
 	/** Copies 'left' string */
-	public static left(str: string, length: number) {
+	static left(str: string, length: number) {
 		return this.isNotEmpty(str) && str.length > length
 			? str.substring(0, str.length - length)
 			: str;
 	}
 
 	/** Copies 'right' string */
-	public static right(str: string, length: number) {
+	static right(str: string, length: number) {
 		return this.isNotEmpty(str) && str.length > length
 			? str.substring(str.length - length)
 			: str;
 	}
 
 	/** Converts an object into a JSON string */
-	public static stringify(object: any, replacer?: (key: string, value: any) => any) {
+	static stringify(object: any, replacer?: (key: string, value: any) => any) {
 		return JSON.stringify(
 			object || {},
 			(key, value) => replacer !== undefined
@@ -358,7 +364,7 @@ export class AppUtility {
 	}
 
 	/** Converts a JSON string into an object */
-	public static parse(json: string, reviver?: (key: string, value: any) => any) {
+	static parse(json: string, reviver?: (key: string, value: any) => any) {
 		return JSON.parse(
 			json || "{}",
 			(key, value) => reviver !== undefined
@@ -373,7 +379,7 @@ export class AppUtility {
 	 * @param target The instance of an object to copy data into
 	 * @param onCompleted The handler to run when the copy process is on-going completed with normalized data from source
 	*/
-	public static copy<T>(source: any, target: T, onCompleted?: (data: any) => void) {
+	static copy<T>(source: any, target: T, onCompleted?: (data: any) => void) {
 		try {
 			const data = this.isNotEmpty(source)
 				? this.parse(source)
@@ -425,7 +431,7 @@ export class AppUtility {
 	 * @param excluded The collection of excluded properties are not be deleted event value is undefined
 	 * @param onCompleted The handler to run when cleaning process is completed
 	*/
-	public static clean<T>(object: T, excluded?: Array<string>, onCompleted?: (object: T) => void) {
+	static clean<T>(object: T, excluded?: Array<string>, onCompleted?: (object: T) => void) {
 		this.getProperties(object).forEach(info => {
 			if (this.isNull(object[info.name])) {
 				if (excluded === undefined || excluded.indexOf(info.name) < 0) {
@@ -452,7 +458,7 @@ export class AppUtility {
 	 * @param excluded The collection of excluded properties are not be deleted event value is undefined
 	 * @param onCompleted The handler to run when process is completed
 	*/
-	public static clone<T>(source: T, beRemovedOrCleanUndefined?: Array<string> | boolean, excluded?: Array<string>, onCompleted?: (object: any) => void) {
+	static clone<T>(source: T, beRemovedOrCleanUndefined?: Array<string> | boolean, excluded?: Array<string>, onCompleted?: (object: any) => void) {
 		const object = this.parse(this.stringify(source));
 		if (this.isArray(beRemovedOrCleanUndefined, true)) {
 			(beRemovedOrCleanUndefined as Array<string>).forEach(name => delete object[name]);
@@ -470,7 +476,7 @@ export class AppUtility {
 	}
 
 	/** Removes tags from the HTML content */
-	public static removeTags(html: string, keepTags?: string[]) {
+	static removeTags(html: string, keepTags?: string[]) {
 		if (this.isNotEmpty(html)) {
 			(keepTags || []).forEach(tag => {
 				html = html.replace(this.toRegExp("/\\<" + tag + "\\>/gi"), `[${tag}]`);
@@ -486,7 +492,7 @@ export class AppUtility {
 	}
 
 	/** Normalizes the HTML content */
-	public static normalizeHtml(html?: string, removeTags?: boolean) {
+	static normalizeHtml(html?: string, removeTags?: boolean) {
 		const wellHtml = this.isNotEmpty(html)
 			? this.isTrue(removeTags)
 				? this.removeTags(html)
@@ -498,7 +504,7 @@ export class AppUtility {
 	}
 
 	/** Formats the mustache-style (double braces) template with params */
-	public static format(template: string, params: { [key: string]: any }) {
+	static format(template: string, params: { [key: string]: any }) {
 		const parameters = (template.match(/{{([^{}]*)}}/g) || []).map(param => ({ token: param, name: param.match(/[\w\.]+/)[0] }));
 		this.getAttributes(params).forEach(key => {
 			const value: string = (params[key] || "").toString();
@@ -508,12 +514,12 @@ export class AppUtility {
 	}
 
 	/** Converts an observable object into promise object for working with async/await */
-	public static toAsync<T>(observable: Observable<T>) {
+	static toAsync<T>(observable: Observable<T>) {
 		return observable.toPromise<T>();
 	}
 
 	/** Converts an object into array of key-value pair */
-	public static toKeyValuePair(object: any, predicate?: (kvp: { key: any; value: any; }) => boolean) {
+	static toKeyValuePair(object: any, predicate?: (kvp: { key: any; value: any; }) => boolean) {
 		let keyvaluePairs = new Array<{ key: any; value: any; }>();
 		if (this.isArray(object, true) || object instanceof Set) {
 			keyvaluePairs = (object instanceof Set ? Array.from(object.values()) : object as Array<any>).filter(element => AppUtility.isNotNull(element)).map((element, index) => ({ key: this.isNotNull(element.key) ? element.key : index, value: this.isNotNull(element.value) ? element.value : element }));
@@ -528,7 +534,7 @@ export class AppUtility {
 	}
 
 	/** Converts an array of key-value pair into an object */
-	public static toObject(array: Array<{ key: string; value: any; }>, onCompleted?: (object: { [key: string]: any }) => void) {
+	static toObject(array: Array<{ key: string; value: any; }>, onCompleted?: (object: { [key: string]: any }) => void) {
 		const object: { [key: string]: any } = {};
 		array.filter(kvp => this.isNotEmpty(kvp.key)).forEach(kvp => object[kvp.key] = kvp.value);
 		if (onCompleted !== undefined) {
@@ -538,7 +544,7 @@ export class AppUtility {
 	}
 
 	/** Converts the string/object into an array of strings/key-value pair/value of objects' properties */
-	public static toArray(object: any, separator?: any): Array<string> | Array<any> | Array<{ key: string, value: any }> {
+	static toArray(object: any, separator?: any): Array<string> | Array<any> | Array<{ key: string, value: any }> {
 		if (this.isArray(object)) {
 			return object as Array<any>;
 		}
@@ -562,7 +568,7 @@ export class AppUtility {
 	}
 
 	/** Converts and joins the array into a string */
-	public static toStr(array: Array<any>, separator?: string) {
+	static toStr(array: Array<any>, separator?: string) {
 		let string = "";
 		if (this.isArray(array, true)) {
 			separator = separator || "";
@@ -572,7 +578,7 @@ export class AppUtility {
 	}
 
 	/** Converts the object into a 'query' string */
-	public static toQuery(object: any) {
+	static toQuery(object: any) {
 		try {
 			return this.toStr(this.toKeyValuePair(object).map(kvp => `${kvp.key.toString()}=${encodeURIComponent((kvp.value || "").toString())}`), "&");
 		}
@@ -582,14 +588,14 @@ export class AppUtility {
 	}
 
 	/** Converts object into an integer number */
-	public static toInt(value: any) {
+	static toInt(value: any) {
 		return this.isNotEmpty(value)
 			? parseInt(value, 0)
 			: 0;
 	}
 
 	/** Converts the regular expression string into an RegExp object */
-	public static toRegExp(regex: string) {
+	static toRegExp(regex: string) {
 		const flags = regex.replace(/.*\/([gimy]*)$/, "$1");
 		const pattern = regex.replace(new RegExp("^/(.*?)/" + flags + "$"), "$1");
 		return new RegExp(pattern, flags);
@@ -602,7 +608,7 @@ export class AppUtility {
 	 * @param miliseconds true to include the value of mili-seconds
 	 * @param useLocalTimezone true to use local time zone
 	*/
-	public static toIsoDateTime(date: string | number | Date, seconds: boolean = false, miliseconds: boolean = false, useLocalTimezone: boolean = true) {
+	static toIsoDateTime(date: string | number | Date, seconds: boolean = false, miliseconds: boolean = false, useLocalTimezone: boolean = true) {
 		if (date === undefined || date === null) {
 			return undefined;
 		}
@@ -623,7 +629,7 @@ export class AppUtility {
 	}
 
 	/** Converts date-time object into a ISO 8601 date string to use with date-picker */
-	public static toIsoDate(date: string | number | Date) {
+	static toIsoDate(date: string | number | Date) {
 		const isoDateTime = date === undefined || "-" === date
 			? undefined
 			: this.toIsoDateTime(date, true, true);
@@ -631,7 +637,7 @@ export class AppUtility {
 	}
 
 	/** Converts the ANSI string into a string that can use in an URI */
-	public static toURI(input?: string): string {
+	static toURI(input?: string): string {
 		if (!this.isNotEmpty(input) || input.trim() === "") {
 			return "";
 		}
@@ -650,7 +656,7 @@ export class AppUtility {
 	}
 
 	/** Converts the Vietnamese string into an ANSI string */
-	public static toANSI(input?: string, asURI?: boolean): string {
+	static toANSI(input?: string, asURI?: boolean): string {
 		if (!this.isNotEmpty(input) || input.trim() === "") {
 			return "";
 		}

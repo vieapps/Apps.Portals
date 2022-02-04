@@ -16,22 +16,22 @@ export class PlatformUtility {
 	private static _electronService: ElectronService;
 
 	/** Sets the instance of device keyboard */
-	public static setKeyboard(keyboard: Keyboard) {
+	static setKeyboard(keyboard: Keyboard) {
 		this._keyboard = keyboard;
 	}
 
 	/** Sets the instance of app clipboard */
-	public static setClipboard(clipboard: Clipboard) {
+	static setClipboard(clipboard: Clipboard) {
 		this._clipboard = clipboard;
 	}
 
 	/** Sets the instance of in-app browser (native app) */
-	public static setInAppBrowser(inappBrowser: InAppBrowser) {
+	static setInAppBrowser(inappBrowser: InAppBrowser) {
 		this._inappBrowser = inappBrowser;
 	}
 
 	/** Sets the instance of Electron service (web app) */
-	public static setElectronService(electronService: ElectronService) {
+	static setElectronService(electronService: ElectronService) {
 		this._electronService = electronService;
 	}
 
@@ -40,7 +40,7 @@ export class PlatformUtility {
 	 * @param control The control to focus into
 	 * @param defer The defer times (in miliseconds)
 	 */
-	public static focus(control: any, defer?: number) {
+	static focus(control: any, defer?: number) {
 		if (AppUtility.isNotNull(control)) {
 			const ctrl = control instanceof ElementRef
 				? (control as ElementRef).nativeElement
@@ -62,7 +62,7 @@ export class PlatformUtility {
 	}
 
 	/** Opens an URL in browser */
-	public static openURL(url?: string, target?: string) {
+	static openURL(url?: string, target?: string) {
 		if (AppUtility.isNotEmpty(url)) {
 			if (this._electronService !== undefined) {
 				this._electronService.shell.openExternal(url);
@@ -80,17 +80,17 @@ export class PlatformUtility {
 	}
 
 	/** Opens Google Maps by address or location via query */
-	public static openGoogleMaps(info: string) {
+	static openGoogleMaps(info: string) {
 		this.openURL(`https://www.google.com/maps?q=${encodeURIComponent(info)}`);
 	}
 
 	/** Copies the value into clipboard */
-	public static copyToClipboardAsync(value: string, onNext?: () => void) {
+	static copyToClipboardAsync(value: string, onNext?: () => void) {
 		return AppConfig.isNativeApp ? this.copyToNativeAppClipboardAsync(value, onNext) : this.copyToWebAppClipboardAsync(value, onNext);
 	}
 
 	/** Copies the value into clipboard of the native app */
-	public static copyToNativeAppClipboardAsync(value: string, onNext?: () => void) {
+	static copyToNativeAppClipboardAsync(value: string, onNext?: () => void) {
 		return this._clipboard.copy(value)
 			.then(() => {
 				if (AppConfig.isDebug) {
@@ -104,7 +104,7 @@ export class PlatformUtility {
 	}
 
 	/** Copies the value into clipboard of the web app */
-	public static copyToWebAppClipboardAsync(value: string, onNext?: () => void) {
+	static copyToWebAppClipboardAsync(value: string, onNext?: () => void) {
 		return AppUtility.invoke(() => {
 			const parentNode = window.document.body;
 			const textarea = this.appendElement({ value: value }, "textarea", parentNode) as HTMLTextAreaElement;
@@ -123,7 +123,7 @@ export class PlatformUtility {
 	}
 
 	/** Prepares environments of the PWA */
-	public static preparePWAEnvironment(onFacebookInit?: () => void) {
+	static preparePWAEnvironment(onFacebookInit?: () => void) {
 		// Facebook SDKs
 		if (AppUtility.isNotEmpty(AppConfig.facebook.id) && AppUtility.parseURI().Scheme !== "file") {
 			this.appendElement({

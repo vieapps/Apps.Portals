@@ -10,7 +10,7 @@
 
 	<ion-buttons *ngIf="icon || isPasswordControl" style="background-color:var(--ion-color-base)" [slot]="iconSlot">
 		<ion-button tabindex="-1" [disabled]="!!disabled" [fill]="iconFill" [color]="iconColor" (click)="clickOnIcon($event)">
-			<ion-icon *ngIf="icon && !isPasswordControl" [name]="icon" slot="icon-only"></ion-icon>
+			<ion-icon *ngIf="icon && !isPasswordControl && !readonly" [name]="icon" slot="icon-only"></ion-icon>
 			<ion-icon *ngIf="isPasswordControl" name="eye" slot="icon-only" [hidden]="showPassword"></ion-icon>
 			<ion-icon *ngIf="isPasswordControl" name="eye-off" slot="icon-only" [hidden]="!showPassword"></ion-icon>
 		</ion-button>
@@ -391,14 +391,29 @@
 		(change)="onChanged($event)"></ckeditor>
 </div>
 
-<control-data-selector *ngIf="visible && (isSelector || isCustomControl('data-selector'))" #elementRef
+<ion-item *ngIf="visible && label && isCustomControl('data-items')" [color]="theme" lines="none">
+	<ion-label
+		[color]="color.label"
+		[position]="position"
+		[class]="css.label">{{ label }}</ion-label>
+</ion-item>
+
+<control-data-item *ngIf="visible && (isSelector || isCustomControl('data-selector'))" #elementRef
 	[formGroup]="formGroup"
 	[control]="control"
 	[items]="lookupDisplayValues"
 	[resources]="lookupResources"
 	[handlers]="lookupHandlers"
-	[multiple]="lookupMultiple"></control-data-selector>
-<ion-item *ngIf="visible && description && (isSelector || isCustomControl('data-selector'))" [color]="theme">
+	[settings]="lookupSettings"
+	[multiple]="lookupMultiple"></control-data-item>
+
+<control-data-item *ngIf="visible && isCustomControl('data-items')" #elementRef
+	[control]="control"
+	[items]="lookupDisplayValues"
+	[settings]="lookupSettings"
+	[multiple]="lookupMultiple"></control-data-item>
+
+<ion-item *ngIf="visible && description && (isSelector || isCustomControl('data-selector') || isCustomControl('data-items'))" [color]="theme">
 	<label
 		[class]="css.description"
 		[style]="style.description"

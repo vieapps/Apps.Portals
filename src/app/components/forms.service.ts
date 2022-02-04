@@ -44,20 +44,20 @@ export class AppFormsService {
 		return !AppConfig.isNativeApp && AppConfig.app.platform.indexOf("Desktop") > -1 && !AppUtility.isAppleSafari();
 	}
 
-	public async normalizeResourceAsync(resource: string, interpolateParams?: object) {
+	async normalizeResourceAsync(resource: string, interpolateParams?: object) {
 		return AppUtility.isNotEmpty(resource) && resource.startsWith("{{") && resource.endsWith("}}")
 			? await this.getResourceAsync(resource.substr(2, resource.length - 4).trim(), interpolateParams)
 			: resource;
 	}
 
-	public prepareSelectControl(formControl: AppFormsControlConfig, selectValues?: string | string[] | AppFormsLookupValue[], onCompleted?: (formControl: AppFormsControlConfig) => void) {
+	prepareSelectControl(formControl: AppFormsControlConfig, selectValues?: string | string[] | AppFormsLookupValue[], onCompleted?: (formControl: AppFormsControlConfig) => void) {
 		const values = selectValues || formControl.Options.SelectOptions.Values;
 		formControl.Options.SelectOptions.Values = AppUtility.isArray(values, true) && AppUtility.isGotData(values)
 			? typeof (values as Array<any>).first() === "string"
 				? (values as Array<string>).map(value => ({ Value: value, Label: value }) as AppFormsLookupValue)
 				: (values as Array<any>).map(data => formControl.Options.SelectOptions.RemoteURIConverter !== undefined ? formControl.Options.SelectOptions.RemoteURIConverter(data) : ({ Value: data.Value || data.value, Label: data.Label || data.label || data.Value || data.value, Description: data.Description || data.description }) as AppFormsLookupValue)
 			: AppUtility.isNotEmpty(values)
-				? ((values as string).indexOf("#;") > 0 ? (values as string).split("#;") : (values as string).split(";")).map(value => value.split("|")).map(data => ({ Value: data.first(), Label: data.last() }) as AppFormsLookupValue)
+				? ((values as string).indexOf("#;") > 0 ? (values as string).split("#;") : (values as string).indexOf("#") > 0 ? (values as string).split("#") : (values as string).split(";")).map(value => value.split("|")).map(data => ({ Value: data.first(), Label: data.last() }) as AppFormsLookupValue)
 				: AppUtility.isNotNull(values)
 					? [{ Value: values.toString(), Label: values.toString() } as AppFormsLookupValue]
 					: [];
@@ -151,7 +151,7 @@ export class AppFormsService {
 	}
 
 	/** Gets the definition of all controls */
-	public getControls(formConfig: Array<AppFormsControlConfig> = [], formControls?: Array<AppFormsControl>, formSegments?: { items: Array<AppFormsSegment>, default: string, current: string }) {
+	getControls(formConfig: Array<AppFormsControlConfig> = [], formControls?: Array<AppFormsControl>, formSegments?: { items: Array<AppFormsSegment>, default: string, current: string }) {
 		formControls = formControls || new Array<AppFormsControl>();
 		formConfig.map((options, order) => {
 			const formControl = new AppFormsControl(options, order);
@@ -177,7 +177,7 @@ export class AppFormsService {
 	}
 
 	/** Updates the definition of all controls */
-	public updateControls(formControls: Array<AppFormsControl> = [], value: any = {}) {
+	updateControls(formControls: Array<AppFormsControl> = [], value: any = {}) {
 		formControls.forEach((formControl, order) => formControl.Order = order);
 		formControls.filter(formControl => formControl.SubControls !== undefined).forEach(formControl => {
 			if (formControl.SubControls.AsArray) {
@@ -198,7 +198,7 @@ export class AppFormsService {
 	}
 
 	/** Copies the form control (creates new instance) */
-	public copyControl(formControl: AppFormsControl, onCompleted?: (control: AppFormsControl) => void) {
+	copyControl(formControl: AppFormsControl, onCompleted?: (control: AppFormsControl) => void) {
 		const control = new AppFormsControl(formControl);
 		control.parent = formControl.parent;
 		control.segmentIndex = formControl.segmentIndex;
@@ -209,12 +209,12 @@ export class AppFormsService {
 	}
 
 	/** Copies the form control config (clones a new instance) */
-	public cloneControl(config: AppFormsControlConfig, onCompleted?: (config: AppFormsControlConfig) => void) {
+	cloneControl(config: AppFormsControlConfig, onCompleted?: (config: AppFormsControlConfig) => void) {
 		return AppUtility.clone(config, false, undefined, onCompleted);
 	}
 
 	/** Builds an Angular form */
-	public buildForm(form: FormGroup, formControls: Array<AppFormsControl> = [], value?: any, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
+	buildForm(form: FormGroup, formControls: Array<AppFormsControl> = [], value?: any, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
 		this.getFormGroup(formControls, form, validators, asyncValidators);
 		if (value !== undefined) {
 			this.updateControls(formControls, value);
@@ -227,7 +227,7 @@ export class AppFormsService {
 	}
 
 	/** Gets an Angular form group */
-	public getFormGroup(formControls: Array<AppFormsControl>, formGroup?: FormGroup, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
+	getFormGroup(formControls: Array<AppFormsControl>, formGroup?: FormGroup, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
 		formGroup = formGroup || new FormGroup({}, validators, asyncValidators);
 		formControls.forEach(formControl => {
 			if (formControl.SubControls === undefined && AppUtility.isEquals(formControl.Type, "Lookup") && formControl.Options.LookupOptions.AsCompleter && AppUtility.isEquals(formControl.Options.Type, "Address")) {
@@ -252,7 +252,7 @@ export class AppFormsService {
 	}
 
 	/** Gets an Angular form array */
-	public getFormArray(formControl: AppFormsControl, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
+	getFormArray(formControl: AppFormsControl, validators?: Array<ValidatorFn>, asyncValidators?: Array<AsyncValidatorFn>) {
 		const formArray = new FormArray([], validators, asyncValidators);
 		formControl.SubControls.Controls.forEach(subFormControl => {
 			if (subFormControl.SubControls === undefined && AppUtility.isEquals(subFormControl.Type, "Lookup") && formControl.Options.LookupOptions.AsCompleter && AppUtility.isEquals(subFormControl.Options.Type, "Address")) {
@@ -273,12 +273,12 @@ export class AppFormsService {
 	}
 
 	/** Gets an Angular form control */
-	public getFormControl(formControl: AppFormsControl) {
+	getFormControl(formControl: AppFormsControl) {
 		return new FormControl(undefined, this.getValidators(formControl), this.getAsyncValidators(formControl));
 	}
 
 	/** Gets the validators of an Angular form control */
-	public getValidators(formControl: AppFormsControl) {
+	getValidators(formControl: AppFormsControl) {
 		let validators = new Array<ValidatorFn>();
 
 		if (formControl.Validators !== undefined && formControl.Validators.length > 0) {
@@ -330,13 +330,13 @@ export class AppFormsService {
 	}
 
 	/** Gets the async validators of an Angular form control */
-	public getAsyncValidators(formControl: AppFormsControl) {
+	getAsyncValidators(formControl: AppFormsControl) {
 		const asyncValidators = new Array<AsyncValidatorFn>();
 		return asyncValidators;
 	}
 
 	/** Gets the forms' button controls */
-	public getButtonControls(segment: string, ...buttons: Array<{ Name: string; Label: string; OnClick: (event: Event, control: AppFormsControl) => void; Options?: { Fill?: string; Color?: string; Css?: string; Icon?: { Name?: string; Slot?: string } } }>) {
+	getButtonControls(segment: string, ...buttons: Array<{ Name: string; Label: string; OnClick: (event: Event, control: AppFormsControl) => void; Options?: { Fill?: string; Color?: string; Css?: string; Icon?: { Name?: string; Slot?: string } } }>) {
 		return {
 			Name: "Buttons",
 			Type: "Buttons",
@@ -364,7 +364,7 @@ export class AppFormsService {
 	}
 
 	/** Validates the form and highlights all invalid controls (if has) */
-	public validate(form: FormGroup, onCompleted?: (form: FormGroup, valid: boolean) => void) {
+	validate(form: FormGroup, onCompleted?: (form: FormGroup, valid: boolean) => void) {
 		form.updateValueAndValidity();
 		const invalid = form.invalid;
 		if (invalid) {
@@ -377,7 +377,7 @@ export class AppFormsService {
 	}
 
 	/** Highlights all invalid controls (by mark as dirty on all invalid controls) and set focus into first invalid control */
-	public highlightInvalids(form: FormGroup) {
+	highlightInvalids(form: FormGroup) {
 		const formControl = this.highlightInvalidsFormGroup(form, form["_controls"] as Array<AppFormsControl>);
 		if (formControl !== undefined) {
 			if (AppUtility.isNotEmpty(formControl.Segment) && form["_segments"] !== undefined) {
@@ -436,7 +436,7 @@ export class AppFormsService {
 	}
 
 	/** Sets focus into control */
-	public focus(formControl: AppFormsControl, whenNoControlFound?: () => void) {
+	focus(formControl: AppFormsControl, whenNoControlFound?: () => void) {
 		if (formControl !== undefined) {
 			formControl.focus();
 		}
@@ -454,12 +454,12 @@ export class AppFormsService {
 	}
 
 	/** Sets focus into next control */
-	public focusNext(formControl: AppFormsControl, whenNoControlFound?: () => void) {
+	focusNext(formControl: AppFormsControl, whenNoControlFound?: () => void) {
 		this.focus(this.getNext(formControl), whenNoControlFound);
 	}
 
 	/** Checks values of two controls are equal or not */
-	public areEquals(original: string, confirm: string): ValidatorFn {
+	areEquals(original: string, confirm: string): ValidatorFn {
 		return (formGroup: FormGroup): { [key: string]: any } | null => {
 			const originalControl = formGroup.controls[original];
 			const confirmControl = formGroup.controls[confirm];
@@ -472,7 +472,7 @@ export class AppFormsService {
 	}
 
 	/** Checks value of the control is equal with other control value or not */
-	public isEquals(other: string): ValidatorFn {
+	isEquals(other: string): ValidatorFn {
 		return (formControl: AbstractControl): { [key: string]: any } | null => {
 			const otherControl = formControl.parent instanceof FormGroup
 				? (formControl.parent as FormGroup).controls[other]
@@ -486,7 +486,7 @@ export class AppFormsService {
 	}
 
 	/** Checks value of the date control is greater or equal a specific value */
-	public minDate(date: string): ValidatorFn {
+	minDate(date: string): ValidatorFn {
 		return (formControl: AbstractControl): { [key: string]: any } | null => {
 			if (date !== undefined && formControl.value !== undefined && new Date(formControl.value) < new Date(date)) {
 				formControl.setErrors({ lessThan: true });
@@ -497,7 +497,7 @@ export class AppFormsService {
 	}
 
 	/** Checks value of the date control is less than or equal a specific value */
-	public maxDate(date: string): ValidatorFn {
+	maxDate(date: string): ValidatorFn {
 		return (formControl: AbstractControl): { [key: string]: any } | null => {
 			if (date !== undefined && formControl.value !== undefined && new Date(formControl.value) > new Date(date)) {
 				formControl.setErrors({ greater: true });
@@ -508,7 +508,7 @@ export class AppFormsService {
 	}
 
 	/** Gets the listing of meta counties of a specified country */
-	public getMetaCounties(country?: string) {
+	getMetaCounties(country?: string) {
 		country = country || AppConfig.geoMeta.country;
 		if (this._metaCounties[country] === undefined && AppConfig.geoMeta.provinces[country] !== undefined) {
 			const counties = new Array<{
@@ -532,12 +532,12 @@ export class AppFormsService {
 	}
 
 	/** Gets the resource of current language by a key */
-	public getResourceAsync(key: string, interpolateParams?: object) {
+	getResourceAsync(key: string, interpolateParams?: object) {
 		return AppUtility.toAsync<string>(this.translateSvc.get(key, interpolateParams));
 	}
 
 	/** Shows the loading */
-	public async showLoadingAsync(message?: string) {
+	async showLoadingAsync(message?: string) {
 		await this.hideLoadingAsync();
 		this._loading = await this.loadingController.create({
 			message: message || await this.getResourceAsync("common.messages.loading")
@@ -546,7 +546,7 @@ export class AppFormsService {
 	}
 
 	/** Hides the loading */
-	public async hideLoadingAsync(onNext?: () => void) {
+	async hideLoadingAsync(onNext?: () => void) {
 		if (this._loading !== undefined) {
 			await this._loading.dismiss();
 			this._loading = undefined;
@@ -557,7 +557,7 @@ export class AppFormsService {
 	}
 
 	/** Get the button for working with action sheet */
-	public getActionSheetButton(text: string, icon?: string, handler?: () => void, role?: string) {
+	getActionSheetButton(text: string, icon?: string, handler?: () => void, role?: string) {
 		return {
 			text: text,
 			role: role,
@@ -567,7 +567,7 @@ export class AppFormsService {
 	}
 
 	/** Shows the action sheet */
-	public async showActionSheetAsync(buttons: Array<{ text: string; role?: string; icon?: string; handler?: () => void }>, backdropDismiss: boolean = true, dontAddCancelButton: boolean = false) {
+	async showActionSheetAsync(buttons: Array<{ text: string; role?: string; icon?: string; handler?: () => void }>, backdropDismiss: boolean = true, dontAddCancelButton: boolean = false) {
 		await this.hideLoadingAsync();
 		if (AppUtility.isFalse(dontAddCancelButton)) {
 			buttons.push(this.getActionSheetButton(await this.getResourceAsync("common.buttons.cancel"), "close", () => this.hideActionSheetAsync(), "cancel"));
@@ -583,7 +583,7 @@ export class AppFormsService {
 	}
 
 	/** Hides the action sheet */
-	public async hideActionSheetAsync(onNext?: () => void) {
+	async hideActionSheetAsync(onNext?: () => void) {
 		if (this._actionsheet !== undefined) {
 			await this._actionsheet.dismiss();
 			this._actionsheet = undefined;
@@ -594,7 +594,7 @@ export class AppFormsService {
 	}
 
 	/** Shows the alert box  */
-	public async showAlertAsync(header: string = null, message: string = null, subMessage?: string, onOkClick?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string, inputs?: Array<any>, backdropDismiss: boolean = false) {
+	async showAlertAsync(header: string = null, message: string = null, subMessage?: string, onOkClick?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string, inputs?: Array<any>, backdropDismiss: boolean = false) {
 		await this.hideLoadingAsync();
 		await this.hideAlertAsync();
 		const buttons: Array<{ text: string; role: string; handler: (data?: any) => void; }> = AppUtility.isNotEmpty(cancelButtonText)
@@ -622,7 +622,7 @@ export class AppFormsService {
 	}
 
 	/** Hides the alert box */
-	public async hideAlertAsync(onNext?: () => void) {
+	async hideAlertAsync(onNext?: () => void) {
 		if (this._alert !== undefined) {
 			await this._alert.dismiss();
 			this._alert = undefined;
@@ -633,7 +633,7 @@ export class AppFormsService {
 	}
 
 	/** Shows the confirmation box  */
-	public async showConfirmAsync(message: string = null, onOkClick?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string) {
+	async showConfirmAsync(message: string = null, onOkClick?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string) {
 		await this.showAlertAsync(
 			undefined,
 			message,
@@ -645,13 +645,14 @@ export class AppFormsService {
 	}
 
 	/** Shows the error message (by the alert confirmation box) */
-	public async showErrorAsync(error: any, subHeader?: string, postProcess?: (data?: any) => void) {
+	async showErrorAsync(error: any, subHeader?: string, postProcess?: (data?: any) => void) {
 		const message = AppUtility.isGotWrongAccountOrPasswordException(error)
 			? await this.getResourceAsync("common.messages.errors.wrongAccountOrPassword")
 			: AppUtility.isGotCaptchaException(error) || AppUtility.isGotOTPException(error)
 				? await this.getResourceAsync("common.messages.errors.wrongCaptcha")
 				: AppUtility.isNotEmpty(error.Message) ? error.Message : await this.getResourceAsync("common.messages.errors.general");
 		await this.showAlertAsync(await this.getResourceAsync("common.alert.header.error"), subHeader, message, postProcess);
+		console.error(`Error occurred => ${message}`, error);
 	}
 
 	/**
@@ -662,7 +663,7 @@ export class AppFormsService {
 	 * @param backdropDismiss true to dismiss when tap on backdrop
 	 * @param swipeToClose true to swipe to close the modal dialog (only available on iOS)
 	*/
-	public async showModalAsync(component: any, componentProps?: { [key: string]: any }, onDismiss?: (data?: any) => void, backdropDismiss: boolean = false, swipeToClose: boolean = false) {
+	async showModalAsync(component: any, componentProps?: { [key: string]: any }, onDismiss?: (data?: any) => void, backdropDismiss: boolean = false, swipeToClose: boolean = false) {
 		await this.hideLoadingAsync(async () => await this.hideModalAsync());
 		this._modal = {
 			component: await this.modalController.create({
@@ -682,7 +683,7 @@ export class AppFormsService {
 	 * @param data The data for the onDismiss/onNext handlers
 	 * @param onNext The handler to run when the modal dialog was dismissed
 	*/
-	public async hideModalAsync(data?: any, onNext?: (data?: any) => void) {
+	async hideModalAsync(data?: any, onNext?: (data?: any) => void) {
 		if (this._modal !== undefined) {
 			await this._modal.component.dismiss();
 			if (this._modal !== undefined && this._modal.onDismiss !== undefined) {
@@ -699,7 +700,7 @@ export class AppFormsService {
 	}
 
 	/** Shows the toast alert message */
-	public async showToastAsync(message: string, duration: number = 1000, showCloseButton: boolean = false, closeButtonText: string = "close", atBottom: boolean = false) {
+	async showToastAsync(message: string, duration: number = 1000, showCloseButton: boolean = false, closeButtonText: string = "close", atBottom: boolean = false) {
 		await this.hideToastAsync();
 		this._toast = await this.toastController.create({
 			animated: true,
@@ -712,7 +713,7 @@ export class AppFormsService {
 	}
 
 	/** Hides the toast alert message */
-	public async hideToastAsync(onNext?: () => void) {
+	async hideToastAsync(onNext?: () => void) {
 		if (this._toast !== undefined) {
 			await this._toast.dismiss();
 			this._toast = undefined;

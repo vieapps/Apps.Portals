@@ -30,7 +30,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	private _selectOptions: Array<string>;
 	private _ckEditorConfig: { [key: string]: any };
 
-	public showPassword = false;
+	showPassword = false;
 
 	/** The object that contains settings and data of this control */
 	@Input() control: AppFormsControl;
@@ -571,7 +571,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		this.changeDetector.detectChanges();
 	}
 
-	private lookup() {
+	lookup() {
 		if (this.control.Options.LookupOptions.ModalOptions.Component === undefined) {
 			this.appFormsSvc.showAlertAsync(undefined, "Lookup component is invalid");
 		}
@@ -653,6 +653,14 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			add: this.isSelector && this.control.Options.LookupOptions.SelectorOptions.OnAdd !== undefined ? () => this.control.Options.LookupOptions.SelectorOptions.OnAdd(this) : () => {},
 			delete: (values: Array<string>) => this.deleteValue(values)
 		};
+	}
+
+	get lookupSettings() {
+		return this.control.Extras["LookupSettings"] || {};
+	}
+
+	set lookupSettings(settings: { [key: string]: any }) {
+		this.control.Extras["LookupSettings"] = settings;
 	}
 
 	get isTextDisplayAsBoxControl() {

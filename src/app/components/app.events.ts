@@ -15,7 +15,7 @@ export class AppEvents {
 	}
 
 	/** Initializes the subject */
-	public static initialize() {
+	static initialize() {
 		this._subject = new Subject<{ event: string, args: any }>();
 		this._subject.subscribe(({ event, args }) => this.getHandlers(event).forEach(handler => {
 			try {
@@ -33,7 +33,7 @@ export class AppEvents {
 	  * @param handler The function to handler data when an event was raised
 	  * @param identity The string that presents identity of the handler for unregistering later
 	*/
-	public static on(event: string, handler: (info: { event: string, args: any }) => void, identity?: string) {
+	static on(event: string, handler: (info: { event: string, args: any }) => void, identity?: string) {
 		if (AppUtility.isNotEmpty(event) && handler !== undefined) {
 			this.getHandlers(event).push({
 				func: handler,
@@ -47,7 +47,7 @@ export class AppEvents {
 	  * @param event The string that presents the name of an event
 	  * @param identity The string that presents the identity of the handler for unregistering
 	*/
-	public static off(event: string, identity: string) {
+	static off(event: string, identity: string) {
 		if (AppUtility.isNotEmpty(event) && AppUtility.isNotEmpty(identity)) {
 			const handlers = this.getHandlers(event);
 			let index = handlers.findIndex(handler => AppUtility.isEquals(identity, handler.identity));
@@ -62,12 +62,12 @@ export class AppEvents {
 	  * @param event The string that presents the name of an event
 	  * @param args The JSON object that presents the arguments of an event
 	*/
-	public static broadcast(event: string, args?: any) {
+	static broadcast(event: string, args?: any) {
 		this._subject.next({ event, args });
 	}
 
 	/** Initializes the service of Electron for sending messages */
-	public static initializeElectronService(electronService: ElectronService) {
+	static initializeElectronService(electronService: ElectronService) {
 		if (this._electronService === undefined && electronService !== undefined) {
 			this._electronService = electronService;
 		}
@@ -78,7 +78,7 @@ export class AppEvents {
 	  * @param event The string that presents the name of an event
 	  * @param args The JSON object that presents the arguments of an event
 	*/
-	public static sendToElectron(event: string, args?: any) {
+	static sendToElectron(event: string, args?: any) {
 		if (this._electronService !== undefined) {
 			try {
 				this._electronService.ipcRenderer.send(event, AppUtility.clone(args || {}));
