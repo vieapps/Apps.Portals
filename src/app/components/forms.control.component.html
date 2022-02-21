@@ -398,16 +398,8 @@
 		[class]="css.label">{{ label }}</ion-label>
 </ion-item>
 
-<control-data-item *ngIf="visible && (isSelector || isCustomControl('data-selector'))" #elementRef
+<control-data-item *ngIf="visible && (isSelector || isCustomControl('data-selector') || isCustomControl('data-items'))" #elementRef
 	[formGroup]="formGroup"
-	[control]="control"
-	[items]="lookupDisplayValues"
-	[resources]="lookupResources"
-	[handlers]="lookupHandlers"
-	[settings]="lookupSettings"
-	[multiple]="lookupMultiple"></control-data-item>
-
-<control-data-item *ngIf="visible && isCustomControl('data-items')" #elementRef
 	[control]="control"
 	[items]="lookupDisplayValues"
 	[settings]="lookupSettings"

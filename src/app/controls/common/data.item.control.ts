@@ -3,6 +3,7 @@ import { HashSet } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { AppFormsControl, AppFormsLookupValue } from "@app/components/forms.objects";
 import { ConfigurationService } from "@app/services/configuration.service";
+import { AppFormsService } from "@app/components/forms.service";
 
 @Component({
 	selector: "control-data-item",
@@ -13,7 +14,8 @@ import { ConfigurationService } from "@app/services/configuration.service";
 export class DataItemControl implements OnInit, OnDestroy {
 
 	constructor(
-		private configSvc: ConfigurationService
+		private configSvc: ConfigurationService,
+		private appFormsSvc: AppFormsService
 	) {
 	}
 
@@ -36,6 +38,8 @@ export class DataItemControl implements OnInit, OnDestroy {
 	private _showDescription: boolean;
 	private _descriptionAtRight: boolean;
 
+	private _allowAdd: boolean;
+	private _allowDelete: boolean;
 	private _allowSelect: boolean;
 	private _allowClick: boolean;
 	private _icon: string;
@@ -57,12 +61,24 @@ export class DataItemControl implements OnInit, OnDestroy {
 		return this._descriptionAtRight;
 	}
 
+	get allowAdd() {
+		return this._allowAdd;
+	}
+
+	get allowDelete() {
+		return this._allowDelete;
+	}
+
 	get allowSelect() {
 		return this._allowSelect;
 	}
 
 	get allowClick() {
 		return this._allowClick;
+	}
+
+	get resources(): { [key: string]: any } {
+		return this.settings ? this.settings.resources || {} : {};
 	}
 
 	get icon() {
@@ -78,6 +94,8 @@ export class DataItemControl implements OnInit, OnDestroy {
 				? this.control.Extras["Settings"] || this.control.Extras["settings"] || {}
 				: {};
 
+		this._allowAdd = this.settings.allowAdd !== undefined ? AppUtility.isTrue(this.settings.allowAdd) : true;
+		this._allowDelete = this.settings.allowDelete !== undefined ? AppUtility.isTrue(this.settings.allowDelete) : true;
 		this._allowSelect = this.settings.allowSelect !== undefined ? AppUtility.isTrue(this.settings.allowSelect) : true;
 		this._allowClick = this.settings.allowClick !== undefined ? AppUtility.isTrue(this.settings.allowClick) : false;
 		this._icon = this.settings.icon;
@@ -114,6 +132,28 @@ export class DataItemControl implements OnInit, OnDestroy {
 		return this._selected.contains(value);
 	}
 
+	add() {
+		if (!!this.settings.handlers && typeof this.settings.handlers.onAdd === "function") {
+			this.settings.handlers.onAdd();
+		}
+	}
+
+	delete() {
+		if (this._selected.size > 0 && !!this.settings.handlers && typeof this.settings.handlers.onDelete === "function") {
+			this.appFormsSvc.showAlertAsync(
+				undefined,
+				undefined,
+				this.resources.confirm,
+				() => {
+					this.settings.handlers.onDelete(this._selected.toArray());
+					this._selected.clear();
+				},
+				this.resources.ok,
+				this.resources.cancel
+			);
+		}
+	}
+
 	select(event: any, value: string) {
 		if (event.detail.checked) {
 			if (!this.multiple) {
@@ -124,14 +164,14 @@ export class DataItemControl implements OnInit, OnDestroy {
 		else {
 			this._selected.remove(value);
 		}
-		if (typeof this.settings.onSelect === "function") {
-			this.settings.onSelect(value, event.detail.checked);
+		if (!!this.settings.handlers && typeof this.settings.handlers.onSelect === "function") {
+			this.settings.handlers.onSelect(value, event.detail.checked);
 		}
 	}
 
 	click(event: Event, value: string) {
-		if (typeof this.settings.onClick === "function") {
-			this.settings.onClick(event, value);
+		if (!!this.settings.handlers && typeof this.settings.handlers.onClick === "function") {
+			this.settings.handlers.onClick(event, value);
 		}
 	}
 

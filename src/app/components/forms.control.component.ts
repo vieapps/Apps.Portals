@@ -639,24 +639,19 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.lookupDisplayValues.length > 0 ? this.lookupDisplayValues[0].Label : undefined;
 	}
 
-	get lookupResources() {
-		return {
+	get lookupSettings() {
+		const settings: { [key: string]: any } = this.control.Extras["LookupSettings"] || {};
+		settings["handlers"] = {
+			onAdd: this.isSelector && this.control.Options.LookupOptions.SelectorOptions.OnAdd !== undefined ? () => this.control.Options.LookupOptions.SelectorOptions.OnAdd(this) : () => {},
+			onDelete: (values: Array<string>) => this.deleteValue(values)
+		};
+		settings["resources"] = {
 			header: this.control.Options.LookupOptions.SelectorOptions.HeaderText,
 			confirm: this.control.Options.LookupOptions.WarningOnDelete,
 			ok: this.control.Options.LookupOptions.SelectorOptions.OkText,
 			cancel: this.control.Options.LookupOptions.SelectorOptions.CancelText
 		};
-	}
-
-	get lookupHandlers() {
-		return {
-			add: this.isSelector && this.control.Options.LookupOptions.SelectorOptions.OnAdd !== undefined ? () => this.control.Options.LookupOptions.SelectorOptions.OnAdd(this) : () => {},
-			delete: (values: Array<string>) => this.deleteValue(values)
-		};
-	}
-
-	get lookupSettings() {
-		return this.control.Extras["LookupSettings"] || {};
+		return settings;
 	}
 
 	set lookupSettings(settings: { [key: string]: any }) {
