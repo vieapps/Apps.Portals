@@ -32,22 +32,16 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	showPassword = false;
 
-	/** The object that contains settings and data of this control */
 	@Input() control: AppFormsControl;
 
-	/** The form-group object that contains this control */
 	@Input() formGroup: FormGroup;
 
-	/** The index position of the form array object that contains this control */
 	@Input() formArrayIndex: number;
 
-	/** The color theme of the form ('dark' or 'light') */
 	@Input() theme: string;
 
-	/** The event handler to run when the captcha code of the form was refreshed */
 	@Output() refreshCaptcha = new EventEmitter<AppFormsControlComponent>();
 
-	/** The event handler to run when the form was focused into last control */
 	@Output() lastFocus = new EventEmitter<AppFormsControlComponent>();
 
 	@ViewChild("elementRef", { static: false }) private elementRef: any;
@@ -193,12 +187,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 						: false;
 	}
 
-	/** Gets the reference to the object that contains settings and data of the parent control */
 	get parentControl() {
 		return this.control.parent;
 	}
 
-	/** Gets the form control object (can be instance of AbstractControl, FormControl, FormGroup or FormArray) that assoiciates with this control */
 	get formControl() {
 		return this.formGroup.controls[this.control.Name];
 	}
@@ -337,7 +329,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.control.Options.Name;
 	}
 
-	/** Gets the value of this control */
 	get value() {
 		return this.isDatePickerControl || this.isTextDatePickerControl
 			? this.datetimeValue
@@ -560,12 +551,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this._completerInitialValue;
 	}
 
-	/** Gets the initial value of the completer */
 	get completerInitialValue() {
 		return this._completerInitialValue || this.completerGetInitialValue();
 	}
 
-	/** Sets the initial value of the completer */
 	set completerInitialValue(value: any) {
 		this._completerInitialValue = value;
 		this.changeDetector.detectChanges();
@@ -590,28 +579,23 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		}
 	}
 
-	/** Gets the state to lookup multiple items */
 	get lookupMultiple() {
 		return this.isLookupControl && this.control.Options.LookupOptions.Multiple;
 	}
 
-	/** Gets the values of this lookup control */
 	get lookupValues() {
 		const value = this.formControl.value;
 		return (this.lookupMultiple ? value as Array<string> : value !== undefined ? [value.toString()] : []) || [];
 	}
 
-	/** Sets the values of this lookup control */
 	set lookupValues(values: Array<string>) {
 		this.formControl.setValue(values);
 	}
 
-	/** Gets the values for displaying of this lookup control */
 	get lookupDisplayValues() {
 		return this.control.Extras["LookupDisplayValues"] || [];
 	}
 
-	/** Sets the values for displaying of this lookup control */
 	set lookupDisplayValues(values: Array<AppFormsLookupValue>) {
 		this.control.Extras["LookupDisplayValues"] = AppUtility.isArray(values, true)
 			? values.map(value => ({
@@ -634,7 +618,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 				: new Array<AppFormsLookupValue>();
 	}
 
-	/** Gets the single value for displaying of this lookup control */
 	get lookupDisplayValue() {
 		return this.lookupDisplayValues.length > 0 ? this.lookupDisplayValues[0].Label : undefined;
 	}
@@ -675,32 +658,26 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.isTextDisplayControl && this.type === "paragraph";
 	}
 
-	/** Sets the text for displaying of this text control */
 	set text(value: string) {
 		this.control.Extras["Text"] = value;
 	}
 
-	/** Gets the text for displaying of this text control */
 	get text() {
 		return this.control.Extras["Text"];
 	}
 
-	/** Gets the URI for displaying captcha image of this control */
 	get captchaURI() {
 		return this.control.captchaURI;
 	}
 
-	/** Sets the URI for displaying captcha image of this control */
 	set captchaURI(uri: string) {
 		this.control.captchaURI = uri;
 	}
 
-	/** Sets focus into this control */
 	focus() {
 		this.control.focus();
 	}
 
-	/** Sets focus into next control */
 	focusNext() {
 		this.appFormsSvc.focusNext(this.control, () => this.lastFocus.emit(this));
 	}
@@ -714,7 +691,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		this.refreshCaptcha.emit(this);
 	}
 
-	/** Sets the value of this control */
 	setValue(value: any, options?: Object, updateValueAndValidity: boolean = false) {
 		this.formControl.setValue(value, options);
 		if (updateValueAndValidity) {
@@ -722,7 +698,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		}
 	}
 
-	/** Patchs the value of this control */
 	patchValue(value: any, options?: Object, updateValueAndValidity: boolean = false) {
 		this.formControl.patchValue(value, options);
 		if (updateValueAndValidity) {
@@ -730,7 +705,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		}
 	}
 
-	/** Resets the value of this control */
 	resetValue(value?: any, options?: Object, updateValueAndValidity: boolean = false) {
 		this.formControl.reset(value, options);
 		if (updateValueAndValidity) {

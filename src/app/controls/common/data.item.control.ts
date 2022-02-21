@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from "@angu
 import { HashSet } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { AppFormsControl, AppFormsLookupValue } from "@app/components/forms.objects";
-import { ConfigurationService } from "@app/services/configuration.service";
 import { AppFormsService } from "@app/components/forms.service";
+import { ConfigurationService } from "@app/services/configuration.service";
 
 @Component({
 	selector: "control-data-item",
