@@ -151,9 +151,10 @@ export class PortalsRolesUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "UserIDs"));
 		control.Type = "Lookup";
 		control.Extras = {
-			Settings: {
+			LookupSettings: {
 				ShowImage: true,
-				ShowDescription: true, DescriptionAtRight: true
+				ShowDescription: true,
+				DescriptionAtRight: true
 			},
 			LookupDisplayValues: this.users
 		};
@@ -175,7 +176,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 			},
 			SelectorOptions: {
 				HeaderText: "{{portals.roles.controls.UserIDs.label}}",
-				OnAdd: async formControl => await this.appFormsSvc.showModalAsync(UsersSelectorModalPage, { multiple: true }, async selected => {
+				OnAdd: formControl => this.appFormsSvc.showModalAsync(UsersSelectorModalPage, { multiple: true }, async selected => {
 					if (AppUtility.isArray(selected, true)) {
 						const users = formControl.lookupValues;
 						(selected as Array<string>).except(users).forEach(id => {
