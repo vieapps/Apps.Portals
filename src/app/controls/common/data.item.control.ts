@@ -49,6 +49,16 @@ export class DataItemControl implements OnInit, OnDestroy {
 		return this.configSvc.color;
 	}
 
+	get resources(): { [key: string]: any } {
+		return this.settings ? this.settings.resources || {} : {};
+	}
+
+	get disabled() {
+		return this.control && this.control.Options.Disabled
+			? true
+			: undefined;
+	}
+
 	get showImage() {
 		return this._showImage;
 	}
@@ -75,10 +85,6 @@ export class DataItemControl implements OnInit, OnDestroy {
 
 	get allowClick() {
 		return this._allowClick;
-	}
-
-	get resources(): { [key: string]: any } {
-		return this.settings ? this.settings.resources || {} : {};
 	}
 
 	get icon() {
@@ -117,6 +123,7 @@ export class DataItemControl implements OnInit, OnDestroy {
 			? !!(this.settings.DescriptionAtRight || this.settings.descriptionAtRight)
 			: false;
 
+		this.control.Options.Disabled = true;
 		this.init.emit(this);
 	}
 
@@ -132,14 +139,16 @@ export class DataItemControl implements OnInit, OnDestroy {
 		return this._selected.contains(value);
 	}
 
-	add() {
+	add(event: Event) {
+		event.stopPropagation();
 		if (!!this.settings.handlers && typeof this.settings.handlers.onAdd === "function") {
 			this.settings.handlers.onAdd();
 		}
 	}
 
-	delete() {
-		if (this._selected.size > 0 && !!this.settings.handlers && typeof this.settings.handlers.onDelete === "function") {
+	delete(event: Event) {
+		event.stopPropagation();
+		if (!!this.settings.handlers && typeof this.settings.handlers.onDelete === "function") {
 			this.appFormsSvc.showAlertAsync(
 				undefined,
 				undefined,
@@ -155,6 +164,7 @@ export class DataItemControl implements OnInit, OnDestroy {
 	}
 
 	select(event: any, value: string) {
+		event.stopPropagation();
 		if (event.detail.checked) {
 			if (!this.multiple) {
 				this._selected.clear();
@@ -167,9 +177,11 @@ export class DataItemControl implements OnInit, OnDestroy {
 		if (!!this.settings.handlers && typeof this.settings.handlers.onSelect === "function") {
 			this.settings.handlers.onSelect(value, event.detail.checked);
 		}
+		this.control.Options.Disabled = this._selected.size < 1;
 	}
 
 	click(event: Event, value: string) {
+		event.stopPropagation();
 		if (!!this.settings.handlers && typeof this.settings.handlers.onClick === "function") {
 			this.settings.handlers.onClick(event, value);
 		}

@@ -1,14 +1,14 @@
 <ion-list>
-	<ion-list-header [color]="color">
+	<ion-list-header *ngIf="resources.header || allowAdd || allowDelete" [color]="color">
 		<ion-label>
 			<span *ngIf="resources.header">
 				{{ resources.header }}
 			</span>
 			<ion-buttons *ngIf="allowAdd || allowDelete" class="ion-float-end">
-				<ion-button *ngIf="allowAdd" fill="clear" color="medium" tabindex="-1" (click)="add()">
+				<ion-button *ngIf="allowAdd" fill="clear" color="medium" tabindex="-1" (click)="add($event)">
 					<ion-icon name="add" slot="icon-only"></ion-icon>
 				</ion-button>
-				<ion-button *ngIf="allowDelete" fill="clear" color="medium" tabindex="-1" [disabled]="disabled" (click)="delete()">
+				<ion-button *ngIf="allowDelete" fill="clear" color="medium" tabindex="-1" [disabled]="disabled" (click)="delete($event)">
 					<ion-icon name="close" slot="icon-only"></ion-icon>
 				</ion-button>
 			</ion-buttons>
