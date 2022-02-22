@@ -24,6 +24,7 @@ export class Item extends CmsBaseModel {
 	Tags = undefined as string;
 	Status = undefined as string;
 	AllowComments = false;
+	InlineScripts = undefined as string;
 	Alias = undefined as string;
 	Created = undefined as Date;
 	CreatedID = undefined as string;

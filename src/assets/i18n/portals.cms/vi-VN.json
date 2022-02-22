@@ -197,6 +197,11 @@
 						"placeholder": "",
 						"description": ""
 					},
+					"InlineScripts": {
+						"label": "Mã scripts trực tiếp",
+						"placeholder": "$(function(){ })",
+						"description": "Đoạn mã script nhúng trực tiếp được sử dụng cho những tình huống đặc biệt cần đến mã script riênng cho nội dunng này"
+					},
 					"Title": {
 						"label": "Tiêu đề",
 						"placeholder": "",
