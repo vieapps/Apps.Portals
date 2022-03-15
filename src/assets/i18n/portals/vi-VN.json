@@ -851,11 +851,11 @@
 					"set-null-all": "Chuyển về gốc"
 				},
 				"seo": {
-					"PortletAndDesktopAndSite": "Porlet + Desktop + Site",
+					"PortletAndDesktopAndSite": "Portlet + Desktop + Site",
 					"SiteAndDesktopAndPortlet": "Site + Desktop + Portlet",
-					"PortletAndDesktop": "Porlet + Desktop",
+					"PortletAndDesktop": "Portlet + Desktop",
 					"DesktopAndPortlet": "Desktop + Portlet",
-					"PortletAndSite": "Porlet + Site",
+					"PortletAndSite": "Portlet + Site",
 					"SiteAndPortlet": "Site + Portlet",
 					"DesktopAndSite": "Desktop + Site",
 					"SiteAndDesktop": "Site + Desktop",

@@ -164,7 +164,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.desktops.title.search"), "search", () => this.openSearch(false)),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcel()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcel()),
-				this.appFormsSvc.getActionSheetButton(this.labels.cache, "dice", () => this.clearhAll()),
+				this.appFormsSvc.getActionSheetButton(this.labels.cache, "dice", () => this.clearhAllCache()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("common.buttons.refresh"), "refresh", () => this.refreshAll())
 			];
 
@@ -397,12 +397,12 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		)) : () => {});
 	}
 
-	clearhAll() {
+	clearhAllCache() {
 		this.doClearCache(this.parentDesktop !== undefined ? [this.parentDesktop].merge(this.parentDesktop.getChildren(true)) : Desktop.instances.toArray(desktop => desktop.SystemID === this.organization.ID), 0, false, () => console.log("Cache of all the desktops were clean"));
 	}
 
 	clearCache(event: Event, desktop: Desktop) {
-		this.do(() => this.doClearCache([desktop].merge(desktop.getChildren(true)), 0, true), event);
+		this.do(desktop !== undefined ? () => this.doClearCache([desktop].merge(desktop.getChildren(true)), 0, true) : () => {}, event);
 	}
 
 	exportToExcel() {
