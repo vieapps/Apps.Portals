@@ -77,10 +77,10 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	get activeModule() {
-		if (Module.active === undefined) {
-			const systemID = this.activeOrganization !== undefined
-				? this.activeOrganization.ID
-				: undefined;
+		const systemID = this.activeOrganization !== undefined
+			? this.activeOrganization.ID
+			: undefined;
+		if (Module.active === undefined || Module.active.SystemID !== systemID) {
 			const moduleID = systemID !== undefined
 				? this.activeModules[systemID]
 				: undefined;
@@ -3024,24 +3024,44 @@ export class PortalsCoreService extends BaseService {
 		};
 	}
 
-	async clearCacheAsync(objectName: string, objectID: string, useXHR: boolean = false) {
-		await this.appFormsSvc.showAlertAsync(
-			"Cache",
-			await this.configSvc.getResourceAsync("portals.common.cache.confirm"),
-			undefined,
-			async () => {
-				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.common.cache.title"));
-				await this.readAsync(
-					this.getPath("caches", objectName, "object-id=" + objectID),
-					async _ => await this.appFormsSvc.showAlertAsync("Cache", await this.configSvc.getResourceAsync("portals.common.cache.done")),
-					async error => await this.appFormsSvc.showErrorAsync(error),
-					undefined,
-					useXHR
-				);
-			},
-			await this.configSvc.getResourceAsync("common.buttons.ok"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
+	async clearCacheAsync(objectName: string, objectID: string, onSuccess?: () => void, requireUserInteraction: boolean = true, useXHR: boolean = false) {
+		if (requireUserInteraction) {
+			await this.appFormsSvc.showAlertAsync(
+				"Cache",
+				await this.configSvc.getResourceAsync("portals.common.cache.confirm"),
+				undefined,
+				async () => {
+					await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.common.cache.title"));
+					await this.readAsync(
+						this.getPath("caches", objectName, "object-id=" + objectID),
+						async _ => {
+							await this.appFormsSvc.showAlertAsync("Cache", await this.configSvc.getResourceAsync("portals.common.cache.done"));
+							if (onSuccess !== undefined) {
+								onSuccess();
+							}
+						},
+						async error => await this.appFormsSvc.showErrorAsync(error),
+						undefined,
+						useXHR
+					);
+				},
+				await this.configSvc.getResourceAsync("common.buttons.ok"),
+				await this.configSvc.getResourceAsync("common.buttons.cancel")
+			);
+		}
+		else {
+			await this.readAsync(
+				this.getPath("caches", objectName, "object-id=" + objectID),
+				_ => {
+					if (onSuccess !== undefined) {
+						onSuccess();
+					}
+				},
+				undefined,
+				undefined,
+				useXHR
+			);
+		}
 	}
 
 	async approveAsync(entityInfo: string, id: string, status: string, title: string, message: string, onNext?: () => void) {
