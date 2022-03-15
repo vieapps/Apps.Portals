@@ -68,7 +68,7 @@ export class Desktop extends CoreBaseModel implements NestedObject {
 	}
 
 	/** Gets by identity */
-	static get(id: string) {
+	static get(id: string): Desktop {
 		return AppUtility.isNotEmpty(id)
 			? this.instances.get(id)
 			: undefined;
@@ -106,7 +106,7 @@ export class Desktop extends CoreBaseModel implements NestedObject {
 	}
 
 	get Children() {
-		return (AppUtility.isArray(this.childrenIDs, true) ? this.childrenIDs.map(id => Desktop.get(id)) : Desktop.instances.toArray(desktop => desktop.ParentID === this.ID)).sortBy("Title");
+		return this.getChildren().sortBy("Title");
 	}
 
 	get FullTitle(): string {
@@ -130,6 +130,16 @@ export class Desktop extends CoreBaseModel implements NestedObject {
 
 	get listURI() {
 		return this.getRouterURI({ ParentID: this.ID }).replace("/update/", "/list/");
+	}
+
+	getChildren(getAll: boolean = false) {
+		const children = AppUtility.isArray(this.childrenIDs, true)
+			? this.childrenIDs.map(id => Desktop.get(id)).filter(desktop => desktop !== undefined)
+			: Desktop.instances.toArray(desktop => desktop.ParentID === this.ID);
+		if (getAll) {
+			children.map(desktop => desktop).forEach(desktop => children.merge(desktop.getChildren(true)));
+		}
+		return children;
 	}
 
 }
