@@ -981,7 +981,10 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				Content.update(data);
-				AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
+				AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: data.CategoryID });
+				if (AppUtility.isArray(data.OtherCategories)) {
+					(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
+				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -994,17 +997,17 @@ export class PortalsCmsService extends BaseService {
 		return Content.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
-					this.getPath("cms.content", id),
-					data => {
-						Content.update(data);
-						if (onSuccess !== undefined) {
-							onSuccess(data);
-						}
-					},
-					error => this.processError("Error occurred while getting a content", error, onError),
-					undefined,
-					useXHR
-				);
+				this.getPath("cms.content", id),
+				data => {
+					Content.update(data);
+					if (onSuccess !== undefined) {
+						onSuccess(data);
+					}
+				},
+				error => this.processError("Error occurred while getting a content", error, onError),
+				undefined,
+				useXHR
+			);
 	}
 
 	updateContentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
@@ -1013,7 +1016,10 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				Content.update(data);
-				AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
+				AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: data.CategoryID });
+				if (AppUtility.isArray(data.OtherCategories)) {
+					(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
+				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1027,7 +1033,10 @@ export class PortalsCmsService extends BaseService {
 			this.getPath("cms.content", id),
 			data => {
 				Content.instances.remove(data.ID);
-				AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
+				AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: data.CategoryID });
+				if (AppUtility.isArray(data.OtherCategories)) {
+					(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
+				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
