@@ -148,7 +148,14 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "AlwaysUseHTTPs"));
-		control.Options.Type = "toggle";
+		if (control !== undefined) {
+			control.Options.Type = "toggle";
+		}
+
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "AlwaysReturnHTTPs"));
+		if (control !== undefined) {
+			control.Options.Type = "toggle";
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
 		this.portalsCoreSvc.prepareApprovalStatusControl(control);
@@ -395,7 +402,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 							this.processing = false;
 							await Promise.all([
 								this.trackAsync(this.title, "Update"),
-								this.appFormsSvc.showErrorAsync(error)
+								this.showErrorAsync(error)
 							]);
 						}
 					);
@@ -415,7 +422,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 							this.processing = false;
 							await Promise.all([
 								this.trackAsync(this.title),
-								this.appFormsSvc.showErrorAsync(error)
+								this.showErrorAsync(error)
 							]);
 						}
 					);

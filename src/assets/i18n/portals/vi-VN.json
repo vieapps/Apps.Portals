@@ -582,6 +582,11 @@
 					"placeholder": "",
 					"description": ""
 				},
+				"AlwaysReturnHTTPs": {
+					"label": "Luôn trả về các liên kết sử dụng các kết nối an toàn HTTPS (sử dụng khi SSL ở proxy/load banancers)",
+					"placeholder": "",
+					"description": ""
+				},
 				"Language": {
 					"label": "Ngôn ngữ hiển thị",
 					"placeholder": "",

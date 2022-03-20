@@ -548,7 +548,7 @@ export class PortalsCoreService extends BaseService {
 		const organization = object.organization;
 		const site = organization !== undefined ? Site.instances.first(s => s.SystemID === organization.ID) : undefined;
 		const url = site !== undefined
-			? `http${site.AlwaysUseHTTPs ? "s" : ""}://${site.SubDomain.replace("*", "www")}.${site.PrimaryDomain}/`
+			? `http${site.AlwaysUseHTTPs || site.AlwaysReturnHTTPs ? "s" : ""}://${site.SubDomain.replace("*", "www")}.${site.PrimaryDomain}/`
 			: this.configSvc.appConfig.URIs.portals;
 		return `${url}_permanentlink/${object.RepositoryEntityID}/${object.ID}`;
 	}
