@@ -8,3 +8,4 @@ export * from "@app/models/portals.core.expression";
 export * from "@app/models/portals.core.site";
 export * from "@app/models/portals.core.desktop";
 export * from "@app/models/portals.core.portlet";
+export * from "@app/models/portals.core.task";

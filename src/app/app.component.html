@@ -35,7 +35,7 @@
 
 			<ion-content [color]="color">
 
-				<ion-list class="ion-margin-vertical" lines="full">
+				<ion-list *ngIf="sidebar.State.Active !== 'preferences'" class="ion-margin-vertical" lines="full">
 
 					<ion-menu-toggle [hidden]="!isSidebarTopMenuShown" auto-hide="false">
 						<ion-item *ngFor="let item of sidebar.TopMenu; trackBy: trackSidebarItem" [color]="color" (click)="item.OnClick(item, sidebar, $event)" class="ion-activatable" detail="false">

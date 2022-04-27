@@ -144,55 +144,53 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 					Description: "{{portals.organizations.controls.Instructions.description}}"
 				},
 				SubControls: {
-					Controls: Organization.instructionElements.map(type => {
-						return {
-							Name: type,
-							Options: {
-								Label: `{{portals.organizations.controls.Instructions.${type}.label}}`
-							},
-							SubControls: {
-								Controls: [
-									{
-										Name: "Language",
-										Type: "Select",
-										Options: {
-											Label: "{{portals.organizations.controls.Instructions.language}}",
-											SelectOptions: {
-												Values: this.configSvc.appConfig.languages,
-												Interface: "popover"
-											}
+					Controls: Organization.instructionElements.map(type => ({
+						Name: type,
+						Options: {
+							Label: `{{portals.organizations.controls.Instructions.${type}.label}}`
+						},
+						SubControls: {
+							Controls: [
+								{
+									Name: "Language",
+									Type: "Select",
+									Options: {
+										Label: "{{portals.organizations.controls.Instructions.language}}",
+										SelectOptions: {
+											Values: this.configSvc.appConfig.languages,
+											Interface: "popover"
 										}
-									},
-									{
-										Name: "Subject",
-										Options: {
-											Label: `{{portals.organizations.controls.Instructions.${type}.Subject}}`,
-											MaxLength: 250
-										}
-									},
-									{
-										Name: "Body",
-										Type: "TextArea",
-										Options: {
-											Label: `{{portals.organizations.controls.Instructions.${type}.Body}}`,
-											Rows: 7,
-											Icon: {
-												Name: "color-wand",
-												OnClick: async (_, formControl) => {
-													const mode = (formControl as AppFormsControlComponent).parentControl.Name.toLowerCase();
-													const controls = (formControl as AppFormsControlComponent).formGroup.controls;
-													await this.configSvc.getInstructionsAsync("users", controls.Language.value, data => {
-														controls.Subject.setValue(data[mode].subject);
-														controls.Body.setValue(data[mode].body);
-													});
-												}
+									}
+								},
+								{
+									Name: "Subject",
+									Options: {
+										Label: `{{portals.organizations.controls.Instructions.${type}.Subject}}`,
+										MaxLength: 250
+									}
+								},
+								{
+									Name: "Body",
+									Type: "TextArea",
+									Options: {
+										Label: `{{portals.organizations.controls.Instructions.${type}.Body}}`,
+										Rows: 7,
+										Icon: {
+											Name: "color-wand",
+											OnClick: async (_, formControl) => {
+												const mode = (formControl as AppFormsControlComponent).parentControl.Name.toLowerCase();
+												const controls = (formControl as AppFormsControlComponent).formGroup.controls;
+												await this.configSvc.getInstructionsAsync("users", controls.Language.value, data => {
+													controls.Subject.setValue(data[mode].subject);
+													controls.Body.setValue(data[mode].body);
+												});
 											}
 										}
 									}
-								]
-							}
-						};
-					})
+								}
+							]
+						}
+					}))
 				}
 			},
 			{
@@ -528,9 +526,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		control.Options.Type = "toggle";
 
 		control = formConfig.find(ctrl => ctrl.Name === "Theme");
-		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => {
-			return { Value: theme.name, Label: theme.name };
-		});
+		control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getThemesAsync()).map(theme => ({ Value: theme.name, Label: theme.name }));
 
 		const homeDesktopCtrl = formConfig.find(ctrl => ctrl.Name === "HomeDesktopID");
 		const searchDesktopCtrl = formConfig.find(ctrl => ctrl.Name === "SearchDesktopID");

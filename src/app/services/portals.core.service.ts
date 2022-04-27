@@ -20,7 +20,7 @@ import { FilesService, FileOptions } from "@app/services/files.service";
 import { AttachmentInfo } from "@app/models/base";
 import { Account } from "@app/models/account";
 import { PortalBase as BaseModel, NotificationSettings, EmailNotificationSettings, WebHookNotificationSettings, EmailSettings, WebHookSettings } from "@app/models/portals.base";
-import { Organization, Role, Module, ContentType, Expression, Site, Desktop, Portlet } from "@app/models/portals.core.all";
+import { Organization, Role, Module, ContentType, Expression, Site, Desktop, Portlet, SchedulingTask } from "@app/models/portals.core.all";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
 @Injectable()
@@ -140,6 +140,12 @@ export class PortalsCoreService extends BaseService {
 					case "Core.Expression":
 						this.processExpressionUpdateMessage(message);
 						break;
+					case "Task":
+					case "SchedulingTask":
+					case "Core.Task":
+					case "Core.SchedulingTask":
+						this.processSchedulingTaskUpdateMessage(message);
+						break;
 				}
 			}
 		});
@@ -201,8 +207,13 @@ export class PortalsCoreService extends BaseService {
 		if (Organization.active === undefined) {
 			await this.getActiveOrganizationAsync(undefined, true);
 		}
-		if (Organization.active !== undefined && Organization.active.modules.length < 1) {
-			await this.getActiveOrganizationAsync(undefined, true);
+		else {
+			if (Organization.active.modules.length < 1) {
+				await this.getActiveOrganizationAsync(undefined, true);
+			}
+			else {
+				await this.fetchSchedulingTasksAsync();
+			}
 		}
 		if (this.configSvc.appConfig.services.active.service === this.name) {
 			this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
@@ -327,6 +338,9 @@ export class PortalsCoreService extends BaseService {
 					AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
 				}
 			}
+		}
+		if (Organization.active !== undefined) {
+			this.fetchSchedulingTasksAsync();
 		}
 		if (onNext !== undefined) {
 			onNext();
@@ -1030,7 +1044,7 @@ export class PortalsCoreService extends BaseService {
 				Name: "TestEmailSettings",
 				Label: "{{portals.common.controls.emails.test.label}}",
 				OnClick: (event, formControl) => {
-					console.warn("Test email settings", event, formControl);
+					console.warn("Test email settings", event, formControl.parent.parent);
 				},
 				Options: {
 					Fill: "clear",
@@ -1298,6 +1312,12 @@ export class PortalsCoreService extends BaseService {
 						Link: "/logs/services",
 						Direction: "root",
 						Icon: { Name: "file-tray-full", Color: "medium", Slot: "start" }
+					},
+					{
+						Title: "{{portals.sidebar.tasks}}",
+						Link: this.getRouterLink(undefined, "list", "all", "task", "core"),
+						Direction: "root",
+						Icon: { Name: "timer", Color: "medium", Slot: "start" }
 					},
 					{
 						Title: "{{portals.sidebar.organizations}}",
@@ -2807,6 +2827,182 @@ export class PortalsCoreService extends BaseService {
 
 		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
 			AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		}
+	}
+
+	get taskCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const task = data !== undefined
+				? data instanceof SchedulingTask
+					? data as SchedulingTask
+					: SchedulingTask.deserialize(data)
+				: undefined;
+			return task !== undefined
+				? { title: task.Title, description: task.Description, originalObject: task }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(this.getSearchingPath("task", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => SchedulingTask.contains(obj.ID) ? convertToCompleterItem(SchedulingTask.get(obj.ID)) : convertToCompleterItem(SchedulingTask.update(SchedulingTask.deserialize(obj)))),
+			convertToCompleterItem
+		);
+	}
+
+	searchSchedulingTasks(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.search(
+			this.getSearchingPath("task", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!SchedulingTask.contains(obj.ID)) {
+							SchedulingTask.update(obj);
+						}
+					});
+				}
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while searching tasks", error, onError)
+		);
+	}
+
+	searchSchedulingTasksAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
+		return this.searchAsync(
+			this.getSearchingPath("task", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+					(data.Objects as Array<any>).forEach(obj => {
+						if (!SchedulingTask.contains(obj.ID)) {
+							SchedulingTask.update(obj);
+						}
+					});
+				}
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while searching tasks", error, onError),
+			dontProcessPagination,
+			headers,
+			useXHR
+		);
+	}
+
+	createSchedulingTaskAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
+			this.getPath("task"),
+			body,
+			data => {
+				SchedulingTask.update(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while creating new a task", error, onError)
+		);
+	}
+
+	getSchedulingTask(id: string) {
+		const task = SchedulingTask.get(id);
+		if (task === undefined && AppUtility.isNotEmpty(id)) {
+			this.getSchedulingTaskAsync(id);
+		}
+		return task;
+	}
+
+	async getSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return SchedulingTask.contains(id)
+			? AppUtility.invoke(onSuccess)
+			: this.readAsync(
+				this.getPath("task", id),
+				data => {
+					SchedulingTask.update(data);
+					if (onSuccess !== undefined) {
+						onSuccess(data);
+					}
+				},
+				error => this.processError("Error occurred while getting a task", error, onError),
+				undefined,
+				useXHR
+			);
+	}
+
+	updateSchedulingTaskAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
+			this.getPath("task", body.ID),
+			body,
+			data => {
+				SchedulingTask.update(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while updating a task", error, onError)
+		);
+	}
+
+	deleteSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
+			this.getPath("task", id),
+			data => {
+				SchedulingTask.instances.remove(data.ID);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while deleting a task", error, onError)
+		);
+	}
+
+	async fetchSchedulingTasksAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return this.readAsync(
+			this.getPath("task", "fetch"),
+			data => {
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while getting a task", error, onError),
+			{ "x-system-id": this.activeOrganization.ID },
+			useXHR
+		);
+	}
+
+	async runSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return this.readAsync(
+			this.getPath("task", "run", "x-object-id=" + id),
+			data => {
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while running a task", error, onError),
+			{ "x-system-id": this.activeOrganization.ID },
+			useXHR
+		);
+	}
+
+	private processSchedulingTaskUpdateMessage(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				SchedulingTask.update(message.Data);
+				break;
+
+			case "Delete":
+				SchedulingTask.instances.remove(message.Data.ID);
+				break;
+
+			default:
+				this.showLog("Got an update message of a task", message);
+				break;
+		}
+
+		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+			AppEvents.broadcast(this.name, { Object: "SchedulingTask", Type: `${message.Type.Event}d`, ID: message.Data.ID });
 		}
 	}
 

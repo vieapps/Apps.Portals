@@ -8,6 +8,7 @@
 		},
 		"sidebar": {
 			"logs": "Logs hệ thống",
+			"tasks": "Nhiệm vụ được lập lịch",
 			"organizations": "Đơn vị - Tổ chức",
 			"sites": "Site - Điểm truy cập",
 			"roles": "Vai trò sử dụng",
@@ -583,7 +584,7 @@
 					"description": ""
 				},
 				"AlwaysReturnHTTPs": {
-					"label": "Luôn trả về các liên kết sử dụng các kết nối an toàn HTTPS (sử dụng khi SSL ở proxy/load banancers)",
+					"label": "Luôn trả về các liên kết sử dụng các kết nối an toàn HTTPS (sử dụng khi SSL ở proxy/load balancers)",
 					"placeholder": "",
 					"description": ""
 				},
@@ -1416,6 +1417,97 @@
 					"delete": "Xoá biểu thức truy vấn",
 					"remove": "Đồng ý xoá",
 					"edit": "Cập nhật cấp cao"
+				}
+			}
+		},
+		"tasks": {
+			"title": {
+				"search": "Tìm kiếm nhiệm vụ",
+				"list": "Danh sách nhiệm vụ {{info}}",
+				"create": "Tạo mới nhiệm vụ",
+				"update": "Cập nhật nhiệm vụ",
+				"run": "Thực thi nhiệm vụ"
+			},
+			"controls": {
+				"Organization": "Của đơn vị - tổ chức",
+				"Title": {
+					"label": "Tên nhiệm vụ",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Diễn giải",
+					"placeholder": "",
+					"description": ""
+				},
+				"EntityInfo": {
+					"label": "Kiểu dữ liệu nghiệp vụ",
+					"placeholder": "",
+					"description": ""
+				},
+				"ObjectID": {
+					"label": "Mã định danh của đối tượng trong nhiệm vụ",
+					"placeholder": "",
+					"description": "Chỉ định mã định danh của đối tượng trong nhiệm vụ"
+				},
+				"Time": {
+					"label": "Thời gian thực thi",
+					"placeholder": "",
+					"description": ""
+				},
+				"UserID": {
+					"label": "Mã định danh của người dùng thực thi nhiệm vụ",
+					"placeholder": "",
+					"description": "Chỉ định mã định danh của người dùng thực thi nhiệm vụ"
+				},
+				"SchedulingType": {
+					"label": "Kiểu nhiệm vụ",
+					"placeholder": "",
+					"description": ""
+				},
+				"RecurringType": {
+					"label": "Lặp lại việc thực thi nhiệm vụ theo",
+					"placeholder": "",
+					"description": ""
+				},
+				"RecurringUnit": {
+					"label": "Khoảng thời gian chỉ định để thực thi lại nhiệm vụ",
+					"placeholder": "",
+					"description": ""
+				},
+				"Status": {
+					"label": "Trạng thái",
+					"placeholder": "",
+					"description": ""
+				},
+				"Data": {
+					"label": "Dữ liệu sử dụng để thực thi nhiệm vụ",
+					"placeholder": "",
+					"description": "Dữ liệu dạng JSON sử dụng để thực thi nhiệm vụ"
+				}
+			},
+			"update": {
+				"segments": {
+					"basic": "Thông tin cơ bản",
+					"privileges": "Quyền truy cập",
+					"notifications": "Thông báo",
+					"emails": "Mã theo dõi & Emails"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo nhiệm vụ?",
+						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của nhiệm vụ?",
+						"delete": "Chắc chắn muốn xoá bỏ nhiệm vụ và các thông tin liên quan?"
+					},
+					"success": {
+						"new": "Đã khởi tạo nhiệm vụ thành công",
+						"update": "Đã cập nhật các thay đổi của nhiệm vụ thành công",
+						"delete": "Đã đưa nhiệm vụ và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
+					}
+				},
+				"buttons": {
+					"delete": "Xoá nhiệm vụ",
+					"remove": "Đồng ý xoá"
 				}
 			}
 		}

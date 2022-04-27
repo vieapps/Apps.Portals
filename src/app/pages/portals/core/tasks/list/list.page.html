@@ -1,0 +1,39 @@
+<ion-header>
+	<ion-toolbar [color]="color">
+		<ion-buttons slot="start">
+			<ion-menu-button></ion-menu-button>
+		</ion-buttons>
+		<ion-title>
+			{{ title.page }}
+		</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content [color]="color">
+	<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="create()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+	<ion-list class="ion-padding-end">
+		<ion-item *ngFor="let task of tasks; trackBy: track" [color]="color" (click)="open($event, task)" class="ion-activatable" detail="false">
+			<ion-buttons slot="end">
+				<ion-button fill="clear" [color]="task.Status === 'Awaiting' ? 'secondary' : 'medium'" [title]="labels.run" (click)="run($event, task)">
+					<ion-icon name="bicycle" slot="icon-only"></ion-icon>
+				</ion-button>
+				<ion-button fill="clear" color="primary" [title]="labels.open" (click)="open($event, task)">
+					<ion-icon name="create" slot="icon-only"></ion-icon>
+				</ion-button>
+			</ion-buttons>
+			<ion-label>
+				<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
+					{{ task.Time | time:locale }}
+				</span>
+				<span [class]="'title ' + task.Status">
+					{{ task.Title }}
+					<ion-icon name="radio" slot="icon-only"></ion-icon>
+				</span>
+			</ion-label>
+		</ion-item>
+	</ion-list>
+</ion-content>

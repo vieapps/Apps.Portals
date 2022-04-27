@@ -35,6 +35,10 @@ export const routes: Routes = [
 	{
 		path: "expressions",
 		loadChildren: "@app/pages/portals/core/expressions/expressions.module#PortalsExpressionsModule"
+	},
+	{
+		path: "tasks",
+		loadChildren: "@app/pages/portals/core/tasks/tasks.module#PortalsTasksModule"
 	}
 ];
 
