@@ -185,6 +185,15 @@ export class AppUtility {
 		return chars;
 	}
 
+	/** Gets elapsed time */
+	static getElapsedTime(start: Date, end?: Date) {
+		const miliseconds = (end || new Date()).getTime() - start.getTime();
+		const seconds = Math.round(miliseconds / 1000);
+		return seconds > 0
+			? `${seconds} second(s) and ${miliseconds - (seconds * 1000)} miliseconds`
+			: miliseconds > 0 ? `${miliseconds} miliseconds` : "1 nanosecond";
+	}
+
 	/** Gets an URI */
 	static getURI(info: { url: string, params: { [key: string]: any } }, alternativeURL?: string) {
 		if (info === undefined) {
