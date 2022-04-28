@@ -1043,8 +1043,51 @@ export class PortalsCoreService extends BaseService {
 			{
 				Name: "TestEmailSettings",
 				Label: "{{portals.common.controls.emails.test.label}}",
-				OnClick: (event, formControl) => {
-					console.warn("Test email settings", event, formControl.parent.parent);
+				OnClick: async (event, formControl) => {
+					event.stopPropagation();
+					const email = formControl.parent.parent.value;
+					if (email.Smtp !== undefined && AppUtility.isNotEmpty(email.Smtp.Host)) {
+						const button = await this.appFormsSvc.getResourceAsync("portals.common.controls.emails.test.button");
+						await this.appFormsSvc.showAlertAsync(
+							button,
+							undefined,
+							undefined,
+							async data => {
+								const appInfo = this.configSvc.appConfig.app;
+								email["To"] = data.To;
+								email["Subject"] = AppUtility.isNotEmpty(data.Subject) ? data.Subject : await this.appFormsSvc.getResourceAsync("portals.common.controls.emails.test.subject.default", { info: this.activeOrganization.Alias + " @ " + appInfo.name });
+								email["Body"] = email.Subject + `<br/>App name: ${appInfo.name}<br/>App version: ${appInfo.version}<br/>App frameworks: ${appInfo.frameworks}`;
+								if (AppUtility.isNotEmpty(email.To)) {
+									await this.appFormsSvc.showLoadingAsync(button);
+									await this.sendRequestAsync({
+										ServiceName: "email",
+										ObjectName: "test",
+										Verb: "POST",
+										Body: AppUtility.stringify(email)
+									},
+									async _ => await this.appFormsSvc.showAlertAsync(button, await this.appFormsSvc.getResourceAsync("portals.common.controls.emails.test.messages.success", { email: email.To })),
+									async error => await this.appFormsSvc.showErrorAsync(AppUtility.parseError(error), await this.appFormsSvc.getResourceAsync("portals.common.controls.emails.test.messages.error")),
+									true);
+								}
+							},
+							button,
+							await this.appFormsSvc.getResourceAsync("common.buttons.cancel"),
+							[
+								{
+									name: "To",
+									type: "email",
+									value: undefined,
+									placeholder: await this.appFormsSvc.getResourceAsync("portals.common.controls.emails.test.to")
+								},
+								{
+									name: "Subject",
+									type: "text",
+									value: undefined,
+									placeholder: await this.appFormsSvc.getResourceAsync("portals.common.controls.emails.test.subject.placeholder")
+								}
+							]
+						);
+					}
 				},
 				Options: {
 					Fill: "clear",
