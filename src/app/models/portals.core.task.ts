@@ -1,16 +1,27 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
+import { Module } from "@app/models/portals.core.module";
+import { ContentType } from "@app/models/portals.core.content.type";
 
 export class SchedulingTask extends CoreBaseModel {
 
 	constructor(
-		systemID?: string,
-		title?: string
+		source?: any,
+		onCompleted?: (task: SchedulingTask, data: any) => void
 	) {
 		super();
-		this.SystemID = AppUtility.isNotEmpty(systemID) ? systemID : "";
-		this.Title = AppUtility.isNotEmpty(title) ? title : "";
+		if (AppUtility.isObject(source, true)) {
+			this.copy(source, data => {
+				if (onCompleted !== undefined) {
+					onCompleted(this, data);
+				}
+				this.SchedulingType = this.SchedulingType || "Update";
+				this.RecurringType = this.RecurringType || "Minutes";
+				this.RecurringUnit = this.RecurringUnit !== undefined ? this.RecurringUnit : 0;
+				this.Status = this.Status || "Awaiting";
+			});
+		}
 	}
 
 	/** All instances of task */
@@ -23,7 +34,7 @@ export class SchedulingTask extends CoreBaseModel {
 	Time = undefined as Date;
 	UserID = undefined as string;
 	SchedulingType = "Update";
-	RecurringType = "Hours";
+	RecurringType = "Minutes";
 	RecurringUnit = 0;
 	Data = undefined as string;
 	Status = "Awaiting";
@@ -36,11 +47,13 @@ export class SchedulingTask extends CoreBaseModel {
 	Persistance = true;
 
 	ansiTitle: string;
+	private _contentTypeTitle: string;
 
 	/** Deserializes data to object */
 	static deserialize(json: any, task?: SchedulingTask) {
 		task = task || new SchedulingTask();
 		task.copy(json, _ => task.ansiTitle = AppUtility.toANSI(task.Title).toLowerCase());
+		task._contentTypeTitle = undefined;
 		return task;
 	}
 
@@ -80,6 +93,25 @@ export class SchedulingTask extends CoreBaseModel {
 
 	get routerLink() {
 		return `/portals/core/tasks/update/${AppUtility.toURI(this.ansiTitle)}`;
+	}
+
+	get updatingStatus() {
+		if (this.SchedulingType !== "SendNotification" && this.SchedulingType !== "Refresh") {
+			const data = AppUtility.parse(this.Data);
+			return (AppUtility.isObject(data.Object, true) ? data.Object.Status : data.Status) as string;
+		}
+		return undefined;
+	}
+
+	get contentTypeTitle() {
+		if (this._contentTypeTitle === undefined) {
+			const contentType = ContentType.instances.first(cntType => cntType.ID === this.EntityInfo);
+			const module = contentType !== undefined ? Module.instances.first(mod => mod.ID === contentType.RepositoryID) : undefined;
+			this._contentTypeTitle = contentType !== undefined
+				? `${module !== undefined ? module.Title + " > " : ""}${contentType.Title}`
+				: "";
+		}
+		return this._contentTypeTitle;
 	}
 
 }

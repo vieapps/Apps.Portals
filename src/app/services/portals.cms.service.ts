@@ -1865,4 +1865,22 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
+	async getSchedulingTaskURLAsync(object: CmsBaseModel) {
+		const params = {
+			Title: await this.configSvc.getResourceAsync("portals.tasks.scheduled.update.title", { title: object.Title }),
+			SystemID: object.SystemID,
+			EntityInfo: object.RepositoryEntityID,
+			ObjectID: object.ID,
+			Time: new Date(new Date().getTime() + (24 * 60 * 60 * 1000)),
+			UserID: this.configSvc.getAccount().id,
+			SchedulingType: "Update",
+			RecurringType: "Minutes",
+			RecurringUnit: 0,
+			Status: "Awaiting",
+			Persistance: true,
+			Data: AppUtility.stringify(AppUtility.clone(object, ["ID", "SystemID", "RepositoryID", "RepositoryEntityID", "Created", "CreatedID", "LastModified", "LastModifiedID", "Privileges", "Alias", "AllowComments", "Parent", "Children", "ChildrenIDs", "children", "childrenIDs", "ansiTitle", "_attachments", "_thumbnails", "_routerParams"]))
+		};
+		return `/portals/core/tasks/update/new?x-request=${AppCrypto.jsonEncode(params)}`;
+	}
+
 }

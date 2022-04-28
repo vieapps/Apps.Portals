@@ -5,6 +5,7 @@ import { TimePipeModule } from "@app/components/time.pipe";
 import { DataLookupModalPageModule } from "@app/controls/portals/data.lookup.modal.module";
 import { DesktopsSelectorModalPageModule } from "@app/controls/portals/desktop.selector.modal.module";
 import { RolesSelectorModalPageModule } from "@app/controls/portals/role.selector.modal.module";
+import { ScheduledPublishModalPageModule } from "@app/controls/portals/scheduled.publish.modal.module";
 import { FeaturedContentsControl } from "@app/controls/portals/featured.contents.control";
 import { ShortcutsControl } from "@app/controls/portals/shortcuts.control";
 
@@ -16,7 +17,8 @@ import { ShortcutsControl } from "@app/controls/portals/shortcuts.control";
 		TimePipeModule,
 		DataLookupModalPageModule,
 		DesktopsSelectorModalPageModule,
-		RolesSelectorModalPageModule
+		RolesSelectorModalPageModule,
+		ScheduledPublishModalPageModule
 	],
 	exports: [
 		FeaturedContentsControl,

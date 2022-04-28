@@ -3,7 +3,7 @@ import { AppUtility } from "@app/components/app.utility";
 import { AppEvents } from "@app/components/app.events";
 import { AttachmentInfo } from "@app/models/base";
 import { PortalBase as BaseModel } from "@app/models/portals.base";
-import { Organization, Module, ContentType } from "@app/models/portals.core.all";
+import { Organization, Module, ContentType, SchedulingTask } from "@app/models/portals.core.all";
 
 /** Abstract class for all portals' core entity classes */
 export abstract class PortalCmsBase extends BaseModel {
@@ -75,6 +75,10 @@ export abstract class PortalCmsBase extends BaseModel {
 
 	get attachments() {
 		return this._attachments;
+	}
+
+	get updatingTask() {
+		return SchedulingTask.instances.first(task => task.ObjectID === this.ID && task.SchedulingType === "Update" && task.Status === "Awaiting");
 	}
 
 	static normalizeClonedProperties(original: PortalCmsBase, copy: any, onCompleted?: () => void) {

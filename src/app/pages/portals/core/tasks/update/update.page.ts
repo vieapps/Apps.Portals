@@ -1,7 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@app/components/app.crypto";
-import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsControlConfig, AppFormsControl } from "@app/components/forms.objects";
@@ -47,7 +46,17 @@ export class PortalsTasksUpdatePage implements OnInit {
 	}
 
 	get canUpdate() {
-		return this.task !== undefined ? this.task.Persistance || this.task.SchedulingType !== "Refresh" : true;
+		return this.task !== undefined
+			? this.task.Persistance
+				? this.task.Status === "Awaiting"
+				: this.task.SchedulingType !== "Refresh"
+			: true;
+	}
+
+	get canDelete() {
+		return this.task !== undefined
+			? this.task.Persistance && this.task.Status === "Completed"
+			: false;
 	}
 
 	ngOnInit() {
@@ -79,7 +88,7 @@ export class PortalsTasksUpdatePage implements OnInit {
 			return;
 		}
 
-		this.task = this.task || new SchedulingTask(this.organization.ID);
+		this.task = this.task || new SchedulingTask(this.configSvc.requestParams, (task, _) => task.SystemID = this.organization.ID);
 		if (!AppUtility.isNotEmpty(this.organization.ID) || this.organization.ID !== this.task.SystemID) {
 			this.trackAsync(`${this.title} | Invalid Organization`, "Check"),
 			this.appFormsSvc.hideLoadingAsync(async () => await this.cancelAsync(await this.configSvc.getResourceAsync("portals.organizations.list.invalid")));
@@ -113,35 +122,44 @@ export class PortalsTasksUpdatePage implements OnInit {
 		control.Options.ReadOnly = !this.canUpdate;
 
 		control = formConfig.find(ctrl => ctrl.Name === "SchedulingType");
-		control.Options.Disabled = AppUtility.isNotEmpty(this.task.ID);
+		control.Options.SelectOptions.Values = (control.Options.SelectOptions.Values as string).split("#;").map(value => ({ Value: value, Label: `{{portals.tasks.schedulingType.${value}}}` }));
+		if (AppUtility.isNotEmpty(this.task.ID)) {
+			control.Options.Disabled = true;
+		}
+		else if (!!this.configSvc.requestParams["SchedulingType"]) {
+			control.Options.Disabled = true;
+		}
+
+		control = formConfig.find(ctrl => ctrl.Name === "RecurringType");
+		control.Options.SelectOptions.Values = (control.Options.SelectOptions.Values as string).split("#;").map(value => ({ Value: value, Label: `{{portals.tasks.recurringType.${value}}}` }));
 
 		control = formConfig.find(ctrl => ctrl.Name === "Status");
+		control.Options.SelectOptions.Values = (control.Options.SelectOptions.Values as string).split("#;").map(value => ({ Value: value, Label: `{{portals.tasks.status.${value}}}` }));
 		control.Options.Disabled = true;
 
 		formConfig.find(ctrl => ctrl.Name === "EntityInfo").Hidden = formConfig.find(ctrl => ctrl.Name === "ObjectID").Hidden = this.task.SchedulingType !== "Update" && this.task.SchedulingType !== "SendNotification";
 		formConfig.find(ctrl => ctrl.Name === "UserID").Hidden = this.task.SchedulingType !== "Update";
 
-		if (AppUtility.isNotEmpty(this.task.ID) && this.canUpdate) {
-			formConfig.push(
-				this.portalsCoreSvc.getAuditFormControl(this.task),
-				this.appFormsSvc.getButtonControls(
-					"basic",
-					{
-						Name: "Delete",
-						Label: "{{portals.tasks.update.buttons.delete}}",
-						OnClick: async () => await this.deleteAsync(),
-						Options: {
-							Fill: "clear",
-							Color: "danger",
-							Css: "ion-float-end",
-							Icon: {
-								Name: "trash",
-								Slot: "start"
-							}
+		if (AppUtility.isNotEmpty(this.task.ID)) {
+			if (this.canUpdate || this.canDelete) {
+				formConfig.push(this.portalsCoreSvc.getAuditFormControl(this.task));
+			}
+			if (this.canDelete) {
+				formConfig.push(this.appFormsSvc.getButtonControls("basic", {
+					Name: "Delete",
+					Label: "{{portals.tasks.update.buttons.delete}}",
+					OnClick: async () => await this.deleteAsync(),
+					Options: {
+						Fill: "clear",
+						Color: "danger",
+						Css: "ion-float-end",
+						Icon: {
+							Name: "trash",
+							Slot: "start"
 						}
 					}
-				)
-			);
+				}));
+			}
 		}
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
@@ -162,6 +180,9 @@ export class PortalsTasksUpdatePage implements OnInit {
 	onFormInitialized() {
 		this.form.patchValue(AppUtility.clone(this.task, false, undefined, task => task.Time = AppUtility.toIsoDateTime(this.task.Time)));
 		this.hash = AppCrypto.hash(this.form.value);
+		if (AppUtility.isEmpty(this.task.ID) && !!this.configSvc.requestParams["SchedulingType"]) {
+			this.form.controls.Data.setValue(this.task.Data + "\n");
+		}
 		this.appFormsSvc.hideLoadingAsync();
 	}
 
@@ -171,21 +192,26 @@ export class PortalsTasksUpdatePage implements OnInit {
 				await this.configSvc.navigateBackAsync();
 			}
 			else {
+				const task = this.form.value;
+				try {
+					task.Data = AppUtility.stringify(AppUtility.parse(task.Data));
+				}
+				catch (error) {
+					console.log(task.Data);
+					console.error(error);
+					await this.appFormsSvc.showAlertAsync(await this.appFormsSvc.getResourceAsync("common.alert.header.error"), await this.appFormsSvc.getResourceAsync("portals.tasks.update.messages.json"), undefined, () => this.formControls.find(ctrl => ctrl.Name === "Data").focus());
+					return;
+				}
 				this.processing = true;
 				await this.appFormsSvc.showLoadingAsync(this.title);
-
-				const task = this.form.value;
 				if (AppUtility.isNotEmpty(task.ID)) {
 					await this.portalsCoreSvc.updateSchedulingTaskAsync(
 						task,
-						async data => {
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "SchedulingTask", Type: "Updated", ID: data.ID });
-							await Promise.all([
-								this.trackAsync(this.title, "Update"),
-								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.tasks.update.messages.success.update")),
-								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-							]);
-						},
+						async _ => await Promise.all([
+							this.trackAsync(this.title, "Update"),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.tasks.update.messages.success.update")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]),
 						async error => {
 							this.processing = false;
 							await Promise.all([
@@ -198,14 +224,11 @@ export class PortalsTasksUpdatePage implements OnInit {
 				else {
 					await this.portalsCoreSvc.createSchedulingTaskAsync(
 						task,
-						async data => {
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "SchedulingTask", Type: "Created", ID: data.ID });
-							await Promise.all([
-								this.trackAsync(this.title),
-								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.tasks.update.messages.success.new")),
-								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-							]);
-						},
+						async _ => await Promise.all([
+							this.trackAsync(this.title),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.tasks.update.messages.success.new")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]),
 						async error => {
 							this.processing = false;
 							await Promise.all([
@@ -226,37 +249,22 @@ export class PortalsTasksUpdatePage implements OnInit {
 			undefined,
 			await this.configSvc.getResourceAsync("portals.tasks.update.messages.confirm.delete"),
 			undefined,
-			() => AppUtility.invoke(async () => await this.removeAsync(), 123),
-			await this.configSvc.getResourceAsync("common.buttons.delete"),
-			await this.configSvc.getResourceAsync("common.buttons.cancel")
-		);
-	}
-
-	async removeAsync() {
-		const button = await this.configSvc.getResourceAsync("portals.tasks.update.buttons.delete");
-		await this.appFormsSvc.showAlertAsync(
-			undefined,
-			await this.configSvc.getResourceAsync("portals.tasks.update.messages.confirm.delete"),
-			await this.configSvc.getResourceAsync("portals.tasks.update.messages.confirm.remove"),
 			async () => {
 				await this.appFormsSvc.showLoadingAsync(button);
 				await this.portalsCoreSvc.deleteSchedulingTaskAsync(
 					this.task.ID,
-					async data => {
-						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "SchedulingTask", Type: "Deleted", ID: data.ID });
-						await Promise.all([
-							this.trackAsync(button, "Delete"),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.tasks.update.messages.success.delete")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]);
-					},
+					async _ => await Promise.all([
+						this.trackAsync(button, "Delete"),
+						this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.tasks.update.messages.success.delete")),
+						this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+					]),
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
 						this.trackAsync(button, "Delete")
 					])
 				);
 			},
-			await this.configSvc.getResourceAsync("portals.tasks.update.buttons.remove"),
+			await this.configSvc.getResourceAsync("common.buttons.delete"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
 	}

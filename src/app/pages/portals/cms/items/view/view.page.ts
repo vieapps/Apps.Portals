@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsControlConfig, AppFormsControl, AppFormsSegment } from "@app/components/forms.objects";
@@ -143,6 +144,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(this.resources.update, "create", () => this.update()),
 				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.tasks.scheduled.update.action"), "timer", () => this.createSchedulingTaskAsync()),
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.delete())
 			];
 		}
@@ -326,6 +328,10 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 
 	showActions() {
 		this.appFormsSvc.showActionSheetAsync(this.actions);
+	}
+
+	async createSchedulingTaskAsync() {
+		await this.configSvc.navigateForwardAsync(await this.portalsCmsSvc.getSchedulingTaskURLAsync(this.item));
 	}
 
 	update() {

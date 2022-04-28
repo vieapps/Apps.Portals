@@ -148,6 +148,7 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(this.resources.update, "create", () => this.update()),
 				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.tasks.scheduled.update.action"), "timer", () => this.createSchedulingTaskAsync()),
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.delete())
 			];
 		}
@@ -379,6 +380,10 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 
 	showActions() {
 		this.appFormsSvc.showActionSheetAsync(this.actions);
+	}
+
+	async createSchedulingTaskAsync() {
+		await this.configSvc.navigateForwardAsync(await this.portalsCmsSvc.getSchedulingTaskURLAsync(this.link));
 	}
 
 	update() {

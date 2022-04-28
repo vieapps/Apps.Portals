@@ -31,6 +31,9 @@
 				</span>
 				<span [class]="'title ' + task.Status">
 					{{ task.Title }}
+					<span *ngIf="!!task.contentTypeTitle">
+						&nbsp;[{{ task.contentTypeTitle }}]
+					</span>
 					<ion-icon name="radio" slot="icon-only"></ion-icon>
 				</span>
 			</ion-label>

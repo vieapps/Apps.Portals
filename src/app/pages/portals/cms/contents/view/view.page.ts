@@ -11,6 +11,8 @@ import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { AttachmentInfo } from "@app/models/base";
 import { Category, Content } from "@app/models/portals.cms.all";
+import { SchedulingTask } from "@app/models/portals.core.all";
+import { ScheduledPublishModalPage } from "@app/controls/portals/scheduled.publish.modal.page";
 
 @Component({
 	selector: "page-portals-cms-contents-view",
@@ -31,6 +33,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	private content: Content;
+	private schedulingTask: SchedulingTask;
 	canModerate = false;
 	canEdit = false;
 	canDoApproval = false;
@@ -75,6 +78,13 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			raw: this.content !== undefined ? this.content.Status : "Draft",
 			normalized: control !== undefined ? control.value as string : this.content !== undefined ? this.content.Status : "Draft"
 		};
+	}
+
+	get updatingTask() {
+		if (this.schedulingTask === undefined && this.content !== undefined) {
+			this.schedulingTask = this.content.updatingTask;
+		}
+		return this.schedulingTask;
 	}
 
 	ngOnInit() {
@@ -147,6 +157,9 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()),
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.delete())
 			];
+			if (this.content.Status !== "Published") {
+				this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.tasks.scheduled.publish.title.modal"), "timer", () => this.openSchedulingTask()), 2);
+			}
 		}
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
@@ -384,6 +397,10 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	showActions() {
 		this.appFormsSvc.showActionSheetAsync(this.actions);
+	}
+
+	openSchedulingTask() {
+		this.appFormsSvc.showModalAsync(ScheduledPublishModalPage, { taskID: this.updatingTask !== undefined && this.updatingTask.updatingStatus !== undefined ? this.updatingTask.ID : undefined, object: this.content });
 	}
 
 	update() {

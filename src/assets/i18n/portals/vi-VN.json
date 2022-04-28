@@ -1427,6 +1427,26 @@
 			}
 		},
 		"tasks": {
+			"status": {
+				"Awaiting": "Đang trong hàng đợi",
+				"Acquired": "Chuẩn bị thực thi",
+				"Running": "Đang thực thi",
+				"Completed": "Đã thực thi"
+			},
+			"schedulingType": {
+				"Update": "Cập nhật dữ liệu",
+				"SendNotification": "Gửi thông báo",
+				"Refresh": "Làm tươi trang web",
+				"RunCrawler": "Thực thi bộ thu thập dữ liệu"
+			},
+			"recurringType": {
+				"Years": "Năm",
+				"Months": "Tháng",
+				"Days": "Ngày",
+				"Hours": "Giờ",
+				"Minutes": "Phút",
+				"Seconds": "Giây"
+			},
 			"title": {
 				"search": "Tìm kiếm nhiệm vụ",
 				"list": "Danh sách nhiệm vụ {{info}}",
@@ -1493,27 +1513,36 @@
 				}
 			},
 			"update": {
-				"segments": {
-					"basic": "Thông tin cơ bản",
-					"privileges": "Quyền truy cập",
-					"notifications": "Thông báo",
-					"emails": "Mã theo dõi & Emails"
-				},
 				"messages": {
+					"json": "Dữ liệu JSON chưa chuẩn xác",
 					"confirm": {
 						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo nhiệm vụ?",
 						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của nhiệm vụ?",
-						"delete": "Chắc chắn muốn xoá bỏ nhiệm vụ và các thông tin liên quan?"
+						"delete": "Chắc chắn muốn xoá bỏ nhiệm vụ?"
 					},
 					"success": {
 						"new": "Đã khởi tạo nhiệm vụ thành công",
 						"update": "Đã cập nhật các thay đổi của nhiệm vụ thành công",
-						"delete": "Đã đưa nhiệm vụ và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
+						"delete": "Đã đưa nhiệm vụ vào thùng rác"
 					}
 				},
 				"buttons": {
 					"delete": "Xoá nhiệm vụ",
 					"remove": "Đồng ý xoá"
+				}
+			},
+			"scheduled": {
+				"publish": {
+					"title": {
+						"modal": "Đặt lịch xuất bản",
+						"object": "Xuất bản nội dung \"{{title}}\""
+					},
+					"status": "Trạng thái xuất bản",
+					"time": "Thời gian xuất bản"
+				},
+				"update": {
+					"action": "Thiết đặt cập nhật theo lịch",
+					"title": "Cập nhật \"{{title}}\""
 				}
 			}
 		}
