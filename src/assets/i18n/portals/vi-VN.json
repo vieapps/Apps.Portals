@@ -134,10 +134,16 @@
 					},
 					"test": {
 						"label": "Thử nghiệm gửi email với các thông số đã thiết đặt",
-						"button": "Gửi email",
-						"to": "Gửi tới địa chỉ email",
-						"subject": "Tiêu đề email thử nghiệm",
-						"body": "Nội dung email thử nghiệm"
+						"button": "Gửi test email",
+						"to": "Địa chỉ nhận (bắt buộc)",
+						"subject": {
+							"placeholder": "Tiêu đề (không bắt buộc)",
+							"default": "Thử nghiệm gửi email [{{info}}]"
+						},
+						"messages": {
+							"success": "Các thông số thiết đặt gửi email đã chuẩn xác, đã gửi email thành công tới địa chỉ {{email}}",
+							"error": "Các thông số thiết đặt gửi email chưa chuẩn xác"
+						}
 					}
 				},
 				"webhooks": {

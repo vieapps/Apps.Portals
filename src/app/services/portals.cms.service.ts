@@ -589,6 +589,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	private prepareFeaturedContents(systemID: string) {
+		const start = new Date();
 		const cmsForms = Form.instances.toArray(object => object.SystemID === systemID);
 		const cmsItems = Item.instances.toArray(object => object.SystemID === systemID);
 		const cmsContents = Content.instances.toArray(object => object.SystemID === systemID);
@@ -601,6 +602,9 @@ export class PortalsCmsService extends BaseService {
 			.merge(cmsContents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }).take(20), object => object.ID)
 			.toArray());
 		this._noContents.remove(systemID);
+		if (this.configSvc.isDebug) {
+			console.log(`<Portals>: Featured contents were prepared in ${AppUtility.getElapsedTime(start)}`);
+		}
 		AppEvents.broadcast(this.name, { Type: "FeaturedContents", Mode: "Prepared", ID: systemID });
 	}
 

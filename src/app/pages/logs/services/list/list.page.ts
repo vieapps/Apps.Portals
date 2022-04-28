@@ -173,7 +173,6 @@ export class LogsListPage implements OnInit, OnDestroy {
 	async filterAsync() {
 		const correlationID = this.filterBy["CorrelationID"];
 		const serviceName = this.filterBy["ServiceName"];
-		console.log("do filter", this.filterBy);
 		await this.appFormsSvc.showAlertAsync(
 			"Filter",
 			undefined,

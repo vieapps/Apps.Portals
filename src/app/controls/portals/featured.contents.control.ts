@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input } from "@angular/core";
+import { Component, OnInit, OnDestroy, Input, ChangeDetectorRef, NgZone } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -16,6 +16,8 @@ import { Category } from "@app/models/portals.cms.category";
 export class FeaturedContentsControl implements OnInit, OnDestroy {
 
 	constructor(
+		private changeDetector: ChangeDetectorRef,
+		private zone: NgZone,
 		private configSvc: ConfigurationService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService
@@ -72,10 +74,10 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 			const organization = this.portalsCoreSvc.activeOrganization;
 			if (organization !== undefined) {
 				if ("Organization" === args.Type && "Changed" === args.Mode) {
-					AppUtility.invoke(() => this.prepareContents(true), 123);
+					AppUtility.invoke(() => this.prepareContents(true, new Date()), 123);
 				}
 				else if ("FeaturedContents" === args.Type && "Prepared" === args.Mode && organization.ID === args.ID) {
-					AppUtility.invoke(() => this.prepareContents(true), 123);
+					AppUtility.invoke(() => this.prepareContents(true, new Date()), 123);
 				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
@@ -97,9 +99,10 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}
 	}
 
-	private prepareContents(force: boolean = false) {
+	private prepareContents(force: boolean = false, start?: Date) {
 		if (this.configSvc.isAuthenticated) {
 			if (this.contents.length < 1 || force) {
+				start = start || new Date();
 				const organization = this.portalsCoreSvc.activeOrganization;
 				const organizationID = organization !== undefined ? organization.ID : undefined;
 				const filterBy: (content: FeaturedContent) => boolean = AppUtility.isNotEmpty(this.status)
@@ -130,6 +133,12 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 						OriginalObject: content
 					} as FeaturedContent;
 				}).filter(filterBy).orderBy(orderBy).take(this.amount);
+				this.zone.run(() => {
+					this.changeDetector.detectChanges();
+					if (this.configSvc.isDebug) {
+						console.log(`<Control> Featured contents were prepared in ${AppUtility.getElapsedTime(start)}`);
+					}
+				});
 			}
 			if (this.contents.length < 1) {
 				AppEvents.broadcast(this.portalsCoreSvc.name, { Type: "FeaturedContents", Mode: "Request" });
