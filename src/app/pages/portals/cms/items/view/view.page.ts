@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { AppEvents } from "@app/components/app.events";
-import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsControlConfig, AppFormsControl, AppFormsSegment } from "@app/components/forms.objects";
