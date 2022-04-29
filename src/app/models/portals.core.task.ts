@@ -8,20 +8,21 @@ export class SchedulingTask extends CoreBaseModel {
 
 	constructor(
 		source?: any,
-		onCompleted?: (task: SchedulingTask, data: any) => void
+		onInitialized?: (task: SchedulingTask, data: any) => void
 	) {
 		super();
-		if (AppUtility.isObject(source, true)) {
-			this.copy(source, data => {
-				if (onCompleted !== undefined) {
-					onCompleted(this, data);
-				}
-				this.SchedulingType = this.SchedulingType || "Update";
-				this.RecurringType = this.RecurringType || "Minutes";
-				this.RecurringUnit = this.RecurringUnit !== undefined ? this.RecurringUnit : 0;
-				this.Status = this.Status || "Awaiting";
-			});
-		}
+		this.copy(source, data => {
+			const now = new Date();
+			const time = new Date((!!data.Time ? new Date(data.Time) : now).getTime() + (!!data.Time ? 24 * 60 * 60 * 1000 : 0));
+			this.Time = now.getHours() < 15 ? new Date(new Date(new Date(time.setHours(15)).setMinutes(0)).setSeconds(0)) : time;
+			this.SchedulingType = this.SchedulingType || "Update";
+			this.RecurringType = this.RecurringType || "Minutes";
+			this.RecurringUnit = this.RecurringUnit !== undefined && this.RecurringUnit > 0 ? this.RecurringUnit : 0;
+			this.Status = this.Status || "Awaiting";
+			if (onInitialized !== undefined) {
+				onInitialized(this, data);
+			}
+		});
 	}
 
 	/** All instances of task */
@@ -29,15 +30,15 @@ export class SchedulingTask extends CoreBaseModel {
 
 	Title = undefined as string;
 	Description = undefined as string;
-	EntityInfo = undefined as string;
-	ObjectID = undefined as string;
-	Time = undefined as Date;
-	UserID = undefined as string;
+	Status = "Awaiting";
 	SchedulingType = "Update";
 	RecurringType = "Minutes";
 	RecurringUnit = 0;
+	Time = undefined as Date;
+	EntityInfo = undefined as string;
+	ObjectID = undefined as string;
+	UserID = undefined as string;
 	Data = undefined as string;
-	Status = "Awaiting";
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;
@@ -52,8 +53,10 @@ export class SchedulingTask extends CoreBaseModel {
 	/** Deserializes data to object */
 	static deserialize(json: any, task?: SchedulingTask) {
 		task = task || new SchedulingTask();
-		task.copy(json, _ => task.ansiTitle = AppUtility.toANSI(task.Title).toLowerCase());
-		task._contentTypeTitle = undefined;
+		task.copy(json, _ => {
+			task.ansiTitle = AppUtility.toANSI(task.Title).toLowerCase();
+			task._contentTypeTitle = undefined;
+		});
 		return task;
 	}
 

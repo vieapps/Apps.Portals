@@ -155,11 +155,9 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(this.resources.update, "create", () => this.update()),
 				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync(this.content.Status !== "Published" ? "portals.tasks.scheduled.publish.title.modal" : "portals.tasks.scheduled.update.action"), "timer", () => this.openSchedulingTaskAsync()),
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.delete())
 			];
-			if (this.content.Status !== "Published") {
-				this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.tasks.scheduled.publish.title.modal"), "timer", () => this.openSchedulingTask()), 2);
-			}
 		}
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
@@ -399,8 +397,13 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		this.appFormsSvc.showActionSheetAsync(this.actions);
 	}
 
-	openSchedulingTask() {
-		this.appFormsSvc.showModalAsync(ScheduledPublishModalPage, { taskID: this.updatingTask !== undefined && this.updatingTask.updatingStatus !== undefined ? this.updatingTask.ID : undefined, object: this.content });
+	async openSchedulingTaskAsync() {
+		if (this.content.Status !== "Published") {
+			await this.appFormsSvc.showModalAsync(ScheduledPublishModalPage, { taskID: this.updatingTask !== undefined && this.updatingTask.updatingStatus !== undefined ? this.updatingTask.ID : undefined, object: this.content });
+		}
+		else {
+			await this.configSvc.navigateForwardAsync(await this.portalsCmsSvc.getSchedulingTaskURLAsync(this.content));
+		}
 	}
 
 	update() {

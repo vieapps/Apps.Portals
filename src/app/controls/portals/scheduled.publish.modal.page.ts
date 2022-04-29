@@ -53,18 +53,17 @@ export class ScheduledPublishModalPage implements OnInit {
 			? Organization.get(this.task.SystemID)
 			: this.portalsCoreSvc.activeOrganization;
 		this.title = await this.configSvc.getResourceAsync("portals.tasks.scheduled.publish.title.modal");
+		this.task = this.task || new SchedulingTask({
+			Title: await this.configSvc.getResourceAsync("portals.tasks.scheduled.publish.title.object", { title: this.object.Title }),
+			SystemID: this.object.SystemID,
+			EntityInfo: this.object.RepositoryEntityID,
+			ObjectID: this.object.ID,
+			UserID: this.configSvc.getAccount().id
+		});
 		this.button = {
-			save: await this.configSvc.getResourceAsync("common.buttons.save"),
+			save: await this.configSvc.getResourceAsync(`common.buttons.${AppUtility.isNotEmpty(this.task.ID) ? "save" : "create"}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
-		this.task = this.task || new SchedulingTask(this.organization.ID);
-		if (AppUtility.isEmpty(this.task.ID)) {
-			this.button.save = await this.configSvc.getResourceAsync("common.buttons.create");
-			this.task.Title = await this.configSvc.getResourceAsync("portals.tasks.scheduled.publish.title.object", { title: this.object.Title });
-			this.task.EntityInfo = this.object.RepositoryEntityID;
-			this.task.ObjectID = this.object.ID;
-			this.task.UserID = this.configSvc.getAccount().id;
-		}
 		this.formConfig = [
 			{
 				Name: "Status",
@@ -110,17 +109,17 @@ export class ScheduledPublishModalPage implements OnInit {
 		const form = this.form.value;
 		const task = AppUtility.clone(this.task);
 		task.Time = form.Time !== undefined ? AppUtility.toIsoDateTime(form.Time, true).replace(/\-/g, "/") : undefined;
-		if (task.Time === undefined) {
+		if (task.Time !== undefined) {
 			this.processing = true;
 			await this.appFormsSvc.showLoadingAsync(this.title);
 			const data = AppUtility.parse(this.task.Data);
 			if (AppUtility.isObject(data.Object, true)) {
-				data.Object["Status"] = form.Status;
-				data.Object["PublishedTime"] = task.Time;
+				data.Object.Status = form.Status;
+				data.Object.PublishedTime = task.Time;
 			}
 			else {
-				data["Status"] = form.Status;
-				data["PublishedTime"] = task.Time;
+				data.Status = form.Status;
+				data.PublishedTime = task.Time;
 			}
 			task.Data = AppUtility.stringify(data);
 			if (AppUtility.isNotEmpty(task.ID)) {

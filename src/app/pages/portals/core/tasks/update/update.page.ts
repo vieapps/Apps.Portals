@@ -114,12 +114,9 @@ export class PortalsTasksUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => ctrl.Name === "Description");
 		control.Options.Rows = 2;
 
-		control = formConfig.find(ctrl => ctrl.Name === "Data");
-		control.Options.Rows = 10;
-
-		control = formConfig.find(ctrl => ctrl.Name === "Time");
-		control.Options.DatePickerOptions.AllowTimes = true;
-		control.Options.ReadOnly = !this.canUpdate;
+		control = formConfig.find(ctrl => ctrl.Name === "Status");
+		control.Options.SelectOptions.Values = (control.Options.SelectOptions.Values as string).split("#;").map(value => ({ Value: value, Label: `{{portals.tasks.status.${value}}}` }));
+		control.Options.Disabled = true;
 
 		control = formConfig.find(ctrl => ctrl.Name === "SchedulingType");
 		control.Options.SelectOptions.Values = (control.Options.SelectOptions.Values as string).split("#;").map(value => ({ Value: value, Label: `{{portals.tasks.schedulingType.${value}}}` }));
@@ -133,12 +130,14 @@ export class PortalsTasksUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => ctrl.Name === "RecurringType");
 		control.Options.SelectOptions.Values = (control.Options.SelectOptions.Values as string).split("#;").map(value => ({ Value: value, Label: `{{portals.tasks.recurringType.${value}}}` }));
 
-		control = formConfig.find(ctrl => ctrl.Name === "Status");
-		control.Options.SelectOptions.Values = (control.Options.SelectOptions.Values as string).split("#;").map(value => ({ Value: value, Label: `{{portals.tasks.status.${value}}}` }));
-		control.Options.Disabled = true;
+		control = formConfig.find(ctrl => ctrl.Name === "Time");
+		control.Options.ReadOnly = !this.canUpdate;
 
 		formConfig.find(ctrl => ctrl.Name === "EntityInfo").Hidden = formConfig.find(ctrl => ctrl.Name === "ObjectID").Hidden = this.task.SchedulingType !== "Update" && this.task.SchedulingType !== "SendNotification";
 		formConfig.find(ctrl => ctrl.Name === "UserID").Hidden = this.task.SchedulingType !== "Update";
+
+		control = formConfig.find(ctrl => ctrl.Name === "Data");
+		control.Options.Rows = 15;
 
 		if (AppUtility.isNotEmpty(this.task.ID)) {
 			if (this.canUpdate || this.canDelete) {
