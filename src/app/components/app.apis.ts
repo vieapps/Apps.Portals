@@ -291,7 +291,7 @@ export class AppAPIs {
 			}
 
 			// prepare
-			let msg: { ID: string; Type: string; Data: any; };
+			let msg: { ID?: string; CorrelationID?: string; Type: string; Data: any; };
 			try {
 				msg = AppUtility.parse(event.data || "{}");
 			}
@@ -319,6 +319,14 @@ export class AppAPIs {
 				delete this._successCallbacks[msg.ID];
 				delete this._errorCallbacks[msg.ID];
 				this._resend.id = msg.ID === this._resend.id ? undefined : this._resend.id;
+			}
+
+			// correlation
+			if (AppConfig.isDebug) {
+				const correlationID = msg.CorrelationID || data.CorrelationID;
+				if (AppUtility.isNotEmpty(correlationID)) {
+					console.log(`Correlation ID: ${correlationID}`);
+				}
 			}
 
 			// got an error
