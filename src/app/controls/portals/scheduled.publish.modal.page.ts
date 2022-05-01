@@ -5,7 +5,7 @@ import { AppFormsControlConfig, AppFormsControl } from "@app/components/forms.ob
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { Organization, SchedulingTask } from "@app/models/portals.core.all";
+import { SchedulingTask } from "@app/models/portals.core.all";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
 @Component({
@@ -23,8 +23,6 @@ export class ScheduledPublishModalPage implements OnInit {
 	) {
 	}
 
-	private task: SchedulingTask;
-
 	title = "";
 	form = new FormGroup({});
 	formConfig: Array<AppFormsControlConfig>;
@@ -37,6 +35,7 @@ export class ScheduledPublishModalPage implements OnInit {
 
 	@Input() private taskID: string;
 	@Input() private object: CmsBaseModel;
+	private task: SchedulingTask;
 
 	get color() {
 		return this.configSvc.color;
@@ -47,9 +46,8 @@ export class ScheduledPublishModalPage implements OnInit {
 	}
 
 	private async initializeAsync() {
-		this.task = SchedulingTask.get(this.taskID);
 		this.title = await this.configSvc.getResourceAsync("portals.tasks.scheduled.publish.title.modal");
-		this.task = this.task || new SchedulingTask({
+		this.task = SchedulingTask.get(this.taskID) || new SchedulingTask({
 			Title: await this.configSvc.getResourceAsync("portals.tasks.scheduled.publish.title.object", { title: this.object.Title }),
 			SystemID: this.object.SystemID,
 			EntityInfo: this.object.RepositoryEntityID,
@@ -132,27 +130,29 @@ export class ScheduledPublishModalPage implements OnInit {
 
 	async saveAsync() {
 		const form = this.form.value;
-		const task = AppUtility.clone(this.task);
-		task.Time = form.Time !== undefined ? AppUtility.toStrDateTime(form.Time) : undefined;
-		if (task.Time !== undefined) {
+		const time = form.Time !== undefined ? AppUtility.toStrDateTime(form.Time) : undefined;
+		if (time !== undefined) {
 			this.processing = true;
 			await this.appFormsSvc.showLoadingAsync(this.title);
-			const data = AppUtility.parse(this.task.Data);
-			const start = AppUtility.toStrDate(form.Start);
-			const end = AppUtility.toStrDate(form.End);
-			if (AppUtility.isObject(data.Object, true)) {
-				data.Object.PublishedTime = task.Time;
-				data.Object.Status = form.Status;
-				data.Object.StartDate = start;
-				data.Object.EndDate = end;
-			}
-			else {
-				data.PublishedTime = task.Time;
-				data.Status = form.Status;
-				data.StartDate = start;
-				data.EndDate = end;
-			}
-			task.Data = AppUtility.stringify(data);
+			const task = AppUtility.clone(this.task, false, ["Time", "Data"], obj => {
+				const start = AppUtility.toStrDate(form.Start);
+				const end = AppUtility.toStrDate(form.End);
+				const data = AppUtility.parse(this.task.Data);
+				if (AppUtility.isObject(data.Object, true)) {
+					data.Object.PublishedTime = time;
+					data.Object.Status = form.Status;
+					data.Object.StartDate = start;
+					data.Object.EndDate = end;
+				}
+				else {
+					data.PublishedTime = time;
+					data.Status = form.Status;
+					data.StartDate = start;
+					data.EndDate = end;
+				}
+				obj.Time = time;
+				obj.Data = AppUtility.stringify(data);
+			});
 			if (AppUtility.isNotEmpty(task.ID)) {
 				await this.portalsCoreSvc.updateSchedulingTaskAsync(
 					task,
