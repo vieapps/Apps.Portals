@@ -208,23 +208,20 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments"),
 		);
 		if (this.canEdit) {
-			const buttons = this.appFormsSvc.getButtonControls(
-				"attachments",
-				{
-					Name: "DeleteThumbnail",
-					Label: this.resources.deleteThumbnail,
-					OnClick: () => this.deleteThumbnail(),
-					Options: {
-						Fill: "clear",
-						Color: "danger",
-						Css: "ion-float-end",
-						Icon: {
-							Name: "trash",
-							Slot: "start"
-						}
+			const buttons = this.appFormsSvc.getButtonControls("attachments", {
+				Name: "DeleteThumbnail",
+				Label: this.resources.deleteThumbnail,
+				OnClick: () => this.deleteThumbnail(),
+				Options: {
+					Fill: "clear",
+					Color: "danger",
+					Css: "ion-float-end",
+					Icon: {
+						Name: "trash",
+						Slot: "start"
 					}
 				}
-			);
+			});
 			buttons.Name = "ThumbnailButtons";
 			formConfig.push(buttons);
 		}
