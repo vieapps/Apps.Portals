@@ -524,7 +524,7 @@ export class AppAPIs {
 
 	/**
 		* Sends a request to APIs using WebSocket
-		* @param request The requesting information
+		* @param requestInfo The requesting information
 		* @param onSuccess The callback function to handle the returning data
 		* @param onError The callback function to handle the returning error
 	*/
@@ -562,7 +562,6 @@ export class AppAPIs {
 		* Sends a request to APIs using XMLHttpRequest
 		* @param verb The HTTP verb to perform the request
 		* @param url The absolute URL of APIs to perform the request
-		* @param headers Additional headers to perform the request
 		* @param body The JSON object that contains the body to perform the request
 		* @param options The options to perform the request
 	*/
