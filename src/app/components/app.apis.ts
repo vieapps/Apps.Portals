@@ -321,14 +321,6 @@ export class AppAPIs {
 				this._resend.id = msg.ID === this._resend.id ? undefined : this._resend.id;
 			}
 
-			// correlation
-			if (AppConfig.isDebug) {
-				const correlationID = msg.CorrelationID || data.CorrelationID;
-				if (AppUtility.isNotEmpty(correlationID)) {
-					console.log(`Correlation ID: ${correlationID}`);
-				}
-			}
-
 			// got an error
 			if ("Error" === msg.Type) {
 				// got a security issue
@@ -411,7 +403,8 @@ export class AppAPIs {
 				else {
 					const message: AppMessage = { Type: messageType, Data: data };
 					if (AppConfig.isDebug) {
-						console.log("[AppAPIs]: Got an updating message", message);
+						const correlationID = msg.CorrelationID || data.CorrelationID;
+						console.log("[AppAPIs]: Got an updating message" + (AppUtility.isNotEmpty(correlationID) ? ` - Correlation ID: ${correlationID}` : ""), message);
 					}
 					this.broadcast(message);
 				}
