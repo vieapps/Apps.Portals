@@ -522,6 +522,46 @@ export class AppUtility {
 		return template;
 	}
 
+	/** Adds an unit and return date-time */
+	static addTime(datetime: Date, unit: number = 0, type: string = "seconds") {
+		if (unit === undefined || unit < 1) {
+			return datetime;
+		}
+		switch ((type || "seconds").toLowerCase()) {
+			case "seconds":
+				return new Date(datetime.getTime() + (unit * 1000));
+			case "minutes":
+				return new Date(datetime.getTime() + (unit * 60 * 1000));
+			case "hours":
+				return new Date(datetime.getTime() + (unit * 60 * 60 * 1000));
+			case "days":
+				return new Date(datetime.getTime() + (unit * 24 * 60 * 60 * 1000));
+			case "months":
+				return new Date(datetime.getTime() + (unit * 30 * 24 * 60 * 60 * 1000));
+			case "years":
+				return new Date(datetime.getTime() + (unit * 12 * 30 * 24 * 60 * 60 * 1000));
+			default:
+				return new Date(datetime.getTime() + unit);
+		}
+	}
+
+	/** Sets and return date-time */
+	static setTime(datetime: Date, hours?: number, minutes?: number, seconds?: number, miliseconds?: number) {
+		if (hours !== undefined) {
+			datetime.setHours(hours, minutes, seconds, miliseconds);
+		}
+		else if (minutes !== undefined) {
+			datetime.setMinutes(minutes, seconds, miliseconds);
+		}
+		else if (seconds !== undefined) {
+			datetime.setSeconds(seconds, miliseconds);
+		}
+		else if (miliseconds !== undefined) {
+			datetime.setMilliseconds(miliseconds);
+		}
+		return datetime;
+	}
+
 	/** Converts an observable object into promise object for working with async/await */
 	static toAsync<T>(observable: Observable<T>) {
 		return observable.toPromise<T>();
@@ -633,16 +673,26 @@ export class AppUtility {
 		if (miliseconds) {
 			return isoDateTime;
 		}
-		isoDateTime = isoDateTime.substr(0, 19);
-		return seconds ? isoDateTime : isoDateTime.substr(0, 16);
+		isoDateTime = isoDateTime.substring(0, 19);
+		return seconds ? isoDateTime : isoDateTime.substring(0, 16);
 	}
 
 	/** Converts date-time object into a ISO 8601 date string to use with date-picker */
 	static toIsoDate(date: string | number | Date) {
-		const isoDateTime = date === undefined || "-" === date
-			? undefined
-			: this.toIsoDateTime(date, true, true);
-		return isoDateTime !== undefined ? isoDateTime.substr(0, 10) : undefined;
+		const isoDateTime = this.toIsoDateTime("-" === date ? undefined : date, true, true);
+		return isoDateTime !== undefined ? isoDateTime.substring(0, 10) : undefined;
+	}
+
+	/** Converts date-time object into a date-time string with format 'yyyy/mm/dd hh:mm:ss' */
+	static toStrDateTime(date: string | number | Date, useLocalTimezone: boolean = true) {
+		const isoDateTime = this.toIsoDateTime("-" === date ? undefined : date, true, false, useLocalTimezone);
+		return isoDateTime !== undefined ? isoDateTime.replace(/\-/g, "/").replace("T", " ") : undefined;
+	}
+
+	/** Converts date-time object into a date string with format 'yyyy/mm/dd' */
+	static toStrDate(date: string | number | Date, useLocalTimezone: boolean = true) {
+		const strDateTime = this.toStrDateTime(date, useLocalTimezone);
+		return strDateTime !== undefined ? strDateTime.substring(0, 10) : undefined;
 	}
 
 	/** Converts the ANSI string into a string that can use in an URI */
