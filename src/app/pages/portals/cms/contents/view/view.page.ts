@@ -87,6 +87,10 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		return this.schedulingTask;
 	}
 
+	get scheduled() {
+		return this.updatingTask !== undefined && this.updatingTask.updatingStatus !== undefined && this.content.Status !== "Published";
+	}
+
 	ngOnInit() {
 		this.initializeAsync();
 	}
@@ -398,8 +402,8 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	async openSchedulingTaskAsync() {
-		if (this.content.Status !== "Published") {
-			await this.appFormsSvc.showModalAsync(ScheduledPublishModalPage, { taskID: this.updatingTask !== undefined && this.updatingTask.updatingStatus !== undefined ? this.updatingTask.ID : undefined, object: this.content });
+		if (this.scheduled || this.content.Status !== "Published") {
+			await this.appFormsSvc.showModalAsync(ScheduledPublishModalPage, { taskID: this.updatingTask !== undefined ? this.updatingTask.ID : undefined, object: this.content });
 		}
 		else {
 			await this.configSvc.navigateForwardAsync(await this.portalsCmsSvc.getSchedulingTaskURLAsync(this.content));

@@ -17,7 +17,7 @@
 <ion-footer>
 	<ion-toolbar [color]="color">
 		<span slot="start">
-			<span *ngIf="updatingTask !== undefined" class="task">
+			<span *ngIf="scheduled" class="task">
 				<ion-icon name="timer" slot="icon-only"></ion-icon>
 			</span>
 			<span [class]="status.raw">

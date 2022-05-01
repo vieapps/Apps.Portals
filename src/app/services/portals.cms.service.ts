@@ -305,8 +305,9 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	getFileOptions(object: CmsBaseModel, onCompleted?: (fileOptions: FileOptions) => void) {
-		if (object !== undefined) {
-			const fileOptions: FileOptions = {
+		const fileOptions: FileOptions = object !== undefined
+			?
+			{
 				ServiceName: this.name,
 				ObjectName: object.contentType.getObjectName(false),
 				SystemID: object.SystemID,
@@ -318,13 +319,12 @@ export class PortalsCmsService extends BaseService {
 				IsTracked: object.organization !== undefined && object.organization.TrackDownloadFiles,
 				IsTemporary: AppUtility.isNotEmpty(object.ID) ? false : true,
 				Extras: {}
-			};
-			if (onCompleted !== undefined) {
-				onCompleted(fileOptions);
 			}
-			return fileOptions;
+			: undefined;
+		if (onCompleted !== undefined) {
+			onCompleted(fileOptions);
 		}
-		return undefined;
+		return fileOptions;
 	}
 
 	getFileHeaders(object: CmsBaseModel, additional?: { [header: string]: string }) {
@@ -1862,6 +1862,7 @@ export class PortalsCmsService extends BaseService {
 					}
 				}
 			}
+			AppEvents.broadcast(this.name, { Object: object.contentType.getObjectName(true), Type: "Updated", ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID });
 		}
 	}
 
@@ -1872,13 +1873,14 @@ export class PortalsCmsService extends BaseService {
 			SchedulingType: "Update",
 			RecurringType: "Minutes",
 			RecurringUnit: 0,
-			Time: time || new Date(),
+			Time: time || AppUtility.setTime(AppUtility.addTime(new Date(), 1, "days"), 15, 0, 0, 0),
 			Persistance: true,
 			SystemID: object.SystemID,
 			EntityInfo: object.RepositoryEntityID,
 			ObjectID: object.ID,
 			UserID: this.configSvc.getAccount().id,
-			Data: AppUtility.stringify(AppUtility.clone(object, ["ID", "SystemID", "RepositoryID", "RepositoryEntityID", "Created", "CreatedID", "LastModified", "LastModifiedID", "Privileges", "Alias", "AllowComments", "Parent", "Children", "ChildrenIDs", "children", "childrenIDs", "ansiTitle", "_attachments", "_thumbnails", "_routerParams"]))
+			Data: AppUtility.stringify(AppUtility.clone(object, ["ID", "SystemID", "RepositoryID", "RepositoryEntityID", "Created", "CreatedID", "LastModified", "LastModifiedID", "Privileges", "Alias", "AllowComments", "Parent", "Children", "ChildrenIDs", "children", "childrenIDs", "ansiTitle", "_attachments", "_thumbnails", "_routerParams"])),
+			ObjectName: object.contentType.getObjectName(true)
 		};
 		return `/portals/core/tasks/update/new?x-request=${AppCrypto.jsonEncode(params)}`;
 	}

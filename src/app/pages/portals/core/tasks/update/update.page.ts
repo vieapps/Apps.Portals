@@ -54,9 +54,7 @@ export class PortalsTasksUpdatePage implements OnInit {
 	}
 
 	get canDelete() {
-		return this.task !== undefined
-			? this.task.Persistance && this.task.Status === "Completed"
-			: false;
+		return this.task !== undefined && this.task.Persistance && (this.task.Status === "Awaiting" || this.task.Status === "Completed");
 	}
 
 	ngOnInit() {
@@ -137,7 +135,7 @@ export class PortalsTasksUpdatePage implements OnInit {
 		formConfig.find(ctrl => ctrl.Name === "UserID").Hidden = this.task.SchedulingType !== "Update";
 
 		control = formConfig.find(ctrl => ctrl.Name === "Data");
-		control.Options.Rows = 15;
+		control.Options.Rows = "CMS.Content" === this.configSvc.requestParams["ObjectName"] ? 30 : 15;
 
 		if (AppUtility.isNotEmpty(this.task.ID)) {
 			if (this.canUpdate || this.canDelete) {

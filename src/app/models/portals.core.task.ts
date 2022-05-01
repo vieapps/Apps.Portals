@@ -12,13 +12,11 @@ export class SchedulingTask extends CoreBaseModel {
 	) {
 		super();
 		this.copy(source, data => {
-			const now = new Date();
-			const time = new Date((!!data.Time ? new Date(data.Time) : now).getTime() + (!!data.Time ? 24 * 60 * 60 * 1000 : 0));
-			this.Time = now.getHours() < 15 ? new Date(new Date(new Date(time.setHours(15)).setMinutes(0)).setSeconds(0)) : time;
 			this.SchedulingType = this.SchedulingType || "Update";
 			this.RecurringType = this.RecurringType || "Minutes";
 			this.RecurringUnit = this.RecurringUnit !== undefined && this.RecurringUnit > 0 ? this.RecurringUnit : 0;
 			this.Status = this.Status || "Awaiting";
+			this.Time = !!data.Time ? new Date(data.Time) : undefined;
 			if (onInitialized !== undefined) {
 				onInitialized(this, data);
 			}

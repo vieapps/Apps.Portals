@@ -491,9 +491,9 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 				delete content["Attachments"];
 				delete content["Upload"];
 
-				content.StartDate = AppUtility.toIsoDate(content.StartDate !== undefined ? content.StartDate : new Date()).replace(/\-/g, "/");
-				content.EndDate = content.EndDate !== undefined ? AppUtility.toIsoDate(content.EndDate).replace(/\-/g, "/") : undefined;
-				content.PublishedTime = content.PublishedTime !== undefined ? AppUtility.toIsoDateTime(content.PublishedTime, true).replace(/\-/g, "/") : undefined;
+				content.StartDate = AppUtility.toStrDate(content.StartDate);
+				content.EndDate = AppUtility.toStrDate(content.EndDate);
+				content.PublishedTime = AppUtility.toIsoDateTime(content.PublishedTime, true);
 
 				if (AppUtility.isNotEmpty(content.ID)) {
 					if (this.hash.content === AppCrypto.hash(content)) {
@@ -502,11 +502,14 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 							this.filesSvc.uploadThumbnailAsync(
 								control.value.new,
 								this.portalsCmsSvc.getFileOptions(this.content, options => options.Extras["x-attachment-id"] = control.value.identity),
-								() => this.portalsCmsSvc.refreshContentAsync(content.ID).then(async () => await Promise.all([
-									this.trackAsync(this.title.track, "Upload", "Thumbnail"),
-									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
-									this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
-								])),
+								async () => {
+									await this.portalsCmsSvc.refreshContentAsync(content.ID);
+									await Promise.all([
+										this.trackAsync(this.title.track, "Upload", "Thumbnail"),
+										this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
+										this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
+									]);
+								},
 								error => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
 							);
 						}

@@ -1537,8 +1537,11 @@
 						"modal": "Đặt lịch xuất bản",
 						"object": "Xuất bản nội dung \"{{title}}\""
 					},
-					"status": "Trạng thái xuất bản",
-					"time": "Thời gian xuất bản"
+					"message": "Đã thiết đặt lịch xuất bản thành công",
+					"time": "Thời gian thực thi & xuất bản nội dung",
+					"status": "Trạng thái",
+					"start": "Ngày bắt đầu",
+					"end": "Ngày kết thúc"
 				},
 				"update": {
 					"action": "Thiết đặt cập nhật theo lịch",
