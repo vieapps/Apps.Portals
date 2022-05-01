@@ -33,7 +33,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	private content: Content;
-	private schedulingTask: SchedulingTask;
+	private task: SchedulingTask;
 	canModerate = false;
 	canEdit = false;
 	canDoApproval = false;
@@ -80,15 +80,15 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		};
 	}
 
-	get updatingTask() {
-		if (this.schedulingTask === undefined && this.content !== undefined) {
-			this.schedulingTask = this.content.updatingTask;
+	get schedulingTask() {
+		if (this.task === undefined && this.content !== undefined) {
+			this.task = this.content.updatingTask;
 		}
-		return this.schedulingTask;
+		return this.task;
 	}
 
 	get scheduled() {
-		return this.updatingTask !== undefined && this.updatingTask.updatingStatus !== undefined && this.content.Status !== "Published";
+		return this.schedulingTask !== undefined && this.schedulingTask.updatingStatus !== undefined && this.content.Status !== "Published";
 	}
 
 	ngOnInit() {
@@ -171,6 +171,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		AppEvents.on(this.portalsCoreSvc.name, info => {
 			if (info.args.Object === "CMS.Content" && this.content.ID === info.args.ID) {
 				if (info.args.Type === "Updated") {
+					this.task = undefined;
 					this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => AppUtility.isEquals(cfg.Name, control.Name)).Hidden ? true : false);
 					this.prepareValues();
 				}
@@ -403,7 +404,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	async openSchedulingTaskAsync() {
 		if (this.scheduled || this.content.Status !== "Published") {
-			await this.appFormsSvc.showModalAsync(ScheduledPublishModalPage, { taskID: this.updatingTask !== undefined ? this.updatingTask.ID : undefined, object: this.content });
+			await this.appFormsSvc.showModalAsync(ScheduledPublishModalPage, { taskID: this.schedulingTask !== undefined ? this.schedulingTask.ID : undefined, object: this.content });
 		}
 		else {
 			await this.configSvc.navigateForwardAsync(await this.portalsCmsSvc.getSchedulingTaskURLAsync(this.content));
