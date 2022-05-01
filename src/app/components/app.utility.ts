@@ -524,7 +524,7 @@ export class AppUtility {
 
 	/** Adds an unit and return date-time */
 	static addTime(datetime: Date, unit: number = 0, type: string = "seconds") {
-		if (unit === undefined || unit < 1) {
+		if (unit === undefined) {
 			return datetime;
 		}
 		switch ((type || "seconds").toLowerCase()) {
