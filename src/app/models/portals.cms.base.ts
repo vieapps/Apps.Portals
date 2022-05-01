@@ -5,7 +5,7 @@ import { AttachmentInfo } from "@app/models/base";
 import { PortalBase as BaseModel } from "@app/models/portals.base";
 import { Organization, Module, ContentType, SchedulingTask } from "@app/models/portals.core.all";
 
-/** Abstract class for all portals' core entity classes */
+/** Abstract class for all portals' CMS entity classes */
 export abstract class PortalCmsBase extends BaseModel {
 
 	constructor() {
