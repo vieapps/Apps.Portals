@@ -277,8 +277,13 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 				this.appFormsSvc.hideLoadingAsync(() => AppUtility.invoke(onFreshenUp !== undefined ? () => onFreshenUp() : undefined));
 			}
 		};
-		if (index === 0 && organizations.length > 1) {
-			this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(this.configSvc.isDebug ? () => console.log(`--- Start to refresh ${organizations.length} organizations -----------------`) : () => {});
+		if (index === 0) {
+			if (organizations.length > 1) {
+				this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(this.configSvc.isDebug ? () => console.log(`--- Start to refresh ${organizations.length} organizations -----------------`) : () => {});
+			}
+			else {
+				this.portalsCoreSvc.fetchSchedulingTasksAsync();
+			}
 		}
 		this.portalsCoreSvc.refreshOrganizationAsync(organizations[index].ID, refreshNext, refreshNext, undefined, useXHR);
 	}
