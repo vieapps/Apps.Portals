@@ -484,6 +484,11 @@ export class AppUtility {
 		return object;
 	}
 
+	/** Splits a string/value and return an array of new map */
+	static map<T>(values: string | any, mapper: (value: string) => T, separator: string = "#;") {
+		return (this.toArray(values, separator || "#;") as Array<string>).map(value => mapper(value));
+	}
+
 	/** Removes tags from the HTML content */
 	static removeTags(html: string, keepTags?: string[]) {
 		if (this.isNotEmpty(html)) {
