@@ -214,7 +214,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => ctrl.Name === "OpenBy");
 		control.Options.SelectOptions.AsBoxes = true;
 		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
-			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values, "#;") as Array<string>).map(value => ({
+			control.Options.SelectOptions.Values = AppUtility.map(control.Options.SelectOptions.Values, value => ({
 				Value: value,
 				Label: `{{portals.cms.categories.controls.OpenBy.${value}}}`
 			}));
@@ -225,7 +225,10 @@ export class CmsCategoriesUpdatePage implements OnInit {
 				Name: "OriginalPrivileges",
 				Type: "Custom",
 				Segment: "privileges",
-				Extras: { AllowInheritFromParent: true, RolesSelector: this.portalsCoreSvc.getRolesSelector(RolesSelectorModalPage, { organizationID: this.organization.ID }) },
+				Extras: {
+					AllowInheritFromParent: true,
+					RolesSelector: this.portalsCoreSvc.getRolesSelector(RolesSelectorModalPage, { organizationID: this.organization.ID })
+				},
 				Options: {
 					Type: "object-privileges"
 				}

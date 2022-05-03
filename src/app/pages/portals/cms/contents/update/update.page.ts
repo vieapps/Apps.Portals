@@ -173,7 +173,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.module);
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content", undefined, { "x-content-type-id": this.contentType.ID });
 
-		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
+		let control = formConfig.find(ctrl => ctrl.Name === "Status");
 		this.portalsCoreSvc.prepareApprovalStatusControl(control, "popover");
 		if (!this.canModerate) {
 			control.Options.Disabled = true;
