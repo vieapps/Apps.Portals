@@ -134,7 +134,7 @@ export class ScheduledPublishModalPage implements OnInit {
 		if (time !== undefined) {
 			this.processing = true;
 			await this.appFormsSvc.showLoadingAsync(this.title);
-			const task = AppUtility.clone(this.task, false, ["Time", "Data"], obj => {
+			const task = AppUtility.clone(this.task, false, undefined, obj => {
 				const start = AppUtility.toStrDate(form.Start);
 				const end = AppUtility.toStrDate(form.End);
 				const data = AppUtility.parse(this.task.Data);

@@ -113,11 +113,11 @@ export class PortalsTasksUpdatePage implements OnInit {
 		control.Options.Rows = 2;
 
 		control = formConfig.find(ctrl => ctrl.Name === "Status");
-		control.Options.SelectOptions.Values = (control.Options.SelectOptions.Values as string).split("#;").map(value => ({ Value: value, Label: `{{portals.tasks.status.${value}}}` }));
+		control.Options.SelectOptions.Values = AppUtility.map(control.Options.SelectOptions.Values, value => ({ Value: value, Label: `{{portals.tasks.status.${value}}}` }));
 		control.Options.Disabled = true;
 
 		control = formConfig.find(ctrl => ctrl.Name === "SchedulingType");
-		control.Options.SelectOptions.Values = (control.Options.SelectOptions.Values as string).split("#;").map(value => ({ Value: value, Label: `{{portals.tasks.schedulingType.${value}}}` }));
+		control.Options.SelectOptions.Values = AppUtility.map(control.Options.SelectOptions.Values, value => ({ Value: value, Label: `{{portals.tasks.schedulingType.${value}}}` }));
 		if (AppUtility.isNotEmpty(this.task.ID)) {
 			control.Options.Disabled = true;
 		}
@@ -126,7 +126,7 @@ export class PortalsTasksUpdatePage implements OnInit {
 		}
 
 		control = formConfig.find(ctrl => ctrl.Name === "RecurringType");
-		control.Options.SelectOptions.Values = (control.Options.SelectOptions.Values as string).split("#;").map(value => ({ Value: value, Label: `{{portals.tasks.recurringType.${value}}}` }));
+		control.Options.SelectOptions.Values = AppUtility.map(control.Options.SelectOptions.Values, value => ({ Value: value, Label: `{{portals.tasks.recurringType.${value}}}` }));
 
 		control = formConfig.find(ctrl => ctrl.Name === "Time");
 		control.Options.ReadOnly = !this.canUpdate;
