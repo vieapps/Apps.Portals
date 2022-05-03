@@ -142,7 +142,8 @@
 						},
 						"messages": {
 							"success": "Các thông số thiết đặt gửi email đã chuẩn xác, đã gửi email thành công tới địa chỉ {{email}}",
-							"error": "Các thông số thiết đặt gửi email chưa chuẩn xác"
+							"error": "Các thông số thiết đặt gửi email chưa chuẩn xác",
+							"none": "Chưa có các thông số thiết đặt gửi email"
 						}
 					}
 				},

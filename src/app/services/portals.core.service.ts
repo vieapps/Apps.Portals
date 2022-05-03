@@ -1046,8 +1046,11 @@ export class PortalsCoreService extends BaseService {
 				OnClick: async (event, formControl) => {
 					event.stopPropagation();
 					const email = formControl.parent.parent.value;
-					if (email.Smtp !== undefined && AppUtility.isNotEmpty(email.Smtp.Host)) {
-						const button = await this.appFormsSvc.getResourceAsync("portals.common.controls.emails.test.button");
+					const button = await this.appFormsSvc.getResourceAsync("portals.common.controls.emails.test.button");
+					if (email.Smtp === undefined || AppUtility.isEmpty(email.Smtp.Host)) {
+						await this.appFormsSvc.showAlertAsync(button, await this.appFormsSvc.getResourceAsync("portals.common.controls.emails.test.messages.none"));
+					}
+					else {
 						await this.appFormsSvc.showAlertAsync(
 							button,
 							undefined,
