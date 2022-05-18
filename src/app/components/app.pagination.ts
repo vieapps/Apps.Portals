@@ -8,6 +8,10 @@ export class AppPagination {
 
 	static instances = new Dictionary<string, AppDataPagination>();
 
+	static get keys() {
+		return Array.from(this.instances.keys());
+	}
+
 	private static cloneFilterBy(filterBy: AppDataFilter) {
 		const filter: AppDataFilter = AppUtility.clone(
 			filterBy || {},

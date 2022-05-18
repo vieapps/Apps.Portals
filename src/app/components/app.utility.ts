@@ -632,9 +632,9 @@ export class AppUtility {
 	}
 
 	/** Converts the object into a 'query' string */
-	static toQuery(object: any) {
+	static toQuery(object: any, converter?: (kvp: { key: any; value: any; }) => string, predicate?: (kvp: { key: any; value: any; }) => boolean) {
 		try {
-			return this.toStr(this.toKeyValuePair(object).map(kvp => `${kvp.key.toString()}=${encodeURIComponent((kvp.value || "").toString())}`), "&");
+			return this.toStr(this.toKeyValuePair(object, predicate).map(kvp => converter !== undefined ? converter(kvp) : `${kvp.key.toString()}=${encodeURIComponent((kvp.value || "").toString())}`), "&");
 		}
 		catch (error) {
 			return "";
@@ -653,6 +653,16 @@ export class AppUtility {
 		const flags = regex.replace(/.*\/([gimy]*)$/, "$1");
 		const pattern = regex.replace(new RegExp("^/(.*?)/" + flags + "$"), "$1");
 		return new RegExp(pattern, flags);
+	}
+
+	/** Converts to lower case */
+	static toLowerCase(object: string) {
+		return this.isNotEmpty(object) ? object.toLowerCase() : undefined;
+	}
+
+	/** Converts to upper case */
+	static toUpperCase(object: string) {
+		return this.isNotEmpty(object) ? object.toUpperCase() : undefined;
 	}
 
 	/**
@@ -683,8 +693,8 @@ export class AppUtility {
 	}
 
 	/** Converts date-time object into a ISO 8601 date string to use with date-picker */
-	static toIsoDate(date: string | number | Date) {
-		const isoDateTime = this.toIsoDateTime("-" === date ? undefined : date, true, true);
+	static toIsoDate(date: string | number | Date, useLocalTimezone: boolean = true) {
+		const isoDateTime = this.toIsoDateTime("-" === date ? undefined : date, true, true, useLocalTimezone);
 		return isoDateTime !== undefined ? isoDateTime.substring(0, 10) : undefined;
 	}
 

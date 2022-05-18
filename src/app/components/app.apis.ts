@@ -451,12 +451,12 @@ export class AppAPIs {
 			console.warn(`[AppAPIs]: ${reason || "Re-open because the WebSocket connection is broken"}`);
 			AppUtility.invoke(() => {
 				console.log(`[AppAPIs]: The WebSocket connection is re-opening... #${this._attempt}`);
-				this.openWebSocket(() => {
+				this.openWebSocket(() => AppUtility.invoke(() => {
 					if (this.isWebSocketReady) {
 						console.log(`[AppAPIs]: The WebSocket connection was re-opened... #${this._attempt}`);
-						AppUtility.invoke(() => this._attempt = 0, 123);
+						this._attempt = 0;
 					}
-				}, true);
+				}, 123), true);
 			}, defer || 123 + (this._attempt * 13));
 		}
 	}

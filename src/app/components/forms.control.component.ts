@@ -948,7 +948,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	get ckEditorConfig() {
 		if (this._ckEditorConfig === undefined) {
 			this._ckEditorConfig = {
-				language: this.configSvc.appConfig.language.substr(0, 2),
+				language: this.configSvc.appConfig.language.substring(0, 2),
 				fontSize: this.control.Extras["ckEditorFontSize"] || {
 					options: [10, 11, 12, "default", 14, 16, 18, 20, 24, 28, 34, 38, 40, 46, 50],
 					supportAllValues: true
@@ -1028,10 +1028,17 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	ckEditorOnReady(editor: any) {
-		editor.ui.getEditableElement().parentElement.insertBefore(
-			editor.ui.view.toolbar.element,
-			editor.ui.getEditableElement()
-		);
+		editor.ui.getEditableElement().parentElement.insertBefore(editor.ui.view.toolbar.element, editor.ui.getEditableElement());
+	}
+
+	ckEditorSetData(data: any) {
+		if (this.isTextEditorControl) {
+			this.elementRef.editorInstance.setData(data);
+		}
+	}
+
+	ckEditorGetData() {
+		return this.isTextEditorControl ? this.elementRef.editorInstance.getData() : undefined;
 	}
 
 }
