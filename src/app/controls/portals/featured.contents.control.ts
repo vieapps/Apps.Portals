@@ -74,10 +74,10 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 			const organization = this.portalsCoreSvc.activeOrganization;
 			if (organization !== undefined) {
 				if ("Organization" === args.Type && "Changed" === args.Mode) {
-					AppUtility.invoke(() => this.prepareContents(true, new Date()), 123);
+					AppUtility.invoke(() => this.prepareContents(true), 234);
 				}
 				else if ("FeaturedContents" === args.Type && "Prepared" === args.Mode && organization.ID === args.ID) {
-					AppUtility.invoke(() => this.prepareContents(true, new Date()), 123);
+					AppUtility.invoke(() => this.prepareContents(true), 345);
 				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
@@ -95,14 +95,13 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 				: await this.configSvc.getResourceAsync("portals.cms.common.featured.updated");
 		}
 		else if (this.label.startsWith("{") && this.label.endsWith("}")) {
-			this.label = await this.configSvc.getResourceAsync(this.label.substr(1, this.label.length - 2).trim());
+			this.label = await this.configSvc.getResourceAsync(this.label.substring(1, this.label.length - 2).trim());
 		}
 	}
 
-	private prepareContents(force: boolean = false, start?: Date) {
+	private prepareContents(force: boolean = false) {
 		if (this.configSvc.isAuthenticated) {
 			if (this.contents.length < 1 || force) {
-				start = start || new Date();
 				const organization = this.portalsCoreSvc.activeOrganization;
 				const organizationID = organization !== undefined ? organization.ID : undefined;
 				const filterBy: (content: FeaturedContent) => boolean = AppUtility.isNotEmpty(this.status)
@@ -133,12 +132,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 						OriginalObject: content
 					} as FeaturedContent;
 				}).filter(filterBy).orderBy(orderBy).take(this.amount);
-				this.zone.run(() => {
-					this.changeDetector.detectChanges();
-					if (this.configSvc.isDebug) {
-						console.log(`<Control> Featured contents were prepared in ${AppUtility.getElapsedTime(start)}`);
-					}
-				});
+				this.zone.run(() => this.changeDetector.detectChanges());
 			}
 			if (this.contents.length < 1) {
 				AppEvents.broadcast(this.portalsCoreSvc.name, { Type: "FeaturedContents", Mode: "Request" });

@@ -27,7 +27,7 @@ export class Site extends CoreBaseModel {
 	SubDomain = undefined as string;
 	OtherDomains = undefined as string;
 	AlwaysUseHTTPs = false;
-	AlwaysReturnHTTPs = false;
+	AlwaysReturnHTTPs = true;
 	Language = undefined as string;
 	Theme = undefined as string;
 	HomeDesktopID = undefined as string;

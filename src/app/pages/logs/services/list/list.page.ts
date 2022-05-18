@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from "@angular/core";
+import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonInfiniteScroll, IonCheckbox } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
@@ -25,8 +25,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
-		private portalsCoreSvc: PortalsCoreService,
-		private changeDetector: ChangeDetectorRef
+		private portalsCoreSvc: PortalsCoreService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
@@ -62,14 +61,17 @@ export class LogsListPage implements OnInit, OnDestroy {
 	}
 
 	get predicate() {
-		const correlationID = this.filterBy["CorrelationID"];
-		const serviceName = this.filterBy["ServiceName"];
+		const correlationID = AppUtility.toLowerCase(this.filterBy["CorrelationID"]);
+		const serviceName = AppUtility.toLowerCase(this.filterBy["ServiceName"]);
+		const objectName = AppUtility.toLowerCase(this.filterBy["ObjectName"]);
 		if (AppUtility.isNotEmpty(correlationID) || AppUtility.isNotEmpty(serviceName)) {
-			const predicate: (log: ServiceLog) => boolean = AppUtility.isNotEmpty(correlationID) && AppUtility.isNotEmpty(serviceName)
-				? log => log.CorrelationID === correlationID && log.ServiceName === serviceName
+			const predicate: (log: ServiceLog) => boolean = AppUtility.isNotEmpty(correlationID) && AppUtility.isNotEmpty(serviceName) && AppUtility.isNotEmpty(objectName)
+				? log => log.CorrelationID === correlationID && log.ServiceName === serviceName && log.ObjectName === objectName
 				: AppUtility.isNotEmpty(correlationID)
 					? log => log.CorrelationID === correlationID
-					: log => log.ServiceName === serviceName;
+					: AppUtility.isNotEmpty(objectName)
+						? log => log.ServiceName === serviceName && log.ObjectName === objectName
+						: log => log.ServiceName === serviceName;
 			return predicate;
 		}
 		return undefined;
@@ -83,7 +85,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 	ngOnInit() {
 		const account = this.configSvc.getAccount();
 		if (this.authSvc.isSystemAdministrator(account) || this.portalsCoreSvc.canManageOrganization(this.portalsCoreSvc.activeOrganization, account)) {
-			this.initializeAsync();
+			this.initializeAsync().then(() => this.appFormsSvc.showAlertAsync("Filter", "Click the Refresh button to start search for logs"));
 		}
 		else {
 			Promise.all([
@@ -97,17 +99,19 @@ export class LogsListPage implements OnInit, OnDestroy {
 		this.configSvc.serviceLogs = [];
 	}
 
-	private async initializeAsync() {
+	private async initializeAsync(doSearch: boolean = false) {
 		this.pagination.PageNumber = this.pageNumber = 0;
-		await this.appFormsSvc.showLoadingAsync();
-		await this.searchAsync();
+		if (doSearch) {
+			await this.appFormsSvc.showLoadingAsync();
+			await this.searchAsync();
+		}
 	}
 
 	async refreshAsync() {
 		this.configSvc.serviceLogs = [];
 		this.selected.clear();
 		this.selectAllCtrl.checked = false;
-		await this.initializeAsync();
+		await this.initializeAsync(true);
 	}
 
 	track(index: number, log: ServiceLog) {
@@ -115,7 +119,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 	}
 
 	info(log: ServiceLog) {
-		return log !== undefined ? log.Logs.substr(0, 100) + (log.Logs.length > 100 ? "..." : "") : "";
+		return log !== undefined ? log.Logs.substring(0, 100) + (log.Logs.length > 100 ? "..." : "") : "";
 	}
 
 	async onInfiniteScrollAsync() {
@@ -152,53 +156,42 @@ export class LogsListPage implements OnInit, OnDestroy {
 		await TrackingUtility.trackAsync({ title: "Browse Logs", category: "ServiceLog", action: "Browse" });
 		await this.configSvc.getServiceLogsAsync(
 			{
-				FilterBy: this.filterBy,
+				FilterBy: {
+					CorrelationID: AppUtility.toLowerCase(this.filterBy["CorrelationID"]),
+					ServiceName: AppUtility.toLowerCase(this.filterBy["ServiceName"]),
+					ObjectName: AppUtility.toLowerCase(this.filterBy["ObjectName"])
+				},
 				Pagination: this.pagination
 			},
-			async data => {
+			data => {
 				this.pageNumber++;
 				this.pagination = AppPagination.getDefault(data);
 				this.pagination.PageNumber = this.pageNumber;
 				this.configSvc.serviceLogs.merge(data.Objects);
-				await this.appFormsSvc.hideLoadingAsync(() => {
+				this.appFormsSvc.hideLoadingAsync(() => {
 					if (onNext !== undefined) {
 						onNext(data);
 					}
 				});
 			},
-			async _ => await this.appFormsSvc.hideLoadingAsync()
+			_ => this.appFormsSvc.hideLoadingAsync()
 		);
 	}
 
 	async filterAsync() {
-		const correlationID = this.filterBy["CorrelationID"];
-		const serviceName = this.filterBy["ServiceName"];
 		await this.appFormsSvc.showAlertAsync(
 			"Filter",
 			undefined,
 			undefined,
 			data => {
-				if (AppUtility.isNotEmpty(data.CorrelationID)) {
-					this.filterBy["CorrelationID"] = data.CorrelationID;
-				}
-				else {
-					delete this.filterBy["CorrelationID"];
-				}
-				if (AppUtility.isNotEmpty(data.ServiceName)) {
-					this.filterBy["ServiceName"] = data.ServiceName;
-				}
-				else {
-					delete this.filterBy["ServiceName"];
-				}
-				if (this.configSvc.serviceLogs.length < 1 || Object.keys(this.filterBy).length < 1) {
+				this.filterBy["CorrelationID"] = data.CorrelationID;
+				this.filterBy["ServiceName"] = data.ServiceName;
+				this.filterBy["ObjectName"] = data.ObjectName;
+				this.refreshAsync().then(() => {
 					if (this.infiniteScrollCtrl !== undefined) {
 						this.infiniteScrollCtrl.disabled = false;
 					}
-					this.refreshAsync();
-				}
-				else {
-					this.changeDetector.detectChanges();
-				}
+				});
 			},
 			await this.appFormsSvc.getResourceAsync("common.buttons.ok"),
 			await this.appFormsSvc.getResourceAsync("common.buttons.cancel"),
@@ -206,14 +199,20 @@ export class LogsListPage implements OnInit, OnDestroy {
 				{
 					name: "CorrelationID",
 					type: "text",
-					value: AppUtility.isNotEmpty(correlationID) ? correlationID : undefined,
+					value: this.filterBy["CorrelationID"],
 					placeholder: "Correlation ID"
 				},
 				{
 					name: "ServiceName",
 					type: "text",
-					value: AppUtility.isNotEmpty(serviceName) ? serviceName : undefined,
+					value: this.filterBy["ServiceName"],
 					placeholder: "Service Name"
+				},
+				{
+					name: "ObjectName",
+					type: "text",
+					value: this.filterBy["ObjectName"],
+					placeholder: "Object Name"
 				}
 			]
 		);

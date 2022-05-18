@@ -213,7 +213,18 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 		formConfig.push(
 			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label")),
 			this.portalsCmsSvc.getPermanentLinkFormControl(this.item, "basic"),
-			this.portalsCoreSvc.getAuditFormControl(this.item, "basic")
+			this.portalsCmsSvc.getPublicLinkFormControl(this.item, "basic"),
+			this.portalsCoreSvc.getAuditFormControl(this.item, "basic"),
+			{
+				Name: "RepositoryEntity",
+				Type: "Text",
+				Segment: "basic",
+				Extras: { Text: this.item.contentType !== undefined ? this.item.contentType.Title : "" },
+				Options: {
+					Label: "{{portals.cms.contents.list.current}}",
+					ReadOnly: true
+				}
+			}
 		);
 
 		formConfig.forEach((ctrl, index) => {

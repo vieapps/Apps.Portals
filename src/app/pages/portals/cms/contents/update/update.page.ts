@@ -75,7 +75,8 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 
 	ngOnDestroy() {
 		if (AppUtility.isNotEmpty(this.content.ID)) {
-			AppEvents.off(this.filesSvc.name, "CMS.Contents:Edit:Refresh");
+			AppEvents.off(this.portalsCmsSvc.name, "CMS.Contents:Edit:Refresh");
+			AppEvents.off(this.filesSvc.name, "CMS.Contents:Edit:Refresh:Attachments");
 		}
 	}
 
@@ -146,11 +147,22 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		this.trackAsync(this.title.track);
 
 		if (AppUtility.isNotEmpty(this.content.ID)) {
-			AppEvents.on(this.filesSvc.name, info => {
-				if (info.args.Object === "Attachment" && this.content.ID === info.args.ObjectID) {
-					this.prepareAttachments("Attachments", undefined, info.args.Event === "Delete" ? undefined : this.filesSvc.prepareAttachment(info.args.Data), info.args.Event === "Delete" ? this.filesSvc.prepareAttachment(info.args.Data) : undefined);
+			AppEvents.on(this.portalsCoreSvc.name, info => {
+				if (info.args.Object === "CMS.Content" && this.content.ID === info.args.ID) {
+					if (info.args.Type === "Updated" && !!!info.args.Mode) {
+						this.patchValues(true);
+					}
+					else if (info.args.Type === "Deleted") {
+						this.cancel();
+					}
 				}
 			}, "CMS.Contents:Edit:Refresh");
+			AppEvents.on(this.filesSvc.name, info => {
+				if (info.args.Object === "Attachment" && this.content.ID === info.args.ObjectID) {
+					const isDeleted = info.args.Event === "Delete";
+					this.prepareAttachments("Attachments", undefined, isDeleted ? undefined : this.filesSvc.prepareAttachment(info.args.Data), isDeleted ? this.filesSvc.prepareAttachment(info.args.Data) : undefined);
+				}
+			}, "CMS.Contents:Edit:Refresh:Attachments");
 		}
 	}
 
@@ -436,11 +448,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	onFormInitialized() {
-		this.form.patchValue(AppUtility.clone(this.content, false, ["StartDate", "EndDate", "PublishedTime"], obj => Content.normalizeClonedProperties(this.content, obj, () => {
-			obj.StartDate = AppUtility.toIsoDate(this.content.StartDate);
-			obj.EndDate = AppUtility.toIsoDate(this.content.EndDate);
-			obj.PublishedTime = AppUtility.toIsoDateTime(this.content.PublishedTime, true);
-		})));
+		this.patchValues();
 		this.hash.content = AppCrypto.hash(this.form.value);
 
 		this.appFormsSvc.hideLoadingAsync(() => {
@@ -469,6 +477,18 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 				}
 			}
 		});
+	}
+
+	private patchValues(doUpdateTextEditors: boolean = false) {
+		const content = AppUtility.clone(this.content, false, ["StartDate", "EndDate", "PublishedTime"], obj => Content.normalizeClonedProperties(this.content, obj, () => {
+			obj.StartDate = AppUtility.toIsoDate(this.content.StartDate);
+			obj.EndDate = AppUtility.toIsoDate(this.content.EndDate);
+			obj.PublishedTime = AppUtility.toIsoDateTime(this.content.PublishedTime, true);
+		}));
+		this.form.patchValue(content);
+		if (doUpdateTextEditors) {
+			this.formControls.filter(ctrl => ctrl.Type === "TextEditor").forEach(ctrl => ctrl.controlRef.ckEditorSetData(content[ctrl.Name]));
+		}
 	}
 
 	private prepareAttachments(name: string, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo, onCompleted?: (control: AppFormsControl) => void) {

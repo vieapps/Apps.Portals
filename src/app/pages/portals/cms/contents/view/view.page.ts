@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment } from "@app/components/forms.objects";
 import { AppFormsService } from "@app/components/forms.service";
@@ -36,7 +37,6 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	private task: SchedulingTask;
 	canModerate = false;
 	canEdit = false;
-	canDoApproval = false;
 	title = {
 		page: "Content",
 		track: "Content"
@@ -80,7 +80,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		};
 	}
 
-	get schedulingTask() {
+	private get schedulingTask() {
 		if (this.task === undefined && this.content !== undefined) {
 			this.task = this.content.updatingTask;
 		}
@@ -109,8 +109,6 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		if (this.content === undefined) {
 			await this.portalsCmsSvc.getContentAsync(contentID, _ => this.content = Content.get(contentID), undefined, true);
 		}
-
-		this.title.track = await this.configSvc.getResourceAsync("portals.cms.contents.title.view");
 
 		if (this.content === undefined) {
 			this.trackAsync(`${this.title.track} | No Content`, "Check");
@@ -145,6 +143,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			return;
 		}
 
+		this.title.track = await this.configSvc.getResourceAsync("portals.cms.contents.title.view");
 		this.configSvc.appTitle = this.title.page = this.title.track + ` [${this.content.Title}]`;
 
 		this.resources = {
@@ -158,10 +157,13 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		if (this.canEdit) {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(this.resources.update, "create", () => this.update()),
-				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync(this.content.Status !== "Published" ? "portals.tasks.scheduled.publish.title.modal" : "portals.tasks.scheduled.update.action"), "timer", () => this.openSchedulingTaskAsync()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync(this.content.Status !== "Published" ? "portals.cms.common.buttons.viewAsPublished" : "portals.cms.common.buttons.viewAsPublic"), "eye", () => this.view()),
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.delete())
 			];
+			if (this.canModerate) {
+				this.actions.insert(this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()), 1);
+			}
 		}
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
@@ -174,6 +176,9 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 					this.task = undefined;
 					this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => AppUtility.isEquals(cfg.Name, control.Name)).Hidden ? true : false);
 					this.prepareValues();
+					if (this.canEdit) {
+						AppUtility.invoke(async () => this.actions[this.canModerate ? 3 : 2].text = await this.configSvc.getResourceAsync(this.content.Status !== "Published" ? "portals.cms.common.buttons.viewAsPublished" : "portals.cms.common.buttons.viewAsPublic"));
+					}
 				}
 				else if (info.args.Type === "Deleted") {
 					this.cancel();
@@ -229,19 +234,19 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		formConfig.push(
 			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label")),
 			this.portalsCmsSvc.getPermanentLinkFormControl(this.content, "management"),
-			this.portalsCoreSvc.getAuditFormControl(this.content, "management")
-		);
-
-		formConfig.insert({
-			Name: "RepositoryEntity",
-			Type: "Text",
-			Segment: "management",
-			Extras: { Text: this.content.contentType !== undefined ? this.content.contentType.Title : "" },
-			Options: {
-				Label: "{{portals.cms.contents.list.current}}",
-				ReadOnly: true
+			this.portalsCmsSvc.getPublicLinkFormControl(this.content, "management"),
+			this.portalsCoreSvc.getAuditFormControl(this.content, "management"),
+			{
+				Name: "RepositoryEntity",
+				Type: "Text",
+				Segment: "management",
+				Extras: { Text: this.content.contentType !== undefined ? this.content.contentType.Title : "" },
+				Options: {
+					Label: "{{portals.cms.contents.list.current}}",
+					ReadOnly: true
+				}
 			}
-		}, formConfig.findIndex(ctrl => ctrl.Name === "Audits") + 1);
+		);
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		const control = formConfig.find(ctrl => ctrl.Name === "ID");
@@ -299,23 +304,12 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		});
 	}
 
-	private prepareAttachments(name: string, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo) {
-		const formControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, name));
-		const isThumbnails = AppUtility.isEquals(name, "Thumbnails");
-		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, control => {
-			control.Hidden = control.value === undefined;
-			if (isThumbnails) {
-				this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons").Hidden = control.Hidden;
-			}
-		});
-	}
-
 	private prepareValues() {
 		this.formControls.filter(ctrl => !ctrl.Hidden && ctrl.Name !== "Thumbnails" && ctrl.Name !== "Attachments" && ctrl.Name !== "Buttons" && ctrl.Name !== "ThumbnailButtons").forEach(async control => {
 			control.value = AppUtility.isEquals(control.Name, "Audits")
 				? await this.portalsCoreSvc.getAuditInfoAsync(this.content)
 				: this.content[control.Name];
-			control.Hidden = AppUtility.isEmpty(control.value);
+			control.Hidden = control.value === undefined;
 			if (!control.Hidden) {
 				if (AppUtility.isEquals(control.Type, "TextEditor")) {
 					control.value = this.portalsCmsSvc.normalizeRichHtml(control.value);
@@ -391,6 +385,27 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 							break;
 					}
 				}
+			}
+			else if (control.Name === "PublicLink") {
+				this.portalsCoreSvc.fetchDesktops(this.content.SystemID, () => {
+					const url = this.portalsCoreSvc.getPublicURL(this.content, this.content.category);
+					if (AppUtility.isNotEmpty(url)) {
+						const ctrl = this.formControls.find(ctl => ctl.Name === "PublicLink");
+						ctrl.Extras["Text"] = url;
+						ctrl.Hidden = false;
+					}
+				});
+			}
+		});
+	}
+
+	private prepareAttachments(name: string, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo) {
+		const formControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, name));
+		const isThumbnails = AppUtility.isEquals(name, "Thumbnails");
+		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, control => {
+			control.Hidden = control.value === undefined;
+			if (isThumbnails) {
+				this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons").Hidden = control.Hidden;
 			}
 		});
 	}
@@ -473,6 +488,18 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	cancel() {
 		this.configSvc.navigateBackAsync();
+	}
+
+	private view() {
+		const url = this.portalsCoreSvc.getPublicURL(this.content, this.content.category);
+		if (AppUtility.isNotEmpty(url)) {
+			if (this.content.Status === "Published") {
+				PlatformUtility.openURL(url);
+			}
+			else {
+				PlatformUtility.openURL(`${url}${url.indexOf("?") > 0 ? "&" : "?"}x-app-token=${this.configSvc.appConfig.jwt}`);
+			}
+		}
 	}
 
 	private trackAsync(title: string, action?: string, category?: string) {

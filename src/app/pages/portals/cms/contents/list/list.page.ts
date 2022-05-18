@@ -184,6 +184,10 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.search"), "search", () => this.openSearch(false))
 			];
 
+			if (this.category !== undefined && !this.searching) {
+				this.actions.push(this.appFormsSvc.getActionSheetButton(this.labels.refresh, "refresh", () => this.reload()));
+			}
+
 			if (this.module !== undefined && this.portalsCmsSvc.getContentTypesOfContent(this.module).length > 1) {
 				this.actions.push(
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.list.change"), "git-branch", () => this.changeContentType())
@@ -278,7 +282,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	get paginationPrefix() {
-		return (this.contentType !== undefined ? `${this.contentType.ID}#` : "") + this.portalsCoreSvc.getPaginationPrefix("cms.content");
+		return this.portalsCoreSvc.getPaginationPrefix("cms.content");
 	}
 
 	startSearch(onNext?: () => void, pagination?: AppDataPagination) {
@@ -380,6 +384,16 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	back(message: string, url?: string) {
 		this.do(() => this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateBackAsync(url)));
+	}
+
+	reload() {
+		AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
+		this.pagination = undefined;
+		this.appFormsSvc.showLoadingAsync(this.labels.refresh).then(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync(() => {
+			if (this.category !== undefined && this.category.childrenIDs === undefined) {
+				this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up"));
+			}
+		})));
 	}
 
 	changeContentType() {

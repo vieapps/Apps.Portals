@@ -544,27 +544,47 @@ export class PortalsCoreService extends BaseService {
 		return this.getRouterLink(contentType, action, title, objectName, path) + "?x-request=" + this.getRouterQueryParams(contentType, params)["x-request"];
 	}
 
-	getPortalURL(object: CmsBaseModel, parent?: CmsBaseModel) {
-		let uri: string = parent !== undefined ? this.getPortalURL(parent) : undefined;
-		if (uri === undefined) {
-			const organization = Organization.get(object.SystemID);
-			const module = Module.get(object.RepositoryID);
-			const contentType = ContentType.get(object.RepositoryEntityID);
-			const desktop = Desktop.get(object["DesktopID"]) || Desktop.get(contentType === undefined ? undefined : contentType.DesktopID) || Desktop.get(module === undefined ? undefined : module.DesktopID) || Desktop.get(organization === undefined ? undefined : organization.HomeDesktopID);
-			uri = `${this.configSvc.appConfig.URIs.portals}` + (organization !== undefined && desktop !== undefined ? `~${organization.Alias}/${desktop.Alias}` : "_permanentlink");
-		}
-		return uri.indexOf("_permanent") > 0
-			? this.getPermanentURL(object)
-			: uri + "/" + (object["Alias"] || object.ID);
+	getPermanentURL(object: CmsBaseModel) {
+		return `${this.getSiteURL(object)}_permanentlink/${object.RepositoryEntityID}/${object.ID}`;
 	}
 
-	getPermanentURL(object: CmsBaseModel) {
+	private getSiteURL(object: CmsBaseModel) {
 		const organization = object.organization;
 		const site = organization !== undefined ? Site.instances.first(s => s.SystemID === organization.ID) : undefined;
-		const url = site !== undefined
-			? `http${site.AlwaysUseHTTPs || site.AlwaysReturnHTTPs ? "s" : ""}://${site.SubDomain.replace("*", "www")}.${site.PrimaryDomain}/`
-			: this.configSvc.appConfig.URIs.portals;
-		return `${url}_permanentlink/${object.RepositoryEntityID}/${object.ID}`;
+		return site !== undefined
+			? `http${site.AlwaysUseHTTPs || site.AlwaysReturnHTTPs ? "s" : ""}://${site.SubDomain}.${site.PrimaryDomain}/`.replace("://*", "://www").replace("://www.www", "://www")
+			: this.configSvc.appConfig.URIs.portals + `~${organization.Alias}/`;
+	}
+
+	private getDesktop(object: CmsBaseModel) {
+		const module = Module.get(object.RepositoryID);
+		const contentType = ContentType.get(object.RepositoryEntityID);
+		return Desktop.get(object["DesktopID"]) || Desktop.get(contentType === undefined ? undefined : contentType.DesktopID) || Desktop.get(module === undefined ? undefined : module.DesktopID);
+	}
+
+	getPublicURL(object: CmsBaseModel, parent?: CmsBaseModel) {
+		let url: string = parent !== undefined ? this.getPublicURL(parent, undefined) : undefined;
+		if (url === undefined) {
+			const desktop = this.getDesktop(object);
+			url = desktop !== undefined
+				? `${this.getSiteURL(object)}${desktop.Alias}`
+				: undefined;
+		}
+		return url !== undefined
+			? `${url}/${object["Alias"] || object.ID}`
+			: undefined;
+	}
+
+	getPortalURL(object: CmsBaseModel, parent?: CmsBaseModel) {
+		let url: string = parent !== undefined ? this.getPortalURL(parent) : undefined;
+		if (url === undefined) {
+			const organization = Organization.get(object.SystemID);
+			const desktop = this.getDesktop(object);
+			url = `${this.configSvc.appConfig.URIs.portals}` + (organization !== undefined && desktop !== undefined ? `~${organization.Alias}/${desktop.Alias}` : "_permanentlink");
+		}
+		return url.indexOf("_permanent") > 0
+			? this.getPermanentURL(object)
+			: `${url}/${object["Alias"] || object.ID}`;
 	}
 
 	getPaginationPrefix(objectName: string) {
@@ -2088,6 +2108,18 @@ export class PortalsCoreService extends BaseService {
 		return desktop;
 	}
 
+	fetchDesktops(systemID?: string, onSuccess?: () => void) {
+		this.searchDesktopsAsync({
+			FilterBy: {
+				And: [
+					{ SystemID: { Equals: systemID ?? this.activeOrganization.ID } },
+					{ ParentID: "IsNull" }
+				]
+			},
+			SortBy: { Title: "Ascending" }
+		}, onSuccess, undefined, true, undefined, true);
+	}
+
 	private updateDesktop(json: any, oldParentID?: string) {
 		if (AppUtility.isObject(json, true)) {
 			const desktop = Desktop.set(Desktop.deserialize(json, Desktop.get(json.ID)));
@@ -3335,7 +3367,7 @@ export class PortalsCoreService extends BaseService {
 			statuses = availableStatuses.map(status => ({ label: "{{portals.common.approval." + status + "}}", value: status }));
 		}
 		await Promise.all(statuses.map(async status => status.label = await this.appFormsSvc.normalizeResourceAsync(status.label)));
-		if (statuses.findIndex(status => status.value === "Published") > 0) {
+		if (currentStatus !== "Pending" && statuses.findIndex(status => status.value === "Published") > 0) {
 			statuses.find(status => status.value === "Pending").label = options !== undefined && AppUtility.isNotEmpty(options.pending)
 				? await this.appFormsSvc.normalizeResourceAsync(options.pending)
 				: await this.configSvc.getResourceAsync("portals.common.approval.Pending2");

@@ -58,11 +58,6 @@ export class PortalsTasksListPage implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.initializeAsync();
-		AppEvents.on(this.portalsCoreSvc.name, info => {
-			if (info.args.Object === "SchedulingTask") {
-				this.prepare();
-			}
-		}, "SchedulingTasks:Refresh");
 	}
 
 	ngOnDestroy() {
@@ -95,9 +90,16 @@ export class PortalsTasksListPage implements OnInit, OnDestroy {
 			open: await this.configSvc.getResourceAsync("common.buttons.edit"),
 			run: await this.configSvc.getResourceAsync("portals.tasks.title.run")
 		};
+
 		this.systemID = this.organization.ID;
 		this.configSvc.appTitle = this.title.page = await this.configSvc.getResourceAsync("portals.tasks.title.list", { info: `[${this.organization.Title}]` });
 		this.prepare(() => this.appFormsSvc.hideLoadingAsync());
+
+		AppEvents.on(this.portalsCoreSvc.name, info => {
+			if (info.args.Object === "SchedulingTask") {
+				this.prepare();
+			}
+		}, "SchedulingTasks:Refresh");
 	}
 
 	track(index: number, task: SchedulingTask) {

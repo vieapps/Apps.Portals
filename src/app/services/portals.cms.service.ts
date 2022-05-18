@@ -401,21 +401,53 @@ export class PortalsCmsService extends BaseService {
 		return this.portalsCoreSvc.getUploadFormControl(this.getFileOptions(object), segment, label, onCompleted);
 	}
 
-	getPermanentLinkFormControl(object: CmsBaseModel, segment?: string, label?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	getPermanentLinkFormControl(object: CmsBaseModel, segment?: string, label?: string, description?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const controlConfig: AppFormsControlConfig = {
 			Name: "PermanentLink",
 			Type: "Text",
 			Segment: segment || "basic",
 			Extras: { Text: this.portalsCoreSvc.getPermanentURL(object) },
 			Options: {
-				Label: "{{portals.cms.common.permanentLink.label}}",
-				Description: "{{portals.cms.common.permanentLink.description}}",
+				Label: label || "{{portals.cms.common.permanentLink.label}}",
+				Description: description || "{{portals.cms.common.permanentLink.description}}",
 				Icon: {
-					Name: "globe",
+					Name: "copy-outline",
 					Fill: "clear",
 					Color: "medium",
 					Slot: "end",
-					OnClick: (_, formControl) => PlatformUtility.openURL(formControl instanceof AppFormsControlComponent ? (formControl as AppFormsControlComponent).text : formControl.value)
+					OnClick: async (_, formControl) => {
+						const value = formControl instanceof AppFormsControlComponent ? (formControl as AppFormsControlComponent).text : formControl.value;
+						await PlatformUtility.copyToClipboardAsync(value || formControl.value);
+						await this.appFormsSvc.showToastAsync("Copied...");
+					}
+				}
+			}
+		};
+		if (onCompleted !== undefined) {
+			onCompleted(controlConfig);
+		}
+		return controlConfig;
+	}
+
+	getPublicLinkFormControl(object: CmsBaseModel, segment?: string, label?: string, description?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+		const controlConfig: AppFormsControlConfig = {
+			Name: "PublicLink",
+			Type: "Text",
+			Segment: segment || "basic",
+			Extras: { Text: this.portalsCoreSvc.getPublicURL(object, object["category"]) },
+			Options: {
+				Label: label || "{{portals.cms.common.publicLink.label}}",
+				Description: description || "{{portals.cms.common.publicLink.description}}",
+				Icon: {
+					Name: "copy-outline",
+					Fill: "clear",
+					Color: "medium",
+					Slot: "end",
+					OnClick: async (_, formControl) => {
+						const value = formControl instanceof AppFormsControlComponent ? (formControl as AppFormsControlComponent).text : formControl.value;
+						await PlatformUtility.copyToClipboardAsync(value || formControl.value);
+						await this.appFormsSvc.showToastAsync("Copied...");
+					}
 				}
 			}
 		};
@@ -589,7 +621,6 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	private prepareFeaturedContents(systemID: string) {
-		const start = new Date();
 		const cmsForms = Form.instances.toArray(object => object.SystemID === systemID);
 		const cmsItems = Item.instances.toArray(object => object.SystemID === systemID);
 		const cmsContents = Content.instances.toArray(object => object.SystemID === systemID);
@@ -602,9 +633,6 @@ export class PortalsCmsService extends BaseService {
 			.merge(cmsContents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }).take(20), object => object.ID)
 			.toArray());
 		this._noContents.remove(systemID);
-		if (this.configSvc.isDebug) {
-			console.log(`<Portals>: Featured contents were prepared in ${AppUtility.getElapsedTime(start)}`);
-		}
 		AppEvents.broadcast(this.name, { Type: "FeaturedContents", Mode: "Prepared", ID: systemID });
 	}
 
@@ -1862,7 +1890,7 @@ export class PortalsCmsService extends BaseService {
 					}
 				}
 			}
-			AppEvents.broadcast(this.name, { Object: object.contentType.getObjectName(true), Type: "Updated", ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID });
+			AppEvents.broadcast(this.name, { Object: object.contentType.getObjectName(true), Type: "Updated", Mode: "Files", ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID });
 		}
 	}
 

@@ -33,7 +33,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.com",
 		id: "vieapps-ngx",
-		version: "4.2205.1",
+		version: "4.2205.8",
 		frameworks: "ionic 5.9 - angular 11.2 - cordova 10.0",
 		mode: "",
 		platform: "",
@@ -74,7 +74,7 @@ export class AppConfig {
 		all: [
 			{
 				name: "Portals",
-				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "Category", "Content", "Item", "Link", "Form", "Crawler"],
+				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "SchedulingTask", "Category", "Content", "Item", "Link", "Form", "Crawler"],
 				specials: [/*"Crawler"/**/],
 				sidebar: "cms",
 				availableHosts: [/*"cms.vieapps.com"/**/]
@@ -236,6 +236,13 @@ export class AppConfig {
 		return this.app.offline;
 	}
 
+	/** Gets the token of the app (JSON Web Token that encoded by base64url) */
+	static get jwt() {
+		return AppUtility.isObject(this.session.token, true) && AppUtility.isObject(this.session.keys, true) && AppUtility.isNotEmpty(this.session.keys.jwt)
+			? AppCrypto.jwtEncode(this.session.token, this.session.keys.jwt)
+			: undefined;
+	}
+
 	/** Gets the language for working with the app */
 	static get language() {
 		const profile = this.session.account !== undefined ? this.session.account.profile : undefined;
@@ -301,7 +308,7 @@ export class AppConfig {
 	static getAuthenticatedInfo(addToken: boolean = true, addAppInfo: boolean = true, addDeviceID: boolean = true) {
 		const info: { [key: string]: string } = {};
 		if (addToken && AppUtility.isObject(this.session.token, true) && AppUtility.isObject(this.session.keys, true) && AppUtility.isNotEmpty(this.session.keys.jwt)) {
-			info["x-app-token"] = AppCrypto.jwtEncode(this.session.token, this.session.keys.jwt);
+			info["x-app-token"] = this.jwt;
 		}
 		if (addAppInfo) {
 			info["x-app-name"] = this.app.name;
