@@ -18,6 +18,9 @@
 			<ion-label>{{ labels.options.theme }}</ion-label>
 			<ion-toggle [checked]="options.darkTheme" (ionChange)="onThemeChanged($event)"></ion-toggle>
 		</ion-item>
+		<ion-item *ngIf="isSystemAdministrator" [color]="color" (click)="flushCacheAsync()">
+			<ion-label>{{ labels.flushCache }}</ion-label>
+		</ion-item>
 	</ion-list>
 </div>
 

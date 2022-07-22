@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { AppFormsService } from "@app/components/forms.service";
 
 @Component({
 	selector: "control-app-preferences",
@@ -12,7 +14,9 @@ import { ConfigurationService } from "@app/services/configuration.service";
 export class AppPreferencesControl implements OnInit, OnDestroy {
 
 	constructor(
-		private configSvc: ConfigurationService
+		private configSvc: ConfigurationService,
+		private authSvc: AuthenticationService,
+		private appFormsSvc: AppFormsService
 	) {
 	}
 
@@ -22,6 +26,10 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 
 	get isAuthenticated() {
 		return this.configSvc.isAuthenticated;
+	}
+
+	get isSystemAdministrator() {
+		return this.authSvc.isSystemAdministrator();
 	}
 
 	get logo() {
@@ -69,6 +77,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 			mobile: "Mobile & Tablet apps"
 		},
 		profile: "Profile",
+		flushCache: "Flush cache",
 		about: "About",
 		ok: "OK",
 		cancel: "Cancel"
@@ -108,6 +117,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 				mobile: await this.configSvc.getResourceAsync("common.preferences.apps.mobile")
 			},
 			profile: await this.configSvc.getResourceAsync("common.sidebar.profile"),
+			flushCache: await this.configSvc.getResourceAsync("common.preferences.flushCache"),
 			about: await this.configSvc.getResourceAsync("common.preferences.about"),
 			ok: await this.configSvc.getResourceAsync("common.buttons.ok"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
@@ -129,6 +139,17 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 
 	openProfile() {
 		this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.users.profile + "/my");
+	}
+
+	async flushCacheAsync() {
+		this.appFormsSvc.showAlertAsync(
+			await this.appFormsSvc.getResourceAsync("common.alert.header.general"),
+			`${await this.configSvc.getResourceAsync("common.preferences.flushCache")}?`,
+			undefined,
+			_ => this.configSvc.flushCachingStoragesAsync(async __ => this.appFormsSvc.showAlertAsync(await this.configSvc.getResourceAsync("common.preferences.flushCache"), await this.configSvc.getResourceAsync("common.buttons.done"))),
+			await this.configSvc.getResourceAsync("common.buttons.ok"),
+			await this.configSvc.getResourceAsync("common.buttons.cancel")
+		);
 	}
 
 }

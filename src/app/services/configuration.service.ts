@@ -855,4 +855,17 @@ export class ConfigurationService extends BaseService {
 		return this.searchAsync(this.getSearchingPath(undefined, undefined, "logs"), request, onSuccess, onError, true, undefined, useXHR);
 	}
 
+	flushCachingStoragesAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return this.sendRequestAsync(
+			{
+				ServiceName: "cache",
+				ObjectName: "flush",
+				Verb: "GET"
+			},
+			onSuccess,
+			error => this.processError("Error occurred while flushing caching storages", error, onError),
+			useXHR
+		);
+	}
+
 }
