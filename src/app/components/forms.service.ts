@@ -594,12 +594,22 @@ export class AppFormsService {
 	}
 
 	/** Shows the alert box  */
-	async showAlertAsync(header: string = null, message: string = null, subMessage?: string, onOkClick?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string, inputs?: Array<any>, backdropDismiss: boolean = false) {
+	async showAlertAsync(header: string = null, message: string = null, subMessage?: string, onOkClick?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string, inputs?: Array<any>, backdropDismiss: boolean = false, onCancelClick?: () => void) {
 		await this.hideLoadingAsync();
 		await this.hideAlertAsync();
-		const buttons: Array<{ text: string; role: string; handler: (data?: any) => void; }> = AppUtility.isNotEmpty(cancelButtonText)
-			? [{ text: cancelButtonText, role: "cancel", handler: () => this.hideAlertAsync() }]
-			: [];
+		const buttons = new Array<{ text: string; role: string; handler: (data?: any) => void; }>();
+		if (AppUtility.isNotEmpty(cancelButtonText)) {
+			buttons.push({
+				text: cancelButtonText,
+				role: "cancel",
+				handler: () => {
+					if (onCancelClick !== undefined) {
+						onCancelClick();
+					}
+					this.hideAlertAsync();
+				}
+			});
+		}
 		buttons.push({
 			text: okButtonText || await this.getResourceAsync("common.buttons.ok"),
 			role: undefined as string,
@@ -633,14 +643,17 @@ export class AppFormsService {
 	}
 
 	/** Shows the confirmation box  */
-	async showConfirmAsync(message: string = null, onOkClick?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string) {
+	async showConfirmAsync(message: string = null, onOkClick?: (data?: any) => void, okButtonText?: string, cancelButtonText?: string, onCancelClick?: () => void) {
 		await this.showAlertAsync(
 			undefined,
 			message,
 			undefined,
 			onOkClick,
 			"{{default}}" === okButtonText ? await this.configSvc.getResourceAsync("common.buttons.ok") : okButtonText,
-			"{{default}}" === cancelButtonText ? await this.configSvc.getResourceAsync("common.buttons.cancel") : cancelButtonText
+			"{{default}}" === cancelButtonText ? await this.configSvc.getResourceAsync("common.buttons.cancel") : cancelButtonText,
+			undefined,
+			false,
+			onCancelClick
 		);
 	}
 
