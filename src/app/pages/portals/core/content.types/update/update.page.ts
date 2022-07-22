@@ -12,7 +12,7 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { Privileges } from "@app/models/privileges";
-import { ModuleDefinition, ExtendedPropertyDefinition, ExtendedControlDefinition, StandardControlDefinition, EmailNotificationSettings } from "@app/models/portals.base";
+import { ModuleDefinition, ExtendedPropertyDefinition, ExtendedControlDefinition, EmailNotificationSettings } from "@app/models/portals.base";
 import { Organization, Module, ContentType, Desktop } from "@app/models/portals.core.all";
 import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selector.modal.page";
 import { RolesSelectorModalPage } from "@app/controls/portals/role.selector.modal.page";
@@ -323,7 +323,9 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 
 		if (AppUtility.isNotEmpty(this.contentType.ID)) {
 			if (this.extendable) {
-				formConfig.push(
+				const amount = formConfig.length - formConfig.findIndex(ctrl => ctrl.Name === "SubTitleFormula");
+				const restOf = formConfig.take(0, amount);
+				formConfig.clear(amount).push(
 					{
 						Name: "ExtendedPropertyDefinitions",
 						Segment: "extend",
@@ -358,6 +360,10 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 						}
 					}
 				);
+				formConfig.merge(restOf).find(ctrl => ctrl.Name === "SubTitleFormula").Options.ReadOnly = !this.isAdvancedMode;
+			}
+			else {
+				formConfig.filter(ctrl => ctrl.Segment === "extend").forEach(ctrl => ctrl.Hidden = true);
 			}
 			formConfig.push(
 				this.portalsCoreSvc.getAuditFormControl(this.contentType, "basic"),

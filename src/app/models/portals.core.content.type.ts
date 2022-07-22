@@ -36,6 +36,7 @@ export class ContentType extends CoreBaseModel {
 	ExtendedPropertyDefinitions = undefined as Array<ExtendedPropertyDefinition>;
 	ExtendedControlDefinitions = undefined as Array<ExtendedControlDefinition>;
 	StandardControlDefinitions = undefined as Array<StandardControlDefinition>;
+	SubTitleFormula = undefined as string;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;
