@@ -32,10 +32,17 @@
 					"import": "Nhập dữ liệu từ Excel"
 				},
 				"message": {
+					"all": "Chỉ kết xuất các dữ liệu phù hợp với điều kiện lọc hiện tại? (chọn 'Không' để kết xuất toàn bộ)",
+					"confirm": "Chắc chắn kết xuất dữ liệu ra Excel?",
 					"export": "Kết xuất dữ liệu thành công, chọn 'Tải xuống' để tải về file Excel",
 					"import": "Đã nhập dữ liệu từ file Excel thành công"
 				},
 				"button": "Tải lên & cập nhật"
+			},
+			"customizeFilterAndSort": {
+				"label": "Tuỳ chỉnh lọc & sắp xếp dữ liệu",
+				"filter": "Biểu thức lọc dữ liệu (JSON)",
+				"sort": "Biểu thức sắp xếp dữ liệ (JSON)"
 			},
 			"controls": {
 				"notifications": {
@@ -1303,6 +1310,11 @@
 				"StandardControlDefinitions": {
 					"label": "Form nhập dữ liệu thuộc tính tiêu chuẩn",
 					"description": "Mã JSON tái chỉ định các controls đặc biệt trong form nhập dữ liệu của một số thuộc tính tiêu chuẩn"
+				},
+				"SubTitleFormula": {
+					"label": "Biểu thức tính toán tiêu đề phụ",
+					"placeholder": "ex: @['abc xyz' + this.Title]",
+					"description": "Biểu thức tính toán bắt đầu với @, có thể sử dụng @script/@javascript/@js hoặc @[..] cho biểu thức tính toán với mã Javascript và đối tượng 'this' là đối tượng hiện tại."
 				}
 			},
 			"list": {

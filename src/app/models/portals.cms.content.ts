@@ -32,7 +32,6 @@ export class Content extends CmsBaseModel {
 	Tags = undefined as string;
 	AllowComments = false;
 	Title = undefined as string;
-	InlineScripts = undefined as string;
 	SubTitle = undefined as string;
 	Author = undefined as string;
 	AuthorTitle = undefined as string;
@@ -42,6 +41,7 @@ export class Content extends CmsBaseModel {
 	Details = undefined as string;
 	Relateds = undefined as Array<string>;
 	ExternalRelateds = undefined as Array<ExternalRelated>;
+	InlineScripts = undefined as string;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;

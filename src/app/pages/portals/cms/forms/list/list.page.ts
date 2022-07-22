@@ -362,12 +362,25 @@ export class CmsFormsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	exportToExcel() {
-		this.do(() => this.portalsCoreSvc.exportToExcelAsync(
-			"CMS.Form",
-			this.organization.ID,
-			this.module !== undefined ? this.module.ID : undefined,
-			this.contentType !== undefined ? this.contentType.ID : undefined
-		).then(() => this.trackAsync(this.actions[2].text, "Export")));
+		this.do(async () => this.appFormsSvc.showConfirmAsync(
+			await this.configSvc.getResourceAsync("portals.common.excel.message.all"),
+			() => this.exportToExcelAsync(this.filterBy, this.sortBy),
+			await this.configSvc.getResourceAsync("common.buttons.ok"),
+			await this.configSvc.getResourceAsync("common.buttons.no"),
+			() => this.exportToExcelAsync()
+		));
+	}
+
+	private async exportToExcelAsync(filterBy?: any, sortBy?: any) {
+		await this.appFormsSvc.showConfirmAsync(
+			await this.configSvc.getResourceAsync("portals.common.excel.message.confirm"),
+			async () => {
+				await this.portalsCoreSvc.exportToExcelAsync("CMS.Form", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined, filterBy, sortBy);
+				await this.trackAsync(this.actions[2].text, "Export");
+			},
+			"{{default}}",
+			"{{default}}"
+		);
 	}
 
 	importFromExcel() {

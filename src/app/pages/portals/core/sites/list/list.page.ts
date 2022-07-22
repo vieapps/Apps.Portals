@@ -299,16 +299,23 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		}
 	}
 
+	private do(action: () => void, event?: Event) {
+		if (event !== undefined) {
+			event.stopPropagation();
+		}
+		this.listCtrl.closeSlidingItems().then(() => action());
+	}
+
 	showActions() {
-		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showActionSheetAsync(this.actions));
+		this.do(() => this.appFormsSvc.showActionSheetAsync(this.actions));
 	}
 
 	create() {
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync("/portals/core/sites/create"));
+		this.do(() => this.configSvc.navigateForwardAsync("/portals/core/sites/create"));
 	}
 
 	openSearch(filtering: boolean = true) {
-		this.listCtrl.closeSlidingItems().then(() => {
+		this.do(() => {
 			if (filtering) {
 				this.filtering = true;
 				AppUtility.invoke(async () => this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.filter")).then(() => PlatformUtility.focus(this.searchCtrl));
@@ -321,26 +328,31 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 	}
 
 	edit(event: Event, site: Site) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(site.routerURI));
+		this.do(() => this.configSvc.navigateForwardAsync(site.routerURI), event);
 	}
 
 	open(event: Event, site: Site) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => {
+		this.do(() => {
 			const domain = `${site.SubDomain}.${site.PrimaryDomain}`.replace("*.", "www.").replace("www.www.", "www.");
 			const protocol = site.AlwaysUseHTTPs ? "https" : "http";
 			PlatformUtility.openURL(`${protocol}://${domain}`);
-		});
+		}, event);
 	}
 
 	clearCache(event: Event, site: Site) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.portalsCoreSvc.clearCacheAsync("site", site.ID));
+		this.do(() => this.portalsCoreSvc.clearCacheAsync("site", site.ID), event);
 	}
 
 	exportToExcel() {
-		this.portalsCoreSvc.exportToExcelAsync("Site", this.organization.ID).then(() => this.trackAsync(this.actions[2].text, "Export"));
+		this.do(async () => await this.appFormsSvc.showConfirmAsync(
+			await this.configSvc.getResourceAsync("portals.common.excel.message.confirm"),
+			async () => {
+				await this.portalsCoreSvc.exportToExcelAsync("Site", this.organization.ID);
+				await this.trackAsync(this.actions[2].text, "Export");
+			},
+			"{{default}}",
+			"{{default}}"
+		));
 	}
 
 	importFromExcel() {

@@ -43,6 +43,7 @@ export class Form extends CmsBaseModel {
 	RepositoryEntityID = undefined as string;
 	ID = undefined as string;
 
+	SubTitle = undefined as string;
 	ansiTitle: string;
 
 	static deserialize(json: any, form?: Form) {

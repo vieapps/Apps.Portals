@@ -48,7 +48,7 @@ export class PortalsTasksUpdatePage implements OnInit {
 	get canUpdate() {
 		return this.task !== undefined
 			? this.task.Persistance
-				? this.task.Status === "Awaiting"
+				? this.task.Status === "Awaiting" || (this.task.Status === "Acquired" && this.isSystemModerator)
 				: this.task.SchedulingType !== "Refresh"
 			: true;
 	}
@@ -114,7 +114,7 @@ export class PortalsTasksUpdatePage implements OnInit {
 
 		control = formConfig.find(ctrl => ctrl.Name === "Status");
 		control.Options.SelectOptions.Values = AppUtility.map(control.Options.SelectOptions.Values, value => ({ Value: value, Label: `{{portals.tasks.status.${value}}}` }));
-		control.Options.Disabled = true;
+		control.Options.Disabled = this.task.Status !== "Acquired" ? true : !this.isSystemModerator;
 
 		control = formConfig.find(ctrl => ctrl.Name === "SchedulingType");
 		control.Options.SelectOptions.Values = AppUtility.map(control.Options.SelectOptions.Values, value => ({ Value: value, Label: `{{portals.tasks.schedulingType.${value}}}` }));
@@ -179,7 +179,7 @@ export class PortalsTasksUpdatePage implements OnInit {
 		this.form.patchValue(task);
 		this.hash = AppCrypto.hash(this.form.value);
 		if (AppUtility.isNotEmpty(task.ID)) {
-			console.log(`Task: ${task.ID}`, task.Time, `#${this.hash}`);
+			console.log(`Task: ${task.ID} @ ${task.Status}`, task.Time, `#${this.hash}`);
 		}
 		else if (!!this.configSvc.requestParams["SchedulingType"]) {
 			this.form.controls.Data.setValue(task.Data + "\n");

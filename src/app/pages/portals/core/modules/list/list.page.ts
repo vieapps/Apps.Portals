@@ -280,7 +280,15 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 	}
 
 	exportToExcel() {
-		this.portalsCoreSvc.exportToExcelAsync("Module", this.organization.ID).then(() => this.trackAsync(this.actions[2].text, "Export"));
+		this.do(async () => await this.appFormsSvc.showConfirmAsync(
+			await this.configSvc.getResourceAsync("portals.common.excel.message.confirm"),
+			async () => {
+				await this.portalsCoreSvc.exportToExcelAsync("Module", this.organization.ID);
+				await this.trackAsync(this.actions[2].text, "Export");
+			},
+			"{{default}}",
+			"{{default}}"
+		));
 	}
 
 	importFromExcel() {

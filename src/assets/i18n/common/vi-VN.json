@@ -72,6 +72,7 @@
 				"language": "Ngôn ngữ",
 				"theme": "Sử dụng theme màu tối"
 			},
+			"flushCache": "Xoá dữ liệu toàn bộ cache",
 			"apps": {
 				"desktop": "Apps cho máy tính",
 				"mobile": "Apps cho điện thoại"

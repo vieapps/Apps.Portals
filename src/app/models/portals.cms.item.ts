@@ -35,6 +35,7 @@ export class Item extends CmsBaseModel {
 	RepositoryEntityID = undefined as string;
 	ID = undefined as string;
 
+	SubTitle = undefined as string;
 	ansiTitle: string;
 
 	/** Deserializes data to object */
@@ -50,6 +51,8 @@ export class Item extends CmsBaseModel {
 			}
 		});
 		item.ansiTitle = AppUtility.toANSI(item.Title).toLowerCase();
+		console.log("Data", json);
+		console.log("Item", item);
 		return item;
 	}
 

@@ -387,16 +387,23 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				}
 			}
 			else if (control.Name === "PublicLink") {
-				this.portalsCoreSvc.fetchDesktops(this.content.SystemID, () => {
-					const url = this.portalsCoreSvc.getPublicURL(this.content, this.content.category);
-					if (AppUtility.isNotEmpty(url)) {
-						const ctrl = this.formControls.find(ctl => ctl.Name === "PublicLink");
-						ctrl.Extras["Text"] = url;
-						ctrl.Hidden = false;
-					}
-				});
+				this.portalsCoreSvc.fetchDesktops(this.content.SystemID, () => this.setPublicURL(2345, () => this.setPublicURL()));
 			}
 		});
+	}
+
+	private setPublicURL(defer?: number, onUndefined?: () => void) {
+		AppUtility.invoke(() => {
+			const url = this.portalsCoreSvc.getPublicURL(this.content, this.content.category);
+			if (AppUtility.isNotEmpty(url)) {
+				const control = this.formControls.find(ctrl => ctrl.Name === "PublicLink");
+				control.Extras["Text"] = url;
+				control.Hidden = false;
+			}
+			else if (onUndefined !== undefined) {
+				onUndefined();
+			}
+		}, defer || 6789);
 	}
 
 	private prepareAttachments(name: string, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo) {

@@ -43,6 +43,7 @@ export class Link extends CmsBaseModel implements NestedObject {
 	RepositoryEntityID = undefined as string;
 	ID = undefined as string;
 
+	SubTitle = undefined as string;
 	ansiTitle: string;
 	childrenIDs: Array<string>;
 

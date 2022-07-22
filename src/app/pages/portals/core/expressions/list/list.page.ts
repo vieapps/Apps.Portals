@@ -304,6 +304,13 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		}
 	}
 
+	private do(action: () => void, event?: Event) {
+		if (event !== undefined) {
+			event.stopPropagation();
+		}
+		this.listCtrl.closeSlidingItems().then(() => action());
+	}
+
 	showActions() {
 		this.listCtrl.closeSlidingItems().then(() => this.appFormsSvc.showActionSheetAsync(this.actions));
 	}
@@ -322,21 +329,27 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 	}
 
 	create() {
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync("/portals/core/expressions/create/new"));
+		this.do(() => this.configSvc.navigateForwardAsync("/portals/core/expressions/create/new"));
 	}
 
 	edit(event: Event, expression: Expression) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(expression.routerURI));
+		this.do(() => this.configSvc.navigateForwardAsync(expression.routerURI), event);
 	}
 
 	editInAdvancedMode(event: Event, expression: Expression) {
-		event.stopPropagation();
-		this.listCtrl.closeSlidingItems().then(() => this.configSvc.navigateForwardAsync(expression.getRouterURI({ ID: expression.ID, Advanced: true })));
+		this.do(() => this.configSvc.navigateForwardAsync(expression.getRouterURI({ ID: expression.ID, Advanced: true })), event);
 	}
 
 	exportToExcel() {
-		this.portalsCoreSvc.exportToExcelAsync("Expression", this.organization.ID).then(() => this.trackAsync(this.actions[2].text, "Export"));
+		this.do(async () => await this.appFormsSvc.showConfirmAsync(
+			await this.configSvc.getResourceAsync("portals.common.excel.message.confirm"),
+			async () => {
+				await this.portalsCoreSvc.exportToExcelAsync("Expression", this.organization.ID);
+				await this.trackAsync(this.actions[2].text, "Export");
+			},
+			"{{default}}",
+			"{{default}}"
+		));
 	}
 
 	importFromExcel() {

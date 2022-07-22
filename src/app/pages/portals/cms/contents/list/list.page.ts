@@ -171,7 +171,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh")
 		};
 
-		this.prepareFilterBy();
+		this.prepareFilterByAndSort();
 
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.search");
@@ -181,7 +181,8 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		else {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.create"), "create", () => this.create()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.search"), "search", () => this.openSearch(false))
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.title.search"), "search", () => this.openSearch(false)),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.customizeFilterAndSort.label"), "funnel", () => this.customizeFilterAndSort())
 			];
 
 			if (this.category !== undefined && !this.searching) {
@@ -323,22 +324,27 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		}
 	}
 
-	private prepareFilterBy() {
-		this.filterBy.And = this.contentType !== undefined
-			? [
-				{ SystemID: { Equals: this.contentType.SystemID } },
-				{ RepositoryID: { Equals: this.contentType.RepositoryID } },
-				{ RepositoryEntityID: { Equals: this.contentType.ID } }
-			]
-			: this.module !== undefined
+	private prepareFilterByAndSort(prepareFilterBy: boolean = true, prepareSortBy: boolean = true) {
+		if (prepareFilterBy) {
+			this.filterBy.And = this.contentType !== undefined
 				? [
-					{ SystemID: { Equals: this.module.SystemID } },
-					{ RepositoryID: { Equals: this.module.ID } }
+					{ SystemID: { Equals: this.contentType.SystemID } },
+					{ RepositoryID: { Equals: this.contentType.RepositoryID } },
+					{ RepositoryEntityID: { Equals: this.contentType.ID } }
 				]
-				: [{ SystemID: { Equals: this.organization.ID } }];
-		if (this.category !== undefined) {
-			this.filterBy.And.push({ CategoryID: { Equals: this.category.ID } });
+				: this.module !== undefined
+					? [
+						{ SystemID: { Equals: this.module.SystemID } },
+						{ RepositoryID: { Equals: this.module.ID } }
+					]
+					: [{ SystemID: { Equals: this.organization.ID } }];
+			if (this.category !== undefined) {
+				this.filterBy.And.push({ CategoryID: { Equals: this.category.ID } });
+			}
 		}
+		this.sortBy = prepareSortBy
+			? { StartDate: "Descending", PublishedTime: "Descending" }
+			: this.sortBy;
 	}
 
 	private do(action: () => void, event?: Event) {
@@ -386,7 +392,54 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.do(() => this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateBackAsync(url)));
 	}
 
-	reload() {
+	private customizeFilterAndSort() {
+		this.do(async () => {
+			await this.appFormsSvc.showAlertAsync(
+				await this.configSvc.getResourceAsync("portals.common.customizeFilterAndSort.label"),
+				undefined,
+				undefined,
+				data => {
+					try {
+						const gotFilterBy = AppUtility.isNotEmpty(data.filter);
+						const gotSortBy = AppUtility.isNotEmpty(data.sort);
+						if (gotFilterBy) {
+							this.filterBy.And = AppUtility.parse(data.filter);
+						}
+						if (gotSortBy) {
+							this.sortBy = AppUtility.parse(data.sort);
+						}
+						this.appFormsSvc.showLoadingAsync().then(() => {
+							this.prepareFilterByAndSort(!gotFilterBy, !gotSortBy);
+							AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
+							this.contents = [];
+							this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
+						});
+					}
+					catch (error) {
+						this.appFormsSvc.showErrorAsync(error);
+					}
+				},
+				await this.appFormsSvc.getResourceAsync("common.buttons.ok"),
+				await this.appFormsSvc.getResourceAsync("common.buttons.cancel"),
+				[
+					{
+						name: "filter",
+						type: "textarea",
+						value: AppUtility.stringify(this.filterBy.And),
+						placeholder: await this.configSvc.getResourceAsync("portals.common.customizeFilterAndSort.filter")
+					},
+					{
+						name: "sort",
+						type: "textarea",
+						value: AppUtility.stringify(this.sortBy),
+						placeholder: await this.configSvc.getResourceAsync("portals.common.customizeFilterAndSort.sort")
+					}
+				]
+			);
+		});
+	}
+
+	private reload() {
 		AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
 		this.pagination = undefined;
 		this.appFormsSvc.showLoadingAsync(this.labels.refresh).then(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync(() => {
@@ -396,7 +449,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		})));
 	}
 
-	changeContentType() {
+	private changeContentType() {
 		AppUtility.invoke(async () => this.appFormsSvc.showAlertAsync(
 			await this.configSvc.getResourceAsync("portals.cms.contents.list.change"),
 			undefined,
@@ -404,7 +457,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			data => {
 				if (this.contentType.ID !== data) {
 					this.contentType = this.module.contentTypes.first(contentType => contentType.ID === data);
-					this.prepareFilterBy();
+					this.prepareFilterByAndSort();
 					this.contents = [];
 					this.pageNumber = 0;
 					this.pagination = undefined;
@@ -422,16 +475,29 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		));
 	}
 
-	exportToExcel() {
-		this.do(() => this.portalsCoreSvc.exportToExcelAsync(
-			"CMS.Content",
-			this.organization.ID,
-			this.module !== undefined ? this.module.ID : undefined,
-			this.contentType !== undefined ? this.contentType.ID : undefined
-		).then(() => this.trackAsync(this.actions[2].text, "Export")));
+	private exportToExcel() {
+		this.do(async () => this.appFormsSvc.showConfirmAsync(
+			await this.configSvc.getResourceAsync("portals.common.excel.message.all"),
+			() => this.exportToExcelAsync(this.filterBy, this.sortBy),
+			await this.configSvc.getResourceAsync("common.buttons.ok"),
+			await this.configSvc.getResourceAsync("common.buttons.no"),
+			() => this.exportToExcelAsync()
+		));
 	}
 
-	importFromExcel() {
+	private async exportToExcelAsync(filterBy?: any, sortBy?: any) {
+		await this.appFormsSvc.showConfirmAsync(
+			await this.configSvc.getResourceAsync("portals.common.excel.message.confirm"),
+			async () => {
+				await this.portalsCoreSvc.exportToExcelAsync("CMS.Content", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined, filterBy, sortBy);
+				await this.trackAsync(this.actions[2].text, "Export");
+			},
+			"{{default}}",
+			"{{default}}"
+		);
+	}
+
+	private importFromExcel() {
 		this.do(() => this.portalsCoreSvc.importFromExcelAsync(
 			"CMS.Content",
 			this.organization.ID,

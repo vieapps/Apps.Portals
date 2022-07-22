@@ -572,12 +572,15 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	exportToExcel() {
-		this.portalsCoreSvc.exportToExcelAsync(
-			"CMS.Category",
-			this.organization.ID,
-			this.module !== undefined ? this.module.ID : undefined,
-			this.contentType !== undefined ? this.contentType.ID : undefined
-		).then(() => this.trackAsync(this.actions[2].text, "Export"));
+		this.do(async () => await this.appFormsSvc.showConfirmAsync(
+			await this.configSvc.getResourceAsync("portals.common.excel.message.confirm"),
+			async () => {
+				await this.portalsCoreSvc.exportToExcelAsync("CMS.Category", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined);
+				await this.trackAsync(this.actions[2].text, "Export");
+			},
+			"{{default}}",
+			"{{default}}"
+		));
 	}
 
 	importFromExcel() {
