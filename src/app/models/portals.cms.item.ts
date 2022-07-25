@@ -51,8 +51,6 @@ export class Item extends CmsBaseModel {
 			}
 		});
 		item.ansiTitle = AppUtility.toANSI(item.Title).toLowerCase();
-		console.log("Data", json);
-		console.log("Item", item);
 		return item;
 	}
 
