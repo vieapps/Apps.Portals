@@ -323,9 +323,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 
 		if (AppUtility.isNotEmpty(this.contentType.ID)) {
 			if (this.extendable) {
-				const amount = formConfig.length - formConfig.findIndex(ctrl => ctrl.Name === "SubTitleFormula");
-				const restOf = formConfig.take(0, amount);
-				formConfig.clear(amount).push(
+				formConfig.push(
 					{
 						Name: "ExtendedPropertyDefinitions",
 						Segment: "extend",
@@ -358,12 +356,19 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 							Rows: 15,
 							ReadOnly: !this.isAdvancedMode
 						}
+					},
+					{
+						Name: "SubTitleFormula",
+						Segment: "extend",
+						Type: "TextBox",
+						Options: {
+							Label: "{{portals.contenttypes.controls.SubTitleFormula.label}}",
+							Description: "{{portals.contenttypes.controls.SubTitleFormula.description}}",
+							PlaceHolder: "{{portals.contenttypes.controls.SubTitleFormula.placeholder}}",
+							ReadOnly: !this.isAdvancedMode
+						}
 					}
 				);
-				formConfig.merge(restOf).find(ctrl => ctrl.Name === "SubTitleFormula").Options.ReadOnly = !this.isAdvancedMode;
-			}
-			else {
-				formConfig.filter(ctrl => ctrl.Segment === "extend").forEach(ctrl => ctrl.Hidden = true);
 			}
 			formConfig.push(
 				this.portalsCoreSvc.getAuditFormControl(this.contentType, "basic"),
