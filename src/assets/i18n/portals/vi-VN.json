@@ -1313,8 +1313,8 @@
 				},
 				"SubTitleFormula": {
 					"label": "Biểu thức tính toán tiêu đề phụ",
-					"placeholder": "ex: @['abc xyz' + this.Title]",
-					"description": "Biểu thức tính toán bắt đầu với @, có thể sử dụng @script/@javascript/@js hoặc @[..] cho biểu thức tính toán với mã Javascript và đối tượng 'this' là đối tượng hiện tại."
+					"placeholder": "ex: @script(\"abc xyz \" + this.Title)",
+					"description": "Biểu thức tính toán bắt đầu với ký tự '@', có thể sử dụng @script/@javascript/@js hoặc @[...] cho biểu thức tính toán với mã Javascript đi kèm đối tượng 'this', hoặc sử dụng các hàm tính toán được định nghĩa trước, vd: @toString, @object(Name), ..."
 				}
 			},
 			"list": {
