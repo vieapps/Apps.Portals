@@ -74,7 +74,8 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	filtering = false;
 	labels = {
 		filter: "Quick filter",
-		cancel: "Cancel"
+		cancel: "Cancel",
+		refresh: "Refresh"
 	};
 	private objects = new Array<Item>();
 
@@ -161,7 +162,8 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 		this.labels = {
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
-			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
+			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
+			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh")
 		};
 
 		this.prepareFilterByAndSort();
@@ -179,6 +181,7 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			];
 			if (this.canUpdate) {
 				this.actions.push(
+					this.appFormsSvc.getActionSheetButton(this.labels.refresh, "refresh", () => this.reload()),
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcel()),
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcel())
 				);
@@ -371,6 +374,21 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.do(() => this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateBackAsync(url)));
 	}
 
+	refresh(event: Event, item: Item) {
+		this.do(() => this.portalsCmsSvc.refreshContentAsync(item.ID, () => this.appFormsSvc.showToastAsync("The item was freshen-up")), event);
+	}
+
+	private reload() {
+		this.do(() => {
+			AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
+			this.pagination = undefined;
+			this.appFormsSvc.showLoadingAsync(this.labels.refresh).then(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync(() => {
+				this.infiniteScrollCtrl.disabled = false;
+				this.appFormsSvc.showToastAsync("The list was reloaded");
+			})));
+		});
+	}
+
 	private customizeFilterAndSort() {
 		this.do(async () => {
 			await this.appFormsSvc.showAlertAsync(
@@ -433,7 +451,7 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			await this.configSvc.getResourceAsync("portals.common.excel.message.confirm"),
 			async () => {
 				await this.portalsCoreSvc.exportToExcelAsync("CMS.Item", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined, filterBy, sortBy);
-				await this.trackAsync(this.actions[2].text, "Export");
+				await this.trackAsync(this.actions[4].text, "Export");
 			},
 			"{{default}}",
 			"{{default}}"
@@ -446,10 +464,11 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			this.organization.ID,
 			this.module !== undefined ? this.module.ID : undefined,
 			this.contentType !== undefined ? this.contentType.ID : undefined,
-			() => this.appFormsSvc.showLoadingAsync().then(() => this.trackAsync(this.actions[3].text, "Import")).then(() => {
+			() => this.appFormsSvc.showLoadingAsync().then(() => this.trackAsync(this.actions[5].text, "Import")).then(() => {
 				this.items = [];
 				this.pageNumber = 0;
-				AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination), this.paginationPrefix);
+				this.pagination = undefined;
+				AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
 				Item.instances
 					.toArray(item => this.contentType !== undefined ? this.contentType.ID === item.RepositoryEntityID : this.organization.ID === item.SystemID)
 					.map(item => item.ID)
