@@ -384,12 +384,28 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.do(this.canUpdate ? () => this.configSvc.navigateForwardAsync(content.routerURI.replace("/view/", "/update/")) : () => {}, event);
 	}
 
+	back(message: string, url?: string) {
+		this.do(() => this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateBackAsync(url)));
+	}
+
 	refresh(event: Event, content: Content) {
 		this.do(() => this.portalsCmsSvc.refreshContentAsync(content.ID, () => this.appFormsSvc.showToastAsync("The content was freshen-up")), event);
 	}
 
-	back(message: string, url?: string) {
-		this.do(() => this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateBackAsync(url)));
+	private reload() {
+		this.do(() => {
+			AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
+			this.pagination = undefined;
+			this.appFormsSvc.showLoadingAsync(this.labels.refresh).then(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync(() => {
+				this.infiniteScrollCtrl.disabled = false;
+				if (this.category !== undefined && this.category.childrenIDs === undefined) {
+					this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up, and the list was reloaded"));
+				}
+				else {
+					this.appFormsSvc.showToastAsync("The list was reloaded");
+				}
+			})));
+		});
 	}
 
 	private customizeFilterAndSort() {
@@ -439,16 +455,6 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		});
 	}
 
-	private reload() {
-		AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
-		this.pagination = undefined;
-		this.appFormsSvc.showLoadingAsync(this.labels.refresh).then(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync(() => {
-			if (this.category !== undefined && this.category.childrenIDs === undefined) {
-				this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up"));
-			}
-		})));
-	}
-
 	private changeContentType() {
 		AppUtility.invoke(async () => this.appFormsSvc.showAlertAsync(
 			await this.configSvc.getResourceAsync("portals.cms.contents.list.change"),
@@ -490,7 +496,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			await this.configSvc.getResourceAsync("portals.common.excel.message.confirm"),
 			async () => {
 				await this.portalsCoreSvc.exportToExcelAsync("CMS.Content", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined, filterBy, sortBy);
-				await this.trackAsync(this.actions[2].text, "Export");
+				await this.trackAsync(this.actions[4].text, "Export");
 			},
 			"{{default}}",
 			"{{default}}"
@@ -503,10 +509,11 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			this.organization.ID,
 			this.module !== undefined ? this.module.ID : undefined,
 			this.contentType !== undefined ? this.contentType.ID : undefined,
-			() => this.appFormsSvc.showLoadingAsync().then(() => this.trackAsync(this.actions[3].text, "Import")).then(() => {
+			() => this.appFormsSvc.showLoadingAsync().then(() => this.trackAsync(this.actions[5].text, "Import")).then(() => {
 				this.contents = [];
 				this.pageNumber = 0;
-				AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination), this.paginationPrefix);
+				this.pagination = undefined;
+				AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
 				Content.instances
 					.toArray(content => this.contentType !== undefined ? this.contentType.ID === content.RepositoryEntityID : this.organization.ID === content.SystemID)
 					.map(content => content.ID)
