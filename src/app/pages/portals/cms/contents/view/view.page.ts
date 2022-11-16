@@ -7,6 +7,7 @@ import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment } from "@app/components/forms.objects";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
 import { FilesService } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
@@ -25,6 +26,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	constructor(
 		private configSvc: ConfigurationService,
+		private authSvc: AuthenticationService,
 		private filesSvc: FilesService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService,
@@ -311,8 +313,8 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				: this.content[control.Name];
 			control.Hidden = control.value === undefined;
 			if (!control.Hidden) {
-				if (AppUtility.isEquals(control.Type, "TextEditor")) {
-					control.value = this.portalsCmsSvc.normalizeRichHtml(control.value);
+				if (control.Type === "TextEditor") {
+					control.value = this.portalsCmsSvc.normalizeRichHtml(this.portalsCmsSvc.normalizeTempTokens(control.value, this.authSvc.getTempToken(this.content.Privileges)));
 				}
 				else {
 					switch (control.Name) {

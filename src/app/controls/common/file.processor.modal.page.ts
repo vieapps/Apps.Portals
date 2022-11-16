@@ -109,7 +109,7 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 		this.accept = AppUtility.isNotEmpty(this.accept) ? this.accept.trim().toLowerCase() : "*";
 		this.buttonLabels = this.buttonLabels || { select: undefined, cancel: undefined, update: undefined, upload: undefined };
 		this.headers = (this.headerOptions || []).take(3);
-		this.headers.forEach(header => this.uploadedInfo.headers[header.name] = header.value);
+		this.headers.forEach(header => this.uploadedInfo.headers[header.name] = undefined);
 		this.initializeAsync();
 	}
 

@@ -244,52 +244,74 @@ export class PortalsCmsService extends BaseService {
 			// normalize all 'oembed' tags
 			let start = AppUtility.indexOf(html, "<oembed");
 			while (start > -1) {
-				let end = start < 0 ? -1 : AppUtility.indexOf(html, "</oembed>", start + 1);
-				if (end > -1) {
-					end += 9;
-					let media = (html as string).substr(start, 9 + end - start);
-					const urlStart = AppUtility.indexOf(media, "url=") + 5;
-					const urlEnd = AppUtility.indexOf(media, "\"", urlStart + 1);
-					const url = media.substr(urlStart, urlEnd - urlStart);
-					const oembedProvider = this._oembedProviders.find(provider => provider.schemes.some(regex => url.match(regex)));
-					if (oembedProvider !== undefined) {
-						const match = url.match(oembedProvider.pattern.expression);
-						media = AppUtility.format(oembedProvider.pattern.html, { id: match.length > oembedProvider.pattern.position ? match[oembedProvider.pattern.position] : undefined });
-					}
-					else {
-						const tag = url.endsWith(".mp3") ? "audio" : "video";
-						const height = url.endsWith(".mp3") ? "32" : "315";
-						media = AppUtility.format(`<${tag} width=\"560\" height=\"${height}\" controls autoplay muted><source src=\"{{url}}\"/></${tag}>`, { url: url });
-					}
-					html = html.substr(0, start) + media + html.substr(end);
+				const end = AppUtility.indexOf(html, "</oembed>", start + 1) + 9;
+				let oembedMedia = html.substring(start, end);
+				const oembedURL = oembedMedia.substring(AppUtility.indexOf(oembedMedia, "url=") + 5, AppUtility.indexOf(oembedMedia, "\"", AppUtility.indexOf(oembedMedia, "url=") + 6));
+				const oembedProvider = this._oembedProviders.find(provider => provider.schemes.some(regex => oembedURL.match(regex)));
+				if (oembedProvider !== undefined) {
+					const match = oembedURL.match(oembedProvider.pattern.expression);
+					oembedMedia = AppUtility.format(oembedProvider.pattern.html, { id: match.length > oembedProvider.pattern.position ? match[oembedProvider.pattern.position] : undefined });
 				}
+				else {
+					const tag = oembedURL.endsWith(".mp3") ? "audio" : "video";
+					const height = oembedURL.endsWith(".mp3") ? "32" : "315";
+					oembedMedia = AppUtility.format(`<${tag} width=\"560\" height=\"${height}\" controls autoplay muted><source src=\"{{url}}\"/></${tag}>`, { url: oembedURL });
+				}
+				html = html.substring(0, start) + oembedMedia + html.substring(end);
 				start = AppUtility.indexOf(html, "<oembed", start + 1);
 			}
 
-			// remove 'height' from all images (img tags)
+			// remove 'height' of all IMG tags
 			start = AppUtility.indexOf(html, "<img");
 			while (start > -1) {
-				const end = AppUtility.indexOf(html, ">", start + 1) + 1;
-				let img = html.substr(start, end - start);
-				img = img.replace("height=", "data-height=");
-				img = img.replace("height:", "data-height:");
-				html = html.substr(0, start) + img + html.substr(end);
+				const end = AppUtility.indexOf(html, ">", start + 1);
+				let img = html.substring(start, end + 1);
+				if (AppUtility.indexOf(img, "height") > 0) {
+					img = img.replace("height=", "data-height=");
+					img = img.replace("height:", "data-height:");
+				}
+				html = html.substring(0, start) + img + html.substring(end + 1);
 				start = AppUtility.indexOf(html, "<img", start + 1);
 			}
 
-			// add 'target' into all archors (a tags)
+			// add 'target' into all anchors (a tags)
 			start = AppUtility.indexOf(html, "<a");
 			while (start > -1) {
-				const end = AppUtility.indexOf(html, ">", start + 1) + 1;
-				let archor = html.substr(start, end - start);
-				if (AppUtility.indexOf(archor, "target=") < 0) {
-					archor = archor.substr(0, archor.length - 1) + " target=\"_blank\">";
-					html = html.substr(0, start) + archor + html.substr(end);
+				const end = AppUtility.indexOf(html, ">", start + 1);
+				let anchor = html.substring(start, end + 1);
+				if (AppUtility.indexOf(anchor, "target=") < 0) {
+					anchor = anchor.substring(0, anchor.length - 1) + " target=\"_blank\">";
+					html = html.substring(0, start) + anchor + html.substring(end + 1);
 				}
 				start = AppUtility.indexOf(html, "<a", start + 1);
 			}
 		}
 		return this.domSanitizer.bypassSecurityTrustHtml(html || "");
+	}
+
+	normalizeTempTokens(html: string, tempToken: string, forDisplaying: boolean = true) {
+		if (AppUtility.isNotEmpty(html)) {
+			if (!forDisplaying) {
+				let start = AppUtility.indexOf(html, "x-temp-token=");
+				while (start > -1) {
+					let end = AppUtility.indexOf(html, "&", start + 1);
+					end = end > 0 && end < AppUtility.indexOf(html, ">", start + 1) ? end : AppUtility.indexOf(html, "\"", start + 1);
+					html = html.substring(0, start) + "z-temp-token=" + html.substring(end);
+					start = AppUtility.indexOf(html, "x-temp-token=", start + 1);
+				}
+			}
+			else if (AppUtility.isNotEmpty(tempToken)) {
+				let start = AppUtility.indexOf(html, "x-temp-token=");
+				while (start > -1) {
+					let end = AppUtility.indexOf(html, "&", start + 1);
+					end = end > 0 && end < AppUtility.indexOf(html, ">", start + 1) ? end : AppUtility.indexOf(html, "\"", start + 1);
+					html = html.substring(0, start) + "x-temp-token=" + tempToken + html.substring(end);
+					start = AppUtility.indexOf(html, "x-temp-token=", start + 1);
+				}
+				html = html.replace(/z\-temp\-token\=/g, "x-temp-token=" + tempToken);
+			}
+		}
+		return html;
 	}
 
 	lookup(objectName: string, request: AppDataRequest, onSuccess: (data: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
@@ -360,6 +382,7 @@ export class PortalsCmsService extends BaseService {
 			};
 		}
 		if (AppUtility.isNotEmpty(object.ID)) {
+			const tempToken = this.authSvc.getTempToken(object.Privileges);
 			linkSelector.file = {
 				label: options.file.label,
 				selectLink: async (onSelected: (link: string) => void) => await this.appFormsSvc.showModalAsync(
@@ -371,7 +394,11 @@ export class PortalsCmsService extends BaseService {
 						multiple: false,
 						handlers: { onSelect: () => {} }
 					},
-					(attachments: AttachmentInfo[]) => onSelected(attachments !== undefined && attachments.length > 0 ? attachments[0].URIs.Direct : undefined)
+					(attachments: AttachmentInfo[]) => {
+						let url = attachments !== undefined && attachments.length > 0 ? attachments[0].URIs.Direct : undefined;
+						url = url === undefined || tempToken === undefined ? url : url + (url.indexOf("?") > 0 ? "&" : "?") + "x-temp-token=" + tempToken;
+						onSelected(url);
+					}
 				)
 			};
 		}
@@ -379,6 +406,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	getMediaSelector(object: CmsBaseModel, label?: string) {
+		const tempToken = this.authSvc.getTempToken(object.Privileges);
 		return AppUtility.isNotEmpty(object.ID)
 			? {
 				label: label,
@@ -391,7 +419,11 @@ export class PortalsCmsService extends BaseService {
 						multiple: false,
 						handlers: { predicate: (attachment: AttachmentInfo) => attachment.isImage || attachment.isVideo || attachment.isAudio, onSelect: () => {} }
 					},
-					(attachments: AttachmentInfo[]) => onSelected(attachments !== undefined && attachments.length > 0 ? attachments[0].URIs.Direct : undefined, attachments !== undefined && attachments.length > 0 ? attachments[0].ContentType.substr(0, attachments[0].ContentType.indexOf("/")) : undefined)
+					(attachments: AttachmentInfo[]) => {
+						let url = attachments !== undefined && attachments.length > 0 ? attachments[0].URIs.Direct : undefined;
+						url = url === undefined || tempToken === undefined ? url : url + (url.indexOf("?") > 0 ? "&" : "?") + "x-temp-token=" + tempToken;
+						onSelected(url);
+					}
 				)
 			}
 			: undefined;

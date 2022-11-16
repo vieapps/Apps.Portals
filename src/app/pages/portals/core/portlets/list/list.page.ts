@@ -164,7 +164,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 			this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.create"), "create", () => this.create())
 		];
 
-		if (this.desktop !== undefined && this.desktop.portlets !== undefined && this.desktop.portlets.length > 0) {
+		if (this.desktop !== undefined && this.desktop.portlets !== undefined && !!this.desktop.portlets.length) {
 			this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.portlets.title.reorder"), "swap-vertical", () => this.openReorder()));
 			this.preparePortlets();
 			this.trackAsync(this.title.track).then(() => this.appFormsSvc.hideLoadingAsync());
@@ -195,6 +195,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		const portlets = (this.desktop.portlets || []).sortBy("Zone", "OrderIndex");
 		this.portlets.clear();
 		this.zones.forEach(zone => this.portlets.merge(portlets.filter(portlet => portlet.Zone === zone)));
+		this.portlets.merge(portlets.except(this.portlets));
 	}
 
 	track(index: number, portlet: Portlet) {

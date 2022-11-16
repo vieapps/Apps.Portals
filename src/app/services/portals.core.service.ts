@@ -551,9 +551,12 @@ export class PortalsCoreService extends BaseService {
 	private getSiteURL(object: CmsBaseModel) {
 		const organization = object.organization;
 		const site = organization !== undefined ? Site.instances.first(s => s.SystemID === organization.ID) : undefined;
-		return site !== undefined
+		const url = site !== undefined
 			? `http${site.AlwaysUseHTTPs || site.AlwaysReturnHTTPs ? "s" : ""}://${site.SubDomain}.${site.PrimaryDomain}/`.replace("://*", "://www").replace("://www.www", "://www")
 			: this.configSvc.appConfig.URIs.portals + `~${organization.Alias}/`;
+		return site !== undefined && site.RedirectToNoneWWW
+			? url.replace("://www.", "://")
+			: url;
 	}
 
 	private getDesktop(object: CmsBaseModel) {
@@ -2885,6 +2888,22 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
+	refreshExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+		return this.refreshAsync(
+			"expression",
+			id,
+			data => {
+				Expression.update(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			onError,
+			headers,
+			useXHR
+		);
+	}
+
 	private processExpressionUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Create":
@@ -3114,7 +3133,7 @@ export class PortalsCoreService extends BaseService {
 							switch (message.Data.Status || "") {
 								case "Done":
 									if (this.configSvc.isDebug) {
-										console.log(`[Portals]: THe export objects to Excel process was completed - Process ID: ${processID}`);
+										console.log(`[Portals]: The export objects to Excel process was completed - Process ID: ${processID}`);
 									}
 									AppAPIs.unregisterProcessor(processID, this.name, "Excel");
 									if (onProgress !== undefined) {
@@ -3198,6 +3217,7 @@ export class PortalsCoreService extends BaseService {
 				}],
 				handlers: {
 					onUploaded: async (uploadedInfo: { data: Array<any>; headers: { [key: string]: string } }) => {
+						console.log("Import data from Excel", uploadedInfo.data, uploadedInfo.headers);
 						await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.common.excel.action.import"));
 						const info = uploadedInfo.data.first();
 						const nodeID = info["x-node"] as string;

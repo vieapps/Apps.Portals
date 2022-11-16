@@ -21,10 +21,25 @@ export class FilesService extends BaseService {
 	) {
 		super("Files");
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => AppEvents.broadcast(this.name, { Object: message.Type.Object, Event: message.Type.Event, ObjectID: message.Data.ObjectID, Data: message.Data }));
+		AppEvents.on("Session", info => {
+			if (info.args.Type === "LogIn") {
+				this.authenticate();
+			}
+		});
+		AppEvents.on("App", info => {
+			if (info.args.Type === "Initialized" && this.configSvc.isReady && this.configSvc.isAuthenticated) {
+				this.authenticate();
+			}
+		});
 	}
 
 	private get http() {
 		return AppAPIs.http;
+	}
+
+	private authenticate() {
+		const url = AppAPIs.getURL("avatars/default.png", this.configSvc.appConfig.URIs.files) + "?" + AppUtility.toQuery(this.getHeaders()) + "&x-authenticate=true&x-response=json";
+		AppUtility.toAsync(this.http.get(url)).then(() => console.log("[Files]: was authenticated")).catch(error => console.error("[Files]: error occurred while authenticating with file services", error));
 	}
 
 	readAsDataURL(file: File, onRead: (data: string) => void, limitSize?: number, onLimitExceeded?: (fileSize?: number, limitSize?: number) => void) {
