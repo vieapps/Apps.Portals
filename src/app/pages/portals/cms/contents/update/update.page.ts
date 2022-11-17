@@ -145,6 +145,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 		this.trackAsync(this.title.track);
+		this.portalsCoreSvc.setActiveOrganization(this.content.organization);
 
 		if (AppUtility.isNotEmpty(this.content.ID)) {
 			AppEvents.on(this.portalsCoreSvc.name, info => {

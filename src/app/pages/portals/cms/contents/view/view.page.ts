@@ -171,6 +171,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 		this.trackAsync(this.title.track);
+		this.portalsCoreSvc.setActiveOrganization(this.content.organization);
 
 		AppEvents.on(this.portalsCoreSvc.name, info => {
 			if (info.args.Object === "CMS.Content" && this.content.ID === info.args.ID) {

@@ -60,6 +60,11 @@ export class Base {
 		console.log(this.getMessage(message), optionalParams);
 	}
 
+	/** Prints the warning message to console/log file */
+	protected showWarning(message: string, ...optionalParams: any[]) {
+		console.warn(this.getMessage(message), optionalParams);
+	}
+
 	/** Gets the error message to print to console/log file */
 	protected getError(message: string, error?: any) {
 		return this.getMessage(`${message}\n${AppUtility.getErrorMessage(error)}`);
