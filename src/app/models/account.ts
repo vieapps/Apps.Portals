@@ -70,6 +70,10 @@ export class Account {
 		return UserProfile.get(this.id);
 	}
 
+	get typeIcon() {
+		return this.type === "Windows" ? "logo-microsoft" : this.type === "OAuth" ? "flower-outline" : "accessibility-outline";
+	}
+
 	/**
 	 * Determines this account is got this role or not
 	 * @param role The role need to check with this accounts' roles

@@ -511,7 +511,7 @@ export class ConfigurationService extends BaseService {
 			account.id = data.ID;
 		}
 
-		if (account.type === undefined) {
+		if (data.Type !== undefined) {
 			account.type = data.Type;
 		}
 
@@ -523,7 +523,7 @@ export class ConfigurationService extends BaseService {
 			account.privileges = (data.Privileges as Array<any>).map(privilege => Privilege.deserialize(privilege));
 		}
 
-		if (AppUtility.isNotEmpty(data.Status)) {
+		if (data.Status !== undefined) {
 			account.status = data.Status as string;
 		}
 

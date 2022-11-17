@@ -32,7 +32,6 @@ export class UsersProfilePage implements OnInit {
 
 	title = "Profile";
 	mode = "profile";
-	type = "accessibility-outline";
 	id: string;
 	profile: UserProfile;
 	buttons = {
@@ -100,6 +99,10 @@ export class UsersProfilePage implements OnInit {
 
 	get activeService() {
 		return this.configSvc.appConfig.services.active.service;
+	}
+
+	get typeIcon() {
+		return (Account.get((this.profile || new UserProfile()).ID) || new Account()).typeIcon;
 	}
 
 	ngOnInit() {
@@ -180,16 +183,9 @@ export class UsersProfilePage implements OnInit {
 			await this.setModeAsync("profile", await this.configSvc.getResourceAsync("users.profile.title"));
 			await Promise.all([
 				this.trackAsync(this.title),
+				this.usersSvc.getServicePrivilegesAsync(this.profile.ID),
 				this.appFormsSvc.hideLoadingAsync(onNext)
 			]);
-			await this.usersSvc.getServicePrivilegesAsync(this.profile.ID, () => {
-				const type = Account.get(this.profile.ID).type;
-				this.type = type === "Windows"
-					? "logo-microsoft"
-					: type === "OAuth"
-						? "flower-outline"
-						: "accessibility-outline";
-			});
 		};
 		const force = this.configSvc.appConfig.services.active.service === "Books" && (this.profile === undefined || this.profile.LastSync === undefined);
 		if (this.profile === undefined || force) {
