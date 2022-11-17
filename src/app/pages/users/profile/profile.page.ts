@@ -9,6 +9,7 @@ import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { UsersService } from "@app/services/users.service";
+import { Account } from "@app/models/account";
 import { UserProfile } from "@app/models/user";
 import { Privilege } from "@app/models/privileges";
 import { UsersAvatarPage } from "../avatar/avatar.page";
@@ -31,6 +32,7 @@ export class UsersProfilePage implements OnInit {
 
 	title = "Profile";
 	mode = "profile";
+	type = "accessibility-outline";
 	id: string;
 	profile: UserProfile;
 	buttons = {
@@ -132,24 +134,31 @@ export class UsersProfilePage implements OnInit {
 
 	async prepareActionsAsync() {
 		if (this.mode === "profile") {
+			const account = this.configSvc.getAccount();
 			this.actions = [];
 
-			if (this.profile.ID === this.configSvc.getAccount().id) {
+			if (this.profile.ID === account.id) {
 				[
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.avatar"), "camera", () => this.openAvatarAsync()),
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.profile"), "create", () => this.openUpdateAsync("profile")),
-					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.password"), "key", () => this.openUpdateAsync("password")),
-					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.email"), "at", () => this.openUpdateAsync("email")),
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.otp"), "lock-open", () => this.openOTPAsync())
 				].forEach(action => this.actions.push(action));
+				if (account.type === "BuiltIn") {
+					this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.password"), "key", () => this.openUpdateAsync("password")), 2);
+					this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.email"), "at", () => this.openUpdateAsync("email")), 3);
+				}
 			}
 
-			else if (this.authSvc.canSetServicePrivileges) {
-				this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.privileges"), "settings", () => this.openUpdateAsync("privileges")));
-				this.usersSvc.getServicePrivilegesAsync(this.profile.ID);
+			else {
+				if (this.authSvc.isSystemAdministrator(account)) {
+					this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.profile"), "create", () => this.openUpdateAsync("profile")));
+				}
+				if (this.authSvc.canSetServicePrivileges) {
+					this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.privileges"), "settings", () => this.openUpdateAsync("privileges")));
+				}
 			}
 
-			if (this.id === undefined || this.id === this.configSvc.getAccount().id) {
+			if (this.id === undefined || this.id === account.id) {
 				this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.logout"), "log-out", () => this.logoutAsync()));
 			}
 
@@ -162,7 +171,8 @@ export class UsersProfilePage implements OnInit {
 	}
 
 	async showProfileAsync(onNext?: () => void) {
-		const id = this.id || this.configSvc.getAccount().id;
+		const account = this.configSvc.getAccount();
+		const id = this.id || account.id;
 		const showProfileAsync = async () => {
 			this.profile = this.profile || UserProfile.get(id);
 			this.labels.header = await this.configSvc.getResourceAsync("users.profile.labels.header");
@@ -172,6 +182,14 @@ export class UsersProfilePage implements OnInit {
 				this.trackAsync(this.title),
 				this.appFormsSvc.hideLoadingAsync(onNext)
 			]);
+			await this.usersSvc.getServicePrivilegesAsync(this.profile.ID, () => {
+				const type = Account.get(this.profile.ID).type;
+				this.type = type === "Windows"
+					? "logo-microsoft"
+					: type === "OAuth"
+						? "flower-outline"
+						: "accessibility-outline";
+			});
 		};
 		const force = this.configSvc.appConfig.services.active.service === "Books" && (this.profile === undefined || this.profile.LastSync === undefined);
 		if (this.profile === undefined || force) {
@@ -180,7 +198,7 @@ export class UsersProfilePage implements OnInit {
 				id,
 				async _ => {
 					this.profile = UserProfile.get(id);
-					if (id === this.configSvc.getAccount().id) {
+					if (id === account.id) {
 						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
 						AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: this.profile });
 					}

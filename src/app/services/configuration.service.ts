@@ -511,6 +511,10 @@ export class ConfigurationService extends BaseService {
 			account.id = data.ID;
 		}
 
+		if (account.type === undefined) {
+			account.type = data.Type;
+		}
+
 		if (AppUtility.isArray(data.Roles, true)) {
 			account.roles = (data.Roles as Array<string>).distinct();
 		}

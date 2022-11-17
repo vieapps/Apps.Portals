@@ -156,6 +156,7 @@ export class UsersUpdatePage implements OnInit {
 	}
 
 	async openUpdateProfileAsync() {
+		const account = this.configSvc.getAccount();
 		const config: Array<AppFormsControlConfig> = [
 			{
 				Name: "ID",
@@ -237,7 +238,7 @@ export class UsersUpdatePage implements OnInit {
 				Options: {
 					Type: "email",
 					Label: await this.configSvc.getResourceAsync("users.register.controls.Email"),
-					ReadOnly: true
+					ReadOnly: !(this.profile.ID === account.id ? account.type !== "BuiltIn" : this.authSvc.isSystemAdministrator(account))
 				}
 			},
 			{
