@@ -580,10 +580,10 @@ export class PortalsCoreService extends BaseService {
 			: url;
 	}
 
-	getPermanentURL(object: CmsBaseModel) {
+	getPermanentURL(object: CmsBaseModel, usePortalURL: boolean = false) {
 		const organization = object.organization;
-		const url = this.getSiteURL(object);
-		return (url.indexOf("~" + organization.Alias) > 0 ? this.configSvc.appConfig.URIs.portals : url) + `_permanentlink/${object.RepositoryEntityID}/${object.ID}`;
+		const url = usePortalURL ? `~${organization.Alias}/` : this.getSiteURL(object);
+		return (url.indexOf("~" + organization.Alias) > -1 ? this.configSvc.appConfig.URIs.portals : url) + `_permanentlink/${object.RepositoryEntityID}/${object.ID}`;
 	}
 
 	getDesktop(object: CmsBaseModel) {
@@ -605,15 +605,15 @@ export class PortalsCoreService extends BaseService {
 			: undefined;
 	}
 
-	getPortalURL(object: CmsBaseModel, parent?: CmsBaseModel) {
+	getPortalURL(object: CmsBaseModel, parent?: CmsBaseModel, usePortalURL: boolean = false) {
 		let url: string = parent !== undefined ? this.getPortalURL(parent) : undefined;
 		if (url === undefined) {
 			const organization = Organization.get(object.SystemID);
 			const desktop = this.getDesktop(object);
-			url = `${this.configSvc.appConfig.URIs.portals}` + (organization !== undefined && desktop !== undefined ? `~${organization.Alias}/${desktop.Alias}` : "_permanentlink");
+			url = this.configSvc.appConfig.URIs.portals + (organization !== undefined && desktop !== undefined ? `~${organization.Alias}/${desktop.Alias}` : "_permanentlink");
 		}
 		return url.indexOf("_permanent") > 0
-			? this.getPermanentURL(object)
+			? this.getPermanentURL(object, usePortalURL)
 			: `${url}/${object["Alias"] || object.ID}`;
 	}
 

@@ -461,6 +461,33 @@ export class PortalsCmsService extends BaseService {
 		return controlConfig;
 	}
 
+	getTemporaryLinkFormControl(object: CmsBaseModel, segment?: string, label?: string, description?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+		const controlConfig: AppFormsControlConfig = {
+			Name: "TempLink",
+			Type: "Text",
+			Segment: segment || "basic",
+			Extras: { Text: this.portalsCoreSvc.getPortalURL(object, object["category"], true) },
+			Options: {
+				Label: label || "{{portals.cms.common.tempLink.label}}",
+				Description: description || "{{portals.cms.common.tempLink.description}}",
+				Icon: {
+					Name: "globe",
+					Fill: "clear",
+					Color: "medium",
+					Slot: "end",
+					OnClick: (_, formControl) => {
+						const value = formControl instanceof AppFormsControlComponent ? (formControl as AppFormsControlComponent).text : formControl.value;
+						PlatformUtility.openURL(value || formControl.value);
+					}
+				}
+			}
+		};
+		if (onCompleted !== undefined) {
+			onCompleted(controlConfig);
+		}
+		return controlConfig;
+	}
+
 	getPublicLinkFormControl(object: CmsBaseModel, segment?: string, label?: string, description?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const controlConfig: AppFormsControlConfig = {
 			Name: "PublicLink",

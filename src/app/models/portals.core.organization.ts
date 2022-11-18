@@ -5,6 +5,7 @@ import { NotificationSettings, EmailSettings, WebHookSettings } from "@app/model
 import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
 import { Module } from "@app/models/portals.core.module";
 import { ContentType } from "@app/models/portals.core.content.type";
+import { UserProfile } from "@app/models/user";
 
 export class Organization extends CoreBaseModel {
 
@@ -78,7 +79,6 @@ export class Organization extends CoreBaseModel {
 	ID = undefined as string;
 
 	ansiTitle: string;
-	owner: string;
 
 	/** Deserializes data to object */
 	static deserialize(json: any, organization?: Organization) {
@@ -135,8 +135,12 @@ export class Organization extends CoreBaseModel {
 	}
 
 	get defaultModule() {
-		const modules = this.modules;
-		return modules.first(module => module.ModuleDefinitionID === "A0000000000000000000000000000001") || modules.first();
+		return this.modules.firstOrDefault(module => module.ModuleDefinitionID === "A0000000000000000000000000000001");
+	}
+
+	get owner() {
+		const profile = UserProfile.get(this.OwnerID);
+		return profile !== undefined ? profile.Name : "";
 	}
 
 }

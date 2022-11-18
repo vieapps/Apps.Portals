@@ -238,6 +238,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label")),
 			this.portalsCmsSvc.getPermanentLinkFormControl(this.content, "management"),
 			this.portalsCmsSvc.getPublicLinkFormControl(this.content, "management"),
+			this.portalsCmsSvc.getTemporaryLinkFormControl(this.content, "management"),
 			this.portalsCoreSvc.getAuditFormControl(this.content, "management"),
 			{
 				Name: "RepositoryEntity",
@@ -402,6 +403,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				const control = this.formControls.find(ctrl => ctrl.Name === "PublicLink");
 				control.Extras["Text"] = url;
 				control.Hidden = false;
+				this.formControls.find(ctrl => ctrl.Name === "TempLink").Extras["Text"] = this.portalsCoreSvc.getPortalURL(this.content, this.content.category, true);
 			}
 			else if (onUndefined !== undefined) {
 				onUndefined();

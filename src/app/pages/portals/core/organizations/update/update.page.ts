@@ -691,7 +691,6 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				delete organization["Privileges"];
 
 				if (AppUtility.isNotEmpty(organization.ID)) {
-					Organization.get(organization.ID).owner = undefined;
 					await this.portalsCoreSvc.updateOrganizationAsync(
 						organization,
 						async data => {

@@ -264,7 +264,9 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 	}
 
 	private fetchOwner(organization: Organization) {
-		AppUtility.invoke(AppUtility.isEmpty(organization.owner) && AppUtility.isNotEmpty(organization.OwnerID) ? () => this.usersSvc.getProfileAsync(organization.OwnerID, () => organization.owner = (UserProfile.get(organization.OwnerID) || new UserProfile("Unknonwn")).Name) : undefined);
+		if (AppUtility.isEmpty(organization.owner) && AppUtility.isNotEmpty(organization.OwnerID)) {
+			this.usersSvc.getProfileAsync(organization.OwnerID);
+		}
 	}
 
 	private doRefresh(organizations: Organization[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {

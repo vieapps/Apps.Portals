@@ -238,7 +238,7 @@ export class UsersUpdatePage implements OnInit {
 				Options: {
 					Type: "email",
 					Label: await this.configSvc.getResourceAsync("users.register.controls.Email"),
-					ReadOnly: !(this.profile.ID === account.id ? account.type !== "BuiltIn" : this.authSvc.isSystemAdministrator(account))
+					ReadOnly: account.type === "BuiltIn" ? true : !(this.profile.ID === account.id || this.authSvc.isSystemAdministrator(account))
 				}
 			},
 			{
@@ -263,11 +263,7 @@ export class UsersUpdatePage implements OnInit {
 			}
 		];
 
-		config.forEach(options => {
-			if (!options.Required && this.configSvc.appConfig.accounts.registration.required.findIndex(value => AppUtility.isEquals(value, options.Name)) > -1) {
-				options.Required = true;
-			}
-		});
+		config.filter(options => !options.Required && this.configSvc.appConfig.accounts.registration.required.indexOf(options.Name) > -1).forEach(options => options.Required = true);
 		this.configSvc.appConfig.accounts.registration.excluded.forEach(name => config.removeAt(config.findIndex(ctrl => ctrl.Name === name)));
 
 		this.update.language = this.profile.Language;

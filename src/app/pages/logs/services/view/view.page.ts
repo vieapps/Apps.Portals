@@ -44,7 +44,7 @@ export class LogsViewPage implements OnInit {
 
 	private async prepareAsync() {
 		const ids = (this.configSvc.requestParams["ids"] as Array<string>).toHashSet();
-		this.logs = this.configSvc.serviceLogs.filter(log => ids.contains(log.ID));
+		this.logs = this.configSvc.serviceLogs.filter(log => ids.contains(log.ID)).sortBy({ name: "Time", reverse: true });
 		await TrackingUtility.trackAsync({ title: this.title, category: "ServiceLog", action: "View" });
 	}
 

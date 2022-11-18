@@ -16,9 +16,13 @@
 					"label": "Liên kết cố định",
 					"description": "Hệ thống sẽ tự động mở đúng liên kết công khai từ liên kết cố định/không thay đổi này"
 				},
+				"tempLink": {
+					"label": "Liên kết xuất bản công khai (tạm  thời)",
+					"description": "Sử dụng liên kết trên để xemm nội dung hiển thị khi được xuất bản công khai tại môi trường tạm thời"
+				},
 				"publicLink": {
 					"label": "Liên kết xuất bản công khai",
-					"description": "Hệ thống sẽ tsử dụng liên kết trên để hiển thị nội dung khi được xuất bản công khai"
+					"description": "Hệ thống sẽ sử dụng liên kết trên để hiển thị nội dung khi được xuất bản công khai"
 				},
 				"featured": {
 					"updated": "Mới cập nhật",
