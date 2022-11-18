@@ -565,13 +565,13 @@ export class PortalsCoreService extends BaseService {
 		return this.getRouterLink(contentType, action, title, objectName, path) + "?x-request=" + this.getRouterQueryParams(contentType, params)["x-request"];
 	}
 
-	getPermanentURL(object: CmsBaseModel) {
-		return `${this.getSiteURL(object)}_permanentlink/${object.RepositoryEntityID}/${object.ID}`;
-	}
-
-	private getSiteURL(object: CmsBaseModel) {
-		const organization = object.organization;
-		const site = organization !== undefined ? Site.instances.first(s => s.SystemID === organization.ID) : undefined;
+	getSiteURL(object: BaseModel) {
+		const organization = Organization.get(object["SystemID"]);
+		const site = object !== undefined && object instanceof Site
+			? object as Site
+			: organization !== undefined
+				? Site.instances.first(s => s.SystemID === organization.ID)
+				: undefined;
 		const url = site !== undefined
 			? `http${site.AlwaysUseHTTPs || site.AlwaysReturnHTTPs ? "s" : ""}://${site.SubDomain}.${site.PrimaryDomain}/`.replace("://*", "://www").replace("://www.www", "://www")
 			: this.configSvc.appConfig.URIs.portals + `~${organization.Alias}/`;
@@ -580,7 +580,13 @@ export class PortalsCoreService extends BaseService {
 			: url;
 	}
 
-	private getDesktop(object: CmsBaseModel) {
+	getPermanentURL(object: CmsBaseModel) {
+		const organization = object.organization;
+		const url = this.getSiteURL(object);
+		return (url.indexOf("~" + organization.Alias) > 0 ? this.configSvc.appConfig.URIs.portals : url) + `_permanentlink/${object.RepositoryEntityID}/${object.ID}`;
+	}
+
+	getDesktop(object: CmsBaseModel) {
 		const module = Module.get(object.RepositoryID);
 		const contentType = ContentType.get(object.RepositoryEntityID);
 		return Desktop.get(object["DesktopID"]) || Desktop.get(contentType === undefined ? undefined : contentType.DesktopID) || Desktop.get(module === undefined ? undefined : module.DesktopID);
