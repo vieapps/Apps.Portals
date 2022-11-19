@@ -10,19 +10,19 @@ export class AppConfig {
 	/** App URIs (remote APIs and related resources) */
 	static URIs = {
 		/** APIs */
-		apis: "https://apis.vieapps.net/",
+		apis: "https://apis.vieapps.com/",
 
 		/** Files HTTP service */
-		files: "https://fs.vieapps.net/",
+		files: "https://fs.vieapps.com/",
 
 		/** Portals HTTP service */
-		portals: "https://portals.vieapps.net/",
+		portals: "https://portals.vieapps.com/",
 
 		/** Apps on the web to perform activation or other business process */
-		apps: "https://cms.vieapps.net/",
+		apps: "https://cms.vieapps.com/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
-		medias: ["fs.vieportal.net"/**/] as Array<string>
+		medias: ["fs.vieapps.net"/**/] as Array<string>
 	};
 
 	/** App information */
@@ -31,9 +31,9 @@ export class AppConfig {
 		description: "Manage information and related services of CMS Portals",
 		copyright: "© VIEApps.net",
 		license: "Apache-2.0",
-		homepage: "https://cms.vieapps.net",
+		homepage: "https://cms.vieapps.com",
 		id: "vieapps-ngx",
-		version: "4.2211.2",
+		version: "4.2212.1",
 		frameworks: "ionic 5.9 - angular 11.2 - cordova 11.0",
 		mode: "",
 		platform: "",
@@ -77,7 +77,7 @@ export class AppConfig {
 				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "SchedulingTask", "Category", "Content", "Item", "Link", "Form", "Crawler"],
 				specials: [/*"Crawler"/**/],
 				sidebar: "cms",
-				availableHosts: ["cms.vieapps.net"/**/]
+				availableHosts: [/*"cms.vieapps.net"/**/]
 			},
 			{
 				name: "Books",
@@ -89,8 +89,8 @@ export class AppConfig {
 			}
 		] as Array<{ name: string; objects: Array<string>; specials?: Array<string>; menuIndex?: number; sidebar?: string; availableHosts?: Array<string>; canSetPrivilegs?: boolean; appName?: string; appDescription?: string; }>,
 		active: {
-			service: "",
-			system: ""
+			service: undefined as string,
+			system: undefined as string
 		}
 	};
 
