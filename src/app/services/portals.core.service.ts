@@ -58,9 +58,13 @@ export class PortalsCoreService extends BaseService {
 
 	get activeOrganization() {
 		if (Organization.active === undefined) {
-			Organization.active = Organization.instances.first();
-			if (Organization.active !== undefined && Organization.active.modules.length < 1) {
-				this.getOrganizationAsync(Organization.active.ID);
+			const organizationID = this.configSvc.appConfig.services.active.system || this.configSvc.appConfig.options.extras["organization"] as string;
+			Organization.active = Organization.instances.firstOrDefault(organization => organization.ID === organizationID);
+			if (Organization.active !== undefined) {
+				this.configSvc.appConfig.services.active.system = this.configSvc.appConfig.options.extras["organization"] = Organization.active.ID;
+				if (Organization.active.modules.length < 1) {
+					this.getOrganizationAsync(Organization.active.ID);
+				}
 			}
 		}
 		return Organization.active;
@@ -151,30 +155,28 @@ export class PortalsCoreService extends BaseService {
 		});
 
 		AppEvents.on(this.name, info => {
-			const args = info.args;
-			if ("Info" === args.Type && "Request" === args.Mode && AppUtility.isNotEmpty(args.ID)) {
-				if ("Organization" === args.Object) {
-					this.getOrganizationAsync(args.ID);
+			if ("Info" === info.args.Type && "Request" === info.args.Mode && AppUtility.isNotEmpty(info.args.ID)) {
+				if ("Organization" === info.args.Object) {
+					this.getOrganizationAsync(info.args.ID);
 				}
-				else if ("Module" === args.Object) {
-					this.getModuleAsync(args.ID);
+				else if ("Module" === info.args.Object) {
+					this.getModuleAsync(info.args.ID);
 				}
-				else if ("ContentType" === args.Object) {
-					this.getContentTypeAsync(args.ID);
+				else if ("ContentType" === info.args.Object) {
+					this.getContentTypeAsync(info.args.ID);
 				}
 			}
-			else if ("Organization" === args.Type && "Changed" === args.Mode) {
+			else if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
 				this.updateSidebarHeader();
 				this.prepareSidebar();
 			}
 		});
 
 		AppEvents.on("Session", info => {
-			const args = info.args;
-			if ("LogIn" === args.Type) {
+			if ("LogIn" === info.args.Type) {
 				this.prepareSidebarFooterItemsAsync().then(() => this.activeSidebar());
 			}
-			else if ("LogOut" === args.Type) {
+			else if ("LogOut" === info.args.Type) {
 				this.prepareSidebarFooterItemsAsync().then(() => this.activeSidebar(() => {
 					this.configSvc.appConfig.options.extras["organizations"] = new Array<string>();
 					AppUtility.invoke(() => this.configSvc.saveOptionsAsync(), 123, true);
@@ -183,20 +185,23 @@ export class PortalsCoreService extends BaseService {
 		});
 
 		AppEvents.on("Account", info => {
-			const args = info.args;
-			if ("Updated" === args.Type && "APIs" === args.Mode) {
+			if ("Updated" === info.args.Type && "APIs" === info.args.Mode) {
 				this.updateSidebarHeader();
 				this.prepareSidebarFooterItemsAsync().then(() => this.prepareSidebar());
 			}
 		});
 
 		AppEvents.on("Profile", info => {
-			const args = info.args;
-			if ("Updated" === args.Type && "APIs" === args.Mode) {
-				const organizations = this.activeOrganizations;
-				const organization = this.activeOrganization;
-				if (organization === undefined || organizations.indexOf(organization.ID) < 0) {
-					this.getOrganizationAsync(organizations.first(), () => this.setActiveOrganization(Organization.get(organizations.first())));
+			if ("Updated" === info.args.Type && "APIs" === info.args.Mode) {
+				if (this.activeOrganization !== undefined) {
+					this.configSvc.appConfig.services.active.system = this.configSvc.appConfig.options.extras["organization"] = this.activeOrganization.ID;
+				}
+				else {
+					const organizationID = this.configSvc.appConfig.options.extras["organization"] as string;
+					if (this.configSvc.isDebug) {
+						this.showWarning("Prepare to update active organization when got profile updated", organizationID);
+					}
+					this.getOrganizationAsync(organizationID, () => this.setActiveOrganization(Organization.get(organizationID)));
 				}
 			}
 		});
@@ -205,11 +210,17 @@ export class PortalsCoreService extends BaseService {
 	async initializeAsync(onNext?: () => void) {
 		await this.getDefinitionsAsync();
 		if (Organization.active === undefined) {
+			if (this.configSvc.isDebug) {
+				this.showWarning("Prepare to get active organization on initializing");
+			}
 			await this.getActiveOrganizationAsync(undefined, true);
 		}
 		else {
+			if (this.configSvc.isDebug) {
+				this.showWarning(`Prepare ${Organization.active.modules.length < 1 ? "modules" : "scheduling tasks"} when got active organization on initializing`, Organization.active);
+			}
 			if (Organization.active.modules.length < 1) {
-				await this.getActiveOrganizationAsync(undefined, true);
+				await this.getOrganizationAsync(Organization.active.ID, undefined, undefined, true);
 			}
 			else {
 				await this.fetchSchedulingTasksAsync();
@@ -305,13 +316,22 @@ export class PortalsCoreService extends BaseService {
 	async getActiveOrganizationAsync(preferID?: string, useXHR: boolean = true, onNext?: () => void) {
 		preferID = AppUtility.isNotEmpty(preferID)
 			? preferID
-			: this.configSvc.appConfig.options.extras["organization"];
+			: this.configSvc.appConfig.services.active.system || this.configSvc.appConfig.options.extras["organization"];
 		if (AppUtility.isNotEmpty(preferID)) {
 			if (Organization.active !== undefined && AppUtility.isEquals(Organization.active.ID, preferID)) {
-				this.configSvc.appConfig.services.active.system = Organization.active.ID;
+				this.configSvc.appConfig.services.active.system = this.configSvc.appConfig.options.extras["organization"] = Organization.active.ID;
 			}
 			else {
-				await this.getOrganizationAsync(preferID, () => this.setActiveOrganization(Organization.get(preferID) || Organization.instances.first()), undefined, useXHR);
+				if (this.configSvc.isDebug) {
+					this.showWarning("Get active organization", preferID);
+				}
+				await this.getOrganizationAsync(preferID, () => {
+					const organization = Organization.get(preferID) || Organization.get(this.activeOrganizations.first()) || Organization.instances.first();
+					if (this.configSvc.isDebug) {
+						this.showWarning("Update active organization (when get active organization)", organization);
+					}
+					this.setActiveOrganization(organization);
+				}, undefined, useXHR);
 			}
 		}
 		if (onNext !== undefined) {
@@ -322,20 +342,23 @@ export class PortalsCoreService extends BaseService {
 
 	setActiveOrganization(organization: Organization, onNext?: () => void) {
 		if (organization !== undefined) {
-			this.configSvc.appConfig.services.active.system = organization.ID;
-			this.configSvc.appConfig.options.extras["organization"] = organization.ID;
+			this.configSvc.appConfig.services.active.system = this.configSvc.appConfig.options.extras["organization"] = organization.ID;
 			this.activeOrganizations.merge([organization.ID], true);
 			if (Organization.active === undefined || Organization.active.ID !== organization.ID) {
 				Organization.active = organization;
-				this.getActiveModuleAsync(undefined, organization.modules.length < 1, undefined, false).then(() => {
-					AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
+				AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
+				const useXHR = organization.modules.length < 1;
+				this.getActiveModuleAsync(undefined, useXHR, undefined, false).then(() => {
+					if (useXHR) {
+						AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
+					}
 					this.configSvc.saveOptionsAsync(() => AppEvents.broadcast("App", { Type: "Options", Mode: "Changed" }));
 					if (this.configSvc.isAuthenticated && Site.instances.first(site => site.SystemID === organization.ID) === undefined) {
 						this.searchSitesAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }));
 					}
 				});
-				if (organization.modules.length < 1) {
-					AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
+				if (this.configSvc.isDebug) {
+					this.showWarning("Set active organization", this.activeOrganization);
 				}
 			}
 		}
@@ -349,12 +372,10 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	removeActiveOrganization(organizationID: string, onNext?: () => void) {
-		this.configSvc.appConfig.services.active.system = undefined;
-		this.configSvc.appConfig.options.extras["organization"] = undefined;
+		this.configSvc.appConfig.services.active.system = this.configSvc.appConfig.options.extras["organization"] = undefined;
 		this.activeOrganizations.remove(organizationID);
 		delete this.activeModules[organizationID];
-		Organization.active = undefined;
-		Module.active = undefined;
+		Organization.active = Module.active = undefined;
 		return this.setActiveOrganization(Organization.get(this.activeOrganizations.first()), onNext);
 	}
 
@@ -544,19 +565,28 @@ export class PortalsCoreService extends BaseService {
 		return this.getRouterLink(contentType, action, title, objectName, path) + "?x-request=" + this.getRouterQueryParams(contentType, params)["x-request"];
 	}
 
-	getPermanentURL(object: CmsBaseModel) {
-		return `${this.getSiteURL(object)}_permanentlink/${object.RepositoryEntityID}/${object.ID}`;
-	}
-
-	private getSiteURL(object: CmsBaseModel) {
-		const organization = object.organization;
-		const site = organization !== undefined ? Site.instances.first(s => s.SystemID === organization.ID) : undefined;
-		return site !== undefined
+	getSiteURL(object: BaseModel) {
+		const organization = Organization.get(object["SystemID"]);
+		const site = object !== undefined && object instanceof Site
+			? object as Site
+			: organization !== undefined
+				? Site.instances.first(s => s.SystemID === organization.ID)
+				: undefined;
+		const url = site !== undefined
 			? `http${site.AlwaysUseHTTPs || site.AlwaysReturnHTTPs ? "s" : ""}://${site.SubDomain}.${site.PrimaryDomain}/`.replace("://*", "://www").replace("://www.www", "://www")
 			: this.configSvc.appConfig.URIs.portals + `~${organization.Alias}/`;
+		return site !== undefined && site.RedirectToNoneWWW
+			? url.replace("://www.", "://")
+			: url;
 	}
 
-	private getDesktop(object: CmsBaseModel) {
+	getPermanentURL(object: CmsBaseModel, usePortalURL: boolean = false) {
+		const organization = object.organization;
+		const url = usePortalURL ? `~${organization.Alias}/` : this.getSiteURL(object);
+		return (url.indexOf("~" + organization.Alias) > -1 ? this.configSvc.appConfig.URIs.portals : url) + `_permanentlink/${object.RepositoryEntityID}/${object.ID}`;
+	}
+
+	getDesktop(object: CmsBaseModel) {
 		const module = Module.get(object.RepositoryID);
 		const contentType = ContentType.get(object.RepositoryEntityID);
 		return Desktop.get(object["DesktopID"]) || Desktop.get(contentType === undefined ? undefined : contentType.DesktopID) || Desktop.get(module === undefined ? undefined : module.DesktopID);
@@ -575,15 +605,15 @@ export class PortalsCoreService extends BaseService {
 			: undefined;
 	}
 
-	getPortalURL(object: CmsBaseModel, parent?: CmsBaseModel) {
+	getPortalURL(object: CmsBaseModel, parent?: CmsBaseModel, usePortalURL: boolean = false) {
 		let url: string = parent !== undefined ? this.getPortalURL(parent) : undefined;
 		if (url === undefined) {
 			const organization = Organization.get(object.SystemID);
 			const desktop = this.getDesktop(object);
-			url = `${this.configSvc.appConfig.URIs.portals}` + (organization !== undefined && desktop !== undefined ? `~${organization.Alias}/${desktop.Alias}` : "_permanentlink");
+			url = this.configSvc.appConfig.URIs.portals + (organization !== undefined && desktop !== undefined ? `~${organization.Alias}/${desktop.Alias}` : "_permanentlink");
 		}
 		return url.indexOf("_permanent") > 0
-			? this.getPermanentURL(object)
+			? this.getPermanentURL(object, usePortalURL)
 			: `${url}/${object["Alias"] || object.ID}`;
 	}
 
@@ -2885,6 +2915,22 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
+	refreshExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+		return this.refreshAsync(
+			"expression",
+			id,
+			data => {
+				Expression.update(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			onError,
+			headers,
+			useXHR
+		);
+	}
+
 	private processExpressionUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Create":
@@ -3114,7 +3160,7 @@ export class PortalsCoreService extends BaseService {
 							switch (message.Data.Status || "") {
 								case "Done":
 									if (this.configSvc.isDebug) {
-										console.log(`[Portals]: THe export objects to Excel process was completed - Process ID: ${processID}`);
+										console.log(`[Portals]: The export objects to Excel process was completed - Process ID: ${processID}`);
 									}
 									AppAPIs.unregisterProcessor(processID, this.name, "Excel");
 									if (onProgress !== undefined) {
@@ -3198,6 +3244,7 @@ export class PortalsCoreService extends BaseService {
 				}],
 				handlers: {
 					onUploaded: async (uploadedInfo: { data: Array<any>; headers: { [key: string]: string } }) => {
+						console.log("Import data from Excel", uploadedInfo.data, uploadedInfo.headers);
 						await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.common.excel.action.import"));
 						const info = uploadedInfo.data.first();
 						const nodeID = info["x-node"] as string;

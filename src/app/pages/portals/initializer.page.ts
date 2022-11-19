@@ -51,15 +51,8 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 		let forward = false;
 		let url: string;
 		if (AppUtility.isNotEmpty(organizationID)) {
-			let organization = Organization.get(organizationID);
-			if (organization === undefined) {
-				if (this.configSvc.isDebug) {
-					console.log("<Portals Initializer>: prepare organization with a specified identity", organizationID);
-				}
-				await this.portalsCoreSvc.getOrganizationAsync(organizationID, _ => organization = Organization.get(organizationID), undefined, true);
-			}
+			let organization = await this.setActiveOrganizationAsync(organizationID);
 			if (organization !== undefined) {
-				this.portalsCoreSvc.setActiveOrganization(organization);
 				const objectName = this.configSvc.requestParams["ObjectName"] as string;
 				const objectID = this.configSvc.requestParams["ObjectID"] as string;
 				let object: BaseModel;
@@ -70,42 +63,90 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 						case "core.organization":
 							object = Organization.get(objectID);
 							if (object === undefined) {
-								await this.portalsCoreSvc.getOrganizationAsync(objectID, _ => object = Organization.get(objectID), undefined, true);
+								await this.portalsCoreSvc.getOrganizationAsync(objectID, async _ => {
+									object = Organization.get(objectID);
+									if (object !== undefined && object.ID !== organization.ID) {
+										organization = await this.setActiveOrganizationAsync(object.ID);
+									}
+								}, undefined, true);
+							}
+							else if (object.ID !== organization.ID) {
+								organization = await this.setActiveOrganizationAsync(object.ID);
 							}
 							break;
 						case "role":
 						case "core.role":
 							object = Role.get(objectID);
 							if (object === undefined) {
-								await this.portalsCoreSvc.getRoleAsync(objectID, _ => object = Role.get(objectID), undefined, true);
+								await this.portalsCoreSvc.getRoleAsync(objectID, async _ => {
+									object = Role.get(objectID);
+									if (object !== undefined && object["SystemID"] !== organization.ID) {
+										organization = await this.setActiveOrganizationAsync(object["SystemID"]);
+									}
+								}, undefined, true);
+							}
+							else if (object["SystemID"] !== organization.ID) {
+								organization = await this.setActiveOrganizationAsync(object["SystemID"]);
 							}
 							break;
 						case "site":
 						case "core.site":
 							object = Site.get(objectID);
 							if (object === undefined) {
-								await this.portalsCoreSvc.getSiteAsync(objectID, _ => object = Site.get(objectID), undefined, true);
+								await this.portalsCoreSvc.getSiteAsync(objectID, async _ => {
+									object = Site.get(objectID);
+									if (object !== undefined && object["SystemID"] !== organization.ID) {
+										organization = await this.setActiveOrganizationAsync(object["SystemID"]);
+									}
+								}, undefined, true);
+							}
+							else if (object["SystemID"] !== organization.ID) {
+								organization = await this.setActiveOrganizationAsync(object["SystemID"]);
 							}
 							break;
 						case "desktop":
 						case "core.desktop":
 							object = Desktop.get(objectID);
 							if (object === undefined) {
-								await this.portalsCoreSvc.getDesktopAsync(objectID, _ => object = Desktop.get(objectID), undefined, true);
+								await this.portalsCoreSvc.getDesktopAsync(objectID, async _ => {
+									object = Desktop.get(objectID);
+									if (object !== undefined && object["SystemID"] !== organization.ID) {
+										organization = await this.setActiveOrganizationAsync(object["SystemID"]);
+									}
+								}, undefined, true);
+							}
+							else if (object["SystemID"] !== organization.ID) {
+								organization = await this.setActiveOrganizationAsync(object["SystemID"]);
 							}
 							break;
 						case "portlet":
 						case "core.portlet":
 							object = Portlet.get(objectID);
 							if (object === undefined) {
-								await this.portalsCoreSvc.getPortletAsync(objectID, _ => object = Portlet.get(objectID), undefined, true);
+								await this.portalsCoreSvc.getPortletAsync(objectID, async _ => {
+									object = Portlet.get(objectID);
+									if (object !== undefined && object["SystemID"] !== organization.ID) {
+										organization = await this.setActiveOrganizationAsync(object["SystemID"]);
+									}
+								}, undefined, true);
+							}
+							else if (object["SystemID"] !== organization.ID) {
+								organization = await this.setActiveOrganizationAsync(object["SystemID"]);
 							}
 							break;
 						case "module":
 						case "core.module":
 							object = Module.get(objectID);
 							if (object === undefined) {
-								await this.portalsCoreSvc.getModuleAsync(objectID, _ => object = Module.get(objectID), undefined, true);
+								await this.portalsCoreSvc.getModuleAsync(objectID, async _ => {
+									object = Module.get(objectID);
+									if (object !== undefined && object["SystemID"] !== organization.ID) {
+										organization = await this.setActiveOrganizationAsync(object["SystemID"]);
+									}
+								}, undefined, true);
+							}
+							else if (object["SystemID"] !== organization.ID) {
+								organization = await this.setActiveOrganizationAsync(object["SystemID"]);
 							}
 							break;
 						case "contenttype":
@@ -115,21 +156,45 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 						case "core.content.type":
 							object = ContentType.get(objectID);
 							if (object === undefined) {
-								await this.portalsCoreSvc.getContentTypeAsync(objectID, _ => object = ContentType.get(objectID), undefined, true);
+								await this.portalsCoreSvc.getContentTypeAsync(objectID, async _ => {
+									object = ContentType.get(objectID);
+									if (object !== undefined && object["SystemID"] !== organization.ID) {
+										organization = await this.setActiveOrganizationAsync(object["SystemID"]);
+									}
+								}, undefined, true);
+							}
+							else if (object["SystemID"] !== organization.ID) {
+								organization = await this.setActiveOrganizationAsync(object["SystemID"]);
 							}
 							break;
 						case "expression":
 						case "core.expression":
 							object = Expression.get(objectID);
 							if (object === undefined) {
-								await this.portalsCoreSvc.getExpressionAsync(objectID, _ => object = Expression.get(objectID), undefined, true);
+								await this.portalsCoreSvc.getExpressionAsync(objectID, async _ => {
+									object = Expression.get(objectID);
+									if (object !== undefined && object["SystemID"] !== organization.ID) {
+										organization = await this.setActiveOrganizationAsync(object["SystemID"]);
+									}
+								}, undefined, true);
+							}
+							else if (object["SystemID"] !== organization.ID) {
+								organization = await this.setActiveOrganizationAsync(object["SystemID"]);
 							}
 							break;
 						case "category":
 						case "cms.category":
 							object = Category.get(objectID);
 							if (object === undefined) {
-								await this.portalsCmsSvc.getCategoryAsync(objectID, _ => object = Category.get(objectID), undefined, true);
+								await this.portalsCmsSvc.getCategoryAsync(objectID, async _ => {
+									object = Category.get(objectID);
+									if (object !== undefined && object["SystemID"] !== organization.ID) {
+										organization = await this.setActiveOrganizationAsync(object["SystemID"]);
+									}
+								}, undefined, true);
+							}
+							else if (object["SystemID"] !== organization.ID) {
+								organization = await this.setActiveOrganizationAsync(object["SystemID"]);
 							}
 							break;
 						case "content":
@@ -137,7 +202,15 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							forward = true;
 							object = Content.get(objectID);
 							if (object === undefined) {
-								await this.portalsCmsSvc.getContentAsync(objectID, _ => object = Content.get(objectID), undefined, true);
+								await this.portalsCmsSvc.getContentAsync(objectID, async _ => {
+									object = Content.get(objectID);
+									if (object !== undefined && object["SystemID"] !== organization.ID) {
+										organization = await this.setActiveOrganizationAsync(object["SystemID"]);
+									}
+								}, undefined, true);
+							}
+							else if (object["SystemID"] !== organization.ID) {
+								organization = await this.setActiveOrganizationAsync(object["SystemID"]);
 							}
 							break;
 						case "item":
@@ -145,7 +218,15 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							forward = true;
 							object = Item.get(objectID);
 							if (object === undefined) {
-								await this.portalsCmsSvc.getItemAsync(objectID, _ => object = Item.get(objectID), undefined, true);
+								await this.portalsCmsSvc.getItemAsync(objectID, async _ => {
+									object = Item.get(objectID);
+									if (object !== undefined && object["SystemID"] !== organization.ID) {
+										organization = await this.setActiveOrganizationAsync(object["SystemID"]);
+									}
+								}, undefined, true);
+							}
+							else if (object["SystemID"] !== organization.ID) {
+								organization = await this.setActiveOrganizationAsync(object["SystemID"]);
 							}
 							break;
 						case "link":
@@ -153,7 +234,15 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							forward = true;
 							object = Link.get(objectID);
 							if (object === undefined) {
-								await this.portalsCmsSvc.getLinkAsync(objectID, _ => object = Link.get(objectID), undefined, true);
+								await this.portalsCmsSvc.getLinkAsync(objectID, async _ => {
+									object = Link.get(objectID);
+									if (object !== undefined && object["SystemID"] !== organization.ID) {
+										organization = await this.setActiveOrganizationAsync(object["SystemID"]);
+									}
+								}, undefined, true);
+							}
+							else if (object["SystemID"] !== organization.ID) {
+								organization = await this.setActiveOrganizationAsync(object["SystemID"]);
 							}
 							break;
 						case "form":
@@ -161,19 +250,27 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							forward = true;
 							object = Form.get(objectID);
 							if (object === undefined) {
-								await this.portalsCmsSvc.getFormAsync(objectID, _ => object = Form.get(objectID), undefined, true);
+								await this.portalsCmsSvc.getFormAsync(objectID, async _ => {
+									object = Form.get(objectID);
+									if (object !== undefined && object["SystemID"] !== organization.ID) {
+										organization = await this.setActiveOrganizationAsync(object["SystemID"]);
+									}
+								}, undefined, true);
+							}
+							else if (object["SystemID"] !== organization.ID) {
+								organization = await this.setActiveOrganizationAsync(object["SystemID"]);
 							}
 							break;
 					}
 					url = object !== undefined ? object.getRouterURI({ ID: object.ID }) : undefined;
 					if (this.configSvc.isDebug) {
-						console.log("<Portals Initializer>: prepare the requested object", objectName, objectID, object, url);
+						console.warn("<Portals Initializer>: prepare the requested object", objectName, objectID, object, url);
 					}
 				}
 
 				if (this.portalsCoreSvc.activeModule === undefined) {
 					if (this.configSvc.isDebug) {
-						console.log("<Portals Initializer>: prepare module when no one was actived");
+						console.warn("<Portals Initializer>: prepare modules when got no active");
 					}
 					if (object !== undefined && object instanceof Module) {
 						this.portalsCoreSvc.setActiveModule(object as Module);
@@ -184,7 +281,24 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 				}
 			}
 		}
-		this.configSvc.navigateAsync(forward ? "forward" : "root", url);
+		this.configSvc.navigateAsync(forward ? "forward" : "root", url || "/home");
+	}
+
+	private async setActiveOrganizationAsync(organizationID: string, additional?: string) {
+		let organization = Organization.get(organizationID);
+		if (organization === undefined) {
+			if (this.configSvc.isDebug) {
+				console.warn(`<Portals Initializer>: Prepare active organization ${additional || ""}`, organizationID);
+			}
+			await this.portalsCoreSvc.getOrganizationAsync(organizationID, _ => organization = Organization.get(organizationID), undefined, true);
+		}
+		if (organization !== undefined) {
+			if (this.configSvc.isDebug) {
+				console.warn(`<Portals Initializer>: Set active organization ${additional || ""}`, organization);
+			}
+			this.portalsCoreSvc.setActiveOrganization(organization);
+		}
+		return organization;
 	}
 
 }

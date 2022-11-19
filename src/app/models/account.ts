@@ -10,6 +10,7 @@ export class Account {
 	static instances = new Dictionary<string, Account>();
 
 	id = undefined as string;
+	type = "BuiltIn";
 	roles = ["All"];
 	privileges = undefined as Array<Privilege>;
 	status = undefined as string;
@@ -17,7 +18,6 @@ export class Account {
 		required: boolean,
 		providers: Array<{ Label: string, Type: string, Time: Date, Info: string }>
 	};
-	// profile = undefined as UserProfile;
 	facebook = undefined as {
 		id: string,
 		name: string,
@@ -68,6 +68,10 @@ export class Account {
 
 	get profile() {
 		return UserProfile.get(this.id);
+	}
+
+	get typeIcon() {
+		return this.type === "Windows" ? "logo-microsoft" : this.type === "OAuth" ? "flower-outline" : "accessibility-outline";
 	}
 
 	/**

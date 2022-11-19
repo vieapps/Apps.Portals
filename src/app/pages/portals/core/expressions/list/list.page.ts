@@ -70,6 +70,8 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 	labels = {
 		edit: "Update this expression",
 		advancedEdit: "Update this expression in advanced mode",
+		refresh: "Refresh",
+		cache: "Clear cache",
 		filter: "Quick filter",
 		cancel: "Cancel"
 	};
@@ -152,6 +154,8 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		this.labels = {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
 			advancedEdit: await this.configSvc.getResourceAsync("portals.expressions.update.buttons.edit"),
+			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
+			cache: await this.configSvc.getResourceAsync("portals.common.cache.title"),
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
@@ -282,22 +286,16 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		}
 		else {
 			const predicate: (expression: Expression) => boolean = this.contentType !== undefined
-			? obj => obj.RepositoryEntityID === this.contentType.ID
-			: this.contentTypeDefinition !== undefined
-				? obj => obj.ContentTypeDefinitionID === this.contentTypeDefinition.ID
-				: this.module !== undefined
-					? obj => obj.RepositoryID === this.module.ID
-					: obj => obj.SystemID === this.organization.ID;
-			let objects = results === undefined
-				? Expression.instances.toList(predicate)
-				: Expression.toList(results).Where(predicate);
-			objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
-			if (results === undefined && this.pagination !== undefined) {
-				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
-			}
-			this.expressions = results === undefined
-				? objects.ToArray()
-				: this.expressions.concat(objects.ToArray());
+				? obj => obj.RepositoryEntityID === this.contentType.ID
+				: this.contentTypeDefinition !== undefined
+					? obj => obj.ContentTypeDefinitionID === this.contentTypeDefinition.ID
+					: this.module !== undefined
+						? obj => obj.RepositoryID === this.module.ID
+						: obj => obj.SystemID === this.organization.ID;
+			const objects = (results === undefined ? Expression.instances.toArray(predicate) : Expression.toArray(results).filter(predicate))
+				.sortBy("Title", { name: "LastModified", reverse: true })
+				.take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
+			this.expressions = results === undefined ? objects : this.expressions.concat(objects);
 		}
 		if (onNext !== undefined) {
 			onNext();
@@ -338,6 +336,14 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 
 	editInAdvancedMode(event: Event, expression: Expression) {
 		this.do(() => this.configSvc.navigateForwardAsync(expression.getRouterURI({ ID: expression.ID, Advanced: true })), event);
+	}
+
+	refresh(event: Event, expression: Expression) {
+		this.do(() => this.portalsCoreSvc.refreshExpressionAsync(expression.ID, () => this.appFormsSvc.showToastAsync("The expression was freshen-up")), event);
+	}
+
+	clearCache(event: Event, expression: Expression) {
+		this.do(() => this.portalsCoreSvc.clearCacheAsync("expression", expression.ID, () => this.appFormsSvc.showToastAsync("The expression's cache was removed")), event);
 	}
 
 	exportToExcel() {

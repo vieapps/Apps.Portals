@@ -4,6 +4,7 @@ import { AppAPIs } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppCustomCompleter } from "@app/components/app.completer";
 import { AppPagination } from "@app/components/app.pagination";
 import { AppFormsControlConfig } from "@app/components/forms.objects";
@@ -13,7 +14,9 @@ import { Privilege } from "@app/models/privileges";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
-import { AppMessage, AppDataRequest } from "@app/components/app.objects";
+import { FilesService } from "@app/services/files.service";
+import { AppFormsService } from "@app/components/forms.service";
+import { AppMessage, AppDataRequest, AppDataPagination } from "@app/components/app.objects";
 
 @Injectable()
 export class UsersService extends BaseService {
@@ -21,6 +24,8 @@ export class UsersService extends BaseService {
 	constructor(
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
+		private filesSvc: FilesService,
+		private appFormsSvc: AppFormsService,
 		private datePipe: DatePipe
 	) {
 		super("Users");
@@ -336,23 +341,48 @@ export class UsersService extends BaseService {
 				break;
 
 			case "Profile":
-				UserProfile.update(message.Data);
-				if (this.configSvc.isAuthenticated && account.id === message.Data.ID) {
-					const profile = account.profile;
-					profile.IsOnline = true;
-					profile.LastAccess = new Date();
-					if (this.configSvc.appConfig.options.i18n !== profile.Language) {
-						this.configSvc.changeLanguageAsync(profile.Language);
+				if (message.Type.Event === "Export") {
+					switch (message.Data.Status || "") {
+						case "Done":
+							if (this.configSvc.isDebug) {
+								console.log("[Users]: The export objects to Excel process was completed.");
+							}
+							AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
+								await this.configSvc.getResourceAsync("portals.common.excel.message.export"),
+								() => PlatformUtility.openURL(this.filesSvc.getTemporaryFileURI(message)),
+								await this.configSvc.getResourceAsync("common.buttons.download"),
+								await this.configSvc.getResourceAsync("common.buttons.cancel")
+							));
+							break;
+						case "Error":
+							if (this.configSvc.isDebug) {
+								console.error("[Users]: Error occurred while exporting objects to Excel.`", message);
+							}
+							this.appFormsSvc.showErrorAsync(message.Data);
+							break;
+						default:
+							break;
 					}
-					this.configSvc.updateOptionsAsync(profile.Options).then(() => {
-						AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
-						AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: profile });
-					});
-					if (this.configSvc.appConfig.facebook.token !== undefined && this.configSvc.appConfig.facebook.id !== undefined) {
-						this.configSvc.getFacebookProfile();
-					}
-					if (this.configSvc.appConfig.app.persistence) {
-						this.configSvc.storeSessionAsync();
+				}
+				else {
+					UserProfile.update(message.Data);
+					if (this.configSvc.isAuthenticated && account.id === message.Data.ID) {
+						const profile = account.profile;
+						profile.IsOnline = true;
+						profile.LastAccess = new Date();
+						if (this.configSvc.appConfig.options.i18n !== profile.Language) {
+							this.configSvc.changeLanguageAsync(profile.Language);
+						}
+						this.configSvc.updateOptionsAsync(profile.Options).then(() => {
+							AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
+							AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: profile });
+						});
+						if (this.configSvc.appConfig.facebook.token !== undefined && this.configSvc.appConfig.facebook.id !== undefined) {
+							this.configSvc.getFacebookProfile();
+						}
+						if (this.configSvc.appConfig.app.persistence) {
+							this.configSvc.storeSessionAsync();
+						}
 					}
 				}
 				break;
@@ -361,6 +391,24 @@ export class UsersService extends BaseService {
 				this.showLog("Got an update of an user", message);
 				break;
 		}
+	}
+
+	async exportToExcelAsync(filterBy?: any, sortBy?: any, pagination?: AppDataPagination, maxPages?: number, onCompleted?: (message: AppMessage) => void, onProgress?: (percentage: string) => void, onError?: (error?: any) => void) {
+		await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.common.excel.action.export"));
+		const request = {
+			FilterBy: filterBy || {},
+			SortBy: sortBy || {},
+			Pagination: pagination || {}
+		};
+		request.Pagination["MaxPages"] = maxPages !== undefined && maxPages > 0 ? maxPages : 0;
+		await this.sendRequestAsync(
+			{
+				Path: this.getPath("profile", "export", "x-request=" + AppCrypto.jsonEncode(request)),
+				Header: this.getHeaders()
+			},
+			data => console.log(`[Users]: Start to export objects to Excel - Process ID: ${data !== undefined ? data.ProcessID as string : undefined}`),
+			error => this.appFormsSvc.showErrorAsync(error)
+		);
 	}
 
 	getAuditFormControl(created: Date, createdID: string, lastModified: Date, lastModifiedID: string, segment?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {

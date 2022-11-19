@@ -173,16 +173,19 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			}, formConfig.findIndex(ctrl => ctrl.Name === control.Name));
 		}
 		else {
-			control.Options.SelectOptions.Values = this.organization.modules.map(module => {
-				return { Value: module.ID, Label: module.Title };
-			});
+			control.Options.SelectOptions.Values = this.organization.modules.map(module => ({ Value: module.ID, Label: module.Title }));
 			control.Options.OnChanged = async (_, formControl) => {
-				const definitions = this.getContentTypeDefinitions(formControl.value);
+				const module = Module.get(formControl.value);
+				const definitions = this.getContentTypeDefinitions(module.ID);
+				const definitionID = definitions.first().ID;
 				const definitionsControl = this.formControls.find(ctrl => ctrl.Name === "ContentTypeDefinitionID");
-				definitionsControl.Options.SelectOptions.Values = definitions.map(definition => {
-					return { Value: definition.ID, Label: definition.Title };
-				});
-				definitionsControl.controlRef.setValue(definitions[0].ID, { onlySelf: true });
+				definitionsControl.Options.SelectOptions.Values = definitions.map(definition => ({ Value: definition.ID, Label: definition.Title }));
+				definitionsControl.controlRef.setValue(definitionID, { onlySelf: true });
+				const contentTypes = module.contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === definitionID);
+				const contentTypeControl = this.formControls.find(ctrl => ctrl.Name === "RepositoryEntityID");
+				contentTypeControl.Options.SelectOptions.Values = contentTypes.map(contentType => ({ Value: contentType.ID, Label: contentType.Title }));
+				contentTypeControl.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
+				contentTypeControl.controlRef.setValue(contentTypes.length > 0 ? contentTypes.first().ID : "-", { onlySelf: true });
 			};
 		}
 
@@ -203,9 +206,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			}
 		}
 		else {
-			control.Options.SelectOptions.Values = this.getContentTypeDefinitions(this.organization.modules[0].ID).map(definition => {
-				return { Value: definition.ID, Label: definition.Title };
-			});
+			control.Options.SelectOptions.Values = this.getContentTypeDefinitions(this.organization.modules[0].ID).map(definition => ({ Value: definition.ID, Label: definition.Title }));
 			control.Options.OnChanged = (_, formControl) => {
 				const module = Module.get(this.formControls.find(ctrl => ctrl.Name === "RepositoryID").value);
 				const contentTypeDefinitionID = formControl.value;

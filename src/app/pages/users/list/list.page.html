@@ -4,7 +4,10 @@
 			<ion-back-button text=""></ion-back-button>
 		</ion-buttons>
 		<ion-buttons *ngIf="!searching" slot="end">
-			<ion-button [hidden]="searching" (click)="openSearchAsync()">
+			<ion-button title="Export to Excel" (click)="exportToExcelAsync()">
+				<ion-icon name="code-download" slot="icon-only"></ion-icon>
+			</ion-button>
+			<ion-button title="Search" (click)="openSearchAsync()">
 				<ion-icon name="search" slot="icon-only"></ion-icon>
 			</ion-button>
 		</ion-buttons>

@@ -332,11 +332,7 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 	}
 
 	open(event: Event, site: Site) {
-		this.do(() => {
-			const domain = `${site.SubDomain}.${site.PrimaryDomain}`.replace("*.", "www.").replace("www.www.", "www.");
-			const protocol = site.AlwaysUseHTTPs ? "https" : "http";
-			PlatformUtility.openURL(`${protocol}://${domain}`);
-		}, event);
+		this.do(() => PlatformUtility.openURL(this.portalsCoreSvc.getSiteURL(site)), event);
 	}
 
 	clearCache(event: Event, site: Site) {
@@ -346,10 +342,10 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 	exportToExcel() {
 		this.do(async () => await this.appFormsSvc.showConfirmAsync(
 			await this.configSvc.getResourceAsync("portals.common.excel.message.confirm"),
-			async () => {
-				await this.portalsCoreSvc.exportToExcelAsync("Site", this.organization.ID);
-				await this.trackAsync(this.actions[2].text, "Export");
-			},
+			async () => await Promise.all([
+				this.portalsCoreSvc.exportToExcelAsync("Site", this.organization.ID),
+				this.trackAsync(this.actions[2].text, "Export")
+			]),
 			"{{default}}",
 			"{{default}}"
 		));

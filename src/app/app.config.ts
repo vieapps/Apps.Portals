@@ -22,7 +22,7 @@ export class AppConfig {
 		apps: "https://cms.vieapps.com/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
-		medias: ["fs.vieportal.net"/**/] as Array<string>
+		medias: ["fs.vieapps.net"/**/] as Array<string>
 	};
 
 	/** App information */
@@ -33,7 +33,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.com",
 		id: "vieapps-ngx",
-		version: "4.2207.25",
+		version: "4.2212.1",
 		frameworks: "ionic 5.9 - angular 11.2 - cordova 11.0",
 		mode: "",
 		platform: "",
@@ -77,7 +77,7 @@ export class AppConfig {
 				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "SchedulingTask", "Category", "Content", "Item", "Link", "Form", "Crawler"],
 				specials: [/*"Crawler"/**/],
 				sidebar: "cms",
-				availableHosts: [/*"cms.vieapps.com"/**/]
+				availableHosts: [/*"cms.vieapps.net"/**/]
 			},
 			{
 				name: "Books",
@@ -89,8 +89,8 @@ export class AppConfig {
 			}
 		] as Array<{ name: string; objects: Array<string>; specials?: Array<string>; menuIndex?: number; sidebar?: string; availableHosts?: Array<string>; canSetPrivilegs?: boolean; appName?: string; appDescription?: string; }>,
 		active: {
-			service: "",
-			system: ""
+			service: undefined as string,
+			system: undefined as string
 		}
 	};
 

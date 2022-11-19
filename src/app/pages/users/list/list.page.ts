@@ -197,4 +197,13 @@ export class UsersListPage implements OnInit, OnDestroy {
 		}
 	}
 
+	async exportToExcelAsync() {
+		await this.appFormsSvc.showConfirmAsync(
+			await this.configSvc.getResourceAsync("portals.common.excel.message.confirm"),
+			async () => await this.usersSvc.exportToExcelAsync(),
+			await this.configSvc.getResourceAsync("common.buttons.ok"),
+			await this.configSvc.getResourceAsync("common.buttons.no")
+		);
+	}
+
 }

@@ -48,7 +48,8 @@
 			{{ profile.Name }}
 		</h1>
 		<div *ngIf="isSystemAdministrator" class="ion-text-center">
-			ID: {{ profile.ID }}
+			<ion-icon [name]="typeIcon"></ion-icon>
+			{{ profile.ID }}
 		</div>
 		<ion-list class="ion-padding-end">
 			<ion-list-header [color]="color">

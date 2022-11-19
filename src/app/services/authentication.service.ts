@@ -118,6 +118,16 @@ export class AuthenticationService extends BaseService {
 		return this.isSystemAdministrator(account) || account.isDownloader(serviceName || this.configSvc.appConfig.services.active.service, objectName, privileges);
 	}
 
+	/**
+	 * Gets the temporay token for working with app resources
+	 * @param privileges The role privileges to check
+	 */
+	getTempToken(privileges?: Privileges) {
+		return privileges !== undefined && privileges.ViewableRoles !== undefined && !privileges.ViewableRoles.contains("All")
+			? this.configSvc.appConfig.jwt
+			: undefined;
+	}
+
 	private canDo(role: string, serviceName?: string, account?: Account) {
 		return AppUtility.isEquals("SystemAdministrator", role)
 			? this.isSystemAdministrator(account)

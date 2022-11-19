@@ -145,6 +145,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 		this.trackAsync(this.title.track);
+		this.portalsCoreSvc.setActiveOrganization(this.content.organization);
 
 		if (AppUtility.isNotEmpty(this.content.ID)) {
 			AppEvents.on(this.portalsCoreSvc.name, info => {
@@ -484,6 +485,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 			obj.StartDate = AppUtility.toIsoDate(this.content.StartDate);
 			obj.EndDate = AppUtility.toIsoDate(this.content.EndDate);
 			obj.PublishedTime = AppUtility.toIsoDateTime(this.content.PublishedTime, true);
+			obj.Details = this.portalsCmsSvc.normalizeTempTokens(obj.Details, this.authSvc.getTempToken(this.content.Privileges));
 		}));
 		this.form.patchValue(content);
 		if (doUpdateTextEditors) {
@@ -514,6 +516,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 				content.StartDate = AppUtility.toStrDate(content.StartDate);
 				content.EndDate = AppUtility.toStrDate(content.EndDate);
 				content.PublishedTime = AppUtility.toIsoDateTime(content.PublishedTime, true);
+				content.Details = this.portalsCmsSvc.normalizeTempTokens(content.Details, this.authSvc.getTempToken(this.content.Privileges), false);
 
 				if (AppUtility.isNotEmpty(content.ID)) {
 					if (this.hash.content === AppCrypto.hash(content)) {

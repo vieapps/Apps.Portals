@@ -7,6 +7,7 @@ import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsControl, AppFormsControlConfig, AppFormsSegment } from "@app/components/forms.objects";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
 import { FilesService } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
@@ -25,6 +26,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	constructor(
 		private configSvc: ConfigurationService,
+		private authSvc: AuthenticationService,
 		private filesSvc: FilesService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService,
@@ -169,6 +171,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 		this.trackAsync(this.title.track);
+		this.portalsCoreSvc.setActiveOrganization(this.content.organization);
 
 		AppEvents.on(this.portalsCoreSvc.name, info => {
 			if (info.args.Object === "CMS.Content" && this.content.ID === info.args.ID) {
@@ -235,6 +238,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label")),
 			this.portalsCmsSvc.getPermanentLinkFormControl(this.content, "management"),
 			this.portalsCmsSvc.getPublicLinkFormControl(this.content, "management"),
+			this.portalsCmsSvc.getTemporaryLinkFormControl(this.content, "management"),
 			this.portalsCoreSvc.getAuditFormControl(this.content, "management"),
 			{
 				Name: "RepositoryEntity",
@@ -311,8 +315,8 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				: this.content[control.Name];
 			control.Hidden = control.value === undefined;
 			if (!control.Hidden) {
-				if (AppUtility.isEquals(control.Type, "TextEditor")) {
-					control.value = this.portalsCmsSvc.normalizeRichHtml(control.value);
+				if (control.Type === "TextEditor") {
+					control.value = this.portalsCmsSvc.normalizeRichHtml(this.portalsCmsSvc.normalizeTempTokens(control.value, this.authSvc.getTempToken(this.content.Privileges)));
 				}
 				else {
 					switch (control.Name) {
@@ -399,6 +403,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				const control = this.formControls.find(ctrl => ctrl.Name === "PublicLink");
 				control.Extras["Text"] = url;
 				control.Hidden = false;
+				this.formControls.find(ctrl => ctrl.Name === "TempLink").Extras["Text"] = this.portalsCoreSvc.getPortalURL(this.content, this.content.category, true);
 			}
 			else if (onUndefined !== undefined) {
 				onUndefined();

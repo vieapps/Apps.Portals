@@ -172,6 +172,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		};
 
 		this.prepareFilterByAndSort();
+		this.portalsCoreSvc.setActiveOrganization(this.organization);
 
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.search");
