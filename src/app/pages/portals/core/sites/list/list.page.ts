@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { PlatformUtility } from "@app/components/app.utility.platform";
@@ -68,6 +69,8 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		cancel: "Cancel",
 		edit: "Update this site",
 		open: "Open  this site",
+		versions: "Versions",
+		refresh: "Refresh",
 		cache: "Clear cache"
 	};
 
@@ -134,6 +137,8 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
 			open: await this.configSvc.getResourceAsync("portals.sites.list.open"),
+			versions: await this.configSvc.getResourceAsync("versions.view"),
+			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			cache: await this.configSvc.getResourceAsync("portals.common.cache.title")
 		};
 
@@ -337,6 +342,14 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 
 	clearCache(event: Event, site: Site) {
 		this.do(() => this.portalsCoreSvc.clearCacheAsync("site", site.ID), event);
+	}
+
+	refresh(event: Event, site: Site) {
+		this.do(() => this.portalsCoreSvc.refreshSiteAsync(site.ID, () => this.appFormsSvc.showToastAsync("The site was freshen-up")), event);
+	}
+
+	viewVersions(event: Event, site: Site) {
+		this.do(() => this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(site.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "Site", id: site.ID })), event);
 	}
 
 	exportToExcel() {

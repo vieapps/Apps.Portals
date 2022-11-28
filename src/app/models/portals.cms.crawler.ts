@@ -46,11 +46,7 @@ export class Crawler extends CmsBaseModel {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, crawler?: Crawler) {
-		crawler = crawler || new Crawler();
-		crawler.copy(json, data => {
-		});
-		crawler.ansiTitle = AppUtility.toANSI(crawler.Title).toLowerCase();
-		return crawler;
+		return (crawler || new Crawler()).copy(json);
 	}
 
 	/** Gets by identity */

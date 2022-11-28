@@ -179,5 +179,11 @@
 				"uri": "Liên kết xem/tải tệp tin"
 			}
 		}
+	},
+	"versions": {
+		"view": "Xem các phiên bản thay đổi",
+		"list": "{{total}} phiên bản thay đổi [{{title}}]",
+		"confirm": "Chắc chắn muốn khôi phục lại từ phiên bản #{{version}} này?",
+		"processing": "Khôi phục dữ liệu..."
 	}
 }

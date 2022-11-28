@@ -54,24 +54,7 @@ export class Book extends BaseModel {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, book?: Book) {
-		book = book || new Book();
-		book.copy(json, data => {
-			book.Counters = new Dictionary<string, CounterInfo>();
-			(data.Counters as Array<any>).forEach(obj => book.Counters.set(obj.Type, CounterInfo.deserialize(obj)));
-
-			book.RatingPoints = new Dictionary<string, RatingPoint>();
-			(data.RatingPoints as Array<any>).forEach(obj => book.RatingPoints.set(obj.Type, RatingPoint.deserialize(obj)));
-
-			book.Chapters = book.TotalChapters > 1 && (book.Chapters === undefined || book.Chapters.length < 1)
-				? book.TOCs.map(_ => "")
-				: book.Chapters;
-
-			book.ansiTitle = AppUtility.toANSI(`${book.Title} ${book.Author}`).toLowerCase();
-			book.routerParams["x-request"] = AppCrypto.jsonEncode({ Service: "books", Object: "book", ID: book.ID });
-
-			delete book["Privileges"];
-			delete book["OriginalPrivileges"];
-		});
+		return  (book || new Book()).copy(json);
 		return book;
 	}
 
@@ -112,6 +95,25 @@ export class Book extends BaseModel {
 
 	get routerLink() {
 		return `/books/read/${(AppUtility.isNotEmpty(this.ansiTitle) ? AppUtility.toURI(this.ansiTitle) : AppUtility.toANSI(`${this.Title}-${this.Author}`, true))}`;
+	}
+
+	copy(source: any, onCompleted?: (data: any, instance: Book) => void) {
+		return super.copy(source, data => {
+			this.Counters = new Dictionary<string, CounterInfo>();
+			(data.Counters as Array<any>).forEach(counter => this.Counters.set(counter.Type, CounterInfo.deserialize(counter)));
+			this.RatingPoints = new Dictionary<string, RatingPoint>();
+			(data.RatingPoints as Array<any>).forEach(ratingPoint => this.RatingPoints.set(ratingPoint.Type, RatingPoint.deserialize(ratingPoint)));
+			this.Chapters = this.TotalChapters > 1 && (this.Chapters === undefined || this.Chapters.length < 1)
+				? this.TOCs.map(_ => "")
+				: this.Chapters;
+			this.ansiTitle = AppUtility.toANSI(`${this.Title} ${this.Author}`).toLowerCase();
+			this.routerParams["x-request"] = AppCrypto.jsonEncode({ Service: "books", Object: "book", ID: this.ID });
+			delete this["Privileges"];
+			delete this["OriginalPrivileges"];
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
 	}
 
 }

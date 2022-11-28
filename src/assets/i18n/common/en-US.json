@@ -176,5 +176,11 @@
 				"filename": "Filename"
 			}
 		}
+	},
+	"versions": {
+		"view": "View changed versions",
+		"list": "{{total}} changed version(s) [{{title}}]",
+		"confirm": "Are you sure you want to rollback from this #{{version}} version?",
+		"processing": "Rolling back..."
 	}
 }

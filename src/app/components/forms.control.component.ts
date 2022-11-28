@@ -771,6 +771,9 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 					: this.appFormsSvc.getFormGroup(control.SubControls.Controls)
 		);
 		this.control.SubControls.Controls.push(control);
+		if (this.control.Extras !== undefined && typeof this.control.Extras.onControlOfFormArrayAdded === "function") {
+			this.control.Extras.onControlOfFormArrayAdded(this.control);
+		}
 	}
 
 	get icon() {

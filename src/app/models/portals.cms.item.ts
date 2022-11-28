@@ -40,18 +40,7 @@ export class Item extends CmsBaseModel {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, item?: Item) {
-		item = item || new Item();
-		item.copy(json, data => {
-			item.normalizeExtendedProperties(data);
-			if (AppUtility.isArray(data.Thumbnails, true)) {
-				item.updateThumbnails(data.Thumbnails);
-			}
-			if (AppUtility.isArray(data.Attachments, true)) {
-				item.updateAttachments(data.Attachments);
-			}
-		});
-		item.ansiTitle = AppUtility.toANSI(item.Title).toLowerCase();
-		return item;
+		return (item || new Item()).copy(json);
 	}
 
 	/** Gets by identity */
@@ -90,6 +79,22 @@ export class Item extends CmsBaseModel {
 
 	get routerLink() {
 		return `/portals/cms/items/view/${AppUtility.toURI(this.ansiTitle)}`;
+	}
+
+	copy(source: any, onCompleted?: (data: any, instance: Item) => void) {
+		return super.copy(source, data => {
+			this.normalizeExtendedProperties(data);
+			if (AppUtility.isArray(data.Thumbnails, true)) {
+				this.updateThumbnails(data.Thumbnails);
+			}
+			if (AppUtility.isArray(data.Attachments, true)) {
+				this.updateAttachments(data.Attachments);
+			}
+			this.ansiTitle = AppUtility.toANSI(this.Title).toLowerCase();
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
 	}
 
 }

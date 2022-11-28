@@ -33,7 +33,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.com",
 		id: "vieapps-ngx",
-		version: "4.2212.1",
+		version: "7.2211.1",
 		frameworks: "ionic 5.9 - angular 11.2 - cordova 11.0",
 		mode: "",
 		platform: "",
@@ -75,9 +75,9 @@ export class AppConfig {
 			{
 				name: "Portals",
 				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "SchedulingTask", "Category", "Content", "Item", "Link", "Form", "Crawler"],
-				specials: [/*"Crawler"/**/],
+				specials: [],
 				sidebar: "cms",
-				availableHosts: [/*"cms.vieapps.net"/**/]
+				availableHosts: []
 			},
 			{
 				name: "Books",
@@ -179,7 +179,7 @@ export class AppConfig {
 
 	/** Tracking information */
 	static tracking = {
-		google: ["UA-3060572-8"/**/] as Array<string>,
+		google: [] as Array<string>,
 		facebook: [] as Array<string>,
 		domains: [] as Array<string>,
 	};

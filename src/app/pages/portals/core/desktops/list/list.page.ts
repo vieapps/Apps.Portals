@@ -64,6 +64,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		alias: "Alias",
 		edit: "Update this desktop",
 		refresh: "Refresh",
+		versions: "Versions",
 		view: "View the list of child desktops",
 		portlets: "Portlets",
 		filter: "Quick filter",
@@ -146,6 +147,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			alias: await this.configSvc.getResourceAsync("portals.desktops.controls.Alias.label"),
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
 			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
+			versions: await this.configSvc.getResourceAsync("versions.view"),
 			view: await this.configSvc.getResourceAsync("portals.desktops.list.view"),
 			portlets: await this.configSvc.getResourceAsync("portals.portlets.title.list", { info: "" }),
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
@@ -403,6 +405,10 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 	clearCache(event: Event, desktop: Desktop) {
 		this.do(desktop !== undefined ? () => this.doClearCache([desktop].merge(desktop.getChildren(true)), 0, true) : () => {}, event);
+	}
+
+	viewVersions(event: Event, desktop: Desktop) {
+		this.do(() => this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(desktop.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "Desktop", id: desktop.ID })), event);
 	}
 
 	exportToExcel() {

@@ -1,10 +1,10 @@
 import { Component, OnInit } from "@angular/core";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsService } from "@app/components/forms.service";
-import { ServiceLog } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
+import { ServiceLog } from "@app/models/base";
 
 @Component({
 	selector: "page-logs-view",

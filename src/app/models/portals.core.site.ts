@@ -58,10 +58,7 @@ export class Site extends CoreBaseModel {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, site?: Site) {
-		site = site || new Site();
-		site.copy(json);
-		site.ansiTitle = AppUtility.toANSI(site.Title).toLowerCase();
-		return site;
+		return (site || new Site()).copy(json);
 	}
 
 	/** Gets by identity */

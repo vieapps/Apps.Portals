@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { PlatformUtility } from "@app/components/app.utility.platform";
@@ -14,7 +15,6 @@ import { AuthenticationService } from "@app/services/authentication.service";
 import { UsersService } from "@app/services/users.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { Organization } from "@app/models/portals.core.organization";
-import { UserProfile } from "@app/models/user";
 
 @Component({
 	selector: "page-portals-core-organizations-list",
@@ -65,6 +65,8 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 		edit: "Update this module",
 		active: "Set active",
 		sites: "View the list of sites",
+		versions: "Versions",
+		refresh: "Refresh",
 		cache: "Clear cache",
 		filter: "Quick filter",
 		cancel: "Cancel"
@@ -129,6 +131,8 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			active: await this.configSvc.getResourceAsync("portals.organizations.list.active"),
 			sites: await this.configSvc.getResourceAsync("portals.sites.title.list", { info: "" }),
 			cache: await this.configSvc.getResourceAsync("portals.common.cache.title"),
+			versions: await this.configSvc.getResourceAsync("versions.view"),
+			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
@@ -153,7 +157,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			}, "Organizations:Refresh");
 		}
 		else {
-			this.organizations.forEach(organization => this.fetchOwner(organization));
+			this.organizations.forEach(organization => this.fetchInfo(organization));
 			this.appFormsSvc.hideLoadingAsync().then(() => this.trackAsync(this.title));
 		}
 	}
@@ -257,21 +261,24 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 				.take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
 			this.organizations = results === undefined ? objects : this.organizations.concat(objects);
 		}
-		this.organizations.forEach(organization => this.fetchOwner(organization));
+		this.organizations.forEach(organization => this.fetchInfo(organization));
 		if (onNext !== undefined) {
 			onNext();
 		}
 	}
 
-	private fetchOwner(organization: Organization) {
+	private fetchInfo(organization: Organization) {
 		if (AppUtility.isEmpty(organization.owner) && AppUtility.isNotEmpty(organization.OwnerID)) {
 			this.usersSvc.getProfileAsync(organization.OwnerID);
+		}
+		if (organization.Versions === undefined) {
+			this.portalsCoreSvc.findVersionsAsync("Organization", organization.ID);
 		}
 	}
 
 	private doRefresh(organizations: Organization[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
 		const refreshNext: () => void = () => {
-			this.trackAsync(this.title, "Refresh").then(() => this.fetchOwner(organizations[index]));
+			this.trackAsync(this.title, "Refresh").then(() => this.fetchInfo(organizations[index]));
 			if (index < organizations.length - 1) {
 				AppUtility.invoke(() => this.doRefresh(organizations, index + 1, useXHR, onFreshenUp));
 			}
@@ -345,6 +352,10 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	clearCache(event: Event, organization: Organization) {
 		this.do(() => this.portalsCoreSvc.clearCacheAsync("organization", organization.ID), event);
+	}
+
+	viewVersions(event: Event, organization: Organization) {
+		this.do(() => this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(organization.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "Organization", id: organization.ID })), event);
 	}
 
 	exportToExcel() {

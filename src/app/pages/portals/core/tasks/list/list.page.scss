@@ -1,17 +1,17 @@
-ion-list > ion-item {
+ion-list > ion-item-sliding > ion-item {
 	cursor: pointer;
 }
-ion-list > ion-item > ion-label > span.time {
+ion-list > ion-item-sliding > ion-item > ion-label > span.time {
 	font-size: 0.85em;
 	padding-top: 5px;
 }
-ion-list > ion-item > ion-label > span.title > ion-icon {
+ion-list > ion-item-sliding > ion-item > ion-label > span.title > ion-icon {
 	padding-left: 7px;
 	padding-right: 7px;
 }
-ion-list > ion-item > ion-label > span.Awaiting > ion-icon {
+ion-list > ion-item-sliding > ion-item > ion-label > span.Awaiting > ion-icon {
 	color: green;
 }
-ion-list > ion-item > ion-label > span.Running > ion-icon {
+ion-list > ion-item-sliding > ion-item > ion-label > span.Running > ion-icon {
 	color: blue;
 }

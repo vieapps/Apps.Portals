@@ -10,7 +10,7 @@
 
 	<ion-buttons *ngIf="icon || isPasswordControl" style="background-color:var(--ion-color-base)" [slot]="iconSlot">
 		<ion-button tabindex="-1" [disabled]="!!disabled" [fill]="iconFill" [color]="iconColor" (click)="clickOnIcon($event)">
-			<ion-icon *ngIf="icon && !isPasswordControl && !readonly" [name]="icon" slot="icon-only"></ion-icon>
+			<ion-icon *ngIf="icon && !isPasswordControl" [name]="icon" slot="icon-only"></ion-icon>
 			<ion-icon *ngIf="isPasswordControl" name="eye" slot="icon-only" [hidden]="showPassword"></ion-icon>
 			<ion-icon *ngIf="isPasswordControl" name="eye-off" slot="icon-only" [hidden]="!showPassword"></ion-icon>
 		</ion-button>
@@ -334,7 +334,14 @@
 			</ion-buttons>
 		</ion-label>
 	</ion-list-header>
-	
+
+	<ion-item *ngIf="visible && description && label" [color]="theme">
+		<label
+			[class]="css.description"
+			[style]="style.description"
+			[innerHTML]="description"></label>
+	</ion-item>
+		
 	<div *ngIf="isFormGroup">
 		<app-form-control *ngFor="let ctrl of control.SubControls.Controls; trackBy: trackControl"
 			[formGroup]="formControlAsFormGroup"
@@ -351,7 +358,7 @@
 	</div>
 	
 	<div *ngIf="isComplexFormArray">
-		<ion-list *ngFor="let ctrl of control.SubControls.Controls; let idx = index; trackBy: trackControl">
+		<ion-list *ngFor="let ctrl of control.SubControls.Controls; let idx = index; trackBy: trackControl" style="margin-bottom:30px">
 			<ion-list-header *ngIf="ctrl.Options.Label" [color]="ctrl.Options.LabelOptions.Color">
 				<ion-label [class]="ctrl.Options.LabelOptions.Css">{{ ctrl.Options.Label }}</ion-label>
 			</ion-list-header>

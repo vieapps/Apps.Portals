@@ -17,9 +17,16 @@ export class CounterBase {
 	Total = 0;
 
 	static deserialize(json: any, counter?: CounterBase) {
-		counter = counter || new CounterBase();
-		AppUtility.copy(json, counter);
-		return counter;
+		return (counter || new CounterBase()).copy(json);
+	}
+
+	copy(source: any, onCompleted?: (data: any, instance: CounterBase) => void) {
+		AppUtility.copy(source, this, data => {
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
+		return this;
 	}
 
 }
@@ -39,9 +46,15 @@ export class CounterInfo extends CounterBase {
 	Week = 0;
 
 	static deserialize(json: any, counter?: CounterInfo) {
-		counter = counter || new CounterInfo();
-		AppUtility.copy(json, counter);
-		return counter;
+		return (counter || new CounterInfo()).copy(json);
+	}
+
+	copy(source: any, onCompleted?: (data: any, instance: CounterInfo) => void) {
+		return super.copy(source, data => {
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
 	}
 
 }

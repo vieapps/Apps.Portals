@@ -55,21 +55,7 @@ export class Content extends CmsBaseModel {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, content?: Content) {
-		content = content || new Content();
-		content.copy(json, data => {
-			content.StartDate = AppUtility.isNotEmpty(data.StartDate) ? new Date(data.StartDate) : undefined;
-			content.EndDate = AppUtility.isNotEmpty(data.EndDate) && data.EndDate !== "-" ? new Date(data.EndDate) : undefined;
-			content.PublishedTime = AppUtility.isNotEmpty(data.PublishedTime) ? new Date(data.PublishedTime) : undefined;
-			content.normalizeExtendedProperties(data);
-			if (AppUtility.isArray(data.Thumbnails, true)) {
-				content.updateThumbnails(data.Thumbnails);
-			}
-			if (AppUtility.isArray(data.Attachments, true)) {
-				content.updateAttachments(data.Attachments);
-			}
-		});
-		content.ansiTitle = AppUtility.toANSI(content.Title).toLowerCase();
-		return content;
+		return (content || new Content()).copy(json);
 	}
 
 	/** Gets by identity */
@@ -112,6 +98,24 @@ export class Content extends CmsBaseModel {
 
 	get routerLink() {
 		return `/portals/cms/contents/view/${AppUtility.toURI(this.ansiTitle)}`;
+	}
+
+	copy(source: any, onCompleted?: (data: any, instance: Content) => void) {
+		return super.copy(source, data => {
+			this.StartDate = AppUtility.isNotEmpty(data.StartDate) ? new Date(data.StartDate) : undefined;
+			this.EndDate = AppUtility.isNotEmpty(data.EndDate) && data.EndDate !== "-" ? new Date(data.EndDate) : undefined;
+			this.PublishedTime = AppUtility.isNotEmpty(data.PublishedTime) ? new Date(data.PublishedTime) : undefined;
+			this.normalizeExtendedProperties(data);
+			if (AppUtility.isArray(data.Thumbnails, true)) {
+				this.updateThumbnails(data.Thumbnails);
+			}
+			if (AppUtility.isArray(data.Attachments, true)) {
+				this.updateAttachments(data.Attachments);
+			}
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
 	}
 
 	async preloadAsync(getCategoryAsync: (id: string) => Promise<void>, getContentAsync: (id: string) => Promise<void>) {

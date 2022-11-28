@@ -16,27 +16,40 @@
     </ion-fab-button>
   </ion-fab>
 	<ion-list class="ion-padding-end">
-		<ion-item *ngFor="let task of tasks; trackBy: track" [color]="color" (click)="open($event, task)" class="ion-activatable" detail="false">
-			<ion-buttons slot="end">
-				<ion-button fill="clear" [color]="task.Status === 'Awaiting' ? 'secondary' : 'medium'" [title]="labels.run" (click)="run($event, task)">
-					<ion-icon name="bicycle" slot="icon-only"></ion-icon>
-				</ion-button>
-				<ion-button fill="clear" color="primary" [title]="labels.open" (click)="open($event, task)">
-					<ion-icon name="create" slot="icon-only"></ion-icon>
-				</ion-button>
-			</ion-buttons>
-			<ion-label>
-				<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
-					{{ task.Time | time:locale }}
-				</span>
-				<span [class]="'title ' + task.Status">
-					{{ task.Title }}
-					<span *ngIf="!!task.contentTypeTitle">
-						&nbsp;[{{ task.contentTypeTitle }}]
+		<ion-item-sliding *ngFor="let task of tasks; trackBy: track">
+			<ion-item [color]="color" (click)="open($event, task)" class="ion-activatable" detail="false">
+				<ion-buttons slot="end">
+					<ion-button fill="clear" [color]="task.Status === 'Awaiting' ? 'secondary' : 'medium'" [title]="labels.run" (click)="run($event, task)">
+						<ion-icon name="bicycle" slot="icon-only"></ion-icon>
+					</ion-button>
+					<ion-button fill="clear" color="primary" [title]="labels.open" (click)="open($event, task)">
+						<ion-icon name="create" slot="icon-only"></ion-icon>
+					</ion-button>
+				</ion-buttons>
+				<ion-label>
+					<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
+						{{ task.Time | time:locale }}
 					</span>
-					<ion-icon name="radio" slot="icon-only"></ion-icon>
-				</span>
-			</ion-label>
-		</ion-item>
+					<span [class]="'title ' + task.Status">
+						{{ task.Title }}
+						<span *ngIf="!!task.contentTypeTitle">
+							&nbsp;[{{ task.contentTypeTitle }}]
+						</span>
+						<ion-icon name="radio" slot="icon-only"></ion-icon>
+					</span>
+				</ion-label>
+			</ion-item>
+			<ion-item-options *ngIf="task.Persistance">
+				<ion-item-option color="dark" [title]="labels.versions" (click)="viewVersions($event, task)">
+					<ion-icon name="layers-outline" slot="icon-only"></ion-icon>
+				</ion-item-option>
+				<ion-item-option color="warning" [title]="labels.refresh" (click)="refresh($event, task)">
+					<ion-icon name="refresh" slot="icon-only"></ion-icon>
+				</ion-item-option>
+				<ion-item-option color="primary" [title]="labels.edit" (click)="open($event, task)">
+					<ion-icon name="create" slot="icon-only"></ion-icon>
+				</ion-item-option>
+			</ion-item-options>
+		</ion-item-sliding>
 	</ion-list>
 </ion-content>

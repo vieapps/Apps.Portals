@@ -310,20 +310,6 @@ export class Base {
 
 }
 
-/** Presents a logging message of a service */
-export interface ServiceLog {
-	ID: string;
-	Time: Date;
-	CorrelationID: string;
-	DeveloperID?: string;
-	AppID?: string;
-	NodeID?: string;
-	ServiceName: string;
-	ObjectName: string;
-	Logs: string;
-	Stack: string;
-}
-
 @Injectable()
 export class AppReadyGuardService implements CanActivate {
 

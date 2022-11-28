@@ -96,40 +96,7 @@ export class Portlet extends CoreBaseModel {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, portlet?: Portlet) {
-		portlet = portlet || new Portlet();
-		portlet.copy(json, data => {
-			if (AppUtility.isNotEmpty(data.OriginalPortletID)) {
-				portlet.CommonSettings = portlet.ListSettings = portlet.ViewSettings = portlet.PaginationSettings = portlet.BreadcrumbSettings = undefined;
-			}
-			else {
-				if (data.CommonSettings !== undefined) {
-					portlet.CommonSettings = portlet.CommonSettings || { HideTitle: true };
-					portlet.CommonSettings.TitleUISettings = portlet.CommonSettings.TitleUISettings || {};
-					portlet.CommonSettings.ContentUISettings = portlet.CommonSettings.ContentUISettings || {};
-				}
-				if (data.ListSettings !== undefined && data.ListSettings.Options !== undefined) {
-					portlet.ListSettings = portlet.ListSettings || {};
-					portlet.ListSettings.Options = typeof data.ListSettings.Options === "string"
-						? AppUtility.parse(data.ListSettings.Options)
-						: data.ListSettings.Options;
-				}
-				if (data.ViewSettings !== undefined && data.ViewSettings.Options !== undefined) {
-					portlet.ViewSettings = portlet.ViewSettings || {};
-					portlet.ViewSettings.Options = typeof data.ViewSettings.Options === "string"
-						? AppUtility.parse(data.ViewSettings.Options)
-						: data.ViewSettings.Options;
-				}
-				if (data.PaginationSettings !== undefined) {
-					portlet.PaginationSettings = portlet.PaginationSettings || { ShowPageLinks: true, NumberOfPageLinks: 5 };
-				}
-				if (AppUtility.isArray(data.OtherDesktops, true)) {
-					portlet.otherDesktops = (data.OtherDesktops as Array<string>).distinct();
-				}
-			}
-		});
-		portlet.ansiTitle = AppUtility.toANSI(portlet.Title).toLowerCase();
-		portlet.routerParams["x-request"] = AppCrypto.jsonEncode({ ID: portlet.ID, DesktopID: portlet.DesktopID });
-		return portlet;
+		return (portlet || new Portlet()).copy(json);
 	}
 
 	/** Gets by identity */
@@ -204,6 +171,43 @@ export class Portlet extends CoreBaseModel {
 		return (contentType !== undefined ? contentType.Title : "Static")
 			+ ` @ ${this.Zone} #${this.OrderIndex}`
 			+ (AppUtility.isNotEmpty(this.OriginalPortletID) ? ` [${(originalDesktop !== undefined ? originalDesktop.FullTitle : "unknown")}]` : "");
+	}
+
+	copy(source: any, onCompleted?: (data: any, instance: Portlet) => void) {
+		return super.copy(source, data => {
+			if (AppUtility.isNotEmpty(data.OriginalPortletID)) {
+				this.CommonSettings = this.ListSettings = this.ViewSettings = this.PaginationSettings = this.BreadcrumbSettings = undefined;
+			}
+			else {
+				if (data.CommonSettings !== undefined) {
+					this.CommonSettings = this.CommonSettings || { HideTitle: true };
+					this.CommonSettings.TitleUISettings = this.CommonSettings.TitleUISettings || {};
+					this.CommonSettings.ContentUISettings = this.CommonSettings.ContentUISettings || {};
+				}
+				if (data.ListSettings !== undefined && data.ListSettings.Options !== undefined) {
+					this.ListSettings = this.ListSettings || {};
+					this.ListSettings.Options = typeof data.ListSettings.Options === "string"
+						? AppUtility.parse(data.ListSettings.Options)
+						: data.ListSettings.Options;
+				}
+				if (data.ViewSettings !== undefined && data.ViewSettings.Options !== undefined) {
+					this.ViewSettings = this.ViewSettings || {};
+					this.ViewSettings.Options = typeof data.ViewSettings.Options === "string"
+						? AppUtility.parse(data.ViewSettings.Options)
+						: data.ViewSettings.Options;
+				}
+				if (data.PaginationSettings !== undefined) {
+					this.PaginationSettings = this.PaginationSettings || { ShowPageLinks: true, NumberOfPageLinks: 5 };
+				}
+				if (AppUtility.isArray(data.OtherDesktops, true)) {
+					this.otherDesktops = (data.OtherDesktops as Array<string>).distinct();
+				}
+			}
+			this.routerParams["x-request"] = AppCrypto.jsonEncode({ ID: this.ID, DesktopID: this.DesktopID });
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
 	}
 
 }

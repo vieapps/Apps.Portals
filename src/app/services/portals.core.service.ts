@@ -108,48 +108,49 @@ export class PortalsCoreService extends BaseService {
 
 	initialize() {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => {
-			if (message.Data !== undefined && message.Data.SystemID !== undefined && this.activeOrganizations.indexOf(message.Data.SystemID) > -1) {
-				switch (message.Type.Object) {
-					case "Organization":
-					case "Core.Organization":
-						this.processOrganizationUpdateMessage(message);
-						break;
-					case "Role":
-					case "Core.Role":
-						this.processRoleUpdateMessage(message);
-						break;
-					case "Site":
-					case "Core.Site":
-						this.processSiteUpdateMessage(message);
-						break;
-					case "Desktop":
-					case "Core.Desktop":
-						this.processDesktopUpdateMessage(message);
-						break;
-					case "Portlet":
-					case "Core.Portlet":
-						this.processPortletUpdateMessage(message);
-						break;
-					case "Module":
-					case "Core.Module":
-						this.processModuleUpdateMessage(message);
-						break;
-					case "ContentType":
-					case "Content.Type":
-					case "Core.ContentType":
-					case "Core.Content.Type":
-						this.processContentTypeUpdateMessage(message);
-						break;
-					case "Expression":
-					case "Core.Expression":
-						this.processExpressionUpdateMessage(message);
-						break;
-					case "Task":
-					case "SchedulingTask":
-					case "Core.Task":
-					case "Core.SchedulingTask":
-						this.processSchedulingTaskUpdateMessage(message);
-						break;
+			if (message.Data !== undefined) {
+				if ((message.Type.Object === "Organization" || message.Type.Object === "Core.Organization") && message.Data.ID !== undefined && this.activeOrganizations.indexOf(message.Data.ID) > -1) {
+					this.processOrganizationUpdateMessage(message);
+				}
+				else if (message.Data.SystemID !== undefined && this.activeOrganizations.indexOf(message.Data.SystemID) > -1) {
+					switch (message.Type.Object) {
+						case "Role":
+						case "Core.Role":
+							this.processRoleUpdateMessage(message);
+							break;
+						case "Site":
+						case "Core.Site":
+							this.processSiteUpdateMessage(message);
+							break;
+						case "Desktop":
+						case "Core.Desktop":
+							this.processDesktopUpdateMessage(message);
+							break;
+						case "Portlet":
+						case "Core.Portlet":
+							this.processPortletUpdateMessage(message);
+							break;
+						case "Module":
+						case "Core.Module":
+							this.processModuleUpdateMessage(message);
+							break;
+						case "ContentType":
+						case "Content.Type":
+						case "Core.ContentType":
+						case "Core.Content.Type":
+							this.processContentTypeUpdateMessage(message);
+							break;
+						case "Expression":
+						case "Core.Expression":
+							this.processExpressionUpdateMessage(message);
+							break;
+						case "Task":
+						case "SchedulingTask":
+						case "Core.Task":
+						case "Core.SchedulingTask":
+							this.processSchedulingTaskUpdateMessage(message);
+							break;
+					}
 				}
 			}
 		});
@@ -746,6 +747,14 @@ export class PortalsCoreService extends BaseService {
 						}
 					},
 					{
+						Name: "SignKeyIsHex",
+						Type: "YesNo",
+						Options: {
+							Label: "{{portals.common.controls.webhooks.signKeyIsHex.label}}",
+							Type: "toggle"
+						}
+					},
+					{
 						Name: "SignatureName",
 						Options: {
 							Label: "{{portals.common.controls.webhooks.signatureName.label}}",
@@ -769,20 +778,59 @@ export class PortalsCoreService extends BaseService {
 						}
 					},
 					{
-						Name: "AdditionalQuery",
-						Type: "TextArea",
+						Name: "SecretToken",
 						Options: {
-							Label: "{{portals.common.controls.webhooks.additionalQuery.label}}",
-							Description: "{{portals.common.controls.webhooks.additionalQuery.description}}",
-							Rows: 10
+							Label: "{{portals.common.controls.webhooks.secretToken.label}}",
+							Description: "{{portals.common.controls.webhooks.secretToken.description}}"
 						}
 					},
 					{
-						Name: "AdditionalHeader",
+						Name: "Query",
 						Type: "TextArea",
 						Options: {
-							Label: "{{portals.common.controls.webhooks.additionalHeader.label}}",
-							Description: "{{portals.common.controls.webhooks.additionalHeader.description}}",
+							Label: "{{portals.common.controls.webhooks.query.label}}",
+							Description: "{{portals.common.controls.webhooks.query.description}}",
+							Rows: 5
+						}
+					},
+					{
+						Name: "Header",
+						Type: "TextArea",
+						Options: {
+							Label: "{{portals.common.controls.webhooks.header.label}}",
+							Description: "{{portals.common.controls.webhooks.header.description}}",
+							Rows: 5
+						}
+					},
+					{
+						Name: "EncryptionKey",
+						Options: {
+							Label: "{{portals.common.controls.webhooks.encryptionKey.label}}",
+							Description: "{{portals.common.controls.webhooks.encryptionKey.description}}"
+						}
+					},
+					{
+						Name: "EncryptionIV",
+						Options: {
+							Label: "{{portals.common.controls.webhooks.encryptionIV.label}}",
+							Description: "{{portals.common.controls.webhooks.encryptionIV.description}}"
+						}
+					},
+					{
+						Name: "GenerateIdentity",
+						Type: "YesNo",
+						Options: {
+							Label: "{{portals.common.controls.webhooks.generateIdentity.label}}",
+							Type: "toggle"
+						}
+					},
+					{
+						Name: "PrepareBodyScript",
+						Type: "TextArea",
+						Options: {
+							Label: "{{portals.common.controls.webhooks.prepareBodyScript.label}}",
+							PlaceHolder: "{{portals.common.controls.webhooks.prepareBodyScript.placeholder}}",
+							Description: "{{portals.common.controls.webhooks.prepareBodyScript.description}}",
 							Rows: 10
 						}
 					}
@@ -790,17 +838,16 @@ export class PortalsCoreService extends BaseService {
 			}
 		};
 
-		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
 			onCompleted(controlConfig);
 		}
+		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		return controlConfig;
 	}
 
 	getWebHookNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const controlConfig = this.getWebHookFormControl("WebHooks", "{{portals.common.controls.notifications.webhooks.label}}");
-		controlConfig.SubControls.Controls.forEach(ctrl => ctrl.Hidden = inheritFromParent);
-
+		controlConfig.SubControls.Controls.removeAt(controlConfig.SubControls.Controls.findIndex(ctrl => ctrl.Name === "SecretToken")).forEach(ctrl => ctrl.Hidden = inheritFromParent);
 		controlConfig.SubControls.Controls.insert({
 			Name: "EndpointURLs",
 			Type: "TextArea",
@@ -811,26 +858,32 @@ export class PortalsCoreService extends BaseService {
 				Description: "{{portals.common.controls.notifications.webhooks.endpointURLs.description}}"
 			}
 		}, 0);
-		controlConfig.SubControls.Controls.insert({
-			Name: "GenerateIdentity",
-			Type: "YesNo",
-			Hidden: inheritFromParent,
-			Options: {
-				Label: "{{portals.common.controls.notifications.webhooks.generateIdentity.label}}",
-				Type: "toggle"
-			}
-		}, controlConfig.SubControls.Controls.findIndex(ctrl => ctrl.Name === "AdditionalQuery"));
 
 		controlConfig.SubControls.Controls.find(ctrl => ctrl.Name === "SignKey").Options.Description = "{{portals.common.controls.notifications.webhooks.signKey.description}}";
 		controlConfig.SubControls.Controls.find(ctrl => ctrl.Name === "SignatureName").Options.Description = "{{portals.common.controls.notifications.webhooks.signatureName.description}}";
 
-		let control = controlConfig.SubControls.Controls.find(ctrl => ctrl.Name === "AdditionalQuery");
-		control.Options.Label = "{{portals.common.controls.notifications.webhooks.additionalQuery.label}}";
-		control.Options.Description = "{{portals.common.controls.notifications.webhooks.additionalQuery.description}}";
+		let control = controlConfig.SubControls.Controls.find(ctrl => ctrl.Name === "Query");
+		control.Options.Label = "{{portals.common.controls.notifications.webhooks.query.label}}";
+		control.Options.Description = "{{portals.common.controls.notifications.webhooks.query.description}}";
 
-		control = controlConfig.SubControls.Controls.find(ctrl => ctrl.Name === "AdditionalHeader");
-		control.Options.Label = "{{portals.common.controls.notifications.webhooks.additionalHeader.label}}";
-		control.Options.Description = "{{portals.common.controls.notifications.webhooks.additionalHeader.description}}";
+		control = controlConfig.SubControls.Controls.find(ctrl => ctrl.Name === "Header");
+		control.Options.Label = "{{portals.common.controls.notifications.webhooks.header.label}}";
+		control.Options.Description = "{{portals.common.controls.notifications.webhooks.header.description}}";
+
+		control = controlConfig.SubControls.Controls.find(ctrl => ctrl.Name === "EncryptionKey");
+		control.Options.Label = "{{portals.common.controls.notifications.webhooks.encryptionKey.label}}";
+		control.Options.Description = "{{portals.common.controls.notifications.webhooks.encryptionKey.description}}";
+
+		control = controlConfig.SubControls.Controls.find(ctrl => ctrl.Name === "EncryptionIV");
+		control.Options.Label = "{{portals.common.controls.notifications.webhooks.encryptionIV.label}}";
+		control.Options.Description = "{{portals.common.controls.notifications.webhooks.encryptionIV.description}}";
+
+		controlConfig.SubControls.Controls.find(ctrl => ctrl.Name === "GenerateIdentity").Options.Label = "{{portals.common.controls.notifications.webhooks.generateIdentity.label}}";
+
+		control = controlConfig.SubControls.Controls.find(ctrl => ctrl.Name === "PrepareBodyScript");
+		control.Options.Label = "{{portals.common.controls.notifications.webhooks.prepareBodyScript.label}}";
+		control.Options.PlaceHolder = "{{portals.common.controls.notifications.webhooks.prepareBodyScript.placeholder}}";
+		control.Options.Description = "{{portals.common.controls.notifications.webhooks.prepareBodyScript.description}}";
 
 		if (allowInheritFromParent) {
 			controlConfig.SubControls.Controls.insert({
@@ -844,10 +897,10 @@ export class PortalsCoreService extends BaseService {
 			}, 0);
 		}
 
-		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
 			onCompleted(controlConfig);
 		}
+		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		return controlConfig;
 	}
 
@@ -862,13 +915,19 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	get defaultWebHookNotificationSettings() {
+		const settings = this.defaultWebHookSettings;
+		settings["EndpointURLs"] = [];
+		settings["SignatureInQuery"] = false;
+		return settings as WebHookNotificationSettings;
+	}
+
+	get defaultWebHookSettings() {
 		return {
-			EndpointURLs: [],
 			SignAlgorithm: "SHA256",
+			SignKeyIsHex: false,
 			SignatureAsHex: true,
-			SignatureInQuery: false,
 			GenerateIdentity: false
-		} as WebHookNotificationSettings;
+		} as WebHookSettings;
 	}
 
 	getNotificationsFormControl(name: string, segment?: string, events?: Array<string>, methods?: Array<string>, allowInheritFromParent: boolean = true, inheritStates?: { inheritEventsAndMethods: boolean, inheritEmails: boolean, inheritEmailsByApprovalStatus: boolean, inheritEmailsWhenPublish: boolean, inheritWebHooks: boolean }, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
@@ -947,10 +1006,10 @@ export class PortalsCoreService extends BaseService {
 			controlConfig.SubControls.Controls.push(this.getWebHookNotificationFormControl(allowInheritFromParent, inheritWebHooks));
 		}
 
-		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		if (onCompleted !== undefined) {
 			onCompleted(controlConfig);
 		}
+		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		return controlConfig;
 	}
 
@@ -1280,26 +1339,37 @@ export class PortalsCoreService extends BaseService {
 		return settings;
 	}
 
-	getWebHookSettingsFormControl(name: string, segment?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+	getWebHookSettingsFormControl(name: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const controlConfig = this.getWebHookFormControl(name || "WebHookSettings", "{{portals.common.controls.webhooks.label}}");
-		controlConfig.Segment = segment;
-		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
+		controlConfig.SubControls.Controls.removeAt(controlConfig.SubControls.Controls.findIndex(ctrl => ctrl.Name === "SignatureInQuery")).insert({
+			Name: "URL",
+			Type: "TextBox",
+			Options: {
+				Label: "{{portals.common.controls.webhooks.url.label}}",
+				Description: "{{portals.common.controls.webhooks.url.description}}",
+				ReadOnly: true,
+				Icon: {
+					Name: "copy-outline",
+					Fill: "clear",
+					Color: "medium",
+					Slot: "end",
+					OnClick: (_, formControl) => PlatformUtility.copyToClipboardAsync(formControl.value, async () => await this.appFormsSvc.showToastAsync("Copied..."))
+				}
+			}
+		}, 0);
 		if (onCompleted !== undefined) {
 			onCompleted(controlConfig);
 		}
+		controlConfig.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
 		return controlConfig;
 	}
 
 	getWebHookSettings(webhookSettings: WebHookSettings, onCompleted?: (settings: any) => void) {
-		const settings = AppUtility.clone(webhookSettings || {
-			SignAlgorithm: "SHA256",
-			SignatureAsHex: true,
-			SignatureInQuery: false
-		});
+		const settings = AppUtility.clone(webhookSettings || this.defaultWebHookSettings);
 		if (onCompleted !== undefined) {
 			onCompleted(settings);
 		}
-		return settings;
+		return settings as WebHookSettings;
 	}
 
 	getUploadFormControl(fileOptions: FileOptions, segment?: string, label?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
@@ -1579,1555 +1649,14 @@ export class PortalsCoreService extends BaseService {
 		return controlConfig;
 	}
 
-	get organizationCompleterDataSource() {
-		const convertToCompleterItem = (data: any) => {
-			const organization = data !== undefined
-				? data instanceof Organization
-					? data as Organization
-					: Organization.deserialize(data)
-				: undefined;
-			return organization !== undefined
-				? { title: organization.Title, description: organization.Description, originalObject: organization }
-				: undefined;
+	getPortalFileHeaders(object: CmsBaseModel) {
+		return {
+			"x-service-name": this.name,
+			"x-object-name": object.contentType.getObjectName(),
+			"x-system-id": object.SystemID,
+			"x-entity": object.contentType.ID,
+			"x-object-id": object.ID
 		};
-		return new AppCustomCompleter(
-			term => AppUtility.format(this.getSearchingPath("organization", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(obj => Organization.contains(obj.ID) ? convertToCompleterItem(Organization.get(obj.ID)) : convertToCompleterItem(Organization.update(Organization.deserialize(obj)))),
-			convertToCompleterItem
-		);
-	}
-
-	searchOrganizations(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.search(
-			this.getSearchingPath("organization", this.configSvc.relatedQuery),
-			request,
-			data => this.processOrganizations(data, onSuccess),
-			error => this.processError("Error occurred while searching organizations", error, onError)
-		);
-	}
-
-	searchOrganizationsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.searchAsync(
-			this.getSearchingPath("organization", this.configSvc.relatedQuery),
-			request,
-			data => this.processOrganizations(data, onSuccess),
-			error => this.processError("Error occurred while searching organizations", error, onError)
-		);
-	}
-
-	createOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.createAsync(
-			this.getPath("organization"),
-			body,
-			data => {
-				Organization.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while creating new an organization", error, onError)
-		);
-	}
-
-	getOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return Organization.contains(id) && Organization.get(id).modules.length > 0
-			? AppUtility.invoke(onSuccess)
-			: this.readAsync(
-					this.getPath("organization", id),
-					data => {
-						Organization.update(data);
-						if (AppUtility.isArray(data.Modules, true)) {
-							(data.Modules as Array<any>).forEach(module => {
-								Module.update(module);
-								if (AppUtility.isArray(module.ContentTypes, true)) {
-									(module.ContentTypes as Array<any>).forEach(contentType => ContentType.update(contentType));
-								}
-							});
-						}
-						if (onSuccess !== undefined) {
-							onSuccess(data);
-						}
-					},
-					error => this.processError("Error occurred while getting an organization", error, onError),
-					undefined,
-					useXHR
-				);
-	}
-
-	getOrganization(id: string, getActiveOrganizationWhenNotFound: boolean = true) {
-		const organization = Organization.get(id);
-		if (organization !== undefined && organization.modules.length < 1) {
-			this.getOrganizationAsync(organization.ID);
-		}
-		return organization || (getActiveOrganizationWhenNotFound ? this.activeOrganization : undefined);
-	}
-
-	updateOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.updateAsync(
-			this.getPath("organization", body.ID),
-			body,
-			data => {
-				Organization.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while updating an organization", error, onError)
-		);
-	}
-
-	deleteOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.deleteAsync(
-			this.getPath("organization", id),
-			data => {
-				Organization.instances.remove(id);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while deleting an organization", error, onError)
-		);
-	}
-
-	refreshOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
-		return this.refreshAsync(
-			"organization",
-			id,
-			data => {
-				Organization.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			onError,
-			headers,
-			useXHR
-		);
-	}
-
-	private processOrganizationUpdateMessage(message: AppMessage) {
-		switch (message.Type.Event) {
-			case "Create":
-			case "Update":
-				Organization.update(message.Data);
-				break;
-
-			case "Delete":
-				Organization.instances.remove(message.Data.ID);
-				break;
-
-			default:
-				this.showLog("Got an update message of an organization", message);
-				break;
-		}
-
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
-			AppEvents.broadcast(this.name, { Object: "Organization", Type: `${message.Type.Event}d`, ID: message.Data.ID });
-		}
-	}
-
-	private processOrganizations(data: any, onNext?: (data?: any) => void) {
-		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-			(data.Objects as Array<any>).forEach(obj => {
-				if (!Organization.contains(obj.ID)) {
-					Organization.update(obj);
-				}
-			});
-		}
-		if (onNext !== undefined) {
-			onNext(data);
-		}
-	}
-
-	get roleCompleterDataSource() {
-		const convertToCompleterItem = (data: any) => {
-			const role = data !== undefined
-				? data instanceof Role
-					? data as Role
-					: Role.deserialize(data)
-				: undefined;
-			return role !== undefined
-				? { title: role.FullTitle, description: role.Description, originalObject: role }
-				: undefined;
-		};
-		return new AppCustomCompleter(
-			term => AppUtility.format(this.getSearchingPath("role", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(obj => {
-				const role = Role.get(obj.ID);
-				return role === undefined
-					? convertToCompleterItem(this.fetchRole(Role.update(obj)))
-					: role.childrenIDs === undefined
-						? convertToCompleterItem(this.fetchRole(role))
-						: convertToCompleterItem(role);
-			}),
-			convertToCompleterItem
-		);
-	}
-
-	searchRoles(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.search(
-			this.getSearchingPath("role", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						const role = Role.get(obj.ID);
-						if (role === undefined) {
-							this.fetchRole(Role.update(obj));
-						}
-						else if (role.childrenIDs === undefined) {
-							this.fetchRole(role);
-						}
-					});
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching roles", error, onError)
-		);
-	}
-
-	searchRolesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.searchAsync(
-			this.getSearchingPath("role", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						const role = Role.get(obj.ID);
-						if (role === undefined) {
-							this.fetchRole(Role.update(obj));
-						}
-						else if (role.childrenIDs === undefined) {
-							this.fetchRole(role);
-						}
-					});
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching roles", error, onError)
-		);
-	}
-
-	createRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.createAsync(
-			this.getPath("role"),
-			body,
-			data => {
-				this.updateRole(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while creating new a role", error, onError)
-		);
-	}
-
-	async getRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		const role = Role.get(id);
-		return role !== undefined && role.childrenIDs !== undefined
-			? AppUtility.invoke(onSuccess)
-			: this.readAsync(
-					this.getPath("role", id),
-					data => {
-						this.updateRole(data);
-						if (onSuccess !== undefined) {
-							onSuccess(data);
-						}
-					},
-					error => this.processError("Error occurred while getting a role", error, onError),
-					undefined,
-					useXHR
-				);
-	}
-
-	updateRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		const parentID = Role.contains(body.ID) ? Role.get(body.ID).ParentID : undefined;
-		return this.updateAsync(
-			this.getPath("role", body.ID),
-			body,
-			data => {
-				this.updateRole(data, parentID);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while updating a role", error, onError)
-		);
-	}
-
-	deleteRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		const parentID = Role.contains(id) ? Role.get(id).ParentID : undefined;
-		return this.deleteAsync(
-			this.getPath("role", id),
-			data => {
-				this.deleteRole(data.ID, parentID);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while deleting a role", error, onError),
-			headers
-		);
-	}
-
-	refreshRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
-		return this.refreshAsync(
-			"role",
-			id,
-			data => {
-				this.updateRole(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			onError,
-			headers,
-			useXHR
-		);
-	}
-
-	private processRoleUpdateMessage(message: AppMessage) {
-		switch (message.Type.Event) {
-			case "Create":
-			case "Update":
-				this.updateRole(message.Data);
-				break;
-
-			case "Delete":
-				this.deleteRole(message.Data.ID, message.Data.ParentID);
-				break;
-
-			default:
-				this.showLog("Got an update message of a role", message);
-				break;
-		}
-
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
-			AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
-			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
-				AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
-			}
-		}
-	}
-
-	private fetchRole(role: Role) {
-		if (role !== undefined && role.childrenIDs === undefined) {
-			this.getRoleAsync(role.ID, _ => {
-				const obj = Role.get(role.ID);
-				if (obj.childrenIDs !== undefined && obj.childrenIDs.length > 0) {
-					obj.Children.forEach(c => this.fetchRole(c));
-				}
-			});
-		}
-		return role;
-	}
-
-	private updateRole(json: any, parentID?: string) {
-		if (AppUtility.isObject(json, true)) {
-			const role = Role.set(Role.deserialize(json, Role.get(json.ID)));
-			if (AppUtility.isArray(json.Children, true)) {
-				role.childrenIDs = (json.Children as Array<any>).map(o => this.updateRole(o)).filter(o => o !== undefined).map(o => o.ID).distinct();
-			}
-			let parentRole = Role.get(parentID);
-			if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.ID !== role.ParentID) {
-				parentRole.childrenIDs.remove(role.ID);
-			}
-			parentRole = role.Parent;
-			if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.childrenIDs.indexOf(role.ID) < 0) {
-				parentRole.childrenIDs.push(role.ID);
-				parentRole.childrenIDs = parentRole.childrenIDs.distinct();
-			}
-			return role;
-		}
-		return undefined;
-	}
-
-	private deleteRole(id: string, parentID?: string) {
-		if (Role.contains(id)) {
-			const parentRole = Role.get(parentID);
-			if (parentRole !== undefined && parentRole.childrenIDs !== undefined) {
-				parentRole.childrenIDs.remove(id);
-			}
-			Role.instances.toArray(role => role.ParentID === id).forEach(role => this.deleteRole(role.ID));
-			Role.instances.remove(id);
-		}
-	}
-
-	get desktopCompleterDataSource() {
-		const convertToCompleterItem = (data: any) => {
-			const desktop = data !== undefined
-				? data instanceof Desktop
-					? data as Desktop
-					: Desktop.deserialize(data)
-				: undefined;
-			return desktop !== undefined
-				? { title: desktop.FullTitle, description: desktop.Alias, originalObject: desktop }
-				: undefined;
-		};
-		return new AppCustomCompleter(
-			term => AppUtility.format(this.getSearchingPath("desktop", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(obj => {
-				const desktop = Desktop.get(obj.ID);
-				return desktop === undefined
-					? convertToCompleterItem(this.fetchDesktop(Desktop.update(obj)))
-					: desktop.childrenIDs === undefined
-						? convertToCompleterItem(this.fetchDesktop(desktop))
-						: convertToCompleterItem(desktop);
-			}),
-			convertToCompleterItem
-		);
-	}
-
-	searchDesktops(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.search(
-			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
-			request,
-			data => this.processDesktops(data, onSuccess),
-			error => this.processError("Error occurred while searching desktops", error, onError)
-		);
-	}
-
-	searchDesktopsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false) {
-		return this.searchAsync(
-			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
-			request,
-			data => this.processDesktops(data, onSuccess),
-			error => this.processError("Error occurred while searching desktops", error, onError),
-			dontProcessPagination,
-			headers,
-			useXHR
-		);
-	}
-
-	createDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.createAsync(
-			this.getPath("desktop"),
-			body,
-			data => {
-				this.updateDesktop(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while creating new a desktop", error, onError)
-		);
-	}
-
-	async getDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		const desktop = Desktop.get(id);
-		return desktop !== undefined && desktop.childrenIDs !== undefined
-			? AppUtility.invoke(onSuccess)
-			: this.readAsync(
-					this.getPath("desktop", id),
-					data => {
-						this.updateDesktop(data);
-						if (onSuccess !== undefined) {
-							onSuccess(data);
-						}
-						if (onSuccess !== undefined) {
-							onSuccess(data);
-						}
-					},
-					error => this.processError("Error occurred while getting a desktop", error, onError),
-					undefined,
-					useXHR
-				);
-	}
-
-	updateDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		const parentID = Desktop.contains(body.ID) ? Desktop.get(body.ID).ParentID : undefined;
-		return this.updateAsync(
-			this.getPath("desktop", body.ID),
-			body,
-			data => {
-				this.updateDesktop(data, parentID);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while updating a desktop", error, onError),
-			headers
-		);
-	}
-
-	deleteDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
-		const parentID = Desktop.contains(id) ? Desktop.get(id).ParentID : undefined;
-		return this.deleteAsync(
-			this.getPath("desktop", id),
-			data => {
-				this.deleteDesktop(data.ID, parentID);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while deleting a desktop", error, onError),
-			headers
-		);
-	}
-
-	refreshDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
-		return this.refreshAsync(
-			"desktop",
-			id,
-			data => {
-				this.updateDesktop(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			onError,
-			headers,
-			useXHR
-		);
-	}
-
-	private processDesktopUpdateMessage(message: AppMessage) {
-		switch (message.Type.Event) {
-			case "Create":
-			case "Update":
-				this.updateDesktop(message.Data);
-				break;
-
-			case "Delete":
-				this.deleteDesktop(message.Data.ID, message.Data.ParentID);
-				break;
-
-			default:
-				this.showLog("Got an update message of a desktop", message);
-				break;
-		}
-
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
-			AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
-			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
-				AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
-			}
-		}
-	}
-
-	private processDesktops(data: any, onNext?: (data?: any) => void) {
-		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-			(data.Objects as Array<any>).forEach(obj => {
-				const desktop = Desktop.get(obj.ID);
-				if (desktop === undefined) {
-					this.fetchDesktop(Desktop.update(obj));
-				}
-				else if (desktop.childrenIDs === undefined) {
-					this.fetchDesktop(desktop);
-				}
-			});
-		}
-		if (onNext !== undefined) {
-			onNext(data);
-		}
-	}
-
-	private fetchDesktop(desktop: Desktop) {
-		if (desktop !== undefined && (desktop.childrenIDs === undefined || desktop.portlets === undefined)) {
-			this.getDesktopAsync(desktop.ID, _ => {
-				const obj = Desktop.get(desktop.ID);
-				if (obj.childrenIDs !== undefined && obj.childrenIDs.length > 0) {
-					obj.Children.forEach(c => this.fetchDesktop(c));
-				}
-			});
-		}
-		return desktop;
-	}
-
-	fetchDesktops(systemID?: string, onSuccess?: () => void) {
-		this.searchDesktopsAsync({
-			FilterBy: {
-				And: [
-					{ SystemID: { Equals: systemID ?? this.activeOrganization.ID } },
-					{ ParentID: "IsNull" }
-				]
-			},
-			SortBy: { Title: "Ascending" }
-		}, onSuccess, undefined, true, undefined, true);
-	}
-
-	private updateDesktop(json: any, oldParentID?: string) {
-		if (AppUtility.isObject(json, true)) {
-			const desktop = Desktop.set(Desktop.deserialize(json, Desktop.get(json.ID)));
-			if (AppUtility.isArray(json.Children, true)) {
-				desktop.childrenIDs = (json.Children as Array<any>).map(o => this.updateDesktop(o)).filter(o => o !== undefined).map(o => o.ID).distinct();
-			}
-			if (AppUtility.isArray(json.Portlets, true)) {
-				desktop.portlets = (json.Portlets as Array<any>).map(p => Portlet.update(p));
-			}
-			let parentDesktop = Desktop.get(oldParentID);
-			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined && parentDesktop.ID !== desktop.ParentID) {
-				parentDesktop.childrenIDs.remove(desktop.ID);
-			}
-			parentDesktop = desktop.Parent;
-			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined && parentDesktop.childrenIDs.indexOf(desktop.ID) < 0) {
-				parentDesktop.childrenIDs.push(desktop.ID);
-				parentDesktop.childrenIDs = parentDesktop.childrenIDs.distinct();
-			}
-			return desktop;
-		}
-		return undefined;
-	}
-
-	private deleteDesktop(id: string, parentID?: string) {
-		if (Desktop.contains(id)) {
-			const parentDesktop = Desktop.get(parentID);
-			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined) {
-				parentDesktop.childrenIDs.remove(id);
-			}
-			Desktop.instances.toArray(desktop => desktop.ParentID === id).forEach(desktop => this.deleteDesktop(desktop.ID));
-			Desktop.instances.remove(id);
-		}
-	}
-
-	get portletCompleterDataSource() {
-		const convertToCompleterItem = (data: any) => {
-			const portlet = data !== undefined
-				? data instanceof Portlet
-					? data as Portlet
-					: Portlet.deserialize(data)
-				: undefined;
-			return portlet !== undefined
-				? { title: portlet.Title, originalObject: portlet }
-				: undefined;
-		};
-		return new AppCustomCompleter(
-			term => AppUtility.format(this.getSearchingPath("portlet", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(obj => Portlet.contains(obj.ID) ? convertToCompleterItem(Portlet.get(obj.ID)) : convertToCompleterItem(Portlet.update(Portlet.deserialize(obj)))),
-			convertToCompleterItem
-		);
-	}
-
-	searchPortlets(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.search(
-			this.getSearchingPath("portlet", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!Portlet.contains(obj.ID)) {
-							Portlet.update(obj);
-						}
-					});
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching portlets", error, onError)
-		);
-	}
-
-	searchPortletsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
-		return this.searchAsync(
-			this.getSearchingPath("portlet", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!Portlet.contains(obj.ID)) {
-							Portlet.update(obj);
-						}
-					});
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching portlets", error, onError),
-			dontProcessPagination,
-			undefined,
-			useXHR
-		);
-	}
-
-	createPortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.createAsync(
-			this.getPath("portlet"),
-			body,
-			data => {
-				Portlet.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while creating new a portlet", error, onError)
-		);
-	}
-
-	async getPortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return Portlet.contains(id) && Portlet.get(id).otherDesktops !== undefined
-			? AppUtility.invoke(onSuccess)
-			: this.readAsync(
-					this.getPath("portlet", id),
-					data => {
-						Portlet.update(data);
-						if (onSuccess !== undefined) {
-							onSuccess(data);
-						}
-					},
-					error => this.processError("Error occurred while getting a portlet", error, onError),
-					undefined,
-					useXHR
-				);
-	}
-
-	updatePortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
-		return this.updateAsync(
-			this.getPath("portlet", body.ID),
-			body,
-			data => {
-				Portlet.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while updating a portlet", error, onError),
-			headers,
-			useXHR
-		);
-	}
-
-	deletePortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.deleteAsync(
-			this.getPath("portlet", id),
-			data => {
-				Portlet.instances.remove(data.ID);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while deleting a portlet", error, onError)
-		);
-	}
-
-	private processPortletUpdateMessage(message: AppMessage) {
-		let desktop: Desktop;
-		switch (message.Type.Event) {
-			case "Create":
-			case "Update":
-				const portlet = Portlet.update(message.Data);
-				desktop = Desktop.get(message.Data.DesktopID);
-				if (desktop !== undefined && desktop.portlets !== undefined) {
-					desktop.portlets.update(portlet, desktop.portlets.findIndex(p => p.ID === portlet.ID));
-				}
-				break;
-
-			case "Delete":
-				Portlet.instances.remove(message.Data.ID);
-				desktop = Desktop.get(message.Data.DesktopID);
-				if (desktop !== undefined && desktop.portlets !== undefined) {
-					desktop.portlets.removeAt(desktop.portlets.findIndex(p => p.ID === message.Data.ID));
-				}
-				break;
-
-			default:
-				this.showLog(`Got an update message of a portlet - Portlet ID: ${message.Data.ID} - Desktop ID: ${message.Data.DesktopID}`, message);
-				break;
-		}
-
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
-			AppEvents.broadcast(this.name, { Object: "Portlet", Type: `${message.Type.Event}d`, ID: message.Data.ID, DesktopID: message.Data.DesktopID });
-		}
-	}
-
-	get siteCompleterDataSource() {
-		const convertToCompleterItem = (data: any) => {
-			const site = data !== undefined
-				? data instanceof Site
-					? data as Site
-					: Site.deserialize(data)
-				: undefined;
-			return site !== undefined
-				? { title: site.Title, description: `${site.SubDomain}.${site.PrimaryDomain}`, originalObject: site }
-				: undefined;
-		};
-		return new AppCustomCompleter(
-			term => AppUtility.format(this.getSearchingPath("site", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(obj => Site.contains(obj.ID) ? convertToCompleterItem(Site.get(obj.ID)) : convertToCompleterItem(Site.update(Site.deserialize(obj)))),
-			convertToCompleterItem
-		);
-	}
-
-	searchSites(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.search(
-			this.getSearchingPath("site", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!Site.contains(obj.ID)) {
-							Site.update(obj);
-						}
-					});
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching sites", error, onError)
-		);
-	}
-
-	searchSitesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false) {
-		return this.searchAsync(
-			this.getSearchingPath("site", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!Site.contains(obj.ID)) {
-							Site.update(obj);
-						}
-					});
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching sites", error, onError),
-			dontProcessPagination,
-			undefined,
-			useXHR
-		);
-	}
-
-	createSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.createAsync(
-			this.getPath("site"),
-			body,
-			data => {
-				Site.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while creating new a site", error, onError)
-		);
-	}
-
-	async getSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return Site.contains(id)
-			? AppUtility.invoke(onSuccess)
-			: this.readAsync(
-					this.getPath("site", id),
-					data => {
-						Site.update(data);
-						if (onSuccess !== undefined) {
-							onSuccess(data);
-						}
-					},
-					error => this.processError("Error occurred while getting a site", error, onError),
-					undefined,
-					useXHR
-				);
-	}
-
-	updateSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.updateAsync(
-			this.getPath("site", body.ID),
-			body,
-			data => {
-				Site.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while updating a site", error, onError)
-		);
-	}
-
-	deleteSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.deleteAsync(
-			this.getPath("site", id),
-			data => {
-				Site.instances.remove(data.ID);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while deleting a site", error, onError)
-		);
-	}
-
-	private processSiteUpdateMessage(message: AppMessage) {
-		switch (message.Type.Event) {
-			case "Create":
-			case "Update":
-				Site.update(message.Data);
-				break;
-
-			case "Delete":
-				Site.instances.remove(message.Data.ID);
-				break;
-
-			default:
-				this.showLog("Got an update message of a site", message);
-				break;
-		}
-
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
-			AppEvents.broadcast(this.name, { Object: "Site", Type: `${message.Type.Event}d`, ID: message.Data.ID });
-		}
-	}
-
-	get moduleCompleterDataSource() {
-		const convertToCompleterItem = (data: any) => {
-			const module = data !== undefined
-				? data instanceof Module
-					? data as Module
-					: Module.deserialize(data)
-				: undefined;
-			return module !== undefined
-				? { title: module.Title, description: module.Description, originalObject: module }
-				: undefined;
-		};
-		return new AppCustomCompleter(
-			term => AppUtility.format(this.getSearchingPath("module", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(obj => Module.contains(obj.ID) ? convertToCompleterItem(Module.get(obj.ID)) : convertToCompleterItem(Module.update(Module.deserialize(obj)))),
-			convertToCompleterItem
-		);
-	}
-
-	searchModules(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.search(
-			this.getSearchingPath("module", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!Module.contains(obj.ID)) {
-							Module.update(obj);
-						}
-					});
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching modules", error, onError)
-		);
-	}
-
-	searchModulesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
-		return this.searchAsync(
-			this.getSearchingPath("module", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!Module.contains(obj.ID)) {
-							Module.update(obj);
-						}
-					});
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching modules", error, onError),
-			dontProcessPagination,
-			headers,
-			useXHR
-		);
-	}
-
-	createModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.createAsync(
-			this.getPath("module"),
-			body,
-			data => {
-				Module.update(data);
-				if (AppUtility.isArray(data.ContentTypes, true)) {
-					(data.ContentTypes as Array<any>).forEach(contentType => ContentType.update(contentType));
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while creating new a module", error, onError)
-		);
-	}
-
-	getModule(id: string, getActiveModuleWhenNotFound: boolean = true) {
-		const module = Module.get(id) || (getActiveModuleWhenNotFound ? this.activeModule : undefined);
-		if (module === undefined && AppUtility.isNotEmpty(id)) {
-			this.getModuleAsync(id);
-		}
-		return module;
-	}
-
-	async getModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return Module.contains(id) && Module.get(id).contentTypes.length > 0
-			? AppUtility.invoke(onSuccess)
-			: this.readAsync(
-					this.getPath("module", id),
-					data => {
-						Module.update(data);
-						if (AppUtility.isArray(data.ContentTypes, true)) {
-							(data.ContentTypes as Array<any>).forEach(contentType => ContentType.update(contentType));
-						}
-						if (onSuccess !== undefined) {
-							onSuccess(data);
-						}
-					},
-					error => this.processError("Error occurred while getting a module", error, onError),
-					undefined,
-					useXHR
-				);
-	}
-
-	updateModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.updateAsync(
-			this.getPath("module", body.ID),
-			body,
-			data => {
-				Module.update(data);
-				if (AppUtility.isArray(data.ContentTypes, true)) {
-					(data.ContentTypes as Array<any>).forEach(contentType => ContentType.update(contentType));
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while updating a module", error, onError)
-		);
-	}
-
-	deleteModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.deleteAsync(
-			this.getPath("module", id),
-			data => {
-				Module.instances.remove(data.ID);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while deleting a module", error, onError)
-		);
-	}
-
-	refreshModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
-		return this.refreshAsync(
-			"module",
-			id,
-			data => {
-				Module.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			onError,
-			headers,
-			useXHR
-		);
-	}
-
-	private processModuleUpdateMessage(message: AppMessage) {
-		switch (message.Type.Event) {
-			case "Create":
-			case "Update":
-				Module.update(message.Data);
-				break;
-
-			case "Delete":
-				Module.instances.remove(message.Data.ID);
-				break;
-
-			default:
-				this.showLog("Got an update message of a module", message);
-				break;
-		}
-
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
-			AppEvents.broadcast(this.name, { Object: "Module", Type: `${message.Type.Event}d`, ID: message.Data.ID });
-		}
-	}
-
-	get contentTypeCompleterDataSource() {
-		const convertToCompleterItem = (data: any) => {
-			const contentType = data !== undefined
-				? data instanceof ContentType
-					? data as ContentType
-					: ContentType.deserialize(data)
-				: undefined;
-			return contentType !== undefined
-				? { title: contentType.Title, description: contentType.Description, originalObject: contentType }
-				: undefined;
-		};
-		return new AppCustomCompleter(
-			term => AppUtility.format(this.getSearchingPath("content.type", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(obj => ContentType.contains(obj.ID) ? convertToCompleterItem(ContentType.get(obj.ID)) : convertToCompleterItem(ContentType.update(ContentType.deserialize(obj)))),
-			convertToCompleterItem
-		);
-	}
-
-	searchContentTypes(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.search(
-			this.getSearchingPath("content.type", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!ContentType.contains(obj.ID)) {
-							ContentType.update(obj);
-						}
-					});
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching content-types", error, onError)
-		);
-	}
-
-	searchContentTypesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return this.searchAsync(
-			this.getSearchingPath("content.type", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!ContentType.contains(obj.ID)) {
-							ContentType.update(obj);
-						}
-					});
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching content-types", error, onError),
-			false,
-			undefined,
-			useXHR
-		);
-	}
-
-	createContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.createAsync(
-			this.getPath("content.type"),
-			body,
-			data => {
-				ContentType.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while creating new a content type", error, onError)
-		);
-	}
-
-	async getContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return ContentType.contains(id)
-			? AppUtility.invoke(onSuccess)
-			: this.readAsync(
-					this.getPath("content.type", id),
-					data => {
-						ContentType.update(data);
-						if (onSuccess !== undefined) {
-							onSuccess(data);
-						}
-					},
-					error => this.processError("Error occurred while getting a content type", error, onError),
-					undefined,
-					useXHR
-				);
-	}
-
-	updateContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.updateAsync(
-			this.getPath("content.type", body.ID),
-			body,
-			data => {
-				ContentType.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while updating a content type", error, onError)
-		);
-	}
-
-	deleteContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.deleteAsync(
-			this.getPath("content.type", id),
-			data => {
-				ContentType.instances.remove(data.ID);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while deleting a content type", error, onError)
-		);
-	}
-
-	refreshContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
-		return this.refreshAsync(
-			"content.type",
-			id,
-			data => {
-				ContentType.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			onError,
-			headers,
-			useXHR
-		);
-	}
-
-	private processContentTypeUpdateMessage(message: AppMessage) {
-		switch (message.Type.Event) {
-			case "Create":
-			case "Update":
-				ContentType.update(message.Data);
-				this.configSvc.removeDefinition(this.name, ContentType.get(message.Data.ID).getObjectName(true), undefined, { "x-content-type-id": message.Data.ID });
-				break;
-
-			case "Delete":
-				if (ContentType.contains(message.Data.ID)) {
-					ContentType.instances.remove(message.Data.ID);
-				}
-				break;
-
-			default:
-				this.showLog("Got an update message of a content type", message);
-				break;
-		}
-
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
-			AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
-		}
-	}
-
-	get expressionCompleterDataSource() {
-		const convertToCompleterItem = (data: any) => {
-			const expression = data !== undefined
-				? data instanceof Expression
-					? data as Expression
-					: Expression.deserialize(data)
-				: undefined;
-			return expression !== undefined
-				? { title: expression.Title, description: expression.Description, originalObject: expression }
-				: undefined;
-		};
-		return new AppCustomCompleter(
-			term => AppUtility.format(this.getSearchingPath("expression", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(obj => Expression.contains(obj.ID) ? convertToCompleterItem(Expression.get(obj.ID)) : convertToCompleterItem(Expression.update(Expression.deserialize(obj)))),
-			convertToCompleterItem
-		);
-	}
-
-	searchExpressions(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.search(
-			this.getSearchingPath("expression", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => Expression.update(obj));
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching expressions", error, onError)
-		);
-	}
-
-	searchExpressionsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.searchAsync(
-			this.getSearchingPath("expression", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => Expression.update(obj));
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching expressions", error, onError)
-		);
-	}
-
-	createExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.createAsync(
-			this.getPath("expression"),
-			body,
-			data => {
-				Expression.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while creating new an expression", error, onError)
-		);
-	}
-
-	async getExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return Expression.contains(id)
-			? AppUtility.invoke(onSuccess)
-			: this.readAsync(
-					this.getPath("expression", id),
-					data => {
-						Expression.update(data);
-						if (onSuccess !== undefined) {
-							onSuccess(data);
-						}
-					},
-					error => this.processError("Error occurred while getting an expression", error, onError),
-					undefined,
-					useXHR
-				);
-	}
-
-	updateExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.updateAsync(
-			this.getPath("expression", body.ID),
-			body,
-			data => {
-				Expression.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while updating an expression", error, onError)
-		);
-	}
-
-	deleteExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.deleteAsync(
-			this.getPath("expression", id),
-			data => {
-				Expression.instances.remove(data.ID);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while deleting an expression", error, onError)
-		);
-	}
-
-	refreshExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
-		return this.refreshAsync(
-			"expression",
-			id,
-			data => {
-				Expression.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			onError,
-			headers,
-			useXHR
-		);
-	}
-
-	private processExpressionUpdateMessage(message: AppMessage) {
-		switch (message.Type.Event) {
-			case "Create":
-			case "Update":
-				Expression.update(message.Data);
-				break;
-
-			case "Delete":
-				if (Expression.contains(message.Data.ID)) {
-					Expression.instances.remove(message.Data.ID);
-				}
-				break;
-
-			default:
-				this.showLog("Got an update message of an expression", message);
-				break;
-		}
-
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
-			AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
-		}
-	}
-
-	get taskCompleterDataSource() {
-		const convertToCompleterItem = (data: any) => {
-			const task = data !== undefined
-				? data instanceof SchedulingTask
-					? data as SchedulingTask
-					: SchedulingTask.deserialize(data)
-				: undefined;
-			return task !== undefined
-				? { title: task.Title, description: task.Description, originalObject: task }
-				: undefined;
-		};
-		return new AppCustomCompleter(
-			term => AppUtility.format(this.getSearchingPath("task", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
-			data => (data.Objects as Array<any> || []).map(obj => SchedulingTask.contains(obj.ID) ? convertToCompleterItem(SchedulingTask.get(obj.ID)) : convertToCompleterItem(SchedulingTask.update(SchedulingTask.deserialize(obj)))),
-			convertToCompleterItem
-		);
-	}
-
-	searchSchedulingTasks(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.search(
-			this.getSearchingPath("task", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!SchedulingTask.contains(obj.ID)) {
-							SchedulingTask.update(obj);
-						}
-					});
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching tasks", error, onError)
-		);
-	}
-
-	searchSchedulingTasksAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
-		return this.searchAsync(
-			this.getSearchingPath("task", this.configSvc.relatedQuery),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!SchedulingTask.contains(obj.ID)) {
-							SchedulingTask.update(obj);
-						}
-					});
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching tasks", error, onError),
-			dontProcessPagination,
-			headers,
-			useXHR
-		);
-	}
-
-	createSchedulingTaskAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.createAsync(
-			this.getPath("task"),
-			body,
-			data => {
-				SchedulingTask.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while creating new a task", error, onError)
-		);
-	}
-
-	getSchedulingTask(id: string) {
-		const task = SchedulingTask.get(id);
-		if (task === undefined && AppUtility.isNotEmpty(id)) {
-			this.getSchedulingTaskAsync(id);
-		}
-		return task;
-	}
-
-	async getSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return SchedulingTask.contains(id)
-			? AppUtility.invoke(onSuccess)
-			: this.readAsync(
-				this.getPath("task", id),
-				data => {
-					SchedulingTask.update(data);
-					if (onSuccess !== undefined) {
-						onSuccess(data);
-					}
-				},
-				error => this.processError("Error occurred while getting a task", error, onError),
-				undefined,
-				useXHR
-			);
-	}
-
-	updateSchedulingTaskAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.updateAsync(
-			this.getPath("task", body.ID),
-			body,
-			data => {
-				SchedulingTask.update(data);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while updating a task", error, onError)
-		);
-	}
-
-	deleteSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.deleteAsync(
-			this.getPath("task", id),
-			data => {
-				SchedulingTask.instances.remove(data.ID);
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while deleting a task", error, onError)
-		);
-	}
-
-	async fetchSchedulingTasksAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return this.readAsync(
-			this.getPath("task", "fetch"),
-			data => {
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while getting a task", error, onError),
-			{ "x-system-id": this.activeOrganization.ID },
-			useXHR
-		);
-	}
-
-	async runSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return this.readAsync(
-			this.getPath("task", "run", "x-object-id=" + id),
-			data => {
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while running a task", error, onError),
-			{ "x-system-id": this.activeOrganization.ID },
-			useXHR
-		);
-	}
-
-	private processSchedulingTaskUpdateMessage(message: AppMessage) {
-		switch (message.Type.Event) {
-			case "Create":
-			case "Update":
-				SchedulingTask.update(message.Data);
-				break;
-
-			case "Delete":
-				SchedulingTask.instances.remove(message.Data.ID);
-				break;
-
-			default:
-				this.showLog("Got an update message of a task", message);
-				break;
-		}
-
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
-			AppEvents.broadcast(this.name, { Object: "SchedulingTask", Type: `${message.Type.Event}d`, ID: message.Data.ID });
-		}
 	}
 
 	async exportToExcelAsync(objectName: string, systemID?: string, repositoryID?: string, repositoryEntityID?: string, filterBy?: any, sortBy?: any, pagination?: AppDataPagination, maxPages?: number, onCompleted?: (message: AppMessage) => void, onProgress?: (percentage: string) => void, onError?: (error?: any) => void) {
@@ -3335,16 +1864,6 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	getPortalFileHeaders(object: CmsBaseModel) {
-		return {
-			"x-service-name": this.name,
-			"x-object-name": object.contentType.getObjectName(),
-			"x-system-id": object.SystemID,
-			"x-entity": object.contentType.ID,
-			"x-object-id": object.ID
-		};
-	}
-
 	async clearCacheAsync(objectName: string, objectID: string, onSuccess?: () => void, requireUserInteraction: boolean = true, useXHR: boolean = false) {
 		if (requireUserInteraction) {
 			await this.appFormsSvc.showAlertAsync(
@@ -3383,6 +1902,41 @@ export class PortalsCoreService extends BaseService {
 				useXHR
 			);
 		}
+	}
+
+	findVersionsAsync(objectName: string, objectID: string, onSuccess?: (data?: any) => void, useXHR: boolean = false) {
+		return this.readAsync(
+			this.getPath("versions", objectName, "object-id=" + objectID),
+			data => {
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			onSuccess,
+			undefined,
+			useXHR
+		);
+	}
+
+	rollbackAsync(objectName: string, objectID: string, versionID: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return this.sendRequestAsync(
+			{
+				Path: this.getPath(objectName, objectID),
+				Verb: "PATCH",
+				Header: {
+					"x-patch-mode": "rollback",
+					"x-version-id": versionID
+				}
+			},
+			data => {
+				this.findVersionsAsync(objectName, objectID);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while rolling back", error, onError),
+			useXHR
+		);
 	}
 
 	async approveAsync(entityInfo: string, id: string, status: string, title: string, message: string, onNext?: () => void) {
@@ -3470,6 +2024,1431 @@ export class PortalsCoreService extends BaseService {
 			cancel,
 			inputs
 		);
+	}
+
+	get organizationCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const organization = data !== undefined
+				? data instanceof Organization
+					? data as Organization
+					: Organization.deserialize(data)
+				: undefined;
+			return organization !== undefined
+				? { title: organization.Title, description: organization.Description, originalObject: organization }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(this.getSearchingPath("organization", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => Organization.contains(obj.ID) ? convertToCompleterItem(Organization.get(obj.ID)) : convertToCompleterItem(Organization.update(Organization.deserialize(obj)))),
+			convertToCompleterItem
+		);
+	}
+
+	searchOrganizations(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.search(
+			this.getSearchingPath("organization", this.configSvc.relatedQuery),
+			request,
+			data => this.processOrganizations(data, onSuccess),
+			error => this.processError("Error occurred while searching organizations", error, onError)
+		);
+	}
+
+	searchOrganizationsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.searchAsync(
+			this.getSearchingPath("organization", this.configSvc.relatedQuery),
+			request,
+			data => this.processOrganizations(data, onSuccess),
+			error => this.processError("Error occurred while searching organizations", error, onError)
+		);
+	}
+
+	createOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
+			this.getPath("organization"),
+			body,
+			data => {
+				Organization.update(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while creating new an organization", error, onError)
+		);
+	}
+
+	getOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return Organization.contains(id) && Organization.get(id).modules.length > 0
+			? AppUtility.invoke(onSuccess)
+			: this.readAsync(
+					this.getPath("organization", id),
+					data => this.processOrganizations({ Objects: [data] }, onSuccess),
+					error => this.processError("Error occurred while getting an organization", error, onError),
+					undefined,
+					useXHR
+				);
+	}
+
+	getOrganization(id: string, getActiveOrganizationWhenNotFound: boolean = true) {
+		const organization = Organization.get(id);
+		if (organization !== undefined && organization.modules.length < 1) {
+			this.getOrganizationAsync(organization.ID);
+		}
+		return organization || (getActiveOrganizationWhenNotFound ? this.activeOrganization : undefined);
+	}
+
+	updateOrganizationAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
+			this.getPath("organization", body.ID),
+			body,
+			data => this.processOrganizations({ Objects: [data] }, onSuccess),
+			error => this.processError("Error occurred while updating an organization", error, onError)
+		);
+	}
+
+	deleteOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
+			this.getPath("organization", id),
+			data => {
+				Organization.instances.remove(id);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while deleting an organization", error, onError)
+		);
+	}
+
+	refreshOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
+		return this.refreshAsync(
+			"organization",
+			id,
+			data => this.processOrganizations({ Objects: [data] }, onSuccess),
+			onError,
+			headers,
+			useXHR
+		);
+	}
+
+	private processOrganizations(data: any, onNext?: (data?: any) => void) {
+		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+			(data.Objects as Array<any>).forEach(organizationData => {
+				const organization = Organization.update(organizationData);
+				if (organization.Versions === undefined) {
+					this.findVersionsAsync("Organization", organization.ID);
+				}
+				this.processModules({ Objects: organizationData.Modules });
+			});
+		}
+		if (onNext !== undefined) {
+			onNext(data);
+		}
+	}
+
+	private processOrganizationUpdateMessage(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				if (!!message.Data.Title) {
+					Organization.update(message.Data);
+				}
+				else if (Organization.contains(message.Data.ID)) {
+					Organization.get(message.Data.ID).update(message.Data);
+				}
+				break;
+
+			case "Delete":
+				Organization.instances.remove(message.Data.ID);
+				break;
+
+			default:
+				this.showLog("Got an update message of an organization", message);
+				break;
+		}
+
+		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
+			AppEvents.broadcast(this.name, { Object: "Organization", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		}
+	}
+
+	get roleCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const role = data !== undefined
+				? data instanceof Role
+					? data as Role
+					: Role.deserialize(data)
+				: undefined;
+			return role !== undefined
+				? { title: role.FullTitle, description: role.Description, originalObject: role }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(this.getSearchingPath("role", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => {
+				const role = Role.get(obj.ID);
+				return role === undefined
+					? convertToCompleterItem(this.fetchRole(Role.update(obj)))
+					: role.childrenIDs === undefined
+						? convertToCompleterItem(this.fetchRole(role))
+						: convertToCompleterItem(role);
+			}),
+			convertToCompleterItem
+		);
+	}
+
+	searchRoles(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.search(
+			this.getSearchingPath("role", this.configSvc.relatedQuery),
+			request,
+			data => this.processRoles(data, onSuccess),
+			error => this.processError("Error occurred while searching roles", error, onError)
+		);
+	}
+
+	searchRolesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.searchAsync(
+			this.getSearchingPath("role", this.configSvc.relatedQuery),
+			request,
+			data => this.processRoles(data, onSuccess),
+			error => this.processError("Error occurred while searching roles", error, onError)
+		);
+	}
+
+	createRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
+			this.getPath("role"),
+			body,
+			data => {
+				this.updateRole(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while creating new a role", error, onError)
+		);
+	}
+
+	async getRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		const role = Role.get(id);
+		return role !== undefined && role.childrenIDs !== undefined
+			? AppUtility.invoke(onSuccess)
+			: this.readAsync(
+					this.getPath("role", id),
+					data => this.processRoles({ Objects: [data] }, onSuccess),
+					error => this.processError("Error occurred while getting a role", error, onError),
+					undefined,
+					useXHR
+				);
+	}
+
+	updateRoleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		const parentID = Role.contains(body.ID) ? Role.get(body.ID).ParentID : undefined;
+		return this.updateAsync(
+			this.getPath("role", body.ID),
+			body,
+			data => {
+				const role = this.updateRole(data, parentID);
+				if (role.Versions === undefined) {
+					this.findVersionsAsync("Role", role.ID);
+				}
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while updating a role", error, onError)
+		);
+	}
+
+	deleteRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		const parentID = Role.contains(id) ? Role.get(id).ParentID : undefined;
+		return this.deleteAsync(
+			this.getPath("role", id),
+			data => {
+				this.deleteRole(data.ID, parentID);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while deleting a role", error, onError),
+			headers
+		);
+	}
+
+	refreshRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
+		return this.refreshAsync(
+			"role",
+			id,
+			data => {
+				const role = this.updateRole(data);
+				if (role.Versions === undefined) {
+					this.findVersionsAsync("Role", role.ID);
+				}
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			onError,
+			headers,
+			useXHR
+		);
+	}
+
+	private fetchRole(role: Role) {
+		if (role !== undefined && role.childrenIDs === undefined) {
+			this.getRoleAsync(role.ID, _ => {
+				const obj = Role.get(role.ID);
+				if (obj.childrenIDs !== undefined && obj.childrenIDs.length > 0) {
+					obj.Children.forEach(c => this.fetchRole(c));
+				}
+			});
+		}
+		return role;
+	}
+
+	private updateRole(json: any, parentID?: string) {
+		if (AppUtility.isObject(json, true)) {
+			const role = Role.update(json);
+			if (AppUtility.isArray(json.Children, true)) {
+				role.childrenIDs = (json.Children as Array<any>).map(o => this.updateRole(o)).filter(o => o !== undefined).map(o => o.ID).distinct();
+			}
+			let parentRole = Role.get(parentID);
+			if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.ID !== role.ParentID) {
+				parentRole.childrenIDs.remove(role.ID);
+			}
+			parentRole = role.Parent;
+			if (parentRole !== undefined && parentRole.childrenIDs !== undefined && parentRole.childrenIDs.indexOf(role.ID) < 0) {
+				parentRole.childrenIDs.push(role.ID);
+				parentRole.childrenIDs = parentRole.childrenIDs.distinct();
+			}
+			return role;
+		}
+		return undefined;
+	}
+
+	private deleteRole(id: string, parentID?: string) {
+		if (Role.contains(id)) {
+			const parentRole = Role.get(parentID);
+			if (parentRole !== undefined && parentRole.childrenIDs !== undefined) {
+				parentRole.childrenIDs.remove(id);
+			}
+			Role.instances.toArray(role => role.ParentID === id).forEach(role => this.deleteRole(role.ID));
+			Role.instances.remove(id);
+		}
+	}
+
+	private processRoles(data: any, onSuccess?: (data?: any) => void) {
+		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+			(data.Objects as Array<any>).forEach(roleData => {
+				const fetch = !Role.contains(roleData.ID);
+				const role = this.updateRole(roleData, roleData.ParentID);
+				if (role.Versions === undefined) {
+					this.findVersionsAsync("Role", role.ID);
+				}
+				if (fetch) {
+					this.fetchRole(role);
+				}
+				else if (role.childrenIDs === undefined) {
+					this.fetchRole(role);
+				}
+			});
+		}
+		if (onSuccess !== undefined) {
+			onSuccess(data);
+		}
+	}
+
+	private processRoleUpdateMessage(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				if (!!message.Data.Title) {
+					this.updateRole(message.Data);
+				}
+				else if (Role.contains(message.Data.ID)) {
+					Role.get(message.Data.ID).update(message.Data);
+				}
+				break;
+
+			case "Delete":
+				this.deleteRole(message.Data.ID, message.Data.ParentID);
+				break;
+
+			default:
+				this.showLog("Got an update message of a role", message);
+				break;
+		}
+
+		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
+			AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
+			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
+				AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+			}
+		}
+	}
+
+	get moduleCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const module = data !== undefined
+				? data instanceof Module
+					? data as Module
+					: Module.deserialize(data)
+				: undefined;
+			return module !== undefined
+				? { title: module.Title, description: module.Description, originalObject: module }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(this.getSearchingPath("module", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => Module.contains(obj.ID) ? convertToCompleterItem(Module.get(obj.ID)) : convertToCompleterItem(Module.update(Module.deserialize(obj)))),
+			convertToCompleterItem
+		);
+	}
+
+	searchModules(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.search(
+			this.getSearchingPath("module", this.configSvc.relatedQuery),
+			request,
+			data => this.processModules(data, onSuccess),
+			error => this.processError("Error occurred while searching modules", error, onError)
+		);
+	}
+
+	searchModulesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
+		return this.searchAsync(
+			this.getSearchingPath("module", this.configSvc.relatedQuery),
+			request,
+			data => this.processModules(data, onSuccess),
+			error => this.processError("Error occurred while searching modules", error, onError),
+			dontProcessPagination,
+			headers,
+			useXHR
+		);
+	}
+
+	createModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
+			this.getPath("module"),
+			body,
+			data => this.processModules({ Objects: [data] }, onSuccess),
+			error => this.processError("Error occurred while creating new a module", error, onError)
+		);
+	}
+
+	getModule(id: string, getActiveModuleWhenNotFound: boolean = true) {
+		const module = Module.get(id) || (getActiveModuleWhenNotFound ? this.activeModule : undefined);
+		if (module === undefined && AppUtility.isNotEmpty(id)) {
+			this.getModuleAsync(id);
+		}
+		return module;
+	}
+
+	async getModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return Module.contains(id) && Module.get(id).contentTypes.length > 0
+			? AppUtility.invoke(onSuccess)
+			: this.readAsync(
+					this.getPath("module", id),
+					data => this.processModules({ Objects: [data] }, onSuccess),
+					error => this.processError("Error occurred while getting a module", error, onError),
+					undefined,
+					useXHR
+				);
+	}
+
+	updateModuleAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
+			this.getPath("module", body.ID),
+			body,
+			data => this.processModules({ Objects: [data] }, onSuccess),
+			error => this.processError("Error occurred while updating a module", error, onError)
+		);
+	}
+
+	deleteModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
+			this.getPath("module", id),
+			data => {
+				Module.instances.remove(data.ID);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while deleting a module", error, onError)
+		);
+	}
+
+	refreshModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
+		return this.refreshAsync(
+			"module",
+			id,
+			data => this.processModules({ Objects: [data] }, onSuccess),
+			onError,
+			headers,
+			useXHR
+		);
+	}
+
+	private processModules(data: any, onNext?: (data?: any) => void) {
+		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+			(data.Objects as Array<any>).forEach(moduleData => {
+				const module = Module.update(moduleData);
+				if (module.Versions === undefined) {
+					this.findVersionsAsync("Module", module.ID);
+				}
+				this.processContentTypes({ Objects: moduleData.ContentTypes });
+			});
+		}
+		if (onNext !== undefined) {
+			onNext(data);
+		}
+	}
+
+	private processModuleUpdateMessage(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				if (!!message.Data.Title) {
+					Module.update(message.Data);
+				}
+				else if (Module.contains(message.Data.ID)) {
+					Module.get(message.Data.ID).update(message.Data);
+				}
+				break;
+
+			case "Delete":
+				Module.instances.remove(message.Data.ID);
+				break;
+
+			default:
+				this.showLog("Got an update message of a module", message);
+				break;
+		}
+
+		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
+			AppEvents.broadcast(this.name, { Object: "Module", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		}
+	}
+
+	get contentTypeCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const contentType = data !== undefined
+				? data instanceof ContentType
+					? data as ContentType
+					: ContentType.deserialize(data)
+				: undefined;
+			return contentType !== undefined
+				? { title: contentType.Title, description: contentType.Description, originalObject: contentType }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(this.getSearchingPath("content.type", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => ContentType.contains(obj.ID) ? convertToCompleterItem(ContentType.get(obj.ID)) : convertToCompleterItem(ContentType.update(ContentType.deserialize(obj)))),
+			convertToCompleterItem
+		);
+	}
+
+	searchContentTypes(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.search(
+			this.getSearchingPath("content.type", this.configSvc.relatedQuery),
+			request,
+			data => this.processContentTypes(data, onSuccess),
+			error => this.processError("Error occurred while searching content-types", error, onError)
+		);
+	}
+
+	searchContentTypesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return this.searchAsync(
+			this.getSearchingPath("content.type", this.configSvc.relatedQuery),
+			request,
+			data => this.processContentTypes(data, onSuccess),
+			error => this.processError("Error occurred while searching content-types", error, onError),
+			false,
+			undefined,
+			useXHR
+		);
+	}
+
+	createContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
+			this.getPath("content.type"),
+			body,
+			data => this.processContentTypes({ Objects: [data] }, onSuccess),
+			error => this.processError("Error occurred while creating new a content type", error, onError)
+		);
+	}
+
+	async getContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return ContentType.contains(id)
+			? AppUtility.invoke(onSuccess)
+			: this.readAsync(
+					this.getPath("content.type", id),
+					data => this.processContentTypes({ Objects: [data] }, onSuccess),
+					error => this.processError("Error occurred while getting a content type", error, onError),
+					undefined,
+					useXHR
+				);
+	}
+
+	updateContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
+			this.getPath("content.type", body.ID),
+			body,
+			data => this.processContentTypes({ Objects: [data] }, onSuccess),
+			error => this.processError("Error occurred while updating a content type", error, onError)
+		);
+	}
+
+	deleteContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
+			this.getPath("content.type", id),
+			data => {
+				ContentType.instances.remove(data.ID);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while deleting a content type", error, onError)
+		);
+	}
+
+	refreshContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
+		return this.refreshAsync(
+			"content.type",
+			id,
+			data => this.processContentTypes({ Objects: [data] }, onSuccess),
+			onError,
+			headers,
+			useXHR
+		);
+	}
+
+	private processContentTypes(data: any, onNext?: (data?: any) => void) {
+		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+			(data.Objects as Array<any>).forEach(contentTypeData => {
+				const contentType = ContentType.update(contentTypeData);
+				if (contentType.Versions === undefined) {
+					this.findVersionsAsync("ContentType", contentType.ID);
+				}
+			});
+		}
+		if (onNext !== undefined) {
+			onNext(data);
+		}
+	}
+
+	private processContentTypeUpdateMessage(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				if (!!message.Data.Title) {
+					const contentType = ContentType.update(message.Data);
+					this.configSvc.removeDefinition(this.name, contentType.getObjectName(true), undefined, { "x-content-type-id": contentType.ID });
+				}
+				else if (ContentType.contains(message.Data.ID)) {
+					ContentType.get(message.Data.ID).update(message.Data);
+				}
+				break;
+
+			case "Delete":
+				if (ContentType.contains(message.Data.ID)) {
+					ContentType.instances.remove(message.Data.ID);
+				}
+				break;
+
+			default:
+				this.showLog("Got an update message of a content type", message);
+				break;
+		}
+
+		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
+			AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		}
+	}
+
+	get expressionCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const expression = data !== undefined
+				? data instanceof Expression
+					? data as Expression
+					: Expression.deserialize(data)
+				: undefined;
+			return expression !== undefined
+				? { title: expression.Title, description: expression.Description, originalObject: expression }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(this.getSearchingPath("expression", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => Expression.contains(obj.ID) ? convertToCompleterItem(Expression.get(obj.ID)) : convertToCompleterItem(Expression.update(Expression.deserialize(obj)))),
+			convertToCompleterItem
+		);
+	}
+
+	searchExpressions(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.search(
+			this.getSearchingPath("expression", this.configSvc.relatedQuery),
+			request,
+			data => this.processExpressions(data, onSuccess),
+			error => this.processError("Error occurred while searching expressions", error, onError)
+		);
+	}
+
+	searchExpressionsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.searchAsync(
+			this.getSearchingPath("expression", this.configSvc.relatedQuery),
+			request,
+			data => this.processExpressions(data, onSuccess),
+			error => this.processError("Error occurred while searching expressions", error, onError)
+		);
+	}
+
+	createExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
+			this.getPath("expression"),
+			body,
+			data => this.processExpressions({ Objects: [data] }, onSuccess),
+			error => this.processError("Error occurred while creating new an expression", error, onError)
+		);
+	}
+
+	async getExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return Expression.contains(id)
+			? AppUtility.invoke(onSuccess)
+			: this.readAsync(
+					this.getPath("expression", id),
+					data => this.processExpressions({ Objects: [data] }, onSuccess),
+					error => this.processError("Error occurred while getting an expression", error, onError),
+					undefined,
+					useXHR
+				);
+	}
+
+	updateExpressionAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
+			this.getPath("expression", body.ID),
+			body,
+			data => this.processExpressions({ Objects: [data] }, onSuccess),
+			error => this.processError("Error occurred while updating an expression", error, onError)
+		);
+	}
+
+	deleteExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
+			this.getPath("expression", id),
+			data => {
+				Expression.instances.remove(data.ID);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while deleting an expression", error, onError)
+		);
+	}
+
+	refreshExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+		return this.refreshAsync(
+			"expression",
+			id,
+			data => this.processExpressions({ Objects: [data] }, onSuccess),
+			onError,
+			headers,
+			useXHR
+		);
+	}
+
+	private processExpressions(data: any, onSuccess?: (data?: any) => void) {
+		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+			(data.Objects as Array<any>).forEach(expData => {
+				const expression = Expression.update(expData);
+				if (expression.Versions === undefined) {
+					this.findVersionsAsync("Expression", expression.ID);
+				}
+			});
+		}
+		if (onSuccess !== undefined) {
+			onSuccess(data);
+		}
+	}
+
+	private processExpressionUpdateMessage(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				if (!!message.Data.Title) {
+					Expression.update(message.Data);
+				}
+				else if (Expression.contains(message.Data.ID)) {
+					Expression.get(message.Data.ID).update(message.Data);
+				}
+				break;
+			case "Delete":
+				if (Expression.contains(message.Data.ID)) {
+					Expression.instances.remove(message.Data.ID);
+				}
+				break;
+			default:
+				this.showLog("Got an update message of an expression", message);
+				break;
+		}
+		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
+			AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		}
+	}
+
+	get siteCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const site = data !== undefined
+				? data instanceof Site
+					? data as Site
+					: Site.deserialize(data)
+				: undefined;
+			return site !== undefined
+				? { title: site.Title, description: `${site.SubDomain}.${site.PrimaryDomain}`, originalObject: site }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(this.getSearchingPath("site", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => Site.contains(obj.ID) ? convertToCompleterItem(Site.get(obj.ID)) : convertToCompleterItem(Site.update(Site.deserialize(obj)))),
+			convertToCompleterItem
+		);
+	}
+
+	searchSites(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.search(
+			this.getSearchingPath("site", this.configSvc.relatedQuery),
+			request,
+			data => this.processSites(data, onSuccess),
+			error => this.processError("Error occurred while searching sites", error, onError)
+		);
+	}
+
+	searchSitesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false) {
+		return this.searchAsync(
+			this.getSearchingPath("site", this.configSvc.relatedQuery),
+			request,
+			data => this.processSites(data, onSuccess),
+			error => this.processError("Error occurred while searching sites", error, onError),
+			dontProcessPagination,
+			undefined,
+			useXHR
+		);
+	}
+
+	createSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
+			this.getPath("site"),
+			body,
+			data => this.processSites({ Objects: [data] }, onSuccess),
+			error => this.processError("Error occurred while creating new a site", error, onError)
+		);
+	}
+
+	async getSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return Site.contains(id)
+			? AppUtility.invoke(onSuccess)
+			: this.readAsync(
+					this.getPath("site", id),
+					data => this.processSites({ Objects: [data] }, onSuccess),
+					error => this.processError("Error occurred while getting a site", error, onError),
+					undefined,
+					useXHR
+				);
+	}
+
+	updateSiteAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
+			this.getPath("site", body.ID),
+			body,
+			data => this.processSites({ Objects: [data] }, onSuccess),
+			error => this.processError("Error occurred while updating a site", error, onError)
+		);
+	}
+
+	deleteSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
+			this.getPath("site", id),
+			data => {
+				Site.instances.remove(data.ID);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while deleting a site", error, onError)
+		);
+	}
+
+	refreshSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+		return this.refreshAsync(
+			"site",
+			id,
+			data => this.processSites({ Objects: [data] }, onSuccess),
+			onError,
+			headers,
+			useXHR
+		);
+	}
+
+	processSites(data: any, onNext?: (data?: any) => void) {
+		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+			(data.Objects as Array<any>).forEach(siteData => {
+				const site = Site.update(siteData);
+				if (site.Versions === undefined) {
+					this.findVersionsAsync("Site", site.ID);
+				}
+			});
+		}
+		if (onNext !== undefined) {
+			onNext(data);
+		}
+	}
+
+	private processSiteUpdateMessage(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				if (!!message.Data.Title) {
+					Site.update(message.Data);
+				}
+				else if (Site.contains(message.Data.ID)) {
+					Site.get(message.Data.ID).update(message.Data);
+				}
+				break;
+			case "Delete":
+				Site.instances.remove(message.Data.ID);
+				break;
+			default:
+				this.showLog("Got an update message of a site", message);
+				break;
+		}
+		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
+			AppEvents.broadcast(this.name, { Object: "Site", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		}
+	}
+
+	get desktopCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const desktop = data !== undefined
+				? data instanceof Desktop
+					? data as Desktop
+					: Desktop.deserialize(data)
+				: undefined;
+			return desktop !== undefined
+				? { title: desktop.FullTitle, description: desktop.Alias, originalObject: desktop }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(this.getSearchingPath("desktop", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => {
+				const desktop = Desktop.get(obj.ID);
+				return desktop === undefined
+					? convertToCompleterItem(this.fetchDesktop(Desktop.update(obj)))
+					: desktop.childrenIDs === undefined
+						? convertToCompleterItem(this.fetchDesktop(desktop))
+						: convertToCompleterItem(desktop);
+			}),
+			convertToCompleterItem
+		);
+	}
+
+	searchDesktops(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.search(
+			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
+			request,
+			data => this.processDesktops(data, onSuccess),
+			error => this.processError("Error occurred while searching desktops", error, onError)
+		);
+	}
+
+	searchDesktopsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false) {
+		return this.searchAsync(
+			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
+			request,
+			data => this.processDesktops(data, onSuccess),
+			error => this.processError("Error occurred while searching desktops", error, onError),
+			dontProcessPagination,
+			headers,
+			useXHR
+		);
+	}
+
+	createDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
+			this.getPath("desktop"),
+			body,
+			data => {
+				this.updateDesktop(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while creating new a desktop", error, onError)
+		);
+	}
+
+	async getDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		const desktop = Desktop.get(id);
+		return desktop !== undefined && desktop.childrenIDs !== undefined
+			? AppUtility.invoke(onSuccess)
+			: this.readAsync(
+					this.getPath("desktop", id),
+					data => {
+						this.updateDesktop(data);
+						if (onSuccess !== undefined) {
+							onSuccess(data);
+						}
+					},
+					error => this.processError("Error occurred while getting a desktop", error, onError),
+					undefined,
+					useXHR
+				);
+	}
+
+	updateDesktopAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		const parentID = Desktop.contains(body.ID) ? Desktop.get(body.ID).ParentID : undefined;
+		return this.updateAsync(
+			this.getPath("desktop", body.ID),
+			body,
+			data => {
+				this.updateDesktop(data, parentID);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while updating a desktop", error, onError),
+			headers
+		);
+	}
+
+	deleteDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
+		const parentID = Desktop.contains(id) ? Desktop.get(id).ParentID : undefined;
+		return this.deleteAsync(
+			this.getPath("desktop", id),
+			data => {
+				this.deleteDesktop(data.ID, parentID);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while deleting a desktop", error, onError),
+			headers
+		);
+	}
+
+	refreshDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
+		return this.refreshAsync(
+			"desktop",
+			id,
+			data => {
+				this.updateDesktop(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			onError,
+			headers,
+			useXHR
+		);
+	}
+
+	private fetchDesktop(desktop: Desktop) {
+		if (desktop !== undefined && (desktop.childrenIDs === undefined || desktop.portlets === undefined)) {
+			this.getDesktopAsync(desktop.ID, _ => {
+				const obj = Desktop.get(desktop.ID);
+				if (obj.childrenIDs !== undefined && obj.childrenIDs.length > 0) {
+					obj.Children.forEach(c => this.fetchDesktop(c));
+				}
+			});
+		}
+		return desktop;
+	}
+
+	fetchDesktops(systemID?: string, onSuccess?: () => void) {
+		this.searchDesktopsAsync({
+			FilterBy: {
+				And: [
+					{ SystemID: { Equals: systemID ?? this.activeOrganization.ID } },
+					{ ParentID: "IsNull" }
+				]
+			},
+			SortBy: { Title: "Ascending" }
+		}, onSuccess, undefined, true, undefined, true);
+	}
+
+	private updateDesktop(json: any, oldParentID?: string) {
+		if (AppUtility.isObject(json, true)) {
+			const desktop = Desktop.update(json);
+			if (desktop.Versions === undefined) {
+				this.findVersionsAsync("Desktop", desktop.ID);
+			}
+			if (AppUtility.isArray(json.Children, true)) {
+				desktop.childrenIDs = (json.Children as Array<any>).map(o => this.updateDesktop(o)).filter(o => o !== undefined).map(o => o.ID).distinct();
+			}
+			if (AppUtility.isArray(json.Portlets, true)) {
+				desktop.portlets = (json.Portlets as Array<any>).map(p => Portlet.update(p));
+			}
+			let parentDesktop = Desktop.get(oldParentID);
+			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined && parentDesktop.ID !== desktop.ParentID) {
+				parentDesktop.childrenIDs.remove(desktop.ID);
+			}
+			parentDesktop = desktop.Parent;
+			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined && parentDesktop.childrenIDs.indexOf(desktop.ID) < 0) {
+				parentDesktop.childrenIDs.push(desktop.ID);
+				parentDesktop.childrenIDs = parentDesktop.childrenIDs.distinct();
+			}
+			return desktop;
+		}
+		return undefined;
+	}
+
+	private deleteDesktop(id: string, parentID?: string) {
+		if (Desktop.contains(id)) {
+			const parentDesktop = Desktop.get(parentID);
+			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined) {
+				parentDesktop.childrenIDs.remove(id);
+			}
+			Desktop.instances.toArray(desktop => desktop.ParentID === id).forEach(desktop => this.deleteDesktop(desktop.ID));
+			Desktop.instances.remove(id);
+		}
+	}
+
+	private processDesktops(data: any, onNext?: (data?: any) => void) {
+		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+			(data.Objects as Array<any>).forEach(obj => {
+				const fetch = Desktop.contains(obj.ID);
+				const desktop = Desktop.update(obj);
+				if (desktop.Versions === undefined) {
+					this.findVersionsAsync("Desktop", desktop.ID);
+				}
+				if (fetch || desktop.childrenIDs === undefined) {
+					this.fetchDesktop(desktop);
+				}
+			});
+		}
+		if (onNext !== undefined) {
+			onNext(data);
+		}
+	}
+
+	private processDesktopUpdateMessage(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				if (!!message.Data.Title) {
+					this.updateDesktop(message.Data);
+				}
+				else if (Desktop.contains(message.Data.ID)) {
+					Desktop.get(message.Data.ID).update(message.Data);
+				}
+				break;
+			case "Delete":
+				this.deleteDesktop(message.Data.ID, message.Data.ParentID);
+				break;
+			default:
+				this.showLog("Got an update message of a desktop", message);
+				break;
+		}
+		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
+			AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
+			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
+				AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+			}
+		}
+	}
+
+	get portletCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const portlet = data !== undefined
+				? data instanceof Portlet
+					? data as Portlet
+					: Portlet.deserialize(data)
+				: undefined;
+			return portlet !== undefined
+				? { title: portlet.Title, originalObject: portlet }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(this.getSearchingPath("portlet", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => Portlet.contains(obj.ID) ? convertToCompleterItem(Portlet.get(obj.ID)) : convertToCompleterItem(Portlet.update(Portlet.deserialize(obj)))),
+			convertToCompleterItem
+		);
+	}
+
+	searchPortlets(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.search(
+			this.getSearchingPath("portlet", this.configSvc.relatedQuery),
+			request,
+			data => this.processPortlets(data, onSuccess),
+			error => this.processError("Error occurred while searching portlets", error, onError)
+		);
+	}
+
+	searchPortletsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false) {
+		return this.searchAsync(
+			this.getSearchingPath("portlet", this.configSvc.relatedQuery),
+			request,
+			data => this.processPortlets(data, onSuccess),
+			error => this.processError("Error occurred while searching portlets", error, onError),
+			dontProcessPagination,
+			undefined,
+			useXHR
+		);
+	}
+
+	createPortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
+			this.getPath("portlet"),
+			body,
+			data => this.processPortlets({ Objects: [data] }, onSuccess),
+			error => this.processError("Error occurred while creating new a portlet", error, onError)
+		);
+	}
+
+	async getPortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return Portlet.contains(id) && Portlet.get(id).otherDesktops !== undefined
+			? AppUtility.invoke(onSuccess)
+			: this.readAsync(
+					this.getPath("portlet", id),
+					data => this.processPortlets({ Objects: [data] }, onSuccess),
+					error => this.processError("Error occurred while getting a portlet", error, onError),
+					undefined,
+					useXHR
+				);
+	}
+
+	updatePortletAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+		return this.updateAsync(
+			this.getPath("portlet", body.ID),
+			body,
+			data => this.processPortlets({ Objects: [data] }, onSuccess),
+			error => this.processError("Error occurred while updating a portlet", error, onError),
+			headers,
+			useXHR
+		);
+	}
+
+	deletePortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
+			this.getPath("portlet", id),
+			data => this.processPortlets({ Objects: [data] }, onSuccess),
+			error => this.processError("Error occurred while deleting a portlet", error, onError)
+		);
+	}
+
+	refreshPortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+		return this.refreshAsync(
+			"portlet",
+			id,
+			data => this.processPortlets({ Objects: [data] }, onSuccess),
+			onError,
+			headers,
+			useXHR
+		);
+	}
+
+	private processPortlets(data: any, onNext?: (data?: any) => void) {
+		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+			(data.Objects as Array<any>).forEach(obj => {
+				const portlet =  Portlet.update(obj);
+				if (portlet.Versions === undefined) {
+					this.findVersionsAsync("Portlet", portlet.ID);
+				}
+			});
+		}
+	}
+
+	private processPortletUpdateMessage(message: AppMessage) {
+		let desktop: Desktop;
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				if (!!message.Data.Title) {
+					const portlet = Portlet.update(message.Data);
+					desktop = Desktop.get(message.Data.DesktopID);
+					if (desktop !== undefined && desktop.portlets !== undefined) {
+						desktop.portlets.update(portlet, desktop.portlets.findIndex(p => p.ID === portlet.ID));
+					}
+				}
+				else if (Portlet.contains(message.Data.ID)) {
+					Portlet.get(message.Data.ID).update(message.Data);
+				}
+				break;
+			case "Delete":
+				Portlet.instances.remove(message.Data.ID);
+				desktop = Desktop.get(message.Data.DesktopID);
+				if (desktop !== undefined && desktop.portlets !== undefined) {
+					desktop.portlets.removeAt(desktop.portlets.findIndex(p => p.ID === message.Data.ID));
+				}
+				break;
+			default:
+				this.showLog(`Got an update message of a portlet - Portlet ID: ${message.Data.ID} - Desktop ID: ${message.Data.DesktopID}`, message);
+				break;
+		}
+		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
+			AppEvents.broadcast(this.name, { Object: "Portlet", Type: `${message.Type.Event}d`, ID: message.Data.ID, DesktopID: message.Data.DesktopID });
+		}
+	}
+
+	get taskCompleterDataSource() {
+		const convertToCompleterItem = (data: any) => {
+			const task = data !== undefined
+				? data instanceof SchedulingTask
+					? data as SchedulingTask
+					: SchedulingTask.deserialize(data)
+				: undefined;
+			return task !== undefined
+				? { title: task.Title, description: task.Description, originalObject: task }
+				: undefined;
+		};
+		return new AppCustomCompleter(
+			term => AppUtility.format(this.getSearchingPath("task", this.configSvc.relatedQuery), { request: AppCrypto.jsonEncode(AppPagination.buildRequest({ Query: term })) }),
+			data => (data.Objects as Array<any> || []).map(obj => SchedulingTask.contains(obj.ID) ? convertToCompleterItem(SchedulingTask.get(obj.ID)) : convertToCompleterItem(SchedulingTask.update(SchedulingTask.deserialize(obj)))),
+			convertToCompleterItem
+		);
+	}
+
+	searchSchedulingTasks(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.search(
+			this.getSearchingPath("task", this.configSvc.relatedQuery),
+			request,
+			data => this.processSchedulingTasks(data, onSuccess),
+			error => this.processError("Error occurred while searching tasks", error, onError)
+		);
+	}
+
+	searchSchedulingTasksAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination?: boolean, useXHR: boolean = false, headers?: { [header: string]: string }) {
+		return this.searchAsync(
+			this.getSearchingPath("task", this.configSvc.relatedQuery),
+			request,
+			data => this.processSchedulingTasks(data, onSuccess),
+			error => this.processError("Error occurred while searching tasks", error, onError),
+			dontProcessPagination,
+			headers,
+			useXHR
+		);
+	}
+
+	createSchedulingTaskAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
+			this.getPath("task"),
+			body,
+			data => this.processSchedulingTasks({ Objects: [data] }, onSuccess),
+			error => this.processError("Error occurred while creating new a task", error, onError)
+		);
+	}
+
+	getSchedulingTask(id: string) {
+		const task = SchedulingTask.get(id);
+		if (task === undefined && AppUtility.isNotEmpty(id)) {
+			this.getSchedulingTaskAsync(id);
+		}
+		return task;
+	}
+
+	async getSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return SchedulingTask.contains(id)
+			? AppUtility.invoke(onSuccess)
+			: this.readAsync(
+				this.getPath("task", id),
+				data => this.processSchedulingTasks({ Objects: [data] }, onSuccess),
+				error => this.processError("Error occurred while getting a task", error, onError),
+				undefined,
+				useXHR
+			);
+	}
+
+	updateSchedulingTaskAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.updateAsync(
+			this.getPath("task", body.ID),
+			body,
+			data => this.processSchedulingTasks({ Objects: [data] }, onSuccess),
+			error => this.processError("Error occurred while updating a task", error, onError)
+		);
+	}
+
+	deleteSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
+			this.getPath("task", id),
+			data => {
+				SchedulingTask.instances.remove(data.ID);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while deleting a task", error, onError)
+		);
+	}
+
+	async fetchSchedulingTasksAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return this.readAsync(
+			this.getPath("task", "fetch"),
+			data => {
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while getting a task", error, onError),
+			{ "x-system-id": this.activeOrganization.ID },
+			useXHR
+		);
+	}
+
+	async runSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return this.readAsync(
+			this.getPath("task", "run", "x-object-id=" + id),
+			data => {
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while running a task", error, onError),
+			{ "x-system-id": this.activeOrganization.ID },
+			useXHR
+		);
+	}
+
+	refreshSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+		return this.refreshAsync(
+			"task",
+			id,
+			data => this.processSchedulingTasks({ Objects: [data] }, onSuccess),
+			onError,
+			headers,
+			useXHR
+		);
+	}
+
+	private processSchedulingTasks(data: any, onNext?: (data?: any) => void) {
+		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+			(data.Objects as Array<any>).forEach(obj => {
+				const task = SchedulingTask.update(obj);
+				if (task.Persistance && task.Versions === undefined) {
+					this.findVersionsAsync("Task", task.ID);
+				}
+			});
+		}
+	}
+
+	private processSchedulingTaskUpdateMessage(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				if (!!message.Data.Title) {
+					const task = SchedulingTask.update(message.Data);
+					if (task.Persistance && task.Versions === undefined) {
+						this.findVersionsAsync("Task", task.ID);
+					}
+				}
+				else if (SchedulingTask.contains(message.Data.ID)) {
+					SchedulingTask.get(message.Data.ID).update(message.Data);
+				}
+				break;
+			case "Delete":
+				SchedulingTask.instances.remove(message.Data.ID);
+				break;
+			default:
+				this.showLog("Got an update message of a task", message);
+				break;
+		}
+		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
+			AppEvents.broadcast(this.name, { Object: "SchedulingTask", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+		}
 	}
 
 }

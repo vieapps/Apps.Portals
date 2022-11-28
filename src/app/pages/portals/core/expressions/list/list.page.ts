@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { PlatformUtility } from "@app/components/app.utility.platform";
@@ -70,6 +71,7 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 	labels = {
 		edit: "Update this expression",
 		advancedEdit: "Update this expression in advanced mode",
+		versions: "Versions",
 		refresh: "Refresh",
 		cache: "Clear cache",
 		filter: "Quick filter",
@@ -154,6 +156,7 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		this.labels = {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
 			advancedEdit: await this.configSvc.getResourceAsync("portals.expressions.update.buttons.edit"),
+			versions: await this.configSvc.getResourceAsync("versions.view"),
 			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			cache: await this.configSvc.getResourceAsync("portals.common.cache.title"),
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
@@ -344,6 +347,10 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 
 	clearCache(event: Event, expression: Expression) {
 		this.do(() => this.portalsCoreSvc.clearCacheAsync("expression", expression.ID, () => this.appFormsSvc.showToastAsync("The expression's cache was removed")), event);
+	}
+
+	viewVersions(event: Event, expression: Expression) {
+		this.do(() => this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(expression.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "Expression", id: expression.ID })), event);
 	}
 
 	exportToExcel() {

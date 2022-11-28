@@ -23,7 +23,8 @@ import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { Account } from "@app/models/account";
 import { Privilege } from "@app/models/privileges";
-import { Base as BaseService, ServiceLog } from "@app/services/base.service";
+import { ServiceLog } from "@app/models/base";
+import { Base as BaseService } from "@app/services/base.service";
 
 @Injectable()
 export class ConfigurationService extends BaseService {

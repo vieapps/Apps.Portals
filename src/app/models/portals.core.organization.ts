@@ -82,10 +82,7 @@ export class Organization extends CoreBaseModel {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, organization?: Organization) {
-		organization = organization || new Organization();
-		organization.copy(json);
-		organization.ansiTitle = AppUtility.toANSI(organization.Title).toLowerCase();
-		return organization;
+		return (organization || new Organization()).copy(json);
 	}
 
 	/** Gets by identity */

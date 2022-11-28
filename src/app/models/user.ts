@@ -52,17 +52,15 @@ export class UserProfileBase extends BaseModel {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, profile?: UserProfileBase) {
-		profile = profile || new UserProfileBase();
-		profile.copy(json, data => {
-			profile.Status = data.Status || "Activated";
-			profile.Mobile = AppUtility.isNotEmpty(profile.Mobile) ? profile.Mobile : undefined;
+		return (profile || new UserProfileBase()).copy(json, (data, instance) => {
+			instance.Status = data.Status || "Activated";
+			instance.Mobile = AppUtility.isNotEmpty(instance.Mobile) ? instance.Mobile : undefined;
 			if (AppUtility.isNotEmpty(data.Options)) {
-				profile.Options = AppUtility.parse(data.Options);
+				instance.Options = AppUtility.parse(data.Options);
 			}
-			delete profile["Privileges"];
-			delete profile["OriginalPrivileges"];
+			delete instance["Privileges"];
+			delete instance["OriginalPrivileges"];
 		});
-		return profile;
 	}
 
 	/** Gets by identity */
@@ -104,20 +102,20 @@ export class UserProfileBase extends BaseModel {
 			+ this.County + ", " + this.Province + ", " + this.Country : "");
 	}
 
-	copy(source: any, onCompleted?: (data: any) => void) {
-		super.copy(source, data => {
+	copy(source: any, onCompleted?: (data: any, instance: UserProfileBase) => void) {
+		return super.copy(source, data => {
 			if (AppUtility.isNotEmpty(this.BirthDay)) {
 				this.BirthDay = this.BirthDay.replace(/--/g, "01").replace(/\//g, "-");
 			}
 			this.ansiTitle = AppUtility.toANSI(this.Name + " " + this.fullAddress + " " + this.Email + " " + this.Mobile).toLowerCase();
 			if (onCompleted !== undefined) {
-				onCompleted(data);
+				onCompleted(data, this);
 			}
 		});
 	}
 
 	getEmail(hideEmail: boolean = true) {
-		return hideEmail ? `${this.Email.substr(0, this.Email.indexOf("@") - 2)}**@**${this.Email.substr(this.Email.indexOf("@") + 3)}` : this.Email;
+		return hideEmail ? `${this.Email.substring(0, this.Email.indexOf("@") - 2)}**@**${this.Email.substring(this.Email.indexOf("@") + 3)}` : this.Email;
 	}
 
 }
@@ -174,14 +172,14 @@ export class UserProfile extends UserProfileBase {
 		return this.toArray(objects).toList();
 	}
 
-	copy(source: any, onCompleted?: (data: any) => void) {
-		super.copy(source, data => {
+	copy(source: any, onCompleted?: (data: any, instance: UserProfile) => void) {
+		return super.copy(source, data => {
 			this.RatingPoints = new Dictionary<string, RatingPoint>();
 			if (AppUtility.isArray(data.RatingPoints, true)) {
-				(data.RatingPoints as Array<any>).forEach(obj => this.RatingPoints.set(obj.Type, RatingPoint.deserialize(obj)));
+				(data.RatingPoints as Array<any>).forEach(ratingPoint => this.RatingPoints.set(ratingPoint.Type, RatingPoint.deserialize(ratingPoint)));
 			}
 			if (onCompleted !== undefined) {
-				onCompleted(data);
+				onCompleted(data, this);
 			}
 		});
 	}

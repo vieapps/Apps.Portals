@@ -38,10 +38,7 @@ export class Role extends CoreBaseModel implements NestedObject {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, role?: Role) {
-		role = role || new Role();
-		role.copy(json);
-		role.ansiTitle = AppUtility.toANSI(role.Title).toLowerCase();
-		return role;
+		return (role || new Role()).copy(json);
 	}
 
 	/** Gets by identity */

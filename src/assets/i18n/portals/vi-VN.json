@@ -82,29 +82,42 @@
 						"description": "Nếu được chỉ định (có ít nhất 01 địa chỉ email, có đề và nội dung), thông báo qua emails này sẽ được gửi theo cách thức bổ sung thêm (so với thông báo qua emails mặc định) khi trạng thái là 'Xuất bản - Published'"
 					},
 					"webhooks": {
-						"label": "Thiết đặt gửi thông báo qua Web Hooks",
+						"label": "Thiết đặt gửi thông báo qua tín hiệu web-hook",
 						"inheritFromParent": "Sử dụng thiết đặt từ cấp trên để gửi thông báo qua webhooks",
 						"endpointURLs": {
-							"label": "Địa chỉ nhận web-hooks",
-							"placeholder": "vd: https://apis.vieapps.net/webhooks",
-							"description": "Các địa chỉ web nhận thông báo webhooks, mỗi một địa chỉ trên một dòng, phải bắt đầu bằng http:// hoặc https://"
+							"label": "Địa chỉ nhận tín hiệu web-hook",
+							"placeholder": "vd: https://apis.vieapps.net/webhooks/portals/",
+							"description": "Các địa chỉ web nhận thông báo qua tín hiệu web-hook, mỗi một địa chỉ trên một dòng, phải bắt đầu bằng http:// hoặc https://"
 						},
 						"signKey": {
-							"description": "Chỉ định cụm từ tạo khoá để ký webhooks.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng giá trị mặc định theo thứ tự ưu tiên:<br/>- Mã định danh của app đang tương tác<br/>- Cụm khoá mặc định của hệ thống"
+							"description": "Chỉ định cụm từ để khởi tạo khoá cho chữ ký HMAC của tín hiệu web-hook.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng giá trị mặc định theo thứ tự ưu tiên:<br/>- Mã định danh của app đang tương tác<br/>- Mã định danh của đơn vị - tổ chức<br/>- Cụm khoá mặc định của hệ thống"
 						},
 						"signatureName": {
-							"description": "Chỉ định tên của tham số chữ ký trong webhooks.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng tên của phương pháp, vd: HmacSha256Signature"
+							"description": "Chỉ định tên của tham số chữ ký trong tín hiệu web-hook.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng tên của phương pháp, vd: HmacSha256Signature"
 						},
-						"generateIdentity": {
-							"label": "Tạo lại mã định danh của dữ liệu (nếu có)"
-						},
-						"additionalQuery": {
+						"query": {
 							"label": "Thông tin bổ sung cho query-string",
 							"description": "Nhập thông tin bổ sung cho query-string dạng JSON.<br/>Ví dụ:<br/>{<br/>&nbsp;&nbsp;\"webhook.query\":\"this is web hook query\"<br/>}"
 						},
-						"additionalHeader": {
+						"header": {
 							"label": "Thông tin bổ sung cho header",
 							"description": "Nhập thông tin bổ sung cho header dạng JSON.<br/>Ví dụ:<br/>{<br/>&nbsp;&nbsp;\"webhook.header\":\"this is web hook header\"<br/>}"
+						},
+						"encryptionKey": {
+							"label": "Chuỗi hexa chứa khoá mã hoá dữ liệu",
+							"description": "Chỉ định khoá mã hoá dữ liệu bằng phương pháp mã hoá AES, chuỗi hexa phải mô tả một khoá có độ dài <b>256 bits</b>"
+						},
+						"encryptionIV": {
+							"label": "Chuỗi hexa chứa khoá khởi tạo (initialize vector) mã hoá dữ liệu",
+							"description": "Chỉ định khoá khởi tạo mã hoá dữ liệu bằng phương pháp mã hoá AES, chuỗi hexa phải mô tả một khoá có độ dài <b>128 bits</b>"
+						},
+						"generateIdentity": {
+							"label": "Tạo lại mã định danh (ID) của dữ liệu"
+						},
+						"prepareBodyScript": {
+							"label": "Mã Javascript để tính toán lại BODY cho tín hiệu web-hook",
+							"placeholder": "ex: this.Title += ' (copied)'; return JSON.stringify(this);",
+							"description": "Nếu được cung cấp, hệ thống sẽ thực thi đoạn mã Javascript trên để tính toán lại BOBY cho tín hiệu web-hook, tham số <b>this</b> là đối tượng chứa BODY của tín hiệu web-hook sẽ gửi đi và có 2 tham số có thể sử dụng được là '<b>__request</b>' chứa yêu cầu gửi tín hiệu web-hook (__request.Body là đối tượng chứa BODY nguyên bản), '<b>__params</b>' chứa thông tin về đơn vị (__params.Organization), module nghiệp vụ (__params.Module) và kiểu dữ liệu nghiệp vụ (__params.ContentType)."
 						}
 					}
 				},
@@ -155,22 +168,26 @@
 					}
 				},
 				"webhooks": {
-					"label": "Thiết đặt nhận thông tin qua Web Hooks",
+					"label": "Thiết đặt nhận thông tin qua tín hiệu web-hook",
 					"url": {
-						"label": "URL để nhận thông tin qua Web Hooks",
-						"description": "URL ở trên được sử dụng đối với các hệ thống bên ngoài nhằm truyền thông tin vào hệ thống qua Web Hook (truyền qua HTTP bằng phương thức POST)"
+						"label": "URL để nhận thông tin qua tín hiệu web-hook",
+						"description": "URL ở trên được các hệ thống bên ngoài sử dụng nhằm truyền thông tin vào hệ thống qua tín hiệu web-hook (truyền tài liệu JSON qua HTTP bằng phương thức POST).<br/>Nguồn gửi tín hiệu web-hook buộc phải cung cấp các thông số sau (chứa trong header hoặc query-string):<ul><li>Đối với dữ liệu hệ thống phải cung cấp tên của đối tượng: <b>x-webhook-object</b></li><li>Đối với dữ liệu nghiệp vụ phải cung cấp mã định danh của kiểu dữ liệu nghiệp vụ: <b>x-webhook-entity</b></li></ul>",
+						"descriptionOfContentType": "URL ở trên được các hệ thống bên ngoài sử dụng nhằm truyền thông tin vào hệ thống qua tín hiệu web-hook (truyền tài liệu JSON qua HTTP bằng phương thức POST) đối với các dữ liệu thuộc kiểu dữ liệu nghiệp vụ này."
 					},
 					"signAlgorithm": {
 						"label": "Phương pháp ký HMAC",
-						"description": "Chỉ định phương pháp ký từ nội dung message bằng khoá được tạo từ cụm từ tạo khoá chữ ký"
+						"description": "Chỉ định phương pháp ký từ nội dung tín hiệu web-hook nhằm đảm bảo tính hợp lệ"
 					},
 					"signKey": {
-						"label": "Cụm từ tạo khoá để chữ ký",
-						"description": "Chỉ định cụm từ tạo khoá để tạo chữ ký kiểm tra tính hợp lệ của webhooks.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng giá trị mặc định theo thứ tự ưu tiên:<br/>- Mã định danh của app đang tương tác<br/>- Cụm khoá mặc định của hệ thống"
+						"label": "Cụm từ để khởi tạo khoá cho chữ ký HMAC",
+						"description": "Chỉ định cụm từ để khởi tạo khoá cho chữ ký HMAC nhằm đảm bảo tính hợp lệ của tín hiệu web-hook.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng giá trị mặc định theo thứ tự ưu tiên:<br/>- Mã định danh của app đang tương tác<br/>- Mã định danh của đơn vị - tổ chức<br/>- Cụm khoá mặc định của hệ thống"
+					},
+					"signKeyIsHex": {
+						"label": "Cụm từ khởi tạo khoá là chuỗi hexa (bật để sử dụng trực tiếp khoá trong chuỗi hexa, tắt để khởi tạo khoá từ cụm từ)"
 					},
 					"signatureName": {
 						"label": "Tên của tham số chữ ký",
-						"description": "Chỉ định tên của tham số chữ ký để kiểm tra tính hợp lệ của webhooks.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng tên của phương pháp, vd: HmacSha256Signature"
+						"description": "Chỉ định tên của tham số chữ ký để kiểm tra tính hợp lệ của tín hiệu web-hook.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng tên của phương pháp, vd: HmacSha256Signature"
 					},
 					"signatureAsHex": {
 						"label": "Chữ ký dạng hex (tắt nếu muốn chữ ký dạng base64)"
@@ -178,13 +195,33 @@
 					"signatureInQuery": {
 						"label": "Đặt chữ ký trong query-string (tắt nếu muốn đặt chữ ký trong header)"
 					},
-					"additionalQuery": {
+					"secretToken": {
+						"label": "Khoá bí mật",
+						"description": "Chỉ định khoá bí mật để có thể xác thực và đảm bảo toàn vẹn dữ liệu theo cách thức khác (thay thế cho phương pháp kiểm tra qua chữ ký - tuy nhiên kém an toàn hơn).<br/>Các tín hiệu web-hook gửi đến phải chứa khoá bí mật này trong tham số có tên là <b>x-webhook-secret-token</b>, tham số này phải được đặt tại header hoặc query-string."
+					},
+					"query": {
 						"label": "Tham số phải có trong query-string",
 						"description": "Chỉ định các tham số buộc phải có trong query-string đối với thông tin truyền vào (dạng JSON).<br/>Ví dụ:<br/>{<br/>&nbsp;&nbsp;\"webhook.query\":\"this is web hook query\"<br/>}"
 					},
-					"additionalHeader": {
+					"header": {
 						"label": "Tham số phải có trong header",
 						"description": "Chỉ định các tham số buộc phải có trong header đối với thông tin truyền vào (dạng JSON).<br/>Ví dụ:<br/>{<br/>&nbsp;&nbsp;\"webhook.header\":\"this is web hook header\"<br/>}"
+					},
+					"encryptionKey": {
+						"label": "Chuỗi hexa chứa khoá giải mã dữ liệu",
+						"description": "Chỉ định khoá giải mã dữ liệu bằng phương pháp mã hoá AES, chuỗi hexa phải mô tả một khoá có độ dài <b>256 bits</b>"
+					},
+					"encryptionIV": {
+						"label": "Chuỗi hexa chứa khoá khởi tạo (initialize vector) giải mã dữ liệu",
+						"description": "Chỉ định khoá khởi tạo giải mã dữ liệu bằng phương pháp mã hoá AES, chuỗi hexa phải mô tả một khoá có độ dài <b>128 bits</b>"
+					},
+					"generateIdentity": {
+						"label": "Tạo lại mã định danh (ID) của dữ liệu (nếu có)"
+					},
+					"prepareBodyScript": {
+						"label": "Mã Javascript để tính toán lại BODY từ tín hiệu web-hook",
+						"placeholder": "ex: this.Title += ' (copied)'; this.Alias = null; return JSON.stringify(this);",
+						"description": "Nếu được cung cấp, hệ thống sẽ thực thi đoạn mã Javascript trên để tính toán lại BOBY từ tín hiệu web-hook, tham số <b>this</b> là đối tượng chứa BODY của tín hiệu web-hook sẽ được xử lý và có 2 tham số có thể sử dụng được là '<b>__request</b>' chứa yêu cầu xử lý tín hiệu web-hook (__request.Body là đối tượng chứa BODY nguyên bản), '<b>__params</b>' chứa thông tin về đơn vị (__params.Organization), module nghiệp vụ (__params.Module) và kiểu dữ liệu nghiệp vụ (__params.ContentType)."
 					}
 				},
 				"UISettings": {
@@ -479,9 +516,9 @@
 					"privileges": "Quyền truy cập",
 					"notifications": "Thông báo",
 					"instructions": "Thông điệp",
-					"socials": "Mạng XH & Bổ sung",
 					"urls": "URLs",
-					"emails": "Emails"
+					"emails": "Emails & Web-Hook",
+					"socials": "Mạng XH & Bổ sung"
 				},
 				"messages": {
 					"confirm": {
@@ -1299,6 +1336,18 @@
 						"description": "Nhập các mã định danh của FB Pixel, phân cách bằng dấu chấm phẩy (;) để đếm dạng page-view (web) đối với các nội dung của kiểu dữ liệu nghiệp vụ"
 					}
 				},
+				"WebHookNotifications": {
+					"label": "Thiết đặt gửi tín hiệu web-hook",
+					"description": "Thiết đặt cách gửi tín hiệu web-hook trực tiếp với tất cả các sự kiện xảy ra đối với toàn bộ các đối tượng của kiểu dữ liệu nghiệp vụ.<br/>Các tín hiệu web-hook sẽ được gửi đi tự động và độc lập với thiết đặt tại phần thông báo."
+				},
+				"WebHookAdapters": {
+					"label": "Thiết đặt bộ ráp nối nhận tín nhiệu web-hook",
+					"description": "Thiết đặt các bộ ráp nối nhận tín hiệu web-hook được gửi từ bên ngoài vào từ nhiều nguồn khác nhau đối với kiểu dữ liệu nghiệp vụ này.",
+					"Name": {
+						"label": "Tên của bộ ráp nối nhận tín hiệu web-hook",
+						"description": "Tên phải là duy nhất, bộ ráp nối có tên là <b>default</b> sẽ được sử dụng trong tình huống một bộ ráp nối được chỉ định theo tên không được tìm thấy."
+					}
+				},
 				"ExtendedPropertyDefinitions": {
 					"label": "Thuộc tính mở rộng",
 					"description": "Mã JSON định nghĩa các thuộc tính mở rộng"
@@ -1313,8 +1362,7 @@
 				},
 				"SubTitleFormula": {
 					"label": "Biểu thức tính toán tiêu đề phụ",
-					"placeholder": "ex: @script(\"abc xyz \" + this.Title)",
-					"description": "Biểu thức tính toán bắt đầu với ký tự '@', có thể sử dụng @script/@javascript/@js hoặc @[...] cho biểu thức tính toán với mã Javascript đi kèm đối tượng 'this', hoặc sử dụng các hàm tính toán được định nghĩa trước, vd: @toString, @object(Name), ..."
+					"description": "Biểu thức tính toán có thể sử dụng bằng một trong 2 cách sau:<ul><li>Sử dụng biểu thức: bắt đầu với ký tự '@', có thể sử dụng @script/@javascript/@js hoặc @[...] cho biểu thức tính toán với mã Javascript đi kèm đối tượng 'this' với 2 tham số có thể sử dụng là '__request' và '__params', ví dụ: @[return \"abc xyz \" + this.Title;]</li><li>Sử dụng mẫu {{ }} với các hàm tính toán được định nghĩa trước như @current/@object, @request, @params, @toString, ..., ví dụ: Đây là tiêu đề phụ của {{@object(Title)}}"
 				}
 			},
 			"list": {
@@ -1331,11 +1379,12 @@
 			},
 			"update": {
 				"segments": {
-					"basic": "Thông tin cơ bản",
+					"basic": "Cơ bản",
 					"privileges": "Quyền truy cập",
-					"notifications": "Thông báo",
-					"emails": "Mã theo dõi & Emails",
-					"extend": "Tuỳ chỉnh dữ liệu mở rộng"
+					"notifications": "Thông báo & Mã theo dõi",
+					"webhookNotifications": "Gửi web-hook",
+					"webhookAdapters": "Nhận web-hook",
+					"extend": "Tuỳ chỉnh"
 				},
 				"messages": {
 					"confirm": {

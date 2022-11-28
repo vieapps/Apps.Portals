@@ -1,0 +1,36 @@
+<ion-header>
+	<ion-toolbar [color]="color">
+		<ion-buttons slot="start">
+			<ion-back-button text=""></ion-back-button>
+		</ion-buttons>
+		<ion-title>
+			{{ title }}
+		</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content [color]="color">
+	<ion-list class="ion-padding-end">
+		<ion-item *ngFor="let version of versions; trackBy: track" [color]="color" detail="false">
+			<ion-buttons slot="end">
+				<ion-button fill="clear" color="primary" (click)="rollbackAsync(version)">
+					<ion-icon name="arrow-undo-outline"></ion-icon>
+				</ion-button>
+			</ion-buttons>
+			<ion-label>
+				<label class="ion-float-end ion-padding-start">
+					{{ version.Created | date:'h:mm:ss a' }}
+					<br/>
+					{{ version.Created | date:'d/M/y' }}
+				</label>
+				<span>
+					<span>
+						#{{ version.VersionNumber }} - by {{ version.Creator }}
+					</span>
+					<br/>
+					{{ version.Title }}
+				</span>
+			</ion-label>
+		</ion-item>
+	</ion-list>
+</ion-content>

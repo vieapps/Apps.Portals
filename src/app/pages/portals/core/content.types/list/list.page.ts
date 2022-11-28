@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { PlatformUtility } from "@app/components/app.utility.platform";
@@ -72,6 +73,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		expressions: "Expressions",
 		filter: "Quick filter",
 		cancel: "Cancel",
+		versions: "Versions",
 		cache: "Clear cache",
 		move: "Move content-type and contents to other module"
 	};
@@ -168,6 +170,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 			expressions: await this.configSvc.getResourceAsync("portals.expressions.title.list", { info: "" }),
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
+			versions: await this.configSvc.getResourceAsync("versions.view"),
 			cache: await this.configSvc.getResourceAsync("portals.common.cache.title"),
 			move: await this.configSvc.getResourceAsync("portals.contenttypes.list.move")
 		};
@@ -378,6 +381,10 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 				return { "x-module-id": data.moduleID };
 			}
 		).then(() => this.trackAsync(this.title.track, "Move")), event);
+	}
+
+	viewVersions(event: Event, contentType: ContentType) {
+		this.do(() => this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(contentType.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "ContentType", id: contentType.ID })), event);
 	}
 
 	exportToExcel() {

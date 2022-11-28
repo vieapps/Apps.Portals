@@ -44,10 +44,7 @@ export class Expression extends CoreBaseModel {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, expression?: Expression) {
-		expression = expression || new Expression();
-		expression.copy(json);
-		expression.ansiTitle = AppUtility.toANSI(expression.Title).toLowerCase();
-		return expression;
+		return (expression || new Expression()).copy(json);
 	}
 
 	/** Gets by identity */

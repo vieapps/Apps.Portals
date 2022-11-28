@@ -44,10 +44,7 @@ export class Module extends CoreBaseModel {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, module?: Module) {
-		module = module || new Module();
-		module.copy(json);
-		module.ansiTitle = AppUtility.toANSI(module.Title).toLowerCase();
-		return module;
+		return (module || new Module()).copy(json);
 	}
 
 	/** Gets by identity */
