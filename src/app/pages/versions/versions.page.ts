@@ -47,9 +47,9 @@ export class VersionsPage implements OnInit {
 	}
 
 	private async initializeAsync() {
-		const account = this.configSvc.getAccount();
 		this.id = this.configSvc.requestParams["id"];
 		this.name = this.configSvc.requestParams["name"];
+		const account = this.configSvc.getAccount();
 		let object: BaseModel;
 		let gotRights = this.authSvc.isSystemAdministrator(account);
 		switch (this.name) {
@@ -106,7 +106,7 @@ export class VersionsPage implements OnInit {
 			case "Content":
 			case "CMS.Content":
 				object = Content.get(this.id) || new Content(this.portalsCoreSvc.activeOrganization.ID);
-				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Content).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Category", (object as Content).category.Privileges);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Content).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Category", ((object as Content).category || new Category(this.portalsCoreSvc.activeOrganization.ID)).Privileges);
 				if (!gotRights && ((object as Content).Status === "Draft" || (object as Content).Status === "Pending")) {
 					gotRights = (object as Content).CreatedID === account.id;
 				}
@@ -114,7 +114,7 @@ export class VersionsPage implements OnInit {
 			case "Item":
 			case "CMS.Item":
 				object = Item.get(this.id) || new Item(this.portalsCoreSvc.activeOrganization.ID);
-				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Item).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Item", (object as Item).contentType.Privileges);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Item).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Item", ((object as Item).contentType || new ContentType(this.portalsCoreSvc.activeOrganization.ID)).Privileges);
 				if (!gotRights && ((object as Item).Status === "Draft" || (object as Item).Status === "Pending")) {
 					gotRights = (object as Item).CreatedID === account.id;
 				}
@@ -122,7 +122,7 @@ export class VersionsPage implements OnInit {
 			case "Link":
 			case "CMS.Link":
 				object = Link.get(this.id) || new Link(this.portalsCoreSvc.activeOrganization.ID);
-				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Link).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Link", (object as Link).contentType.Privileges);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Link).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Link", ((object as Link).contentType || new ContentType(this.portalsCoreSvc.activeOrganization.ID)).Privileges);
 				if (!gotRights && ((object as Link).Status === "Draft" || (object as Link).Status === "Pending")) {
 					gotRights = (object as Link).CreatedID === account.id;
 				}
@@ -130,12 +130,12 @@ export class VersionsPage implements OnInit {
 			case "Form":
 			case "CMS.Form":
 				object = Form.get(this.id) || new Form(this.portalsCoreSvc.activeOrganization.ID);
-				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Form).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Form", (object as Form).contentType.Privileges);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Form).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Form", ((object as Form).contentType || new ContentType(this.portalsCoreSvc.activeOrganization.ID)).Privileges);
 				break;
 			case "Crawler":
 			case "CMS.Crawler":
 				object = Crawler.get(this.id) || new Crawler(this.portalsCoreSvc.activeOrganization.ID);
-				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Crawler).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Crawler", (object as Crawler).contentType.Privileges);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Crawler).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Crawler", ((object as Crawler).contentType || new ContentType(this.portalsCoreSvc.activeOrganization.ID)).Privileges);
 				break;
 		}
 		if (gotRights) {
@@ -144,9 +144,7 @@ export class VersionsPage implements OnInit {
 				if (verison["Creator"] === undefined) {
 					const profile = UserProfile.get(verison.CreatedID);
 					if (profile === undefined) {
-						this.usersSvc.getProfileAsync(verison.CreatedID, () => {
-							verison["Creator"] = UserProfile.contains(verison.CreatedID) ? UserProfile.get(verison.CreatedID).Name : "Unknown";
-						});
+						this.usersSvc.getProfileAsync(verison.CreatedID, () => verison["Creator"] = UserProfile.contains(verison.CreatedID) ? UserProfile.get(verison.CreatedID).Name : "Unknown");
 					}
 					else {
 						verison["Creator"] = profile.Name;
