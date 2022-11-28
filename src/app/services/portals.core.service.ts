@@ -3251,6 +3251,9 @@ export class PortalsCoreService extends BaseService {
 				}
 			});
 		}
+		if (onNext !== undefined) {
+			onNext(data);
+		}
 	}
 
 	private processPortletUpdateMessage(message: AppMessage) {

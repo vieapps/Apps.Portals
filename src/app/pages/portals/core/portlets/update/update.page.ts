@@ -327,6 +327,9 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				if (otherDesktop !== undefined) {
 					otherDekstops.push({ Value: otherDesktop.ID, Label: otherDesktop.FullTitle });
 				}
+				else {
+					this.otherDesktops.remove(id);
+				}
 			}));
 		}
 
@@ -856,7 +859,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			this.portalsCoreSvc.updatePortletAsync(
 				portlet,
 				() => this.trackAsync(this.title, "Update").then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.portlets.update.messages.success.update"))).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
-				error => this.trackAsync(this.title, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false),
+				error => this.trackAsync(this.title, "Update").then(() => this.showErrorAsync(error)).then(() => this.processing = false),
 				{ "IsAdvancedMode": this.isAdvancedMode.toString() }
 			);
 		}
@@ -864,7 +867,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			this.portalsCoreSvc.createPortletAsync(
 				portlet,
 				() => this.trackAsync(this.title).then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.portlets.update.messages.success.new"))).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
-				error => this.trackAsync(this.title).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
+				error => this.trackAsync(this.title).then(() => this.showErrorAsync(error)).then(() => this.processing = false)
 			);
 		}
 	}

@@ -792,7 +792,7 @@ export class PortalsCmsService extends BaseService {
 			EntityInfo: object.RepositoryEntityID,
 			ObjectID: object.ID,
 			UserID: this.configSvc.getAccount().id,
-			Data: AppUtility.stringify(AppUtility.clone(object, ["ID", "SystemID", "RepositoryID", "RepositoryEntityID", "Created", "CreatedID", "LastModified", "LastModifiedID", "Privileges", "Alias", "AllowComments", "Parent", "Children", "ChildrenIDs", "children", "childrenIDs", "ansiTitle", "_attachments", "_thumbnails", "_routerParams"])),
+			Data: AppUtility.stringify(AppUtility.clone(object, ["ID", "SystemID", "RepositoryID", "RepositoryEntityID", "Created", "CreatedID", "LastModified", "LastModifiedID", "Privileges", "Alias", "AllowComments", "TotalVersions", "Versions", "Parent", "Children", "ChildrenIDs", "children", "childrenIDs", "ansiTitle", "_attachments", "_thumbnails", "_routerParams"])),
 			ObjectName: object.contentType.getObjectName(true)
 		};
 		return `/portals/core/tasks/update/new?x-request=${AppCrypto.jsonEncode(params)}`;
