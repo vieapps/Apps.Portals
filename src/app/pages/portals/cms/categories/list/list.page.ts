@@ -79,6 +79,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		view: "View the list of contents",
 		refresh: "Refresh",
 		expression: "Create new expression",
+		versions: "versions",
 		save: "Save",
 		cancel: "Cancel",
 		move: "Move contents to other category"
@@ -196,6 +197,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			view: await this.configSvc.getResourceAsync("portals.cms.categories.list.labels.view"),
 			expression: await this.configSvc.getResourceAsync("portals.expressions.title.create"),
 			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
+			versions: await this.configSvc.getResourceAsync("versions.view"),
 			save: await this.configSvc.getResourceAsync("common.buttons.save"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
 			move: await this.configSvc.getResourceAsync("portals.cms.categories.list.labels.move"),
@@ -464,6 +466,10 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			}
 		} : undefined;
 		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", category.ansiTitle, params, "expression", "core")), event);
+	}
+
+	viewVersions(event: Event, category: Category) {
+		this.do(() => this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(category.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "CMS.Category", id: category.ID })), event);
 	}
 
 	private back(message: string, url?: string) {

@@ -723,12 +723,79 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	getContentTypesOfCategory(module: Module) {
-		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000001");
+	private processAttachmentUpdateMessage(message: AppMessage) {
+		const object: CmsBaseModel = Content.contains(message.Data.ObjectID)
+			? Content.get(message.Data.ObjectID)
+			: Item.contains(message.Data.ObjectID)
+				? Item.get(message.Data.ObjectID)
+				: Link.contains(message.Data.ObjectID)
+					? Link.get(message.Data.ObjectID)
+					: undefined;
+		if (object !== undefined) {
+			const attachments = message.Type.Object === "Thumbnail" ? object.thumbnails : object.attachments;
+			if (message.Type.Event === "Delete") {
+				if (attachments !== undefined) {
+					if (AppUtility.isArray(message.Data, true)) {
+						(message.Data as Array<AttachmentInfo>).forEach(attachment => attachments.removeAt(attachments.findIndex(a => a.ID === attachment.ID)));
+					}
+					else {
+						attachments.removeAt(attachments.findIndex(a => a.ID === message.Data.ID));
+					}
+				}
+			}
+			else {
+				if (attachments === undefined) {
+					if (message.Type.Object === "Thumbnail") {
+						object.updateThumbnails(AppUtility.isArray(message.Data, true) ? (message.Data as Array<AttachmentInfo>).map(attachment => this.filesSvc.prepareAttachment(attachment)) : [this.filesSvc.prepareAttachment(message.Data)]);
+					}
+					else {
+						object.updateAttachments(AppUtility.isArray(message.Data, true) ? (message.Data as Array<AttachmentInfo>).map(attachment => this.filesSvc.prepareAttachment(attachment)) : [this.filesSvc.prepareAttachment(message.Data)]);
+					}
+				}
+				else {
+					if (AppUtility.isArray(message.Data, true)) {
+						(message.Data as Array<AttachmentInfo>).forEach(attachment => {
+							const index = attachments.findIndex(a => a.ID === attachment.ID);
+							if (index < 0) {
+								attachments.push(this.filesSvc.prepareAttachment(attachment));
+							}
+							else {
+								attachments[index] = this.filesSvc.prepareAttachment(attachment);
+							}
+						});
+					}
+					else {
+						const index = attachments.findIndex(a => a.ID === message.Data.ID);
+						if (index < 0) {
+							attachments.push(this.filesSvc.prepareAttachment(message.Data));
+						}
+						else {
+							attachments[index] = this.filesSvc.prepareAttachment(message.Data);
+						}
+					}
+				}
+			}
+			AppEvents.broadcast(this.name, { Object: object.contentType.getObjectName(true), Type: "Updated", Mode: "Files", ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID });
+		}
 	}
 
-	getDefaultContentTypeOfCategory(module: Module) {
-		return this.getContentTypesOfCategory(module).first();
+	async getSchedulingTaskURLAsync(object: CmsBaseModel, time?: Date) {
+		const params = {
+			Title: await this.configSvc.getResourceAsync("portals.tasks.scheduled.update.title", { title: object.Title }),
+			Status: "Awaiting",
+			SchedulingType: "Update",
+			RecurringType: "Minutes",
+			RecurringUnit: 0,
+			Time: time || AppUtility.setTime(AppUtility.addTime(new Date(), 1, "days"), 15, 0, 0, 0),
+			Persistance: true,
+			SystemID: object.SystemID,
+			EntityInfo: object.RepositoryEntityID,
+			ObjectID: object.ID,
+			UserID: this.configSvc.getAccount().id,
+			Data: AppUtility.stringify(AppUtility.clone(object, ["ID", "SystemID", "RepositoryID", "RepositoryEntityID", "Created", "CreatedID", "LastModified", "LastModifiedID", "Privileges", "Alias", "AllowComments", "Parent", "Children", "ChildrenIDs", "children", "childrenIDs", "ansiTitle", "_attachments", "_thumbnails", "_routerParams"])),
+			ObjectName: object.contentType.getObjectName(true)
+		};
+		return `/portals/core/tasks/update/new?x-request=${AppCrypto.jsonEncode(params)}`;
 	}
 
 	get categoryCompleterDataSource() {
@@ -756,12 +823,20 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
+	getContentTypesOfCategory(module: Module) {
+		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000001");
+	}
+
+	getDefaultContentTypeOfCategory(module: Module) {
+		return this.getContentTypesOfCategory(module).first();
+	}
+
 	searchCategories(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("cms.category", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
 					this.processCategories(data.Objects as Array<any>);
 				}
 				if (onSuccess !== undefined) {
@@ -777,7 +852,7 @@ export class PortalsCmsService extends BaseService {
 			this.getSearchingPath("cms.category", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
 					this.processCategories(data.Objects as Array<any>);
 				}
 				if (onSuccess !== undefined) {
@@ -904,12 +979,17 @@ export class PortalsCmsService extends BaseService {
 		switch (message.Type.Event) {
 			case "Create":
 			case "Update":
-				this.updateCategory(message.Data);
-				if (this._sidebarContentType !== undefined) {
-					const parentCategory = Category.get(message.Data.ParentID);
-					if (this._sidebarCategory === parentCategory) {
-						this.updateSidebarWithCategoriesAsync(parentCategory);
+				if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID) {
+					this.updateCategory(message.Data);
+					if (this._sidebarContentType !== undefined) {
+						const parentCategory = Category.get(message.Data.ParentID);
+						if (this._sidebarCategory === parentCategory) {
+							this.updateSidebarWithCategoriesAsync(parentCategory);
+						}
 					}
+				}
+				else if (Category.contains(message.Data.ID)) {
+					Category.get(message.Data.ID).update(message.Data);
 				}
 				break;
 
@@ -921,8 +1001,7 @@ export class PortalsCmsService extends BaseService {
 				this.showLog("Got an update message of a CMS category", message);
 				break;
 		}
-
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete" || message.Type.Event === "Refresh") {
+		if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete" || message.Type.Event === "Refresh")) {
 			AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
 			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
 				AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
@@ -932,12 +1011,11 @@ export class PortalsCmsService extends BaseService {
 
 	processCategories(categories: Array<any>, fetchDesktops: boolean = false) {
 		categories.forEach(data => {
-			let category = Category.get(data.ID);
-			if (category === undefined) {
-				category = Category.update(data);
-				this.fetchCategory(category);
+			const category = Category.update(data);
+			if (category.Versions === undefined) {
+				this.portalsCoreSvc.findVersionsAsync("CMS.Category", category.ID);
 			}
-			else if (category.childrenIDs === undefined) {
+			if (category.childrenIDs === undefined) {
 				this.fetchCategory(category);
 			}
 			if (fetchDesktops) {
@@ -960,10 +1038,13 @@ export class PortalsCmsService extends BaseService {
 
 	private updateCategory(json: any, parentID?: string) {
 		if (AppUtility.isObject(json, true)) {
-			const category = Category.set(Category.deserialize(json, Category.get(json.ID)));
+			const category = Category.update(json);
 			category.childrenIDs = AppUtility.isArray(json.Children, true)
 				? (json.Children as Array<any>).map(o => this.updateCategory(o)).filter(o => o !== undefined).map(o => o.ID).distinct()
 				: [];
+			if (category.Versions === undefined) {
+				this.portalsCoreSvc.findVersionsAsync("CMS.Category", category.ID);
+			}
 			let parentCategory = Category.get(parentID);
 			if (parentCategory !== undefined && parentCategory.childrenIDs !== undefined && parentCategory.ID !== category.ParentID) {
 				parentCategory.childrenIDs.remove(category.ID);
@@ -1038,8 +1119,8 @@ export class PortalsCmsService extends BaseService {
 			this.getSearchingPath("cms.content", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => Content.update(obj));
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+					this.processContents(data.Objects as Array<any>);
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -1054,9 +1135,8 @@ export class PortalsCmsService extends BaseService {
 			this.getSearchingPath("cms.content", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
-					(data.Objects as Array<any>).forEach(obj => Content.update(obj));
-					this._noContents.remove(data.Objects.first().SystemID);
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+					this.processContents(data.Objects as Array<any>);
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -1157,25 +1237,36 @@ export class PortalsCmsService extends BaseService {
 		switch (message.Type.Event) {
 			case "Create":
 			case "Update":
-				Content.update(message.Data);
-				this._noContents.remove(message.Data.SystemID);
+				if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID) {
+					this._noContents.remove(Content.update(message.Data).SystemID);
+				}
+				else if (Content.contains(message.Data.ID)) {
+					Content.get(message.Data.ID).update(message.Data);
+				}
 				break;
-
 			case "Delete":
 				Content.instances.remove(message.Data.ID);
 				break;
-
 			default:
 				this.showLog("Got an update message of a CMS content", message);
 				break;
 		}
-
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+		if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
 			AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: message.Data.CategoryID });
 			if (AppUtility.isArray(message.Data.OtherCategories)) {
 				(message.Data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: categoryID }));
 			}
 		}
+	}
+
+	private processContents(contents: Array<any>) {
+		contents.forEach(data => {
+			const content = Content.update(data);
+			if (content.Versions === undefined) {
+				this.portalsCoreSvc.findVersionsAsync("CMS.Content", content.ID);
+			}
+		});
+		this._noContents.remove(contents.first().SystemID);
 	}
 
 	getContentTypesOfItem(module: Module) {
@@ -1209,8 +1300,8 @@ export class PortalsCmsService extends BaseService {
 			this.getSearchingPath("cms.item", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => Item.update(obj));
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+					this.processItems(data.Objects as Array<any>);
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -1225,9 +1316,8 @@ export class PortalsCmsService extends BaseService {
 			this.getSearchingPath("cms.item", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
-					(data.Objects as Array<any>).forEach(obj => Item.update(obj));
-					this._noContents.remove(data.Objects.first().SystemID);
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+					this.processItems(data.Objects as Array<any>);
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -1319,22 +1409,33 @@ export class PortalsCmsService extends BaseService {
 		switch (message.Type.Event) {
 			case "Create":
 			case "Update":
-				Item.update(message.Data);
-				this._noContents.remove(message.Data.SystemID);
+				if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID) {
+					this._noContents.remove(Item.update(message.Data).SystemID);
+				}
+				else if (Item.contains(message.Data.ID)) {
+					Item.get(message.Data.ID).update(message.Data);
+				}
 				break;
-
 			case "Delete":
 				Item.instances.remove(message.Data.ID);
 				break;
-
 			default:
 				this.showLog("Got an update message of a CMS item", message);
 				break;
 		}
-
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+		if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
 			AppEvents.broadcast(this.name, { Object: "CMS.Item", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
 		}
+	}
+
+	private processItems(items: Array<any>) {
+		items.forEach(obj => {
+			const item = Item.update(obj);
+			if (item.Versions === undefined) {
+				this.portalsCoreSvc.findVersionsAsync("CMS.Item", item.ID);
+			}
+		});
+		this._noContents.remove(items.first().SystemID);
 	}
 
 	getContentTypesOfLink(module: Module) {
@@ -1375,7 +1476,7 @@ export class PortalsCmsService extends BaseService {
 			this.getSearchingPath("cms.link", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
 					this.processLinks(data.Objects as Array<any>);
 				}
 				if (onSuccess !== undefined) {
@@ -1391,7 +1492,7 @@ export class PortalsCmsService extends BaseService {
 			this.getSearchingPath("cms.link", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
 					this.processLinks(data.Objects as Array<any>);
 				}
 				if (onSuccess !== undefined) {
@@ -1505,42 +1606,6 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	private processLinkUpdateMessage(message: AppMessage) {
-		switch (message.Type.Event) {
-			case "Create":
-			case "Update":
-				this.updateLink(message.Data);
-				break;
-
-			case "Delete":
-				this.deleteLink(message.Data.ID, message.Data.ParentID);
-				break;
-
-			default:
-				this.showLog("Got an update message of a CMS link", message);
-				break;
-		}
-
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
-			AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
-			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
-				AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
-			}
-		}
-	}
-
-	processLinks(links: Array<any>) {
-		links.forEach(data => {
-			const link = Link.get(data.ID);
-			if (link === undefined) {
-				this.fetchLink(Link.update(data));
-			}
-			else if (link.childrenIDs === undefined) {
-				this.fetchLink(link);
-			}
-		});
-	}
-
 	private fetchLink(link: Link) {
 		if (link !== undefined && link.childrenIDs === undefined) {
 			this.getLinkAsync(link.ID, _ => {
@@ -1549,13 +1614,16 @@ export class PortalsCmsService extends BaseService {
 					obj.Children.forEach(cobj => this.fetchLink(cobj));
 				}
 			});
+			if (link.Versions === undefined) {
+				this.portalsCoreSvc.findVersionsAsync("CMS.Link", link.ID);
+			}
 		}
 		return link;
 	}
 
 	private updateLink(json: any, parentID?: string) {
 		if (AppUtility.isObject(json, true)) {
-			const link = Link.set(Link.deserialize(json, Link.get(json.ID)));
+			const link = Link.update(json);
 			link.childrenIDs = AppUtility.isArray(json.Children, true)
 				? (json.Children as Array<any>).map(obj => this.updateLink(obj)).filter(obj => obj !== undefined).map(obj => obj.ID).distinct()
 				: [];
@@ -1584,12 +1652,42 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	getContentTypesOfForm(module: Module) {
-		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000005");
+	processLinks(links: Array<any>) {
+		links.forEach(data => {
+			const link = Link.update(data);
+			if (link.childrenIDs === undefined) {
+				this.fetchLink(link);
+			}
+			if (link.Versions === undefined) {
+				this.portalsCoreSvc.findVersionsAsync("CMS.Link", link.ID);
+			}
+		});
 	}
 
-	getDefaultContentTypeOfForm(module: Module) {
-		return this.getContentTypesOfForm(module).first();
+	private processLinkUpdateMessage(message: AppMessage) {
+		switch (message.Type.Event) {
+			case "Create":
+			case "Update":
+				if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID) {
+					this.updateLink(message.Data);
+				}
+				else if (Link.contains(message.Data.ID)) {
+					Link.get(message.Data.ID).update(message.Data);
+				}
+				break;
+			case "Delete":
+				this.deleteLink(message.Data.ID, message.Data.ParentID);
+				break;
+			default:
+				this.showLog("Got an update message of a CMS link", message);
+				break;
+		}
+		if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
+			AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
+			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
+				AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+			}
+		}
 	}
 
 	get formCompleterDataSource() {
@@ -1608,6 +1706,14 @@ export class PortalsCmsService extends BaseService {
 			data => (data.Objects as Array<any> || []).map(obj => convertToCompleterForm(obj)),
 			convertToCompleterForm
 		);
+	}
+
+	getContentTypesOfForm(module: Module) {
+		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000005");
+	}
+
+	getDefaultContentTypeOfForm(module: Module) {
+		return this.getContentTypesOfForm(module).first();
 	}
 
 	searchForms(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
@@ -1895,81 +2001,6 @@ export class PortalsCmsService extends BaseService {
 		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
 			AppEvents.broadcast(this.name, { Object: "CMS.Crawler", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
 		}
-	}
-
-	private processAttachmentUpdateMessage(message: AppMessage) {
-		const object: CmsBaseModel = Content.contains(message.Data.ObjectID)
-			? Content.get(message.Data.ObjectID)
-			: Item.contains(message.Data.ObjectID)
-				? Item.get(message.Data.ObjectID)
-				: Link.contains(message.Data.ObjectID)
-					? Link.get(message.Data.ObjectID)
-					: undefined;
-		if (object !== undefined) {
-			const attachments = message.Type.Object === "Thumbnail" ? object.thumbnails : object.attachments;
-			if (message.Type.Event === "Delete") {
-				if (attachments !== undefined) {
-					if (AppUtility.isArray(message.Data, true)) {
-						(message.Data as Array<AttachmentInfo>).forEach(attachment => attachments.removeAt(attachments.findIndex(a => a.ID === attachment.ID)));
-					}
-					else {
-						attachments.removeAt(attachments.findIndex(a => a.ID === message.Data.ID));
-					}
-				}
-			}
-			else {
-				if (attachments === undefined) {
-					if (message.Type.Object === "Thumbnail") {
-						object.updateThumbnails(AppUtility.isArray(message.Data, true) ? (message.Data as Array<AttachmentInfo>).map(attachment => this.filesSvc.prepareAttachment(attachment)) : [this.filesSvc.prepareAttachment(message.Data)]);
-					}
-					else {
-						object.updateAttachments(AppUtility.isArray(message.Data, true) ? (message.Data as Array<AttachmentInfo>).map(attachment => this.filesSvc.prepareAttachment(attachment)) : [this.filesSvc.prepareAttachment(message.Data)]);
-					}
-				}
-				else {
-					if (AppUtility.isArray(message.Data, true)) {
-						(message.Data as Array<AttachmentInfo>).forEach(attachment => {
-							const index = attachments.findIndex(a => a.ID === attachment.ID);
-							if (index < 0) {
-								attachments.push(this.filesSvc.prepareAttachment(attachment));
-							}
-							else {
-								attachments[index] = this.filesSvc.prepareAttachment(attachment);
-							}
-						});
-					}
-					else {
-						const index = attachments.findIndex(a => a.ID === message.Data.ID);
-						if (index < 0) {
-							attachments.push(this.filesSvc.prepareAttachment(message.Data));
-						}
-						else {
-							attachments[index] = this.filesSvc.prepareAttachment(message.Data);
-						}
-					}
-				}
-			}
-			AppEvents.broadcast(this.name, { Object: object.contentType.getObjectName(true), Type: "Updated", Mode: "Files", ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID });
-		}
-	}
-
-	async getSchedulingTaskURLAsync(object: CmsBaseModel, time?: Date) {
-		const params = {
-			Title: await this.configSvc.getResourceAsync("portals.tasks.scheduled.update.title", { title: object.Title }),
-			Status: "Awaiting",
-			SchedulingType: "Update",
-			RecurringType: "Minutes",
-			RecurringUnit: 0,
-			Time: time || AppUtility.setTime(AppUtility.addTime(new Date(), 1, "days"), 15, 0, 0, 0),
-			Persistance: true,
-			SystemID: object.SystemID,
-			EntityInfo: object.RepositoryEntityID,
-			ObjectID: object.ID,
-			UserID: this.configSvc.getAccount().id,
-			Data: AppUtility.stringify(AppUtility.clone(object, ["ID", "SystemID", "RepositoryID", "RepositoryEntityID", "Created", "CreatedID", "LastModified", "LastModifiedID", "Privileges", "Alias", "AllowComments", "Parent", "Children", "ChildrenIDs", "children", "childrenIDs", "ansiTitle", "_attachments", "_thumbnails", "_routerParams"])),
-			ObjectName: object.contentType.getObjectName(true)
-		};
-		return `/portals/core/tasks/update/new?x-request=${AppCrypto.jsonEncode(params)}`;
 	}
 
 }

@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList, ViewDidEnter } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { PlatformUtility } from "@app/components/app.utility.platform";
@@ -77,7 +78,8 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	labels = {
 		filter: "Quick filter",
 		cancel: "Cancel",
-		refresh: "Refresh"
+		refresh: "Refresh",
+		versions: "versions"
 	};
 	private objects = new Array<Content>();
 
@@ -168,7 +170,8 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.labels = {
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
-			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh")
+			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
+			versions: await this.configSvc.getResourceAsync("versions.view")
 		};
 
 		this.prepareFilterByAndSort();
@@ -383,6 +386,10 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	edit(event: Event, content: Content) {
 		this.do(this.canUpdate ? () => this.configSvc.navigateForwardAsync(content.routerURI.replace("/view/", "/update/")) : () => {}, event);
+	}
+
+	viewVersions(event: Event, content: Content) {
+		this.do(() => this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(content.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "CMS.Content", id: content.ID })), event);
 	}
 
 	back(message: string, url?: string) {

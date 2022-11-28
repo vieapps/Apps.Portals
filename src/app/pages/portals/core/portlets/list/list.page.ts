@@ -71,6 +71,8 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		edit: "Update this portlet",
 		advancedEdit: "Update this portlet in advanced mode",
 		filter: "Quick filter",
+		versions: "Versions",
+		refresh: "Refresh",
 		cancel: "Cancel"
 	};
 	processing = false;
@@ -152,6 +154,8 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
 			advancedEdit: await this.configSvc.getResourceAsync("portals.common.advancedEdit"),
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
+			versions: await this.configSvc.getResourceAsync("versions.view"),
+			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
@@ -297,6 +301,14 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 
 	edit(event: Event, portlet: Portlet, isAdvancedMode: boolean = false) {
 		this.do(() => this.configSvc.navigateForwardAsync(portlet.getRouterURI({ ID: portlet.ID, DesktopID: portlet.DesktopID, Advanced: isAdvancedMode })), event);
+	}
+
+	refresh(event: Event, portlet: Portlet) {
+		this.do(() => this.portalsCoreSvc.refreshPortletAsync(portlet.ID, () => this.appFormsSvc.showToastAsync("The portlet was freshen-up")), event);
+	}
+
+	viewVersions(event: Event, portlet: Portlet) {
+		this.do(() => this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(portlet.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "Portlet", id: portlet.ID })), event);
 	}
 
 	private openReorder() {

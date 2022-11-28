@@ -47,14 +47,7 @@ export class Form extends CmsBaseModel {
 	ansiTitle: string;
 
 	static deserialize(json: any, form?: Form) {
-		form = form || new Form();
-		form.copy(json, data => {
-			form.normalizeExtendedProperties(data);
-			form.Profiles = new Dictionary<string, string>();
-			AppUtility.toKeyValuePair(data.Profiles).forEach(kvp => form.Profiles.add(kvp.key, kvp.value));
-		});
-		form.ansiTitle = AppUtility.toANSI(form.Title).toLowerCase();
-		return form;
+		return (form || new Form()).copy(json);
 	}
 
 	/** Gets by identity */
@@ -99,6 +92,17 @@ export class Form extends CmsBaseModel {
 		return this.Address
 			+ (AppUtility.isNotEmpty(this.Province) ? (AppUtility.isNotEmpty(this.Address) ? ", " : "")
 			+ this.County + ", " + this.Province + ", " + this.Country : "");
+	}
+
+	copy(source: any, onCompleted?: (data: any, instance: Form) => void) {
+		return super.copy(source, data => {
+			this.normalizeExtendedProperties(data);
+			this.Profiles = new Dictionary<string, string>();
+			AppUtility.toKeyValuePair(data.Profiles).forEach(kvp => this.Profiles.add(kvp.key, kvp.value));
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
 	}
 
 }

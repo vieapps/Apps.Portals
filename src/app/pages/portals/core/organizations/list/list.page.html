@@ -76,6 +76,9 @@
 				<ion-item-option color="warning" [title]="labels.refresh" (click)="refresh($event, organization)">
 					<ion-icon name="refresh" slot="icon-only"></ion-icon>
 				</ion-item-option>
+				<ion-item-option color="dark" [title]="labels.versions" (click)="viewVersions($event, organization)">
+					<ion-icon name="layers-outline" slot="icon-only"></ion-icon>
+				</ion-item-option>
 				<ion-item-option color="medium" [title]="labels.cache" (click)="clearCache($event, organization)">
 					<ion-icon name="dice" slot="icon-only"></ion-icon>
 				</ion-item-option>

@@ -1,8 +1,6 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
-import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
-import { Module } from "@app/models/portals.core.module";
-import { ContentType } from "@app/models/portals.core.content.type";
+import { PortalCoreBase as CoreBaseModel, Organization, Module, ContentType } from "@app/models/portals.core.all";
 
 export class SchedulingTask extends CoreBaseModel {
 
@@ -50,12 +48,7 @@ export class SchedulingTask extends CoreBaseModel {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, task?: SchedulingTask) {
-		task = task || new SchedulingTask();
-		task.copy(json, _ => {
-			task.ansiTitle = AppUtility.toANSI(task.Title).toLowerCase();
-			task._contentTypeTitle = undefined;
-		});
-		return task;
+		return (task || new SchedulingTask()).copy(json);
 	}
 
 	/** Gets by identity */
@@ -92,6 +85,12 @@ export class SchedulingTask extends CoreBaseModel {
 		return this.toArray(objects).toList();
 	}
 
+	get organization() {
+		return AppUtility.isNotEmpty(this.SystemID)
+			? Organization.get(this.SystemID)
+			: undefined;
+	}
+
 	get routerLink() {
 		return `/portals/core/tasks/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
@@ -113,6 +112,15 @@ export class SchedulingTask extends CoreBaseModel {
 				: "";
 		}
 		return this._contentTypeTitle;
+	}
+
+	copy(source: any, onCompleted?: (data: any, instance: SchedulingTask) => void) {
+		return super.copy(source, data => {
+			this._contentTypeTitle = undefined;
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
 	}
 
 }

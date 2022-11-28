@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList, ViewDidEnter } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { PlatformUtility } from "@app/components/app.utility.platform";
@@ -75,6 +76,7 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	labels = {
 		filter: "Quick filter",
 		cancel: "Cancel",
+		versions: "versions",
 		refresh: "Refresh"
 	};
 	private objects = new Array<Item>();
@@ -163,6 +165,7 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.labels = {
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
+			versions: await this.configSvc.getResourceAsync("versions.view"),
 			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh")
 		};
 
@@ -378,6 +381,10 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.do(() => this.portalsCmsSvc.refreshContentAsync(item.ID, () => this.appFormsSvc.showToastAsync("The item was freshen-up")), event);
 	}
 
+	viewVersions(event: Event, item: Item) {
+		this.do(() => this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(item.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "CMS.Item", id: item.ID })), event);
+	}
+
 	private reload() {
 		this.do(() => {
 			AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
@@ -451,7 +458,7 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			await this.configSvc.getResourceAsync("portals.common.excel.message.confirm"),
 			async () => {
 				await this.portalsCoreSvc.exportToExcelAsync("CMS.Item", this.organization.ID, this.module !== undefined ? this.module.ID : undefined, this.contentType !== undefined ? this.contentType.ID : undefined, filterBy, sortBy);
-				await this.trackAsync(this.actions[4].text, "Export");
+				await this.trackAsync(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "Export");
 			},
 			"{{default}}",
 			"{{default}}"

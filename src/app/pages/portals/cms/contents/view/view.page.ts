@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
@@ -54,6 +55,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		status: "Status",
 		update: "Update",
 		moderate: "Moderate",
+		versions: "Versions",
 		delete: "Delete",
 		deleteThumbnail: "Delete Thumbnail"
 	};
@@ -147,11 +149,15 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 		this.title.track = await this.configSvc.getResourceAsync("portals.cms.contents.title.view");
 		this.configSvc.appTitle = this.title.page = this.title.track + ` [${this.content.Title}]`;
+		if (this.content.Versions === undefined) {
+			this.portalsCoreSvc.findVersionsAsync("CMS.Content", this.content.ID);
+		}
 
 		this.resources = {
 			status: await this.configSvc.getResourceAsync("portals.cms.contents.controls.Status.label"),
 			update: await this.configSvc.getResourceAsync("common.buttons.update"),
 			moderate: await this.configSvc.getResourceAsync("common.buttons.approve"),
+			versions: await this.configSvc.getResourceAsync("versions.view"),
 			delete: await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"),
 			deleteThumbnail: await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.deleteThumbnail")
 		};
@@ -161,6 +167,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				this.appFormsSvc.getActionSheetButton(this.resources.update, "create", () => this.update()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync(this.content.Status !== "Published" ? "portals.tasks.scheduled.publish.title.modal" : "portals.tasks.scheduled.update.action"), "timer", () => this.openSchedulingTaskAsync()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync(this.content.Status !== "Published" ? "portals.cms.common.buttons.viewAsPublished" : "portals.cms.common.buttons.viewAsPublic"), "eye", () => this.view()),
+				this.appFormsSvc.getActionSheetButton(this.resources.versions, "layers-outline", () => this.viewVersions()),
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.delete())
 			];
 			if (this.canModerate) {
@@ -449,6 +456,10 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		}
 		const currentStatus = availableStatuses.indexOf(this.content.Status) > -1 ? this.content.Status : "Draft";
 		this.portalsCoreSvc.showApprovalDialogAsync(this.content.contentType.ID, this.content.ID, currentStatus, availableStatuses);
+	}
+
+	viewVersions() {
+		this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(this.content.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "CMS.Content", id: this.content.ID }));
 	}
 
 	delete() {

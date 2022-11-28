@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonList, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppPagination } from "@app/components/app.pagination";
@@ -64,6 +65,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		edit: "Update this module",
 		active: "Set active",
 		contentTypes: "View the list of content-types",
+		versions: "Versions",
 		expressions: "Expressions",
 		cache: "Clear cache"
 	};
@@ -129,6 +131,7 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 			active: await this.configSvc.getResourceAsync("portals.module.list.active"),
 			contentTypes: await this.configSvc.getResourceAsync("portals.contenttypes.title.list", { info: "" }),
 			expressions: await this.configSvc.getResourceAsync("portals.expressions.title.list", { info: "" }),
+			versions: await this.configSvc.getResourceAsync("versions.view"),
 			cache: await this.configSvc.getResourceAsync("portals.common.cache.title")
 		};
 
@@ -277,6 +280,10 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 
 	isActive(module: Module) {
 		return module !== undefined && Module.active !== undefined && AppUtility.isEquals(module.ID, Module.active.ID);
+	}
+
+	viewVersions(event: Event, module: Module) {
+		this.do(() => this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(module.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "Module", id: module.ID })), event);
 	}
 
 	exportToExcel() {

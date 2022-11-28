@@ -63,6 +63,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 	filtering = false;
 	labels = {
 		filter: "Quick filter",
+		versions: "Versions",
 		cancel: "Cancel"
 	};
 	private objects = new Array<Role>();
@@ -138,6 +139,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 
 		this.labels = {
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),
+			versions: await this.configSvc.getResourceAsync("versions.view"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
@@ -344,6 +346,10 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 
 	showChildren(event: Event, role: Role) {
 		this.do(() => this.configSvc.navigateForwardAsync(role.listURI), event);
+	}
+
+	viewVersions(event: Event, role: Role) {
+		this.do(() => this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(role.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "Role", id: role.ID })), event);
 	}
 
 	refresh(event: Event, role: Role) {

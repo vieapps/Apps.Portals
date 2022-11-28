@@ -49,10 +49,7 @@ export class Link extends CmsBaseModel implements NestedObject {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, link?: Link) {
-		link = link || new Link();
-		link.copy(json, data => link.normalizeExtendedProperties(data));
-		link.ansiTitle = AppUtility.toANSI(link.Title).toLowerCase();
-		return link;
+		return (link || new Link()).copy(json);
 	}
 
 	/** Gets by identity */
@@ -111,6 +108,15 @@ export class Link extends CmsBaseModel implements NestedObject {
 
 	get listURI() {
 		return `${this.routerLink.replace("/view/", "/list/sub-")}?x-request=${AppCrypto.jsonEncode({ ParentID: this.ID })}`;
+	}
+
+	copy(source: any, onCompleted?: (data: any, instance: Link) => void) {
+		return super.copy(source, data => {
+			this.normalizeExtendedProperties(data);
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
 	}
 
 }

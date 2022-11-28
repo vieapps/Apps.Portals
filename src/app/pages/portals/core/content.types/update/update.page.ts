@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
-import { FormGroup } from "@angular/forms";
-import { HashSet } from "@app/components/app.collections";
+import { FormGroup, FormArray } from "@angular/forms";
+import { Dictionary, HashSet } from "@app/components/app.collections";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
@@ -12,7 +12,7 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { Privileges } from "@app/models/privileges";
-import { ModuleDefinition, ExtendedPropertyDefinition, ExtendedControlDefinition, EmailNotificationSettings } from "@app/models/portals.base";
+import { ModuleDefinition, ExtendedPropertyDefinition, ExtendedControlDefinition, EmailNotificationSettings, WebHookNotificationSettings, WebHookSettings } from "@app/models/portals.base";
 import { Organization, Module, ContentType, Desktop } from "@app/models/portals.core.all";
 import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selector.modal.page";
 import { RolesSelectorModalPage } from "@app/controls/portals/role.selector.modal.page";
@@ -168,10 +168,15 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.contenttypes.update.segments.basic")),
 			new AppFormsSegment("privileges", await this.configSvc.getResourceAsync("portals.contenttypes.update.segments.privileges")),
 			new AppFormsSegment("notifications", await this.configSvc.getResourceAsync("portals.contenttypes.update.segments.notifications")),
-			new AppFormsSegment("emails", await this.configSvc.getResourceAsync("portals.contenttypes.update.segments.emails"))
 		];
-		if (this.extendable) {
-			formSegments.push(new AppFormsSegment("extend", await this.configSvc.getResourceAsync("portals.contenttypes.update.segments.extend")));
+		if (AppUtility.isNotEmpty(this.contentType.ID)) {
+			formSegments.push(
+				new AppFormsSegment("webhookNotifications", await this.configSvc.getResourceAsync("portals.contenttypes.update.segments.webhookNotifications")),
+				new AppFormsSegment("webhookAdapters", await this.configSvc.getResourceAsync("portals.contenttypes.update.segments.webhookAdapters"))
+			);
+			if (this.extendable) {
+				formSegments.push(new AppFormsSegment("extend", await this.configSvc.getResourceAsync("portals.contenttypes.update.segments.extend")));
+			}
 		}
 		if (onCompleted !== undefined) {
 			onCompleted(formSegments);
@@ -299,29 +304,105 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, true, this.portalsCoreSvc.getNotificationInheritStates(this.contentType.Notifications)),
 			{
 				Name: "Trackings",
-				Segment: "emails",
+				Segment: "notifications",
 				Options: {
 					Label: "{{portals.contenttypes.controls.Trackings.label}}"
 				},
 				SubControls: {
-					Controls: trackings.map(tracking => {
-						return {
-							Name: tracking,
-							Options: {
-								Label: `{{portals.contenttypes.controls.Trackings.${tracking}.label}}`,
-								Description: `{{portals.contenttypes.controls.Trackings.${tracking}.description}}`
-							}
-						};
-					})
+					Controls: trackings.map(tracking => ({
+						Name: tracking,
+						Options: {
+							Label: `{{portals.contenttypes.controls.Trackings.${tracking}.label}}`,
+							Description: `{{portals.contenttypes.controls.Trackings.${tracking}.description}}`
+						}
+					}))
 				}
 			},
-			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "emails", true, AppUtility.isNull(this.contentType.EmailSettings))
+			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "notifications", true, AppUtility.isNull(this.contentType.EmailSettings))
 		);
 
 		control = formConfig.find(ctrl => ctrl.Name === "Notifications");
 		this.portalsCoreSvc.prepareNotificationsFormControl(control, this.emailsByApprovalStatus);
 
 		if (AppUtility.isNotEmpty(this.contentType.ID)) {
+			formConfig.push(
+				{
+					Name: "WebHookNotifications",
+					Segment: "webhookNotifications",
+					Extras: {},
+					Options: {
+						Label: "{{portals.contenttypes.controls.WebHookNotifications.label}}",
+						Description: "{{portals.contenttypes.controls.WebHookNotifications.description}}"
+					},
+					SubControls: {
+						AsArray: true,
+						Controls: [this.portalsCoreSvc.getWebHookNotificationFormControl(false)]
+					}
+				},
+				{
+					Name: "WebHookAdapters",
+					Segment: "webhookAdapters",
+					Extras: {},
+					Options: {
+						Label: "{{portals.contenttypes.controls.WebHookAdapters.label}}",
+						Description: "{{portals.contenttypes.controls.WebHookAdapters.description}}"
+					},
+					SubControls: {
+						AsArray: true,
+						Controls: [this.portalsCoreSvc.getWebHookSettingsFormControl("WebHookSettings", config => {
+							config.Options.Description = "{{portals.common.controls.webhooks.url.descriptionOfContentType}}";
+							config.SubControls.Controls.find(ctrl => ctrl.Name === "URL").Options.Description = "{{portals.common.controls.webhooks.url.descriptionOfContentType}}";
+							config.SubControls.Controls.insert({
+								Name: "Name",
+								Type: "TextBox",
+								Options: {
+									Label: "{{portals.contenttypes.controls.WebHookAdapters.Name.label}}",
+									Description: "{{portals.contenttypes.controls.WebHookAdapters.Name.description}}",
+									OnBlur: (_, formControl) => {
+										formControl.setValue(AppUtility.toANSI(formControl.value, true).replace(/-/g, ""));
+										formControl.parentControl.SubControls.Controls.find(ctrl => ctrl.Name === "URL").controlRef.setValue(`${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.ID}/${this.contentType.ID}${formControl.value !== "default" ? `/${formControl.value}` : ""}`, { onlySelf: true });
+									}
+								}
+							}, 0);
+						})]
+					}
+				}
+			);
+
+			control = formConfig.find(ctrl => ctrl.Name === "WebHookNotifications");
+			control.Extras.onControlOfFormArrayAdded = () => {
+				const controls = (this.form.controls.WebHookNotifications as FormArray).controls;
+				controls[controls.length - 1].patchValue(this.portalsCoreSvc.defaultWebHookNotificationSettings, { onlySelf: true });
+			};
+			if (AppUtility.isArray(this.contentType.WebHookNotifications, true) && this.contentType.WebHookNotifications.length > 1) {
+				while (control.SubControls.Controls.length < this.contentType.WebHookNotifications.length) {
+					control.SubControls.Controls.push(this.appFormsSvc.cloneControl(control.SubControls.Controls[0], ctrl => {
+						ctrl.Name = `${control.Name}_${control.SubControls.Controls.length}`;
+						ctrl.Order = control.SubControls.Controls.length;
+						ctrl.Options.Label = `#${control.SubControls.Controls.length + 1}`;
+					}));
+				}
+			}
+
+			control = formConfig.find(ctrl => ctrl.Name === "WebHookAdapters");
+			control.Extras.onControlOfFormArrayAdded = formControl => {
+				const controls = (this.form.controls.WebHookAdapters as FormArray).controls;
+				controls[controls.length - 1].patchValue(this.portalsCoreSvc.getWebHookSettings(undefined, settings => {
+					const name = `adapter${formControl.SubControls.Controls.length}`;
+					settings.Name = name;
+					settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.ID}/${this.contentType.ID}/${name}`;
+				}), { onlySelf: true });
+			};
+			if (AppUtility.isObject(this.contentType.WebHookAdapters, true) && this.contentType.WebHookAdapters.size > 1) {
+				while (control.SubControls.Controls.length < this.contentType.WebHookAdapters.size) {
+					control.SubControls.Controls.push(this.appFormsSvc.cloneControl(control.SubControls.Controls[0], ctrl => {
+						ctrl.Name = `${control.Name}_${control.SubControls.Controls.length}`;
+						ctrl.Order = control.SubControls.Controls.length;
+						ctrl.Options.Label = `#${control.SubControls.Controls.length + 1}`;
+					}));
+				}
+			}
+
 			if (this.extendable) {
 				formConfig.push(
 					{
@@ -364,12 +445,12 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 						Options: {
 							Label: "{{portals.contenttypes.controls.SubTitleFormula.label}}",
 							Description: "{{portals.contenttypes.controls.SubTitleFormula.description}}",
-							PlaceHolder: "{{portals.contenttypes.controls.SubTitleFormula.placeholder}}",
 							ReadOnly: !this.isAdvancedMode
 						}
 					}
 				);
 			}
+
 			formConfig.push(
 				this.portalsCoreSvc.getAuditFormControl(this.contentType, "basic"),
 				this.appFormsSvc.getButtonControls(
@@ -408,10 +489,31 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 	}
 
 	onFormInitialized() {
-		const contentType = AppUtility.clone(this.contentType, false, ["ExtendedPropertyDefinitions", "ExtendedControlDefinitions", "StandardControlDefinitions", "Notifications", "EmailSettings"], obj => delete obj["Privileges"]);
+		const contentType = AppUtility.clone(this.contentType, false, ["Notifications", "EmailSettings", "WebHookNotifications", "WebHookAdapters", "ExtendedPropertyDefinitions", "ExtendedControlDefinitions", "StandardControlDefinitions"], obj => delete obj["Privileges"]);
 		contentType.OriginalPrivileges = Privileges.clonePrivileges(this.contentType.OriginalPrivileges);
 		contentType.Notifications = this.portalsCoreSvc.getNotificationSettings(this.contentType.Notifications, this.emailsByApprovalStatus);
 		contentType.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.contentType.EmailSettings);
+
+		if (AppUtility.isNotEmpty(this.contentType.ID)) {
+			contentType.WebHookNotifications = (this.contentType.WebHookNotifications || []).map(notification => {
+				const webhookNotification = AppUtility.clone(notification);
+				webhookNotification.EndpointURLs = AppUtility.toStr(webhookNotification.EndpointURLs, "\n");
+				return webhookNotification;
+			});
+			if (contentType.WebHookNotifications.length < 1) {
+				contentType.WebHookNotifications.push(this.portalsCoreSvc.defaultWebHookNotificationSettings);
+			}
+
+			contentType.WebHookAdapters = [];
+			(this.contentType.WebHookAdapters || new Dictionary<string, WebHookSettings>()).forEach((webhookAdapter, name) => contentType.WebHookAdapters.push(this.portalsCoreSvc.getWebHookSettings(webhookAdapter, settings => {
+				settings.Name = name;
+				settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.ID}/${this.contentType.ID}${name !== "default" ? `/${name}` : ""}`;
+			})));
+			if (contentType.WebHookAdapters.length < 1) {
+				contentType.WebHookAdapters.push(this.portalsCoreSvc.getWebHookSettings(undefined, settings => settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.ID}/${this.contentType.ID}`));
+			}
+		}
+
 		if (this.extendable) {
 			contentType.ExtendedPropertyDefinitions = AppUtility.isArray(this.contentType.ExtendedPropertyDefinitions, true) ? AppUtility.stringify(this.contentType.ExtendedPropertyDefinitions) : undefined;
 			contentType.ExtendedControlDefinitions = AppUtility.isArray(this.contentType.ExtendedControlDefinitions, true) ? AppUtility.stringify(this.contentType.ExtendedControlDefinitions) : undefined;
@@ -450,6 +552,23 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 					contentType.OriginalPrivileges = Privileges.getPrivileges(contentType.OriginalPrivileges);
 					this.portalsCoreSvc.normalizeNotificationSettings(contentType.Notifications, this.emailsByApprovalStatus);
 					this.portalsCoreSvc.normalizeEmailSettings(contentType.EmailSettings);
+
+					if (AppUtility.isNotEmpty(contentType.ID)) {
+						(contentType.WebHookNotifications as Array<WebHookNotificationSettings>).forEach(webhookNotification => webhookNotification.EndpointURLs = AppUtility.toArray(webhookNotification.EndpointURLs, "\n").filter(value => AppUtility.isNotEmpty(value)));
+						const webhookAdapters = {};
+						(contentType.WebHookAdapters as Array<WebHookSettings>).forEach(webhookAdapter => {
+							const name = webhookAdapter["Name"];
+							delete webhookAdapter["Name"];
+							delete webhookAdapter["URL"];
+							if (AppUtility.isNotEmpty(name)) {
+								webhookAdapters[name] = webhookAdapter;
+							}
+						});
+						contentType.WebHookAdapters = webhookAdapters;
+					}
+					else {
+						contentType.WebHookNotifications = contentType.WebHookAdapters = undefined;
+					}
 
 					if (this.extendable && this.isAdvancedMode) {
 						if (AppUtility.isNotEmpty(contentType.ExtendedPropertyDefinitions)) {

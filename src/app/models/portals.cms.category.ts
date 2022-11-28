@@ -47,10 +47,7 @@ export class Category extends CmsBaseModel implements NestedObject {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, category?: Category) {
-		category = category || new Category();
-		category.copy(json);
-		category.ansiTitle = AppUtility.toANSI(category.Title).toLowerCase();
-		return category;
+		return (category || new Category()).copy(json);
 	}
 
 	/** Gets by identity */

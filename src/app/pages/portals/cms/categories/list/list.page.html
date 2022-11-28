@@ -82,8 +82,8 @@
 				<ion-item-option *ngIf="isSystemAdministrator" color="danger" [title]="labels.move" (click)="move($event, category)">
 					<ion-icon name="shuffle" slot="icon-only"></ion-icon>
 				</ion-item-option>
-				<ion-item-option color="medium" [title]="labels.edit" (click)="open($event, category)">
-					<ion-icon name="create" slot="icon-only"></ion-icon>
+				<ion-item-option color="medium" [title]="labels.versions" (click)="viewVersions($event, category)">
+					<ion-icon name="layers-outline" slot="icon-only"></ion-icon>
 				</ion-item-option>
 				<ion-item-option color="warning" [title]="labels.refresh" (click)="refresh($event, category)">
 					<ion-icon name="refresh" slot="icon-only"></ion-icon>

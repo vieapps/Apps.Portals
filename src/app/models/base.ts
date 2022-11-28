@@ -10,6 +10,12 @@ export abstract class Base {
 	/** The identity */
 	ID: string;
 
+	/** The total of versions */
+	TotalVersions = 0;
+
+	/** The collection of versions */
+	Versions?: Array<VersionContent>;
+
 	/** The working privileges */
 	Privileges: Privileges;
 
@@ -88,13 +94,17 @@ export abstract class Base {
 	}
 
 	/** Copies data from source (object or JSON) and fill into this objects' properties */
-	copy(source: any, onCompleted?: (data: any) => void) {
+	copy(source: any, onCompleted?: (data: any, instance: Base) => void) {
 		AppUtility.copy(source, this, data => {
 			if (AppUtility.isNotEmpty(data.Created)) {
 				this["Created"] = new Date(data.Created);
 			}
 			if (AppUtility.isNotEmpty(data.LastModified)) {
 				this["LastModified"] = new Date(data.LastModified);
+			}
+			if (AppUtility.isArray(data.Versions, true)) {
+				this.Versions = (data.Versions as Array<VersionContent>).sortBy({ name: "VersionNumber", reverse: true });
+				this.Versions.forEach(version => version.Created = new Date(version.Created));
 			}
 			this.Privileges = AppUtility.isObject(data.Privileges, true)
 				? Privileges.deserialize(data.Privileges)
@@ -103,9 +113,27 @@ export abstract class Base {
 				? Privileges.deserialize(data.OriginalPrivileges)
 				: undefined;
 			if (onCompleted !== undefined) {
-				onCompleted(data);
+				onCompleted(data, this);
 			}
 		});
+		return this;
+	}
+
+	/** Updates data from source (object or JSON) into this objects' properties */
+	update(source: any, onCompleted?: (data: any, instance: Base) => void) {
+		const data = AppUtility.isNotEmpty(source)
+			? AppUtility.parse(source)
+			: AppUtility.isObject(source, true)
+				? source
+				: {};
+		AppUtility.toKeyValuePair(data).forEach(kvp => this[kvp.key] = kvp.value);
+		if (this.Versions !== undefined) {
+			this.Versions.forEach(version => version.Created = new Date(version.Created));
+		}
+		if (onCompleted !== undefined) {
+			onCompleted(data, this);
+		}
+		return this;
 	}
 
 }
@@ -141,4 +169,41 @@ export interface AttachmentInfo {
 	isText: boolean;
 	icon: string;
 	friendlyFilename: string;
+}
+
+export interface TrashContent {
+	ID: string;
+	Title: string;
+	ServiceName: string;
+	SystemID?: string;
+	RepositoryID?: string;
+	RepositoryEntityID?: string;
+	Created: Date;
+	CreatedID: string;
+}
+
+export interface VersionContent {
+	ID: string;
+	Title: string;
+	ServiceName: string;
+	SystemID?: string;
+	RepositoryID?: string;
+	RepositoryEntityID?: string;
+	VersionNumber: number;
+	ObjectID: string;
+	Created: Date;
+	CreatedID: string;
+}
+
+export interface ServiceLog {
+	ID: string;
+	Time: Date;
+	CorrelationID: string;
+	DeveloperID?: string;
+	AppID?: string;
+	NodeID?: string;
+	ServiceName: string;
+	ObjectName: string;
+	Logs: string;
+	Stack: string;
 }

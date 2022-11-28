@@ -1,3 +1,4 @@
+import { AppUtility } from "@app/components/app.utility";
 import { Base as BaseModel } from "@app/models/base";
 
 /** Abstract class for all portals' entity classes */
@@ -32,6 +33,16 @@ export abstract class PortalBase extends BaseModel {
 
 	/** The identity of user who was modified the object at the last time */
 	abstract LastModifiedID: string;
+
+	copy(source: any, onCompleted?: (data: any, instance: PortalBase) => void) {
+		return super.copy(source, data => {
+			this.ansiTitle = AppUtility.toANSI(this.Title).toLowerCase();
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
+	}
+
 }
 
 /** Interface of a module definition */
@@ -110,12 +121,16 @@ export interface WebHookNotificationSettings {
 	EndpointURLs?: Array<string>;
 	SignAlgorithm?: string;
 	SignKey?: string;
+	SignKeyIsHex?: boolean;
 	SignatureName?: string;
 	SignatureAsHex?: boolean;
 	SignatureInQuery?: boolean;
+	Query?: string;
+	Header?: string;
+	EncryptionKey?: string;
+	EncryptionIV?: string;
 	GenerateIdentity?: boolean;
-	AdditionalQuery?: string;
-	AdditionalHeader?: string;
+	PrepareBodyScript?: string;
 }
 
 export interface NotificationSettings {
@@ -144,11 +159,16 @@ export interface EmailSettings {
 export interface WebHookSettings {
 	SignAlgorithm?: string;
 	SignKey?: string;
+	SignKeyIsHex?: boolean;
 	SignatureName?: string;
 	SignatureAsHex?: boolean;
-	SignatureInQuery?: boolean;
-	AdditionalQuery?: string;
-	AdditionalHeader?: string;
+	SecretToken?: string;
+	Query?: string;
+	Header?: string;
+	EncryptionKey?: string;
+	EncryptionIV?: string;
+	GenerateIdentity?: boolean;
+	PrepareBodyScript?: string;
 }
 
 /** Interface of UI settings of all elements */

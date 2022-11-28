@@ -61,10 +61,7 @@ export class Desktop extends CoreBaseModel implements NestedObject {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, desktop?: Desktop) {
-		desktop = desktop || new Desktop();
-		desktop.copy(json);
-		desktop.ansiTitle = AppUtility.toANSI(desktop.Title).toLowerCase();
-		return desktop;
+		return (desktop || new Desktop()).copy(json);
 	}
 
 	/** Gets by identity */

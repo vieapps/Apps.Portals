@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonList, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -41,6 +43,8 @@ export class PortalsTasksListPage implements OnInit, OnDestroy {
 	tasks = new Array<SchedulingTask>();
 	labels = {
 		open: "Update",
+		versions: "Versions",
+		refresh: "Refresh",
 		run: "Run"
 	};
 
@@ -88,6 +92,8 @@ export class PortalsTasksListPage implements OnInit, OnDestroy {
 
 		this.labels = {
 			open: await this.configSvc.getResourceAsync("common.buttons.edit"),
+			versions: await this.configSvc.getResourceAsync("versions.view"),
+			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			run: await this.configSvc.getResourceAsync("portals.tasks.title.run")
 		};
 
@@ -131,6 +137,14 @@ export class PortalsTasksListPage implements OnInit, OnDestroy {
 
 	run(event: Event, task: SchedulingTask) {
 		this.do(task.Status !== "Awaiting" ? () => {} : () => this.portalsCoreSvc.runSchedulingTaskAsync(task.ID), event);
+	}
+
+	refresh(event: Event, task: SchedulingTask) {
+		this.do(() => this.portalsCoreSvc.refreshSchedulingTaskAsync(task.ID, () => this.appFormsSvc.showToastAsync("The task was freshen-up")), event);
+	}
+
+	viewVersions(event: Event, task: SchedulingTask) {
+		this.do(() => this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(task.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "SchedulingTask", id: task.ID })), event);
 	}
 
 	private trackAsync(title: string, action?: string) {

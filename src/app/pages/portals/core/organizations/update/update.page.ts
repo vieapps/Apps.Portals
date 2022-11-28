@@ -302,6 +302,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				}
 			},
 			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "emails", false),
+			this.portalsCoreSvc.getWebHookSettingsFormControl("WebHookSettings", config => config.Segment = "emails"),
 			{
 				Name: "Socials",
 				Segment: "socials",
@@ -333,22 +334,6 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 					})
 				}
 			},
-			this.portalsCoreSvc.getWebHookSettingsFormControl("WebHookSettings", "socials", config => {
-				config.SubControls.Controls.insert({
-					Name: "URL",
-					Type: "TextBox",
-					Options: {
-						Label: "{{portals.common.controls.webhooks.url.label}}",
-						Description: "{{portals.common.controls.webhooks.url.description}}",
-						ReadOnly: true,
-						Icon: {
-							Name: "copy",
-							OnClick: (_, formControl) => PlatformUtility.copyToClipboardAsync(formControl.value, async () => await this.appFormsSvc.showToastAsync("Copied..."))
-						}
-					}
-				}, 0);
-				config.SubControls.Controls.forEach((ctrl, index) => ctrl.Order = index);
-			}),
 			{
 				Name: "Others",
 				Segment: "socials",
@@ -616,7 +601,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 
 		organization.Notifications = this.portalsCoreSvc.getNotificationSettings(this.organization.Notifications, this.emailsByApprovalStatus, false);
 		organization.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.organization.EmailSettings, false);
-		organization.WebHookSettings = this.portalsCoreSvc.getWebHookSettings(this.organization.WebHookSettings, settings => settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}`);
+		organization.WebHookSettings = this.portalsCoreSvc.getWebHookSettings(this.organization.WebHookSettings, settings => settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.ID || ""}`);
 		organization.Others = { MetaTags: organization.MetaTags, ScriptLibraries: organization.ScriptLibraries, Scripts: organization.Scripts };
 
 		organization.RefreshUrls = organization.RefreshUrls || {};
@@ -646,6 +631,11 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				Body: instruction.Body
 			};
 		});
+
+		if (AppUtility.isEmpty(this.organization.ID)) {
+			organization.Notifications.WebHooks.SignKey = "vieapps-ngx-webhook-" + AppCrypto.md5(new Date().toJSON());
+			organization.Notifications.WebHooks.SignatureName = "vieapps-ngx-webhook-signature";
+		}
 
 		delete organization["MetaTags"];
 		delete organization["ScriptLibraries"];
@@ -689,6 +679,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				delete organization["Others"];
 				delete organization["FakeURIs"];
 				delete organization["Privileges"];
+				delete organization.WebHookSettings["URL"];
 
 				if (AppUtility.isNotEmpty(organization.ID)) {
 					await this.portalsCoreSvc.updateOrganizationAsync(

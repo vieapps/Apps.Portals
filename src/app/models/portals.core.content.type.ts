@@ -1,7 +1,7 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { Privileges } from "@app/models/privileges";
-import { PortalBase as BaseModel, NotificationSettings, EmailSettings } from "@app/models/portals.base";
+import { PortalBase as BaseModel, NotificationSettings, EmailSettings, WebHookNotificationSettings, WebHookSettings } from "@app/models/portals.base";
 import { ExtendedPropertyDefinition, ExtendedControlDefinition, StandardControlDefinition } from "@app/models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
 
@@ -33,6 +33,8 @@ export class ContentType extends CoreBaseModel {
 		[key: string]: string
 	};
 	EmailSettings = undefined as EmailSettings;
+	WebHookNotifications = undefined as Array<WebHookNotificationSettings>;
+	WebHookAdapters = undefined as Dictionary<string, WebHookSettings>;
 	ExtendedPropertyDefinitions = undefined as Array<ExtendedPropertyDefinition>;
 	ExtendedControlDefinitions = undefined as Array<ExtendedControlDefinition>;
 	StandardControlDefinitions = undefined as Array<StandardControlDefinition>;
@@ -50,10 +52,7 @@ export class ContentType extends CoreBaseModel {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, contentType?: ContentType) {
-		contentType = contentType || new ContentType();
-		contentType.copy(json);
-		contentType.ansiTitle = AppUtility.toANSI(contentType.Title).toLowerCase();
-		return contentType;
+		return (contentType || new ContentType()).copy(json);
 	}
 
 	/** Gets by identity */
@@ -107,6 +106,18 @@ export class ContentType extends CoreBaseModel {
 				? (AppUtility.isNotEmpty(definition.ObjectNamePrefix) ? definition.ObjectNamePrefix : "") + definition.ObjectName + (AppUtility.isNotEmpty(definition.ObjectNameSuffix) ? definition.ObjectNameSuffix : "")
 				: definition.ObjectName
 			: undefined;
+	}
+
+	copy(source: any, onCompleted?: (data: any, instance: ContentType) => void) {
+		return super.copy(source, data => {
+			if (data.WebHookAdapters !== undefined) {
+				this.WebHookAdapters = new Dictionary<string, WebHookSettings>();
+				AppUtility.toKeyValuePair(data.WebHookAdapters).forEach(kvp => this.WebHookAdapters.add(kvp.key, kvp.value as WebHookSettings));
+			}
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
 	}
 
 }

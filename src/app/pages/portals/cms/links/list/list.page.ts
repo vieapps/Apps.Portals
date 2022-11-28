@@ -77,6 +77,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		edit: "Edit",
 		refresh: "Refresh",
 		expression: "Create new expression",
+		versions: "versions",
 		save: "Save",
 		cancel: "Cancel"
 	};
@@ -192,6 +193,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			edit: await this.configSvc.getResourceAsync("portals.cms.links.list.labels.edit"),
 			expression: await this.configSvc.getResourceAsync("portals.expressions.title.create"),
 			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
+			versions: await this.configSvc.getResourceAsync("versions.view"),
 			save: await this.configSvc.getResourceAsync("common.buttons.save"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
@@ -454,6 +456,10 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			}
 			: undefined;
 		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", link.ansiTitle, params, "expression", "core")), event);
+	}
+
+	viewVersions(event: Event, link: Link) {
+		this.do(() => this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(link.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "CMS.Link", id: link.ID })), event);
 	}
 
 	private back(message: string, url?: string) {

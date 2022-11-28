@@ -233,6 +233,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 			);
 		}
 		else {
+			control.Options.OnBlur = (_, formControl) => this.form.controls.Alias.setValue(AppUtility.toANSI(formControl.value, true), { onlySelf: true });
 			formConfig.push(this.filesSvc.getThumbnailFormControl("Thumbnails", "basic", true, true));
 		}
 
