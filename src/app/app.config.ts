@@ -22,7 +22,7 @@ export class AppConfig {
 		apps: "https://cms.vieapps.com/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
-		medias: ["fs.vieapps.net"/**/] as Array<string>
+		medias: ["fs.vieapps.net"]
 	};
 
 	/** App information */
