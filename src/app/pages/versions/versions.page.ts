@@ -169,14 +169,28 @@ export class VersionsPage implements OnInit {
 	async rollbackAsync(version: VersionContent) {
 		await this.appFormsSvc.showConfirmAsync(
 			await this.configSvc.getResourceAsync("versions.confirm", { version: version.VersionNumber }),
-			async () => this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("versions.processing")).then(() => this.portalsCoreSvc.rollbackAsync(this.name, this.id, version.ID, () => Promise.all([
-				TrackingUtility.trackAsync({ title: this.title, category: "Versions", action: "Rollback" }),
-				this.appFormsSvc.hideLoadingAsync(),
-				this.configSvc.navigateBackAsync()
-			]))),
+			async () => {
+				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("versions.processing"));
+				await this.portalsCoreSvc.rollbackAsync(this.name, this.id, version.ID, () => this.rollbackSuccessAsync(), error => {
+					if ((error.Message || "").indexOf("Value cannot be null") > -1 ) {
+						this.rollbackSuccessAsync();
+					}
+					else {
+						this.appFormsSvc.showErrorAsync(error);
+					}
+				});
+			},
 			"{{default}}",
 			"{{default}}"
 		);
+	}
+
+	rollbackSuccessAsync() {
+		return Promise.all([
+			TrackingUtility.trackAsync({ title: this.title, category: "Versions", action: "Rollback" }),
+			this.appFormsSvc.hideLoadingAsync(),
+			this.configSvc.navigateBackAsync()
+		]);
 	}
 
 }
