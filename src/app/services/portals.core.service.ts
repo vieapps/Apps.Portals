@@ -3077,11 +3077,11 @@ export class PortalsCoreService extends BaseService {
 			if (desktop.Versions === undefined) {
 				this.findVersionsAsync("Desktop", desktop.ID);
 			}
-			if (AppUtility.isArray(json.Children, true)) {
-				desktop.childrenIDs = (json.Children as Array<any>).map(o => this.updateDesktop(o)).filter(o => o !== undefined).map(o => o.ID).distinct();
-			}
 			if (AppUtility.isArray(json.Portlets, true)) {
 				desktop.portlets = (json.Portlets as Array<any>).map(p => Portlet.update(p));
+			}
+			if (AppUtility.isArray(json.Children, true)) {
+				desktop.childrenIDs = (json.Children as Array<any>).map(o => this.updateDesktop(o)).filter(o => o !== undefined).map(o => o.ID).distinct();
 			}
 			let parentDesktop = Desktop.get(oldParentID);
 			if (parentDesktop !== undefined && parentDesktop.childrenIDs !== undefined && parentDesktop.ID !== desktop.ParentID) {

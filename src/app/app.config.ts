@@ -10,19 +10,19 @@ export class AppConfig {
 	/** App URIs (remote APIs and related resources) */
 	static URIs = {
 		/** APIs */
-		apis: "https://apis.vieapps.com/",
+		apis: "https://apis.vieapps.net/",
 
 		/** Files HTTP service */
-		files: "https://fs.vieapps.com/",
+		files: "https://files.vieapps.net/",
 
 		/** Portals HTTP service */
-		portals: "https://portals.vieapps.com/",
+		portals: "https://portals.vieapps.net/",
 
 		/** Apps on the web to perform activation or other business process */
-		apps: "https://cms.vieapps.com/",
+		apps: "https://cms.vieapps.net/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
-		medias: ["fs.vieapps.net"]
+		medias: ["fs.vieportal.net"]
 	};
 
 	/** App information */
@@ -31,16 +31,16 @@ export class AppConfig {
 		description: "Manage information and related services of CMS Portals",
 		copyright: "© VIEApps.net",
 		license: "Apache-2.0",
-		homepage: "https://cms.vieapps.com",
+		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "7.2211.1",
+		version: "7.2212.1",
 		frameworks: "ionic 5.9 - angular 11.2 - cordova 11.0",
 		mode: "",
 		platform: "",
 		os: "",
 		shell: "",
 		persistence: true,
-		debug: true,
+		debug: false,
 		offline: false
 	};
 
