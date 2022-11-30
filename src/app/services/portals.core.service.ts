@@ -1652,7 +1652,7 @@ export class PortalsCoreService extends BaseService {
 	getPortalFileHeaders(object: CmsBaseModel) {
 		return {
 			"x-service-name": this.name,
-			"x-object-name": object.contentType.getObjectName(),
+			"x-object-name": object.contentType !== undefined ? object.contentType.getObjectName() : "unknown",
 			"x-system-id": object.SystemID,
 			"x-entity": object.contentType.ID,
 			"x-object-id": object.ID
@@ -2640,7 +2640,9 @@ export class PortalsCoreService extends BaseService {
 			case "Update":
 				if (!!message.Data.Title) {
 					const contentType = ContentType.update(message.Data);
-					this.configSvc.removeDefinition(this.name, contentType.getObjectName(true), undefined, { "x-content-type-id": contentType.ID });
+					if (contentType !== undefined) {
+						this.configSvc.removeDefinition(this.name, contentType.getObjectName(true), undefined, { "x-content-type-id": contentType.ID });
+					}
 				}
 				else if (ContentType.contains(message.Data.ID)) {
 					ContentType.get(message.Data.ID).update(message.Data);
