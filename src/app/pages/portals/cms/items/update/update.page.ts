@@ -319,7 +319,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 								this.filesSvc.uploadThumbnailAsync(
 									control.value.new,
 									this.portalsCmsSvc.getFileOptions(this.item, options => options.Extras["x-attachment-id"] = control.value.identity),
-									() => {
+									_ => {
 										this.trackAsync(this.title.track, "Upload", "Thumbnail").then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")));
 										this.portalsCmsSvc.refreshItemAsync(item.ID).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
 									},
@@ -333,7 +333,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 						else {
 							this.portalsCmsSvc.updateItemAsync(
 								item,
-								async data => {
+								async _ => {
 									const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 									if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
 										await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.item, options => options.Extras["x-attachment-id"] = control.value.identity));
@@ -351,6 +351,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 						this.portalsCmsSvc.createItemAsync(
 							item,
 							async data => {
+								data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 								const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 								if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
 									await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(Item.get(data.ID)));

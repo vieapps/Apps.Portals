@@ -685,6 +685,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 					await this.portalsCoreSvc.updateOrganizationAsync(
 						organization,
 						async data => {
+							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Organization", Type: "Updated", ID: data.ID });
 							await Promise.all([
 								this.trackAsync(this.title, "Update"),
@@ -705,6 +706,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 					await this.portalsCoreSvc.createOrganizationAsync(
 						organization,
 						async data => {
+							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Organization", Type: "Created", ID: data.ID });
 							await Promise.all([
 								this.trackAsync(this.title),

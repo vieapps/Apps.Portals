@@ -267,6 +267,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 					await this.portalsCoreSvc.updateRoleAsync(
 						role,
 						async data => {
+							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Role", Type: "Updated", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							if (oldParentID !== data.ParentID) {
 								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Role", Type: "Updated", ID: oldParentID });
@@ -290,6 +291,7 @@ export class PortalsRolesUpdatePage implements OnInit {
 					await this.portalsCoreSvc.createRoleAsync(
 						role,
 						async data => {
+							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Role", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							await Promise.all([
 								this.trackAsync(this.title),

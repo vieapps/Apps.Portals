@@ -419,6 +419,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 					await this.portalsCoreSvc.updateDesktopAsync(
 						desktop,
 						async data => {
+							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Desktop", Type: "Updated", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							if (oldParentID !== data.ParentID) {
 								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Desktop", Type: "Updated", ID: oldParentID });
@@ -433,7 +434,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 							this.processing = false;
 							await Promise.all([
 								this.trackAsync(this.title, "Update"),
-								this.appFormsSvc.showErrorAsync(error)
+								this.showErrorAsync(error)
 							]);
 						}
 					);
@@ -442,6 +443,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 					await this.portalsCoreSvc.createDesktopAsync(
 						desktop,
 						async data => {
+							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Desktop", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							await Promise.all([
 								this.trackAsync(this.title),
@@ -453,7 +455,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 							this.processing = false;
 							await Promise.all([
 								this.trackAsync(this.title),
-								this.appFormsSvc.showErrorAsync(error)
+								this.showErrorAsync(error)
 							]);
 						}
 					);
