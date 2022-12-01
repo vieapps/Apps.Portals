@@ -199,7 +199,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		const portlets = (this.desktop.portlets || []).sortBy("Zone", "OrderIndex");
 		this.portlets.clear();
 		this.zones.forEach(zone => this.portlets.merge(portlets.filter(portlet => portlet.Zone === zone)));
-		this.portlets.merge(portlets.except(this.portlets)).filter(portlet => portlet.Versions === undefined).forEach(portlet => this.portalsCoreSvc.findVersionsAsync("Portlet", portlet.ID));
+		this.portlets.merge(portlets.except(this.portlets)).filter(portlet => portlet.Versions === undefined).forEach(portlet => this.portalsCoreSvc.findVersions("Portlet", portlet.ID));
 	}
 
 	track(index: number, portlet: Portlet) {

@@ -1013,7 +1013,7 @@ export class PortalsCmsService extends BaseService {
 		categories.forEach(data => {
 			const category = Category.update(data);
 			if (category.Versions === undefined) {
-				this.portalsCoreSvc.findVersionsAsync("CMS.Category", category.ID);
+				this.portalsCoreSvc.findVersions("CMS.Category", category.ID);
 			}
 			if (category.childrenIDs === undefined) {
 				this.fetchCategory(category);
@@ -1043,7 +1043,7 @@ export class PortalsCmsService extends BaseService {
 				? (json.Children as Array<any>).map(o => this.updateCategory(o)).filter(o => o !== undefined).map(o => o.ID).distinct()
 				: [];
 			if (category.Versions === undefined) {
-				this.portalsCoreSvc.findVersionsAsync("CMS.Category", category.ID);
+				this.portalsCoreSvc.findVersions("CMS.Category", category.ID);
 			}
 			let parentCategory = Category.get(parentID);
 			if (parentCategory !== undefined && parentCategory.childrenIDs !== undefined && parentCategory.ID !== category.ParentID) {
@@ -1263,7 +1263,7 @@ export class PortalsCmsService extends BaseService {
 		contents.forEach(data => {
 			const content = Content.update(data);
 			if (content.Versions === undefined) {
-				this.portalsCoreSvc.findVersionsAsync("CMS.Content", content.ID);
+				this.portalsCoreSvc.findVersions("CMS.Content", content.ID);
 			}
 		});
 		this._noContents.remove(contents.first().SystemID);
@@ -1432,7 +1432,7 @@ export class PortalsCmsService extends BaseService {
 		items.forEach(obj => {
 			const item = Item.update(obj);
 			if (item.Versions === undefined) {
-				this.portalsCoreSvc.findVersionsAsync("CMS.Item", item.ID);
+				this.portalsCoreSvc.findVersions("CMS.Item", item.ID);
 			}
 		});
 		this._noContents.remove(items.first().SystemID);
@@ -1615,7 +1615,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			});
 			if (link.Versions === undefined) {
-				this.portalsCoreSvc.findVersionsAsync("CMS.Link", link.ID);
+				this.portalsCoreSvc.findVersions("CMS.Link", link.ID);
 			}
 		}
 		return link;
@@ -1659,7 +1659,7 @@ export class PortalsCmsService extends BaseService {
 				this.fetchLink(link);
 			}
 			if (link.Versions === undefined) {
-				this.portalsCoreSvc.findVersionsAsync("CMS.Link", link.ID);
+				this.portalsCoreSvc.findVersions("CMS.Link", link.ID);
 			}
 		});
 	}

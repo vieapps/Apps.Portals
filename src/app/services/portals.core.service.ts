@@ -1904,18 +1904,8 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	findVersionsAsync(objectName: string, objectID: string, onSuccess?: (data?: any) => void, useXHR: boolean = false) {
-		return this.readAsync(
-			this.getPath("versions", objectName, "object-id=" + objectID),
-			data => {
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			onSuccess,
-			undefined,
-			useXHR
-		);
+	findVersions(objectName: string, objectID: string) {
+		AppUtility.invoke(() => this.readAsync(this.getPath("versions", objectName, "object-id=" + objectID)), 234);
 	}
 
 	rollbackAsync(objectName: string, objectID: string, versionID: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
@@ -1929,7 +1919,7 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			data => {
-				this.findVersionsAsync(objectName, objectID);
+				this.findVersions(objectName, objectID);
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -2134,7 +2124,7 @@ export class PortalsCoreService extends BaseService {
 			(data.Objects as Array<any>).forEach(organizationData => {
 				const organization = Organization.update(organizationData);
 				if (organization.Versions === undefined) {
-					this.findVersionsAsync("Organization", organization.ID);
+					this.findVersions("Organization", organization.ID);
 				}
 				this.processModules({ Objects: organizationData.Modules });
 			});
@@ -2248,7 +2238,7 @@ export class PortalsCoreService extends BaseService {
 			data => {
 				const role = this.updateRole(data, parentID);
 				if (role.Versions === undefined) {
-					this.findVersionsAsync("Role", role.ID);
+					this.findVersions("Role", role.ID);
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -2280,7 +2270,7 @@ export class PortalsCoreService extends BaseService {
 			data => {
 				const role = this.updateRole(data);
 				if (role.Versions === undefined) {
-					this.findVersionsAsync("Role", role.ID);
+					this.findVersions("Role", role.ID);
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -2341,7 +2331,7 @@ export class PortalsCoreService extends BaseService {
 				const fetch = !Role.contains(roleData.ID);
 				const role = this.updateRole(roleData, roleData.ParentID);
 				if (role.Versions === undefined) {
-					this.findVersionsAsync("Role", role.ID);
+					this.findVersions("Role", role.ID);
 				}
 				if (fetch) {
 					this.fetchRole(role);
@@ -2491,7 +2481,7 @@ export class PortalsCoreService extends BaseService {
 			(data.Objects as Array<any>).forEach(moduleData => {
 				const module = Module.update(moduleData);
 				if (module.Versions === undefined) {
-					this.findVersionsAsync("Module", module.ID);
+					this.findVersions("Module", module.ID);
 				}
 				this.processContentTypes({ Objects: moduleData.ContentTypes });
 			});
@@ -2625,7 +2615,7 @@ export class PortalsCoreService extends BaseService {
 			(data.Objects as Array<any>).forEach(contentTypeData => {
 				const contentType = ContentType.update(contentTypeData);
 				if (contentType.Versions === undefined) {
-					this.findVersionsAsync("ContentType", contentType.ID);
+					this.findVersions("ContentType", contentType.ID);
 				}
 			});
 		}
@@ -2760,7 +2750,7 @@ export class PortalsCoreService extends BaseService {
 			(data.Objects as Array<any>).forEach(expData => {
 				const expression = Expression.update(expData);
 				if (expression.Versions === undefined) {
-					this.findVersionsAsync("Expression", expression.ID);
+					this.findVersions("Expression", expression.ID);
 				}
 			});
 		}
@@ -2892,7 +2882,7 @@ export class PortalsCoreService extends BaseService {
 			(data.Objects as Array<any>).forEach(siteData => {
 				const site = Site.update(siteData);
 				if (site.Versions === undefined) {
-					this.findVersionsAsync("Site", site.ID);
+					this.findVersions("Site", site.ID);
 				}
 			});
 		}
@@ -3077,7 +3067,7 @@ export class PortalsCoreService extends BaseService {
 		if (AppUtility.isObject(json, true)) {
 			const desktop = Desktop.update(json);
 			if (desktop.Versions === undefined) {
-				this.findVersionsAsync("Desktop", desktop.ID);
+				this.findVersions("Desktop", desktop.ID);
 			}
 			if (AppUtility.isArray(json.Portlets, true)) {
 				desktop.portlets = (json.Portlets as Array<any>).map(p => Portlet.update(p));
@@ -3116,7 +3106,7 @@ export class PortalsCoreService extends BaseService {
 				const fetch = Desktop.contains(obj.ID);
 				const desktop = Desktop.update(obj);
 				if (desktop.Versions === undefined) {
-					this.findVersionsAsync("Desktop", desktop.ID);
+					this.findVersions("Desktop", desktop.ID);
 				}
 				if (fetch || desktop.childrenIDs === undefined) {
 					this.fetchDesktop(desktop);
@@ -3249,7 +3239,7 @@ export class PortalsCoreService extends BaseService {
 			(data.Objects as Array<any>).forEach(obj => {
 				const portlet =  Portlet.update(obj);
 				if (portlet.Versions === undefined) {
-					this.findVersionsAsync("Portlet", portlet.ID);
+					this.findVersions("Portlet", portlet.ID);
 				}
 			});
 		}
@@ -3424,7 +3414,7 @@ export class PortalsCoreService extends BaseService {
 			(data.Objects as Array<any>).forEach(obj => {
 				const task = SchedulingTask.update(obj);
 				if (task.Persistance && task.Versions === undefined) {
-					this.findVersionsAsync("Task", task.ID);
+					this.findVersions("Task", task.ID);
 				}
 			});
 		}
@@ -3437,7 +3427,7 @@ export class PortalsCoreService extends BaseService {
 				if (!!message.Data.Title) {
 					const task = SchedulingTask.update(message.Data);
 					if (task.Persistance && task.Versions === undefined) {
-						this.findVersionsAsync("Task", task.ID);
+						this.findVersions("Task", task.ID);
 					}
 				}
 				else if (SchedulingTask.contains(message.Data.ID)) {

@@ -13,7 +13,7 @@ export class AppConfig {
 		apis: "https://apis.vieapps.net/",
 
 		/** Files HTTP service */
-		files: "https://files.vieapps.net/",
+		files: "https://fs.vieapps.net/",
 
 		/** Portals HTTP service */
 		portals: "https://portals.vieapps.net/",
@@ -29,11 +29,11 @@ export class AppConfig {
 	static app = {
 		name: "NGX Portals",
 		description: "Manage information and related services of CMS Portals",
-		copyright: "© VIEApps.net",
+		copyright: "© vieapps.net",
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "7.2212.1",
+		version: "7.2212.2",
 		frameworks: "ionic 5.9 - angular 11.2 - cordova 11.0",
 		mode: "",
 		platform: "",

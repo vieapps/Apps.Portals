@@ -272,7 +272,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			this.usersSvc.getProfileAsync(organization.OwnerID);
 		}
 		if (organization.Versions === undefined) {
-			this.portalsCoreSvc.findVersionsAsync("Organization", organization.ID);
+			this.portalsCoreSvc.findVersions("Organization", organization.ID);
 		}
 	}
 

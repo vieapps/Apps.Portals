@@ -139,7 +139,7 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 
 		this.configSvc.appTitle = this.title.page = this.title.track + ` [${this.link.FullTitle}]`;
 		if (this.link.Versions === undefined) {
-			this.portalsCoreSvc.findVersionsAsync("CMS.Link", this.link.ID);
+			this.portalsCoreSvc.findVersions("CMS.Link", this.link.ID);
 		}
 
 		this.resources = {
