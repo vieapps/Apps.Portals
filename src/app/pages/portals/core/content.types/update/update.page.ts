@@ -672,6 +672,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 						this.portalsCoreSvc.updateContentTypeAsync(
 							contentType,
 							data => {
+								data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Updated", ID: data.ID });
 								this.configSvc.removeDefinition(this.portalsCoreSvc.name, ContentType.get(data.ID).getObjectName(true), undefined, { "x-content-type-id": data.ID });
 								this.configSvc.removeDefinition(this.portalsCoreSvc.name, ContentType.get(data.ID).getObjectName(true), undefined, { "x-content-type-id": data.ID, "x-view-controls": "x" });
@@ -686,6 +687,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 						this.portalsCoreSvc.createContentTypeAsync(
 							contentType,
 							data => {
+								data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Created", ID: data.ID });
 								this.trackAsync(this.title)
 									.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.new")))

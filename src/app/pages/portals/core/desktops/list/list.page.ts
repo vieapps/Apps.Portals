@@ -180,13 +180,13 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 
 			if (this.parentDesktop !== undefined) {
 				this.desktops = this.parentDesktop.Children;
-				this.desktops.filter(desktop => desktop.Versions === undefined).forEach(desktop => this.portalsCoreSvc.findVersionsAsync("Desktop", desktop.ID));
+				this.desktops.filter(desktop => desktop.Versions === undefined).forEach(desktop => this.portalsCoreSvc.findVersions("Desktop", desktop.ID));
 				this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: `[${this.parentDesktop.FullTitle}]` });
 				await this.appFormsSvc.hideLoadingAsync();
 				AppEvents.on("Portals", info => {
 					if (info.args.Object === "Desktop" && (this.parentDesktop.ID === info.args.ID || this.parentDesktop.ID === info.args.ParentID)) {
 						this.desktops = this.parentDesktop.Children;
-						this.desktops.filter(desktop => desktop.Versions === undefined).forEach(desktop => this.portalsCoreSvc.findVersionsAsync("Desktop", desktop.ID));
+						this.desktops.filter(desktop => desktop.Versions === undefined).forEach(desktop => this.portalsCoreSvc.findVersions("Desktop", desktop.ID));
 					}
 				}, `Desktops:${this.parentDesktop.ID}:Refresh`);
 			}

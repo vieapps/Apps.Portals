@@ -342,6 +342,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 					this.portalsCmsSvc.updateCategoryAsync(
 						category,
 						async data => {
+							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 							const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 							if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
 								await this.filesSvc.uploadThumbnailAsync(
@@ -364,6 +365,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 					this.portalsCmsSvc.createCategoryAsync(
 						category,
 						data => {
+							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							this.trackAsync(this.title.track).then(() => async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.new")));
 							this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());

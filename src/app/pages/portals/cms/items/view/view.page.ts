@@ -134,7 +134,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 
 		this.configSvc.appTitle = this.title.page = this.title.track + ` [${this.item.Title}]`;
 		if (this.item.Versions === undefined) {
-			this.portalsCoreSvc.findVersionsAsync("CMS.Item", this.item.ID);
+			this.portalsCoreSvc.findVersions("CMS.Item", this.item.ID);
 		}
 
 		this.resources = {

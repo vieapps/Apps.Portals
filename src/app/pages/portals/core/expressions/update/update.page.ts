@@ -489,6 +489,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 					await this.portalsCoreSvc.updateExpressionAsync(
 						expression,
 						async data => {
+							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Expression", Type: "Updated", ID: data.ID });
 							await Promise.all([
 								this.trackAsync(this.title, "Update"),
@@ -510,6 +511,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 					await this.portalsCoreSvc.createExpressionAsync(
 						expression,
 						async data => {
+							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Expression", Type: "Created", ID: data.ID });
 							await Promise.all([
 								this.trackAsync(this.title),

@@ -391,6 +391,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 					await this.portalsCoreSvc.updateSiteAsync(
 						site,
 						async data => {
+							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Site", Type: "Updated", ID: data.ID });
 							await Promise.all([
 								this.trackAsync(this.title, "Update"),
@@ -411,6 +412,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 					await this.portalsCoreSvc.createSiteAsync(
 						site,
 						async data => {
+							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Site", Type: "Created", ID: data.ID });
 							await Promise.all([
 								this.trackAsync(this.title),

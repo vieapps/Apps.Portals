@@ -545,6 +545,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 						this.portalsCmsSvc.updateContentAsync(
 							content,
 							async data => {
+								data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 								const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 								if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
 									await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.content, options => options.Extras["x-attachment-id"] = control.value.identity), () => this.trackAsync(this.title.track, "Upload", "Thumbnail"));
@@ -566,6 +567,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 					this.portalsCmsSvc.createContentAsync(
 						content,
 						async data => {
+							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 							const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 							if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
 								await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(Content.get(data.ID)), () => this.trackAsync(this.title.track, "Upload", "Thumbnail"));

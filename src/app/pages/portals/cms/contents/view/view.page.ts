@@ -150,7 +150,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		this.title.track = await this.configSvc.getResourceAsync("portals.cms.contents.title.view");
 		this.configSvc.appTitle = this.title.page = this.title.track + ` [${this.content.Title}]`;
 		if (this.content.Versions === undefined) {
-			this.portalsCoreSvc.findVersionsAsync("CMS.Content", this.content.ID);
+			this.portalsCoreSvc.findVersions("CMS.Content", this.content.ID);
 		}
 
 		this.resources = {
