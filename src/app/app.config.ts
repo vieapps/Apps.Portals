@@ -29,7 +29,7 @@ export class AppConfig {
 	static app = {
 		name: "NGX Portals",
 		description: "Manage information and related services of CMS Portals",
-		copyright: "© vieapps.net",
+		copyright: "© VIEApps.net",
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
@@ -40,7 +40,7 @@ export class AppConfig {
 		os: "",
 		shell: "",
 		persistence: true,
-		debug: false,
+		debug: true,
 		offline: false
 	};
 
