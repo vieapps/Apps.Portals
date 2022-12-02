@@ -1905,7 +1905,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	findVersions(objectName: string, objectID: string) {
-		AppUtility.invoke(() => this.readAsync(this.getPath("versions", objectName, "object-id=" + objectID)), 234);
+		AppUtility.invoke(() => this.readAsync(this.getPath("versions", objectName, "object-id=" + objectID)), 456, true);
 	}
 
 	rollbackAsync(objectName: string, objectID: string, versionID: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
