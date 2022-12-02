@@ -2145,16 +2145,13 @@ export class PortalsCoreService extends BaseService {
 					Organization.get(message.Data.ID).update(message.Data);
 				}
 				break;
-
 			case "Delete":
 				Organization.instances.remove(message.Data.ID);
 				break;
-
 			default:
 				this.showLog("Got an update message of an organization", message);
 				break;
 		}
-
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
 			AppEvents.broadcast(this.name, { Object: "Organization", Type: `${message.Type.Event}d`, ID: message.Data.ID });
 		}
@@ -2357,16 +2354,13 @@ export class PortalsCoreService extends BaseService {
 					Role.get(message.Data.ID).update(message.Data);
 				}
 				break;
-
 			case "Delete":
 				this.deleteRole(message.Data.ID, message.Data.ParentID);
 				break;
-
 			default:
 				this.showLog("Got an update message of a role", message);
 				break;
 		}
-
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
 			AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
 			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
@@ -2502,16 +2496,13 @@ export class PortalsCoreService extends BaseService {
 					Module.get(message.Data.ID).update(message.Data);
 				}
 				break;
-
 			case "Delete":
 				Module.instances.remove(message.Data.ID);
 				break;
-
 			default:
 				this.showLog("Got an update message of a module", message);
 				break;
 		}
-
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
 			AppEvents.broadcast(this.name, { Object: "Module", Type: `${message.Type.Event}d`, ID: message.Data.ID });
 		}
@@ -2638,18 +2629,15 @@ export class PortalsCoreService extends BaseService {
 					ContentType.get(message.Data.ID).update(message.Data);
 				}
 				break;
-
 			case "Delete":
 				if (ContentType.contains(message.Data.ID)) {
 					ContentType.instances.remove(message.Data.ID);
 				}
 				break;
-
 			default:
 				this.showLog("Got an update message of a content type", message);
 				break;
 		}
-
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
 			AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
 		}
@@ -3280,7 +3268,7 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-	get taskCompleterDataSource() {
+	get schedulingTaskCompleterDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const task = data !== undefined
 				? data instanceof SchedulingTask
