@@ -397,7 +397,7 @@ export class CmsCrawlersUpdatePage implements OnInit, OnDestroy {
 						else {
 							this.portalsCmsSvc.updateCrawlerAsync(
 								crawler,
-								async data => {
+								async _ => {
 									await this.trackAsync(this.title.track, "Update");
 									await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.crawlers.update.messages.success.update"));
 									await this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
@@ -409,7 +409,7 @@ export class CmsCrawlersUpdatePage implements OnInit, OnDestroy {
 					else {
 						this.portalsCmsSvc.createCrawlerAsync(
 							crawler,
-							async data => {
+							async _ => {
 								await this.trackAsync(this.title.track);
 								await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.crawlers.update.messages.success.new"));
 								await this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());

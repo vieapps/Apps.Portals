@@ -230,18 +230,18 @@ export class CmsFormsUpdatePage implements OnInit {
 			else {
 				this.appFormsSvc.showLoadingAsync(this.title.track).then(() => {
 					this.processing = true;
-					const item = this.form.value;
-					if (AppUtility.isNotEmpty(item.ID)) {
+					const form = this.form.value;
+					if (AppUtility.isNotEmpty(form.ID)) {
 						this.portalsCmsSvc.updateFormAsync(
-							item,
-							() => this.trackAsync(this.title.track, "Update").then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update"))).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
+							form,
+							_ => this.trackAsync(this.title.track, "Update").then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update"))).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
 							error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
 						);
 					}
 					else {
 						this.portalsCmsSvc.createFormAsync(
-							item,
-							() => this.trackAsync(this.title.track).then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new"))).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
+							form,
+							_ => this.trackAsync(this.title.track).then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new"))).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
 							error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
 						);
 					}
