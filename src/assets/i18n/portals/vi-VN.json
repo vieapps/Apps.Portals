@@ -981,6 +981,7 @@
 				},
 				"CommonSettings": {
 					"label": "Thiết đặt hiển thị của portlet",
+					"description": "Các thiết đặt chung để hiển thị portlet",
 					"Template": {
 						"label": "Mẫu hiển thị",
 						"placeholder": "",
@@ -1053,6 +1054,7 @@
 				},
 				"PaginationSettings": {
 					"label": "Thiết đặt hiển thị thanh nhảy trang",
+					"description": "Các thiết đặt để hiển thị thanh nhảy trang của portlet",
 					"Template": {
 						"label": "Mẫu hiển thị",
 						"placeholder": "",
@@ -1084,6 +1086,7 @@
 				},
 				"BreadcrumbSettings": {
 					"label": "Thiết đặt hiển thị thanh chỉ thị",
+					"description": "Các thiết đặt để hiển thị thanh chỉ thị của portlet",
 					"Template": {
 						"label": "Mẫu hiển thị",
 						"placeholder": "",
