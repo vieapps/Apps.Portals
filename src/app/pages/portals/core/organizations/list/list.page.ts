@@ -269,10 +269,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	private fetchInfo(organization: Organization) {
 		if (AppUtility.isEmpty(organization.owner) && AppUtility.isNotEmpty(organization.OwnerID)) {
-			this.usersSvc.getProfileAsync(organization.OwnerID);
-		}
-		if (organization.Versions === undefined) {
-			this.portalsCoreSvc.findVersions("Organization", organization.ID);
+			AppUtility.invoke(() => this.usersSvc.getProfileAsync(organization.OwnerID), 234, true);
 		}
 	}
 
@@ -291,7 +288,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 				this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(this.configSvc.isDebug ? () => console.log(`--- Start to refresh ${organizations.length} organizations -----------------`) : () => {});
 			}
 			else {
-				this.portalsCoreSvc.fetchSchedulingTasksAsync();
+				this.portalsCoreSvc.fetchSchedulingTasks();
 			}
 		}
 		this.portalsCoreSvc.refreshOrganizationAsync(organizations[index].ID, refreshNext, refreshNext, undefined, useXHR);
