@@ -178,10 +178,7 @@ export class PortalsTasksUpdatePage implements OnInit {
 		const task = AppUtility.clone(this.task, false, undefined, obj => obj.Time = AppUtility.toIsoDateTime(this.task.Time));
 		this.form.patchValue(task);
 		this.hash = AppCrypto.hash(this.form.value);
-		if (AppUtility.isNotEmpty(task.ID)) {
-			console.log(`Task: ${task.ID} @ ${task.Status}`, task.Time, `#${this.hash}`);
-		}
-		else if (!!this.configSvc.requestParams["SchedulingType"]) {
+		if (!!this.configSvc.requestParams["SchedulingType"]) {
 			this.form.controls.Data.setValue(task.Data + "\n");
 		}
 		this.appFormsSvc.hideLoadingAsync();
