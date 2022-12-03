@@ -109,10 +109,10 @@ export class PortalsCoreService extends BaseService {
 	initialize() {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => {
 			if (message.Data !== undefined) {
-				if ((message.Type.Object === "Organization" || message.Type.Object === "Core.Organization") && message.Data.ID !== undefined && this.activeOrganizations.indexOf(message.Data.ID) > -1) {
+				if ((message.Type.Object === "Organization" || message.Type.Object === "Core.Organization") && this.activeOrganizations.find(id => id === message.Data.ID) !== undefined) {
 					this.processOrganizationUpdateMessage(message);
 				}
-				else if (message.Data.SystemID !== undefined && this.activeOrganizations.indexOf(message.Data.SystemID) > -1) {
+				else if (this.activeOrganizations.find(id => id === message.Data.SystemID) !== undefined) {
 					switch (message.Type.Object) {
 						case "Role":
 						case "Core.Role":
@@ -224,7 +224,7 @@ export class PortalsCoreService extends BaseService {
 				await this.getOrganizationAsync(Organization.active.ID, undefined, undefined, true);
 			}
 			else {
-				await this.fetchSchedulingTasksAsync();
+				this.fetchSchedulingTasks();
 			}
 		}
 		if (this.configSvc.appConfig.services.active.service === this.name) {
@@ -364,7 +364,7 @@ export class PortalsCoreService extends BaseService {
 			}
 		}
 		if (Organization.active !== undefined) {
-			this.fetchSchedulingTasksAsync();
+			this.fetchSchedulingTasks();
 		}
 		if (onNext !== undefined) {
 			onNext();
@@ -3358,18 +3358,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	async fetchSchedulingTasksAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return this.readAsync(
-			this.getPath("task", "fetch"),
-			data => {
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while getting a task", error, onError),
-			{ "x-system-id": this.activeOrganization.ID },
-			useXHR
-		);
+	fetchSchedulingTasks() {
+		AppUtility.invoke(() => this.readAsync(this.getPath("task", "fetch"), undefined, undefined, { "x-system-id": this.activeOrganization.ID }), 123, true);
 	}
 
 	async runSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
@@ -3399,8 +3389,8 @@ export class PortalsCoreService extends BaseService {
 
 	private processSchedulingTasks(data: any, onNext?: (data?: any) => void) {
 		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-			(data.Objects as Array<any>).forEach(obj => {
-				const task = SchedulingTask.update(obj);
+			(data.Objects as Array<any>).forEach(json => {
+				const task = SchedulingTask.update(json);
 				if (task.Persistance && task.Versions === undefined) {
 					this.findVersions("Task", task.ID);
 				}

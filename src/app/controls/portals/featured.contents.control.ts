@@ -77,7 +77,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 					AppUtility.invoke(() => this.prepareContents(true), 234);
 				}
 				else if ("FeaturedContents" === args.Type && "Prepared" === args.Mode && organization.ID === args.ID) {
-					AppUtility.invoke(() => this.prepareContents(true), 345);
+					AppUtility.invoke(() => this.prepareContents(true), 345, true);
 				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
