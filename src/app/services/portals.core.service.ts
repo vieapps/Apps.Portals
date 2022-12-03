@@ -3090,9 +3090,9 @@ export class PortalsCoreService extends BaseService {
 
 	private processDesktops(data: any, onNext?: (data?: any) => void) {
 		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
-			(data.Objects as Array<any>).forEach(obj => {
-				const fetch = Desktop.contains(obj.ID);
-				const desktop = Desktop.update(obj);
+			(data.Objects as Array<any>).forEach(json => {
+				const fetch = !Desktop.contains(json.ID);
+				const desktop = Desktop.update(json);
 				if (desktop.Versions === undefined) {
 					this.findVersions("Desktop", desktop.ID);
 				}
@@ -3224,8 +3224,8 @@ export class PortalsCoreService extends BaseService {
 
 	private processPortlets(data: any, onNext?: (data?: any) => void) {
 		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-			(data.Objects as Array<any>).forEach(obj => {
-				const portlet =  Portlet.update(obj);
+			(data.Objects as Array<any>).forEach(json => {
+				const portlet =  Portlet.update(json);
 				if (portlet.Versions === undefined) {
 					this.findVersions("Portlet", portlet.ID);
 				}
@@ -3365,12 +3365,8 @@ export class PortalsCoreService extends BaseService {
 	async runSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.readAsync(
 			this.getPath("task", "run", "x-object-id=" + id),
-			data => {
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while running a task", error, onError),
+			onSuccess,
+			error => this.processError("Error occurred while running a scheduling task", error, onError),
 			{ "x-system-id": this.activeOrganization.ID },
 			useXHR
 		);
