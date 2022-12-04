@@ -99,7 +99,7 @@ export class AppAPIs {
 
 	/** Gets the absolute URL to send a request to APIs */
 	static getURL(url: string, endpoint?: string) {
-		return (url.startsWith("http://") || url.startsWith("https://") ? "" : endpoint || AppConfig.URIs.apis) + url;
+		return (url.startsWith("https://") || url.startsWith("http://") ? "" : endpoint || AppConfig.URIs.apis) + url;
 	}
 
 	/** Gets the headers that include the authenticated information */
@@ -373,9 +373,6 @@ export class AppAPIs {
 
 				// send PONG
 				else if (messageType.Service === "Ping") {
-					if (AppConfig.isDebug) {
-						console.log("[AppAPIs]: Got a heartbeat signal => response with PONG", AppUtility.toIsoDateTime(new Date(), true));
-					}
 					this._ping = +new Date();
 					this.sendWebSocketRequest({
 						ServiceName: "Session",
@@ -385,28 +382,17 @@ export class AppAPIs {
 
 				// run schedulers
 				else if (messageType.Service === "Scheduler") {
-					if (AppConfig.isDebug) {
-						console.log("[AppAPIs]: Got a signal to run scheduler", AppUtility.toIsoDateTime(new Date(), true));
-					}
 					this.broadcast({ Type: { Service: "Scheduler" }, Data: data });
 				}
 
 				// refresh some data
 				else if (messageType.Service === "Refresher") {
-					if (AppConfig.isDebug) {
-						console.log("[AppAPIs]: Got a signal to refresh data", AppUtility.toIsoDateTime(new Date(), true));
-					}
 					this.broadcast({ Type: { Service: "Refresher" }, Data: data });
 				}
 
 				// broadcast the messags to all subscribers
 				else {
-					const message: AppMessage = { Type: messageType, Data: data };
-					if (AppConfig.isDebug) {
-						const correlationID = msg.CorrelationID || data.CorrelationID;
-						console.log("[AppAPIs]: Got an updating message" + (AppUtility.isNotEmpty(correlationID) ? ` - Correlation ID: ${correlationID}` : ""), message);
-					}
-					this.broadcast(message);
+					this.broadcast({ Type: messageType, Data: data });
 				}
 			}
 

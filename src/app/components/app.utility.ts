@@ -132,7 +132,7 @@ export class AppUtility {
 
 	/** Gets the state to determines the object is got data or not (means the object has any attribute or not) */
 	static isGotData(object: any, length: number = 1) {
-		return (this.isArray(object, true)
+		return !!object && (this.isArray(object, true)
 			? object.length
 			: object instanceof Set || object instanceof Map
 				? object.size
