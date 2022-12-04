@@ -381,30 +381,30 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				SubControls: {
 					AsArray: true,
 					Controls: [{
+						Name: "HttpIndicator",
+						Extras: {},
 						Options: {},
 						SubControls: {
-							Controls: [
-								{
-									Name: "Name",
-									Type: "TextBox",
-									Options: {
-										Type: "text",
-										Label: "{{portals.organizations.controls.HttpIndicators.Name.label}}",
-										Description: "{{portals.organizations.controls.HttpIndicators.Name.description}}",
-										MaxLength: 250
-									}
-								},
-								{
-									Name: "Content",
-									Type: "TextArea",
-									Options: {
-										Type: "text",
-										Label: "{{portals.organizations.controls.HttpIndicators.Content.label}}",
-										Description: "{{portals.organizations.controls.HttpIndicators.Content.description}}",
-										MaxLength: 4000
-									}
+							Controls: [{
+								Name: "Name",
+								Type: "TextBox",
+								Options: {
+									Type: "text",
+									Label: "{{portals.organizations.controls.HttpIndicators.Name.label}}",
+									Description: "{{portals.organizations.controls.HttpIndicators.Name.description}}",
+									MaxLength: 250
 								}
-							]
+							},
+							{
+								Name: "Content",
+								Type: "TextArea",
+								Options: {
+									Type: "text",
+									Label: "{{portals.organizations.controls.HttpIndicators.Content.label}}",
+									Description: "{{portals.organizations.controls.HttpIndicators.Content.description}}",
+									MaxLength: 4000
+								}
+							}]
 						}
 					}]
 				}
@@ -568,10 +568,11 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 
 		control = formConfig.find(ctrl => ctrl.Name === "HttpIndicators");
 		if (AppUtility.isArray(this.organization.HttpIndicators, true) && this.organization.HttpIndicators.length > 1) {
-			while (control.SubControls.Controls.length <= this.organization.HttpIndicators.length) {
+			while (control.SubControls.Controls.length < this.organization.HttpIndicators.length) {
 				control.SubControls.Controls.push(this.appFormsSvc.cloneControl(control.SubControls.Controls[0], ctrl => {
 					ctrl.Name = `${control.Name}_${control.SubControls.Controls.length}`;
 					ctrl.Order = control.SubControls.Controls.length;
+					ctrl.Options.Label = `#${control.SubControls.Controls.length + 1}`;
 				}));
 			}
 		}
@@ -595,60 +596,41 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const organization = AppUtility.clone(this.organization, false, ["Notifications", "EmailSettings", "WebHookSettings"]);
-		organization.Privileges = Privileges.clonePrivileges(this.organization.Privileges);
-		organization.ExpiredDate = AppUtility.toIsoDate(organization.ExpiredDate);
-
-		organization.Notifications = this.portalsCoreSvc.getNotificationSettings(this.organization.Notifications, this.emailsByApprovalStatus, false);
-		organization.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.organization.EmailSettings, false);
-		organization.WebHookSettings = this.portalsCoreSvc.getWebHookSettings(this.organization.WebHookSettings, settings => settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.ID || ""}`);
-		organization.Others = { MetaTags: organization.MetaTags, ScriptLibraries: organization.ScriptLibraries, Scripts: organization.Scripts };
-
-		organization.RefreshUrls = organization.RefreshUrls || {};
-		organization.RefreshUrls.Addresses = AppUtility.toStr(organization.RefreshUrls.Addresses, "\n");
-		organization.RefreshUrls.Interval = organization.RefreshUrls.Interval || 25;
-
-		organization.RedirectUrls = organization.RedirectUrls || {};
-		organization.RedirectUrls.Addresses = AppUtility.toStr(organization.RedirectUrls.Addresses, "\n");
-		organization.RedirectUrls.AllHttp404 = organization.RedirectUrls.AllHttp404 !== undefined ? !!organization.RedirectUrls.AllHttp404 : false;
-
-		organization.FakeURIs = { FakeFilesHttpURI: this.organization.FakeFilesHttpURI, FakePortalsHttpURI: this.organization.FakePortalsHttpURI };
-
-		this.instructions = organization.Instructions || {};
-		Organization.instructionElements.forEach(type => {
-			this.instructions[type] = this.instructions[type] || {};
-			this.configSvc.appConfig.languages.map(language => language.Value).forEach(language => {
-				this.instructions[type][language] = this.instructions[type][language] || { Subject: undefined as string, Body: undefined as string };
+		this.form.patchValue(AppUtility.clone(this.organization, false, ["Privileges", "Notifications", "Instructions", "EmailSettings", "WebHookSettings", "MetaTags", "ScriptLibraries", "Scripts", "FakeFilesHttpURI", "FakePortalsHttpURI"], organization => {
+			organization.Privileges = Privileges.clonePrivileges(this.organization.Privileges);
+			organization.ExpiredDate = AppUtility.toIsoDate(organization.ExpiredDate);
+			organization.Notifications = this.portalsCoreSvc.getNotificationSettings(this.organization.Notifications, this.emailsByApprovalStatus, false);
+			organization.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.organization.EmailSettings, false);
+			organization.WebHookSettings = this.portalsCoreSvc.getWebHookSettings(this.organization.WebHookSettings, settings => settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.Alias || ""}`);
+			organization.Others = { MetaTags: this.organization.MetaTags, ScriptLibraries: this.organization.ScriptLibraries, Scripts: this.organization.Scripts };
+			organization.RefreshUrls = organization.RefreshUrls || {};
+			organization.RefreshUrls.Addresses = AppUtility.toStr(organization.RefreshUrls.Addresses, "\n");
+			organization.RefreshUrls.Interval = organization.RefreshUrls.Interval || 25;
+			organization.RedirectUrls = organization.RedirectUrls || {};
+			organization.RedirectUrls.Addresses = AppUtility.toStr(organization.RedirectUrls.Addresses, "\n");
+			organization.RedirectUrls.AllHttp404 = organization.RedirectUrls.AllHttp404 !== undefined ? !!organization.RedirectUrls.AllHttp404 : false;
+			organization.FakeURIs = { FakeFilesHttpURI: this.organization.FakeFilesHttpURI, FakePortalsHttpURI: this.organization.FakePortalsHttpURI };
+			this.instructions = organization.Instructions || {};
+			Organization.instructionElements.forEach(type => {
+				this.instructions[type] = this.instructions[type] || {};
+				this.configSvc.appConfig.languages.map(language => language.Value).forEach(language => {
+					this.instructions[type][language] = this.instructions[type][language] || { Subject: undefined as string, Body: undefined as string };
+				});
 			});
-		});
-
-		organization.Instructions = {};
-		Organization.instructionElements.forEach(type => {
-			const instruction = this.instructions[type][this.configSvc.appConfig.language];
-			organization.Instructions[type] = {
-				Language: this.configSvc.appConfig.language,
-				Subject: instruction.Subject,
-				Body: instruction.Body
-			};
-		});
-
-		if (AppUtility.isEmpty(this.organization.ID)) {
-			organization.Notifications.WebHooks.SignKey = "vieapps-ngx-webhook-" + AppCrypto.md5(new Date().toJSON());
-			organization.Notifications.WebHooks.SignatureName = "vieapps-ngx-webhook-signature";
-		}
-
-		delete organization["MetaTags"];
-		delete organization["ScriptLibraries"];
-		delete organization["Scripts"];
-		delete organization["FakeFilesHttpURI"];
-		delete organization["FakePortalsHttpURI"];
-
-		this.form.patchValue(organization);
+			organization.Instructions = {};
+			Organization.instructionElements.forEach(type => {
+				const instruction = this.instructions[type][this.configSvc.appConfig.language];
+				organization.Instructions[type] = {
+					Language: this.configSvc.appConfig.language,
+					Subject: instruction.Subject,
+					Body: instruction.Body
+				};
+			});
+		}));
 		this.hash = AppCrypto.hash(this.form.value);
-
-		// hack the Completer component to update correct form value & validity status
 		this.appFormsSvc.hideLoadingAsync(() => AppUtility.invoke(() => {
-			this.form.controls.OwnerID.setValue(organization.OwnerID, { onlySelf: true });
+			// hack the Completer component to update correct form value & validity status
+			this.form.controls.OwnerID.setValue(this.organization.OwnerID, { onlySelf: true });
 			this.hash = AppCrypto.hash(this.form.value);
 		}, 234));
 	}

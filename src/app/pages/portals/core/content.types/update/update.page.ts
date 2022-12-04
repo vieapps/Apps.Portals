@@ -360,7 +360,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 									Description: "{{portals.contenttypes.controls.WebHookAdapters.Name.description}}",
 									OnBlur: (_, formControl) => {
 										formControl.setValue(AppUtility.toANSI(formControl.value, true).replace(/-/g, ""));
-										formControl.parentControl.SubControls.Controls.find(ctrl => ctrl.Name === "URL").controlRef.setValue(`${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.ID}/${this.contentType.ID}${formControl.value !== "default" ? `/${formControl.value}` : ""}`, { onlySelf: true });
+										formControl.parentControl.SubControls.Controls.find(ctrl => ctrl.Name === "URL").controlRef.setValue(`${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.Alias}/${this.contentType.ID}${formControl.value !== "default" ? `/${formControl.value}` : ""}`, { onlySelf: true });
 									}
 								}
 							}, 0);
@@ -390,7 +390,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 				controls[controls.length - 1].patchValue(this.portalsCoreSvc.getWebHookSettings(undefined, settings => {
 					const name = `adapter${formControl.SubControls.Controls.length}`;
 					settings.Name = name;
-					settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.ID}/${this.contentType.ID}/${name}`;
+					settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.Alias}/${this.contentType.ID}/${name}`;
 				}), { onlySelf: true });
 			};
 			if (AppUtility.isObject(this.contentType.WebHookAdapters, true) && this.contentType.WebHookAdapters.size > 1) {
@@ -489,41 +489,37 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 	}
 
 	onFormInitialized() {
-		const contentType = AppUtility.clone(this.contentType, false, ["Notifications", "EmailSettings", "WebHookNotifications", "WebHookAdapters", "ExtendedPropertyDefinitions", "ExtendedControlDefinitions", "StandardControlDefinitions"], obj => delete obj["Privileges"]);
-		contentType.OriginalPrivileges = Privileges.clonePrivileges(this.contentType.OriginalPrivileges);
-		contentType.Notifications = this.portalsCoreSvc.getNotificationSettings(this.contentType.Notifications, this.emailsByApprovalStatus);
-		contentType.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.contentType.EmailSettings);
-
-		if (AppUtility.isNotEmpty(this.contentType.ID)) {
-			contentType.WebHookNotifications = (this.contentType.WebHookNotifications || []).map(notification => {
-				const webhookNotification = AppUtility.clone(notification);
-				webhookNotification.EndpointURLs = AppUtility.toStr(webhookNotification.EndpointURLs, "\n");
-				return webhookNotification;
-			});
-			if (contentType.WebHookNotifications.length < 1) {
-				contentType.WebHookNotifications.push(this.portalsCoreSvc.defaultWebHookNotificationSettings);
+		this.form.patchValue(AppUtility.clone(this.contentType, false, ["Privileges", "Notifications", "EmailSettings", "WebHookNotifications", "WebHookAdapters", "ExtendedPropertyDefinitions", "ExtendedControlDefinitions", "StandardControlDefinitions"], contentType => {
+			contentType.OriginalPrivileges = Privileges.clonePrivileges(this.contentType.OriginalPrivileges);
+			contentType.Notifications = this.portalsCoreSvc.getNotificationSettings(this.contentType.Notifications, this.emailsByApprovalStatus);
+			contentType.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.contentType.EmailSettings);
+			if (AppUtility.isNotEmpty(this.contentType.ID)) {
+				contentType.WebHookNotifications = (this.contentType.WebHookNotifications || []).map(notification => {
+					const webhookNotification = AppUtility.clone(notification);
+					webhookNotification.EndpointURLs = AppUtility.toStr(webhookNotification.EndpointURLs, "\n");
+					return webhookNotification;
+				});
+				if (contentType.WebHookNotifications.length < 1) {
+					contentType.WebHookNotifications.push(this.portalsCoreSvc.defaultWebHookNotificationSettings);
+				}
+				contentType.WebHookAdapters = [];
+				(this.contentType.WebHookAdapters || new Dictionary<string, WebHookSettings>()).forEach((webhookAdapter, name) => contentType.WebHookAdapters.push(this.portalsCoreSvc.getWebHookSettings(webhookAdapter, settings => {
+					settings.Name = name;
+					settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.Alias}/${this.contentType.ID}${name !== "default" ? `/${name}` : ""}`;
+				})));
+				if (contentType.WebHookAdapters.length < 1) {
+					contentType.WebHookAdapters.push(this.portalsCoreSvc.getWebHookSettings(undefined, settings => settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.Alias}/${this.contentType.ID}`));
+				}
 			}
-
-			contentType.WebHookAdapters = [];
-			(this.contentType.WebHookAdapters || new Dictionary<string, WebHookSettings>()).forEach((webhookAdapter, name) => contentType.WebHookAdapters.push(this.portalsCoreSvc.getWebHookSettings(webhookAdapter, settings => {
-				settings.Name = name;
-				settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.ID}/${this.contentType.ID}${name !== "default" ? `/${name}` : ""}`;
-			})));
-			if (contentType.WebHookAdapters.length < 1) {
-				contentType.WebHookAdapters.push(this.portalsCoreSvc.getWebHookSettings(undefined, settings => settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.ID}/${this.contentType.ID}`));
+			if (this.extendable) {
+				contentType.ExtendedPropertyDefinitions = AppUtility.isArray(this.contentType.ExtendedPropertyDefinitions, true) ? AppUtility.stringify(this.contentType.ExtendedPropertyDefinitions) : undefined;
+				contentType.ExtendedControlDefinitions = AppUtility.isArray(this.contentType.ExtendedControlDefinitions, true) ? AppUtility.stringify(this.contentType.ExtendedControlDefinitions) : undefined;
+				contentType.StandardControlDefinitions = AppUtility.isArray(this.contentType.StandardControlDefinitions, true) ? AppUtility.stringify(this.contentType.StandardControlDefinitions) : undefined;
 			}
-		}
-
-		if (this.extendable) {
-			contentType.ExtendedPropertyDefinitions = AppUtility.isArray(this.contentType.ExtendedPropertyDefinitions, true) ? AppUtility.stringify(this.contentType.ExtendedPropertyDefinitions) : undefined;
-			contentType.ExtendedControlDefinitions = AppUtility.isArray(this.contentType.ExtendedControlDefinitions, true) ? AppUtility.stringify(this.contentType.ExtendedControlDefinitions) : undefined;
-			contentType.StandardControlDefinitions = AppUtility.isArray(this.contentType.StandardControlDefinitions, true) ? AppUtility.stringify(this.contentType.StandardControlDefinitions) : undefined;
-		}
-		else {
-			contentType.ExtendedPropertyDefinitions = contentType.ExtendedControlDefinitions = contentType.StandardControlDefinitions = undefined;
-		}
-
-		this.form.patchValue(contentType);
+			else {
+				contentType.ExtendedPropertyDefinitions = contentType.ExtendedControlDefinitions = contentType.StandardControlDefinitions = undefined;
+			}
+		}));
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (!AppUtility.isNotEmpty(this.contentType.ID) && Module.instances.size > 0) {

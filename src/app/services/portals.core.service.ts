@@ -743,7 +743,11 @@ export class PortalsCoreService extends BaseService {
 						Name: "SignKey",
 						Options: {
 							Label: "{{portals.common.controls.webhooks.signKey.label}}",
-							Description: "{{portals.common.controls.webhooks.signKey.description}}"
+							Description: "{{portals.common.controls.webhooks.signKey.description}}",
+							Icon: {
+								Name: "color-wand",
+								OnClick: (_, formControl) => (formControl as AppFormsControlComponent).setValue(`${this.activeOrganization.Alias}-webhook-signature-key-${AppCrypto.md5(new Date().toJSON())}`)
+							}
 						}
 					},
 					{
@@ -1039,10 +1043,10 @@ export class PortalsCoreService extends BaseService {
 	getNotificationInheritStates(notificationSettings: NotificationSettings) {
 		return {
 			inheritEventsAndMethods: AppUtility.isNull(notificationSettings) || (AppUtility.isNull(notificationSettings.Events) && AppUtility.isNull(notificationSettings.Methods)),
-			inheritEmails: AppUtility.isNull(notificationSettings) || AppUtility.isNull(notificationSettings.Emails),
-			inheritEmailsByApprovalStatus: AppUtility.isNull(notificationSettings) || AppUtility.isNull(notificationSettings.EmailsByApprovalStatus),
-			inheritEmailsWhenPublish: AppUtility.isNull(notificationSettings) || AppUtility.isNull(notificationSettings.EmailsWhenPublish),
-			inheritWebHooks: AppUtility.isNull(notificationSettings) || AppUtility.isNull(notificationSettings.WebHooks)
+			inheritEmails: AppUtility.isNull(notificationSettings) || !AppUtility.isGotData(notificationSettings.Emails),
+			inheritEmailsByApprovalStatus: AppUtility.isNull(notificationSettings) || !AppUtility.isGotData(notificationSettings.EmailsByApprovalStatus),
+			inheritEmailsWhenPublish: AppUtility.isNull(notificationSettings) || !AppUtility.isGotData(notificationSettings.EmailsWhenPublish),
+			inheritWebHooks: AppUtility.isNull(notificationSettings) || AppUtility.isNull(notificationSettings.WebHooks) || !AppUtility.isGotData(notificationSettings.WebHooks.EndpointURLs)
 		};
 	}
 
@@ -1087,10 +1091,10 @@ export class PortalsCoreService extends BaseService {
 		if (AppUtility.isTrue(allowInheritFromParent)) {
 			const inheritFromParent = AppUtility.isNull(notificationSettings);
 			notifications.InheritFromParent = inheritFromParent || (AppUtility.isNull(notificationSettings.Events) && AppUtility.isNull(notificationSettings.Methods));
-			notifications.Emails.InheritFromParent = inheritFromParent || AppUtility.isNull(notificationSettings.Emails);
-			notifications.EmailsByApprovalStatus.InheritFromParent = inheritFromParent || AppUtility.isNull(notificationSettings.EmailsByApprovalStatus);
-			notifications.EmailsWhenPublish.InheritFromParent = inheritFromParent || AppUtility.isNull(notificationSettings.EmailsWhenPublish);
-			notifications.WebHooks.InheritFromParent = inheritFromParent || AppUtility.isNull(notificationSettings.WebHooks);
+			notifications.Emails.InheritFromParent = inheritFromParent || !AppUtility.isGotData(notificationSettings.Emails);
+			notifications.EmailsByApprovalStatus.InheritFromParent = inheritFromParent || !AppUtility.isGotData(notificationSettings.EmailsByApprovalStatus);
+			notifications.EmailsWhenPublish.InheritFromParent = inheritFromParent || !AppUtility.isGotData(notificationSettings.EmailsWhenPublish);
+			notifications.WebHooks.InheritFromParent = inheritFromParent || AppUtility.isNull(notificationSettings.WebHooks) || !AppUtility.isGotData(notificationSettings.WebHooks.EndpointURLs);
 		}
 		if (onCompleted !== undefined) {
 			onCompleted(notifications);

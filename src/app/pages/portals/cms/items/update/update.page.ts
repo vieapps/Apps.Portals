@@ -263,7 +263,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	onFormInitialized() {
-		this.form.patchValue(AppUtility.clone(this.item, false, undefined, obj => Item.normalizeClonedProperties(this.item, obj)));
+		this.form.patchValue(AppUtility.clone(this.item, false, undefined, item => Item.normalizeClonedProperties(this.item, item)));
 		this.hash.content = AppCrypto.hash(this.form.value);
 
 		this.appFormsSvc.hideLoadingAsync(() => {

@@ -360,7 +360,7 @@ export class CmsLinksUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		this.form.patchValue(AppUtility.clone(this.link, false, undefined, obj => Link.normalizeClonedProperties(this.link, obj)));
+		this.form.patchValue(AppUtility.clone(this.link, false, undefined, link => Link.normalizeClonedProperties(this.link, link)));
 		this.hash.content = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (AppUtility.isNotEmpty(this.link.ID)) {

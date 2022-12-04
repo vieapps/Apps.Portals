@@ -107,8 +107,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 		const formSegments = [
 			new AppFormsSegment("basic", await this.configSvc.getResourceAsync("portals.modules.update.segments.basic")),
 			new AppFormsSegment("privileges", await this.configSvc.getResourceAsync("portals.modules.update.segments.privileges")),
-			new AppFormsSegment("notifications", await this.configSvc.getResourceAsync("portals.modules.update.segments.notifications")),
-			new AppFormsSegment("emails", await this.configSvc.getResourceAsync("portals.modules.update.segments.emails"))
+			new AppFormsSegment("notifications", await this.configSvc.getResourceAsync("portals.modules.update.segments.notifications"))
 		];
 		if (onCompleted !== undefined) {
 			onCompleted(formSegments);
@@ -198,7 +197,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 			this.portalsCoreSvc.getNotificationsFormControl("Notifications", "notifications", undefined, undefined, true, this.portalsCoreSvc.getNotificationInheritStates(this.module.Notifications)),
 			{
 				Name: "Trackings",
-				Segment: "emails",
+				Segment: "notifications",
 				Options: {
 					Label: "{{portals.modules.controls.Trackings.label}}"
 				},
@@ -214,7 +213,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 					})
 				}
 			},
-			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "emails", true, AppUtility.isNull(this.module.EmailSettings))
+			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "notifications", true, AppUtility.isNull(this.module.EmailSettings))
 		);
 
 		if (AppUtility.isNotEmpty(this.module.ID)) {
@@ -259,15 +258,12 @@ export class PortalsModulesUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		const module = AppUtility.clone(this.module, false, ["Notifications", "EmailSettings"]);
-		delete module["Privileges"];
-		module.OriginalPrivileges = Privileges.clonePrivileges(this.module.OriginalPrivileges);
-		module.Notifications = this.portalsCoreSvc.getNotificationSettings(this.module.Notifications, this.emailsByApprovalStatus);
-		module.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.module.EmailSettings);
-
-		this.form.patchValue(module);
+		this.form.patchValue(AppUtility.clone(this.module, false, ["Privileges", "Notifications", "EmailSettings"], module => {
+			module.OriginalPrivileges = Privileges.clonePrivileges(this.module.OriginalPrivileges);
+			module.Notifications = this.portalsCoreSvc.getNotificationSettings(this.module.Notifications, this.emailsByApprovalStatus);
+			module.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.module.EmailSettings);
+		}));
 		this.hash = AppCrypto.hash(this.form.value);
-
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (!AppUtility.isNotEmpty(this.module.ID)) {
 				const first = this.formControls.find(ctrl => ctrl.Name === "ModuleDefinitionID").Options.SelectOptions.Values[0];

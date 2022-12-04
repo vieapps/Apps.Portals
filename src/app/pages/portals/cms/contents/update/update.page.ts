@@ -481,15 +481,14 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	private patchValues(doUpdateTextEditors: boolean = false) {
-		const content = AppUtility.clone(this.content, false, ["StartDate", "EndDate", "PublishedTime"], obj => Content.normalizeClonedProperties(this.content, obj, () => {
-			obj.StartDate = AppUtility.toIsoDate(this.content.StartDate);
-			obj.EndDate = AppUtility.toIsoDate(this.content.EndDate);
-			obj.PublishedTime = AppUtility.toIsoDateTime(this.content.PublishedTime, true);
-			obj.Details = this.portalsCmsSvc.normalizeTempTokens(obj.Details, this.authSvc.getTempToken(this.content.Privileges));
-		}));
-		this.form.patchValue(content);
+		this.form.patchValue(AppUtility.clone(this.content, false, ["StartDate", "EndDate", "PublishedTime"], content => Content.normalizeClonedProperties(this.content, content, () => {
+			content.StartDate = AppUtility.toIsoDate(this.content.StartDate);
+			content.EndDate = AppUtility.toIsoDate(this.content.EndDate);
+			content.PublishedTime = AppUtility.toIsoDateTime(this.content.PublishedTime, true);
+			content.Details = this.portalsCmsSvc.normalizeTempTokens(content.Details, this.authSvc.getTempToken(this.content.Privileges));
+		})));
 		if (doUpdateTextEditors) {
-			this.formControls.filter(ctrl => ctrl.Type === "TextEditor").forEach(ctrl => ctrl.controlRef.ckEditorSetData(content[ctrl.Name]));
+			this.formControls.filter(ctrl => ctrl.Type === "TextEditor").forEach(ctrl => ctrl.controlRef.ckEditorSetData(this.content[ctrl.Name]));
 		}
 	}
 

@@ -157,7 +157,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			}, "Organizations:Refresh");
 		}
 		else {
-			this.organizations.forEach(organization => this.fetchInfo(organization));
+			this.organizations.forEach((organization, index) => this.fetchInfo(organization, index));
 			this.appFormsSvc.hideLoadingAsync().then(() => this.trackAsync(this.title));
 		}
 	}
@@ -261,21 +261,29 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 				.take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
 			this.organizations = results === undefined ? objects : this.organizations.concat(objects);
 		}
-		this.organizations.forEach(organization => this.fetchInfo(organization));
+		this.organizations.forEach((organization, index) => this.fetchInfo(organization, index));
 		if (onNext !== undefined) {
 			onNext();
 		}
 	}
 
-	private fetchInfo(organization: Organization) {
+	private doFetch(organization: Organization) {
+		AppUtility.invoke(() => {
+			if (AppUtility.isNotEmpty(organization.OwnerID)) {
+				this.usersSvc.getProfileAsync(organization.OwnerID);
+			}
+		}, 123, true);
+	}
+
+	private fetchInfo(organization: Organization, defer: number = 1) {
 		if (AppUtility.isEmpty(organization.owner) && AppUtility.isNotEmpty(organization.OwnerID)) {
-			AppUtility.invoke(() => this.usersSvc.getProfileAsync(organization.OwnerID), 234, true);
+			AppUtility.invoke(() => this.doFetch(organization), 234 + (13 * defer), true);
 		}
 	}
 
 	private doRefresh(organizations: Organization[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
 		const refreshNext: () => void = () => {
-			this.trackAsync(this.title, "Refresh").then(() => this.fetchInfo(organizations[index]));
+			this.trackAsync(this.title, "Refresh").then(() => this.fetchInfo(organizations[index], index));
 			if (index < organizations.length - 1) {
 				AppUtility.invoke(() => this.doRefresh(organizations, index + 1, useXHR, onFreshenUp));
 			}
