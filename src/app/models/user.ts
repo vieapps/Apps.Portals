@@ -52,15 +52,7 @@ export class UserProfileBase extends BaseModel {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, profile?: UserProfileBase) {
-		return (profile || new UserProfileBase()).copy(json, (data, instance) => {
-			instance.Status = data.Status || "Activated";
-			instance.Mobile = AppUtility.isNotEmpty(instance.Mobile) ? instance.Mobile : undefined;
-			if (AppUtility.isNotEmpty(data.Options)) {
-				instance.Options = AppUtility.parse(data.Options);
-			}
-			delete instance["Privileges"];
-			delete instance["OriginalPrivileges"];
-		});
+		return (profile || new UserProfileBase()).copy(json);
 	}
 
 	/** Gets by identity */
@@ -104,8 +96,15 @@ export class UserProfileBase extends BaseModel {
 
 	copy(source: any, onCompleted?: (data: any, instance: UserProfileBase) => void) {
 		return super.copy(source, data => {
+			delete this["Privileges"];
+			delete this["OriginalPrivileges"];
+			this.Status = data.Status || "Activated";
 			if (AppUtility.isNotEmpty(this.BirthDay)) {
 				this.BirthDay = this.BirthDay.replace(/--/g, "01").replace(/\//g, "-");
+			}
+			this.Mobile = AppUtility.isNotEmpty(this.Mobile) ? this.Mobile : undefined;
+			if (AppUtility.isNotEmpty(data.Options)) {
+				this.Options = AppUtility.parse(data.Options);
 			}
 			this.ansiTitle = AppUtility.toANSI(this.Name + " " + this.fullAddress + " " + this.Email + " " + this.Mobile).toLowerCase();
 			if (onCompleted !== undefined) {
@@ -142,7 +141,7 @@ export class UserProfile extends UserProfileBase {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, profile?: UserProfile) {
-		return super.deserialize(json, profile || new UserProfile()) as UserProfile;
+		return (profile || new UserProfile()).copy(json);
 	}
 
 	/** Gets by identity */

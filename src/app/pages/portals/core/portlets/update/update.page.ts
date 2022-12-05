@@ -702,7 +702,6 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		portlet.OriginalPortletID = this.originalPortlet !== undefined ? this.originalPortlet.ID : undefined;
 		portlet.DesktopID = this.originalPortlet !== undefined ? this.originalPortlet.DesktopID : this.portlet.DesktopID;
 		portlet.OtherDesktops = this.otherDesktops;
-
 		if (AppUtility.isNotEmpty(portlet.ID) && !this.isAdvancedMode) {
 			if (this.contentType === undefined) {
 				portlet.Action = portlet.AlternativeAction = undefined;

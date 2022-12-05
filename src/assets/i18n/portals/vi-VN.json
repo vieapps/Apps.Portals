@@ -52,6 +52,7 @@
 					"emails": {
 						"inheritFromParent": "Sử dụng thiết đặt từ cấp trên để gửi thông báo qua emails",
 						"label": "Thiết đặt gửi thông báo qua emails",
+						"description": "Thiết đặt cách gửi email thông báo khi phát sinh một sự kiện dữ liệu",
 						"toAddresses": {
 							"label": "Gửi tới địa chỉ",
 							"placeholder": "Địa chỉ email có thể nhập dạng Tên <địa chỉ email>, vd: VIEApps.net <info@vieapps.net>",
@@ -86,7 +87,7 @@
 						"inheritFromParent": "Sử dụng thiết đặt từ cấp trên để gửi thông báo qua webhooks",
 						"endpointURLs": {
 							"label": "Địa chỉ nhận tín hiệu web-hook",
-							"placeholder": "vd: https://apis.vieapps.net/webhooks/portals/",
+							"placeholder": "vd: https://apis.vieapps.net/webhooks/portals/vieapps-ngx",
 							"description": "Các địa chỉ web nhận thông báo qua tín hiệu web-hook, mỗi một địa chỉ trên một dòng, phải bắt đầu bằng http:// hoặc https://"
 						},
 						"signKey": {
@@ -1252,8 +1253,7 @@
 				"segments": {
 					"basic": "Thông tin cơ bản",
 					"privileges": "Quyền truy cập",
-					"notifications": "Thông báo",
-					"emails": "Mã theo dõi & Emails"
+					"notifications": "Thông báo & Mã theo dõi"
 				},
 				"messages": {
 					"confirm": {

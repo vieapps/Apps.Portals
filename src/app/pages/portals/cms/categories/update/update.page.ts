@@ -295,11 +295,10 @@ export class CmsCategoriesUpdatePage implements OnInit {
 	}
 
 	onFormInitialized() {
-		this.form.patchValue(AppUtility.clone(this.category, false, ["Notifications", "EmailSettings"], obj => {
-			delete obj["Privileges"];
-			obj.OriginalPrivileges = Privileges.clonePrivileges(this.category.OriginalPrivileges);
-			obj.Notifications = this.portalsCoreSvc.getNotificationSettings(this.category.Notifications, this.emailsByApprovalStatus);
-			obj.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.category.EmailSettings);
+		this.form.patchValue(AppUtility.clone(this.category, false, ["Privileges", "Notifications", "EmailSettings"], category => {
+			category.OriginalPrivileges = Privileges.clonePrivileges(this.category.OriginalPrivileges);
+			category.Notifications = this.portalsCoreSvc.getNotificationSettings(this.category.Notifications, this.emailsByApprovalStatus);
+			category.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.category.EmailSettings);
 		}));
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(() => {
