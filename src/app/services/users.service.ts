@@ -419,7 +419,22 @@ export class UsersService extends BaseService {
 			Options: {
 				Label: "{{common.audits.label}}",
 				Type: "label",
-				OnAfterViewInit: async formControl => formControl.control.Extras["Text"] = await this.getAuditInfoAsync(created, createdID, lastModified, lastModifiedID)
+				OnAfterViewInit: async formControl => {
+					formControl.control.Extras["UserID"] = lastModifiedID;
+					formControl.control.Extras["Text"] = await this.getAuditInfoAsync(created, createdID, lastModified, lastModifiedID);
+				},
+				Icon: {
+					Name: "person-outline",
+					Fill: "clear",
+					Color: "medium",
+					Slot: "end",
+					OnClick: async (_, formControl) => {
+						const profile = UserProfile.get(formControl.control.Extras["UserID"]);
+						if (profile !== undefined) {
+							await this.configSvc.navigateForwardAsync(profile.routerLink, profile.routerParams);
+						}
+					}
+				}
 			}
 		};
 		if (onCompleted !== undefined) {
