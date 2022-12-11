@@ -445,14 +445,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 				RepositoryID: contentType.RepositoryID,
 				RepositoryEntityID: contentType.ID,
 				ContentTypeDefinitionID: contentType.ContentTypeDefinitionID,
-				Filter: {
-					Operator: "And",
-					Children: [{
-						Attribute: "ParentID",
-						Operator: "Equals",
-						Value: link.ID
-					}]
-				}
+				ParentID: link.ID
 			}
 			: undefined;
 		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", link.ansiTitle, params, "expression", "core")), event);

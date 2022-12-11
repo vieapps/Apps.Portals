@@ -104,8 +104,9 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				: this.organization.modules[0];
 			const contentTypeDefinitionID = this.configSvc.requestParams["ContentTypeDefinitionID"] || this.getContentTypeDefinitions(module.ID)[0].ID;
 			const contentTypes = module.contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === contentTypeDefinitionID);
-			const contentTypeID = this.configSvc.requestParams["RepositoryEntityID"] || contentTypes.length > 0 ? contentTypes[0].ID : undefined;
+			const contentTypeID = this.configSvc.requestParams["RepositoryEntityID"] || contentTypes.length > 0 ? contentTypes.first().ID : undefined;
 			this.expression = new Expression(this.organization.ID, module.ID, contentTypeDefinitionID, contentTypeID, this.configSvc.requestParams["Title"]);
+			this.prepareFilterAndSorts();
 		}
 		else {
 			this.isAdvancedMode = AppUtility.isTrue(this.configSvc.requestParams["Advanced"]);
@@ -215,6 +216,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				contentTypeControl.Options.SelectOptions.Values = contentTypes.map(contentType => ({ Value: contentType.ID, Label: contentType.Title }));
 				contentTypeControl.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
 				contentTypeControl.controlRef.setValue(contentTypes.length > 0 ? contentTypes.first().ID : "-", { onlySelf: true });
+				this.prepareFilterAndSorts();
 			};
 		}
 
@@ -237,35 +239,40 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		else {
 			const module = AppUtility.isNotEmpty(this.expression.RepositoryID)
 				? this.organization.modules.find(m => m.ID === this.expression.RepositoryID)
-				: this.organization.modules[0];
+				: this.organization.modules.first();
 			const contentTypeDefinitionID = AppUtility.isNotEmpty(this.expression.ContentTypeDefinitionID)
 				? this.expression.ContentTypeDefinitionID
-				: this.getContentTypeDefinitions(module.ID)[0].ID;
+				: this.getContentTypeDefinitions(module.ID).first().ID;
 			const contentTypes = module.contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === contentTypeDefinitionID);
 			control.Options.SelectOptions.Values = contentTypes.map(contentType => ({ Value: contentType.ID, Label: contentType.Title }));
 			control.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
+			control.Options.OnChanged = (_, __) => this.prepareFilterAndSorts();
 		}
 
+		formConfig.push(
+			{
+				Name: "Filter",
+				Type: "TextArea",
+				Segment: "filter",
+				Hidden: AppUtility.isEmpty(this.expression.ID),
+				Options: {
+					Label: control.Options.Label.replace("RepositoryEntityID", "Filter"),
+					Rows: 25
+				}
+			},
+			{
+				Name: "Sorts",
+				Type: "TextArea",
+				Segment: "sorts",
+				Hidden: AppUtility.isEmpty(this.expression.ID),
+				Options: {
+					Label: control.Options.Label.replace("RepositoryEntityID", "Sorts"),
+					Rows: 25
+				}
+			}
+		);
 		if (AppUtility.isNotEmpty(this.expression.ID)) {
 			formConfig.push(
-				{
-					Name: "Filter",
-					Type: "TextArea",
-					Segment: "filter",
-					Options: {
-						Label: control.Options.Label.replace("RepositoryEntityID", "Filter"),
-						Rows: 25
-					}
-				},
-				{
-					Name: "Sorts",
-					Type: "TextArea",
-					Segment: "sorts",
-					Options: {
-						Label: control.Options.Label.replace("RepositoryEntityID", "Sorts"),
-						Rows: 25
-					}
-				},
 				this.portalsCoreSvc.getAuditFormControl(this.expression, "basic"),
 				this.appFormsSvc.getButtonControls(
 					"basic",
@@ -414,18 +421,110 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		return Module.moduleDefinitions.find(definition => definition.ID === moduleDefinitionID).ContentTypeDefinitions.filter(definition => definition.Portlets);
 	}
 
+	private prepareFilterAndSorts() {
+		const module = this.formControls.find(ctrl => ctrl.Name === "RepositoryID") !== undefined
+			? Module.get(this.formControls.find(ctrl => ctrl.Name === "RepositoryID").value || this.configSvc.requestParams["RepositoryID"])
+			: Module.get(this.configSvc.requestParams["RepositoryID"]);
+		const contentType = this.formControls.find(ctrl => ctrl.Name === "RepositoryEntityID") !== undefined
+			? ContentType.get(this.formControls.find(ctrl => ctrl.Name === "RepositoryEntityID").value || this.configSvc.requestParams["RepositoryEntityID"])
+			: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"]);
+		const objectName = contentType !== undefined ? contentType.getObjectName(true) : undefined;
+		const filterBy: Array<{ Attribute?: string; Operator: string; Value?: string; Children?: Array<{ Attribute: string; Operator: string; Value?: string }> }> = contentType !== undefined
+			? [
+				{
+					Attribute: "SystemID",
+					Operator: "Equals",
+					Value: contentType.SystemID
+				},
+				{
+					Attribute: "RepositoryID",
+					Operator: "Equals",
+					Value: contentType.RepositoryID
+				},
+				{
+					Attribute: "RepositoryEntityID",
+					Operator: "Equals",
+					Value: contentType.ID
+				}
+			]
+			: module !== undefined
+				? [
+					{
+						Attribute: "SystemID",
+						Operator: "Equals",
+						Value: module.SystemID
+					},
+					{
+						Attribute: "RepositoryID",
+						Operator: "Equals",
+						Value: module.ID
+					}
+				]
+				: [
+					{
+						Attribute: "SystemID",
+						Operator: "Equals",
+						Value: this.organization.ID
+					}
+				];
+		if (this.configSvc.requestParams["ParentID"] !== undefined && ("CMS.Content" === objectName || "CMS.Link" === objectName)) {
+			filterBy.push({
+				Attribute: "CMS.Content" === objectName ? "CategoryID" : "ParentID",
+				Operator: "Equals",
+				Value: this.configSvc.requestParams["ParentID"]
+			});
+		}
+		filterBy.push({
+			Attribute: "Status",
+			Operator: "Equals",
+			Value: "Published"
+		});
+		if ("CMS.Content" === objectName) {
+			filterBy.push(
+				{
+					Attribute: "StartDate",
+					Operator: "LessThanOrEquals",
+					Value: "@today"
+				},
+				{
+					Operator: "Or",
+					Children: [
+						{
+							Attribute: "EndDate",
+							Operator: "GreaterOrEquals",
+							Value: "@today"
+						},
+						{
+							Attribute: "EndDate",
+							Operator: "IsNull"
+						}
+					]
+				}
+			);
+		}
+		this.expression.Filter = {
+			Operator: "And",
+			Children: filterBy
+		};
+		this.expression.Sorts = ["CMS.Content" === objectName
+			? { Attribute: "StartDate", Mode: "Descending", ThenBy: { Attribute: "PublishedTime", Mode: "Descending" } }
+			: "CMS.Link" === objectName
+				? { Attribute: "OrderIndex", Mode: "Ascending" }
+				: { Attribute: "Created", Mode: "Descending" }
+		];
+	}
+
 	onFormInitialized() {
 		this.form.patchValue(this.expression);
-		if (AppUtility.isNotEmpty(this.expression.ID)) {
-			this.form.controls.Filter.setValue(JSON.stringify(this.expression.Filter), { onlySelf: true });
-			this.form.controls.Sorts.setValue(JSON.stringify(this.expression.Sorts), { onlySelf: true });
-		}
-		else {
-			this.form.controls.ContentTypeDefinitionID.setValue(this.expression.ContentTypeDefinitionID || this.getContentTypeDefinitions(this.expression.RepositoryID)[0].ID, { onlySelf: true });
-		}
+		this.form.controls.Filter.setValue(JSON.stringify(this.expression.Filter), { onlySelf: true });
+		this.form.controls.Sorts.setValue(JSON.stringify(this.expression.Sorts), { onlySelf: true });
 		this.appFormsSvc.hideLoadingAsync(() => {
 			this.hash = AppCrypto.hash(this.form.value);
-			if (this.isAdvancedMode) {
+			if (AppUtility.isEmpty(this.expression.ID)) {
+				this.form.controls.Description.setValue("", { onlySelf: true });
+				this.form.controls.ContentTypeDefinitionID.setValue(this.expression.ContentTypeDefinitionID || this.getContentTypeDefinitions(this.expression.RepositoryID).first().ID, { onlySelf: true });
+			}
+			else if (this.isAdvancedMode) {
 				this.form.controls.JSONXRequest.setValue(JSON.stringify({
 					FilterBy: {
 						And: [{
@@ -464,25 +563,19 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 					delete expression["Encode"];
 				}
 
-				if (AppUtility.isNotEmpty(this.expression.ID)) {
-					try {
-						expression.Filter = AppUtility.isNotEmpty(expression.Filter)
-							? AppUtility.parse(expression.Filter)
-							: undefined;
-						expression.Sorts = AppUtility.isNotEmpty(expression.Sorts)
-							? AppUtility.parse(expression.Sorts)
-							: undefined;
-					}
-					catch (error) {
-						this.processing = false;
-						console.error("Error occurred while parsing JSON of expressions", error);
-						await this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.expressions.update.messages.json")});
-						return;
-					}
+				try {
+					expression.Filter = AppUtility.isNotEmpty(expression.Filter)
+						? AppUtility.parse(expression.Filter)
+						: undefined;
+					expression.Sorts = AppUtility.isNotEmpty(expression.Sorts)
+						? AppUtility.parse(expression.Sorts)
+						: undefined;
 				}
-				else {
-					expression.Filter = this.configSvc.requestParams["Filter"];
-					expression.Sorts = this.configSvc.requestParams["Sorts"];
+				catch (error) {
+					this.processing = false;
+					console.error("Error occurred while parsing JSON of expressions", error);
+					await this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.expressions.update.messages.json")});
+					return;
 				}
 
 				if (AppUtility.isNotEmpty(expression.ID)) {

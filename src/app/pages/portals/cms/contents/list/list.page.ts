@@ -312,6 +312,9 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		else {
 			this.portalsCmsSvc.searchContentsAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 		}
+		if (this.configSvc.isDebug) {
+			console.log("<CMS.Content>: search for contents", this.request);
+		}
 	}
 
 	prepareResults(onNext?: () => void, results?: Array<any>) {
