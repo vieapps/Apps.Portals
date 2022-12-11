@@ -30,6 +30,7 @@ export class Category extends CmsBaseModel implements NestedObject {
 	DesktopID = undefined as string;
 	OpenBy = "DesktopWithAlias";
 	SpecifiedURI = undefined as string;
+	PrimaryContentID = undefined as string;
 	Notes = undefined as string;
 	Notifications = undefined as NotificationSettings;
 	EmailSettings = undefined as EmailSettings;
@@ -104,12 +105,8 @@ export class Category extends CmsBaseModel implements NestedObject {
 		return `/portals/cms/categories/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
-	get listLink() {
-		return this.routerLink.replace("/update/", "/list/");
-	}
-
-	get listURI() {
-		return `${this.listLink}?x-request=${AppCrypto.jsonEncode({ ParentID: this.ID })}`;
+	get showChildrenLink() {
+		return `${this.routerLink.replace("/update/", "/list/")}?x-request=${AppCrypto.jsonEncode({ ParentID: this.ID })}`;
 	}
 
 }

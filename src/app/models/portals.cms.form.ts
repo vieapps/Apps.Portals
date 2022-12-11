@@ -19,8 +19,6 @@ export class Form extends CmsBaseModel {
 
 	static instances = new Dictionary<string, Form>();
 
-	Title = undefined as string;
-	Details = undefined as string;
 	Name = undefined as string;
 	Phone = undefined as string;
 	Email = undefined as string;
@@ -30,10 +28,12 @@ export class Form extends CmsBaseModel {
 	Postal = undefined as string;
 	Country = undefined as string;
 	Notes = undefined as string;
+	Title = undefined as string;
+	Details = undefined as string;
 	IPAddress = undefined as string;
-	Profiles = undefined as Dictionary<string, string>;
 	Status = undefined as string;
 	AllowComments = false;
+	Profiles = undefined as Dictionary<string, string>;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;
