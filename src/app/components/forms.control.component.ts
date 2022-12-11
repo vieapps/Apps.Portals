@@ -763,6 +763,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 			ctrl.Order = this.control.SubControls.Controls.length;
 			ctrl.Options.Label = `#${this.control.SubControls.Controls.length + 1}`;
 		});
+		this.control.SubControls.Controls.push(control);
 		this.formControlAsFormArray.push(
 			control.SubControls === undefined || control.SubControls.Controls === undefined || control.SubControls.Controls.length < 1
 				? this.appFormsSvc.getFormControl(control)
@@ -770,7 +771,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 					? this.appFormsSvc.getFormArray(control)
 					: this.appFormsSvc.getFormGroup(control.SubControls.Controls)
 		);
-		this.control.SubControls.Controls.push(control);
 		if (this.control.Extras !== undefined && typeof this.control.Extras.onControlOfFormArrayAdded === "function") {
 			this.control.Extras.onControlOfFormArrayAdded(this.control);
 		}
