@@ -573,15 +573,14 @@ export class PortalsCmsService extends BaseService {
 		const filterBy: (contentType: ContentType) => boolean = AppUtility.isNotEmpty(definitionID)
 			? contentType => contentType.ContentTypeDefinitionID === definitionID
 			: contentType => contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000001" && contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000002";
-		this.updateSidebar(
-			this.portalsCoreSvc.activeModule.contentTypes.filter(filterBy).sortBy("Title").map(contentType => ({
-				Title: contentType.Title,
-				Link: this.portalsCoreSvc.getRouterLink(contentType, "list"),
-				Params: this.portalsCoreSvc.getRouterQueryParams(contentType)
-			})),
-			{ Title: await this.configSvc.getResourceAsync("portals.sidebar.titles.contents") },
-			onNext
-		);
+		const contentTypes = this.portalsCoreSvc.activeModule !== undefined
+			? this.portalsCoreSvc.activeModule.contentTypes
+			: new Array<ContentType>();
+		this.updateSidebar(contentTypes.filter(filterBy).sortBy("Title").map(contentType => ({
+			Title: contentType.Title,
+			Link: this.portalsCoreSvc.getRouterLink(contentType, "list"),
+			Params: this.portalsCoreSvc.getRouterQueryParams(contentType)
+		})), { Title: await this.configSvc.getResourceAsync("portals.sidebar.titles.contents") }, onNext);
 	}
 
 	private getSidebarItems(categories: Array<Category>, parent?: Category, expandedID?: string): { Parent: AppSidebarMenuItem; Items: AppSidebarMenuItem[] } {
@@ -603,11 +602,12 @@ export class PortalsCmsService extends BaseService {
 	private getSidebarItem(category: Category, expandedID?: string) {
 		const gotChildren = category.childrenIDs !== undefined && category.childrenIDs.length > 0;
 		const expanded = gotChildren && category.ID === expandedID;
+		const contentType = ContentType.get(category.PrimaryContentID) || this._sidebarContentType;
 		return {
 			ID: category.ID,
 			Title: category.Title,
-			Link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", category.ansiTitle),
-			Params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: category.ID }),
+			Link: this.portalsCoreSvc.getRouterLink(contentType, "list", category.ansiTitle),
+			Params: this.portalsCoreSvc.getRouterQueryParams(contentType, { CategoryID: category.ID }),
 			Children: gotChildren ? this.getSidebarItems(category.Children, undefined, expandedID).Items : [],
 			Icon: gotChildren ? { Name: expanded ? "chevron-down" : "chevron-forward", Color: "medium", Slot: "end" } : undefined,
 			Expanded: expanded,
@@ -1044,14 +1044,6 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	getContentTypesOfContent(module: Module) {
-		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000002");
-	}
-
-	getDefaultContentTypeOfContent(module: Module) {
-		return this.getContentTypesOfContent(module).first();
-	}
-
 	processCategories(categories: Array<any>, fetchDesktops: boolean = false) {
 		categories.forEach(data => {
 			const category = Category.update(data);
@@ -1115,6 +1107,14 @@ export class PortalsCmsService extends BaseService {
 			data => (data.Objects as Array<any> || []).map(obj => convertToCompleterItem(obj)),
 			convertToCompleterItem
 		);
+	}
+
+	getContentTypesOfContent(module: Module) {
+		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000002");
+	}
+
+	getDefaultContentTypeOfContent(module: Module) {
+		return this.getContentTypesOfContent(module).first();
 	}
 
 	searchContents(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
@@ -1850,6 +1850,10 @@ export class PortalsCmsService extends BaseService {
 		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
 			AppEvents.broadcast(this.name, { Object: "CMS.Form", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
 		}
+	}
+
+	getContentTypesOfProduct(module: Module) {
+		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000006");
 	}
 
 	get crawlerCompleterDataSource() {
