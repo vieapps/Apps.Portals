@@ -40,6 +40,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 	private organization: Organization;
 	private module: Module;
 	private contentType: ContentType;
+	private contentTypes: ContentType[];
 	private category: Category;
 	private emailsByApprovalStatus = {} as { [status: string]: EmailNotificationSettings };
 	private hash = "";
@@ -103,6 +104,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		}
 
 		this.module = Module.get(this.contentType.RepositoryID);
+		this.contentTypes = this.portalsCmsSvc.getContentTypesOfContent(this.module).merge(this.portalsCmsSvc.getContentTypesOfProduct(this.module));
 
 		const canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.category !== undefined ? this.category.Privileges : this.module.Privileges);
 		if (!canUpdate) {
@@ -220,6 +222,29 @@ export class CmsCategoriesUpdatePage implements OnInit {
 			}));
 		}
 
+		formConfig.insert({
+			Name: "PrimaryContentID",
+			Type: "Select",
+			Segment: "basic",
+			Options: {
+				Label: "{{portals.cms.categories.controls.PrimaryContentID.label}}",
+				Description: "{{portals.cms.categories.controls.PrimaryContentID.description}}",
+				SelectOptions: {
+					Multiple: false
+				}
+			}
+		}, formConfig.findIndex(ctrl => ctrl.Name === "Notes"));
+		control = formConfig.find(ctrl => ctrl.Name === "PrimaryContentID");
+		if (this.contentTypes.length > 1) {
+			control.Options.SelectOptions.Values = this.contentTypes.map(contentType => ({
+				Value: contentType.ID,
+				Label: contentType.Title
+			}));
+		}
+		else {
+			control.Hidden = true;
+		}
+
 		formConfig.push(
 			{
 				Name: "OriginalPrivileges",
@@ -277,8 +302,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		}
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
-		formConfig.find(ctrl => ctrl.Name === "Description").Options.Rows = 2;
-		formConfig.find(ctrl => ctrl.Name === "Notes").Options.Rows = 2;
+		formConfig.find(ctrl => ctrl.Name === "Description").Options.Rows = formConfig.find(ctrl => ctrl.Name === "Notes").Options.Rows = 2;
 
 		if (AppUtility.isNotEmpty(this.category.ID)) {
 			control = formConfig.find(ctrl => ctrl.Name === "ID");
@@ -296,6 +320,10 @@ export class CmsCategoriesUpdatePage implements OnInit {
 
 	onFormInitialized() {
 		this.form.patchValue(AppUtility.clone(this.category, false, ["Privileges", "Notifications", "EmailSettings"], category => {
+			if (this.contentTypes.length > 1) {
+				const contentType = ContentType.get(this.category.PrimaryContentID) || this.portalsCmsSvc.getDefaultContentTypeOfContent(this.module);
+				category.PrimaryContentID = contentType !== undefined ? contentType.ID : undefined;
+			}
 			category.OriginalPrivileges = Privileges.clonePrivileges(this.category.OriginalPrivileges);
 			category.Notifications = this.portalsCoreSvc.getNotificationSettings(this.category.Notifications, this.emailsByApprovalStatus);
 			category.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.category.EmailSettings);
@@ -332,6 +360,7 @@ export class CmsCategoriesUpdatePage implements OnInit {
 				this.appFormsSvc.showLoadingAsync(this.title.track);
 
 				const category = this.form.value;
+				category.PrimaryContentID = this.contentTypes.length > 1 ? category.PrimaryContentID : undefined;
 				category.OriginalPrivileges = Privileges.getPrivileges(category.OriginalPrivileges);
 				this.portalsCoreSvc.normalizeNotificationSettings(category.Notifications, this.emailsByApprovalStatus);
 				this.portalsCoreSvc.normalizeEmailSettings(category.EmailSettings);

@@ -412,7 +412,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	showChildren(event: Event, category: Category) {
-		this.do(() => this.configSvc.navigateForwardAsync(category.listURI), event);
+		this.do(() => this.configSvc.navigateForwardAsync(category.showChildrenLink), event);
 	}
 
 	view(event: Event, category: Category) {
@@ -456,15 +456,8 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			RepositoryID: contentType.RepositoryID,
 			RepositoryEntityID: contentType.ID,
 			ContentTypeDefinitionID: contentType.ContentTypeDefinitionID,
-			Filter: {
-				Operator: "And",
-				Children: [{
-					Attribute: "CategoryID",
-					Operator: "Equals",
-					Value: category.ID
-				}]
-			}
-		} : undefined;
+			ParentID: category.ID
+		} : { ParentID: category.ID };
 		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", category.ansiTitle, params, "expression", "core")), event);
 	}
 

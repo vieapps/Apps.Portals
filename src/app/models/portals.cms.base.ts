@@ -59,6 +59,10 @@ export abstract class PortalCmsBase extends BaseModel {
 		return (this.contentType || new ContentType()).contentTypeDefinition;
 	}
 
+	get objectName() {
+		return (this.contentType || new ContentType()).getObjectName(true);
+	}
+
 	get thumbnailURI() {
 		return this.thumbnails !== undefined && this.thumbnails.length > 0
 			? AppUtility.isObject(this.thumbnails[0].URIs, true)

@@ -784,6 +784,7 @@ export class PortalsCoreService extends BaseService {
 					{
 						Name: "SecretToken",
 						Options: {
+							Type: "password",
 							Label: "{{portals.common.controls.webhooks.secretToken.label}}",
 							Description: "{{portals.common.controls.webhooks.secretToken.description}}"
 						}
@@ -809,6 +810,7 @@ export class PortalsCoreService extends BaseService {
 					{
 						Name: "EncryptionKey",
 						Options: {
+							Type: "password",
 							Label: "{{portals.common.controls.webhooks.encryptionKey.label}}",
 							Description: "{{portals.common.controls.webhooks.encryptionKey.description}}"
 						}
@@ -816,6 +818,7 @@ export class PortalsCoreService extends BaseService {
 					{
 						Name: "EncryptionIV",
 						Options: {
+							Type: "password",
 							Label: "{{portals.common.controls.webhooks.encryptionIV.label}}",
 							Description: "{{portals.common.controls.webhooks.encryptionIV.description}}"
 						}

@@ -100,6 +100,11 @@
 						"placeholder": "",
 						"description": "Chỉ định liên kết tĩnh/cố định của phân loại.<br/>Tips: có thể sử dụng ký hiệu '<b>~/</b>' để chỉ định liên kết từ gốc (root), hoặc sử dụng '<b>javascript:</b>' để chỉ định chạy hàm Javascript."
 					},
+					"PrimaryContentID": {
+						"label": "Kiểu dữ liệu nội dung chính",
+						"placeholder": "",
+						"description": "Chỉ định kiểu dữ liệu của nội dung chính khi duyệt danh sách nội dung"
+					},
 					"Notes": {
 						"label": "Ghi chú",
 						"placeholder": "",

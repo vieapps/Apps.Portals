@@ -1348,7 +1348,7 @@
 					"description": "Thiết đặt các bộ ráp nối nhận tín hiệu web-hook được gửi từ bên ngoài vào từ nhiều nguồn khác nhau đối với kiểu dữ liệu nghiệp vụ này.",
 					"Name": {
 						"label": "Tên của bộ ráp nối nhận tín hiệu web-hook",
-						"description": "Tên phải là duy nhất, bộ ráp nối có tên là <b>default</b> sẽ được sử dụng trong tình huống một bộ ráp nối được chỉ định theo tên không được tìm thấy."
+						"description": "Tên phải là duy nhất, bộ ráp nối có tên là <b>default</b> sẽ được sử dụng trong tình huống một bộ ráp nối được chỉ định theo tên không được tìm thấy.<br/>Tips: xoá tên (không thiết đặt tên) để xoá bộ ráp nối này."
 					}
 				},
 				"ExtendedPropertyDefinitions": {
