@@ -213,6 +213,7 @@ export interface ExtendedControlDefinition {
 	MaxValue?: string;
 	MinLength?: number;
 	MaxLength?: number;
+	Css?: string;
 	Width?: string;
 	Height?: string;
 	AsTextEditor?: boolean;
@@ -234,6 +235,7 @@ export interface StandardControlDefinition {
 	Label?: string;
 	PlaceHolder?: string;
 	Description?: string;
+	Css?: string;
 	Hidden?: boolean;
 	Formula?: string;
 	HiddenInView?: boolean;
