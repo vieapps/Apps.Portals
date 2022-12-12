@@ -522,11 +522,11 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 		}));
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(() => {
-			if (!AppUtility.isNotEmpty(this.contentType.ID) && Module.instances.size > 0) {
-				this.form.controls.RepositoryID.setValue(Module.instances.toArray()[0].ID, { onlySelf: true });
+			if (AppUtility.isEmpty(this.contentType.ID) && Module.instances.size > 0) {
+				this.form.controls.RepositoryID.setValue(this.portalsCoreSvc.activeModule !== undefined ? this.portalsCoreSvc.activeModule.ID : this.getRepositories().first().Value, { onlySelf: true });
 				const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "ContentTypeDefinitionID"));
 				if (control.Options.SelectOptions.Values.length > 0) {
-					const first = control.Options.SelectOptions.Values[0];
+					const first = control.Options.SelectOptions.Values.first();
 					this.form.controls.ContentTypeDefinitionID.setValue(first.Value, { onlySelf: true });
 					this.form.controls.Title.setValue(first.Label, { onlySelf: true });
 					this.form.controls.Description.setValue(first.Description, { onlySelf: true });
