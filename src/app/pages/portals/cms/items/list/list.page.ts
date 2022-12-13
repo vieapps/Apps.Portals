@@ -202,6 +202,9 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 					else {
 						this.prepareResults(() => this.items = this.items.sortBy({ name: "Created", reverse: true }));
 					}
+					if (info.args.Type === "Updated" || info.args.Type === "Deleted") {
+						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+					}
 				}
 			}, "CMS.Items:Refresh");
 		}
@@ -274,7 +277,7 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		}
 	}
 
-	get paginationPrefix() {
+	private get paginationPrefix() {
 		return this.portalsCoreSvc.getPaginationPrefix("cms.item");
 	}
 

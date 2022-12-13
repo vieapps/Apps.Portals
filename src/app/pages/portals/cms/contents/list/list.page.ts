@@ -216,6 +216,9 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			AppEvents.on(this.portalsCoreSvc.name, info => {
 				if (info.args.Object === "CMS.Content" && info.args.SystemID === this.portalsCoreSvc.activeOrganization.ID) {
 					this.prepareResults();
+					if (info.args.Type === "Updated" || info.args.Type === "Deleted") {
+						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+					}
 				}
 			}, `CMS.Contents:${(this.category !== undefined ? ":" + this.category.ID : "")}:Refresh`);
 		}

@@ -245,6 +245,9 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 					const args = info.args;
 					if (info.args.Object === "CMS.Category" && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type)) {
 						this.prepareResults();
+						if (info.args.Type === "Updated" || info.args.Type === "Deleted") {
+							AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+						}
 					}
 				}, "CMS.Categories:Refresh");
 			}
