@@ -179,7 +179,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		}
 		else {
 			control.Options.SelectOptions.Values = this.organization.modules.map(module => ({ Value: module.ID, Label: module.Title }));
-			control.Options.OnChanged = async (_, formControl) => {
+			control.Options.OnChanged = (_, formControl) => {
 				const module = Module.get(formControl.value);
 				const definitions = module.contentTypeDefinitions;
 				const definitionID = definitions.first().ID;
@@ -580,16 +580,11 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				if (AppUtility.isNotEmpty(expression.ID)) {
 					await this.portalsCoreSvc.updateExpressionAsync(
 						expression,
-						async data => {
-							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Expression", Type: "Updated", ID: data.ID });
-							await Promise.all([
-								this.trackAsync(this.title, "Update"),
-								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.expressions.update.messages.success.update")),
-								this.appFormsSvc.hideLoadingAsync()
-							]);
-							await this.configSvc.navigateBackAsync();
-						},
+						async _ => await Promise.all([
+							this.trackAsync(this.title, "Update"),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.expressions.update.messages.success.update")),
+							this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
+						]),
 						async error => {
 							this.processing = false;
 							await Promise.all([
@@ -602,15 +597,11 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				else {
 					await this.portalsCoreSvc.createExpressionAsync(
 						expression,
-						async data => {
-							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Expression", Type: "Created", ID: data.ID });
-							await Promise.all([
-								this.trackAsync(this.title),
-								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.expressions.update.messages.success.new")),
-								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-							]);
-						},
+						async _ => await Promise.all([
+							this.trackAsync(this.title),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.expressions.update.messages.success.new")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]),
 						async error => {
 							this.processing = false;
 							await Promise.all([

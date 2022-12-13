@@ -347,7 +347,6 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 						}
 					}
 					else {
-						item.Alias = AppUtility.toANSI(this.item.Title, true);
 						this.portalsCmsSvc.createItemAsync(
 							item,
 							async data => {

@@ -540,17 +540,12 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 						}
 					}
 					else {
-						const oldCategoryID = this.content.CategoryID;
 						this.portalsCmsSvc.updateContentAsync(
 							content,
-							async data => {
-								data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
+							async _ => {
 								const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 								if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
 									await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.content, options => options.Extras["x-attachment-id"] = control.value.identity), () => this.trackAsync(this.title.track, "Upload", "Thumbnail"));
-								}
-								if (oldCategoryID !== data.CategoryID) {
-									AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: oldCategoryID });
 								}
 								await Promise.all([
 									this.trackAsync(this.title.track, "Update"),

@@ -670,7 +670,6 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 							contentType,
 							data => {
 								data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
-								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Updated", ID: data.ID });
 								this.configSvc.removeDefinition(this.portalsCoreSvc.name, ContentType.get(data.ID).getObjectName(true), undefined, { "x-content-type-id": data.ID });
 								this.configSvc.removeDefinition(this.portalsCoreSvc.name, ContentType.get(data.ID).getObjectName(true), undefined, { "x-content-type-id": data.ID, "x-view-controls": "x" });
 								this.trackAsync(this.title, "Update")
@@ -683,13 +682,9 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 					else {
 						this.portalsCoreSvc.createContentTypeAsync(
 							contentType,
-							data => {
-								data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
-								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Created", ID: data.ID });
-								this.trackAsync(this.title)
-									.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.new")))
-									.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
-							},
+							_ => this.trackAsync(this.title)
+								.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.new")))
+								.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
 							error => this.trackAsync(this.title).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
 						);
 					}
@@ -709,8 +704,8 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 					.then(() => this.portalsCoreSvc.deleteContentTypeAsync(
 						this.contentType.ID,
 						_ => this.trackAsync(this.title, "Delete")
-								.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.delete")))
-								.then(() => this.appFormsSvc.hideLoadingAsync()),
+							.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.delete")))
+							.then(() => this.appFormsSvc.hideLoadingAsync()),
 						error => this.trackAsync(this.title, "Delete").then(() => this.appFormsSvc.showErrorAsync(error))
 					)
 				),

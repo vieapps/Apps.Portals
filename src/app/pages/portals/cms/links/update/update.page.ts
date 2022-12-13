@@ -437,15 +437,10 @@ export class CmsLinksUpdatePage implements OnInit {
 						const oldParentID = this.link.ParentID;
 						this.portalsCmsSvc.updateLinkAsync(
 							link,
-							async data => {
-								data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
+							async _ => {
 								const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 								if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
 									await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.link, options => options.Extras["x-attachment-id"] = control.value.identity), () => this.trackAsync(this.title.track, "Upload", "Thumbnail"));
-								}
-								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Updated", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
-								if (oldParentID !== data.ParentID) {
-									AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Updated", ID: oldParentID });
 								}
 								await Promise.all([
 									this.trackAsync(this.title.track, "Update"),
@@ -466,7 +461,6 @@ export class CmsLinksUpdatePage implements OnInit {
 							if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
 								await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(Link.get(data.ID)), () => this.trackAsync(this.title.track, "Upload", "Thumbnail"));
 							}
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Link", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
 							await Promise.all([
 								this.trackAsync(this.title.track),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.links.update.messages.success.new")),

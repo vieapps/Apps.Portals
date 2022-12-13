@@ -857,7 +857,9 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(portlet.ID)) {
 			this.portalsCoreSvc.updatePortletAsync(
 				portlet,
-				() => this.trackAsync(this.title, "Update").then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.portlets.update.messages.success.update"))).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
+				_ => this.trackAsync(this.title, "Update")
+					.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.portlets.update.messages.success.update")))
+					.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
 				error => this.trackAsync(this.title, "Update").then(() => this.showErrorAsync(error)).then(() => this.processing = false),
 				{ "IsAdvancedMode": this.isAdvancedMode.toString() }
 			);
