@@ -237,7 +237,8 @@ export interface StandardControlDefinition {
 	Description?: string;
 	Css?: string;
 	Hidden?: boolean;
-	Formula?: string;
 	HiddenInView?: boolean;
+	DefaultValue?: string;
+	Formula?: string;
 }
 
