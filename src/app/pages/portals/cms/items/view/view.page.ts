@@ -380,9 +380,9 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 				this.processing = true;
 				this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete")).then(() => this.portalsCmsSvc.deleteItemAsync(
 					this.item.ID,
-					() => this.trackAsync(this.resources.delete, "Delete")
+					_ => this.trackAsync(this.resources.delete, "Delete")
 						.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete"))
-						.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
+						.then(() => this.appFormsSvc.hideLoadingAsync()),
 					error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.resources.delete, "Delete"))
 				)));
 			},

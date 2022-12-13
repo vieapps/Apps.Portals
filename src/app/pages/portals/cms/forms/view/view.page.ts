@@ -297,7 +297,9 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 				confirmMessage,
 				() => this.appFormsSvc.showLoadingAsync(deleteButton).then(() => this.portalsCmsSvc.deleteFormAsync(
 					this.item.ID,
-					() => this.trackAsync(deleteButton, "Delete").then(() => this.appFormsSvc.showToastAsync(successMessage)).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
+					_ => this.trackAsync(deleteButton, "Delete")
+						.then(() => this.appFormsSvc.showToastAsync(successMessage))
+						.then(() => this.appFormsSvc.hideLoadingAsync()),
 					error => this.trackAsync(this.title.track, "Delete").then(() => this.appFormsSvc.showErrorAsync(error))
 				)),
 				removeButton,

@@ -378,7 +378,9 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 				confirmMessage,
 				() => this.appFormsSvc.showLoadingAsync(deleteButton).then(() => this.portalsCmsSvc.deleteItemAsync(
 					this.item.ID,
-					() => this.trackAsync(deleteButton, "Delete").then(() => this.appFormsSvc.showToastAsync(successMessage)).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
+					_ => this.trackAsync(deleteButton, "Delete")
+						.then(() => this.appFormsSvc.showToastAsync(successMessage))
+						.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
 					error => this.trackAsync(this.title.track, "Delete").then(() => this.appFormsSvc.showErrorAsync(error))
 				)),
 				removeButton,

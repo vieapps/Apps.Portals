@@ -472,13 +472,9 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				confirm,
 				() => this.appFormsSvc.showLoadingAsync(title).then(() => this.portalsCmsSvc.deleteContentAsync(
 					this.content.ID,
-					data => {
-						AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: data.CategoryID });
-						if (AppUtility.isArray(data.OtherCategories)) {
-							(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.portalsCmsSvc.name, { Object: "CMS.Content", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
-						}
-						this.trackAsync(title, "Delete").then(() => this.appFormsSvc.showToastAsync(success)).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
-					},
+					_ => this.trackAsync(title, "Delete")
+						.then(() => this.appFormsSvc.showToastAsync(success))
+						.then(() => this.appFormsSvc.hideLoadingAsync()),
 					error => this.trackAsync(title, "Delete").then(() => this.appFormsSvc.showErrorAsync(error))
 				)),
 				button,

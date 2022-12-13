@@ -411,16 +411,20 @@ export class CmsCategoriesUpdatePage implements OnInit {
 			const removeButton = await this.configSvc.getResourceAsync("portals.cms.categories.update.buttons.delete");
 			const cancelButton = await this.configSvc.getResourceAsync("common.buttons.cancel");
 			const deleteMessage = await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.confirm.delete");
-			const removeMessage = await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.confirm.remove");
+			const removeMessage = this.category.childrenIDs === undefined || this.category.childrenIDs.length < 1 ? undefined : await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.confirm.remove");
 			const successMessage = await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.delete");
-			const modes = [
+			const inputs = this.category.childrenIDs === undefined || this.category.childrenIDs.length < 1 ? undefined : [
 				{
+					type: "radio",
 					label: await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete-all"),
-					value: "delete"
+					value: "delete",
+					checked: false
 				},
 				{
+					type: "radio",
 					label: await this.configSvc.getResourceAsync("portals.desktops.update.buttons.set-null-all"),
-					value: "set-null"
+					value: "set-null",
+					checked: true
 				}
 			];
 			this.appFormsSvc.showConfirmAsync(
@@ -432,22 +436,16 @@ export class CmsCategoriesUpdatePage implements OnInit {
 					mode => {
 						this.appFormsSvc.showLoadingAsync(deleteButton).then(() => this.portalsCmsSvc.deleteCategoryAsync(
 							this.category.ID,
-							data => {
-								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
-								this.trackAsync(this.title.track, "Delete").then(() => this.appFormsSvc.showToastAsync(successMessage)).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
-							},
+							_ => this.trackAsync(this.title.track, "Delete")
+								.then(() => this.appFormsSvc.showToastAsync(successMessage))
+								.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
 							error => this.trackAsync(this.title.track, "Delete").then(() => this.appFormsSvc.showErrorAsync(error)),
 							{ "x-children": mode }
 						));
 					},
 					removeButton,
 					cancelButton,
-					this.category.childrenIDs === undefined || this.category.childrenIDs.length < 1 ? undefined : modes.map(mode => ({
-						type: "radio",
-						label: mode.label,
-						value: mode.value,
-						checked: mode.value === "delete"
-					}))
+					inputs
 				),
 				deleteButton,
 				cancelButton
