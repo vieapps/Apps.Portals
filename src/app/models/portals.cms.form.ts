@@ -89,7 +89,7 @@ export class Form extends CmsBaseModel {
 	}
 
 	get fullAddress() {
-		return this.Address
+		return (this.Address ?? "")
 			+ (AppUtility.isNotEmpty(this.Province) ? (AppUtility.isNotEmpty(this.Address) ? ", " : "")
 			+ this.County + ", " + this.Province + ", " + this.Country : "");
 	}

@@ -62,11 +62,6 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.initializeAsync();
-		AppEvents.on(this.portalsCoreSvc.name, info => {
-			if (info.args.Object === "Content.Type" && info.args.Type === "Deleted" && info.args.ID === this.contentType.ID) {
-				this.configSvc.navigateBackAsync();
-			}
-		}, "ContentTypes:Edit");
 	}
 
 	ngOnDestroy() {
@@ -128,6 +123,12 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 		this.trackAsync(this.title);
+
+		AppEvents.on(this.portalsCoreSvc.name, info => {
+			if (info.args.Object === "Content.Type" && info.args.Type === "Deleted" && info.args.ID === this.contentType.ID) {
+				this.configSvc.navigateBackAsync();
+			}
+		}, "ContentTypes:Edit");
 	}
 
 	private getModuleDefinition(moduleID: string) {
@@ -707,12 +708,9 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 				async () => this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.buttons.delete"))
 					.then(() => this.portalsCoreSvc.deleteContentTypeAsync(
 						this.contentType.ID,
-						data => {
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Content.Type", Type: "Deleted", ID: data.ID });
-							this.trackAsync(this.title, "Delete")
+						_ => this.trackAsync(this.title, "Delete")
 								.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.delete")))
-								.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
-						},
+								.then(() => this.appFormsSvc.hideLoadingAsync()),
 						error => this.trackAsync(this.title, "Delete").then(() => this.appFormsSvc.showErrorAsync(error))
 					)
 				),

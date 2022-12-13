@@ -199,7 +199,14 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 				? `ContentTypes:${this.repositoryID}:Refresh`
 				: "ContentTypes:Refresh";
 		AppEvents.on(this.portalsCoreSvc.name, info => {
-			if (info.args.Object === "Content.Type" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
+			if (info.args.Object === "Content.Type" && info.args.SystemID === this.organization.ID) {
+				if (info.args.Type === "Created" || info.args.Type === "Deleted") {
+					AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+				}
+				if (info.args.Type === "Deleted") {
+					ContentType.instances.remove(info.args.ID);
+					this.contentTypes.removeAt(this.contentTypes.findIndex(contentType => contentType.ID === info.args.ID));
+				}
 				this.prepareResults();
 			}
 		}, identity);

@@ -242,12 +242,16 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			else {
 				this.prepareTitleAsync().then(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync()));
 				AppEvents.on(this.portalsCoreSvc.name, info => {
-					const args = info.args;
-					if (info.args.Object === "CMS.Category" && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type)) {
-						this.prepareResults();
-						if (info.args.Type === "Updated" || info.args.Type === "Deleted") {
+					if (info.args.Object === "CMS.Category" && info.args.RepositoryEntityID === this.contentType.ID) {
+						if (info.args.Type === "Created" && info.args.ParentID === undefined) {
 							AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
 						}
+						else if (info.args.Type === "Deleted") {
+							AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+							Category.instances.remove(info.args.ID);
+							this.categories.removeAt(this.categories.findIndex(category => category.ID === info.args.ID));
+						}
+						this.prepareResults();
 					}
 				}, "CMS.Categories:Refresh");
 			}
@@ -453,14 +457,13 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	createExpression(event: Event, category: Category) {
-		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module);
-		const params = AppUtility.isObject(contentType, true) ? {
+		const contentType = ContentType.get(category.PrimaryContentID) || this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module);
+		const params = {
 			Title: `Contents of ${category.Title}`,
-			RepositoryID: contentType.RepositoryID,
-			RepositoryEntityID: contentType.ID,
-			ContentTypeDefinitionID: contentType.ContentTypeDefinitionID,
+			RepositoryID: contentType === undefined ? undefined : contentType.RepositoryID,
+			RepositoryEntityID: contentType === undefined ? undefined : contentType.ID,
 			ParentID: category.ID
-		} : { ParentID: category.ID };
+		};
 		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", category.ansiTitle, params, "expression", "core")), event);
 	}
 

@@ -189,7 +189,14 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 			];
 			this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
 			AppEvents.on("Portals", info => {
-				if (info.args.Object === "Site" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
+				if (info.args.Object === "Site") {
+					if (info.args.Type === "Created" || info.args.Type === "Deleted") {
+						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+					}
+					if (info.args.Type === "Deleted") {
+						Site.instances.remove(info.args.ID);
+						this.sites.removeAt(this.sites.findIndex(site => site.ID === info.args.ID));
+					}
 					this.prepareResults();
 				}
 			}, "Sites:Refresh");
@@ -288,16 +295,10 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 					? obj => obj.SystemID === this.organization.ID
 					: _ => true
 				: obj => obj.SystemID === this.organization.ID;
-			let objects = results === undefined
-				? Site.instances.toList(predicate)
-				: Site.toList(results).Where(predicate);
-			objects = objects.OrderBy(obj => obj.Title).ThenByDescending(obj => obj.LastModified);
-			if (results === undefined && this.pagination !== undefined) {
-				objects = objects.Take(this.pageNumber * this.pagination.PageSize);
-			}
-			this.sites = results === undefined
-				? objects.ToArray()
-				: this.sites.concat(objects.ToArray());
+			const objects = (results === undefined ? Site.instances.toArray(predicate) : Site.toArray(results).filter(predicate))
+				.sortBy("Title", { name: "LastModified", reverse: true })
+				.take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
+			this.sites = results === undefined ? objects : this.sites.concat(objects);
 		}
 		if (onNext !== undefined) {
 			onNext();

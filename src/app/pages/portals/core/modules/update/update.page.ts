@@ -358,14 +358,11 @@ export class PortalsModulesUpdatePage implements OnInit {
 				await this.appFormsSvc.showLoadingAsync(button);
 				await this.portalsCoreSvc.deleteModuleAsync(
 					this.module.ID,
-					async data => {
-						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Module", Type: "Deleted", ID: data.ID });
-						await Promise.all([
-							this.trackAsync(button, "Delete"),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.modules.update.messages.success.delete")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]);
-					},
+					async _ => await Promise.all([
+						this.trackAsync(button, "Delete"),
+						this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.modules.update.messages.success.delete")),
+						this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+					]),
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
 						this.trackAsync(button, "Delete")

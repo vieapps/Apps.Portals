@@ -87,6 +87,12 @@ export class Module extends CoreBaseModel {
 			: undefined;
 	}
 
+	get contentTypeDefinitions() {
+		return this.moduleDefinition !== undefined
+			? this.moduleDefinition.ContentTypeDefinitions.filter(definition => definition.Portlets)
+			: undefined;
+	}
+
 	get contentTypes() {
 		return ContentType.instances.toArray(contentType => contentType.RepositoryID === this.ID).sortBy("Title");
 	}

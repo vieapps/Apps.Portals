@@ -67,7 +67,7 @@
 						{{ item.Name }}
 						<ion-icon name="call"></ion-icon>
 						{{ item.Phone }}
-						<ion-icon name="pin"></ion-icon>
+						<ion-icon name="pin" *ngIf="!!item.fullAddress"></ion-icon>
 						{{ item.fullAddress }}
 					</div>
 				</ion-label>

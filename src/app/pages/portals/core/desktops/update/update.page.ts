@@ -467,14 +467,18 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 	async deleteAsync() {
 		const button = await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete");
 		await this.trackAsync(button, "Delete");
-		const modes = [
+		const inputs = this.desktop.childrenIDs === undefined || this.desktop.childrenIDs.length < 1 ? undefined : [
 			{
+				type: "radio",
 				label: await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete-all"),
-				value: "delete"
+				value: "delete",
+				checked: false
 			},
 			{
+				type: "radio",
 				label: await this.configSvc.getResourceAsync("portals.desktops.update.buttons.set-null-all"),
-				value: "set-null"
+				value: "set-null",
+				checked: true
 			}
 		];
 		await this.appFormsSvc.showAlertAsync(
@@ -485,14 +489,11 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 				await this.appFormsSvc.showLoadingAsync(button);
 				await this.portalsCoreSvc.deleteDesktopAsync(
 					this.desktop.ID,
-					async data => {
-						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Desktop", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
-						await Promise.all([
-							this.trackAsync(button, "Delete"),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.desktops.update.messages.success.delete")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]);
-					},
+					async _ => await Promise.all([
+						this.trackAsync(button, "Delete"),
+						this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.desktops.update.messages.success.delete")),
+						this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+					]),
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
 						this.trackAsync(button, "Delete")
@@ -502,12 +503,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 			},
 			await this.configSvc.getResourceAsync("common.buttons.delete"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel"),
-			this.desktop.childrenIDs === undefined || this.desktop.childrenIDs.length < 1 ? undefined : modes.map(mode => ({
-				type: "radio",
-				label: mode.label,
-				value: mode.value,
-				checked: mode.value === "delete"
-			}))
+			inputs
 		);
 	}
 

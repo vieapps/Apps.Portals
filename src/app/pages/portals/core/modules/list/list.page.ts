@@ -155,8 +155,15 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		];
 
 		this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
-		AppEvents.on("Portals", info => {
-			if (info.args.Object === "Module" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
+		AppEvents.on(this.portalsCoreSvc.name, info => {
+			if (info.args.Object === "Module" && info.args.SystemID === this.organization.ID) {
+				if (info.args.Type === "Created" || info.args.Type === "Deleted") {
+					AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+				}
+				if (info.args.Type === "Deleted") {
+					Module.instances.remove(info.args.ID);
+					this.modules.removeAt(this.modules.findIndex(module => module.ID === info.args.ID));
+				}
 				this.prepareResults();
 			}
 		}, this.definition !== undefined ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");

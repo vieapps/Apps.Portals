@@ -30,7 +30,6 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 	private item: Form;
 	canModerate = false;
 	canEdit = false;
-	processing = false;
 	title = {
 		page: "Item",
 		track: "Item"
@@ -144,7 +143,7 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 					this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => cfg.Name === control.Name).Hidden ? true : false);
 					this.prepareValues();
 				}
-				else if (args.Type === "Deleted" && !this.processing) {
+				else if (args.Type === "Deleted") {
 					this.cancel();
 				}
 			}
@@ -292,7 +291,6 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 			const removeButton = await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove");
 			const confirmMessage = await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete");
 			const successMessage = await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete");
-			this.processing = true;
 			this.appFormsSvc.showConfirmAsync(
 				confirmMessage,
 				() => this.appFormsSvc.showLoadingAsync(deleteButton).then(() => this.portalsCmsSvc.deleteFormAsync(

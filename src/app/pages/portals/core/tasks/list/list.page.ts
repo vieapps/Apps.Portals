@@ -103,6 +103,10 @@ export class PortalsTasksListPage implements OnInit, OnDestroy {
 
 		AppEvents.on(this.portalsCoreSvc.name, info => {
 			if (info.args.Object === "SchedulingTask") {
+				if (info.args.Type === "Deleted") {
+					SchedulingTask.instances.remove(info.args.ID);
+					this.tasks.removeAt(this.tasks.findIndex(task => task.ID === info.args.ID));
+				}
 				this.prepare();
 			}
 		}, "SchedulingTasks:Refresh");

@@ -237,11 +237,16 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 				this.prepareTitleAsync().then(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync()));
 				AppEvents.on(this.portalsCoreSvc.name, info => {
 					const args = info.args;
-					if (args.Object === "CMS.Link" && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type)) {
-						this.prepareResults();
-						if (info.args.Type === "Updated" || info.args.Type === "Deleted") {
+					if (args.Object === "CMS.Link" && info.args.RepositoryEntityID === this.contentType.ID) {
+						if (info.args.Type === "Created" && info.args.ParentID === undefined) {
 							AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
 						}
+						else if (info.args.Type === "Deleted") {
+							AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+							Link.instances.remove(info.args.ID);
+							this.links.removeAt(this.links.findIndex(link => link.ID === info.args.ID));
+						}
+						this.prepareResults();
 					}
 				}, "CMS.Links:Refresh");
 			}
@@ -370,7 +375,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		}
 		else {
 			const predicate: (link: Link) => boolean = object => object.SystemID === this.organization.ID && (this.module !== undefined ? object.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? object.RepositoryEntityID === this.contentType.ID : true) && object.ParentID === this.parentID;
-			const objects: Link[] = (results === undefined ? Link.instances.toArray(predicate) : Link.toArray(results).filter(predicate)).sortBy("OrderIndex", "Title");
+			const objects = (results === undefined ? Link.instances.toArray(predicate) : Link.toArray(results).filter(predicate)).sortBy("OrderIndex", "Title");
 			this.links.merge(results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects, true, (object, array) => array.findIndex(item => item.ID === object.ID));
 		}
 		if (onNext !== undefined) {
@@ -441,16 +446,12 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	}
 
 	createExpression(event: Event, link: Link) {
-		const contentType = link.contentType;
-		const params = AppUtility.isObject(contentType, true)
-			? {
-				Title: `Children of ${link.Title}`,
-				RepositoryID: contentType.RepositoryID,
-				RepositoryEntityID: contentType.ID,
-				ContentTypeDefinitionID: contentType.ContentTypeDefinitionID,
-				ParentID: link.ID
-			}
-			: undefined;
+		const params = {
+			Title: `Children of ${link.Title}`,
+			RepositoryID: this.contentType.RepositoryID,
+			RepositoryEntityID: this.contentType.ID,
+			ParentID: link.ID
+		};
 		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(undefined, "create", link.ansiTitle, params, "expression", "core")), event);
 	}
 

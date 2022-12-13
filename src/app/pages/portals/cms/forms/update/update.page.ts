@@ -132,7 +132,7 @@ export class CmsFormsUpdatePage implements OnInit {
 		}
 
 		control = formConfig.find(ctrl => ctrl.Name === "Address");
-		if (!!control) {
+		if (!!control && !control.Hidden) {
 			formConfig.insert({
 				Name: "Addresses",
 				Type: "Lookup",

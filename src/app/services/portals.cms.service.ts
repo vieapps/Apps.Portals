@@ -895,7 +895,6 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				this.updateCategory(data);
-				AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -938,7 +937,6 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				this.updateCategory(data, parentID);
-				AppEvents.broadcast(this.name, { Object: "CMS.Category", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1154,10 +1152,6 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				Content.update(data);
-				AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: data.CategoryID });
-				if (AppUtility.isArray(data.OtherCategories)) {
-					(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
-				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1189,10 +1183,6 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				Content.update(data);
-				AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: data.CategoryID });
-				if (AppUtility.isArray(data.OtherCategories)) {
-					(data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID, CategoryID: categoryID }));
-				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1229,14 +1219,6 @@ export class PortalsCmsService extends BaseService {
 			headers,
 			useXHR
 		);
-	}
-
-	getContentTypesOfItem(module: Module) {
-		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000003");
-	}
-
-	getDefaultContentTypeOfItem(module: Module) {
-		return this.getContentTypesOfItem(module).first();
 	}
 
 	private processContents(contents: Array<any>) {
@@ -1293,6 +1275,14 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
+	getContentTypesOfItem(module: Module) {
+		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000003");
+	}
+
+	getDefaultContentTypeOfItem(module: Module) {
+		return this.getContentTypesOfItem(module).first();
+	}
+
 	searchItems(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("cms.item", this.configSvc.relatedQuery),
@@ -1331,7 +1321,6 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				Item.update(data);
-				AppEvents.broadcast(this.name, { Object: "CMS.Item", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1363,7 +1352,6 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				Item.update(data);
-				AppEvents.broadcast(this.name, { Object: "CMS.Item", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1527,7 +1515,6 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				this.updateLink(data);
-				AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1561,7 +1548,6 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				this.updateLink(data, parentID);
-				AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1679,9 +1665,9 @@ export class PortalsCmsService extends BaseService {
 				break;
 		}
 		if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
-			AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
+			AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
 			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
-				AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+				AppEvents.broadcast(this.name, { Object: "CMS.Link", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
 			}
 		}
 	}
@@ -1717,8 +1703,8 @@ export class PortalsCmsService extends BaseService {
 			this.getSearchingPath("cms.form", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => Form.update(obj));
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+					this.processForms(data.Objects as Array<any>);
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -1733,9 +1719,8 @@ export class PortalsCmsService extends BaseService {
 			this.getSearchingPath("CMS.Form", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
-					(data.Objects as Array<any>).forEach(obj => Form.update(obj));
-					this._noContents.remove(data.Objects.first().SystemID);
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+					this.processForms(data.Objects as Array<any>);
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -1751,7 +1736,6 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				Form.update(data);
-				AppEvents.broadcast(this.name, { Object: "CMS.Form", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1783,7 +1767,6 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				Form.update(data);
-				AppEvents.broadcast(this.name, { Object: "CMS.Form", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1822,24 +1805,31 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
+	private processForms(forms: Array<any>) {
+		forms.forEach(obj => Form.update(obj));
+		this._noContents.remove(forms.first().SystemID);
+	}
+
 	private processFormUpdateMessage(message: AppMessage) {
 		switch (message.Type.Event) {
 			case "Create":
 			case "Update":
-				Form.update(message.Data);
-				this._noContents.remove(message.Data.SystemID);
+				if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID) {
+					Form.update(message.Data);
+					this._noContents.remove(message.Data.SystemID);
+				}
+				else if (Form.contains(message.Data.ID)) {
+					Form.get(message.Data.ID).update(message.Data);
+				}
 				break;
-
 			case "Delete":
 				Form.instances.remove(message.Data.ID);
 				break;
-
 			default:
 				this.showLog("Got an update message of a CMS form", message);
 				break;
 		}
-
-		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
+		if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
 			AppEvents.broadcast(this.name, { Object: "CMS.Form", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
 		}
 	}
@@ -1907,7 +1897,6 @@ export class PortalsCmsService extends BaseService {
 			data => {
 				if (data.ID !== "test" && data.ID !== "categories") {
 					Crawler.update(data);
-					AppEvents.broadcast(this.name, { Object: "CMS.Crawler", Type: "Created", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -1940,7 +1929,6 @@ export class PortalsCmsService extends BaseService {
 			body,
 			data => {
 				Crawler.update(data);
-				AppEvents.broadcast(this.name, { Object: "CMS.Crawler", Type: "Updated", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1954,7 +1942,6 @@ export class PortalsCmsService extends BaseService {
 			this.getPath("cms.crawler", id),
 			data => {
 				Crawler.instances.remove(data.ID);
-				AppEvents.broadcast(this.name, { Object: "CMS.Crawler", Type: "Deleted", ID: data.ID, SystemID: data.SystemID, RepositoryID: data.RepositoryID, RepositoryEntityID: data.RepositoryEntityID });
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -1985,20 +1972,16 @@ export class PortalsCmsService extends BaseService {
 			case "Create":
 			case "Update":
 				Crawler.update(message.Data);
-				this._noContents.remove(message.Data.SystemID);
 				break;
-
 			case "Delete":
 				Crawler.instances.remove(message.Data.ID);
 				break;
-
 			default:
 				this.showLog("Got an update message of a CMS crawler", message);
 				break;
 		}
-
 		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
-			AppEvents.broadcast(this.name, { Object: "CMS.Crawler", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
+			AppEvents.broadcast(this.name, { Object: "CMS.Crawler", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID });
 		}
 	}
 

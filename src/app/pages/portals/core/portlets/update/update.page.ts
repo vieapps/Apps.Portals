@@ -881,7 +881,9 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				confirmMessage,
 				() => this.appFormsSvc.showLoadingAsync(title).then(() => this.portalsCoreSvc.deletePortletAsync(
 					this.portlet.ID,
-					() => this.trackAsync(title, "Delete").then(() => this.appFormsSvc.showToastAsync(successMessage)).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
+					_ => this.trackAsync(title, "Delete")
+						.then(() => this.appFormsSvc.showToastAsync(successMessage))
+						.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
 					error => this.trackAsync(title, "Delete").then(() => this.appFormsSvc.showErrorAsync(error))
 				)),
 				button,
