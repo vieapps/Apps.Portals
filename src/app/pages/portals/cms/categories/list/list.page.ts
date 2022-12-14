@@ -423,7 +423,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	view(event: Event, category: Category) {
-		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module), "list", category.Title, { CategoryID: category.ID })), event);
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(ContentType.get(category.PrimaryContentID) || this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module), "list", category.Title, { CategoryID: category.ID })), event);
 	}
 
 	doRefresh(categories: Category[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {

@@ -559,7 +559,13 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	getRouterQueryParams(contentType: ContentType, params?: { [key: string]: any }) {
-		return { "x-request": AppCrypto.jsonEncode(params || { RepositoryEntityID: contentType !== undefined ? contentType.ID : undefined }) };
+		if (contentType !== undefined) {
+			params = params || {};
+			params["RepositoryEntityID"] = contentType.ID;
+		}
+		return {
+			"x-request": AppCrypto.jsonEncode(params)
+		};
 	}
 
 	getAppURL(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }, objectName?: string, path?: string) {

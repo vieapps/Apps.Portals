@@ -590,7 +590,7 @@ export class PortalsCmsService extends BaseService {
 				: {
 						ID: parent.ID,
 						Title: parent.Title,
-						Link: this.portalsCoreSvc.getRouterLink(this._sidebarContentType, "list", parent.ansiTitle),
+						Link: this.portalsCoreSvc.getRouterLink(ContentType.get(parent.PrimaryContentID) || this._sidebarContentType, "list", parent.ansiTitle),
 						Params: this.portalsCoreSvc.getRouterQueryParams(this._sidebarContentType, { CategoryID: parent.ID }),
 						Expanded: true,
 						OnClick: menuItem => this.updateSidebarWithCategoriesAsync(this._sidebarCategory !== undefined ? this._sidebarCategory.Parent : undefined, this._sidebarCategory !== undefined ? this._sidebarCategory.ID : menuItem.ID),
