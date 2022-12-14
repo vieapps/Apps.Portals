@@ -180,7 +180,14 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		AppEvents.on(this.portalsCoreSvc.name, info => {
 			const args = info.args;
 			if (args.Object === "Portlet") {
+				if (info.args.Type === "Deleted") {
+					Portlet.instances.remove(info.args.ID);
+					this.portlets.removeAt(this.portlets.findIndex(portlet => portlet.ID === info.args.ID));
+				}
 				this.do(this.desktop !== undefined && this.desktop.ID === args.DesktopID ? () => this.preparePortlets() : () => this.prepareResults());
+				if (this.desktop === undefined && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
+					AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+				}
 			}
 		}, "Portlets:Refresh");
 	}

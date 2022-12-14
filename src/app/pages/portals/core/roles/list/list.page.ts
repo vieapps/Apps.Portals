@@ -178,7 +178,14 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 				];
 				this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on("Portals", info => {
-					if (info.args.Object === "Role" && info.args.ParentID === undefined) {
+					if (info.args.Object === "Role" && info.args.SystemID === this.organization.ID && info.args.ParentID === undefined) {
+						if (info.args.Type === "Created" || info.args.Type === "Deleted") {
+							AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+						}
+						if (info.args.Type === "Deleted") {
+							Role.instances.remove(info.args.ID);
+							this.roles.removeAt(this.roles.findIndex(role => role.ID === info.args.ID));
+						}
 						this.prepareResults();
 					}
 				}, "Roles:Refresh");

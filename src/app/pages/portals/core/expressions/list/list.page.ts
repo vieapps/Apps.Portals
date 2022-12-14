@@ -186,7 +186,14 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 			];
 			this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
 			AppEvents.on(this.portalsCoreSvc.name, info => {
-				if (info.args.Object === "Expression" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
+				if (info.args.Object === "Expression" && info.args.SystemID === this.organization.ID) {
+					if (info.args.Type === "Created" || info.args.Type === "Deleted") {
+						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+					}
+					if (info.args.Type === "Deleted") {
+						Expression.instances.remove(info.args.ID);
+						this.expressions.removeAt(this.expressions.findIndex(expression => expression.ID === info.args.ID));
+					}
 					this.prepareResults();
 				}
 			}, "Expressions:Refresh");

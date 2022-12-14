@@ -189,6 +189,7 @@ export class CmsFormsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			];
 			if (this.canUpdate) {
 				this.actions.push(
+					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("common.buttons.refresh"), "refresh", () => this.reload()),
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.export"), "code-download", () => this.exportToExcel()),
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.excel.action.import"), "code-working", () => this.importFromExcel())
 				);
@@ -199,11 +200,16 @@ export class CmsFormsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 			AppEvents.on(this.portalsCoreSvc.name, info => {
 				const args = info.args;
-				if (args.Object === "CMS.Form" && args.SystemID === this.portalsCoreSvc.activeOrganization.ID) {
+				if (args.Object === "CMS.Form" && info.args.RepositoryEntityID === this.contentType.ID) {
 					if (args.Type === "Deleted") {
-						this.items.removeAt(this.items.findIndex(item => item.ID === args.ID));
+						Form.instances.remove(args.ID);
+						this.items.removeAt(this.items.findIndex(form => form.ID === args.ID));
+						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
 					}
 					else {
+						if (info.args.Type === "Created") {
+							AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+						}
 						this.prepareResults(() => this.items = this.items.sortBy({ name: "Created", reverse: true }));
 					}
 				}
@@ -278,7 +284,7 @@ export class CmsFormsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		}
 	}
 
-	get paginationPrefix() {
+	private get paginationPrefix() {
 		return this.portalsCoreSvc.getPaginationPrefix("cms.form");
 	}
 
@@ -312,7 +318,7 @@ export class CmsFormsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		}
 		else {
 			const predicate: (item: Form) => boolean = object => object.SystemID === this.organization.ID && (this.module !== undefined ? object.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? object.RepositoryEntityID === this.contentType.ID : true);
-			const objects: Form[] = (results === undefined ? Form.instances.toArray(predicate) : Form.toArray(results).filter(predicate)).sortBy({ name: "Created", reverse: true });
+			const objects = (results === undefined ? Form.instances.toArray(predicate) : Form.toArray(results).filter(predicate)).sortBy({ name: "Created", reverse: true });
 			this.items.merge(results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects, true, (object, array) => array.findIndex(item => item.ID === object.ID));
 		}
 		if (onNext !== undefined) {
@@ -359,6 +365,17 @@ export class CmsFormsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	back(message: string, url?: string) {
 		this.do(() => this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateBackAsync(url)));
+	}
+
+	private reload() {
+		this.do(async () => {
+			AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
+			this.pagination = undefined;
+			await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("common.buttons.refresh")).then(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync(() => {
+				this.infiniteScrollCtrl.disabled = false;
+				this.appFormsSvc.showToastAsync("The list was reloaded");
+			})));
+		});
 	}
 
 	exportToExcel() {

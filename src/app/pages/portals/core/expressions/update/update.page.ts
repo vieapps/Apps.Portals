@@ -100,12 +100,16 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		if (this.expression === undefined) {
 			const moduleID = this.configSvc.requestParams["RepositoryID"];
 			const module = AppUtility.isNotEmpty(moduleID)
-				? this.organization.modules.find(m => m.ID === moduleID)
-				: this.organization.modules[0];
-			const contentTypeDefinitionID = this.configSvc.requestParams["ContentTypeDefinitionID"] || this.getContentTypeDefinitions(module.ID)[0].ID;
-			const contentTypes = module.contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === contentTypeDefinitionID);
-			const contentTypeID = this.configSvc.requestParams["RepositoryEntityID"] || contentTypes.length > 0 ? contentTypes.first().ID : undefined;
-			this.expression = new Expression(this.organization.ID, module.ID, contentTypeDefinitionID, contentTypeID, this.configSvc.requestParams["Title"]);
+				? Module.get(moduleID)
+				: this.portalsCoreSvc.activeModule || this.organization.modules.first();
+			const contentTypeID = this.configSvc.requestParams["RepositoryEntityID"] || (module.contentTypes.length > 0 ? module.contentTypes.first().ID : undefined);
+			const contentType = AppUtility.isNotEmpty(contentTypeID)
+				? ContentType.get(contentTypeID)
+				: module.contentTypes.length > 0 ? module.contentTypes.first() : undefined;
+			const contentTypeDefinitionID = contentType !== undefined
+				? contentType.ContentTypeDefinitionID
+				: this.configSvc.requestParams["ContentTypeDefinitionID"] || (module.contentTypeDefinitions.length > 0 ? module.contentTypeDefinitions.first().ID : undefined);
+			this.expression = new Expression(this.organization.ID, module.ID, contentTypeDefinitionID, contentType !== undefined ? contentType.ID : undefined, this.configSvc.requestParams["Title"]);
 			this.prepareFilterAndSorts();
 		}
 		else {
@@ -175,9 +179,9 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		}
 		else {
 			control.Options.SelectOptions.Values = this.organization.modules.map(module => ({ Value: module.ID, Label: module.Title }));
-			control.Options.OnChanged = async (_, formControl) => {
+			control.Options.OnChanged = (_, formControl) => {
 				const module = Module.get(formControl.value);
-				const definitions = this.getContentTypeDefinitions(module.ID);
+				const definitions = module.contentTypeDefinitions;
 				const definitionID = definitions.first().ID;
 				const definitionsControl = this.formControls.find(ctrl => ctrl.Name === "ContentTypeDefinitionID");
 				definitionsControl.Options.SelectOptions.Values = definitions.map(definition => ({ Value: definition.ID, Label: definition.Title }));
@@ -198,7 +202,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 					Name: "ContentTypeDefinition",
 					Type: "Text",
 					Segment: "basic",
-					Extras: { Text: this.getContentTypeDefinitions(this.expression.RepositoryID).find(definition => definition.ID  === this.expression.ContentTypeDefinitionID).Title },
+					Extras: { Text: Module.get(this.expression.RepositoryID).contentTypeDefinitions.find(definition => definition.ID  === this.expression.ContentTypeDefinitionID).Title },
 					Options: {
 						Label: control.Options.Label,
 						ReadOnly: true
@@ -207,7 +211,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			}
 		}
 		else {
-			control.Options.SelectOptions.Values = this.getContentTypeDefinitions(this.organization.modules[0].ID).map(definition => ({ Value: definition.ID, Label: definition.Title }));
+			control.Options.SelectOptions.Values = this.organization.modules.first().contentTypeDefinitions.map(definition => ({ Value: definition.ID, Label: definition.Title }));
 			control.Options.OnChanged = (_, formControl) => {
 				const module = Module.get(this.formControls.find(ctrl => ctrl.Name === "RepositoryID").value);
 				const contentTypeDefinitionID = formControl.value;
@@ -242,7 +246,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				: this.organization.modules.first();
 			const contentTypeDefinitionID = AppUtility.isNotEmpty(this.expression.ContentTypeDefinitionID)
 				? this.expression.ContentTypeDefinitionID
-				: this.getContentTypeDefinitions(module.ID).first().ID;
+				: module.contentTypeDefinitions.first().ID;
 			const contentTypes = module.contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === contentTypeDefinitionID);
 			control.Options.SelectOptions.Values = contentTypes.map(contentType => ({ Value: contentType.ID, Label: contentType.Title }));
 			control.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
@@ -416,11 +420,6 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		return formConfig;
 	}
 
-	private getContentTypeDefinitions(moduleID: string) {
-		const moduleDefinitionID = Module.get(moduleID).ModuleDefinitionID;
-		return Module.moduleDefinitions.find(definition => definition.ID === moduleDefinitionID).ContentTypeDefinitions.filter(definition => definition.Portlets);
-	}
-
 	private prepareFilterAndSorts() {
 		const module = this.formControls.find(ctrl => ctrl.Name === "RepositoryID") !== undefined
 			? Module.get(this.formControls.find(ctrl => ctrl.Name === "RepositoryID").value || this.configSvc.requestParams["RepositoryID"])
@@ -522,7 +521,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			this.hash = AppCrypto.hash(this.form.value);
 			if (AppUtility.isEmpty(this.expression.ID)) {
 				this.form.controls.Description.setValue("", { onlySelf: true });
-				this.form.controls.ContentTypeDefinitionID.setValue(this.expression.ContentTypeDefinitionID || this.getContentTypeDefinitions(this.expression.RepositoryID).first().ID, { onlySelf: true });
+				this.form.controls.ContentTypeDefinitionID.setValue(this.expression.ContentTypeDefinitionID || Module.get(this.expression.RepositoryID).contentTypeDefinitions.first().ID, { onlySelf: true });
 			}
 			else if (this.isAdvancedMode) {
 				this.form.controls.JSONXRequest.setValue(JSON.stringify({
@@ -581,16 +580,11 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				if (AppUtility.isNotEmpty(expression.ID)) {
 					await this.portalsCoreSvc.updateExpressionAsync(
 						expression,
-						async data => {
-							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Expression", Type: "Updated", ID: data.ID });
-							await Promise.all([
-								this.trackAsync(this.title, "Update"),
-								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.expressions.update.messages.success.update")),
-								this.appFormsSvc.hideLoadingAsync()
-							]);
-							await this.configSvc.navigateBackAsync();
-						},
+						async _ => await Promise.all([
+							this.trackAsync(this.title, "Update"),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.expressions.update.messages.success.update")),
+							this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
+						]),
 						async error => {
 							this.processing = false;
 							await Promise.all([
@@ -603,15 +597,11 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				else {
 					await this.portalsCoreSvc.createExpressionAsync(
 						expression,
-						async data => {
-							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Expression", Type: "Created", ID: data.ID });
-							await Promise.all([
-								this.trackAsync(this.title),
-								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.expressions.update.messages.success.new")),
-								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-							]);
-						},
+						async _ => await Promise.all([
+							this.trackAsync(this.title),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.expressions.update.messages.success.new")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]),
 						async error => {
 							this.processing = false;
 							await Promise.all([
@@ -636,14 +626,11 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				await this.appFormsSvc.showLoadingAsync(button);
 				await this.portalsCoreSvc.deleteExpressionAsync(
 					this.expression.ID,
-					async data => {
-						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Expression", Type: "Deleted", ID: data.ID });
-						await Promise.all([
-							this.trackAsync(button, "Delete"),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.expressions.update.messages.success.delete")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]);
-					},
+					async _ => await Promise.all([
+						this.trackAsync(button, "Delete"),
+						this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.expressions.update.messages.success.delete")),
+						this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+					]),
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
 						this.trackAsync(button, "Delete")

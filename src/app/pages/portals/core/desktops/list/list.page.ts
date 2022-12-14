@@ -183,7 +183,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 				this.desktops.filter(desktop => desktop.Versions === undefined).forEach(desktop => this.portalsCoreSvc.findVersions("Desktop", desktop.ID));
 				this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: `[${this.parentDesktop.FullTitle}]` });
 				await this.appFormsSvc.hideLoadingAsync();
-				AppEvents.on("Portals", info => {
+				AppEvents.on(this.portalsCoreSvc.name, info => {
 					if (info.args.Object === "Desktop" && (this.parentDesktop.ID === info.args.ID || this.parentDesktop.ID === info.args.ParentID)) {
 						this.desktops = this.parentDesktop.Children;
 						this.desktops.filter(desktop => desktop.Versions === undefined).forEach(desktop => this.portalsCoreSvc.findVersions("Desktop", desktop.ID));
@@ -193,8 +193,15 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			else {
 				this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: `[${this.organization.Title}]` });
 				this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
-				AppEvents.on("Portals", info => {
-					if (info.args.Object === "Desktop") {
+				AppEvents.on(this.portalsCoreSvc.name, info => {
+					if (info.args.Object === "Desktop" && info.args.SystemID === this.organization.ID) {
+						if (info.args.Type === "Created" || info.args.Type === "Deleted") {
+							AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+						}
+						if (info.args.Type === "Deleted") {
+							Desktop.instances.remove(info.args.ID);
+							this.desktops.removeAt(this.desktops.findIndex(desktop => desktop.ID === info.args.ID));
+						}
 						this.prepareResults();
 					}
 				}, "Desktops:Refresh");

@@ -315,16 +315,6 @@ export class PortalsRolesUpdatePage implements OnInit {
 	async deleteAsync() {
 		const button = await this.configSvc.getResourceAsync("portals.roles.update.buttons.delete");
 		await this.trackAsync(button, "Delete");
-		const modes = [
-			{
-				label: await this.configSvc.getResourceAsync("portals.roles.update.buttons.delete-all"),
-				value: "delete"
-			},
-			{
-				label: await this.configSvc.getResourceAsync("portals.roles.update.buttons.set-null-all"),
-				value: "set-null"
-			}
-		];
 		await this.appFormsSvc.showAlertAsync(
 			undefined,
 			await this.configSvc.getResourceAsync("portals.roles.update.messages.confirm.delete"),
@@ -333,14 +323,11 @@ export class PortalsRolesUpdatePage implements OnInit {
 				await this.appFormsSvc.showLoadingAsync(button);
 				await this.portalsCoreSvc.deleteRoleAsync(
 					this.role.ID,
-					async data => {
-						AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Role", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
-						await Promise.all([
-							this.trackAsync(button, "Delete"),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.delete")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-						]);
-					},
+					async _ => Promise.all([
+						this.trackAsync(button, "Delete"),
+						this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.roles.update.messages.success.delete")),
+						this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+					]),
 					async error => await Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
 						this.trackAsync(button, "Delete")
@@ -350,14 +337,20 @@ export class PortalsRolesUpdatePage implements OnInit {
 			},
 			await this.configSvc.getResourceAsync("common.buttons.delete"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel"),
-			this.role.childrenIDs === undefined || this.role.childrenIDs.length < 1 ? undefined : modes.map(mode => {
-				return {
+			this.role.childrenIDs === undefined || this.role.childrenIDs.length < 1 ? undefined : [
+				{
 					type: "radio",
-					label: mode.label,
-					value: mode.value,
-					checked: mode.value === "delete"
-				};
-			})
+					label: await this.configSvc.getResourceAsync("portals.roles.update.buttons.delete-all"),
+					value: "delete",
+					checked: false
+				},
+				{
+					type: "radio",
+					label: await this.configSvc.getResourceAsync("portals.roles.update.buttons.set-null-all"),
+					value: "set-null",
+					checked: true
+				}
+			]
 		);
 	}
 

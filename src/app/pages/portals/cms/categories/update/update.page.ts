@@ -366,11 +366,9 @@ export class CmsCategoriesUpdatePage implements OnInit {
 				this.portalsCoreSvc.normalizeEmailSettings(category.EmailSettings);
 
 				if (AppUtility.isNotEmpty(category.ID)) {
-					const oldParentID = this.category.ParentID;
 					this.portalsCmsSvc.updateCategoryAsync(
 						category,
-						async data => {
-							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
+						async _ => {
 							const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 							if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
 								await this.filesSvc.uploadThumbnailAsync(
@@ -379,11 +377,8 @@ export class CmsCategoriesUpdatePage implements OnInit {
 									() => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(() => this.portalsCmsSvc.refreshCategoryAsync(category.ID))
 								);
 							}
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Updated", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
-							if (oldParentID !== data.ParentID) {
-								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Updated", ID: oldParentID });
-							}
-							await this.trackAsync(this.title.track, "Update").then(() => async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.update")));
+							await this.trackAsync(this.title.track, "Update");
+							await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.update"));
 							await this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 						},
 						error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
@@ -392,12 +387,10 @@ export class CmsCategoriesUpdatePage implements OnInit {
 				else {
 					this.portalsCmsSvc.createCategoryAsync(
 						category,
-						data => {
-							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Created", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
-							this.trackAsync(this.title.track).then(() => async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.new")));
-							this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
-						},
+						_ => Promise.all([
+							this.trackAsync(this.title.track).then(() => async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.new"))),
+							this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
+						]),
 						error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
 					);
 				}
@@ -411,16 +404,20 @@ export class CmsCategoriesUpdatePage implements OnInit {
 			const removeButton = await this.configSvc.getResourceAsync("portals.cms.categories.update.buttons.delete");
 			const cancelButton = await this.configSvc.getResourceAsync("common.buttons.cancel");
 			const deleteMessage = await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.confirm.delete");
-			const removeMessage = await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.confirm.remove");
+			const removeMessage = this.category.childrenIDs === undefined || this.category.childrenIDs.length < 1 ? undefined : await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.confirm.remove");
 			const successMessage = await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.delete");
-			const modes = [
+			const inputs = this.category.childrenIDs === undefined || this.category.childrenIDs.length < 1 ? undefined : [
 				{
+					type: "radio",
 					label: await this.configSvc.getResourceAsync("portals.desktops.update.buttons.delete-all"),
-					value: "delete"
+					value: "delete",
+					checked: false
 				},
 				{
+					type: "radio",
 					label: await this.configSvc.getResourceAsync("portals.desktops.update.buttons.set-null-all"),
-					value: "set-null"
+					value: "set-null",
+					checked: true
 				}
 			];
 			this.appFormsSvc.showConfirmAsync(
@@ -432,22 +429,16 @@ export class CmsCategoriesUpdatePage implements OnInit {
 					mode => {
 						this.appFormsSvc.showLoadingAsync(deleteButton).then(() => this.portalsCmsSvc.deleteCategoryAsync(
 							this.category.ID,
-							data => {
-								AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "CMS.Category", Type: "Deleted", ID: data.ID, ParentID: AppUtility.isNotEmpty(data.ParentID) ? data.ParentID : undefined });
-								this.trackAsync(this.title.track, "Delete").then(() => this.appFormsSvc.showToastAsync(successMessage)).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
-							},
+							_ => this.trackAsync(this.title.track, "Delete")
+								.then(() => this.appFormsSvc.showToastAsync(successMessage))
+								.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
 							error => this.trackAsync(this.title.track, "Delete").then(() => this.appFormsSvc.showErrorAsync(error)),
 							{ "x-children": mode }
 						));
 					},
 					removeButton,
 					cancelButton,
-					this.category.childrenIDs === undefined || this.category.childrenIDs.length < 1 ? undefined : modes.map(mode => ({
-						type: "radio",
-						label: mode.label,
-						value: mode.value,
-						checked: mode.value === "delete"
-					}))
+					inputs
 				),
 				deleteButton,
 				cancelButton

@@ -34,7 +34,6 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 	private item: Item;
 	canModerate = false;
 	canEdit = false;
-	processing = false;
 	title = {
 		page: "Item",
 		track: "Item"
@@ -168,7 +167,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 					this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => cfg.Name === control.Name).Hidden ? true : false);
 					this.prepareValues();
 				}
-				else if (args.Type === "Deleted" && !this.processing) {
+				else if (args.Type === "Deleted") {
 					this.cancel();
 				}
 			}
@@ -376,16 +375,13 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 	delete() {
 		AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.delete"),
-			async () => {
-				this.processing = true;
-				this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete")).then(() => this.portalsCmsSvc.deleteItemAsync(
-					this.item.ID,
-					() => this.trackAsync(this.resources.delete, "Delete")
-						.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete"))
-						.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
-					error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.resources.delete, "Delete"))
-				)));
-			},
+			async () => await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete")).then(() => this.portalsCmsSvc.deleteItemAsync(
+				this.item.ID,
+				_ => this.trackAsync(this.resources.delete, "Delete")
+					.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.delete"))
+					.then(() => this.appFormsSvc.hideLoadingAsync()),
+				error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.resources.delete, "Delete"))
+			))),
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.remove"),
 			"{{default}}"
 		));

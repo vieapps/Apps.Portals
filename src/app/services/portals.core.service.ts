@@ -559,7 +559,13 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	getRouterQueryParams(contentType: ContentType, params?: { [key: string]: any }) {
-		return { "x-request": AppCrypto.jsonEncode(params || { RepositoryEntityID: contentType !== undefined ? contentType.ID : undefined }) };
+		if (contentType !== undefined) {
+			params = params || {};
+			params["RepositoryEntityID"] = contentType.ID;
+		}
+		return {
+			"x-request": AppCrypto.jsonEncode(params)
+		};
 	}
 
 	getAppURL(contentType: ContentType, action?: string, title?: string, params?: { [key: string]: any }, objectName?: string, path?: string) {
@@ -2369,9 +2375,9 @@ export class PortalsCoreService extends BaseService {
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
-			AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
+			AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined, SystemID: message.Data.SystemID });
 			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
-				AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+				AppEvents.broadcast(this.name, { Object: "Role", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined, SystemID: message.Data.SystemID });
 			}
 		}
 	}
@@ -2511,7 +2517,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
-			AppEvents.broadcast(this.name, { Object: "Module", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+			AppEvents.broadcast(this.name, { Object: "Module", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID });
 		}
 	}
 
@@ -2646,7 +2652,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
-			AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+			AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID });
 		}
 	}
 
@@ -2775,7 +2781,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
-			AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+			AppEvents.broadcast(this.name, { Object: "Content.Type", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID });
 		}
 	}
 
@@ -3132,9 +3138,9 @@ export class PortalsCoreService extends BaseService {
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
-			AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined });
+			AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: AppUtility.isNotEmpty(message.Data.ParentID) ? message.Data.ParentID : undefined, SystemID: message.Data.SystemID });
 			if (AppUtility.isNotEmpty(message.Data.ParentID)) {
-				AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined });
+				AppEvents.broadcast(this.name, { Object: "Desktop", Type: `${message.Type.Event}d`, ID: message.Data.ID, ParentID: undefined, SystemID: message.Data.SystemID });
 			}
 		}
 	}
@@ -3271,7 +3277,7 @@ export class PortalsCoreService extends BaseService {
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
-			AppEvents.broadcast(this.name, { Object: "Portlet", Type: `${message.Type.Event}d`, ID: message.Data.ID, DesktopID: message.Data.DesktopID });
+			AppEvents.broadcast(this.name, { Object: "Portlet", Type: `${message.Type.Event}d`, ID: message.Data.ID, DesktopID: message.Data.DesktopID, SystemID: message.Data.SystemID });
 		}
 	}
 

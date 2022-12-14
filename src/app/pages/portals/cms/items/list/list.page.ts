@@ -195,13 +195,16 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 			AppEvents.on(this.portalsCoreSvc.name, info => {
 				const args = info.args;
-				if (args.Object === "CMS.Item" && args.SystemID === this.portalsCoreSvc.activeOrganization.ID) {
+				if (args.Object === "CMS.Item" && info.args.RepositoryEntityID === this.contentType.ID) {
 					if (args.Type === "Deleted") {
+						Item.instances.remove(args.ID);
 						this.items.removeAt(this.items.findIndex(item => item.ID === args.ID));
+						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
 					}
-					else {
-						this.prepareResults(() => this.items = this.items.sortBy({ name: "Created", reverse: true }));
+					else if (info.args.Type === "Created") {
+						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
 					}
+					this.prepareResults(() => this.items = this.items.sortBy({ name: "Created", reverse: true }));
 				}
 			}, "CMS.Items:Refresh");
 		}
@@ -274,7 +277,7 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		}
 	}
 
-	get paginationPrefix() {
+	private get paginationPrefix() {
 		return this.portalsCoreSvc.getPaginationPrefix("cms.item");
 	}
 

@@ -666,15 +666,11 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				if (AppUtility.isNotEmpty(organization.ID)) {
 					await this.portalsCoreSvc.updateOrganizationAsync(
 						organization,
-						async data => {
-							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Organization", Type: "Updated", ID: data.ID });
-							await Promise.all([
-								this.trackAsync(this.title, "Update"),
-								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.update")),
-								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-							]);
-						},
+						async _ => await Promise.all([
+							this.trackAsync(this.title, "Update"),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.update")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]),
 						async error => {
 							this.processing = false;
 							await Promise.all([
@@ -687,15 +683,11 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				else {
 					await this.portalsCoreSvc.createOrganizationAsync(
 						organization,
-						async data => {
-							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
-							AppEvents.broadcast(this.portalsCoreSvc.name, { Object: "Organization", Type: "Created", ID: data.ID });
-							await Promise.all([
-								this.trackAsync(this.title),
-								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.new")),
-								this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
-							]);
-						},
+						async _ => await Promise.all([
+							this.trackAsync(this.title),
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.new")),
+							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						]),
 						async error => {
 							this.processing = false;
 							await Promise.all([

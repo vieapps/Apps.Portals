@@ -214,7 +214,15 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			}));
 
 			AppEvents.on(this.portalsCoreSvc.name, info => {
-				if (info.args.Object === "CMS.Content" && info.args.SystemID === this.portalsCoreSvc.activeOrganization.ID) {
+				if (info.args.Object === "CMS.Content" && info.args.RepositoryEntityID === this.contentType.ID && this.category !== undefined && this.category.ID === info.args.CategoryID) {
+					if (info.args.Type === "Created") {
+						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+					}
+					else if (info.args.Type === "Deleted") {
+						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+						Content.instances.remove(info.args.ID);
+						this.contents.removeAt(this.contents.findIndex(content => content.ID === info.args.ID));
+					}
 					this.prepareResults();
 				}
 			}, `CMS.Contents:${(this.category !== undefined ? ":" + this.category.ID : "")}:Refresh`);

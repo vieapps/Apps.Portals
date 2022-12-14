@@ -151,7 +151,14 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 			];
 			this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
 			AppEvents.on(this.portalsCoreSvc.name, info => {
-				if (info.args.Object === "Organization" && (info.args.Type === "Created" || info.args.Type === "Deleted")) {
+				if (info.args.Object === "Organization") {
+					if (info.args.Type === "Created" || info.args.Type === "Deleted") {
+						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+					}
+					if (info.args.Type === "Deleted") {
+						Organization.instances.remove(info.args.ID);
+						this.organizations.removeAt(this.organizations.findIndex(organization => organization.ID === info.args.ID));
+					}
 					this.prepareResults();
 				}
 			}, "Organizations:Refresh");
