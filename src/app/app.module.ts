@@ -32,6 +32,7 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { UsersService } from "@app/services/users.service";
 import { FilesService } from "@app/services/files.service";
+import { NotificationsService } from "@app/services/notifications.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { BooksService } from "@app/services/books.service";
@@ -83,6 +84,7 @@ export class HammerConfig extends HammerGestureConfig {
 		AuthenticationService,
 		UsersService,
 		FilesService,
+		NotificationsService,
 		PortalsCoreService,
 		PortalsCmsService,
 		BooksService,
