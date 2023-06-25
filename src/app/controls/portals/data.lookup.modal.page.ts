@@ -61,6 +61,10 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	/** The function to pre-process items */
 	@Input() private preProcess: (items: Array<any>) => void;
 
+	/** The pre-defined items */
+	@Input() predefinedItems: Array<DataItem>;
+	@Input() private preselectedID: string;
+
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
@@ -94,7 +98,9 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	selected = new Dictionary<string, DataItem>();
 
 	ngOnInit() {
-		AppUtility.invoke(async () => await TrackingUtility.trackAsync({ title: `Lookup - ${this.objectName}`, category: this.objectName.split(".").last(), action: "Lookup" }));
+		if (this.objectName !== undefined) {
+			AppUtility.invoke(async () => await TrackingUtility.trackAsync({ title: `Lookup - ${this.objectName}`, category: this.objectName.split(".").last(), action: "Lookup" }));
+		}
 		this.nested = this.nested === undefined ? false : AppUtility.isTrue(this.nested);
 		this.multiple = this.multiple === undefined ? true : AppUtility.isTrue(this.multiple);
 		this.excludedIDs = AppUtility.isArray(this.excludedIDs, true) ? this.excludedIDs.filter(id => AppUtility.isNotEmpty(id)).map(id => id.trim()) : [];
@@ -120,10 +126,21 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
 			search: await this.configSvc.getResourceAsync("common.buttons.search")
 		};
-		if (this.configSvc.isDebug) {
-			console.log(`[DataLookup]: lookup portal data (${this.objectName})`, `\n- Organization: ${this.organizationID}`, this.organization, `\n- Module: ${this.moduleID}`, this.module, `\n- Content Type: ${this.contentTypeID}`, this.contentType, "\n- Multiple & Nested:", this.multiple, this.nested, "\n- Filter:", this.filterBy);
+		if (AppUtility.isArray(this.predefinedItems, true)) {
+			const selected = this.preselectedID !== undefined ? this.predefinedItems.firstOrDefault(o => o.ID === this.preselectedID) : undefined;
+			if (selected !== undefined) {
+				this.selected.set(selected.ID, selected);
+			}
+			this.items = this.predefinedItems.map(o => o);
+			this.infiniteScrollCtrl.disabled = true;
+			await this.appFormsSvc.hideLoadingAsync();
 		}
-		await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+		else {
+			if (this.configSvc.isDebug) {
+				console.log(`[DataLookup]: lookup portal data (${this.objectName})`, `\n- Organization: ${this.organizationID}`, this.organization, `\n- Module: ${this.moduleID}`, this.module, `\n- Content Type: ${this.contentTypeID}`, this.contentType, "\n- Multiple & Nested:", this.multiple, this.nested, "\n- Filter:", this.filterBy);
+			}
+			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+		}
 	}
 
 	track(index: number, item: DataItem) {

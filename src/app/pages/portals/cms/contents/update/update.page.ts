@@ -42,6 +42,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	private category: Category;
 	private content: Content;
 	private canModerate = false;
+	private rawHtmlEditors = false;
 	private hash = {
 		content: "",
 		full: ""
@@ -141,6 +142,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.content.ID) ? "save" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
+		this.rawHtmlEditors = this.canModerate && !!this.configSvc.requestParams["RawHtmlEditors"];
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
@@ -183,8 +185,8 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
-		const contentType = this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.module);
-		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content", undefined, { "x-content-type-id": this.contentType.ID });
+		let formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content", undefined, { "x-content-type-id": this.contentType.ID });
+		formConfig = this.rawHtmlEditors ? AppUtility.clone(formConfig) : formConfig;
 
 		let control = formConfig.find(ctrl => ctrl.Name === "Status");
 		this.portalsCoreSvc.prepareApprovalStatusControl(control, "popover");
@@ -194,7 +196,8 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 
 		control = formConfig.find(ctrl => ctrl.Name === "CategoryID");
 		control.Extras = { LookupDisplayValues: this.category !== undefined ? [{ Value: this.category.ID, Label: this.category.FullTitle }] : undefined };
-		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, contentType, false, true, options => {
+		const categoryContentType = this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.module);
+		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, categoryContentType, false, true, options => {
 			options.OnDelete = (_, formControl) => {
 				formControl.setValue(undefined);
 				formControl.lookupDisplayValues = undefined;
@@ -224,7 +227,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "OtherCategories"));
 		control.Extras = { LookupDisplayValues: otherCategories.length > 0 ? otherCategories.sortBy("Label") : undefined };
-		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, contentType, true, true, options => {
+		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, categoryContentType, true, true, options => {
 			options.OnDelete = (data, formControl) => {
 				const lookupDisplayValues = formControl.lookupDisplayValues;
 				data.forEach(id => lookupDisplayValues.removeAt(lookupDisplayValues.findIndex(item => item.Value === id)));
@@ -272,35 +275,42 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 			OnClick: (_, formControl) => PlatformUtility.openURL(formControl.value)
 		};
 
-		const linkSelectorOptions = {
-			content: {
-				label: await this.appFormsSvc.getResourceAsync("portals.cms.common.links.content"),
-				sortBy: { StartDate: "Descending", PublishedTime: "Descending" },
-				preProcess: (contents: Array<any>) => contents.forEach(data => {
-					const content = Content.update(data);
-					if (content.category === undefined) {
-						this.portalsCmsSvc.getCategoryAsync(content.CategoryID, _ => {
-							const category = Category.get(content.CategoryID);
-							if (category !== undefined) {
-								this.portalsCmsSvc.fetchCategoryDesktops(category);
-							}
-						});
-					}
-				})
-			},
-			file: {
-				label: await this.appFormsSvc.getResourceAsync("portals.cms.common.links.file")
-			}
-		};
-		const linkSelector = this.portalsCmsSvc.getLinkSelector(this.content, DataLookupModalPage, linkSelectorOptions);
-		const mediaSelector = this.portalsCmsSvc.getMediaSelector(this.content, await this.appFormsSvc.getResourceAsync("portals.cms.common.links.media"));
-
-		formConfig.filter(ctrl => AppUtility.isEquals(ctrl.Type, "TextEditor")).forEach(ctrl => {
-			ctrl.Extras["ckEditorLinkSelector"] = linkSelector;
-			ctrl.Extras["ckEditorMediaSelector"] = mediaSelector;
-			ctrl.Extras["ckEditorSimpleUpload"] = AppUtility.isNotEmpty(this.content.ID) ? this.portalsCmsSvc.getFileHeaders(this.content) : undefined;
-			ctrl.Extras["ckEditorTrustedHosts"] = this.configSvc.appConfig.URIs.medias;
-		});
+		if (this.rawHtmlEditors) {
+			formConfig.filter(ctrl => ctrl.Type === "TextEditor").forEach(ctrl => {
+				ctrl.Type = "TextArea";
+				ctrl.Options.Rows = 30;
+			});
+		}
+		else {
+			const linkSelectorOptions = {
+				content: {
+					label: await this.appFormsSvc.getResourceAsync("portals.cms.common.links.content"),
+					sortBy: { StartDate: "Descending", PublishedTime: "Descending" },
+					preProcess: (contents: Array<any>) => contents.forEach(data => {
+						const content = Content.update(data);
+						if (content.category === undefined) {
+							this.portalsCmsSvc.getCategoryAsync(content.CategoryID, _ => {
+								const category = Category.get(content.CategoryID);
+								if (category !== undefined) {
+									this.portalsCmsSvc.fetchCategoryDesktops(category);
+								}
+							});
+						}
+					})
+				},
+				file: {
+					label: await this.appFormsSvc.getResourceAsync("portals.cms.common.links.file")
+				}
+			};
+			const linkSelector = this.portalsCmsSvc.getLinkSelector(this.content, DataLookupModalPage, linkSelectorOptions);
+			const mediaSelector = this.portalsCmsSvc.getMediaSelector(this.content, await this.appFormsSvc.getResourceAsync("portals.cms.common.links.media"));
+			formConfig.filter(ctrl => ctrl.Type === "TextEditor").forEach(ctrl => {
+				ctrl.Extras["ckEditorLinkSelector"] = linkSelector;
+				ctrl.Extras["ckEditorMediaSelector"] = mediaSelector;
+				ctrl.Extras["ckEditorSimpleUpload"] = AppUtility.isNotEmpty(this.content.ID) ? this.portalsCmsSvc.getFileHeaders(this.content) : undefined;
+				ctrl.Extras["ckEditorTrustedHosts"] = this.configSvc.appConfig.URIs.medias;
+			});
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Details"));
 		control.Extras["ckEditorPageBreakIsAvailable"] = true;
@@ -451,7 +461,6 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	onFormInitialized() {
 		this.patchValues();
 		this.hash.content = AppCrypto.hash(this.form.value);
-
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (AppUtility.isNotEmpty(this.content.ID)) {
 				if (this.content.thumbnails !== undefined) {
@@ -478,6 +487,9 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 				}
 			}
 		});
+		if (this.configSvc.isDebug) {
+			console.log("<CMS.Content>: edit a content", this.configSvc.requestParams, this.content);
+		}
 	}
 
 	private patchValues(doUpdateTextEditors: boolean = false) {

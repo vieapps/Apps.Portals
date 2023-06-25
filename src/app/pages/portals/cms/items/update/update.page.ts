@@ -40,6 +40,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 	private contentType: ContentType;
 	private item: Item;
 	private canModerate = false;
+	private rawHtmlEditors = false;
 	private hash = {
 		content: "",
 		full: ""
@@ -140,6 +141,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
+		this.rawHtmlEditors = this.canModerate && !!this.configSvc.requestParams["RawHtmlEditors"];
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
 
@@ -166,7 +168,8 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
-		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.item", undefined, { "x-content-type-id": this.contentType.ID });
+		let formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.item", undefined, { "x-content-type-id": this.contentType.ID });
+		formConfig = this.rawHtmlEditors ? AppUtility.clone(formConfig) : formConfig;
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
 		this.portalsCoreSvc.prepareApprovalStatusControl(control, "popover");
@@ -178,25 +181,32 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		control.Options.Type = "toggle";
 		control.Hidden = !this.contentType.AllowComments;
 
-		const linkSelectorOptions = {
-			content: {
-				label: await this.appFormsSvc.getResourceAsync("portals.cms.common.links.content"),
-				sortBy: { Created: "Descending" },
-				preProcess: (objects: Array<any>) => objects.forEach(object => Item.update(object))
-			},
-			file: {
-				label: await this.appFormsSvc.getResourceAsync("portals.cms.common.links.file")
-			}
-		};
-		const linkSelector = this.portalsCmsSvc.getLinkSelector(this.item, DataLookupModalPage, linkSelectorOptions);
-		const mediaSelector = this.portalsCmsSvc.getMediaSelector(this.item, await this.appFormsSvc.getResourceAsync("portals.cms.common.links.media"));
-
-		formConfig.filter(ctrl => AppUtility.isEquals(ctrl.Type, "TextEditor")).forEach(ctrl => {
-			ctrl.Extras["ckEditorLinkSelector"] = linkSelector;
-			ctrl.Extras["ckEditorMediaSelector"] = mediaSelector;
-			ctrl.Extras["ckEditorSimpleUpload"] = AppUtility.isNotEmpty(this.item.ID) ? this.portalsCmsSvc.getFileHeaders(this.item) : undefined;
-			ctrl.Extras["ckEditorTrustedHosts"] = this.configSvc.appConfig.URIs.medias;
-		});
+		if (this.rawHtmlEditors) {
+			formConfig.filter(ctrl => ctrl.Type === "TextEditor").forEach(ctrl => {
+				ctrl.Type = "TextArea";
+				ctrl.Options.Rows = 30;
+			});
+		}
+		else {
+			const linkSelectorOptions = {
+				content: {
+					label: await this.appFormsSvc.getResourceAsync("portals.cms.common.links.content"),
+					sortBy: { Created: "Descending" },
+					preProcess: (objects: Array<any>) => objects.forEach(object => Item.update(object))
+				},
+				file: {
+					label: await this.appFormsSvc.getResourceAsync("portals.cms.common.links.file")
+				}
+			};
+			const linkSelector = this.portalsCmsSvc.getLinkSelector(this.item, DataLookupModalPage, linkSelectorOptions);
+			const mediaSelector = this.portalsCmsSvc.getMediaSelector(this.item, await this.appFormsSvc.getResourceAsync("portals.cms.common.links.media"));
+			formConfig.filter(ctrl => AppUtility.isEquals(ctrl.Type, "TextEditor")).forEach(ctrl => {
+				ctrl.Extras["ckEditorLinkSelector"] = linkSelector;
+				ctrl.Extras["ckEditorMediaSelector"] = mediaSelector;
+				ctrl.Extras["ckEditorSimpleUpload"] = AppUtility.isNotEmpty(this.item.ID) ? this.portalsCmsSvc.getFileHeaders(this.item) : undefined;
+				ctrl.Extras["ckEditorTrustedHosts"] = this.configSvc.appConfig.URIs.medias;
+			});
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
 		if (!control.Hidden) {

@@ -4,6 +4,7 @@ import { AppUtility } from "@app/components/app.utility";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { AppFormsService } from "@app/components/forms.service";
+import { Notification } from "@app/models/notification";
 
 @Component({
 	selector: "control-app-preferences",
@@ -77,6 +78,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 			mobile: "Mobile & Tablet apps"
 		},
 		profile: "Profile",
+		notifications: "Notifications",
 		flushCache: "Flush cache",
 		about: "About",
 		ok: "OK",
@@ -118,6 +120,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 			},
 			profile: await this.configSvc.getResourceAsync("common.sidebar.profile"),
 			flushCache: await this.configSvc.getResourceAsync("common.preferences.flushCache"),
+			notifications: await this.configSvc.getResourceAsync("common.preferences.notifications"),
 			about: await this.configSvc.getResourceAsync("common.preferences.about"),
 			ok: await this.configSvc.getResourceAsync("common.buttons.ok"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
@@ -150,6 +153,14 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
+	}
+
+	openNotifications() {
+		this.configSvc.navigateForwardAsync("/notifications");
+	}
+
+	get unreadNotifications() {
+		return Notification.unread.size;
 	}
 
 }

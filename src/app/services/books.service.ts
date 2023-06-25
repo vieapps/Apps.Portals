@@ -36,6 +36,10 @@ export class BooksService extends BaseService {
 		return 0;
 	}
 
+	get appsURL() {
+		return "https://viebooks.net/";
+	}
+
 	initialize() {
 		AppAPIs.registerAsServiceScopeProcessor("Scheduler", () => {
 			const profile = this.configSvc.getAccount().profile;

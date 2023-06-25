@@ -151,8 +151,8 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Gets the URL for opening the app on web-browser */
-	getAppURL(path?: string) {
-		return (AppConfig.isWebApp ? AppUtility.parseURI().HostURI + AppConfig.URLs.base : AppConfig.URIs.apps) + (AppUtility.isEmpty(path) ? "" : path[0] === "/" ? AppUtility.right(path, path.length - 1) : path);
+	getAppURL(path?: string, rootURL?: string) {
+		return (rootURL !== undefined ? rootURL : AppConfig.isWebApp ? AppUtility.parseURI().HostURI + AppConfig.URLs.base : AppConfig.URIs.apps) + (AppUtility.isEmpty(path) ? "" : path[0] === "/" ? AppUtility.right(path, path.length - 1) : path);
 	}
 
 	/** Gets the current working URL */

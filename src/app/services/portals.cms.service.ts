@@ -20,8 +20,8 @@ import { AppFormsControlComponent } from "@app/components/forms.control.componen
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 import { Account } from "@app/models/account";
 import { AttachmentInfo } from "@app/models/base";
-import { Organization, Module, ContentType, Desktop } from "@app/models/portals.core.all";
-import { Category, Content, Item, Link, Form, Crawler, PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.all";
+import { PortalBase as BaseModel, Organization, Role, Module, ContentType, Expression, Site, Desktop, Portlet, SchedulingTask } from "@app/models/portals.core.all";
+import { PortalCmsBase as CmsBaseModel, Category, Content, Item, Link, Form, Crawler } from "@app/models/portals.cms.all";
 
 @Injectable()
 export class PortalsCmsService extends BaseService {
@@ -176,6 +176,13 @@ export class PortalsCmsService extends BaseService {
 					this.portalsCoreSvc.removeActiveOrganization(Organization.active.ID);
 					this.updateSidebarAsync().then(() => this.prepareFeaturedContentsAsync());
 				}
+			}
+		});
+
+		AppEvents.on("OpenNotification", async info => {
+			const object = (await this.getObjectAsync(info.args.ObjectID, info.args.ObjectName, true)).object;
+			if (object !== undefined && AppUtility.isNotEmpty(object.ID)) {
+				this.configSvc.navigateForwardAsync(object.routerURI);
 			}
 		});
 	}
@@ -1983,6 +1990,164 @@ export class PortalsCmsService extends BaseService {
 		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {
 			AppEvents.broadcast(this.name, { Object: "CMS.Crawler", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID });
 		}
+	}
+
+	async getObjectAsync(id: string, name: string, force: boolean = false) {
+		const account = this.configSvc.getAccount();
+		let gotRights = this.authSvc.isSystemAdministrator(account);
+		let object: BaseModel;
+		switch (name) {
+			case "Organization":
+			case "Core.Organization":
+				object = Organization.get(id);
+				if (object === undefined && force) {
+					await this.portalsCoreSvc.getOrganizationAsync(id, () => object = Organization.get(id), undefined, true);
+				}
+				gotRights = gotRights || this.portalsCoreSvc.canManageOrganization(object as Organization, account);
+				break;
+			case "Role":
+			case "Core.Role":
+				object = Role.get(id);
+				if (object === undefined && force) {
+					await this.portalsCoreSvc.getRoleAsync(id, () => object = Role.get(id), undefined, true);
+				}
+				object = object || new Role(this.portalsCoreSvc.activeOrganization.ID);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Role).organization, account);
+				break;
+			case "Module":
+			case "Core.Module":
+				object = Module.get(id);
+				if (object === undefined && force) {
+					await this.portalsCoreSvc.getModuleAsync(id, () => object = Module.get(id), undefined, true);
+				}
+				object = object || new Module(this.portalsCoreSvc.activeOrganization.ID);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization(Organization.get((object as Module).SystemID), account);
+				break;
+			case "ContentType":
+			case "Core.ContentType":
+				object = ContentType.get(id);
+				if (object === undefined && force) {
+					await this.portalsCoreSvc.getContentTypeAsync(id, () => object = ContentType.get(id), undefined, true);
+				}
+				object = object || new ContentType(this.portalsCoreSvc.activeOrganization.ID);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization(Organization.get((object as ContentType).SystemID), account);
+				break;
+			case "Expression":
+			case "Core.Expression":
+				object = Expression.get(id);
+				if (object === undefined && force) {
+					await this.portalsCoreSvc.getExpressionAsync(id, () => object = Expression.get(id), undefined, true);
+				}
+				object = object || new Expression(this.portalsCoreSvc.activeOrganization.ID);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Expression).organization, account);
+				break;
+			case "Site":
+			case "Core.Site":
+				object = Site.get(id);
+				if (object === undefined && force) {
+					await this.portalsCoreSvc.getSiteAsync(id, () => object = Site.get(id), undefined, true);
+				}
+				object = object || new Site(this.portalsCoreSvc.activeOrganization.ID);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Site).organization, account);
+				break;
+			case "Desktop":
+			case "Core.Desktop":
+				object = Desktop.get(id);
+				if (object === undefined && force) {
+					await this.portalsCoreSvc.getDesktopAsync(id, () => object = Desktop.get(id), undefined, true);
+				}
+				object = object || new Desktop(this.portalsCoreSvc.activeOrganization.ID);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Desktop).organization, account);
+				break;
+			case "Portlet":
+			case "Core.Portlet":
+				object = Portlet.get(id);
+				if (object === undefined && force) {
+					await this.portalsCoreSvc.getPortletAsync(id, () => object = Portlet.get(id), undefined, true);
+				}
+				object = object || new Portlet(this.portalsCoreSvc.activeOrganization.ID);
+				gotRights = gotRights || this.portalsCoreSvc.canManageOrganization((object as Portlet).organization, account);
+				break;
+			case "SchedulingTask":
+			case "Core.SchedulingTask":
+				object = SchedulingTask.get(id);
+				if (object === undefined && force) {
+					await this.portalsCoreSvc.getSchedulingTaskAsync(id, () => object = SchedulingTask.get(id), undefined, true);
+				}
+				object = object || new SchedulingTask({ SystemIDSystemID: this.portalsCoreSvc.activeOrganization.ID });
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as SchedulingTask).organization, account);
+				break;
+			case "Category":
+			case "Cms.Category":
+			case "CMS.Category":
+				object = Category.get(id);
+				if (object === undefined && force) {
+					await this.getCategoryAsync(id, () => object = Category.get(id), undefined, true);
+				}
+				object = object || new Category(this.portalsCoreSvc.activeOrganization.ID);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Category).organization, account) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", (object as Category).Privileges);
+				break;
+			case "Content":
+			case "Cms.Content":
+			case "CMS.Content":
+				object = Content.get(id);
+				if (object === undefined && force) {
+					await this.getContentAsync(id, () => object = Content.get(id), undefined, true);
+				}
+				object = object || new Content(this.portalsCoreSvc.activeOrganization.ID);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Content).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Category", ((object as Content).category || new Category(this.portalsCoreSvc.activeOrganization.ID)).Privileges);
+				if (!gotRights && ((object as Content).Status === "Draft" || (object as Content).Status === "Pending")) {
+					gotRights = (object as Content).CreatedID === account.id;
+				}
+				break;
+			case "Item":
+			case "Cms.Item":
+			case "CMS.Item":
+				object = Item.get(id);
+				if (object === undefined && force) {
+					await this.getItemAsync(id, () => object = Item.get(id), undefined, true);
+				}
+				object = object || new Item(this.portalsCoreSvc.activeOrganization.ID);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Item).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Item", ((object as Item).contentType || new ContentType(this.portalsCoreSvc.activeOrganization.ID)).Privileges);
+				if (!gotRights && ((object as Item).Status === "Draft" || (object as Item).Status === "Pending")) {
+					gotRights = (object as Item).CreatedID === account.id;
+				}
+				break;
+			case "Link":
+			case "Cms.Link":
+			case "CMS.Link":
+				object = Link.get(id);
+				if (object === undefined && force) {
+					await this.getLinkAsync(id, () => object = Link.get(id), undefined, true);
+				}
+				object = object || new Link(this.portalsCoreSvc.activeOrganization.ID);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Link).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Link", ((object as Link).contentType || new ContentType(this.portalsCoreSvc.activeOrganization.ID)).Privileges);
+				if (!gotRights && ((object as Link).Status === "Draft" || (object as Link).Status === "Pending")) {
+					gotRights = (object as Link).CreatedID === account.id;
+				}
+				break;
+			case "Form":
+			case "Cms.Form":
+			case "CMS.Form":
+				object = Form.get(id);
+				if (object === undefined && force) {
+					await this.getFormAsync(id, () => object = Form.get(id), undefined, true);
+				}
+				object = object || new Form(this.portalsCoreSvc.activeOrganization.ID);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Form).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Form", ((object as Form).contentType || new ContentType(this.portalsCoreSvc.activeOrganization.ID)).Privileges);
+				break;
+			case "Crawler":
+			case "Cms.Crawler":
+			case "CMS.Crawler":
+				object = Crawler.get(id);
+				if (object === undefined && force) {
+					await this.getCrawlerAsync(id, () => object = Crawler.get(id), undefined, true);
+				}
+				object = object || new Crawler(this.portalsCoreSvc.activeOrganization.ID);
+				gotRights = gotRights || this.portalsCoreSvc.canModerateOrganization((object as Crawler).organization, account) || this.authSvc.isEditor(this.portalsCoreSvc.name, "Crawler", ((object as Crawler).contentType || new ContentType(this.portalsCoreSvc.activeOrganization.ID)).Privileges);
+				break;
+		}
+		return { object: object, gotRights: gotRights };
 	}
 
 }

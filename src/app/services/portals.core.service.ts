@@ -21,7 +21,7 @@ import { AttachmentInfo } from "@app/models/base";
 import { Account } from "@app/models/account";
 import { PortalBase as BaseModel, NotificationSettings, EmailNotificationSettings, WebHookNotificationSettings, EmailSettings, WebHookSettings } from "@app/models/portals.base";
 import { Organization, Role, Module, ContentType, Expression, Site, Desktop, Portlet, SchedulingTask } from "@app/models/portals.core.all";
-import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
+import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.all";
 
 @Injectable()
 export class PortalsCoreService extends BaseService {

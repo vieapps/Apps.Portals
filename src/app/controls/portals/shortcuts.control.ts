@@ -7,6 +7,7 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
+import { DataLookupModalPage } from "@app/controls/portals/data.lookup.modal.page";
 
 @Component({
 	selector: "control-cms-portals-shortcuts",
@@ -140,22 +141,42 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		}
 		else if (activeOrganizations.length > 1) {
 			const activeOrganizationID = this.portalsCoreSvc.activeOrganization !== undefined ? this.portalsCoreSvc.activeOrganization.ID : undefined;
-			await this.appFormsSvc.showAlertAsync(
-				await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.select.organization"),
-				undefined,
-				undefined,
-				organizationID => this.portalsCoreSvc.setActiveOrganization(this.portalsCoreSvc.getOrganization(organizationID, false)),
-				await this.configSvc.getResourceAsync("common.buttons.select"),
-				await this.configSvc.getResourceAsync("common.buttons.cancel"),
-				activeOrganizations.sortBy("Alias").map(organization => ({
-					name: "organizationID",
-					type: "radio",
-					label: `${organization.Alias} - ${organization.Title}`,
-					value: organization.ID,
-					checked: organization.ID === activeOrganizationID
-				})),
-				true
-			);
+			if (activeOrganizations.length > 3) {
+				await this.appFormsSvc.showModalAsync(
+					DataLookupModalPage,
+					{
+						nested: false,
+						multiple: false,
+						preselectedID: activeOrganizationID,
+						predefinedItems: activeOrganizations.sortBy("Alias").map(organization => ({
+							ID: organization.ID,
+							Title: organization.Alias,
+							Info: organization.Title
+						}))
+					},
+					data => this.portalsCoreSvc.setActiveOrganization(this.portalsCoreSvc.getOrganization(data !== undefined && !!data.length ? data.first().ID : activeOrganizationID, false)),
+					true,
+					true
+				);
+			}
+			else {
+				await this.appFormsSvc.showAlertAsync(
+					await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.select.organization"),
+					undefined,
+					undefined,
+					organizationID => this.portalsCoreSvc.setActiveOrganization(this.portalsCoreSvc.getOrganization(organizationID, false)),
+					await this.configSvc.getResourceAsync("common.buttons.select"),
+					await this.configSvc.getResourceAsync("common.buttons.cancel"),
+					activeOrganizations.sortBy("Alias").map(organization => ({
+						name: "organizationID",
+						type: "radio",
+						label: `${organization.Alias} - ${organization.Title}`,
+						value: organization.ID,
+						checked: organization.ID === activeOrganizationID
+					})),
+					true
+				);
+			}
 		}
 	}
 

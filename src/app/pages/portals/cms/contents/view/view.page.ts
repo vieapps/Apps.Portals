@@ -171,7 +171,8 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.delete())
 			];
 			if (this.canModerate) {
-				this.actions.insert(this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()), 1);
+				this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.advancedEdit"), "create", () => this.update(true)), 1);
+				this.actions.insert(this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()), 2);
 			}
 		}
 
@@ -442,8 +443,9 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		}
 	}
 
-	update() {
-		this.configSvc.navigateForwardAsync(this.content.routerURI.replace("/view/", "/update/"));
+	update(rawHtmlEditors: boolean = false) {
+		const uri = rawHtmlEditors ? this.content.getRouterURI({ ID: this.content.ID, RawHtmlEditors: !!rawHtmlEditors }) : this.content.routerURI;
+		this.configSvc.navigateForwardAsync(uri.replace("/view/", "/update/"));
 	}
 
 	moderate() {
