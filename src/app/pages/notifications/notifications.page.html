@@ -1,0 +1,34 @@
+<ion-header>
+	<ion-toolbar [color]="color">
+		<ion-buttons slot="start">
+			<ion-back-button text=""></ion-back-button>
+		</ion-buttons>
+		<ion-buttons slot="end">
+			<ion-button fill="clear" color="primary" class="ion-padding-end" (click)="markAllAsRead()">
+				<ion-icon name="checkmark-done-outline"></ion-icon>
+			</ion-button>
+		</ion-buttons>
+		<ion-title>
+			{{ title }}
+		</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content [color]="color">
+	<ion-list class="ion-padding-end">
+		<ion-item *ngFor="let notification of notifications; trackBy: track" [color]="color" (click)="open(notification)" class="ion-activatable" detail="false">
+			<ion-label>
+				<label class="ion-float-end ion-padding-start">
+					{{ notification.Time | time:locale }}
+					<ion-icon name="radio-button-on-outline" [class]="indicatorCss(notification)"></ion-icon>
+				</label>
+				<span>
+					{{ info(notification) }}
+				</span>
+			</ion-label>
+		</ion-item>
+	</ion-list>
+	<ion-infinite-scroll threshold="288px" position="bottom" (ionInfinite)="onInfiniteScrollAsync()">
+		<ion-infinite-scroll-content></ion-infinite-scroll-content>
+	</ion-infinite-scroll>
+</ion-content>
