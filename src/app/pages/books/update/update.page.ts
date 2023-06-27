@@ -133,10 +133,9 @@ export class BooksUpdatePage implements OnInit {
 			control.Options = control.Options || {};
 			control.Options.SelectOptions = {
 				Values: this.configSvc.languages.map(language => ({
-					Value: language.Value.substr(0, 2),
+					Value: language.Value.substring(0, 1),
 					Label: language.Label
-				})),
-				Interface: "popover"
+				}))
 			};
 		}
 

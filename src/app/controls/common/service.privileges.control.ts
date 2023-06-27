@@ -29,9 +29,6 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 	/** The position of labels (default is 'stacked') */
 	@Input() labelPosition: string;
 
-	/** The interface of select boxes (default is 'popover') */
-	@Input() selectInterface: string;
-
 	/** The event handler to run when the controls was initialized */
 	@Output() init = new EventEmitter<ServicePrivilegesControl>();
 
@@ -63,7 +60,6 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 		this.service = this.service || this.configSvc.appConfig.services.active.service;
 		this.privileges = this.privileges || [];
 		this.labelPosition = (this.labelPosition || "stacked").trim().toLowerCase();
-		this.selectInterface = (this.selectInterface || "popover").trim().toLowerCase();
 
 		if (this.privileges.findIndex(privilege => AppUtility.isEquals(privilege.ServiceName, this.service) && AppUtility.isEquals(privilege.ObjectName, "")) < 0) {
 			this.privileges.insert(new Privilege(this.service.toLowerCase()), 0);
@@ -85,12 +81,10 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 	}
 
 	private prepareObjectRoles() {
-		this.objectRoles = this.privileges.filter(privilege => AppUtility.isEquals(privilege.ServiceName, this.service) && !AppUtility.isEquals(privilege.ObjectName, "")).map(privilege => {
-			return {
-				name: privilege.ObjectName,
-				role: privilege.Role
-			};
-		});
+		this.objectRoles = this.privileges.filter(privilege => AppUtility.isEquals(privilege.ServiceName, this.service) && !AppUtility.isEquals(privilege.ObjectName, "")).map(privilege => ({
+			name: privilege.ObjectName,
+			role: privilege.Role
+		}));
 	}
 
 	private async prepareLabelsAsync() {

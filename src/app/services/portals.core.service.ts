@@ -747,7 +747,7 @@ export class PortalsCoreService extends BaseService {
 							Label: "{{portals.common.controls.webhooks.signAlgorithm.label}}",
 							Description: "{{portals.common.controls.webhooks.signAlgorithm.description}}",
 							SelectOptions: {
-								Interface: "popover",
+								Interface: "alert",
 								Values: ["MD5", "SHA1", "SHA256", "SHA384", "SHA512", "RIPEMD160", "BLAKE128", "BLAKE256", "BLAKE384", "BLAKE512"]
 							}
 						}
@@ -1013,7 +1013,7 @@ export class PortalsCoreService extends BaseService {
 					Options: {
 						Label: "{{status.approval.label}}",
 						SelectOptions: {
-							Interface: "popover",
+							Interface: "alert",
 							Values: BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{status.approval.${value}}}` }))
 						}
 					}
@@ -1649,9 +1649,8 @@ export class PortalsCoreService extends BaseService {
 		return controlConfig;
 	}
 
-	async prepareLanguageControlAsync(controlConfig: AppFormsControlConfig, required: boolean = false, addUnspecified: boolean = true, selectInterface?: string) {
+	async prepareLanguageControlAsync(controlConfig: AppFormsControlConfig, required: boolean = false, addUnspecified: boolean = true) {
 		controlConfig.Required = required;
-		controlConfig.Options.SelectOptions.Interface = selectInterface || "popover";
 		controlConfig.Options.SelectOptions.Values = this.configSvc.languages.map(language => ({ Value: language.Value, Label: language.Label }));
 		if (addUnspecified) {
 			controlConfig.Options.SelectOptions.Values.insert({ Value: "-", Label: await this.configSvc.getResourceAsync("portals.common.unspecified") }, 0);
