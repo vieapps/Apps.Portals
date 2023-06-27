@@ -5,7 +5,8 @@
 				"buttons": {
 					"list": "Danh sách nội dung",
 					"viewAsPublished": "Xem nội dung (như đã xuất bản)",
-					"viewAsPublic": "Xem nội dung (đã xuất bản công khai)"
+					"viewAsPublic": "Xem nội dung (đã xuất bản công khai)",
+					"duplicate": "Tạo bản sao của nội dung"
 				},
 				"links": {
 					"content": "Tạo liên kết từ nội dung đã có",
@@ -318,6 +319,16 @@
 					"segments": {
 						"management": "Thông tin quản trị",
 						"basic": "Nội dung"
+					},
+					"duplicate": {
+						"organization": "Đơn vị - tổ chức sẽ chứa nội dung",
+						"module": "Module nghiệp vụ chứa nội dung",
+						"contentType": "Kiểu dữ liệu nghiệp vụ của nội dung",
+						"category": "Chọn chuyên mục chính",
+						"otherCategories": "Chọn các chuyên mục đồng thời xuất hiện",
+						"confirm": "Chắc chắn muốn tạo bản sao của nội dung này ở '{{organization}}'?",
+						"success": "Đã tạo bản sao của nội dung thành công. Bấm 'Xem' để mở xem nội dung bản sao.",
+						"error": "Đã xảy ra lỗi khi tạo bản sao => {{error}}"
 					}
 				}
 			},
