@@ -74,6 +74,10 @@ export interface AppShortcut {
 	Removable?: boolean;
 	OnClick?: (shortcut?: AppShortcut, index?: number, event?: Event) => void;
 	OnRemove?: (shortcut?: AppShortcut, index?: number, event?: Event) => void;
+	OtherAction?: {
+		Icon?: string;
+		OnClick?: (shortcut?: AppShortcut, index?: number, event?: Event) => void;
+	}
 }
 
 /** Presents the struct of a requesting information */
