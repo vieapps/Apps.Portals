@@ -25,7 +25,7 @@
 		},
 		"common": {
 			"unspecified": "Không xác định",
-			"advancedEdit": "Cập nhật cấp cao",
+			"advancedEdit": "Cập nhật (cao cấp)",
 			"excel": {
 				"action": {
 					"export": "Kết xuất dữ liệu ra Excel",
@@ -705,6 +705,11 @@
 					"label": "Sử dụng các mã scripts trực tiếp thay cho liên kết ra bên ngoài",
 					"placeholder": "",
 					"description": ""
+				},
+				"CanonicalHost": {
+					"label": "Tên miền cho các liên kết Canonical",
+					"placeholder": "",
+					"description": "Chỉ định tên miền duy nhất sử dụng cho các liên kết canonical"
 				},
 				"SEOInfo": {
 					"label": "Thiết đặt thông số SEO",

@@ -54,8 +54,7 @@ export class Book extends BaseModel {
 
 	/** Deserializes data to object */
 	static deserialize(json: any, book?: Book) {
-		return  (book || new Book()).copy(json);
-		return book;
+		return (book || new Book()).copy(json);
 	}
 
 	/** Gets by identity */

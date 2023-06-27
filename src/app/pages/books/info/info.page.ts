@@ -72,7 +72,7 @@ export class BooksInfoPage implements OnInit, OnDestroy {
 	}
 
 	get redirectUrl() {
-		return this.configSvc.getAppURL(this.book !== undefined ? this.book.routerURI : undefined);
+		return this.configSvc.getAppURL(this.book !== undefined ? this.book.routerURI : undefined, this.booksSvc.appsURL);
 	}
 
 	ngOnInit() {

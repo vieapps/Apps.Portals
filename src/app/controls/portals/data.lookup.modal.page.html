@@ -10,8 +10,9 @@
 				{{ labels.select }}
 			</ion-button>
 		</ion-buttons>
-		<ion-title [hidden]="searching" class="ion-text-center">
-			<ion-button fill="clear" color="medium" (click)="openSearch()">
+		<ion-title class="ion-text-center">
+			{{ labels.title }}
+			<ion-button [hidden]="searching || predefinedItems !== undefined" fill="clear" color="medium" (click)="openSearch()">
 				<ion-icon name="search"></ion-icon>
 				{{ labels.search }}
 			</ion-button>

@@ -21,7 +21,7 @@ import { AttachmentInfo } from "@app/models/base";
 import { Account } from "@app/models/account";
 import { PortalBase as BaseModel, NotificationSettings, EmailNotificationSettings, WebHookNotificationSettings, EmailSettings, WebHookSettings } from "@app/models/portals.base";
 import { Organization, Role, Module, ContentType, Expression, Site, Desktop, Portlet, SchedulingTask } from "@app/models/portals.core.all";
-import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
+import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.all";
 
 @Injectable()
 export class PortalsCoreService extends BaseService {
@@ -104,6 +104,10 @@ export class PortalsCoreService extends BaseService {
 			return menuIndex !== undefined ? menuIndex : 0;
 		}
 		return 0;
+	}
+
+	get allowSelectActiveOrganization() {
+		return false;
 	}
 
 	initialize() {
@@ -232,6 +236,9 @@ export class PortalsCoreService extends BaseService {
 			if (Organization.active === undefined) {
 				this.prepareSidebar();
 			}
+		}
+		if (this.allowSelectActiveOrganization) {
+			AppUtility.invoke(() => this.fetchOrganizationsAsync(), 789);
 		}
 		await this.prepareSidebarFooterItemsAsync();
 		this.activeSidebar(onNext);
@@ -740,7 +747,7 @@ export class PortalsCoreService extends BaseService {
 							Label: "{{portals.common.controls.webhooks.signAlgorithm.label}}",
 							Description: "{{portals.common.controls.webhooks.signAlgorithm.description}}",
 							SelectOptions: {
-								Interface: "popover",
+								Interface: "alert",
 								Values: ["MD5", "SHA1", "SHA256", "SHA384", "SHA512", "RIPEMD160", "BLAKE128", "BLAKE256", "BLAKE384", "BLAKE512"]
 							}
 						}
@@ -1006,7 +1013,7 @@ export class PortalsCoreService extends BaseService {
 					Options: {
 						Label: "{{status.approval.label}}",
 						SelectOptions: {
-							Interface: "popover",
+							Interface: "alert",
 							Values: BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{status.approval.${value}}}` }))
 						}
 					}
@@ -1634,19 +1641,16 @@ export class PortalsCoreService extends BaseService {
 		return controls;
 	}
 
-	prepareApprovalStatusControl(controlConfig: AppFormsControlConfig, selectInterface?: string) {
-		this.appFormsSvc.prepareSelectControl(controlConfig, controlConfig.Options.SelectOptions.Values, _ => {
-			controlConfig.Options.SelectOptions.Interface = selectInterface || "popover";
-			controlConfig.Options.SelectOptions.Values = AppUtility.isGotData(controlConfig.Options.SelectOptions.Values)
-				? (controlConfig.Options.SelectOptions.Values as AppFormsLookupValue[]).map(kvp => ({ Value: kvp.Value, Label: `{{status.approval.${kvp.Value}}}` }) as AppFormsLookupValue)
-				: BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{status.approval.${value}}}` }) as AppFormsLookupValue);
-		});
+	prepareApprovalStatusControl(controlConfig: AppFormsControlConfig) {
+		this.appFormsSvc.prepareSelectControl(controlConfig, controlConfig.Options.SelectOptions.Values, _ => controlConfig.Options.SelectOptions.Values = AppUtility.isGotData(controlConfig.Options.SelectOptions.Values)
+			? (controlConfig.Options.SelectOptions.Values as AppFormsLookupValue[]).map(kvp => ({ Value: kvp.Value, Label: `{{status.approval.${kvp.Value}}}` }) as AppFormsLookupValue)
+			: BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{status.approval.${value}}}` }) as AppFormsLookupValue)
+		);
 		return controlConfig;
 	}
 
-	async prepareLanguageControlAsync(controlConfig: AppFormsControlConfig, required: boolean = false, addUnspecified: boolean = true, selectInterface?: string) {
+	async prepareLanguageControlAsync(controlConfig: AppFormsControlConfig, required: boolean = false, addUnspecified: boolean = true) {
 		controlConfig.Required = required;
-		controlConfig.Options.SelectOptions.Interface = selectInterface || "popover";
 		controlConfig.Options.SelectOptions.Values = this.configSvc.languages.map(language => ({ Value: language.Value, Label: language.Label }));
 		if (addUnspecified) {
 			controlConfig.Options.SelectOptions.Values.insert({ Value: "-", Label: await this.configSvc.getResourceAsync("portals.common.unspecified") }, 0);
@@ -2056,12 +2060,35 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	searchOrganizationsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchOrganizationsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, relatedQuery?: string) {
 		return this.searchAsync(
-			this.getSearchingPath("organization", this.configSvc.relatedQuery),
+			this.getSearchingPath("organization", relatedQuery || this.configSvc.relatedQuery),
 			request,
 			data => this.processOrganizations(data, onSuccess),
 			error => this.processError("Error occurred while searching organizations", error, onError)
+		);
+	}
+
+	private fetchOrganizationsAsync(pagination?: AppDataPagination) {
+		return this.searchAsync(
+			this.getSearchingPath("organization", this.configSvc.relatedQuery + "&x-fetch=ngx-apps"),
+			AppPagination.buildRequest(undefined, undefined, pagination),
+			data => {
+				const ids = new Array<string>();
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+					(data.Objects as Array<any>).filter(org => !Organization.contains(org.ID)).forEach(org => {
+						Organization.set(Organization.deserialize(org));
+						ids.push(org.ID);
+					});
+				}
+				const pagination = AppPagination.getDefault(data);
+				if (pagination.PageNumber < pagination.TotalPages) {
+					AppUtility.invoke(() => this.fetchOrganizationsAsync(pagination), 123);
+				}
+				AppUtility.invoke(() => ids.forEach(id => this.getOrganizationAsync(id)), 456);
+			},
+			error => this.processError("Error occurred while fetching organizations", error),
+			true
 		);
 	}
 

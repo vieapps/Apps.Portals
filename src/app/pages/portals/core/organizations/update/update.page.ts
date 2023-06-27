@@ -157,8 +157,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 									Options: {
 										Label: "{{portals.organizations.controls.Instructions.language}}",
 										SelectOptions: {
-											Values: this.configSvc.appConfig.languages,
-											Interface: "popover"
+											Values: this.configSvc.appConfig.languages
 										}
 									}
 								},

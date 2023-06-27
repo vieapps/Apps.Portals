@@ -159,10 +159,10 @@ export class CmsCrawlersUpdatePage implements OnInit, OnDestroy {
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.crawler");
 
 		let control = formConfig.find(ctrl => ctrl.Name === "Status");
-		this.portalsCoreSvc.prepareApprovalStatusControl(control, "popover");
+		this.portalsCoreSvc.prepareApprovalStatusControl(control);
 
 		control = formConfig.find(ctrl => ctrl.Name === "DefaultStatus");
-		this.portalsCoreSvc.prepareApprovalStatusControl(control, "popover");
+		this.portalsCoreSvc.prepareApprovalStatusControl(control);
 
 		if (AppUtility.isNotEmpty(this.crawler.ID)) {
 			const module = Module.get(this.crawler.RepositoryID);

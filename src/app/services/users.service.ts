@@ -185,7 +185,7 @@ export class UsersService extends BaseService {
 						}
 					},
 					error => this.processError("Error occurred while reading profile", error, onError),
-					{ "x-app-idetity": this.configSvc.appConfig.app.id, "x-app-name": this.configSvc.appConfig.app.name },
+					{ "x-app-identity": this.configSvc.appConfig.app.id, "x-app-name": this.configSvc.appConfig.app.name },
 					useXHR
 				);
 	}

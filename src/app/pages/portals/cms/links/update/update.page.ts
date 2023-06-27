@@ -180,41 +180,32 @@ export class CmsLinksUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ChildrenMode"));
 		control.Options.SelectOptions.AsBoxes = true;
 		if (AppUtility.isNotEmpty(control.Options.SelectOptions.Values)) {
-			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values, "#;") as Array<string>).map(value => {
-				return { Value: value, Label: `{{portals.cms.links.controls.ChildrenMode.${value}}}` };
-			});
+			control.Options.SelectOptions.Values = (AppUtility.toArray(control.Options.SelectOptions.Values, "#;") as Array<string>).map(value => ({ Value: value, Label: `{{portals.cms.links.controls.ChildrenMode.${value}}}` }));
 		}
 		control.Options.OnChanged = (_, formControl) => {
 			const moduleFormControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryID"));
 			const contentTypeFormControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryEntityID"));
 			moduleFormControl.Options.Disabled = contentTypeFormControl.Options.Disabled = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryObjectID")).Options.Disabled = AppUtility.isEquals(formControl.value, "Normal");
 			if (!moduleFormControl.Options.Disabled) {
-				moduleFormControl.Options.SelectOptions.Values = this.organization.modules.map(module => {
-					return { Value: module.ID, Label: module.Title };
-				});
+				moduleFormControl.Options.SelectOptions.Values = this.organization.modules.map(module => ({ Value: module.ID, Label: module.Title }));
 				moduleFormControl.controlRef.setValue(AppUtility.isNotEmpty(this.form.value.LookupRepositoryID) && moduleFormControl.Options.SelectOptions.Values.findIndex(info => info.Value === this.form.value.LookupRepositoryID) > -1 ? this.form.value.LookupRepositoryID : moduleFormControl.Options.SelectOptions.Values.length > 0 ? moduleFormControl.Options.SelectOptions.Values[0].Value : undefined);
 			}
 		};
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryID"));
-		control.Options.SelectOptions.Interface = "popover";
+		control.Options.SelectOptions.Interface = "alert";
 		control.Options.SelectOptions.Values = this.organization.modules.map(module => {
 			return { Value: module.ID, Label: module.Title };
 		});
 		control.Options.OnChanged = (_, formControl) => {
 			const contentTypeFormControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryEntityID"));
-			contentTypeFormControl.Options.SelectOptions.Values = Module.get(formControl.value).contentTypes.filter(contentType => contentType.contentTypeDefinition.NestedObject).map(contentType => {
-				return { Value: contentType.ID, Label: contentType.Title };
-			});
+			contentTypeFormControl.Options.SelectOptions.Values = Module.get(formControl.value).contentTypes.filter(contentType => contentType.contentTypeDefinition.NestedObject).map(contentType => ({ Value: contentType.ID, Label: contentType.Title }));
 			contentTypeFormControl.controlRef.setValue(AppUtility.isNotEmpty(this.form.value.LookupRepositoryEntityID) && contentTypeFormControl.Options.SelectOptions.Values.findIndex(info => info.Value === this.form.value.LookupRepositoryEntityID) > -1 ? this.form.value.LookupRepositoryEntityID : contentTypeFormControl.Options.SelectOptions.Values.length > 0 ? contentTypeFormControl.Options.SelectOptions.Values[0].Value : undefined);
 			this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryObjectID")).Options.LookupOptions.ModalOptions.ComponentProps.moduleID = formControl.value;
 		};
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryEntityID"));
-		control.Options.SelectOptions.Interface = "popover";
-		control.Options.SelectOptions.Values = this.module.contentTypes.filter(contentType => contentType.contentTypeDefinition.NestedObject).map(contentType => {
-			return { Value: contentType.ID, Label: contentType.Title };
-		});
+		control.Options.SelectOptions.Values = this.module.contentTypes.filter(contentType => contentType.contentTypeDefinition.NestedObject).map(contentType => ({ Value: contentType.ID, Label: contentType.Title }));
 		control.Options.OnChanged = async (_, formControl) => {
 			const contentType = ContentType.get(formControl.value);
 			const objectFormControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "LookupRepositoryObjectID"));
@@ -276,7 +267,7 @@ export class CmsLinksUpdatePage implements OnInit {
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
-		this.portalsCoreSvc.prepareApprovalStatusControl(control, "popover");
+		this.portalsCoreSvc.prepareApprovalStatusControl(control);
 		if (!this.canModerate) {
 			control.Options.Disabled = true;
 		}

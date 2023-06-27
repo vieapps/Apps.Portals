@@ -418,7 +418,8 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get selectInterface() {
-		return this.control.Options.SelectOptions.Interface;
+		return "alert";
+		// return this.control.Options.SelectOptions.Interface;
 	}
 
 	get selectInterfaceOptions() {

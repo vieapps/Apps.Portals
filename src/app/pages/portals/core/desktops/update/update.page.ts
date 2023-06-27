@@ -230,22 +230,20 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Stylesheets")).Options.Rows =
 			formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Scripts")).Options.Rows = 15;
 
+		const unspecified = await this.configSvc.getResourceAsync("portals.common.unspecified");
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "MainPortletID"));
 		if (AppUtility.isNotEmpty(this.desktop.ID) && this.desktop.portlets !== undefined) {
-			control.Options.SelectOptions.Values = this.desktop.portlets.map(portlet => {
-				return { Value: portlet.ID, Label: portlet.Title };
-			});
+			control.Options.SelectOptions.Values = this.desktop.portlets.map(portlet => ({ Value: portlet.ID, Label: portlet.Title }));
+			control.Options.SelectOptions.Values.insert({ Value: "-", Label: unspecified }, 0);
 		}
 		else {
 			control.Hidden = true;
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SEOSettings"));
-		const seo = (AppUtility.toArray(control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "TitleMode")).Options.SelectOptions.Values, "#;") as Array<string>).map(value => {
-			return { Value: value, Label: `{{portals.desktops.update.seo.${value}}}` };
-		});
+		const seo = (AppUtility.toArray(control.SubControls.Controls.find(ctrl => AppUtility.isEquals(ctrl.Name, "TitleMode")).Options.SelectOptions.Values, "#;") as Array<string>).map(value => ({ Value: value, Label: `{{portals.desktops.update.seo.${value}}}` }));
 		await Promise.all(seo.map(async s => s.Label = await this.appFormsSvc.getResourceAsync(s.Label)));
-		seo.insert({ Value: "-", Label: await this.configSvc.getResourceAsync("portals.common.unspecified") }, 0);
+		seo.insert({ Value: "-", Label: unspecified }, 0);
 		control.SubControls.Controls.filter(ctrl => ctrl.Type === "Select").forEach(ctrl => ctrl.Options.SelectOptions.Values = seo);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
@@ -338,6 +336,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		this.form.patchValue(AppUtility.clone(this.desktop, false, undefined, desktop => {
 			desktop.Language = AppUtility.isNotEmpty(desktop.Language) ? desktop.Language : "-";
 			desktop.Theme = AppUtility.isNotEmpty(desktop.Theme) ? desktop.Theme : "-";
+			desktop.MainPortletID = AppUtility.isNotEmpty(desktop.MainPortletID) ? desktop.MainPortletID : "-";
 			desktop.UISettings = desktop.UISettings || {};
 			desktop.SEOSettings = desktop.SEOSettings || {};
 			desktop.SEOSettings.SEOInfo = desktop.SEOSettings.SEOInfo || {};
@@ -408,6 +407,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 				const desktop = this.form.value;
 				desktop.Language = AppUtility.isEquals(desktop.Language, "-") ? undefined : desktop.Language;
 				desktop.Theme = AppUtility.isEquals(desktop.Theme, "-") ? undefined : desktop.Theme;
+				desktop.MainPortletID = AppUtility.isEquals(desktop.MainPortletID, "-") ? undefined : desktop.MainPortletID;
 				this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "SEOSettings")).SubControls.Controls.filter(ctrl => ctrl.Type === "Select").forEach(ctrl => {
 					const value = desktop.SEOSettings[ctrl.Name];
 					desktop.SEOSettings[ctrl.Name] = AppUtility.isEquals(value, "-") ? undefined : value;

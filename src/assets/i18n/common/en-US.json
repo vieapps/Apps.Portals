@@ -71,6 +71,7 @@
 				"language": "Language",
 				"theme": "Use dark-theme"
 			},
+			"notifications": "Notifications",
 			"apps": {
 				"desktop:": "Desktop apps",
 				"mobile": "Mobile & Tablet apps"
@@ -182,5 +183,9 @@
 		"list": "{{total}} changed version(s) [{{title}}]",
 		"confirm": "Are you sure you want to rollback from this #{{version}} version?",
 		"processing": "Rolling back..."
+	},
+	"notifications": {
+		"title": "Notifications",
+		"label": "{{user}} do {{action}} with '{{title}}' - Status: {{status}}"
 	}
 }

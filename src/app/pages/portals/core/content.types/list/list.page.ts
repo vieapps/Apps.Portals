@@ -69,6 +69,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 	labels = {
 		edit: "Update this content type",
 		advancedEdit: "Update this content type in advanced mode",
+		refresh: "Refresh",
 		contents: "View the list of contents",
 		expressions: "Expressions",
 		filter: "Quick filter",
@@ -166,6 +167,7 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		this.labels = {
 			edit: await this.configSvc.getResourceAsync("common.buttons.edit"),
 			advancedEdit: await this.configSvc.getResourceAsync("portals.common.advancedEdit"),
+			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			contents: await this.configSvc.getResourceAsync("portals.cms.common.buttons.list"),
 			expressions: await this.configSvc.getResourceAsync("portals.expressions.title.list", { info: "" }),
 			filter: await this.configSvc.getResourceAsync("common.buttons.filter"),

@@ -9,6 +9,7 @@ export class TrackingUtility {
 
 	/** Initializes the tracking objects (Google Analytics, Facebook, ...) */
 	static initializeAsync(googleAnalytics?: GoogleAnalytics) {
+		/*
 		const promises = new Array<Promise<void>>();
 		if (this._googleAnalytics === undefined && googleAnalytics !== undefined && AppConfig.tracking.google.length > 0) {
 			this._googleAnalytics = googleAnalytics;
@@ -25,10 +26,13 @@ export class TrackingUtility {
 			));
 		}
 		return Promise.all(promises);
+		*/
+		return AppUtility.promise;
 	}
 
 	/** Tracks a screen */
 	static trackScreenAsync(title?: string, campaignUrl?: string, addPrefix: boolean = true) {
+		/*
 		title = title || AppConfig.app.name;
 		campaignUrl = campaignUrl || AppUtility.getURI(AppConfig.URLs.stack.last(), AppConfig.URLs.home);
 		const promises = new Array<Promise<void>>();
@@ -36,15 +40,20 @@ export class TrackingUtility {
 			promises.push(this._googleAnalytics.trackView(`${addPrefix ? `${AppConfig.services.active.service} - ` : ""}${title}`, campaignUrl).catch(error => console.error("[AppTracking]: Error occurred while tracking a screen", error)));
 		}
 		return Promise.all(promises);
+		*/
+		return AppUtility.promise;
 	}
 
 	/** Tracks an event */
 	static trackEventAsync(category: string, action: string, label?: string, addPrefix: boolean = true) {
+		/*
 		const promises = new Array<Promise<void>>();
 		if (this._googleAnalytics !== undefined) {
 			promises.push(this._googleAnalytics.trackEvent(`${addPrefix ? `${AppConfig.services.active.service}:` : ""}${category}`, action, label).catch(error => console.error("[AppTracking]: Error occurred while tracking an event", error)));
 		}
 		return Promise.all(promises);
+		*/
+		return AppUtility.promise;
 	}
 
 	/** Tracks a screen with an event */

@@ -1,6 +1,10 @@
 <div class="options">
 	<h2>{{ labels.options.label }}</h2>
 	<ion-list lines="full">
+		<ion-item *ngIf="isAuthenticated" [color]="color" (click)="openNotifications()">
+			<ion-label>{{ labels.notifications }}</ion-label>
+			<ion-badge *ngIf="!!unreadNotifications" color="danger">{{ unreadNotifications > 9 ? '9+' : unreadNotifications }}</ion-badge>
+		</ion-item>
 		<ion-item *ngIf="isAuthenticated" [color]="color" (click)="openProfile()">
 			<ion-label>{{ labels.profile }}</ion-label>
 		</ion-item>

@@ -154,6 +154,9 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 				this.appFormsSvc.getActionSheetButton(this.resources.tasks, "timer", () => this.createSchedulingTaskAsync()),
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.delete())
 			];
+			if (this.canModerate) {
+				this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.advancedEdit"), "create", () => this.update(true)), 1);
+			}
 		}
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
@@ -352,8 +355,9 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 		await this.configSvc.navigateForwardAsync(await this.portalsCmsSvc.getSchedulingTaskURLAsync(this.item));
 	}
 
-	update() {
-		this.configSvc.navigateForwardAsync(this.item.routerURI.replace("/view/", "/update/"));
+	update(rawHtmlEditors: boolean = false) {
+		const uri = rawHtmlEditors ? this.item.getRouterURI({ ID: this.item.ID, RawHtmlEditors: !!rawHtmlEditors }) : this.item.routerURI;
+		this.configSvc.navigateForwardAsync(uri.replace("/view/", "/update/"));
 	}
 
 	viewVersions() {

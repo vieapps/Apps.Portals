@@ -20,6 +20,11 @@ export const routes: Routes = [
 		loadChildren: "@app/pages/logs/logs.module#LogsModule"
 	},
 	{
+		path: "notifications",
+		canActivate: [AppReadyGuardService],
+		loadChildren: "@app/pages/notifications/notifications.module#NotificationsModule"
+	},
+	{
 		path: "versions",
 		canActivate: [AppReadyGuardService],
 		loadChildren: "@app/pages/versions/versions.module#VersionsModule"

@@ -18,6 +18,8 @@ import { UsersService } from "@app/services/users.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { BooksService } from "@app/services/books.service";
+import { NotificationsService } from "@app/services/notifications.service";
+import { Notification } from "@app/models/notification";
 
 @Component({
 	selector: "app-root",
@@ -34,6 +36,7 @@ export class AppComponent implements OnInit {
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private usersSvc: UsersService,
+		private notificationsSvc: NotificationsService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService,
 		private booksSvc: BooksService,
@@ -142,8 +145,8 @@ export class AppComponent implements OnInit {
 			}
 			this.sidebar.State.Active = activeService.sidebar || activeService.name.toLowerCase();
 
-			[this.usersSvc, this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc]
-				.filter(service => "Users" === service.name || appConfig.services.all.findIndex(svc => svc.name === service.name) > -1)
+			[this.usersSvc, this.notificationsSvc, this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc]
+				.filter(service => "Users" === service.name || "Notifications" === service.name || appConfig.services.all.findIndex(svc => svc.name === service.name) > -1)
 				.forEach(service => service.initialize());
 
 			this.sidebar.Header.Title = appConfig.app.name;
@@ -268,6 +271,7 @@ export class AppComponent implements OnInit {
 				AppUtility.invoke(async () => this.sidebar.updateFooter({ items: [{
 					Name: "preferences",
 					Icon: "settings",
+					Badge: Notification.unread.size,
 					Title: await this.configSvc.getResourceAsync("common.preferences.label"),
 					OnClick: (name: string, sidebar: AppSidebar) => {
 						sidebar.State.Active = name;
@@ -432,6 +436,9 @@ export class AppComponent implements OnInit {
 				if ("LogOut" === info.args.Type) {
 					this.sidebar.updateHeader({ title: this.configSvc.appConfig.app.name, onClick: () => {}, updateAvatar: true });
 				}
+				else {
+					this.notificationsSvc.fetchNotificationsAsync();
+				}
 				this.updateSidebarAsync({}, true, () => this.sidebar.normalizeTopMenu());
 			}
 		});
@@ -441,6 +448,8 @@ export class AppComponent implements OnInit {
 				this.sidebar.updateHeader({ updateAvatar: true });
 			}
 		});
+
+		AppEvents.on("UpdateUnreadNotifications", _ => this.sidebar.updateBadge("preferences", Notification.unread.size));
 	}
 
 	private activate() {
@@ -517,10 +526,11 @@ export class AppComponent implements OnInit {
 
 	private finalize(onNext?: () => void) {
 		const appConfig = this.configSvc.appConfig;
-		AppUtility.invoke(() => console.log("<AppComponent>: Initialized", appConfig.isDebug ? appConfig.app : undefined))
+		AppUtility.invoke(() => console.log("<AppComponent>: Initialized", appConfig.app))
 			.then(() => this.sidebar.normalizeTopMenu())
 			.then(this.configSvc.isWebApp ? () => PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect()) : () => {})
 			.then(() => AppAPIs.openWebSocket(() => Promise.all([this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc].filter(service => appConfig.services.all.findIndex(svc => svc.name === service.name) > -1).map(service => service.initializeAsync()))
+				.then(() => this.notificationsSvc.fetchNotificationsAsync())
 				.then(() => this.appFormsSvc.hideLoadingAsync())
 				.then(() => {
 					const data = {

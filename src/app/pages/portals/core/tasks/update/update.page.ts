@@ -48,7 +48,7 @@ export class PortalsTasksUpdatePage implements OnInit {
 	get canUpdate() {
 		return this.task !== undefined
 			? this.task.Persistance
-				? this.task.Status === "Awaiting" || (this.task.Status === "Acquired" && this.isSystemModerator)
+				? this.task.Status === "Awaiting" || (this.isSystemModerator && (this.task.Status === "Running" || this.task.Status === "Acquired"))
 				: this.task.SchedulingType !== "Refresh"
 			: true;
 	}
@@ -114,7 +114,7 @@ export class PortalsTasksUpdatePage implements OnInit {
 
 		control = formConfig.find(ctrl => ctrl.Name === "Status");
 		control.Options.SelectOptions.Values = AppUtility.map(control.Options.SelectOptions.Values, value => ({ Value: value, Label: `{{portals.tasks.status.${value}}}` }));
-		control.Options.Disabled = this.task.Status !== "Acquired" ? true : !this.isSystemModerator;
+		control.Options.Disabled = this.task.Status === "Running" || this.task.Status === "Acquired" ? !this.isSystemModerator : true;
 
 		control = formConfig.find(ctrl => ctrl.Name === "SchedulingType");
 		control.Options.SelectOptions.Values = AppUtility.map(control.Options.SelectOptions.Values, value => ({ Value: value, Label: `{{portals.tasks.schedulingType.${value}}}` }));

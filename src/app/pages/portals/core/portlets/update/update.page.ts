@@ -259,17 +259,11 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		control.Options.AutoFocus = true;
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Action"));
-		control.Options.SelectOptions.Interface = "popover";
-		control.Options.SelectOptions.Values = ["List", "View"].map(action => {
-			return { Value: action, Label: `{{portals.portlets.actions.${action}}}` };
-		});
+		control.Options.SelectOptions.Values = ["List", "View"].map(action => ({ Value: action, Label: `{{portals.portlets.actions.${action}}}` }));
 		control.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "AlternativeAction"));
-		control.Options.SelectOptions.Interface = "popover";
-		control.Options.SelectOptions.Values = ["List", "View"].map(action => {
-			return { Value: action, Label: `{{portals.portlets.actions.${action}}}` };
-		});
+		control.Options.SelectOptions.Values = ["List", "View"].map(action => ({ Value: action, Label: `{{portals.portlets.actions.${action}}}` }));
 		control.Options.SelectOptions.Values.insert({ Value: "-", Label: this.unspecified }, 0);
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "DesktopID"));
@@ -390,7 +384,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			}, formConfig.findIndex(ctrl => ctrl.Name === control.Name));
 		}
 		else {
-			control.Options.SelectOptions.Interface = "popover";
+			control.Options.SelectOptions.Interface = "alert";
 			control.Options.SelectOptions.Values = (await this.portalsCoreSvc.getTemplateZonesAsync(this.originalDesktop !== undefined ? this.originalDesktop.ID : this.desktop.ID)).map(zone => {
 				return { Value: zone, Label: zone };
 			});
