@@ -706,6 +706,11 @@
 					"placeholder": "",
 					"description": ""
 				},
+				"CanonicalHost": {
+					"label": "Tên miền cho các liên kết Canonical",
+					"placeholder": "",
+					"description": "Chỉ định tên miền duy nhất sử dụng cho các liên kết canonical"
+				},
 				"SEOInfo": {
 					"label": "Thiết đặt thông số SEO",
 					"placeholder": "",
