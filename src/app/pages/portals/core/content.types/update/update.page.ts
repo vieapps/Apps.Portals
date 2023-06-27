@@ -290,7 +290,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 		["CreateNewVersionWhenUpdated", "AllowComments", "UseSocialNetworkComments"].forEach(name => formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, name)).Options.Type = "toggle");
 
 		control = formConfig.find(ctrl => ctrl.Name === "DefaultCommentStatus");
-		this.portalsCoreSvc.prepareApprovalStatusControl(control, "popover");
+		this.portalsCoreSvc.prepareApprovalStatusControl(control);
 
 		formConfig.push(
 			{

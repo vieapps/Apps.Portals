@@ -172,7 +172,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		formConfig = this.rawHtmlEditors ? AppUtility.clone(formConfig) : formConfig;
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
-		this.portalsCoreSvc.prepareApprovalStatusControl(control, "popover");
+		this.portalsCoreSvc.prepareApprovalStatusControl(control);
 		if (!this.canModerate) {
 			control.Options.Disabled = true;
 		}

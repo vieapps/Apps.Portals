@@ -13,9 +13,10 @@ import { FilesService } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { AttachmentInfo } from "@app/models/base";
+import { Organization, Module, ContentType, SchedulingTask } from "@app/models/portals.core.all";
 import { Category, Content } from "@app/models/portals.cms.all";
-import { SchedulingTask } from "@app/models/portals.core.all";
 import { ScheduledPublishModalPage } from "@app/controls/portals/scheduled.publish.modal.page";
+import { DataLookupModalPage } from "@app/controls/portals/data.lookup.modal.page";
 
 @Component({
 	selector: "page-portals-cms-contents-view",
@@ -38,6 +39,13 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	private content: Content;
 	private task: SchedulingTask;
+	private duplicate = {
+		organization: undefined as Organization,
+		module: undefined as Module,
+		contentType: undefined as ContentType,
+		category: undefined as Category,
+		otherCategories: undefined as Array<Category>
+	};
 	canModerate = false;
 	canEdit = false;
 	title = {
@@ -166,13 +174,16 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(this.resources.update, "create", () => this.update()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync(this.content.Status !== "Published" ? "portals.tasks.scheduled.publish.title.modal" : "portals.tasks.scheduled.update.action"), "timer", () => this.openSchedulingTaskAsync()),
-				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync(this.content.Status !== "Published" ? "portals.cms.common.buttons.viewAsPublished" : "portals.cms.common.buttons.viewAsPublic"), "eye", () => this.view()),
+				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync(this.content.Status !== "Published" ? "portals.cms.common.buttons.viewAsPublished" : "portals.cms.common.buttons.viewAsPublic"), "eye", () => this.viewAsPublic()),
 				this.appFormsSvc.getActionSheetButton(this.resources.versions, "layers-outline", () => this.viewVersions()),
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.delete())
 			];
 			if (this.canModerate) {
 				this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.advancedEdit"), "create", () => this.update(true)), 1);
 				this.actions.insert(this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()), 2);
+				if (!!(await this.portalsCoreSvc.getActiveOrganizationsAsync()).length) {
+					this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.common.buttons.duplicate"), "copy-outline", () => this.duplicateAsync()), 6);
+				}
 			}
 		}
 
@@ -460,8 +471,180 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		this.portalsCoreSvc.showApprovalDialogAsync(this.content.contentType.ID, this.content.ID, currentStatus, availableStatuses);
 	}
 
-	viewVersions() {
+	private viewAsPublic() {
+		const url = this.portalsCoreSvc.getPublicURL(this.content, this.content.category);
+		if (AppUtility.isNotEmpty(url)) {
+			if (this.content.Status === "Published") {
+				PlatformUtility.openURL(url);
+			}
+			else {
+				PlatformUtility.openURL(`${url}${url.indexOf("?") > 0 ? "&" : "?"}x-app-token=${this.configSvc.appConfig.jwt}`);
+			}
+		}
+	}
+
+	private viewVersions() {
 		this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(this.content.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "CMS.Content", id: this.content.ID }));
+	}
+
+	private async duplicateAsync() {
+		await this.appFormsSvc.hideActionSheetAsync(() => this.duplicateNextStepAsync());
+	}
+
+	private async duplicateNextStepAsync() {
+		let items: Array<any> = undefined;
+		let selected: string = undefined;
+		let nested = false;
+		let multiple = false;
+		let allowEmpty = false;
+		let labels: { [key: string]: string } = { select: await this.configSvc.getResourceAsync("common.buttons.continue") };
+		let sortBy: { [key: string]: string } = { Title: "Ascending" };
+		let mapper: (item: any) => { [key: string]: any } = item => ({
+			ID: item.ID,
+			Title: item.Title,
+			Info: item.Description
+		});
+		let assigner: (data: any[]) => void = undefined;
+
+		if (this.duplicate.organization === undefined) {
+			items = await this.portalsCoreSvc.getActiveOrganizationsAsync();
+			selected = this.portalsCoreSvc.activeOrganization.ID;
+			labels.title = await this.configSvc.getResourceAsync("portals.cms.contents.view.duplicate.organization");
+			mapper = item => ({
+				ID: item.ID,
+				Title: item.Title + " - " + item.Alias
+			});
+			assigner = data => this.duplicate.organization = this.portalsCoreSvc.getOrganization(data.first().ID);
+		}
+		else if (this.duplicate.module === undefined) {
+			items = this.duplicate.organization.modules;
+			selected = this.portalsCoreSvc.activeModule != undefined ? this.portalsCoreSvc.activeModule.ID : (items.first() || {}).ID;
+			selected = selected === undefined || items.first(m => m.ID === selected) === undefined ? items.first().ID : selected;
+			labels.title = await this.configSvc.getResourceAsync("portals.cms.contents.view.duplicate.module");
+			assigner = data => this.duplicate.module = this.portalsCoreSvc.getModule(data.first().ID);
+		}
+		else if (this.duplicate.contentType === undefined) {
+			items = this.portalsCmsSvc.getContentTypesOfContent(this.duplicate.module);
+			selected = !!items.length ? items.first().ID : undefined;
+			labels.title = await this.configSvc.getResourceAsync("portals.cms.contents.view.duplicate.contentType");
+			assigner = data => this.duplicate.contentType = this.duplicate.module.contentTypes.first(cntType => cntType.ID === data.first().ID);
+		}
+		else if (this.duplicate.category === undefined || this.duplicate.otherCategories === undefined) {
+			nested = true;
+			const contentType = this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.duplicate.module)
+			items = Category.instances.toArray(category => category.SystemID === contentType.SystemID && category.RepositoryID === contentType.RepositoryID && category.ParentID === undefined);
+			if (!!!items.length) {
+				await this.portalsCmsSvc.searchSpecifiedCategoriesAsync(
+					contentType,
+					data => items = data !== undefined
+						? Category.toArray(data.Objects)
+						: Category.instances.toArray(category => category.SystemID === contentType.SystemID && category.RepositoryID === contentType.RepositoryID && category.ParentID === undefined),
+					undefined,
+					false,
+					true
+				);
+			}
+			mapper = item => ({
+				ID: item.ID,
+				Title: item.Title,
+				Info: item.Description,
+				ParentID: item.ParentID,
+				OrderIndex: item.OrderIndex,
+				Parent: item.Parent !== undefined ? {
+					ID: item.Parent.ID,
+					Title: item.Parent.Title,
+					Info: item.Parent.Description,
+					ParentID: item.Parent.ParentID,
+					OrderIndex: item.Parent.OrderIndex
+				} : undefined,
+				Children: (item.Children || []).map(children => mapper(children))
+			});
+			if (this.duplicate.category === undefined) {
+				labels.title = await this.configSvc.getResourceAsync("portals.cms.contents.view.duplicate.category");
+				assigner = data => this.duplicate.category = Category.get(data.first().ID);
+			}
+			else {
+				multiple = true;
+				allowEmpty = true;
+				labels.title = await this.configSvc.getResourceAsync("portals.cms.contents.view.duplicate.otherCategories");
+				assigner = data => this.duplicate.otherCategories = data.map(item => Category.get(item.ID)).filter(category => category !== undefined);
+			}
+		}
+
+		if (items !== undefined) {
+			await this.appFormsSvc.showModalAsync(
+				DataLookupModalPage,
+				{
+					nested: nested,
+					multiple: multiple,
+					allowEmpty: allowEmpty,
+					sortBy: sortBy,
+					labels: labels,
+					preselectedID: selected,
+					predefinedItems: items.map(item => mapper(item))
+				},
+				data => {
+					if (data !== undefined) {
+						assigner(data);
+						AppUtility.invoke(() => this.duplicateNextStepAsync(), 13);
+					}
+					else {
+						this.duplicateCleanStep();
+					}
+				},
+				true,
+				true
+			);			
+		}
+		else {
+			await this.duplicateFinalStepAsync();
+		}
+	}
+
+	private async duplicateFinalStepAsync() {
+		await this.appFormsSvc.showConfirmAsync(
+			await this.configSvc.getResourceAsync("portals.cms.contents.view.duplicate.confirm", { organization: this.duplicate.organization.Title }),
+			() => this.portalsCmsSvc.createContentAsync(
+				{
+					CopyFromID: this.content.ID,
+					SystemID: this.duplicate.organization.ID,
+					RepositoryID: this.duplicate.module.ID,
+					RepositoryEntityID: this.duplicate.contentType.ID,
+					CategoryID: this.duplicate.category.ID,
+					OtherCategories: this.duplicate.otherCategories.map(category => category.ID)
+				},
+				async data => {
+					this.duplicateCleanStep();
+					await this.appFormsSvc.showConfirmAsync(
+						await this.configSvc.getResourceAsync("portals.cms.contents.view.duplicate.success"),
+						undefined,
+						"{{default}}",
+						await this.configSvc.getResourceAsync("common.buttons.view"),
+						() => this.configSvc.navigateForwardAsync(Content.get(data.ID).routerURI)
+					);
+				},
+				async error => await this.appFormsSvc.showAlertAsync(
+					undefined,
+					await this.configSvc.getResourceAsync("portals.cms.contents.view.duplicate.error", { error: error.Message }),
+					undefined,
+					() => this.duplicateCleanStep(),
+					await this.configSvc.getResourceAsync("common.buttons.close")
+				)
+			),
+			await this.configSvc.getResourceAsync("common.buttons.create"),
+			"{{default}}",
+			() => this.duplicateCleanStep()
+		);
+	}
+
+	private duplicateCleanStep() {
+		this.duplicate = {
+			organization: undefined as Organization,
+			module: undefined as Module,
+			contentType: undefined as ContentType,
+			category: undefined as Category,
+			otherCategories: undefined as Array<Category>
+		};
 	}
 
 	delete() {
@@ -509,18 +692,6 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	cancel() {
 		this.configSvc.navigateBackAsync();
-	}
-
-	private view() {
-		const url = this.portalsCoreSvc.getPublicURL(this.content, this.content.category);
-		if (AppUtility.isNotEmpty(url)) {
-			if (this.content.Status === "Published") {
-				PlatformUtility.openURL(url);
-			}
-			else {
-				PlatformUtility.openURL(`${url}${url.indexOf("?") > 0 ? "&" : "?"}x-app-token=${this.configSvc.appConfig.jwt}`);
-			}
-		}
 	}
 
 	private trackAsync(title: string, action?: string, category?: string) {
