@@ -13,6 +13,7 @@
 				<ion-icon *ngIf="shortcut.Icon && shortcut.Icon.Name" [name]="shortcut.Icon.Name" [color]="shortcut.Icon.Color" slot="start"></ion-icon>
 				<ion-label>
 					<span class="ion-float-end">
+						<ion-icon *ngIf="shortcut.OtherAction && shortcut.OtherAction.Icon" (click)="click(shortcut, idx, $event)" [name]="shortcut.OtherAction.Icon" color="medium" slot="icon-only" class="ion-padding-end"></ion-icon>
 						<ion-icon *ngIf="shortcut.Editable" (click)="update(shortcut, idx, $event)" name="create" color="medium" slot="icon-only"></ion-icon>
 						<ion-icon *ngIf="shortcut.Removable" (click)="remove(shortcut, idx, $event)" name="trash" color="medium" slot="icon-only"></ion-icon>
 					</span>

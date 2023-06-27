@@ -11,9 +11,7 @@ import { AppDataPagination, AppDataRequest } from "@app/components/app.objects";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
-import { Organization } from "@app/models/portals.core.organization";
-import { Module } from "@app/models/portals.core.module";
-import { ContentType } from "@app/models/portals.core.content.type";
+import { Organization, Module, ContentType } from "@app/models/portals.core.all";
 
 @Component({
 	selector: "page-data-lookup",
@@ -61,9 +59,15 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	/** The function to pre-process items */
 	@Input() private preProcess: (items: Array<any>) => void;
 
+	/** The labels for processing items */
+	@Input() labels: { [key: string]: string };
+
 	/** The pre-defined items */
 	@Input() predefinedItems: Array<DataItem>;
-	@Input() private preselectedID: string;
+	@Input() private preselectedID: string | Array<string>;
+
+	/** Set to 'true' to allow select multiple items */
+	@Input() private allowEmpty: boolean;
 
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
@@ -79,22 +83,18 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	private children = "{{number}} children: {{children}}";
 	private rootItems = new Array<DataItem>();
 
+	private pageNumber = 0;
+	private pagination: AppDataPagination;
+	private request: AppDataRequest;
+	private filterBy = {
+		Query: undefined as string,
+		And: undefined as Array<{ [key: string]: any }>
+	};
+
 	parent: DataItem;
 	items = new Array<DataItem>();
 	results = new Array<DataItem>();
 	searching = false;
-	pageNumber = 0;
-	pagination: AppDataPagination;
-	request: AppDataRequest;
-	filterBy = {
-		Query: undefined as string,
-		And: undefined as Array<{ [key: string]: any }>
-	};
-	labels = {
-		select: "Select",
-		cancel: "Cancel",
-		search: "Search"
-	};
 	selected = new Dictionary<string, DataItem>();
 
 	ngOnInit() {
@@ -104,6 +104,8 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		this.nested = this.nested === undefined ? false : AppUtility.isTrue(this.nested);
 		this.multiple = this.multiple === undefined ? true : AppUtility.isTrue(this.multiple);
 		this.excludedIDs = AppUtility.isArray(this.excludedIDs, true) ? this.excludedIDs.filter(id => AppUtility.isNotEmpty(id)).map(id => id.trim()) : [];
+		this.labels = this.labels || {};
+		this.allowEmpty = this.multiple === undefined ? false : AppUtility.isTrue(this.allowEmpty);
 		this.initializeAsync();
 	}
 
@@ -121,17 +123,24 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		this.prepareFilterBy(true);
 		this.children = await this.configSvc.getResourceAsync("portals.common.lookup.children");
 		this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.common.lookup.searchbar");
-		this.labels = {
-			select: await this.configSvc.getResourceAsync("common.buttons.select"),
-			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
-			search: await this.configSvc.getResourceAsync("common.buttons.search")
-		};
+		this.labels.select = this.labels.select || await this.configSvc.getResourceAsync("common.buttons.select");
+		this.labels.cancel = this.labels.cancel || await this.configSvc.getResourceAsync("common.buttons.cancel");
+		this.labels.search = this.labels.search || await this.configSvc.getResourceAsync("common.buttons.search");
 		if (AppUtility.isArray(this.predefinedItems, true)) {
-			const selected = this.preselectedID !== undefined ? this.predefinedItems.firstOrDefault(o => o.ID === this.preselectedID) : undefined;
-			if (selected !== undefined) {
-				this.selected.set(selected.ID, selected);
+			if (this.preselectedID !== undefined) {
+				const preselectedIDs = AppUtility.isArray(this.preselectedID, true) ? this.preselectedID as Array<string> : [this.preselectedID as string];
+				preselectedIDs.forEach(preselectedID => {
+					const selected = this.predefinedItems.firstOrDefault(o => o.ID === preselectedID);
+					if (selected !== undefined) {
+						this.selected.set(selected.ID, selected);
+					}
+				});
 			}
-			this.items = this.predefinedItems.map(o => o);
+			this.items = this.prepareItems(this.predefinedItems);
+			if (this.nested) {
+				this.items.forEach(item => this.updateParent(item));
+				this.rootItems = this.items.map(item => item);
+			}
 			this.infiniteScrollCtrl.disabled = true;
 			await this.appFormsSvc.hideLoadingAsync();
 		}
@@ -215,7 +224,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	}
 
 	private prepareItems(items: DataItem[], doSort: boolean = true) {
-		items.forEach(item => item.Info = AppUtility.isArray(item.Children, true) && item.Children.length > 0 ? AppUtility.format(this.children, { number: item.Children.length, children: `${item.Children[0].Title}, ...` }) : "");
+		items.forEach(item => item.Info = AppUtility.isArray(item.Children, true) && item.Children.length > 0 ? AppUtility.format(this.children, { number: item.Children.length, children: `${item.Children[0].Title}, ...` }) : item.Info);
 		const orderBy = this.prepareSortBy();
 		return doSort
 			? items.orderBy(Object.keys(orderBy).map(key => ({ name: key, reverse: AppUtility.isEquals("Descending", orderBy[key]) })))
@@ -294,9 +303,11 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	}
 
 	closeAsync(items?: Array<DataItem>) {
-		return items === undefined || items.length > 0
-			? this.appFormsSvc.hideModalAsync(items)
-			: AppUtility.promise;
+		return items === undefined
+			? this.appFormsSvc.hideModalAsync()
+			: items.length > 0 || (items.length < 1 && this.allowEmpty)
+				? this.appFormsSvc.hideModalAsync(items)
+				: AppUtility.promise;
 	}
 
 	back(event: Event) {
