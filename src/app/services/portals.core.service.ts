@@ -107,7 +107,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	get allowSelectActiveOrganization() {
-		return true;
+		return false;
 	}
 
 	initialize() {

@@ -1,6 +1,6 @@
 {
 	"name": "net.vieapps.portals",
-	"version": "7.2212.7",
+	"version": "7.2306.1",
 	"author": "VIEApps.net",
 	"homepage": "https://cms.vieapps.net/",
 	"description": "Manage information and related services of CMS Portals",
@@ -58,7 +58,7 @@
 		"cordova-plugin-splashscreen": "^6.0.1",
 		"cordova-plugin-statusbar": "^3.0.0",
 		"cordova-plugin-whitelist": "^1.3.5",
-		"core-js": "^3.23.5",
+		"core-js": "^3.27.1",
 		"crypto-js": "^4.1.1",
 		"deepmerge": "^4.2.2",
 		"hammerjs": "^2.0.8",
@@ -70,7 +70,7 @@
 		"platform": "^1.3.6",
 		"rxjs": "^6.6.7",
 		"tslib": "^2.4.0",
-		"zone.js": "^0.11.5"
+		"zone.js": "^0.11.8"
 	},
 	"devDependencies": {
 		"@angular-devkit/architect": "^0.1102.19",
