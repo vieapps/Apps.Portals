@@ -3,16 +3,27 @@
 		<ion-buttons slot="start">
 			<ion-back-button text=""></ion-back-button>
 		</ion-buttons>
-		<ion-buttons slot="end">
-			<ion-button fill="clear" color="primary" class="ion-padding-end" (click)="markAllAsRead()">
-				<ion-icon name="checkmark-done-outline"></ion-icon>
-			</ion-button>
-		</ion-buttons>
 		<ion-title>
 			{{ title }}
 		</ion-title>
 	</ion-toolbar>
 </ion-header>
+
+<ion-footer *ngIf="pagination">
+	<ion-toolbar [color]="color">
+		<span class="ion-float-start" slot="start">
+			<ion-icon name="notifications-outline" color="primary" slot="start"></ion-icon>
+			<span>
+				{{ totalRecords | number:'':locale }} / {{ pagination.TotalRecords | number:'':locale }}	
+			</span>
+		</span>
+		<ion-buttons slot="end">
+			<ion-button fill="clear" color="primary" class="ion-padding-end" (click)="markAllAsRead()">
+				<ion-icon name="checkmark-done-outline"></ion-icon>
+			</ion-button>
+		</ion-buttons>
+	</ion-toolbar>
+</ion-footer>
 
 <ion-content [color]="color">
 	<ion-list class="ion-padding-end">

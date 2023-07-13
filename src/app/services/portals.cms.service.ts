@@ -2150,4 +2150,8 @@ export class PortalsCmsService extends BaseService {
 		return { object: object, gotRights: gotRights };
 	}
 
+	sendNotificationAsync(objectID: string, contentTypeID: string, sendAppNotifications: boolean = false, sendEmailNotifications: boolean = false, sendWebHookNotifications: boolean = false) {
+		return this.readAsync(this.getPath("notification", objectID, "x-entity=" + contentTypeID + (sendAppNotifications ? "&x-send-app-notifications=true" : "") + (sendEmailNotifications ? "&x-send-email-notifications=true" : "") + (sendWebHookNotifications ? "&x-send-webhook-notifications=true" : "")), undefined, error => this.processError("Error occurred while re-sending a notification", error));
+	}
+
 }

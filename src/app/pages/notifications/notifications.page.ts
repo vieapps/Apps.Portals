@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonInfiniteScroll } from "@ionic/angular";
+import { AppDataFilter } from "@app/components/app.objects";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { AppPagination } from "@app/components/app.pagination";
-import { AppDataPagination } from "@app/components/app.objects";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { NotificationsService } from "@app/services/notifications.service";
@@ -30,13 +30,12 @@ export class NotificationsPage implements OnInit, OnDestroy {
 	}
 
 	notifications = new Array<Notification>();
-	pageNumber = 0;
-	pagination: AppDataPagination = {
-		TotalRecords: 0,
-		TotalPages: 0,
-		PageSize: 100,
-		PageNumber: 0
+	filterBy: AppDataFilter = {
+		Query: undefined as string,
+		And: new Array<{ [key: string]: any }>()
 	};
+	sortBy: { [key: string]: any } = { Time: "Descending" };
+	pagination = AppPagination.getDefault();
 
 	title = "Notifications";
 	private label = "";
@@ -68,6 +67,10 @@ export class NotificationsPage implements OnInit, OnDestroy {
 		return "notifications";
 	}
 
+	get totalRecords() {
+		return AppPagination.computeTotal(this.pagination.PageNumber, this.pagination);
+	}
+
 	ngOnInit() {
 		this.initializeAsync();
 		AppEvents.on("UpdateUnreadNotifications", _ => this.getNotifications(), "Notifications:UpdateUnread");
@@ -83,11 +86,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
 		this.label = await this.appFormsSvc.getResourceAsync("notifications.label");
 		await Promise.all(Object.keys(this.actions).map(async name => this.actions[name] = (await this.appFormsSvc.getResourceAsync("events." + name)).toLowerCase()));
 		await Promise.all(Object.keys(this.status).map(async name => this.status[name] = await this.appFormsSvc.getResourceAsync("status.approval." + name)));
-		this.getNotifications(() => this.appFormsSvc.hideLoadingAsync(() => this.searchAsync(() => {
-			if (this.pagination.TotalPages > 1 && this.pageNumber < 2) {
-				this.searchAsync();
-			}
-		})));
+		this.getNotifications(() => this.appFormsSvc.hideLoadingAsync(() => this.searchAsync(() => this.searchAsync())));
 	}
 
 	async onInfiniteScrollAsync() {
@@ -100,13 +99,10 @@ export class NotificationsPage implements OnInit, OnDestroy {
 		}
 	}
 
-	private searchAsync(onNext?: () => void) {
-		return this.notificationsSvc.searchNotificationsAsync(AppPagination.buildRequest(undefined, undefined, this.pagination), data => {
-			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(AppPagination.buildRequest(undefined, undefined, this.pagination), this.paginationPrefix);
-			if (this.pagination !== undefined) {
-				this.pageNumber++;
-				this.pagination.PageNumber = this.pageNumber;
-			}
+	private async searchAsync(onNext?: () => void) {
+		const request = AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination);
+		await this.notificationsSvc.searchNotificationsAsync(request, data => {
+			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(request, this.paginationPrefix);
 			this.getNotifications(onNext);
 		});
 	}

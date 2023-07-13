@@ -3,9 +3,12 @@
 		<ion-buttons [hidden]="searching || filtering" slot="start">
 			<ion-back-button text=""></ion-back-button>
 		</ion-buttons>
-		<ion-buttons [hidden]="searching || filtering" slot="end">
+		<ion-buttons [hidden]="searching || filtering" slot="end" class="ion-padding-end">
 			<ion-button [title]="labels.filter" (click)="openSearch()">
 				<ion-icon name="search" slot="icon-only"></ion-icon>
+			</ion-button>
+			<ion-button [hidden]="!allowAdvanced">
+				<ion-checkbox color="secondary" (ionChange)="onChanged($event, true)" #selectAll></ion-checkbox>
 			</ion-button>
 		</ion-buttons>
 		<ion-title [hidden]="searching || filtering">
@@ -28,12 +31,15 @@
 <ion-footer *ngIf="(pagination || actions) && !filtering">
 	<ion-toolbar [color]="color">
 		<span *ngIf="pagination" slot="start">
-			<ion-icon name="color-filter" color="primary" slot="start"></ion-icon>
+			<ion-icon name="color-filter" color="primary" slot="start"></ion-icon>			
 			<span>
 				{{ totalDisplays | number:'':locale }} / {{ totalRecords | number:'':locale }}	
 			</span>
 		</span>
 		<ion-buttons *ngIf="actions" slot="end">
+			<ion-button *ngIf="canManage && !searching" color="secondary" (click)="showAdvancedAsync($event)">
+				<ion-icon name="footsteps-outline"></ion-icon>
+			</ion-button>
 			<ion-button color="primary" (click)="showActions()">
 				<ion-icon name="ellipsis-horizontal" slot="icon-only"></ion-icon>
 			</ion-button>
@@ -47,7 +53,7 @@
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
-	<ion-list class="ion-padding-end">
+	<ion-list>
 		<ion-item-sliding *ngFor="let content of contents; trackBy: track">
 			<ion-item [color]="color" (click)="view($event, content)" class="ion-activatable" detail="false">
 				<ion-buttons slot="end">
@@ -56,6 +62,9 @@
 					</ion-button>
 					<ion-button *ngIf="!canUpdate" fill="clear" color="primary" [title]="buttons.edit" (click)="view($event, content)">
 						<ion-icon name="eye" slot="icon-only"></ion-icon>
+					</ion-button>
+					<ion-button *ngIf="allowAdvanced">
+						<ion-checkbox color="secondary" [value]="content.ID" [checked]="selected.contains(content.ID)" (click)="$event.stopPropagation()" (ionChange)="onChanged($event)"></ion-checkbox>
 					</ion-button>
 				</ion-buttons>
 				<ion-label>

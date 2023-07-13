@@ -8,16 +8,16 @@
 		<ion-item *ngIf="isAuthenticated" [color]="color" (click)="openProfile()">
 			<ion-label>{{ labels.profile }}</ion-label>
 		</ion-item>
-		<ion-item [color]="color">
+		<!--ion-item [color]="color">
 			<ion-label>{{ labels.options.language }}</ion-label>
-			<ion-select multiple="false" interface="popover"
+			<ion-select multiple="false" interface="alert"
 				[cancelText]="labels.cancel"
 				[okText]="labels.ok"
 				[value]="options.language"
 				(ionChange)="onLanguageChanged($event)">
 				<ion-select-option *ngFor="let lang of languages" [value]="lang.Value">{{ lang.Label }}</ion-select-option>
 			</ion-select>
-		</ion-item>
+		</ion-item-->
 		<ion-item [color]="color">
 			<ion-label>{{ labels.options.theme }}</ion-label>
 			<ion-toggle [checked]="options.darkTheme" (ionChange)="onThemeChanged($event)"></ion-toggle>

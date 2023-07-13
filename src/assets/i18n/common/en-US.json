@@ -155,7 +155,8 @@
 		"label": "Events",
 		"Create": "Create",
 		"Update": "Update",
-		"Delete": "Delete"
+		"Delete": "Delete",
+		"Approve": "Approve"
 	},
 	"files": {
 		"thumbnails": {

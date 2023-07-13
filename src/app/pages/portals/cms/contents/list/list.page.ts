@@ -1,7 +1,8 @@
 import { Subscription } from "rxjs";
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { IonSearchbar, IonInfiniteScroll, IonList, ViewDidEnter } from "@ionic/angular";
+import { IonSearchbar, IonInfiniteScroll, IonList, IonCheckbox, ViewDidEnter } from "@ionic/angular";
+import { HashSet } from "@app/components/app.collections";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
@@ -38,6 +39,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	@ViewChild(IonSearchbar, { static: true }) private searchCtrl: IonSearchbar;
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 	@ViewChild(IonList, { static: true }) private listCtrl: IonList;
+	@ViewChild("selectAll", { static: true }) private selectAllCtrl: IonCheckbox;
 
 	private organization: Organization;
 	private module: Module;
@@ -82,6 +84,10 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		versions: "versions"
 	};
 	private objects = new Array<Content>();
+
+	canManage = false;
+	allowAdvanced = false;
+	selected = new HashSet<string>();
 
 	get color() {
 		return this.configSvc.color;
@@ -154,6 +160,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.categoryID = this.configSvc.requestParams["CategoryID"];
 		this.category = Category.get(this.categoryID);
 
+		this.canManage = this.portalsCoreSvc.canManageOrganization(this.organization);
 		this.canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Content", this.module === undefined ? undefined : this.module.Privileges);
 		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Content", this.module === undefined ? undefined : this.module.Privileges);
 		if (!this.canContribute) {
@@ -411,67 +418,67 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.do(() => this.portalsCmsSvc.refreshContentAsync(content.ID, () => this.appFormsSvc.showToastAsync("The content was freshen-up")), event);
 	}
 
+	private prepareForReloading(onNext: () => void) {
+		AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
+		this.pagination = undefined;
+		this.pageNumber = 0;
+		this.contents = [];
+		this.appFormsSvc.showLoadingAsync(this.labels.refresh).then(() => onNext());
+	}
+
 	private reload() {
-		this.do(() => {
-			AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
-			this.pagination = undefined;
-			this.appFormsSvc.showLoadingAsync(this.labels.refresh).then(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync(() => {
-				this.infiniteScrollCtrl.disabled = false;
-				if (this.category !== undefined && this.category.childrenIDs === undefined) {
-					this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up, and the list was reloaded"));
-				}
-				else {
-					this.appFormsSvc.showToastAsync("The list was reloaded");
-				}
-			})));
-		});
+		this.do(() => this.prepareForReloading(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync(() => {
+			this.infiniteScrollCtrl.disabled = false;
+			if (this.category !== undefined && this.category.childrenIDs === undefined) {
+				this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up, and the list was reloaded"));
+			}
+			else {
+				this.appFormsSvc.showToastAsync("Re-loaded");
+			}
+		}))));
 	}
 
 	private customizeFilterAndSort() {
-		this.do(async () => {
-			await this.appFormsSvc.showAlertAsync(
-				await this.configSvc.getResourceAsync("portals.common.customizeFilterAndSort.label"),
-				undefined,
-				undefined,
-				data => {
-					try {
-						const gotFilterBy = AppUtility.isNotEmpty(data.filter);
-						const gotSortBy = AppUtility.isNotEmpty(data.sort);
-						if (gotFilterBy) {
-							this.filterBy.And = AppUtility.parse(data.filter);
-						}
-						if (gotSortBy) {
-							this.sortBy = AppUtility.parse(data.sort);
-						}
-						this.appFormsSvc.showLoadingAsync().then(() => {
-							this.prepareFilterByAndSort(!gotFilterBy, !gotSortBy);
-							AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
-							this.contents = [];
-							this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
-						});
+		this.do(async () => await this.appFormsSvc.showAlertAsync(
+			await this.configSvc.getResourceAsync("portals.common.customizeFilterAndSort.label"),
+			undefined,
+			undefined,
+			data => {
+				try {
+					const gotFilterBy = AppUtility.isNotEmpty(data.filter);
+					const gotSortBy = AppUtility.isNotEmpty(data.sort);
+					if (gotFilterBy) {
+						this.filterBy.And = AppUtility.parse(data.filter);
 					}
-					catch (error) {
-						this.appFormsSvc.showErrorAsync(error);
+					if (gotSortBy) {
+						this.sortBy = AppUtility.parse(data.sort);
 					}
+					this.prepareForReloading(() => {
+						this.prepareFilterByAndSort(!gotFilterBy, !gotSortBy);
+						this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
+					});
+				}
+				catch (error) {
+					this.appFormsSvc.showErrorAsync(error);
+				}
+			},
+			await this.appFormsSvc.getResourceAsync("common.buttons.ok"),
+			await this.appFormsSvc.getResourceAsync("common.buttons.cancel"),
+			[
+				{
+					name: "filter",
+					type: "textarea",
+					value: AppUtility.stringify(this.filterBy.And),
+					placeholder: await this.configSvc.getResourceAsync("portals.common.customizeFilterAndSort.filter")
 				},
-				await this.appFormsSvc.getResourceAsync("common.buttons.ok"),
-				await this.appFormsSvc.getResourceAsync("common.buttons.cancel"),
-				[
-					{
-						name: "filter",
-						type: "textarea",
-						value: AppUtility.stringify(this.filterBy.And),
-						placeholder: await this.configSvc.getResourceAsync("portals.common.customizeFilterAndSort.filter")
-					},
-					{
-						name: "sort",
-						type: "textarea",
-						value: AppUtility.stringify(this.sortBy),
-						placeholder: await this.configSvc.getResourceAsync("portals.common.customizeFilterAndSort.sort")
-					}
-				]
-			);
-		});
+				{
+					name: "sort",
+					type: "textarea",
+					value: AppUtility.stringify(this.sortBy),
+					placeholder: await this.configSvc.getResourceAsync("portals.common.customizeFilterAndSort.sort")
+				}
+			]
+		));
 	}
 
 	private changeContentType() {
@@ -483,10 +490,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 				if (this.contentType.ID !== data) {
 					this.contentType = this.module.contentTypes.first(contentType => contentType.ID === data);
 					this.prepareFilterByAndSort();
-					this.contents = [];
-					this.pageNumber = 0;
-					this.pagination = undefined;
-					this.appFormsSvc.showLoadingAsync().then(() => this.prepareResults(() => this.appFormsSvc.hideLoadingAsync(() => AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebar", Mode: "Categories", ContentTypeID: this.contentType !== undefined ? this.contentType.ID : undefined }))));
+					this.prepareForReloading(() => this.prepareResults(() => this.appFormsSvc.hideLoadingAsync(() => AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebar", Mode: "Categories", ContentTypeID: this.contentType !== undefined ? this.contentType.ID : undefined }))));
 				}
 			},
 			await this.configSvc.getResourceAsync("common.buttons.select"),
@@ -544,6 +548,113 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	private trackAsync(title: string, action?: string) {
 		return TrackingUtility.trackAsync({ title: title, category: "Content", action: action || (this.searching ? "Search" : "Browse") });
+	}
+
+	async showAdvancedAsync(event: Event) {
+		event.stopPropagation();
+		this.allowAdvanced = !this.allowAdvanced;
+		if (this.allowAdvanced) {
+			if (this.actions.find(btn => "skull-outline" === btn.icon) === undefined) {
+				this.actions.push(
+					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.common.advanced.delete.action"), "skull-outline", () => this.deleteAsync()),
+					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.common.advanced.resend.action"), "send-outline", () => this.resendAsync())
+				);
+			}
+		}
+		else if (this.actions.find(btn => "skull-outline" === btn.icon) !== undefined) {
+			const index = this.actions.findIndex(btn => "skull-outline" === btn.icon);
+			this.actions.removeAt(index + 1).removeAt(index);
+		}
+	}
+
+	onChanged(event: any, selectAll: boolean = false) {
+		if (event.detail.checked) {
+			if (selectAll) {
+				this.selected = this.contents.map(obj => obj.ID).toHashSet();
+			}
+			else {
+				this.selected.add(event.detail.value);
+			}
+		}
+		else {
+			if (selectAll) {
+				this.clearSelected();
+			}
+			else {
+				this.selected.delete(event.detail.value);
+			}
+		}
+	}
+
+	async deleteAsync() {
+		const ids = this.selected.toArray();
+		if (!!ids.length) {
+			await this.appFormsSvc.showConfirmAsync(
+				await this.configSvc.getResourceAsync("portals.cms.common.advanced.delete.confirm.first"),
+				async _ => await this.appFormsSvc.showAlertAsync(
+					undefined,
+					await this.configSvc.getResourceAsync("portals.cms.common.advanced.delete.confirm.last"),
+					await this.configSvc.getResourceAsync("portals.cms.common.advanced.delete.confirm.next"),
+					async _ => await Promise.all(ids.map(id => this.portalsCmsSvc.deleteContentAsync(id))).then(async () => {
+						ids.forEach(id => this.contents.removeAt(this.contents.findIndex(obj => obj.ID === id)));
+						this.clearSelected();
+						await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.common.advanced.delete.message"));
+					}),
+					await this.configSvc.getResourceAsync("common.buttons.ok"),
+					await this.configSvc.getResourceAsync("common.buttons.cancel")
+				),
+				"{{default}}",
+				"{{default}}"
+			);
+		}
+	}
+
+	async resendAsync() {
+		const ids = this.selected.toArray();
+		if (!!ids.length) {
+			await this.appFormsSvc.showAlertAsync(
+				undefined,
+				await this.configSvc.getResourceAsync("portals.cms.common.advanced.resend.confirm"),
+				await this.configSvc.getResourceAsync("portals.cms.common.advanced.resend.label"),
+				async data => {
+					const contentTypeID = this.contentType.ID;
+					const sendAppNotifications = (data as string[]).findIndex(o => "x-send-app-notifications" === o) !== -1;
+					const sendEmailNotifications = (data as string[]).findIndex(o => "x-send-email-notifications" === o) !== -1;
+					const sendWebHookNotifications = (data as string[]).findIndex(o => "x-send-webhook-notifications" === o) !== -1;
+					await Promise.all(ids.map(id => this.portalsCmsSvc.sendNotificationAsync(id, contentTypeID, sendAppNotifications, sendEmailNotifications, sendWebHookNotifications)));
+					await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.common.advanced.resend.message"));
+					this.clearSelected();
+				},
+				await this.configSvc.getResourceAsync("common.buttons.ok"),
+				await this.configSvc.getResourceAsync("common.buttons.cancel"),
+				[
+					{
+						type: "checkbox",
+						label: await this.configSvc.getResourceAsync("portals.cms.common.advanced.resend.types.app"),
+						value: "x-send-app-notifications",
+						checked: false
+					},
+					{
+						type: "checkbox",
+						label: await this.configSvc.getResourceAsync("portals.cms.common.advanced.resend.types.email"),
+						value: "x-send-email-notifications",
+						checked: false
+					},
+					{
+						type: "checkbox",
+						label: await this.configSvc.getResourceAsync("portals.cms.common.advanced.resend.types.webhook"),
+						value: "x-send-webhook-notifications",
+						checked: true
+					}
+				],
+				false
+			);
+		}
+	}
+
+	private clearSelected() {
+		this.selected.clear();
+		this.selectAllCtrl.checked = false;
 	}
 
 }

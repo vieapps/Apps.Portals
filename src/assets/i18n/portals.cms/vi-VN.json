@@ -46,6 +46,28 @@
 					"messages": {
 						"removeOrganization": "Chắc chắn muốn rời khỏi '{{name}}'?"
 					}
+				},
+				"advanced": {
+					"delete": {
+						"action": "Xoá các nội dung đã chọn",
+						"confirm": {
+							"first": "Chắc chắn muốn xoá các nội dung đã chọn?",
+							"last": "Các nội dung đã chọn sẽ được đưa vào 'Thùng rác' và sẽ bị xoá vĩnh viễn sau 30 ngày.",
+							"next": "Chắc chắn xoá các nội dung này?"
+						},
+						"message": "Đã xoá các nội dung đã chọn!"
+					},
+					"resend": {
+						"action": "Gửi lại thông báo của các nội dung đã chọn",
+						"confirm": "Chắc chắn muốn gửi lại thông báo của các nội dung đã chọn?",
+						"message": "Đã gửi thông báo của các nội dung đã chọn!",
+						"label": "Kiểu thông báo sẽ gửi:",
+						"types": {
+							"app": "Thông báo của app",
+							"email": "Thông báo qua email",
+							"webhook": "Tín hiệu web-hook"
+						}
+					}
 				}
 			},
 			"categories": {

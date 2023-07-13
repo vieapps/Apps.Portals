@@ -3,8 +3,7 @@
 		<ion-label [position]="labelPosition">
 			{{ labels.service }}
 		</ion-label>
-		<ion-select
-			[interface]="selectInterface"
+		<ion-select interface="alert"
 			[okText]="labels.buttons.ok"
 			[cancelText]="labels.buttons.cancel"
 			[value]="serviceRole"
@@ -22,9 +21,8 @@
 			<ion-label [position]="labelPosition">
 				{{ labels.objects[objectRole.name] }}
 			</ion-label>
-			<ion-select
+			<ion-select interface="alert"
 				[disabled]="serviceRole !== 'Viewer'"
-				[interface]="selectInterface"
 				[okText]="labels.buttons.ok"
 				[cancelText]="labels.buttons.cancel"
 				[value]="objectRole.role"
