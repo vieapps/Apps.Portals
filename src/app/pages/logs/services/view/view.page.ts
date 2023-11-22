@@ -48,6 +48,10 @@ export class LogsViewPage implements OnInit {
 		await TrackingUtility.trackAsync({ title: this.title, category: "ServiceLog", action: "View" });
 	}
 
+	detailLogs(log: ServiceLog) {
+		return log.Logs.replace(/;/g, "; ").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\r/g, "").replace(/\n/g, "<br/>");
+	}
+
 	track(index: number, log: ServiceLog) {
 		return `${log.ID}@${index}`;
 	}

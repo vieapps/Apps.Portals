@@ -240,9 +240,14 @@ export class PortalsRolesUpdatePage implements OnInit {
 			if (profile === undefined) {
 				await this.usersSvc.getProfileAsync(user.Value, _ => profile = UserProfile.get(user.Value) || new UserProfile(), undefined, true);
 			}
-			user.Label = profile.Name;
-			user.Description = profile.getEmail(!this.canModerateOrganization);
-			user.Image = profile.avatarURI;
+			if (profile !== undefined) {
+				user.Label = profile.Name;
+				user.Description = profile.getEmail(!this.canModerateOrganization);
+				user.Image = profile.avatarURI;
+			}
+			else {
+				user.Label = "Unknown";
+			}
 		}));
 		this.users = this.users.sortBy("Label", "Description");
 	}

@@ -31,9 +31,7 @@
 				App ID: {{ log.AppID }}
 			</span>
 		</section>
-		<section>
-			{{ log.Logs }}
-		</section>
+		<section [innerHtml]="detailLogs(log)"></section>
 		<section *ngIf="log.Stack" class="ion-padding-start">
 			<label>
 				Stack:

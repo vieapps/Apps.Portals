@@ -33,7 +33,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "7.2307.2",
+		version: "7.2310.2",
 		frameworks: "ionic 5.9 - angular 11.2 - cordova 11.0",
 		mode: "",
 		platform: "",
@@ -77,7 +77,7 @@ export class AppConfig {
 				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "SchedulingTask", "Category", "Content", "Item", "Link", "Form", "Crawler"],
 				specials: [],
 				sidebar: "cms",
-				availableHosts: []
+			availableHosts: ["cms.vieapps.net"/**/]
 			},
 			{
 				name: "Books",
@@ -189,7 +189,7 @@ export class AppConfig {
 		id: undefined as string,
 		token: undefined as string,
 		url: undefined as string,
-		version: "v12.0",
+		version: "v21.0",
 	};
 
 	/** Refer informaion */
