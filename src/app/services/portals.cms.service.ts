@@ -127,7 +127,7 @@ export class PortalsCmsService extends BaseService {
 					if ("Request" === args.Mode && !this._noContents.contains(organization.ID)) {
 						if (organization.modules.flatMap(module => module.contentTypes).length > 0) {
 							this._noContents.add(organization.ID);
-							this.prepareFeaturedContentsAsync(false);
+							this.prepareFeaturedContentsAsync(true);
 						}
 					}
 					else if ("Refresh" === args.Mode) {
@@ -702,7 +702,7 @@ export class PortalsCmsService extends BaseService {
 		AppEvents.broadcast(this.name, { Type: "FeaturedContents", Mode: "Prepared", ID: systemID });
 	}
 
-	private async prepareFeaturedContentsAsync(allActiveOrganizations: boolean = true) {
+	private async prepareFeaturedContentsAsync(activeOnly: boolean = false) {
 		if (this.configSvc.isAuthenticated) {
 			const categoryContentTypes = new Array<ContentType>();
 			const activeOrganization = await this.portalsCoreSvc.getActiveOrganizationAsync();
@@ -714,8 +714,9 @@ export class PortalsCmsService extends BaseService {
 				});
 				AppUtility.invoke(activeContentTypes.length > 0 ? () => this.getFeaturedContentsAsync(activeContentTypes, 0) : undefined);
 			}
-			if (allActiveOrganizations) {
-				const availableOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync();
+			const processModules = !activeOnly && this.portalsCoreSvc.activeOrganizations.length < 4;
+			const availableOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync(true, processModules);
+			if (processModules) {
 				if (activeOrganization !== undefined) {
 					availableOrganizations.removeAt(availableOrganizations.findIndex(organization => organization.ID === activeOrganization.ID));
 				}

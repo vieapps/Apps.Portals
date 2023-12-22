@@ -36,7 +36,9 @@ export class PortalsCoreService extends BaseService {
 		super("Portals");
 	}
 
-	private _themes: Array<{ name: string, description: string; author: string; intro: string; screenshots: Array<string> }>;
+	private themes: Array<{ name: string, description: string; author: string; intro: string; screenshots: Array<string>; }>;
+	private versions: Array<{ name: string, id: string; }> = [];
+	private findVersionsAsync: () => Promise<void>;
 
 	get moduleDefinitions() {
 		return BaseModel.moduleDefinitions;
@@ -237,9 +239,6 @@ export class PortalsCoreService extends BaseService {
 				this.prepareSidebar();
 			}
 		}
-		if (this.allowSelectActiveOrganization) {
-			AppUtility.invoke(() => this.fetchOrganizationsAsync(), 789);
-		}
 		await this.prepareSidebarFooterItemsAsync();
 		this.activeSidebar(onNext);
 	}
@@ -277,14 +276,14 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	async getThemesAsync(onNext?: () => void) {
-		if (this._themes === undefined) {
+		if (this.themes === undefined) {
 			const path = this.configSvc.getDefinitionPath(this.name, "themes");
-			this._themes = this.configSvc.getDefinition(path) || await this.configSvc.fetchDefinitionAsync(path, false);
+			this.themes = this.configSvc.getDefinition(path) || await this.configSvc.fetchDefinitionAsync(path, false);
 		}
 		if (onNext !== undefined) {
 			onNext();
 		}
-		return this._themes;
+		return this.themes;
 	}
 
 	getActiveOrganizations() {
@@ -306,13 +305,13 @@ export class PortalsCoreService extends BaseService {
 		return organizations;
 	}
 
-	async getActiveOrganizationsAsync(useXHR: boolean = true) {
+	async getActiveOrganizationsAsync(useXHR: boolean = true, processModules: boolean = true) {
 		const organizations = new Array<Organization>();
 		const organizationIDs = this.activeOrganizations;
 		await Promise.all((organizationIDs || []).filter(id => AppUtility.isNotEmpty(id)).map(async id => {
 			let organization = Organization.get(id);
 			if (organization === undefined) {
-				await this.getOrganizationAsync(id, _ => organization = Organization.get(id), undefined, useXHR);
+				await this.getOrganizationAsync(id, _ => organization = Organization.get(id), undefined, useXHR, processModules);
 			}
 			if (organization !== undefined) {
 				organizations.push(organization);
@@ -1922,7 +1921,27 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	findVersions(objectName: string, objectID: string) {
-		AppUtility.invoke(() => this.readAsync(this.getPath("versions", objectName, "object-id=" + objectID)), 456, true);
+		this.versions.push({ name: objectName, id: objectID });
+		if (this.findVersionsAsync === undefined) {
+			this.findVersionsAsync = async () => {
+				const info = this.versions.first();
+				if (this.configSvc.isDebug) {
+					console.log(`[Portals]: Find versions (${info.name}#${info.id}) - Queue: ${this.versions.length - 1}`);
+				}
+				await this.readAsync(this.getPath("versions", info.name, "object-id=" + info.id), _ => this.findNextVersions(), _ => this.findNextVersions(), undefined, true);
+			};
+			AppUtility.invoke(() => this.findVersionsAsync(), 567, true);
+		}
+	}
+
+	private findNextVersions() {
+		this.versions.removeAt(0);
+		if (this.versions.length < 1) {
+			this.findVersionsAsync = undefined;
+		}
+		else {
+			AppUtility.invoke(() => this.findVersionsAsync(), 567, true);
+		}
 	}
 
 	rollbackAsync(objectName: string, objectID: string, versionID: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
@@ -2106,12 +2125,12 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	getOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, processModules: boolean = true) {
 		return Organization.contains(id) && Organization.get(id).modules.length > 0
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
 					this.getPath("organization", id),
-					data => this.processOrganizations({ Objects: [data] }, onSuccess),
+					data => this.processOrganizations({ Objects: [data] }, onSuccess, processModules),
 					error => this.processError("Error occurred while getting an organization", error, onError),
 					undefined,
 					useXHR
@@ -2159,14 +2178,16 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	private processOrganizations(data: any, onNext?: (data?: any) => void) {
+	private processOrganizations(data: any, onNext?: (data?: any) => void, processModules: boolean = true) {
 		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
-			(data.Objects as Array<any>).forEach(organizationData => {
-				const organization = Organization.update(organizationData);
+			(data.Objects as Array<any>).forEach(org => {
+				const organization = Organization.update(org);
 				if (organization.Versions === undefined) {
 					this.findVersions("Organization", organization.ID);
 				}
-				this.processModules({ Objects: organizationData.Modules });
+				if (processModules) {
+					this.processModules({ Objects: org.Modules });
+				}
 			});
 		}
 		if (onNext !== undefined) {
