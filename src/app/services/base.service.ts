@@ -201,7 +201,7 @@ export class Base {
 		* @param headers The additional headers to send the request
 		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	protected createAsync(path: string, body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+	protected createAsync(path: string, body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
 		return this.sendRequestAsync(
 			{
 				Path: path,
@@ -267,7 +267,7 @@ export class Base {
 		* @param headers The additional headers to send the request
 		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	protected deleteAsync(path: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+	protected deleteAsync(path: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
 		return this.sendRequestAsync(
 			{
 				Path: path,
