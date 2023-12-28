@@ -222,15 +222,15 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 			AppEvents.on(this.portalsCoreSvc.name, info => {
 				if (info.args.Object === "CMS.Content" && info.args.RepositoryEntityID === this.contentType.ID && this.category !== undefined && this.category.ID === info.args.CategoryID) {
-					if (info.args.Type === "Created") {
-						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
-					}
-					else if (info.args.Type === "Deleted") {
-						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+					if (info.args.Type === "Deleted") {
 						Content.instances.remove(info.args.ID);
 						this.contents.removeAt(this.contents.findIndex(content => content.ID === info.args.ID));
+						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
 					}
-					this.prepareResults();
+					else if (info.args.Type === "Created") {
+						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
+					}
+					this.prepareResults(info.args.Type !== "Created" ? undefined : () => this.contents = this.contents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }));
 				}
 			}, `CMS.Contents:${(this.category !== undefined ? ":" + this.category.ID : "")}:Refresh`);
 		}
@@ -313,6 +313,9 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	search(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
+		if (this.configSvc.isDebug) {
+			console.log("<CMS.Content>: search for contents", this.request);
+		}
 		const onSuccess = (data?: any) => {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			if (this.pagination !== undefined) {
@@ -327,9 +330,6 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		else {
 			this.portalsCmsSvc.searchContentsAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 		}
-		if (this.configSvc.isDebug) {
-			console.log("<CMS.Content>: search for contents", this.request);
-		}
 	}
 
 	prepareResults(onNext?: () => void, results?: Array<any>) {
@@ -339,7 +339,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		else {
 			const predicate: (content: Content) => boolean = object => object.SystemID === this.organization.ID && (this.module !== undefined ? object.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? object.RepositoryEntityID === this.contentType.ID : true) && (this.category !== undefined ? object.CategoryID === this.category.ID || (object.OtherCategories !== undefined && object.OtherCategories.indexOf(this.category.ID) > -1) : true);
 			const objects: Content[] = (results === undefined ? Content.instances.toArray(predicate) : Content.toArray(results).filter(predicate)).sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true });
-			this.contents.merge(results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects, true, (object, array) => array.findIndex(item => item.ID === object.ID));
+			this.contents.merge(results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects, true, (object, array) => array.findIndex(item => item.ID === object.ID));			
 		}
 		if (onNext !== undefined) {
 			onNext();

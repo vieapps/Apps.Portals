@@ -109,7 +109,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	get allowSelectActiveOrganization() {
-		return false;
+		return true;
 	}
 
 	initialize() {
@@ -307,14 +307,16 @@ export class PortalsCoreService extends BaseService {
 
 	async getActiveOrganizationsAsync(useXHR: boolean = true, processModules: boolean = true) {
 		const organizations = new Array<Organization>();
-		const organizationIDs = this.activeOrganizations;
-		await Promise.all((organizationIDs || []).filter(id => AppUtility.isNotEmpty(id)).map(async id => {
+		await Promise.all(this.activeOrganizations.filter(id => AppUtility.isNotEmpty(id)).map(async id => {
 			let organization = Organization.get(id);
 			if (organization === undefined) {
 				await this.getOrganizationAsync(id, _ => organization = Organization.get(id), undefined, useXHR, processModules);
 			}
 			if (organization !== undefined) {
 				organizations.push(organization);
+			}
+			else if (useXHR) {
+				this.activeOrganizations.remove(id);
 			}
 		}));
 		return organizations.sortBy("Title");
@@ -596,7 +598,7 @@ export class PortalsCoreService extends BaseService {
 	getPermanentURL(object: CmsBaseModel, usePortalURL: boolean = false) {
 		const organization = object.organization;
 		const url = usePortalURL ? `~${organization.Alias}/` : this.getSiteURL(object);
-		return (url.indexOf("~" + organization.Alias) > -1 ? this.configSvc.appConfig.URIs.portals : url) + `_permanentlink/${object.RepositoryEntityID}/${object.ID}`;
+		return (url.indexOf("~" + organization.Alias) > -1 ? this.configSvc.appConfig.URIs.portals : url) + `_permanentlink/${object.RepositoryEntityID}/${object.ID}${object.organization.AlwaysUseHtmlSuffix ? ".html" : ""}`;
 	}
 
 	getDesktop(object: CmsBaseModel) {
@@ -614,7 +616,7 @@ export class PortalsCoreService extends BaseService {
 				: undefined;
 		}
 		return url !== undefined
-			? `${url}/${object["Alias"] || object.ID}`
+			? `${url}/${object["Alias"] || object.ID}${parent !== undefined && object.organization.AlwaysUseHtmlSuffix ? ".html" : ""}`
 			: undefined;
 	}
 
@@ -1928,7 +1930,7 @@ export class PortalsCoreService extends BaseService {
 				if (this.configSvc.isDebug) {
 					console.log(`[Portals]: Find versions (${info.name}#${info.id}) - Queue: ${this.versions.length - 1}`);
 				}
-				await this.readAsync(this.getPath("versions", info.name, "object-id=" + info.id), _ => this.findNextVersions(), _ => this.findNextVersions(), undefined, true);
+				await this.readAsync(this.getPath("versions", info.name, "object-id=" + info.id), _ => this.findNextVersions(), _ => this.findNextVersions());
 			};
 			AppUtility.invoke(() => this.findVersionsAsync(), 567, true);
 		}

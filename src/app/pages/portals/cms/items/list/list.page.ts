@@ -211,7 +211,7 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 					else if (info.args.Type === "Created") {
 						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
 					}
-					this.prepareResults(() => this.items = this.items.sortBy({ name: "Created", reverse: true }));
+					this.prepareResults(info.args.Type !== "Created" ? undefined : () => this.items = this.items.sortBy({ name: "Created", reverse: true }));
 				}
 			}, "CMS.Items:Refresh");
 		}

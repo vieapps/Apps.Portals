@@ -100,11 +100,16 @@ export abstract class Base {
 				this["Created"] = new Date(data.Created);
 			}
 			if (AppUtility.isNotEmpty(data.LastModified)) {
-				this["LastModified"] = new Date(data.LastModified);
+				const lastModified = new Date(data.LastModified);
+				this["LastModified"] = lastModified;
+				if (Math.round((new Date().getTime() - lastModified.getTime()) / (1000 * 3600 * 24)) > 30) {
+					this.Versions = [];
+				}
 			}
 			if (AppUtility.isArray(data.Versions, true)) {
 				this.Versions = (data.Versions as Array<VersionContent>).sortBy({ name: "VersionNumber", reverse: true });
 				this.Versions.forEach(version => version.Created = new Date(version.Created));
+				this.TotalVersions = this.Versions.length;
 			}
 			this.Privileges = AppUtility.isObject(data.Privileges, true)
 				? Privileges.deserialize(data.Privileges)

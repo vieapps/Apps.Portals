@@ -127,7 +127,7 @@ export class PortalsCmsService extends BaseService {
 					if ("Request" === args.Mode && !this._noContents.contains(organization.ID)) {
 						if (organization.modules.flatMap(module => module.contentTypes).length > 0) {
 							this._noContents.add(organization.ID);
-							this.prepareFeaturedContentsAsync(true);
+							this.prepareFeaturedContentsAsync();
 						}
 					}
 					else if ("Refresh" === args.Mode) {
@@ -702,31 +702,17 @@ export class PortalsCmsService extends BaseService {
 		AppEvents.broadcast(this.name, { Type: "FeaturedContents", Mode: "Prepared", ID: systemID });
 	}
 
-	private async prepareFeaturedContentsAsync(activeOnly: boolean = false) {
+	private async prepareFeaturedContentsAsync() {
 		if (this.configSvc.isAuthenticated) {
-			const categoryContentTypes = new Array<ContentType>();
 			const activeOrganization = await this.portalsCoreSvc.getActiveOrganizationAsync();
 			if (activeOrganization !== undefined) {
 				const activeContentTypes = new Array<ContentType>();
-				activeOrganization.modules.forEach(module => {
-					activeContentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module)).merge(this.getContentTypesOfForm(module));
-					categoryContentTypes.merge(this.getContentTypesOfCategory(module));
-				});
+				activeOrganization.modules.forEach(module => activeContentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module)).merge(this.getContentTypesOfForm(module)));
 				AppUtility.invoke(activeContentTypes.length > 0 ? () => this.getFeaturedContentsAsync(activeContentTypes, 0) : undefined);
+				await this.portalsCoreSvc.getActiveOrganizationsAsync(false, false);
 			}
-			const processModules = !activeOnly && this.portalsCoreSvc.activeOrganizations.length < 4;
-			const availableOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync(true, processModules);
-			if (processModules) {
-				if (activeOrganization !== undefined) {
-					availableOrganizations.removeAt(availableOrganizations.findIndex(organization => organization.ID === activeOrganization.ID));
-				}
-				const availableContentTypes = new Array<ContentType>();
-				availableOrganizations.forEach(organization => organization.modules.forEach(module => {
-					availableContentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module)).merge(this.getContentTypesOfForm(module));
-					categoryContentTypes.merge(this.getContentTypesOfCategory(module));
-				}));
-				AppUtility.invoke(availableContentTypes.length > 0 ? () => this.getFeaturedContentsAsync(availableContentTypes, 0) : undefined, 12345);
-				categoryContentTypes.filter(contentType => contentType !== undefined).forEach(contentType => AppUtility.invoke(() => this.searchSpecifiedCategoriesAsync(contentType, () => AppEvents.broadcast(this.name, { Type: "FeaturedContents", Mode: "Prepared", ID: contentType.SystemID })), 12345));
+			else {
+				await this.portalsCoreSvc.getActiveOrganizationsAsync(true, false);
 			}
 		}
 	}
