@@ -22,7 +22,7 @@ export class AppConfig {
 		apps: "https://cms.vieapps.net/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
-		medias: ["fs.vieportal.net"]
+		medias: ["fs.vieapps.net"]
 	};
 
 	/** App information */
@@ -33,7 +33,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "8.2312.4",
+		version: "8.2312.5",
 		frameworks: "ionic 5.9 - angular 11.2 - cordova 11.0",
 		mode: "",
 		platform: "",

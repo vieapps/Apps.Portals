@@ -565,7 +565,8 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 									this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
 								]);
 							},
-							error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
+							error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false),
+							(content.Details as string || "").length > 524288
 						);
 					}
 				}
