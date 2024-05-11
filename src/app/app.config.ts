@@ -11,6 +11,7 @@ export class AppConfig {
 	static URIs = {
 		/** APIs */
 		apis: "https://apis.vieapps.net/",
+		ws: "https://apis.vieapps.com/",
 
 		/** Files HTTP service */
 		files: "https://fs.vieapps.net/",
@@ -22,7 +23,7 @@ export class AppConfig {
 		apps: "https://cms.vieapps.net/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
-		medias: ["fs.vieapps.net"]
+		medias: ["fs.vieportal.net"]
 	};
 
 	/** App information */
@@ -33,7 +34,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "8.2312.5",
+		version: "8.2405.1",
 		frameworks: "ionic 5.9 - angular 11.2 - cordova 11.0",
 		mode: "",
 		platform: "",

@@ -116,9 +116,9 @@
 							"label": "Tạo lại mã định danh (ID) của dữ liệu"
 						},
 						"prepareBodyScript": {
-							"label": "Mã Javascript để tính toán lại BODY cho tín hiệu web-hook",
+							"label": "Mã Javascript để tính toán lại BODY của tín hiệu web-hook",
 							"placeholder": "ex: this.Title += ' (copied)'; return JSON.stringify(this);",
-							"description": "Nếu được cung cấp, hệ thống sẽ thực thi đoạn mã Javascript trên để tính toán lại BOBY cho tín hiệu web-hook, tham số <b>this</b> là đối tượng chứa BODY của tín hiệu web-hook sẽ gửi đi và có 2 tham số có thể sử dụng được là '<b>__request</b>' chứa yêu cầu gửi tín hiệu web-hook (__request.Body là đối tượng chứa BODY nguyên bản), '<b>__params</b>' chứa thông tin về đơn vị (__params.Organization), module nghiệp vụ (__params.Module) và kiểu dữ liệu nghiệp vụ (__params.ContentType)."
+							"description": "Nếu được cung cấp, hệ thống sẽ thực thi đoạn mã Javascript trên để tính toán lại BOBY của tín hiệu web-hook, tham số <b>this</b> là đối tượng chứa BODY của tín hiệu web-hook sẽ được gửi đi và có 2 tham số có thể sử dụng được là '<b>__request</b>' chứa yêu cầu xử lý tín hiệu web-hook (__request.Body là đối tượng chứa BODY nguyên bản), '<b>__params</b>' chứa thông tin về đơn vị (__params.Organization), module nghiệp vụ (__params.Module) và kiểu dữ liệu nghiệp vụ (__params.ContentType)."
 						}
 					}
 				},
@@ -220,9 +220,9 @@
 						"label": "Tạo lại mã định danh (ID) của dữ liệu (nếu có)"
 					},
 					"prepareBodyScript": {
-						"label": "Mã Javascript để tính toán lại BODY từ tín hiệu web-hook",
+						"label": "Mã Javascript để tính toán",
 						"placeholder": "ex: this.Title += ' (copied)'; this.Alias = null; return JSON.stringify(this);",
-						"description": "Nếu được cung cấp, hệ thống sẽ thực thi đoạn mã Javascript trên để tính toán lại BOBY từ tín hiệu web-hook, tham số <b>this</b> là đối tượng chứa BODY của tín hiệu web-hook sẽ được xử lý và có 2 tham số có thể sử dụng được là '<b>__request</b>' chứa yêu cầu xử lý tín hiệu web-hook (__request.Body là đối tượng chứa BODY nguyên bản), '<b>__params</b>' chứa thông tin về đơn vị (__params.Organization), module nghiệp vụ (__params.Module) và kiểu dữ liệu nghiệp vụ (__params.ContentType)."
+						"description": "Nếu được cung cấp, hệ thống sẽ thực thi đoạn mã Javascript trên để tính toán lại BOBY từ tín hiệu web-hook trong ngữ cảnh bình thường hoặc tính toán toàn bộ dữ liệu của tín hiệu web-hook sẽ chuyển tiếp trong ngữ cảnh sử dụng đây là bộ chuyển tiếp (forwarder).<br/>Trong ngữ cảnh bình thường, tham số <b>this</b> là đối tượng chứa BODY của tín hiệu web-hook sẽ gửi đi và có 2 tham số có thể sử dụng được là '<b>__request</b>' chứa yêu cầu gửi tín hiệu web-hook (__request.Body là đối tượng chứa BODY nguyên bản), '<b>__params</b>' chứa thông tin về đơn vị (__params.Organization), module nghiệp vụ (__params.Module) và kiểu dữ liệu nghiệp vụ (__params.ContentType).<br/>Trong ngữ cảnh chuyển tiếp, tham số <b>this</b> là đối tượng JSON chứa toàn bộ thông tin cần thiết của tín hiệu web-hook sẽ chuyển tiếp, và có 2 tham số có thể sử dụng được là '<b>__request</b>' chứa yêu cầu gửi tín hiệu web-hook (bao gồm 3 thông số: __request.Header, __request.Query, __request.Body), '<b>__params</b>' chứa thông tin về đơn vị (__params.Organization), module nghiệp vụ (__params.Module) và kiểu dữ liệu nghiệp vụ (__params.ContentType).<br/>Đối tượng JSON này cần chứa các thông số sau:<ul><li>Verb (string): HTTP Verb sẽ sử dụng khi chuyển tiếp (GET, POST, PUT, PATCH, DELETE)</li><li>URL (string): địa chỉ sẽ chuyển tiếp đến</li><li>Header (json): tham số của header khi thực hiện chuyển tiếp</li><li>Query (json): các tham số của query-string khi thực hiện chuyển tiếp</li><li>Body (json): nội dung của tín hiệu chuyển tiếp</li></ul>Lưu ý: chữ ký sẽ tự động được thêm vào tín hiệu chuyển tiép theo các thông số đã thiết đặt ở trên."
 					}
 				},
 				"UISettings": {

@@ -852,7 +852,7 @@ export class PortalsCoreService extends BaseService {
 							Label: "{{portals.common.controls.webhooks.prepareBodyScript.label}}",
 							PlaceHolder: "{{portals.common.controls.webhooks.prepareBodyScript.placeholder}}",
 							Description: "{{portals.common.controls.webhooks.prepareBodyScript.description}}",
-							Rows: 10
+							Rows: 30
 						}
 					}
 				]
@@ -905,6 +905,7 @@ export class PortalsCoreService extends BaseService {
 		control.Options.Label = "{{portals.common.controls.notifications.webhooks.prepareBodyScript.label}}";
 		control.Options.PlaceHolder = "{{portals.common.controls.notifications.webhooks.prepareBodyScript.placeholder}}";
 		control.Options.Description = "{{portals.common.controls.notifications.webhooks.prepareBodyScript.description}}";
+		control.Options.Rows = 10;
 
 		if (allowInheritFromParent) {
 			controlConfig.SubControls.Controls.insert({

@@ -1140,7 +1140,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	createContentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	createContentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.createAsync(
 			this.getPath("cms.content"),
 			body,
@@ -1150,7 +1150,9 @@ export class PortalsCmsService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError("Error occurred while creating a content", error, onError)
+			error => this.processError("Error occurred while creating a content", error, onError),
+			undefined,
+			useXHR
 		);
 	}
 
