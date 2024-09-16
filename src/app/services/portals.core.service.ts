@@ -1432,6 +1432,11 @@ export class PortalsCoreService extends BaseService {
 		return this.usersSvc.getAuditInfoAsync(ojbect.Created, ojbect.CreatedID, ojbect.LastModified, ojbect.LastModifiedID);
 	}
 
+	getRepositoryEntityInfo(contentType: ContentType) {
+		const organization = contentType !== undefined ? Organization.get(contentType.SystemID) : undefined;
+		return contentType !== undefined ? contentType.Title + (organization !== undefined ? ` (${organization.Title})` : "") : "";
+	}
+
 	getRolesSelector(modalComponent: any, modalComponentProperties?: { [key: string]: any }) {
 		return {
 			prepare: async (role: AppFormsLookupValue) => {

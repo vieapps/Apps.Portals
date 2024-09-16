@@ -1,7 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@app/components/app.crypto";
-import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
@@ -391,7 +390,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 									Type: "text",
 									Label: "{{portals.organizations.controls.HttpIndicators.Name.label}}",
 									Description: "{{portals.organizations.controls.HttpIndicators.Name.description}}",
-									MaxLength: 250
+									MaxLength: 100
 								}
 							},
 							{
@@ -400,8 +399,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 								Options: {
 									Type: "text",
 									Label: "{{portals.organizations.controls.HttpIndicators.Content.label}}",
-									Description: "{{portals.organizations.controls.HttpIndicators.Content.description}}",
-									MaxLength: 4000
+									Description: "{{portals.organizations.controls.HttpIndicators.Content.description}}"
 								}
 							}]
 						}

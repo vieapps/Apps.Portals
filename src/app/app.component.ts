@@ -526,44 +526,43 @@ export class AppComponent implements OnInit {
 
 	private finalize(onNext?: () => void) {
 		const appConfig = this.configSvc.appConfig;
-		AppUtility.invoke(() => console.log("<AppComponent>: Initialized", appConfig.app))
-			.then(() => this.sidebar.normalizeTopMenu())
-			.then(this.configSvc.isWebApp ? () => PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect()) : () => {})
-			.then(() => AppAPIs.openWebSocket(() => Promise.all([this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc].filter(service => appConfig.services.all.findIndex(svc => svc.name === service.name) > -1).map(service => service.initializeAsync()))
-				.then(() => this.notificationsSvc.fetchNotificationsAsync())
-				.then(() => this.appFormsSvc.hideLoadingAsync())
-				.then(() => {
-					const data = {
-						URIs: appConfig.URIs,
-						app: appConfig.app,
-						session: appConfig.session,
-						services: appConfig.services,
-						accounts: appConfig.accounts,
-						options: appConfig.options,
-						languages: appConfig.languages
-					};
-					AppEvents.broadcast("App", { Type: "Initialized", Data: data });
-					AppEvents.sendToElectron("App", { Type: "Initialized", Data: data});
-					AppUtility.invoke(onNext !== undefined ? () => onNext() : () => {
-						let redirect = this.configSvc.queryParams["redirect"] as string || appConfig.URLs.redirectToWhenReady;
-						if (AppUtility.isNotEmpty(redirect)) {
-							appConfig.URLs.redirectToWhenReady = undefined;
-							appConfig.URLs.stack.update({ url: appConfig.URLs.home, params: {} }, appConfig.URLs.stack.length - 1);
-							try {
-								redirect = AppCrypto.base64urlDecode(redirect);
-								if (appConfig.isDebug) {
-									console.warn(`<AppComponent>: Redirect to the requested URI => ${redirect}`);
-								}
-								this.configSvc.navigateForwardAsync(redirect);
+		AppUtility.invoke(() => Promise.all([this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc].filter(service => appConfig.services.all.findIndex(svc => svc.name === service.name) > -1).map(service => service.initializeAsync()))).then(() => {
+			if (this.configSvc.isWebApp) {
+				PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
+			}
+			this.sidebar.normalizeTopMenu();
+			this.appFormsSvc.hideLoadingAsync(() => AppAPIs.openWebSocket(() => this.notificationsSvc.fetchNotificationsAsync().then(() => {
+				const data = {
+					URIs: appConfig.URIs,
+					app: appConfig.app,
+					session: appConfig.session,
+					services: appConfig.services,
+					accounts: appConfig.accounts,
+					options: appConfig.options,
+					languages: appConfig.languages
+				};
+				AppEvents.broadcast("App", { Type: "Initialized", Data: data });
+				AppEvents.sendToElectron("App", { Type: "Initialized", Data: data});
+				console.log("<AppComponent>: Initialized", appConfig.app);
+				AppUtility.invoke(onNext !== undefined ? () => onNext() : () => {
+					let redirect = this.configSvc.queryParams["redirect"] as string || appConfig.URLs.redirectToWhenReady;
+					if (AppUtility.isNotEmpty(redirect)) {
+						appConfig.URLs.redirectToWhenReady = undefined;
+						appConfig.URLs.stack.update({ url: appConfig.URLs.home, params: {} }, appConfig.URLs.stack.length - 1);
+						try {
+							redirect = AppCrypto.base64urlDecode(redirect);
+							if (appConfig.isDebug) {
+								console.warn(`<AppComponent>: Redirect to the requested URI => ${redirect}`);
 							}
-							catch (error) {
-								console.error(`<AppComponent>: The requested URI for redirecting is not well-form => ${redirect}`, error);
-							}
+							this.configSvc.navigateForwardAsync(redirect);
 						}
-					});
-				}
-			)
-		));
+						catch (error) {
+							console.error(`<AppComponent>: The requested URI for redirecting is not well-form => ${redirect}`, error);
+						}
+					}
+				});
+			})));
+		});
 	}
 
 }

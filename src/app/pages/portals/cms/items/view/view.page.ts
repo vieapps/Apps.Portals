@@ -230,7 +230,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 				Name: "RepositoryEntity",
 				Type: "Text",
 				Segment: "basic",
-				Extras: { Text: this.item.contentType !== undefined ? this.item.contentType.Title : "" },
+				Extras: { Text: this.portalsCoreSvc.getRepositoryEntityInfo(this.item.contentType) },
 				Options: {
 					Label: "{{portals.cms.contents.list.current}}",
 					ReadOnly: true
