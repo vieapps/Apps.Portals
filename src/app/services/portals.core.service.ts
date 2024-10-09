@@ -1501,12 +1501,6 @@ export class PortalsCoreService extends BaseService {
 			if (canManageOrganization) {
 				items.push(
 					{
-						Title: "{{portals.sidebar.logs}}",
-						Link: "/logs/services",
-						Direction: "root",
-						Icon: { Name: "file-tray-full", Color: "medium", Slot: "start" }
-					},
-					{
 						Title: "{{portals.sidebar.tasks}}",
 						Link: this.getRouterLink(undefined, "list", "all", "task", "core"),
 						Direction: "root",
@@ -1934,9 +1928,9 @@ export class PortalsCoreService extends BaseService {
 			this.findVersionsAsync = async () => {
 				const info = this.versions.first();
 				if (this.configSvc.isDebug) {
-					console.log(`[Portals]: Find versions (${info.name}#${info.id}) - Queue: ${this.versions.length - 1}`);
+					console.log(`[Portals]: Find versions (${info.name}#${info.id}) - Queue: ${this.versions.length - 1} - WS: ${AppAPIs.isWebSocketReady}`);
 				}
-				await this.readAsync(this.getPath("versions", info.name, "object-id=" + info.id), _ => this.findNextVersions(), _ => this.findNextVersions());
+				await this.readAsync(this.getPath("versions", info.name, "object-id=" + info.id), _ => this.findNextVersions(), _ => this.findNextVersions(), { "x-update-messagae": AppAPIs.isWebSocketReady.toString() });
 			};
 			AppUtility.invoke(() => this.findVersionsAsync(), 567, true);
 		}
@@ -1969,6 +1963,25 @@ export class PortalsCoreService extends BaseService {
 				}
 			},
 			error => this.processError("Error occurred while rolling back", error, onError),
+			useXHR
+		);
+	}
+
+	findTrashContentsAsync(request: AppDataRequest, systemID?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.searchAsync(this.getSearchingPath("trash", this.configSvc.relatedQuery), request, onSuccess, onError, true, { "x-system-id": systemID });
+	}
+
+	restoreAsync(objectID: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+		return this.sendRequestAsync(
+			{
+				Path: this.getPath("trash", objectID),
+				Verb: "PATCH",
+				Header: {
+					"x-patch-mode": "restore"
+				}
+			},
+			onSuccess,
+			error => this.processError("Error occurred while restoring", error, onError),
 			useXHR
 		);
 	}

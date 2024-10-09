@@ -67,13 +67,15 @@
 			"info": "{{creator}} khởi tạo lúc {{created}} - {{modifier}} cập nhật lần cuối lúc {{modified}}"
 		},
 		"preferences": {
-			"label": "Tuỳ chỉnh",
+			"label": "Hệ thống",
+			"notifications": "Thông báo",
+			"profile": "Thông tin tài khoản",
+			"logs": "Logs hệ thống",
+			"flushCache": "Xoá dữ liệu toàn bộ cache",
 			"options": {
 				"language": "Ngôn ngữ",
 				"theme": "Sử dụng theme màu tối"
 			},
-			"notifications": "Thông báo",
-			"flushCache": "Xoá dữ liệu toàn bộ cache",
 			"apps": {
 				"desktop": "Apps cho máy tính",
 				"mobile": "Apps cho điện thoại"
@@ -186,7 +188,15 @@
 		"view": "Xem các phiên bản thay đổi",
 		"list": "{{total}} phiên bản thay đổi [{{title}}]",
 		"confirm": "Chắc chắn muốn khôi phục lại từ phiên bản #{{version}} này?",
-		"processing": "Khôi phục dữ liệu..."
+		"processing": "Khôi phục phiên bản...",
+		"done": "Đã khôi phục được từ phiên bản #{{version}}..."
+	},
+	"trash": {
+		"list": "Thùng rác",
+		"all": "Toàn bộ đơn vị",
+		"confirm": "Chắc chắn muốn khôi phục [{{title}}] từ thùng rác?",
+		"processing": "Khôi phục dữ liệu...",
+		"done": "Đã khôi phục [{{title}}] từ thùng rác..."
 	},
 	"notifications": {
 		"title": "Thông báo hoạt động",

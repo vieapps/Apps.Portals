@@ -172,7 +172,7 @@ export class Base {
 			if (request.Pagination !== undefined && request.Pagination.PageNumber !== undefined) {
 				request.Pagination.PageNumber++;
 			}
-			return this.sendRequestAsync(
+			await this.sendRequestAsync(
 				{
 					Path: AppUtility.format(path, { request: AppCrypto.jsonEncode(request) }),
 					Verb: "GET",

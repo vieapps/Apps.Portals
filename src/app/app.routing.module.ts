@@ -30,6 +30,11 @@ export const routes: Routes = [
 		loadChildren: "@app/pages/versions/versions.module#VersionsModule"
 	},
 	{
+		path: "trash",
+		canActivate: [AppReadyGuardService],
+		loadChildren: "@app/pages/trash/trash.module#TrashModule"
+	},
+	{
 		path: "portals",
 		canActivate: [AppReadyGuardService],
 		loadChildren: "@app/pages/portals/portals.module#PortalsModule"

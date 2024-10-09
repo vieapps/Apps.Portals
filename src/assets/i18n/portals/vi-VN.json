@@ -3,11 +3,9 @@
 		"name": "Cổng tích hợp nội dung",
 		"preferences": {
 			"cms": "Quản trị nội dung",
-			"portals": "Quản trị portals và thông tin hệ thống",
-			"notifications": "Thông báo"
+			"portals": "Quản trị portals và thông tin hệ thống"
 		},
 		"sidebar": {
-			"logs": "Logs hệ thống",
 			"tasks": "Nhiệm vụ được lập lịch",
 			"organizations": "Đơn vị - Tổ chức",
 			"sites": "Site - Điểm truy cập",

@@ -1,0 +1,58 @@
+<ion-header>
+	<ion-toolbar [color]="color">
+		<ion-buttons slot="start">
+			<ion-back-button text=""></ion-back-button>
+		</ion-buttons>
+		<ion-title>
+			{{ title }}
+		</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-footer>
+	<ion-toolbar [color]="color">
+		<span *ngIf="pagination" slot="start">
+			<ion-icon name="color-filter" color="primary" slot="start"></ion-icon>			
+			<span>
+				{{ totalDisplays | number:'':locale }} / {{ totalRecords | number:'':locale }}	
+			</span>
+		</span>
+		<ion-buttons *ngIf="isSystemAdministrator" slot="end">
+			<ion-button>				
+				<ion-checkbox labelPlacement="end" (ionChange)="onAllOrganizationsChanged($event)"></ion-checkbox>
+				<ion-label position="end">&nbsp;{{ all.label }}</ion-label>
+			</ion-button>
+		</ion-buttons>
+	</ion-toolbar>
+</ion-footer>
+
+<ion-content [color]="color">
+	<ion-list class="ion-padding-end">
+		<ion-item *ngFor="let content of contents; trackBy: track" [color]="color" detail="false">
+			<ion-buttons slot="end">
+				<ion-button fill="clear" color="primary" (click)="restoreAsync(content)">
+					<ion-icon name="arrow-undo-outline"></ion-icon>
+				</ion-button>
+			</ion-buttons>
+			<ion-label>
+				<label class="ion-float-end ion-padding-start">
+					{{ content.Created | date:'h:mm:ss a' }}
+					<br/>
+					<span>
+						{{ content.Created | date:'d/M/y' }}
+					</span>
+				</label>
+				<span>
+					{{ content.Title }}
+					<br/>
+					<span>
+						{{ content.Meta }} deleted by {{ content.Creator }}
+					</span>
+				</span>
+			</ion-label>
+		</ion-item>
+	</ion-list>
+	<ion-infinite-scroll threshold="288px" position="bottom" (ionInfinite)="onInfiniteScroll()">
+		<ion-infinite-scroll-content></ion-infinite-scroll-content>
+	</ion-infinite-scroll>
+</ion-content>

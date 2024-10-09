@@ -4,6 +4,7 @@ import { AppUtility } from "@app/components/app.utility";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { AppFormsService } from "@app/components/forms.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
 import { Notification } from "@app/models/notification";
 
 @Component({
@@ -17,7 +18,8 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 	constructor(
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
-		private appFormsSvc: AppFormsService
+		private appFormsSvc: AppFormsService,
+		private portalsCoreSvc: PortalsCoreService
 	) {
 	}
 
@@ -31,6 +33,10 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 
 	get isSystemAdministrator() {
 		return this.authSvc.isSystemAdministrator();
+	}
+
+	get isAdministrator() {
+		return this.isSystemAdministrator || this.portalsCoreSvc.canManageOrganization(this.portalsCoreSvc.activeOrganization);
 	}
 
 	get logo() {
@@ -67,6 +73,10 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		return this.configSvc.languages;
 	}
 
+	get unreadNotifications() {
+		return Notification.unread.size;
+	}
+
 	labels = {
 		options: {
 			label: "Options",
@@ -77,8 +87,10 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 			desktop: "Desktop apps",
 			mobile: "Mobile & Tablet apps"
 		},
-		profile: "Profile",
 		notifications: "Notifications",
+		profile: "Profile",
+		logs: "Logs",
+		trash: "Trash",
 		flushCache: "Flush cache",
 		about: "About",
 		ok: "OK",
@@ -118,9 +130,11 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 				desktop: await this.configSvc.getResourceAsync("common.preferences.apps.desktop"),
 				mobile: await this.configSvc.getResourceAsync("common.preferences.apps.mobile")
 			},
-			profile: await this.configSvc.getResourceAsync("common.sidebar.profile"),
-			flushCache: await this.configSvc.getResourceAsync("common.preferences.flushCache"),
 			notifications: await this.configSvc.getResourceAsync("common.preferences.notifications"),
+			profile: await this.configSvc.getResourceAsync("common.preferences.profile"),
+			logs: await this.configSvc.getResourceAsync("common.preferences.logs"),
+			trash: await this.configSvc.getResourceAsync("trash.list"),
+			flushCache: await this.configSvc.getResourceAsync("common.preferences.flushCache"),
 			about: await this.configSvc.getResourceAsync("common.preferences.about"),
 			ok: await this.configSvc.getResourceAsync("common.buttons.ok"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
@@ -140,6 +154,18 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		this.configSvc.storeOptionsAsync();
 	}
 
+	openNotifications() {
+		this.configSvc.navigateForwardAsync("/notifications");
+	}
+
+	openLogs() {
+		this.configSvc.navigateForwardAsync("/logs/services");
+	}
+
+	openTrash() {
+		this.configSvc.navigateForwardAsync("/trash");
+	}
+
 	openProfile() {
 		this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.users.profile + "/my");
 	}
@@ -153,14 +179,6 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
-	}
-
-	openNotifications() {
-		this.configSvc.navigateForwardAsync("/notifications");
-	}
-
-	get unreadNotifications() {
-		return Notification.unread.size;
 	}
 
 }
