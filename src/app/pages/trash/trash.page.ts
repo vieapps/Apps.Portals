@@ -43,12 +43,6 @@ export class TrashPage implements OnInit {
 	pageNumber = 0;
 	pagination: AppDataPagination;
 	request: AppDataRequest;
-	actions: Array<{
-		text: string,
-		role?: string,
-		icon?: string,
-		handler: () => void
-	}>;
 
 	get color() {
 		return this.configSvc.color;
@@ -105,6 +99,8 @@ export class TrashPage implements OnInit {
 
 	onAllOrganizationsChanged(event: any) {
 		this.contents = [];
+		this.pageNumber = 0;
+		this.pagination = undefined;
 		this.all.value = event.detail.checked;
 		this.appFormsSvc.showLoadingAsync().then(() => this.find());
 	}

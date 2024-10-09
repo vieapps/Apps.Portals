@@ -19,7 +19,7 @@
 		</span>
 		<ion-buttons *ngIf="isSystemAdministrator" slot="end">
 			<ion-button>				
-				<ion-checkbox labelPlacement="end" (ionChange)="onAllOrganizationsChanged($event)"></ion-checkbox>
+				<ion-checkbox (ionChange)="onAllOrganizationsChanged($event)"></ion-checkbox>
 				<ion-label position="end">&nbsp;{{ all.label }}</ion-label>
 			</ion-button>
 		</ion-buttons>
