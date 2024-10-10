@@ -6,3 +6,8 @@ ion-item > ion-label > label {
 	text-align: right;
 	color: var(--ion-color-medium);
 }
+ion-item > ion-label > label > span,
+ion-item > ion-label > span > span {
+	display: block;
+	margin-top: 10px;	
+}

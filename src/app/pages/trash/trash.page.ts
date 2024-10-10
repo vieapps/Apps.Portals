@@ -34,15 +34,15 @@ export class TrashPage implements OnInit {
 
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
-	title = "Trashs";
-	contents = new Array<TrashContent>();
 	all = {
 		value: false,
 		label: "All organizations"
 	};
+	title = "Trash";
+	contents = new Array<TrashContent>();
+	request: AppDataRequest;
 	pageNumber = 0;
 	pagination: AppDataPagination;
-	request: AppDataRequest;
 
 	get color() {
 		return this.configSvc.color;
@@ -102,7 +102,7 @@ export class TrashPage implements OnInit {
 		this.pageNumber = 0;
 		this.pagination = undefined;
 		this.all.value = event.detail.checked;
-		this.appFormsSvc.showLoadingAsync().then(() => this.find());
+		this.appFormsSvc.showLoadingAsync().then(() => this.find(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.disabled = false : () => {}));
 	}
 
 	private find(onNext?: () => void) {
@@ -111,9 +111,6 @@ export class TrashPage implements OnInit {
 			this.request,
 			this.all.value ? undefined : this.portalsCoreSvc.activeOrganization.ID,
 			data => {
-				if (this.configSvc.isDebug) {
-					console.log("<Trash>: Find trash contents", data);
-				}
 				this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request);
 				if (this.pagination !== undefined) {
 					this.pageNumber++;
@@ -131,45 +128,31 @@ export class TrashPage implements OnInit {
 						}
 					}
 					if (content["Meta"] === undefined) {
-						let contentType: ContentType;
-						let module: Module;
-						let organization: Organization;
-						if (AppUtility.isNotEmpty(content.RepositoryEntityID)) {
-							contentType = ContentType.get(content.RepositoryEntityID);
-							if (contentType === undefined ) {
-								this.portalsCoreSvc.getContentTypeAsync(content.RepositoryEntityID, () => {
-									contentType = ContentType.get(content.RepositoryEntityID);
-									module = Module.get(content.RepositoryID);
-									organization = Organization.get(content.SystemID);
-									this.updateMeta(content, contentType, module, organization);
-								});
-							}
-							else {
+						let contentType = ContentType.get(content.RepositoryEntityID);
+						let module = Module.get(content.RepositoryID);
+						let organization = Organization.get(content.SystemID);
+						if (contentType === undefined && AppUtility.isNotEmpty(content.RepositoryEntityID)) {
+							Promise.all([this.portalsCoreSvc.getModuleAsync(content.RepositoryID), this.portalsCoreSvc.getOrganizationAsync(content.SystemID)])
+							.then(() => this.portalsCoreSvc.getContentTypeAsync(content.RepositoryEntityID, () => {
+								contentType = ContentType.get(content.RepositoryEntityID);
 								module = Module.get(content.RepositoryID);
 								organization = Organization.get(content.SystemID);
-							}
+								this.updateMeta(content, contentType, module, organization);
+							}));
 						}
-						else if (AppUtility.isNotEmpty(content.RepositoryID)) {
-							module = Module.get(content.RepositoryID);
-							if (module === undefined ) {
-								this.portalsCoreSvc.getModuleAsync(content.RepositoryID, () => {
-									module = Module.get(content.RepositoryID);
-									organization = Organization.get(content.SystemID);	
-									this.updateMeta(content, contentType, module, organization);
-								});
-							}
-							else {
+						else if (module === undefined && AppUtility.isNotEmpty(content.RepositoryID)) {
+							this.portalsCoreSvc.getOrganizationAsync(content.SystemID)
+							.then(() => this.portalsCoreSvc.getModuleAsync(content.RepositoryID, () => {
+								module = Module.get(content.RepositoryID);
+								organization = Organization.get(content.SystemID);	
+								this.updateMeta(content, contentType, module, organization);
+							}));
+						}
+						else if (organization === undefined && AppUtility.isNotEmpty(content.SystemID)) {
+							this.portalsCoreSvc.getOrganizationAsync(content.SystemID, () => {
 								organization = Organization.get(content.SystemID);
-							}
-						}
-						else if (AppUtility.isNotEmpty(content.SystemID)) {
-							organization = Organization.get(content.SystemID);
-							if (organization === undefined ) {
-								this.portalsCoreSvc.getOrganizationAsync(content.SystemID, () => {
-									organization = Organization.get(content.SystemID);
-									this.updateMeta(content, contentType, module, organization);
-								});
-							}
+								this.updateMeta(content, contentType, module, organization);
+							});
 						}
 						if (contentType !== undefined || module !== undefined || organization !== undefined) {
 							this.updateMeta(content, contentType, module, organization);

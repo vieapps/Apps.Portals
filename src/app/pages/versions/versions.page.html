@@ -21,14 +21,16 @@
 				<label class="ion-float-end ion-padding-start">
 					{{ version.Created | date:'h:mm:ss a' }}
 					<br/>
-					{{ version.Created | date:'d/M/y' }}
+					<span>
+						{{ version.Created | date:'d/M/y' }}
+					</span>
 				</label>
 				<span>
-					<span>
-						#{{ version.VersionNumber }} - by {{ version.Creator }}
-					</span>
+					#{{ version.VersionNumber }} - by {{ version.Creator }}
 					<br/>
-					{{ version.Title }}
+					<span>
+						{{ version.Title }}
+					</span>
 				</span>
 			</ion-label>
 		</ion-item>

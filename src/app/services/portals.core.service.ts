@@ -109,7 +109,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	get allowSelectActiveOrganization() {
-		return true;
+		return false;
 	}
 
 	initialize() {
@@ -1434,7 +1434,7 @@ export class PortalsCoreService extends BaseService {
 
 	getRepositoryEntityInfo(contentType: ContentType) {
 		const organization = contentType !== undefined ? Organization.get(contentType.SystemID) : undefined;
-		return contentType !== undefined ? contentType.Title + (organization !== undefined ? ` (${organization.Title})` : "") : "";
+		return contentType !== undefined ? contentType.Title + (organization !== undefined ? ` @ ${organization.Title}` : "") : "";
 	}
 
 	getRolesSelector(modalComponent: any, modalComponentProperties?: { [key: string]: any }) {
