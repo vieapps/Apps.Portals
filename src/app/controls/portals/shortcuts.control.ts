@@ -82,8 +82,8 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			Removable: true,
 			OnClick: () => this.changeOrganizationAsync(),
 			OnRemove: () => this.removeOrganizationAsync(),
-			OtherAction: this.portalsCoreSvc.allowSelectActiveOrganization
-				? { Icon: "add-circle-outline", OnClick: () => this.selectOrganizationAsync(Organization.instances.toArray(), this.portalsCoreSvc.activeOrganization !== undefined ? this.portalsCoreSvc.activeOrganization.ID : undefined) }
+			OtherAction: this.portalsCoreSvc.allowSelectActiveOrganization || this.authSvc.isSystemAdministrator()
+				? { Icon: "add-circle-outline", OnClick: () => this.selectOrganizationAsync(this.portalsCoreSvc.activeOrganization !== undefined ? this.portalsCoreSvc.activeOrganization.ID : undefined) }
 				: undefined
 		}, 0);
 
@@ -140,13 +140,13 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 
 	async changeOrganizationAsync() {
 		const activeOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync();
+		const activeOrganizationID = this.portalsCoreSvc.activeOrganization !== undefined ? this.portalsCoreSvc.activeOrganization.ID : undefined;
 		if (this.authSvc.isSystemAdministrator() && activeOrganizations.length < 2) {
-			await this.configSvc.navigateRootAsync(this.portalsCoreSvc.getRouterLink(undefined, "list", "all", "organization", "core"));
+			await this.selectOrganizationAsync(activeOrganizationID);
 		}
 		else if (activeOrganizations.length > 1) {
-			const activeOrganizationID = this.portalsCoreSvc.activeOrganization !== undefined ? this.portalsCoreSvc.activeOrganization.ID : undefined;
 			if (activeOrganizations.length > 3) {
-				await this.selectOrganizationAsync(activeOrganizations, activeOrganizationID);
+				await this.selectOrganizationAsync(activeOrganizationID, activeOrganizations);
 			}
 			else {
 				await this.appFormsSvc.showAlertAsync(
@@ -159,7 +159,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 					activeOrganizations.sortBy("Alias").map(organization => ({
 						name: "organizationID",
 						type: "radio",
-						label: `${organization.Alias} - ${organization.Title}`,
+						label: organization.Title,
 						value: organization.ID,
 						checked: organization.ID === activeOrganizationID
 					})),
@@ -169,19 +169,23 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		}
 	}
 
-	private async selectOrganizationAsync(organizations: Organization[], selectedID: string) {
+	private async selectOrganizationAsync(selectedID: string, organizations?: Organization[]) {
 		await this.appFormsSvc.showModalAsync(
 			DataLookupModalPage,
 			{
+				organizationID: undefined,
+				moduleID: undefined,
+				contentTypeID: undefined,
+				objectName: "Organization",
 				nested: false,
 				multiple: false,
 				sortBy: { Title: "Ascending" },
 				labels: { title: await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.select.organization") },
 				preselectedID: selectedID,
-				predefinedItems: organizations.map(organization => ({
+				predefinedItems: organizations !== undefined && !!organizations.length ? organizations.map(organization => ({
 					ID: organization.ID,
-					Title: organization.Title + " - " + organization.Alias
-				}))
+					Title: organization.Title
+				})) : undefined
 			},
 			data => this.portalsCoreSvc.setActiveOrganization(this.portalsCoreSvc.getOrganization(data !== undefined && !!data.length ? data.first().ID : selectedID, false)),
 			true,

@@ -76,6 +76,10 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		return this.configSvc.color;
 	}
 
+	get isLookupOrganization() {
+		return "Organization" === this.objectName;
+	}
+
 	private subscription: Subscription;
 	private organization: Organization;
 	private module: Module;
@@ -117,9 +121,9 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
-		this.organization = Organization.get(this.organizationID) || await this.portalsCoreSvc.getActiveOrganizationAsync();
-		this.module = Module.get(this.moduleID) || await this.portalsCoreSvc.getActiveModuleAsync();
-		this.contentType = ContentType.get(this.contentTypeID);
+		this.organization = this.isLookupOrganization ? undefined : Organization.get(this.organizationID) || await this.portalsCoreSvc.getActiveOrganizationAsync();
+		this.module = this.isLookupOrganization ? undefined : Module.get(this.moduleID) || await this.portalsCoreSvc.getActiveModuleAsync();
+		this.contentType = this.isLookupOrganization ? undefined : ContentType.get(this.contentTypeID);
 		this.prepareFilterBy(true);
 		this.children = await this.configSvc.getResourceAsync("portals.common.lookup.children");
 		this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.common.lookup.searchbar");
@@ -197,7 +201,10 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	}
 
 	private prepareFilterBy(allowParent: boolean) {
-		this.filterBy.And = [{ SystemID: { Equals: this.organization.ID } }];
+		this.filterBy.And = [];
+		if (this.organization !== undefined) {
+			this.filterBy.And.push({ SystemID: { Equals: this.organization.ID } });
+		}
 		if (this.module !== undefined) {
 			this.filterBy.And.push({ RepositoryID: { Equals: this.module.ID } });
 		}
@@ -257,6 +264,13 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 				if (this.nested) {
 					this.items.forEach(item => this.updateParent(item));
 					this.rootItems = this.items.map(item => item);
+				}
+			}
+			if (this.preselectedID !== undefined) {
+				const preselectedID = AppUtility.isArray(this.preselectedID, true) ? (this.preselectedID as Array<string>).first() : this.preselectedID as string;
+				const selected = (this.searching ? this.results : this.items).first(o => o.ID === preselectedID);
+				if (selected !== undefined) {
+					this.selected.set(selected.ID, selected);
 				}
 			}
 			if (onNext !== undefined) {

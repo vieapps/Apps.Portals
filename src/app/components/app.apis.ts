@@ -28,7 +28,9 @@ export class AppAPIs {
 	private static _ping: number;
 	private static _counter = 0;
 	private static _attempt = 0;
+	private static _time = new Date();
 	private static _http: HttpClient;
+	private static _onOpened: () => void;
 
 	/** Sets the action to fire when the WebSocket connection is opened */
 	static set onWebSocketOpened(func: (event: Event) => void) {
@@ -226,17 +228,18 @@ export class AppAPIs {
 			return;
 		}
 
-		// create new instance of WebSocket
+		// prepare
 		this._websocketStatus = "initializing";
 		this._websocketURL = (AppConfig.URIs.ws || AppConfig.URIs.apis).replace("http://", "ws://").replace("https://", "wss://");
 		this._websocket = new WebSocket(`${this._websocketURL}v?x-session-id=${AppCrypto.base64urlEncode(AppConfig.session.id)}&x-device-id=${AppCrypto.base64urlEncode(AppConfig.session.device)}` + (isReopenOrRestart ? "&x-restart=" : ""));
+		this._onOpened = this._onOpened || onOpened;
 		this._ping = +new Date();
 
 		// assign 'on-open' event handler
 		this._websocket.onopen = event => {
 			this._websocketStatus = "ready";
 			this.authenticateWebSocket();
-			console.log(`[AppAPIs]: The WebSocket connection was opened... (${AppUtility.parseURI(this._websocketURL).HostURI})`, AppUtility.toIsoDateTime(new Date(), true));
+			console.log(`[AppAPIs]: The WebSocket connection was opened... [${AppUtility.getElapsedTime(this._time)} => ${AppUtility.parseURI(this._websocketURL).HostURI}]`, AppUtility.toIsoDateTime(new Date(), true));
 			if (this._onWebSocketOpened !== undefined) {
 				try {
 					this._onWebSocketOpened(event);
@@ -250,7 +253,8 @@ export class AppAPIs {
 		// assign 'on-close' event handler
 		this._websocket.onclose = event => {
 			this._websocketStatus = "close";
-			console.log(`[AppAPIs]: The WebSocket connection was closed [${event.reason}]`, AppUtility.toIsoDateTime(new Date(), true));
+			this._time = new Date();
+			console.log(`[AppAPIs]: The WebSocket connection was closed [${event.reason}]`, AppUtility.toIsoDateTime(this._time, true));
 			if (this._onWebSocketClosed !== undefined) {
 				try {
 					this._onWebSocketClosed(event);
@@ -408,7 +412,15 @@ export class AppAPIs {
 		};
 
 		// callback when done
-		AppUtility.invoke(onOpened, this.isWebSocketReady ? 0 : 567);
+		AppUtility.invoke(() => {
+			if (onOpened !== undefined) {
+				onOpened();
+			}
+			else if (this._onOpened !== undefined) {
+				this._onOpened();
+				this._onOpened = undefined;
+			}
+		}, this.isWebSocketReady ? 0 : 567, true);
 	}
 
 	private static disposeWebSocket() {
@@ -437,12 +449,15 @@ export class AppAPIs {
 			console.warn(`[AppAPIs]: ${reason || "Re-open because the WebSocket connection is broken"}`);
 			AppUtility.invoke(() => {
 				console.log(`[AppAPIs]: The WebSocket connection is re-opening... #${this._attempt}`);
-				this.openWebSocket(() => AppUtility.invoke(() => {
+				this.openWebSocket(() => {
 					if (this.isWebSocketReady) {
 						console.log(`[AppAPIs]: The WebSocket connection was re-opened... #${this._attempt}`);
 						this._attempt = 0;
 					}
-				}, 123), true);
+					if (this._onOpened !== undefined) {
+						this._onOpened();
+					}
+				})
 			}, defer || 123 + (this._attempt * 13));
 		}
 	}

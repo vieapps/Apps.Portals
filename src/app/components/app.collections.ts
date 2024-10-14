@@ -2,6 +2,9 @@ import { List } from "linqts";
 
 declare global {
 	interface Array<T> {
+		/** Adds an element */
+		add(value: T): T[];
+
 		/** Inserts an element at a specified index/position */
 		insert(value: T, index?: number): T[];
 
@@ -71,6 +74,10 @@ declare global {
 		/** Converts to Dictionary object */
 		toDictionary<K>(keySelector: (value: T) => K, predicate?: (value: T, index: number, array: T[]) => boolean, thisArg?: any): Dictionary<K, T>;
 	}
+}
+
+Array.prototype.add = function<T>(this: T[], value: T): T[] {
+	return this.update(value);
 }
 
 Array.prototype.insert = function<T>(this: T[], value: T, index?: number): T[] {

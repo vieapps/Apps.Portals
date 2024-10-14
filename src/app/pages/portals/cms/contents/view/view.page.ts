@@ -181,7 +181,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			if (this.canModerate) {
 				this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.common.advancedEdit"), "create", () => this.update(true)), 1);
 				this.actions.insert(this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()), 2);
-				if (!!(await this.portalsCoreSvc.getActiveOrganizationsAsync()).length) {
+				if (this.portalsCoreSvc.allowSelectActiveOrganization && !!(await this.portalsCoreSvc.getActiveOrganizationsAsync()).length) {
 					this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.common.buttons.duplicate"), "copy-outline", () => this.duplicateAsync()), 6);
 				}
 			}

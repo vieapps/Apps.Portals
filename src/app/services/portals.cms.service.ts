@@ -188,22 +188,18 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	async initializeAsync(onNext?: () => void) {
-		const promises = new Array<Promise<any>>();
+		const tasks = new Array<Promise<any>>();
 
-		if (Module.active === undefined) {
-			promises.push(this.portalsCoreSvc.getActiveModuleAsync(undefined, true));
-		}
-
-		if (Module.active !== undefined && Module.active.contentTypes.length < 1) {
-			promises.push(this.portalsCoreSvc.getActiveModuleAsync(undefined, true));
+		if (Module.active === undefined || Module.active.contentTypes.length < 1) {
+			tasks.push(this.portalsCoreSvc.getActiveModuleAsync(undefined, true));
 		}
 
 		if (this.configSvc.appConfig.services.active.service === this.name) {
-			promises.push(this.updateSidebarAsync());
+			tasks.push(this.updateSidebarAsync());
 		}
 
 		if (this._oembedProviders === undefined) {
-			promises.push(AppUtility.invoke(() => this.fetchAsync(
+			tasks.push(this.fetchAsync(
 				"statics/oembed.providers.json",
 				data => {
 					const oembedProviders = data as Array<{ name: string; schemes: string[], pattern: { expression: string; position: number; html: string } }>;
@@ -217,10 +213,10 @@ export class PortalsCmsService extends BaseService {
 						}
 					}));
 				}
-			), 1234));
+			));
 		}
 
-		await Promise.all(promises);
+		await Promise.all(tasks);
 		if (onNext !== undefined) {
 			onNext();
 		}
@@ -1326,7 +1322,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	async getItemAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getItemAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Item.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -1520,7 +1516,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	async getLinkAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getLinkAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const link = Link.get(id);
 		return link !== undefined && link.childrenIDs !== undefined
 			? AppUtility.invoke(onSuccess)
@@ -1741,7 +1737,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	async getFormAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getFormAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Form.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -1903,7 +1899,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	async getCrawlerAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getCrawlerAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Crawler.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(

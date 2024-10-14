@@ -1986,7 +1986,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	async approveAsync(entityInfo: string, id: string, status: string, title: string, message: string, onNext?: () => void) {
+	approveAsync(entityInfo: string, id: string, status: string, title: string, message: string, onNext?: () => void) {
 		const contentType = ContentType.get(entityInfo);
 		return this.readAsync(
 			this.getPath("approve", id),
@@ -2296,7 +2296,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	async getRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getRoleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const role = Role.get(id);
 		return role !== undefined && role.childrenIDs !== undefined
 			? AppUtility.invoke(onSuccess)
@@ -2507,7 +2507,7 @@ export class PortalsCoreService extends BaseService {
 		return module;
 	}
 
-	async getModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getModuleAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Module.contains(id) && Module.get(id).contentTypes.length > 0
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -2638,7 +2638,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	async getContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return ContentType.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -2770,7 +2770,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	async getExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getExpressionAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Expression.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -2902,7 +2902,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	async getSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getSiteAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Site.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -3044,7 +3044,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	async getDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getDesktopAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		const desktop = Desktop.get(id);
 		return desktop !== undefined && desktop.childrenIDs !== undefined
 			? AppUtility.invoke(onSuccess)
@@ -3262,7 +3262,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	async getPortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getPortletAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return Portlet.contains(id) && Portlet.get(id).otherDesktops !== undefined
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -3406,7 +3406,7 @@ export class PortalsCoreService extends BaseService {
 		return task;
 	}
 
-	async getSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return SchedulingTask.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -3441,10 +3441,10 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	fetchSchedulingTasks() {
-		AppUtility.invoke(() => this.readAsync(this.getPath("task", "fetch"), undefined, undefined, { "x-system-id": this.activeOrganization.ID }), 123, true);
+		AppUtility.invoke(() => this.readAsync(this.getPath("task", "fetch"), data => this.processSchedulingTasks(data), error => this.showError("Error occurred while fetching tasks", error), { "x-system-id": this.activeOrganization.ID, "x-update-messagae": AppAPIs.isWebSocketReady.toString() }), 1234, true);
 	}
 
-	async runSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	runSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.readAsync(
 			this.getPath("task", "run", "x-object-id=" + id),
 			onSuccess,
@@ -3469,10 +3469,13 @@ export class PortalsCoreService extends BaseService {
 		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 			(data.Objects as Array<any>).forEach(json => {
 				const task = SchedulingTask.update(json);
-				if (task.Persistance && task.Versions === undefined) {
+				if (task !== undefined && task.Persistance && task.Versions === undefined) {
 					this.findVersions("Task", task.ID);
 				}
 			});
+		}		
+		if (onNext !== undefined) {
+			onNext(data);
 		}
 	}
 
@@ -3482,7 +3485,7 @@ export class PortalsCoreService extends BaseService {
 			case "Update":
 				if (!!message.Data.Title) {
 					const task = SchedulingTask.update(message.Data);
-					if (task.Persistance && task.Versions === undefined) {
+					if (task !== undefined && task.Persistance && task.Versions === undefined) {
 						this.findVersions("Task", task.ID);
 					}
 				}

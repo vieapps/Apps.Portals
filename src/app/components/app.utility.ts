@@ -187,11 +187,12 @@ export class AppUtility {
 
 	/** Gets elapsed time */
 	static getElapsedTime(start: Date, end?: Date) {
-		const miliseconds = (end || new Date()).getTime() - start.getTime();
-		const seconds = Math.round(miliseconds / 1000);
-		return seconds > 0
-			? `${seconds} second(s) and ${miliseconds - (seconds * 1000)} miliseconds`
-			: miliseconds > 0 ? `${miliseconds} miliseconds` : "1 nanosecond";
+		let miliseconds = (end || new Date()).getTime() - start.getTime();
+		let seconds = Math.round(miliseconds / 1000);
+		let minutes = Math.round(seconds / 60);
+		miliseconds = seconds > 0 ? miliseconds - (seconds * 1000) : miliseconds;
+		seconds = minutes > 0 ? seconds - (minutes * 60) : seconds;
+		return (minutes > 0 ? `${minutes} minute(s)` : "") + (seconds > 0 ? (minutes > 0 ? ", " : "") + `${seconds} second(s)` : "") + (miliseconds > 0 ? (minutes > 0 || seconds > 0 ? ", " : "") + `${miliseconds} milisecond(s)` : "") + (minutes < 1 && seconds < 1 && miliseconds < 1 ? "1 nanosecond" : "");
 	}
 
 	/** Gets an URI */

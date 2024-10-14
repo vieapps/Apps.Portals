@@ -12,7 +12,7 @@
 		</ion-buttons>
 		<ion-title class="ion-text-center">
 			{{ labels.title }}
-			<ion-button [hidden]="searching || predefinedItems !== undefined" fill="clear" color="medium" (click)="openSearch()">
+			<ion-button [hidden]="searching || predefinedItems !== undefined || isLookupOrganization" fill="clear" color="medium" (click)="openSearch()">
 				<ion-icon name="search"></ion-icon>
 				{{ labels.search }}
 			</ion-button>
