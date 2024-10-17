@@ -46,9 +46,9 @@ export class ConfigurationService extends BaseService {
 		http: HttpClient
 	) {
 		super("Configuration");
-		AppEvents.initialize();
 		AppAPIs.initialize(http);
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", () => this.reloadGeoMetaAsync());
+		AppEvents.initialize();
 		AppStorage.initializeAsync(this.storage, () => this.showLog(`Storage is ready. Driver: ${this.storage.driver}`));
 	}
 

@@ -718,8 +718,8 @@ export class AppUtility {
 		}
 
 		let result = input.trim();
-		result = result.replace(/\s/g, "-").replace(/\&/g, "").replace(/\?/g, "");
-		result = result.replace(/\+/g, "").replace(/\//g, "-").replace(/\'/g, "");
+		result = result.replace(/\s/g, "-").replace(/\&/g, "").replace(/\?/g, "").replace(/\“/g, "-");
+		result = result.replace(/\+/g, "").replace(/\//g, "-").replace(/\'/g, "").replace(/\”/g, "-")
 		result = result.replace(/\\/g, "-").replace(/\=/g, "").replace(/\,/g, "").replace(/\./g, "-");
 		result = result.replace(/\(/g, "").replace(/\)/g, "").replace(/\#/g, "").replace(/\%/g, "");
 		result = result.replace(/\`/g, "").replace(/\!/g, "").replace(/\@/g, "").replace(/\$/g, "");

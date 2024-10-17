@@ -140,11 +140,8 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 
 	async changeOrganizationAsync() {
 		const activeOrganizations = await this.portalsCoreSvc.getActiveOrganizationsAsync();
-		const activeOrganizationID = this.portalsCoreSvc.activeOrganization !== undefined ? this.portalsCoreSvc.activeOrganization.ID : undefined;
-		if (this.authSvc.isSystemAdministrator() && activeOrganizations.length < 2) {
-			await this.selectOrganizationAsync(activeOrganizationID);
-		}
-		else if (activeOrganizations.length > 1) {
+		if (activeOrganizations.length > 1) {
+			const activeOrganizationID = this.portalsCoreSvc.activeOrganization !== undefined ? this.portalsCoreSvc.activeOrganization.ID : undefined;
 			if (activeOrganizations.length > 3) {
 				await this.selectOrganizationAsync(activeOrganizationID, activeOrganizations);
 			}
@@ -159,7 +156,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 					activeOrganizations.sortBy("Alias").map(organization => ({
 						name: "organizationID",
 						type: "radio",
-						label: organization.Title,
+						label: organization.Alias + " - " + organization.Title,
 						value: organization.ID,
 						checked: organization.ID === activeOrganizationID
 					})),
@@ -185,7 +182,8 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 				predefinedItems: organizations !== undefined && !!organizations.length ? organizations.map(organization => ({
 					ID: organization.ID,
 					Title: organization.Title
-				})) : undefined
+				})) : undefined,
+				preProcess: (objects: Array<any>) => this.portalsCoreSvc.processOrganizations({ Objects: objects }, undefined, false)
 			},
 			data => this.portalsCoreSvc.setActiveOrganization(this.portalsCoreSvc.getOrganization(data !== undefined && !!data.length ? data.first().ID : selectedID, false)),
 			true,

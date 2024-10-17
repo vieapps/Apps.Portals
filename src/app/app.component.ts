@@ -530,22 +530,26 @@ export class AppComponent implements OnInit {
 			PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
 		}		
 		this.sidebar.normalizeTopMenu();
-		this.appFormsSvc.hideLoadingAsync(() => Promise.all([this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc]
+		Promise.all([this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc]
 			.filter(service => this.configSvc.appConfig.services.all.findIndex(svc => svc.name === service.name) > -1)
 			.map(service => service.initializeAsync())
-			.add(AppUtility.invoke(() => AppAPIs.openWebSocket(() => Promise.all([this.notificationsSvc.fetchNotificationsAsync(), () => {
-				const data = {
-					URIs: this.configSvc.appConfig.URIs,
-					app: this.configSvc.appConfig.app,
-					session: this.configSvc.appConfig.session,
-					services: this.configSvc.appConfig.services,
-					accounts: this.configSvc.appConfig.accounts,
-					options: this.configSvc.appConfig.options,
-					languages: this.configSvc.appConfig.languages
-				};
-				AppEvents.broadcast("App", { Type: "Initialized", Data: data });
-				AppEvents.sendToElectron("App", { Type: "Initialized", Data: data});
-				return AppUtility.invoke(onNext !== undefined ? () => onNext() : () => {
+			.add(this.appFormsSvc.hideLoadingAsync())
+			.add(AppUtility.invoke(() => AppAPIs.openWebSocket(() => Promise.all([
+				this.notificationsSvc.fetchNotificationsAsync(),
+				AppUtility.invoke(() => {
+					const data = {
+						URIs: this.configSvc.appConfig.URIs,
+						app: this.configSvc.appConfig.app,
+						session: this.configSvc.appConfig.session,
+						services: this.configSvc.appConfig.services,
+						accounts: this.configSvc.appConfig.accounts,
+						options: this.configSvc.appConfig.options,
+						languages: this.configSvc.appConfig.languages
+					};
+					AppEvents.broadcast("App", { Type: "Initialized", Data: data });
+					AppEvents.sendToElectron("App", { Type: "Initialized", Data: data});
+				}),
+				AppUtility.invoke(onNext !== undefined ? () => onNext() : () => {
 					let redirect = this.configSvc.queryParams["redirect"] as string || this.configSvc.appConfig.URLs.redirectToWhenReady;
 					if (AppUtility.isNotEmpty(redirect)) {
 						this.configSvc.appConfig.URLs.redirectToWhenReady = undefined;
@@ -561,8 +565,8 @@ export class AppComponent implements OnInit {
 							console.error(`<AppComponent>: The requested URI for redirecting is not well-form => ${redirect}`, error);
 						}
 					}
-				});
-			}]))))
-		).then(() => console.log(`<AppComponent>: Initialized [${AppUtility.getElapsedTime(this._time)}]`, this.configSvc.appConfig.app)));
+				})
+			]))))
+		).then(() => console.log(`<AppComponent>: Initialized [${AppUtility.getElapsedTime(this._time)}]`, this.configSvc.appConfig.app));
 	}
 }

@@ -160,7 +160,8 @@
 		"Create": "Tạo mới",
 		"Update": "Cập nhật",
 		"Delete": "Xoá",
-		"Approve": "Phê duyệt"
+		"Approve": "Phê duyệt",
+		"Reject": "Từ chối"
 	},
 	"files": {
 		"thumbnails": {

@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonInfiniteScroll } from "@ionic/angular";
+import { HashSet } from "@app/components/app.collections";
 import { AppDataFilter } from "@app/components/app.objects";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
@@ -42,7 +43,9 @@ export class NotificationsPage implements OnInit, OnDestroy {
 	private actions = {
 		Create: "Create",
 		Update: "Update",
-		Delete: "Update"
+		Delete: "Update",
+		Approve: "Phê duyệt",
+		Reject: "Từ chối"
 	};
 	private status = {
 		Draft: "Draft",
@@ -52,6 +55,8 @@ export class NotificationsPage implements OnInit, OnDestroy {
 		Published: "Published",
 		Archieved: "Archieved"
 	};
+	private counter = 0;
+	private fetching = new HashSet<string>();
 
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 
@@ -86,12 +91,12 @@ export class NotificationsPage implements OnInit, OnDestroy {
 		this.label = await this.appFormsSvc.getResourceAsync("notifications.label");
 		await Promise.all(Object.keys(this.actions).map(async name => this.actions[name] = (await this.appFormsSvc.getResourceAsync("events." + name)).toLowerCase()));
 		await Promise.all(Object.keys(this.status).map(async name => this.status[name] = await this.appFormsSvc.getResourceAsync("status.approval." + name)));
-		this.getNotifications(() => this.appFormsSvc.hideLoadingAsync(() => this.searchAsync(() => this.searchAsync())));
+		this.getNotifications(() => this.appFormsSvc.hideLoadingAsync(() => this.searchNotificationsAsync(() => this.searchNotificationsAsync())));
 	}
 
 	async onInfiniteScrollAsync() {
 		if (this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : AppUtility.promise));
+			await this.searchNotificationsAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : AppUtility.promise));
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
 			await this.infiniteScrollCtrl.complete();
@@ -99,7 +104,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
 		}
 	}
 
-	private async searchAsync(onNext?: () => void) {
+	private async searchNotificationsAsync(onNext?: () => void) {
 		const request = AppPagination.buildRequest(this.filterBy, this.sortBy, this.pagination);
 		await this.notificationsSvc.searchNotificationsAsync(request, data => {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(request, this.paginationPrefix);
@@ -119,9 +124,18 @@ export class NotificationsPage implements OnInit, OnDestroy {
 	}
 
 	info(notification: Notification) {
-		const organization = AppUtility.isNotEmpty(notification.SystemID) ? Organization.get(notification.SystemID) : undefined;
-		if (organization === undefined && AppUtility.isNotEmpty(notification.SystemID)) {
-			AppUtility.invoke(() => this.portalsCoreSvc.getOrganizationAsync(notification.SystemID), 789);
+		const organization = Organization.get(notification.SystemID);
+		if (organization === undefined && AppUtility.isNotEmpty(notification.SystemID) && !this.fetching.contains(notification.SystemID)) {
+			this.counter = this.counter < 0 ? 0 : this.counter + 1;
+			this.fetching.add(notification.SystemID);
+			AppUtility.invoke(() => {
+				if (!Organization.contains(notification.SystemID)) {
+					this.portalsCoreSvc.getOrganizationAsync(notification.SystemID, _ => {
+						this.counter--;
+						this.fetching.remove(notification.SystemID);
+					});
+				}
+			}, 678 + (this.counter * 50), true);
 		}
 		return (organization !== undefined ? "[" + organization.Alias + "] " : "") + AppUtility.format(this.label, {
 			user: notification.SenderName,

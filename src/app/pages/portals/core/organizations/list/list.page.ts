@@ -190,7 +190,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 				this.organizations = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				this.search(() => this.appFormsSvc.hideLoadingAsync().then(() => this.infiniteScrollCtrl.disabled = false));
+				this.search(() => this.appFormsSvc.hideLoadingAsync(() => this.infiniteScrollCtrl.disabled = false));
 			}
 			else {
 				this.organizations = this.objects.filter(Organization.getFilterBy(this.filterBy.Query));

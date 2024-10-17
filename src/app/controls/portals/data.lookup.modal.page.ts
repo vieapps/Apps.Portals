@@ -152,7 +152,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			if (this.configSvc.isDebug) {
 				console.log(`[DataLookup]: lookup portal data (${this.objectName})`, `\n- Organization: ${this.organizationID}`, this.organization, `\n- Module: ${this.moduleID}`, this.module, `\n- Content Type: ${this.contentTypeID}`, this.contentType, "\n- Multiple & Nested:", this.multiple, this.nested, "\n- Filter:", this.filterBy);
 			}
-			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
+			await this.startSearchAsync(() => this.appFormsSvc.hideLoadingAsync());
 		}
 	}
 
@@ -238,10 +238,10 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			: items;
 	}
 
-	private async startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
+	private startSearchAsync(onNext?: () => void, pagination?: AppDataPagination) {
 		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.prepareSortBy() }) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
-		await this.searchAsync(onNext);
+		return this.searchAsync(onNext);
 	}
 
 	private async searchAsync(onNext?: () => void) {

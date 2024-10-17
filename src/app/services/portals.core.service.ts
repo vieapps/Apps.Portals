@@ -1928,9 +1928,9 @@ export class PortalsCoreService extends BaseService {
 			this.findVersionsAsync = async () => {
 				const info = this.versions.first();
 				if (this.configSvc.isDebug) {
-					console.log(`[Portals]: Find versions (${info.name}#${info.id}) - Queue: ${this.versions.length - 1} - WS: ${AppAPIs.isWebSocketReady}`);
+					console.log(`[Versions]: ${info.name}#${info.id} [${this.versions.length}/${AppAPIs.isWebSocketReady}]`);
 				}
-				await this.readAsync(this.getPath("versions", info.name, "object-id=" + info.id), _ => this.findNextVersions(), _ => this.findNextVersions(), { "x-update-messagae": AppAPIs.isWebSocketReady.toString() });
+				await this.readAsync(this.getPath("versions", info.name, "object-id=" + info.id), _ => this.findNextVersions(), _ => this.findNextVersions(), AppAPIs.isWebSocketReady ? undefined : { "x-update-messagae": "false" });
 			};
 			AppUtility.invoke(() => this.findVersionsAsync(), 567, true);
 		}
@@ -1940,6 +1940,9 @@ export class PortalsCoreService extends BaseService {
 		this.versions.removeAt(0);
 		if (this.versions.length < 1) {
 			this.findVersionsAsync = undefined;
+			if (this.configSvc.isDebug) {
+				console.log("[Versions]: No queued");
+			}
 		}
 		else {
 			AppUtility.invoke(() => this.findVersionsAsync(), 567, true);
@@ -2199,7 +2202,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	private processOrganizations(data: any, onNext?: (data?: any) => void, processModules: boolean = true) {
+	processOrganizations(data: any, onNext?: (data?: any) => void, processModules: boolean = true) {
 		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
 			(data.Objects as Array<any>).forEach(org => {
 				const organization = Organization.update(org);

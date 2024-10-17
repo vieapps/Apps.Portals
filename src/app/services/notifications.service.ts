@@ -29,12 +29,31 @@ export class NotificationsService extends BaseService {
 	}
 
 	fetchNotificationsAsync() {
-		return AppAPIs.sendRequestAsync({ ServiceName: this.name, ObjectName: "Notification", Verb: "GET", Query: { "object-identity": "fetch" } });
+		return AppUtility.invoke(() => this.sendRequestAsync({
+			ServiceName: this.name,
+			ObjectName: "Notification",
+			Query: { "object-identity": "fetch" },
+			Header: AppAPIs.isWebSocketReady ? undefined : { "x-update-messagae": "false" }
+		}, AppAPIs.isWebSocketReady ? undefined : data => this.updateNotifications(data !== undefined ? data.Objects : [])), 1234);
+	}
+
+	searchNotificationsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.searchAsync(
+			this.getSearchingPath("Notification"),
+			request,
+			data => {
+				this.updateNotifications(data !== undefined ? data.Objects : []);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while searching notifications", error, onError)
+		);
 	}
 
 	private updateNotifications(objects: Array<any>) {
 		let broadcast = false;
-		objects.forEach(obj => {
+		(objects || []).forEach(obj => {
 			const read = Notification.contains(obj.ID) ? Notification.get(obj.ID).Read : undefined;
 			const notification = Notification.update(obj);
 			if (read === undefined || read !== notification.Read) {
@@ -50,38 +69,6 @@ export class NotificationsService extends BaseService {
 		if (broadcast) {
 			AppEvents.broadcast("UpdateUnreadNotifications");
 		}
-	}
-
-	searchNotifications(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.search(
-			this.getSearchingPath("notification"),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					this.updateNotifications(data.Objects as Array<any>);
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching", error, onError)
-		);
-	}
-
-	searchNotificationsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.searchAsync(
-			this.getSearchingPath("notification"),
-			request,
-			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					this.updateNotifications(data.Objects as Array<any>);
-				}
-				if (onSuccess !== undefined) {
-					onSuccess(data);
-				}
-			},
-			error => this.processError("Error occurred while searching", error, onError)
-		);
 	}
 
 	updateNotificationAsync(notification: Notification, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {

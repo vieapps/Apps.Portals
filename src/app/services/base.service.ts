@@ -62,7 +62,7 @@ export class Base {
 
 	/** Prints the warning message to console/log file */
 	protected showWarning(message: string, ...optionalParams: any[]) {
-		console.warn(this.getMessage(message), optionalParams);
+		console.log(this.getMessage(message), optionalParams);
 	}
 
 	/** Gets the error message to print to console/log file */

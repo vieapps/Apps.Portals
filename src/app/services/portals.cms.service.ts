@@ -180,10 +180,16 @@ export class PortalsCmsService extends BaseService {
 		});
 
 		AppEvents.on("OpenNotification", async info => {
-			const object = (await this.getObjectAsync(info.args.ObjectID, info.args.ObjectName, true)).object;
-			if (object !== undefined && AppUtility.isNotEmpty(object.ID)) {
-				this.configSvc.navigateForwardAsync(object.routerURI);
+			await this.appFormsSvc.showLoadingAsync();
+			const notification = info.args;
+			let contentType = ContentType.get(notification.RepositoryEntityID);
+			if (contentType === undefined && AppUtility.isNotEmpty(notification.RepositoryEntityID)) {
+				await this.portalsCoreSvc.getOrganizationAsync(notification.SystemID, undefined, undefined, true, false);
+				await this.portalsCoreSvc.getModuleAsync(notification.RepositoryID, undefined, undefined, true);
+				await this.portalsCoreSvc.getContentTypeAsync(notification.RepositoryEntityID, _ => contentType = ContentType.get(notification.RepositoryEntityID), undefined, true);
 			}
+			const data = await this.getObjectAsync(notification.ObjectID, contentType !== undefined ? contentType.getObjectName() : notification.ObjectName, true);
+			await this.appFormsSvc.hideLoadingAsync(data.gotRights && data.object !== undefined && AppUtility.isNotEmpty(data.object.ID) ? () => this.configSvc.navigateForwardAsync(data.object.routerURI) : () => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
 		});
 	}
 

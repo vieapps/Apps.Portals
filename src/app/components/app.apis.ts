@@ -623,7 +623,7 @@ export class AppAPIs {
 			const requestMsg = {
 				ServiceName: request !== undefined ? request.ServiceName : requestInfo.ServiceName,
 				ObjectName: request !== undefined ? request.ObjectName : requestInfo.ObjectName,
-				Verb: requestInfo.Verb,
+				Verb: requestInfo.Verb || "GET",
 				Header: AppUtility.clone(requestInfo.Header || {}),
 				Query: AppUtility.clone((request !== undefined ? request.Query : requestInfo.Query) || {}),
 				Extra: requestInfo.Extra,
