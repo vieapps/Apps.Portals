@@ -268,6 +268,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 				.take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
 			this.organizations = results === undefined ? objects : this.organizations.concat(objects);
 		}
+		this.organizations = this.organizations.filter(organization => organization !== undefined && AppUtility.isNotEmpty(organization.ID));
 		this.organizations.forEach((organization, index) => this.fetchInfo(organization, index));
 		if (onNext !== undefined) {
 			onNext();

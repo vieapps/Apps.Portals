@@ -227,12 +227,13 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		control = formConfig.find(ctrl => ctrl.Name === "RepositoryEntityID");
 		if (AppUtility.isNotEmpty(this.expression.ID)) {
 			control.Hidden = true;
-			if (AppUtility.isNotEmpty(this.expression.RepositoryEntityID)) {
+			const contentType = ContentType.get(this.expression.RepositoryEntityID);
+			if (contentType !== undefined) {
 				formConfig.insert({
 					Name: "RepositoryEntity",
 					Type: "Text",
 					Segment: "basic",
-					Extras: { Text: ContentType.get(this.expression.RepositoryEntityID).Title },
+					Extras: { Text: contentType.Title },
 					Options: {
 						Label: control.Options.Label,
 						ReadOnly: true
