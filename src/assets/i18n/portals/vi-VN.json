@@ -523,13 +523,19 @@
 					"confirm": {
 						"new": "Chắc chắn muốn huỷ bỏ quá trình khởi tạo đơn vị - tổ chức?",
 						"cancel": "Chắc chắn muốn huỷ bỏ các thay đổi của đơn vị - tổ chức?",
-						"delete": "Chắc chắn muốn xoá bỏ đơn vị - tổ chức và các thông tin liên quan?"
+						"delete": "Chắc chắn muốn xoá bỏ đơn vị - tổ chức và toàn bộ các thông tin liên quan?",
+						"remove": "Đơn vị - tổ chức và toàn bộ các thông tin liên quan sẽ bị xoá bỏ (chuyển vào thùng rác và có thể khôi phục lại trong 30 ngày)."
 					},
 					"success": {
 						"new": "Đã khởi tạo đơn vị - tổ chức thành công",
 						"update": "Đã cập nhật các thay đổi của đơn vị - tổ chức thành công",
-						"delete": "Đã đưa đơn vị - tổ chức và các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
+						"delete": "Đã đưa đơn vị - tổ chức và toàn bộ các thông tin liên quan vào hàng đợi để chuyển vào thùng rác"
 					}
+				},
+				"buttons": {
+					"delete": "Xoá đơn vị - tổ chức",
+					"remove": "Đồng ý xoá",
+					"phrase": "Cụm từ bí mật"
 				}
 			}
 		},

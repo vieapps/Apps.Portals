@@ -224,7 +224,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 					{
 						Name: "Delete",
 						Label: "{{portals.modules.update.buttons.delete}}",
-						OnClick: async () => await this.deleteAsync(),
+						OnClick: () => this.deleteAsync(),
 						Options: {
 							Fill: "clear",
 							Color: "danger",
@@ -334,7 +334,7 @@ export class PortalsModulesUpdatePage implements OnInit {
 			undefined,
 			await this.configSvc.getResourceAsync("portals.modules.update.messages.confirm.delete"),
 			undefined,
-			() => AppUtility.invoke(async () => await this.removeAsync(), 123),
+			() => AppUtility.invoke(() => this.removeAsync(), 123),
 			await this.configSvc.getResourceAsync("common.buttons.delete"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
@@ -353,9 +353,9 @@ export class PortalsModulesUpdatePage implements OnInit {
 					async _ => await Promise.all([
 						this.trackAsync(button, "Delete"),
 						this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.modules.update.messages.success.delete")),
-						this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+						this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
 					]),
-					async error => await Promise.all([
+					error => Promise.all([
 						this.appFormsSvc.showErrorAsync(error),
 						this.trackAsync(button, "Delete")
 					])

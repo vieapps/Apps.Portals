@@ -120,8 +120,25 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "organization");
 		formConfig.forEach(ctrl => ctrl.Segment = "basic");
+
 		if (AppUtility.isNotEmpty(this.organization.ID)) {
 			formConfig.push(this.portalsCoreSvc.getAuditFormControl(this.organization, "basic"));
+			if (this.isSystemAdministrator) {
+				formConfig.push(this.appFormsSvc.getButtonControls("basic", {
+					Name: "Delete",
+					Label: "{{portals.organizations.update.buttons.delete}}",
+					OnClick: () => this.deleteAsync(),
+					Options: {
+						Fill: "clear",
+						Color: "danger",
+						Css: "ion-float-end",
+						Icon: {
+							Name: "trash",
+							Slot: "start"
+						}
+					}
+				}));
+			}
 		}
 
 		formConfig.push(
@@ -712,6 +729,52 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				await this.configSvc.getResourceAsync("common.buttons.cancel")
 			);
 		}
+	}
+
+	async deleteAsync() {
+		const button = await this.configSvc.getResourceAsync("portals.organizations.update.buttons.delete");
+		await this.trackAsync(button, "Delete");
+		await this.appFormsSvc.showAlertAsync(
+			undefined,
+			await this.configSvc.getResourceAsync("portals.organizations.update.messages.confirm.delete"),
+			undefined,
+			() => AppUtility.invoke(() => this.removeAsync(), 123),
+			await this.configSvc.getResourceAsync("common.buttons.delete"),
+			await this.configSvc.getResourceAsync("common.buttons.cancel")
+		);
+	}
+
+	async removeAsync() {
+		const button = await this.configSvc.getResourceAsync("portals.organizations.update.buttons.delete");
+		await this.appFormsSvc.showAlertAsync(
+			undefined,
+			await this.configSvc.getResourceAsync("portals.organizations.update.messages.confirm.delete"),
+			await this.configSvc.getResourceAsync("portals.organizations.update.messages.confirm.remove"),
+			async data => {
+				await this.appFormsSvc.showLoadingAsync(button);
+				await this.portalsCoreSvc.deleteOrganizationAsync(
+					this.organization.ID,
+					() => AppUtility.invoke(() => this.portalsCoreSvc.removeActiveOrganization(this.organization.ID)).then(async () => await Promise.all([
+						this.trackAsync(button, "Delete"),
+						this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.delete")),
+						this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
+					])),
+					error => Promise.all([
+						this.appFormsSvc.showErrorAsync(error),
+						this.trackAsync(button, "Delete")
+					]),
+					{ "x-phrase": (data || {}).phrase }
+				);
+			},
+			await this.configSvc.getResourceAsync("portals.organizations.update.buttons.remove"),
+			await this.configSvc.getResourceAsync("common.buttons.cancel"),
+			[{
+				name: "phrase",
+				type: "text",
+				value: undefined,
+				placeholder: await this.configSvc.getResourceAsync("portals.organizations.update.buttons.phrase")
+			}]
+		);
 	}
 
 	private async trackAsync(title: string, action?: string, category?: string) {

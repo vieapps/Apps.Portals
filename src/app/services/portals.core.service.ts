@@ -2178,7 +2178,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	deleteOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	deleteOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		return this.deleteAsync(
 			this.getPath("organization", id),
 			data => {
@@ -2187,7 +2187,8 @@ export class PortalsCoreService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError("Error occurred while deleting an organization", error, onError)
+			error => this.processError("Error occurred while deleting an organization", error, onError),
+			headers
 		);
 	}
 
