@@ -976,13 +976,15 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 					}]
 				}
 			};
-			const hosts = this.control.Extras["ckEditorTrustedHosts"];
-			if (AppUtility.isArray(hosts, true)) {
-				(hosts as Array<string>).filter(host => AppUtility.isNotEmpty(host)).forEach(host => this._ckEditorConfig.mediaEmbed.extraProviders.push({
+			this.configSvc.appConfig.URIs.medias.concat(this.control.Extras["ckEditorTrustedHosts"] as Array<string> || [])
+				.filter(host => AppUtility.isNotEmpty(host))
+				.map(host => host.indexOf("://") > 0 ? host.substring(host.indexOf("://") + 3) : host)
+				.map(host => host.indexOf("/") > 0 ? host.substring(0, host.indexOf("/")) : host)
+				.filter(host => this.configSvc.appConfig.URIs.files.indexOf(host) < 0)
+				.distinct().forEach(host => this._ckEditorConfig.mediaEmbed.extraProviders.push({
 					name: host,
 					url: AppUtility.toRegExp(`/^${host}/`)
 				}));
-			}
 			const linkSelector = this.control.Extras["ckEditorLinkSelector"];
 			if (AppUtility.isObject(linkSelector, true) && (AppUtility.isObject(linkSelector.content, true) || AppUtility.isObject(linkSelector.file, true))) {
 				this._ckEditorConfig.link = this._ckEditorConfig.link || {};
@@ -1035,14 +1037,14 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		editor.ui.getEditableElement().parentElement.insertBefore(editor.ui.view.toolbar.element, editor.ui.getEditableElement());
 	}
 
-	ckEditorSetData(data: any) {
+	ckEditorSetData(data: string) {
 		if (this.isTextEditorControl) {
 			this.elementRef.editorInstance.setData(data);
 		}
 	}
 
 	ckEditorGetData() {
-		return this.isTextEditorControl ? this.elementRef.editorInstance.getData() : undefined;
+		return this.isTextEditorControl ? this.elementRef.editorInstance.getData() as string : undefined;
 	}
 
 }

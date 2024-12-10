@@ -308,7 +308,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 				ctrl.Extras["ckEditorLinkSelector"] = linkSelector;
 				ctrl.Extras["ckEditorMediaSelector"] = mediaSelector;
 				ctrl.Extras["ckEditorSimpleUpload"] = AppUtility.isNotEmpty(this.content.ID) ? this.portalsCmsSvc.getFileHeaders(this.content) : undefined;
-				ctrl.Extras["ckEditorTrustedHosts"] = this.configSvc.appConfig.URIs.medias;
+				ctrl.Extras["ckEditorTrustedHosts"] = [this.portalsCoreSvc.activeOrganization.FakeFilesHttpURI ?? ""];
 			});
 		}
 
@@ -500,7 +500,18 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 			content.Details = this.portalsCmsSvc.normalizeTempTokens(content.Details, this.authSvc.getTempToken(this.content.Privileges));
 		})));
 		if (doUpdateTextEditors) {
-			this.formControls.filter(ctrl => ctrl.Type === "TextEditor").forEach(ctrl => ctrl.controlRef.ckEditorSetData(this.content[ctrl.Name]));
+			this.formControls.filter(ctrl => ctrl.Type === "TextEditor").forEach(ctrl => {
+				if (ctrl.controlRef !== undefined) {
+					ctrl.controlRef.ckEditorSetData(this.content[ctrl.Name]);
+				}
+				else {
+					AppUtility.invoke(() => {
+						if (ctrl.controlRef !== undefined) {
+							ctrl.controlRef.ckEditorSetData(this.content[ctrl.Name]);
+						}
+					}, 1234);
+				}
+			});
 		}
 	}
 

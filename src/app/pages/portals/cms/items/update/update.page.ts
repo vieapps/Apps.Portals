@@ -204,7 +204,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 				ctrl.Extras["ckEditorLinkSelector"] = linkSelector;
 				ctrl.Extras["ckEditorMediaSelector"] = mediaSelector;
 				ctrl.Extras["ckEditorSimpleUpload"] = AppUtility.isNotEmpty(this.item.ID) ? this.portalsCmsSvc.getFileHeaders(this.item) : undefined;
-				ctrl.Extras["ckEditorTrustedHosts"] = this.configSvc.appConfig.URIs.medias;
+				ctrl.Extras["ckEditorTrustedHosts"] = [this.portalsCoreSvc.activeOrganization.FakeFilesHttpURI ?? ""];
 			});
 		}
 

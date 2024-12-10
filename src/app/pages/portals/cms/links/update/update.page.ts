@@ -284,7 +284,7 @@ export class CmsLinksUpdatePage implements OnInit {
 			ctrl.Extras["ckEditorLinkSelector"] = linkSelector;
 			ctrl.Extras["ckEditorMediaSelector"] = mediaSelector;
 			ctrl.Extras["ckEditorSimpleUpload"] = AppUtility.isNotEmpty(this.link.ID) ? this.portalsCmsSvc.getFileHeaders(this.link) : undefined;
-			ctrl.Extras["ckEditorTrustedHosts"] = this.configSvc.appConfig.URIs.medias;
+			ctrl.Extras["ckEditorTrustedHosts"] = [this.portalsCoreSvc.activeOrganization.FakeFilesHttpURI ?? ""];
 		});
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Summary"));
