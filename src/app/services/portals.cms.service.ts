@@ -404,9 +404,9 @@ export class PortalsCmsService extends BaseService {
 						handlers: { onSelect: () => {} }
 					},
 					(attachments: AttachmentInfo[]) => {
-						let url = attachments !== undefined && attachments.length > 0 ? attachments[0].URIs.Direct : undefined;
-						url = url === undefined || tempToken === undefined ? url : url + (url.indexOf("?") > 0 ? "&" : "?") + "x-temp-token=" + tempToken;
-						onSelected(url);
+						const attachment = attachments !== undefined && attachments.length > 0 ? attachments[0] : undefined;
+						const link = attachment !== undefined ? attachment.URIs.Direct : undefined;
+						onSelected(link !== undefined && tempToken !== undefined ? `${link}${link.indexOf("?") > 0 ? "&" : "?"}x-temp-token=${tempToken}` : link);
 					}
 				)
 			};
@@ -429,9 +429,9 @@ export class PortalsCmsService extends BaseService {
 						handlers: { predicate: (attachment: AttachmentInfo) => attachment.isImage || attachment.isVideo || attachment.isAudio, onSelect: () => {} }
 					},
 					(attachments: AttachmentInfo[]) => {
-						let url = attachments !== undefined && attachments.length > 0 ? attachments[0].URIs.Direct : undefined;
-						url = url === undefined || tempToken === undefined ? url : url + (url.indexOf("?") > 0 ? "&" : "?") + "x-temp-token=" + tempToken;
-						onSelected(url);
+						const attachment = attachments !== undefined && attachments.length > 0 ? attachments[0] : undefined;
+						const link = attachment !== undefined ? attachment.URIs.Direct : undefined;
+						onSelected(link !== undefined && tempToken !== undefined ? `${link}${link.indexOf("?") > 0 ? "&" : "?"}x-temp-token=${tempToken}` : link, attachment !== undefined && (attachment.isVideo || attachment.isAudio) ? "media" : undefined);
 					}
 				)
 			}
@@ -682,10 +682,10 @@ export class PortalsCmsService extends BaseService {
 			onSuccess();
 		};
 		return isCmsItem
-			? this.searchItemsAsync(request, onSuccess, onError)
+			? this.searchItemsAsync(request, onSuccess, onError, true)
 			: isCmsForm
-				? this.searchFormsAsync(request, onSuccess, onError)
-				: this.searchContentsAsync(request, onSuccess, onError);
+				? this.searchFormsAsync(request, onSuccess, onError, true)
+				: this.searchContentsAsync(request, onSuccess, onError, true);
 	}
 
 	private prepareFeaturedContents(systemID: string) {
@@ -1126,7 +1126,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	searchContentsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchContentsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("cms.content", this.configSvc.relatedQuery),
 			request,
@@ -1138,7 +1138,10 @@ export class PortalsCmsService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError("Error occurred while searching contents", error, onError)
+			error => this.processError("Error occurred while searching contents", error, onError),
+			false,
+			undefined,
+			useXHR
 		);
 	}
 
@@ -1249,6 +1252,9 @@ export class PortalsCmsService extends BaseService {
 				break;
 		}
 		if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
+			if (this.configSvc.isDebug) {
+				this.showLog("Got an update message of a CMS content", message.Data);
+			}
 			AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: message.Data.CategoryID });
 			if (AppUtility.isArray(message.Data.OtherCategories)) {
 				(message.Data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: categoryID }));
@@ -1298,7 +1304,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	searchItemsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchItemsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("cms.item", this.configSvc.relatedQuery),
 			request,
@@ -1310,7 +1316,10 @@ export class PortalsCmsService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError("Error occurred while searching items", error, onError)
+			error => this.processError("Error occurred while searching items", error, onError),
+			false,
+			undefined,
+			useXHR
 		);
 	}
 
@@ -1713,7 +1722,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	searchFormsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	searchFormsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("CMS.Form", this.configSvc.relatedQuery),
 			request,
@@ -1725,7 +1734,10 @@ export class PortalsCmsService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError("Error occurred while searching form items", error, onError)
+			error => this.processError("Error occurred while searching form items", error, onError),
+			false,
+			undefined,
+			useXHR
 		);
 	}
 

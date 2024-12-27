@@ -96,7 +96,6 @@ export class Base {
 		* @param useXHR Set to true to always use XHR
 	*/
 	protected sendRequest(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		requestInfo.Header = this.getHeaders(requestInfo.Header);
 		const subscription = useXHR
 			? AppAPIs.sendRequest(requestInfo).subscribe(onSuccess, onError)
 			: AppAPIs.sendRequest(requestInfo, false, onSuccess, onError).subscribe();
@@ -114,7 +113,6 @@ export class Base {
 		* @param useXHR Set to true to always use XHR
 	*/
 	protected sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		requestInfo.Header = this.getHeaders(requestInfo.Header);
 		return AppAPIs.sendRequestAsync(requestInfo, onSuccess, onError, useXHR);
 	}
 

@@ -295,7 +295,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 			this.subscription = this.portalsCoreSvc.searchDesktops(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
 		}
 		else {
-			this.portalsCoreSvc.searchDesktopsAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
+			this.portalsCoreSvc.searchDesktopsAsync(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)), false, undefined, false, this.searching);
 		}
 	}
 
@@ -309,13 +309,16 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 				.sortBy("Title", { name: "LastModified", reverse: true })
 				.take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
 			this.desktops = results === undefined ? objects : this.desktops.concat(objects);
+			if (results !== undefined) {
+				AppUtility.invoke(() => this.desktops.filter(desktop => desktop.ParentID === undefined && desktop.childrenIDs === undefined).forEach(desktop => this.portalsCoreSvc.fetchDesktop(desktop, false)), 789);
+			}
 		}
 		if (onNext !== undefined) {
 			onNext();
 		}
 	}
 
-	private doRefresh(desktops: Desktop[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
+	private doRefresh(desktops: Desktop[], index: number, useXHR: boolean = false, onFreshenUp?: () => void, showLoading: boolean = true) {
 		const refreshNext: () => void = () => {
 			this.trackAsync(this.title.track, "Refresh");
 			if (index < desktops.length - 1) {
@@ -325,7 +328,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 				this.appFormsSvc.hideLoadingAsync(() => AppUtility.invoke(onFreshenUp !== undefined ? () => onFreshenUp() : undefined));
 			}
 		};
-		if (index === 0) {
+		if (index === 0 && showLoading) {
 			this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(this.configSvc.isDebug && desktops.length > 1 ? () => console.log(`--- Start to refresh ${desktops.length} desktops -----------------`) : () => {});
 		}
 		this.portalsCoreSvc.refreshDesktopAsync(desktops[index].ID, refreshNext, refreshNext, undefined, useXHR);

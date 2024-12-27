@@ -1,5 +1,5 @@
 import { Subscription } from "rxjs";
-import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
@@ -25,6 +25,8 @@ import { Organization } from "@app/models/portals.core.organization";
 export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private usersSvc: UsersService,
@@ -270,6 +272,9 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 		}
 		this.organizations = this.organizations.filter(organization => organization !== undefined && AppUtility.isNotEmpty(organization.ID));
 		this.organizations.forEach((organization, index) => this.fetchInfo(organization, index));
+		if (this.searching || this.configSvc.isElectronApp) {
+			this.zone.run(() => this.changeDetector.detectChanges());
+		}
 		if (onNext !== undefined) {
 			onNext();
 		}
@@ -278,7 +283,7 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 	private doFetch(organization: Organization) {
 		AppUtility.invoke(() => {
 			if (AppUtility.isNotEmpty(organization.OwnerID)) {
-				this.usersSvc.getProfileAsync(organization.OwnerID);
+				this.usersSvc.getProfileAsync(organization.OwnerID).then(() => this.zone.run(() => this.changeDetector.detectChanges()));
 			}
 		}, 123, true);
 	}

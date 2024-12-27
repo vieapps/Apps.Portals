@@ -1,6 +1,7 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
+import { AppEvents } from "@app/components/app.events";
 import { NestedObject, NotificationSettings, EmailSettings } from "@app/models/portals.base";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
@@ -107,6 +108,20 @@ export class Category extends CmsBaseModel implements NestedObject {
 
 	get showChildrenLink() {
 		return `${this.routerLink.replace("/update/", "/list/")}?x-request=${AppCrypto.jsonEncode({ ParentID: this.ID })}`;
+	}
+
+	copy(source: any, onCompleted?: (data: any, instance: Category) => void) {
+		return super.copy(source, data => {
+			if (AppUtility.isArray(data.Thumbnails, true)) {
+				this.updateThumbnails(data.Thumbnails, uri => AppEvents.broadcast("Portals", { Object: "CMS.Category", Type: "Thumbnail", ID: this.ID, SystemID: this.SystemID, RepositoryID: this.RepositoryID, RepositoryEntityID: this.RepositoryEntityID, ThumbnailURI: uri }));
+			}
+			if (AppUtility.isArray(data.Attachments, true)) {
+				this.updateAttachments(data.Attachments, () => AppEvents.broadcast("Portals", { Object: "CMS.Category", Type: "Attachment", ID: this.ID, SystemID: this.SystemID, RepositoryID: this.RepositoryID, RepositoryEntityID: this.RepositoryEntityID }));
+			}
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
 	}
 
 }

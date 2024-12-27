@@ -577,7 +577,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 								]);
 							},
 							error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false),
-							(content.Details as string || "").length > 524288
+							this.configSvc.appConfig.app.xhr.prefer || (content.Details as string || "").length > 524288
 						);
 					}
 				}
@@ -597,7 +597,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 							]);
 						},
 						error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false),
-						(content.Details as string || "").length > 524288
+						this.configSvc.appConfig.app.xhr.prefer || (content.Details as string || "").length > 524288
 					);
 				}
 			}

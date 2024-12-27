@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonInfiniteScroll } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
@@ -22,6 +22,8 @@ import { Notification } from "@app/models/notification";
 export class NotificationsPage implements OnInit, OnDestroy {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private notificationsSvc: NotificationsService,
@@ -114,6 +116,9 @@ export class NotificationsPage implements OnInit, OnDestroy {
 
 	private getNotifications(onNext?: () => void) {
 		this.notifications = Notification.instances.toArray().sortBy({ name: "Time", reverse: true });
+		if (this.configSvc.isElectronApp) {
+			this.zone.run(() => this.changeDetector.detectChanges());
+		}
 		if (onNext !== undefined) {
 			onNext();
 		}

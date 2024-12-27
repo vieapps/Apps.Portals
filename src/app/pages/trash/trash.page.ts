@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from "@angular/core";
+import { Component, OnInit, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonInfiniteScroll } from "@ionic/angular";
 import { AppUtility } from "@app/components/app.utility";
@@ -23,6 +23,8 @@ import { Organization, Module, ContentType } from "@app/models/portals.core.all"
 export class TrashPage implements OnInit {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private usersSvc: UsersService,
@@ -159,6 +161,9 @@ export class TrashPage implements OnInit {
 						}
 					}
 				});
+				if (this.configSvc.isElectronApp) {
+					this.zone.run(() => this.changeDetector.detectChanges());
+				}
 				this.appFormsSvc.hideLoadingAsync(onNext);
 			},
 			error => this.appFormsSvc.showErrorAsync(error)
@@ -204,6 +209,9 @@ export class TrashPage implements OnInit {
 			TrackingUtility.trackAsync({ title: this.title, category: "Trash", action: "Restore" }),
 			this.appFormsSvc.showAlertAsync(undefined, message, undefined, () => this.contents.removeAt(this.contents.findIndex(cnt => cnt.ID == content.ID)))
 		]);
+		if (this.configSvc.isElectronApp) {
+			this.zone.run(() => this.changeDetector.detectChanges());
+		}
 	}
 
 }

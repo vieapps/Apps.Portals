@@ -1,5 +1,5 @@
 import { Subscription } from "rxjs";
-import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList, IonCheckbox, ViewDidEnter } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
@@ -27,6 +27,8 @@ import { Category, Content } from "@app/models/portals.cms.all";
 export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private appFormsSvc: AppFormsService,
@@ -97,6 +99,10 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		return this.configSvc.locale;
 	}
 
+	get debounce() {
+		return this.configSvc.debounce;
+	}
+
 	get screenWidth() {
 		return this.configSvc.screenWidth;
 	}
@@ -114,12 +120,10 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	ngOnDestroy() {
-		if (!this.searching) {
-			AppEvents.off(this.portalsCoreSvc.name, `CMS.Contents:${(this.category !== undefined ? ":" + this.category.ID : "")}:Refresh`);
-		}
-		else if (this.subscription !== undefined) {
+		if (this.searching && this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 		}
+		AppEvents.off(this.portalsCoreSvc.name, `CMS.Contents:${(this.contentType !== undefined ? this.contentType.ID +":" : "")}${(this.category !== undefined ? this.category.ID + ":" : "")}Refresh`);
 	}
 
 	ionViewDidEnter() {
@@ -188,6 +192,13 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.search");
 			this.configSvc.appTitle = this.title.search = await this.configSvc.getResourceAsync("common.messages.searching");
 			this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.focus(this.searchCtrl));
+			if (this.configSvc.isElectronApp) {
+				AppEvents.on(this.portalsCoreSvc.name, info => {
+					if (info.args.Object === "CMS.Content" && info.args.Type === "Thumbnail" && (this.contentType !== undefined ? this.contentType.ID === info.args.RepositoryEntityID : true) && (this.category !== undefined ? this.category.ID === info.args.CategoryID || (info.args.CategoryIDs as Array<string> || []).findIndex(categoryID => categoryID === this.category.ID) > -1 : true)) {
+						this.zone.run(() => this.changeDetector.detectChanges());
+					}
+				}, `CMS.Contents:${(this.contentType !== undefined ? this.contentType.ID +":" : "")}${(this.category !== undefined ? this.category.ID +":" : "")}Refresh`);
+			}
 		}
 		else {
 			this.actions = [
@@ -219,9 +230,12 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 					this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up"));
 				}
 			}));
-
+			if (this.configSvc.isDebug) {
+				console.log("<CMS.Content>: Find contents", this.request);
+			}
+	
 			AppEvents.on(this.portalsCoreSvc.name, info => {
-				if (info.args.Object === "CMS.Content" && info.args.RepositoryEntityID === this.contentType.ID && this.category !== undefined && this.category.ID === info.args.CategoryID) {
+				if (info.args.Object === "CMS.Content" && (this.contentType !== undefined ? this.contentType.ID === info.args.RepositoryEntityID : true) && (this.category !== undefined ? this.category.ID === info.args.CategoryID || (info.args.CategoryIDs as Array<string> || []).findIndex(categoryID => categoryID === this.category.ID) > -1 : true)) {
 					if (info.args.Type === "Deleted") {
 						Content.instances.remove(info.args.ID);
 						this.contents.removeAt(this.contents.findIndex(content => content.ID === info.args.ID));
@@ -230,9 +244,14 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 					else if (info.args.Type === "Created") {
 						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
 					}
-					this.prepareResults(info.args.Type !== "Created" ? undefined : () => this.contents = this.contents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }));
+					if (info.args.Type !== "Thumbnail") {
+						this.prepareResults(info.args.Type !== "Created" ? undefined : () => this.contents = this.contents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }));
+					}
+					else if (this.configSvc.isElectronApp) {
+						this.zone.run(() => this.changeDetector.detectChanges());
+					}
 				}
-			}, `CMS.Contents:${(this.category !== undefined ? ":" + this.category.ID : "")}:Refresh`);
+			}, `CMS.Contents:${(this.contentType !== undefined ? this.contentType.ID +":" : "")}${(this.category !== undefined ? this.category.ID + ":" : "")}Refresh`);
 		}
 	}
 
@@ -258,6 +277,9 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 							PlatformUtility.focus(this.searchCtrl);
 						}
 					})));
+					if (this.configSvc.isDebug) {
+						console.log("<CMS.Content>: Search for contents", this.request);
+					}
 				});
 			}
 			else {
@@ -295,6 +317,9 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
 			this.search(() => this.trackAsync(this.searching ? this.title.search : this.title.track).then(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : () => {}));
+			if (this.configSvc.isDebug) {
+				console.log(`<CMS.Content>: ${this.searching ? "Search for" : "Find"} contents`, this.pageNumber, (this.pagination || {}).PageNumber, this.request);
+			}
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
 			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
@@ -312,15 +337,24 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	search(onNext?: () => void) {
-		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
-		if (this.configSvc.isDebug) {
-			console.log("<CMS.Content>: search for contents", this.request);
+		if (this.searching && this.pagination !== undefined) {
+			this.pagination.PageNumber++;
 		}
+		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onSuccess = (data?: any) => {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			if (this.pagination !== undefined) {
 				this.pageNumber++;
 				this.pagination.PageNumber = this.pageNumber;
+			}
+			if (this.configSvc.isDebug) {
+				console.log(`<CMS.Content>: Prepare contents (${this.searching ? "Search" : "Find"})`, this.pageNumber, (this.pagination || {}).PageNumber, data);
+				if (data !== undefined) {
+					const large = (data.Objects || []).filter(object => AppUtility.isNotEmpty(object.Details) && object.Details.length > 1024 * 1024);
+					if (!!large.length) {
+						console.log("<CMS.Content>: Large contents\r\n- " + AppUtility.toStr(large.map(object => object.Title), "\r\n- "));
+					}
+				}
 			}
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 		};
@@ -340,6 +374,9 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			const predicate: (content: Content) => boolean = object => object.SystemID === this.organization.ID && (this.module !== undefined ? object.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? object.RepositoryEntityID === this.contentType.ID : true) && (this.category !== undefined ? object.CategoryID === this.category.ID || (object.OtherCategories !== undefined && object.OtherCategories.indexOf(this.category.ID) > -1) : true);
 			const objects: Content[] = (results === undefined ? Content.instances.toArray(predicate) : Content.toArray(results).filter(predicate)).sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true });
 			this.contents.merge(results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects, true, (object, array) => array.findIndex(item => item.ID === object.ID));
+		}
+		if (this.searching || this.configSvc.isElectronApp) {
+			this.zone.run(() => this.changeDetector.detectChanges());
 		}
 		if (onNext !== undefined) {
 			onNext();

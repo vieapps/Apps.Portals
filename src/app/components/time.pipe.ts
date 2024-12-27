@@ -66,15 +66,15 @@ export class TimePipe implements PipeTransform, OnDestroy {
 
 	private setTimer(seconds: number) {
 		this.removeTimer();
-		seconds = Number.isNaN(seconds) 	// unknown
-			? 35 														// update every 35 seconds
-			: seconds < 60 									// less than 1 minute
-				? 15 													// update every 15 seconds
+		seconds = Number.isNaN(seconds) 			// unknown
+			? 35 											// update every 35 seconds
+			: seconds < 60 							// less than 1 minute
+				? 15 										// update every 15 seconds
 				: seconds < 60 * 60 					// less than an hour
-					? 60 												// update every 60 seconds
+					? 60 									// update every 60 seconds
 					: seconds < 60 * 60 * 24 		// less then a day
-						? 300 										// update every 5 minutes
-						: 3600; 									// update every hour
+						? 300 							// update every 5 minutes
+						: 3600; 							// update every hour
 		this.timer = interval(seconds * 1000).subscribe(_ => this.zone.run(() => this.changeDetector.markForCheck()));
 	}
 
@@ -85,16 +85,18 @@ export class TimePipe implements PipeTransform, OnDestroy {
 		}
 	}
 
-	transform(value: string | number | Date, locale?: string, format?: string) {
+	transform(value: string | number | Date, locale?: string, format?: string, timer: boolean = false) {
 		const time = new Date(value);
 		const ticks = new Date().getTime() - time.getTime();
 		const seconds = Math.round(Math.abs(ticks / 1000));
-		this.setTimer(seconds);
+		if (timer) {
+			this.setTimer(seconds);
+		}
 		if (Number.isNaN(seconds)) {
 			return "";
 		}
 
-		locale = (locale || "en_US").trim().substr(0, 2).toLowerCase();
+		locale = (locale || "en_US").trim().substring(0, 2).toLowerCase();
 		const resources = TimePipe.Resources[locale] || TimePipe.Resources["en"];
 
 		if (seconds <= 4) {

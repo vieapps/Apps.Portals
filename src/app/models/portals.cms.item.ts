@@ -1,5 +1,6 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
+import { AppEvents } from "@app/components/app.events";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
 export class Item extends CmsBaseModel {
@@ -85,12 +86,11 @@ export class Item extends CmsBaseModel {
 		return super.copy(source, data => {
 			this.normalizeExtendedProperties(data);
 			if (AppUtility.isArray(data.Thumbnails, true)) {
-				this.updateThumbnails(data.Thumbnails);
+				this.updateThumbnails(data.Thumbnails, uri => AppEvents.broadcast("Portals", { Object: "CMS.Item", Type: "Thumbnail", ID: this.ID, SystemID: this.SystemID, RepositoryID: this.RepositoryID, RepositoryEntityID: this.RepositoryEntityID, ThumbnailURI: uri }));
 			}
 			if (AppUtility.isArray(data.Attachments, true)) {
-				this.updateAttachments(data.Attachments);
+				this.updateAttachments(data.Attachments, () => AppEvents.broadcast("Portals", { Object: "CMS.Item", Type: "Attachment", ID: this.ID, SystemID: this.SystemID, RepositoryID: this.RepositoryID, RepositoryEntityID: this.RepositoryEntityID }));
 			}
-			this.ansiTitle = AppUtility.toANSI(this.Title).toLowerCase();
 			if (onCompleted !== undefined) {
 				onCompleted(data, this);
 			}

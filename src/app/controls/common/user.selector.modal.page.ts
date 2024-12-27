@@ -1,5 +1,5 @@
 import { Subscription } from "rxjs";
-import { Component, OnInit, OnDestroy, Input, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, Input, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
@@ -22,6 +22,8 @@ import { UserProfile } from "@app/models/user";
 export class UsersSelectorModalPage implements OnInit, OnDestroy {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
@@ -139,6 +141,9 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 	}
 
 	private async searchAsync(onNext?: () => void) {
+		if (this.searching && this.pagination !== undefined) {
+			this.pagination.PageNumber++;
+		}
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onSuccess = async (data: any) => {
 			this.pageNumber++;
@@ -152,6 +157,9 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 					.sortBy("Name", { name: "LastAccess", reverse: true })
 					.take(data === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
 				this.profiles = data === undefined ? objects : this.profiles.concat(objects);
+			}
+			if (this.searching || this.configSvc.isElectronApp) {
+				this.zone.run(() => this.changeDetector.detectChanges());
 			}
 			if (onNext !== undefined) {
 				onNext();

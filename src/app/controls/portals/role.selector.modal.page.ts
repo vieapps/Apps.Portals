@@ -1,5 +1,5 @@
 import { Subscription } from "rxjs";
-import { Component, OnInit, OnDestroy, Input, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, Input, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
@@ -22,6 +22,8 @@ import { Role } from "@app/models/portals.core.role";
 export class RolesSelectorModalPage implements OnInit, OnDestroy {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService
@@ -208,6 +210,9 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 	}
 
 	private search(onNext?: () => void) {
+		if (this.searching && this.pagination !== undefined) {
+			this.pagination.PageNumber++;
+		}
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onSuccess = (data: any) => {
 			this.pageNumber++;
@@ -221,6 +226,9 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 				this.roles = data !== undefined
 					? this.roles.concat(objects)
 					: objects.take(this.pagination === undefined ? 0 : this.pageNumber * this.pagination.PageSize);
+			}
+			if (this.searching || this.configSvc.isElectronApp) {
+				this.zone.run(() => this.changeDetector.detectChanges());
 			}
 			if (onNext !== undefined) {
 				onNext();

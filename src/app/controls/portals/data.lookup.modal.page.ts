@@ -1,5 +1,5 @@
 import { Subscription } from "rxjs";
-import { Component, OnInit, OnDestroy, Input, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, Input, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
@@ -22,6 +22,8 @@ import { Organization, Module, ContentType } from "@app/models/portals.core.all"
 export class DataLookupModalPage implements OnInit, OnDestroy {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService,
@@ -80,6 +82,10 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		return "Organization" === this.objectName;
 	}
 
+	get debounce() {
+		return this.configSvc.debounce;
+	}
+
 	private subscription: Subscription;
 	private organization: Organization;
 	private module: Module;
@@ -99,6 +105,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	items = new Array<DataItem>();
 	results = new Array<DataItem>();
 	searching = false;
+	searchInprogress = false;
 	selected = new Dictionary<string, DataItem>();
 
 	ngOnInit() {
@@ -173,7 +180,14 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			this.filterBy.Query = event.detail.value;
 			this.results = [];
 			this.selected.clear();
-			this.startSearchAsync(() => this.infiniteScrollCtrl.disabled = false, AppPagination.getDefault());
+			this.searchInprogress = true;
+			this.startSearchAsync(() => {
+				this.infiniteScrollCtrl.disabled = false;
+				this.searchInprogress = false;
+			}, AppPagination.getDefault());
+			if (this.configSvc.isDebug) {
+				console.log("[DataLookup]: Search for data", this.request);
+			}
 		}
 	}
 
@@ -190,13 +204,15 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		this.prepareFilterBy(true);
 	}
 
-	async onInfiniteScrollAsync() {
+	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : AppUtility.promise));
+			this.searchAsync(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : undefined);
+			if (this.configSvc.isDebug) {
+				console.log(`[DataLookup]: ${this.searching ? "Search for" : "Find"} data`, this.pageNumber, (this.pagination || {}).PageNumber, this.request);
+			}
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
-			await this.infiniteScrollCtrl.complete();
-			this.infiniteScrollCtrl.disabled = true;
+			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
 		}
 	}
 
@@ -245,6 +261,9 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 	}
 
 	private async searchAsync(onNext?: () => void) {
+		if (this.searching && this.pagination !== undefined) {
+			this.pagination.PageNumber++;
+		}
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.prepareSortBy(), this.pagination);
 		const onSuccess = async (data: any) => {
 			if (this.preProcess !== undefined) {
@@ -254,7 +273,7 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request);
 			this.pagination.PageNumber = this.pageNumber;
 			if (this.searching) {
-				this.results = this.results.concat(this.prepareItems((data.Objects as Array<DataItem>).filter(o => this.excludedIDs.indexOf(o.ID) < 0), false));
+				this.results.merge(this.prepareItems((data.Objects as Array<DataItem>).filter(o => this.excludedIDs.indexOf(o.ID) < 0), false));
 			}
 			else {
 				const objects = this.prepareItems(data.Objects as Array<DataItem>).filter(o => this.excludedIDs.indexOf(o.ID) < 0);
@@ -272,6 +291,12 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 				if (selected !== undefined) {
 					this.selected.set(selected.ID, selected);
 				}
+			}
+			if (this.searching || this.configSvc.isElectronApp) {
+				this.zone.run(() => this.changeDetector.detectChanges());
+			}
+			if (this.configSvc.isDebug) {
+				console.log(`[DataLookup]: Prepare data (${this.searching ? "Search" : "Find"})`, this.pageNumber, (this.pagination || {}).PageNumber, data);
 			}
 			if (onNext !== undefined) {
 				onNext();

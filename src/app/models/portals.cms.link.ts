@@ -1,6 +1,7 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
+import { AppEvents } from "@app/components/app.events";
 import { NestedObject } from "@app/models/portals.base";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
@@ -113,6 +114,12 @@ export class Link extends CmsBaseModel implements NestedObject {
 	copy(source: any, onCompleted?: (data: any, instance: Link) => void) {
 		return super.copy(source, data => {
 			this.normalizeExtendedProperties(data);
+			if (AppUtility.isArray(data.Thumbnails, true)) {
+				this.updateThumbnails(data.Thumbnails, uri => AppEvents.broadcast("Portals", { Object: "CMS.Link", Type: "Thumbnail", ID: this.ID, SystemID: this.SystemID, RepositoryID: this.RepositoryID, RepositoryEntityID: this.RepositoryEntityID, ParentID: this.ParentID, ThumbnailURI: uri }));
+			}
+			if (AppUtility.isArray(data.Attachments, true)) {
+				this.updateAttachments(data.Attachments, () => AppEvents.broadcast("Portals", { Object: "CMS.Link", Type: "Attachment", ID: this.ID, SystemID: this.SystemID, RepositoryID: this.RepositoryID, RepositoryEntityID: this.RepositoryEntityID, ParentID: this.ParentID }));
+			}
 			if (onCompleted !== undefined) {
 				onCompleted(data, this);
 			}

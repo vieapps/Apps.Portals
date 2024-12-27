@@ -1,5 +1,5 @@
 import { Subscription } from "rxjs";
-import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList, IonCheckbox, ViewDidEnter } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
@@ -27,6 +27,8 @@ import { Item } from "@app/models/portals.cms.item";
 export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private appFormsSvc: AppFormsService,
@@ -95,6 +97,10 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		return this.configSvc.locale;
 	}
 
+	get debounce() {
+		return this.configSvc.debounce;
+	}
+
 	get screenWidth() {
 		return this.configSvc.screenWidth;
 	}
@@ -112,12 +118,10 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	ngOnDestroy() {
-		if (!this.searching) {
-			AppEvents.off(this.portalsCoreSvc.name, "CMS.Items:Refresh");
-		}
-		else if (this.subscription !== undefined) {
+		if (this.searching && this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 		}
+		AppEvents.off(this.portalsCoreSvc.name, `CMS.Items:${(this.contentType !== undefined ? this.contentType.ID + ":" : "")}Refresh`);
 	}
 
 	ionViewDidEnter() {
@@ -182,6 +186,13 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.contents.list.search");
 			this.title.search = await this.configSvc.getResourceAsync("common.messages.searching");
 			this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.focus(this.searchCtrl));
+			if (this.configSvc.isElectronApp) {
+				AppEvents.on(this.portalsCoreSvc.name, info => {
+					if (info.args.Object === "CMS.Item" && info.args.Type === "Thumbnail" && (this.contentType !== undefined ? this.contentType.ID === info.args.RepositoryEntityID : true)) {
+						this.zone.run(() => this.changeDetector.detectChanges());
+					}
+				}, `CMS.Items:${(this.contentType !== undefined ? this.contentType.ID +":" : "")}Refresh`);
+			}
 		}
 		else {
 			this.actions = [
@@ -199,21 +210,28 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 			this.configSvc.appTitle = this.title.page = AppUtility.format(title, { info: `[${(this.contentType === undefined ? this.organization.Title : this.organization.Title + " :: " + this.contentType.Title)}]` });
 			this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
+			if (this.configSvc.isDebug) {
+				console.log("<CMS.Item>: Find items", this.request);
+			}
 
 			AppEvents.on(this.portalsCoreSvc.name, info => {
-				const args = info.args;
-				if (args.Object === "CMS.Item" && info.args.RepositoryEntityID === this.contentType.ID) {
-					if (args.Type === "Deleted") {
-						Item.instances.remove(args.ID);
-						this.items.removeAt(this.items.findIndex(item => item.ID === args.ID));
+				if (info.args.Object === "CMS.Item" && (this.contentType !== undefined ? this.contentType.ID === info.args.RepositoryEntityID : true)) {
+					if (info.args.Type === "Deleted") {
+						Item.instances.remove(info.args.ID);
+						this.items.removeAt(this.items.findIndex(item => item.ID === info.args.ID));
 						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
 					}
 					else if (info.args.Type === "Created") {
 						AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
 					}
-					this.prepareResults(info.args.Type !== "Created" ? undefined : () => this.items = this.items.sortBy({ name: "Created", reverse: true }));
+					if (info.args.Type !== "Thumbnail") {
+						this.prepareResults(info.args.Type !== "Created" ? undefined : () => this.items = this.items.sortBy({ name: "Created", reverse: true }));
+					}
+					else if (this.configSvc.isElectronApp) {
+						this.zone.run(() => this.changeDetector.detectChanges());
+					}
 				}
-			}, "CMS.Items:Refresh");
+			}, `CMS.Items:${(this.contentType !== undefined ? this.contentType.ID + ":" : "")}Refresh`);
 		}
 	}
 
@@ -241,6 +259,9 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 							PlatformUtility.focus(this.searchCtrl);
 						}
 					})));
+					if (this.configSvc.isDebug) {
+						console.log("<CMS.Item>: Search for items", this.request);
+					}
 				});
 			}
 			else {
@@ -278,6 +299,9 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
 			this.search(() => this.trackAsync(this.searching ? this.title.search : this.title.track).then(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : () => {}));
+			if (this.configSvc.isDebug) {
+				console.log(`<CMS.Item>: ${this.searching ? "Search for" : "Find"} items`, this.pageNumber, (this.pagination || {}).PageNumber, this.request);
+			}
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
 			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
@@ -295,12 +319,18 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	search(onNext?: () => void) {
+		if (this.searching && this.pagination !== undefined) {
+			this.pagination.PageNumber++;
+		}
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onSuccess = (data?: any) => {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
 			if (this.pagination !== undefined) {
 				this.pageNumber++;
 				this.pagination.PageNumber = this.pageNumber;
+			}
+			if (this.configSvc.isDebug) {
+				console.log(`<CMS.Item>: Prepare items (${this.searching ? "Search" : "Find"})`, this.pageNumber, (this.pagination || {}).PageNumber, data);
 			}
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
 		};
@@ -320,6 +350,9 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			const predicate: (item: Item) => boolean = object => object.SystemID === this.organization.ID && (this.module !== undefined ? object.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? object.RepositoryEntityID === this.contentType.ID : true);
 			const objects: Item[] = (results === undefined ? Item.instances.toArray(predicate) : Item.toArray(results).filter(predicate)).sortBy({ name: "Created", reverse: true });
 			this.items.merge(results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects, true, (object, array) => array.findIndex(item => item.ID === object.ID));
+		}
+		if (this.searching || this.configSvc.isElectronApp) {
+			this.zone.run(() => this.changeDetector.detectChanges());
 		}
 		if (onNext !== undefined) {
 			onNext();

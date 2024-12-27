@@ -1,10 +1,10 @@
-import { Component, OnInit, OnDestroy, Input, ChangeDetectorRef, NgZone } from "@angular/core";
+import { Component, OnInit, OnDestroy, Input, NgZone, ChangeDetectorRef } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
-import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
+import { FeaturedContent } from "@app/models/portals.cms.base";
 import { Category } from "@app/models/portals.cms.category";
 
 @Component({
@@ -16,8 +16,8 @@ import { Category } from "@app/models/portals.cms.category";
 export class FeaturedContentsControl implements OnInit, OnDestroy {
 
 	constructor(
-		private changeDetector: ChangeDetectorRef,
 		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService
@@ -32,6 +32,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 
 	contents = new Array<FeaturedContent>();
 	private _isPublished = false;
+	private _preparing = false;
 
 	get color() {
 		return this.configSvc.color;
@@ -70,14 +71,34 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}
 
 		AppEvents.on(this.portalsCmsSvc.name, info => {
-			const args = info.args;
 			const organization = this.portalsCoreSvc.activeOrganization;
 			if (organization !== undefined) {
-				if ("Organization" === args.Type && "Changed" === args.Mode) {
-					AppUtility.invoke(() => this.prepareContents(true), 234);
+				if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
+					AppUtility.invoke(() => {
+						if (this.configSvc.isDebug && !this._preparing) {
+							console.log("<FeaturedContents>: Prepare when change active organization");
+						}
+						this.prepareContents(true);
+					}, 234);
 				}
-				else if ("FeaturedContents" === args.Type && "Prepared" === args.Mode && organization.ID === args.ID) {
-					AppUtility.invoke(() => this.prepareContents(true), 345, true);
+				else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode && organization.ID === info.args.ID) {
+					AppUtility.invoke(() => {
+						if (this.configSvc.isDebug && !this._preparing) {
+							console.log("<FeaturedContents>: Prepare when got updated");
+						}
+						this.prepareContents(true);
+					}, 345, true);
+				}
+				else if (organization.ID === info.args.SystemID && !!info.args.ID && "Thumbnail" === info.args.Type && !!info.args.ThumbnailURI) {
+					AppUtility.invoke(() => {
+						const content = this.contents.find(object => object.ID === info.args.ID);
+						if (content !== undefined) {
+							content.ThumbnailURI = info.args.ThumbnailURI;
+							if (this.configSvc.isDebug) {
+								console.log(`<FeaturedContents/ThumbnailURI>: ${info.args.Object}#${info.args.ID}`);
+							}
+						}
+					}, 456, true);
 				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
@@ -100,7 +121,8 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 	}
 
 	private prepareContents(force: boolean = false) {
-		if (this.configSvc.isAuthenticated) {
+		if (this.configSvc.isAuthenticated && !this._preparing) {
+			this._preparing = true;
 			if (this.contents.length < 1 || force) {
 				const organization = this.portalsCoreSvc.activeOrganization;
 				const organizationID = organization !== undefined ? organization.ID : undefined;
@@ -132,11 +154,14 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 						OriginalObject: content
 					} as FeaturedContent;
 				}).filter(filterBy).orderBy(orderBy).take(this.amount);
-				this.zone.run(() => this.changeDetector.detectChanges());
 			}
 			if (this.contents.length < 1) {
 				AppEvents.broadcast(this.portalsCoreSvc.name, { Type: "FeaturedContents", Mode: "Request" });
 			}
+			this.zone.run(() => {
+				this.changeDetector.detectChanges();
+				this._preparing = false;
+			});
 		}
 	}
 
@@ -155,20 +180,4 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(object.OriginalObject.contentType, "view", object.Category ? object.CategoryTitle : undefined, { ID: object.ID }));
 	}
 
-}
-
-interface FeaturedContent {
-	ID: string;
-	Title: string;
-	Status: string;
-	ThumbnailURI: string;
-	Created: Date;
-	LastModified: Date;
-	StartDate: Date;
-	PublishedTime: Date;
-	SystemID: string;
-	Category: string;
-	CategoryTitle: string;
-	ContentType: string;
-	OriginalObject: CmsBaseModel;
 }

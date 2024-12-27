@@ -80,4 +80,14 @@ export class Notification extends BaseModel {
 		return undefined;
 	}
 
+	copy(source: any, onCompleted?: (data: any, instance: Notification) => void) {
+		return super.copy(source, data => {
+			this.Time = new Date(this.Time);
+			this.ansiTitle = AppUtility.toANSI(this.Title).toLowerCase();
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
+	}
+
 }

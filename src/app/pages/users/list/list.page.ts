@@ -1,5 +1,5 @@
 import { Subscription } from "rxjs";
-import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll } from "@ionic/angular";
 import { AppUtility } from "@app/components/app.utility";
@@ -23,6 +23,8 @@ import { RatingPoint } from "@app/models/rating.point";
 export class UsersListPage implements OnInit, OnDestroy {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
@@ -191,6 +193,9 @@ export class UsersListPage implements OnInit, OnDestroy {
 				.take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
 			this.profiles = results === undefined ? objects : this.profiles.concat(objects);
 			objects.forEach(obj => this.ratings[obj.ID] = obj.RatingPoints.get("General"));
+		}
+		if (this.searching || this.configSvc.isElectronApp) {
+			this.zone.run(() => this.changeDetector.detectChanges());
 		}
 		if (onNext !== undefined) {
 			onNext();

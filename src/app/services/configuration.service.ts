@@ -86,6 +86,11 @@ export class ConfigurationService extends BaseService {
 		return AppConfig.isWebApp;
 	}
 
+	/** Gets the state that determines is Electron app */
+	get isElectronApp() {
+		return this.electronSvc !== undefined && this.electronSvc.isElectronApp;
+	}
+
 	/** Gets the state that determines the app is running on iOS (native or web browser) */
 	get isRunningOnIOS() {
 		return AppConfig.isRunningOnIOS;
@@ -111,6 +116,11 @@ export class ConfigurationService extends BaseService {
 		return "dark" === AppConfig.options.theme ? "dark" : undefined;
 	}
 
+	/** Gets the debounce time for searching */
+	get debounce() {
+		return AppConfig.app.debounce;
+	}
+
 	/** Gets the locale data for working with i18n globalization */
 	getLocaleData(locale: string) {
 		return AppConfig.getLocaleData(locale);
@@ -128,7 +138,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Pushs/Adds an URL into stack of routes */
 	pushURL(url: string, params: { [key: string]: any }) {
-		url = url.indexOf("?") > 0 ? url.substr(0, url.indexOf("?")) : url;
+		url = url.indexOf("?") > 0 ? url.substring(0, url.indexOf("?")) : url;
 		if (url === AppConfig.URLs.home) {
 			AppConfig.URLs.stack.removeAll();
 		}
@@ -226,7 +236,6 @@ export class ConfigurationService extends BaseService {
 	prepare() {
 		const isCordova = this.platform.is("cordova");
 		const isNativeApp = isCordova && (this.device.platform === "iOS" || this.device.platform === "Android");
-		const isElectronApp = this.electronSvc !== undefined && this.electronSvc.isElectronApp;
 		const userAgent = navigator ? navigator.userAgent : "";
 		const platform = isNativeApp
 			? this.device.platform
@@ -278,11 +287,11 @@ export class ConfigurationService extends BaseService {
 			AppConfig.URLs.base = this.platformLocation.getBaseHrefFromDOM();
 			AppConfig.app.platform = `${platform} ${AppConfig.app.mode}`;
 			if (AppUtility.isEmpty(AppConfig.session.device)) {
-				AppConfig.session.device = `${AppCrypto.md5(`${userAgent}${Math.random()}`)}@${AppConfig.app.id}-${isElectronApp ? "electron" : "pwa"}`;
+				AppConfig.session.device = `${AppCrypto.md5(`${userAgent}${Math.random()}`)}@${AppConfig.app.id}-${this.isElectronApp ? "electron" : "pwa"}`;
 			}
 		}
 
-		if (isElectronApp) {
+		if (this.isElectronApp) {
 			AppEvents.initializeElectronService(this.electronSvc);
 			PlatformUtility.setElectronService(this.electronSvc);
 			AppConfig.app.shell = "Electron";

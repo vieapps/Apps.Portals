@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonInfiniteScroll, IonCheckbox } from "@ionic/angular";
 import { HashSet } from "@app/components/app.collections";
@@ -22,6 +22,8 @@ import { ServiceLog } from "@app/models/base";
 export class LogsListPage implements OnInit, OnDestroy {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
@@ -122,13 +124,12 @@ export class LogsListPage implements OnInit, OnDestroy {
 		return log !== undefined ? log.Logs.substring(0, 100) + (log.Logs.length > 100 ? "..." : "") : "";
 	}
 
-	async onInfiniteScrollAsync() {
+	onInfiniteScroll() {
 		if (this.pagination.PageNumber < this.pagination.TotalPages) {
-			await this.searchAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : AppUtility.promise));
+			this.searchAsync(async () => await (this.infiniteScrollCtrl !== undefined ? this.infiniteScrollCtrl.complete() : AppUtility.promise));
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
-			await this.infiniteScrollCtrl.complete();
-			this.infiniteScrollCtrl.disabled = true;
+			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
 		}
 	}
 
@@ -167,7 +168,13 @@ export class LogsListPage implements OnInit, OnDestroy {
 				this.pageNumber++;
 				this.pagination = AppPagination.getDefault(data);
 				this.pagination.PageNumber = this.pageNumber;
-				this.configSvc.serviceLogs.merge(data.Objects);
+				this.configSvc.serviceLogs.merge((data.Objects as Array<any>).map(object => {
+					object.Time = new Date(object.Time);
+					return object as ServiceLog;
+				}));
+				if (this.configSvc.isElectronApp) {
+					this.zone.run(() => this.changeDetector.detectChanges());
+				}
 				this.appFormsSvc.hideLoadingAsync(() => {
 					if (onNext !== undefined) {
 						onNext(data);

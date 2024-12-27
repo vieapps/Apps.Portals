@@ -1,5 +1,5 @@
 import { Subscription } from "rxjs";
-import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
 import { AppCrypto } from "@app/components/app.crypto";
@@ -27,6 +27,8 @@ import { Category } from "@app/models/portals.cms.category";
 export class CmsCategoriesListPage implements OnInit, OnDestroy {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private appFormsSvc: AppFormsService,
@@ -382,6 +384,9 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			const predicate: (category: Category) => boolean = obj => obj.SystemID === this.organization.ID && (this.module !== undefined ? obj.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? obj.RepositoryEntityID === this.contentType.ID : true) && obj.ParentID === this.parentID;
 			const objects: Category[] = (results === undefined ? Category.instances.toArray(predicate) : Category.toArray(results).filter(predicate)).sortBy("OrderIndex", "Title");
 			this.categories.merge(results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects, true, (object, array) => array.findIndex(item => item.ID === object.ID));
+		}
+		if (this.searching || this.configSvc.isElectronApp) {
+			this.zone.run(() => this.changeDetector.detectChanges());
 		}
 		if (onNext !== undefined) {
 			onNext();

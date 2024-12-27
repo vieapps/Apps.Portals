@@ -26,6 +26,7 @@ export abstract class PortalCmsBase extends BaseModel {
 	public SubTitle: string;
 	protected _thumbnails: AttachmentInfo[];
 	protected _attachments: AttachmentInfo[];
+	private _thumbnailURI: string;
 
 	get organization() {
 		const organization = AppUtility.isNotEmpty(this.SystemID) ? Organization.get(this.SystemID) : undefined;
@@ -64,13 +65,9 @@ export abstract class PortalCmsBase extends BaseModel {
 	}
 
 	get thumbnailURI() {
-		return this.thumbnails !== undefined && this.thumbnails.length > 0
-			? AppUtility.isObject(this.thumbnails[0].URIs, true)
-				? this.thumbnails[0].URIs.Direct
-				: AppUtility.isNotEmpty(this.thumbnails[0].URI)
-					? this.thumbnails[0].URI
-					: `${AppConfig.URIs.files}thumbnails/no-image.png`
-			: `${AppConfig.URIs.files}thumbnails/no-image.png`;
+		return this._thumbnailURI !== undefined
+			? AppConfig.nothumbnailURI
+			: PortalCmsBase.getThumbnailURI(this.thumbnails) || AppConfig.nothumbnailURI;
 	}
 
 	get thumbnails() {
@@ -124,6 +121,16 @@ export abstract class PortalCmsBase extends BaseModel {
 		}
 	}
 
+	static getThumbnailURI(thumbnails: AttachmentInfo[]) {
+		return thumbnails !== undefined && !!thumbnails.length
+			? AppUtility.isObject(thumbnails[0].URIs, true)
+				? thumbnails[0].URIs.Direct
+				: AppUtility.isNotEmpty(thumbnails[0].URI)
+					? thumbnails[0].URI
+					: undefined
+			: undefined;
+	}
+
 	normalizeExtendedProperties(data: any, onCompleted?: () => void) {
 		const contentType = this.contentType;
 		if (contentType !== undefined && AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
@@ -154,12 +161,47 @@ export abstract class PortalCmsBase extends BaseModel {
 		}
 	}
 
-	updateThumbnails(thumbnails: AttachmentInfo[]) {
+	updateThumbnails(thumbnails: AttachmentInfo[], onLoaded?: (uri: string) => void, onCompleted?: () => void) {
+		this._thumbnailURI = PortalCmsBase.getThumbnailURI(thumbnails);
+		if (this._thumbnailURI !== undefined) {
+			AppUtility.invoke(() => {
+				const image = new Image();
+				image.onload = () => {
+					if (onLoaded !== undefined) {
+						onLoaded(this._thumbnailURI);
+					}
+					this._thumbnailURI = undefined;
+				};
+				image.src = this._thumbnailURI;
+			}, 456);
+		}
 		this._thumbnails = thumbnails;
+		if (onCompleted !== undefined) {
+			onCompleted();
+		}
 	}
 
-	updateAttachments(attachments: AttachmentInfo[]) {
+	updateAttachments(attachments: AttachmentInfo[], onCompleted?: () => void) {
 		this._attachments = attachments;
+		if (onCompleted !== undefined) {
+			onCompleted();
+		}
 	}
 
+}
+
+export interface FeaturedContent {
+	ID: string;
+	Title: string;
+	Status: string;
+	ThumbnailURI: string;
+	Created: Date;
+	LastModified: Date;
+	StartDate: Date;
+	PublishedTime: Date;
+	SystemID: string;
+	Category: string;
+	CategoryTitle: string;
+	ContentType: string;
+	OriginalObject: PortalCmsBase;
 }

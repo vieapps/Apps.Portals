@@ -73,7 +73,7 @@
 				<ion-icon icon="time" slot="start"></ion-icon>
 				{{ labels.lastAccess }} 
 				<span title="{{ profile.LastAccess | date:'h:mm a @ d/M/y' }}" class="ion-margin-horizontal">
-					{{ profile.LastAccess | time:locale:'h:mm a @ d/M/y' }}
+					{{ profile.LastAccess | time:locale:'h:mm a @ d/M/y':false }}
 				</span>
 			</ion-item>
 		</ion-list>

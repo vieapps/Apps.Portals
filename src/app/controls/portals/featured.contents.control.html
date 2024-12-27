@@ -10,7 +10,7 @@
 				<img [src]="content.ThumbnailURI" />
 			</ion-thumbnail>
 			<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
-				{{ content.Created | date:'h:mm a @ d/M/y' }} <br/> {{ content.LastModified | time:locale }}
+				{{ content.Created | date:'h:mm a @ d/M/y' }} <br/> {{ content.LastModified | time:locale:undefined:false }}
 			</span>
 			<span [class]="'title ' + content.Status">
 				{{ content.Title }}

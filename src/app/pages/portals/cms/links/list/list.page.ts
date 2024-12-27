@@ -1,5 +1,5 @@
 import { Subscription } from "rxjs";
-import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonInfiniteScroll, IonList } from "@ionic/angular";
 import { AppCrypto } from "@app/components/app.crypto";
@@ -27,6 +27,8 @@ import { Link } from "@app/models/portals.cms.link";
 export class CmsLinksListPage implements OnInit, OnDestroy {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private appFormsSvc: AppFormsService,
@@ -52,7 +54,8 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 
 	title = {
 		page: "Links",
-		track: "Links"
+		track: "Links",
+		search: "Searching"
 	};
 	parentLink: Link;
 	links = new Array<Link>();
@@ -120,17 +123,10 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		if (!this.searching) {
-			if (this.parentLink !== undefined) {
-				AppEvents.off(this.portalsCoreSvc.name, `CMS.Links:${this.parentLink.ID}:Refresh`);
-			}
-			else {
-				AppEvents.off(this.portalsCoreSvc.name, "CMS.Links:Refresh");
-			}
-		}
-		else if (this.subscription !== undefined) {
+		if (this.searching && this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 		}
+		AppEvents.off(this.portalsCoreSvc.name, `CMS.Links:${(this.contentType !== undefined ? this.contentType.ID + ":" : "")}${(this.parentLink !== undefined ? this.parentLink.ID + ":" : "")}Refresh`);
 	}
 
 	private async initializeAsync() {
@@ -202,8 +198,16 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 
 		if (this.searching) {
 			this.searchCtrl.placeholder = await this.configSvc.getResourceAsync("portals.cms.links.list.search");
+			this.title.search = await this.configSvc.getResourceAsync("common.messages.searching");
 			this.prepareFilterBy(false);
 			this.prepareTitleAsync().then(() => this.appFormsSvc.hideLoadingAsync(() => PlatformUtility.focus(this.searchCtrl)));
+			if (this.configSvc.isElectronApp) {
+				AppEvents.on(this.portalsCoreSvc.name, info => {
+					if (info.args.Object === "CMS.Link" && info.args.Type === "Thumbnail" && (this.contentType !== undefined ? this.contentType.ID === info.args.RepositoryEntityID : true)) {
+						this.zone.run(() => this.changeDetector.detectChanges());
+					}
+				}, `CMS.Links:${(this.contentType !== undefined ? this.contentType.ID +":" : "")}Refresh`);
+			}
 		}
 		else {
 			this.prepareFilterBy();
@@ -227,17 +231,20 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 				this.prepareLinks();
 				this.prepareTitleAsync().then(() => this.appFormsSvc.hideLoadingAsync());
 				AppEvents.on(this.portalsCoreSvc.name, info => {
-					const args = info.args;
-					if (args.Object === "CMS.Link" && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type) && this.parentID === args.ParentID) {
-						this.prepareLinks();
+					if (info.args.Object === "CMS.Link") {
+						if (this.parentID === info.args.ParentID && ("Created" === info.args.Type || "Updated" === info.args.Type || "Deleted" === info.args.Type)) {
+							this.prepareLinks();
+						}
+						else if ("Thumbnail" === info.args.Type && this.configSvc.isElectronApp) {
+							this.zone.run(() => this.changeDetector.detectChanges());
+						}
 					}
-				}, `CMS.Links:${this.parentLink.ID}:Refresh`);
+				}, `CMS.Links:${this.contentType.ID}:${this.parentLink.ID}:Refresh`);
 			}
 			else {
 				this.prepareTitleAsync().then(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync()));
 				AppEvents.on(this.portalsCoreSvc.name, info => {
-					const args = info.args;
-					if (args.Object === "CMS.Link" && info.args.RepositoryEntityID === this.contentType.ID) {
+					if (info.args.Object === "CMS.Link" && (this.contentType !== undefined ? this.contentType.ID === info.args.RepositoryEntityID : true)) {
 						if (info.args.Type === "Created" && info.args.ParentID === undefined) {
 							AppPagination.remove(AppPagination.buildRequest(this.filterBy, this.sortBy), this.paginationPrefix);
 						}
@@ -246,9 +253,14 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 							Link.instances.remove(info.args.ID);
 							this.links.removeAt(this.links.findIndex(link => link.ID === info.args.ID));
 						}
-						this.prepareResults();
+						if (info.args.Type !== "Thumbnail") {
+							this.prepareResults();
+						}
+						else if (this.configSvc.isElectronApp) {
+							this.zone.run(() => this.changeDetector.detectChanges());
+						}
 					}
-				}, "CMS.Links:Refresh");
+				}, `CMS.Links:${(this.contentType !== undefined ? this.contentType.ID + ":" : "")}Refresh`);
 			}
 		}
 	}
@@ -303,7 +315,15 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 				this.links = [];
 				this.pageNumber = 0;
 				this.pagination = AppPagination.getDefault();
-				this.search(() => this.infiniteScrollCtrl.disabled = false);
+				this.search(() => this.trackAsync(this.title.search).then(() => this.appFormsSvc.hideLoadingAsync(() => {
+					this.infiniteScrollCtrl.disabled = false;
+					if (this.links.length < 1) {
+						PlatformUtility.focus(this.searchCtrl);
+					}
+				})));
+				if (this.configSvc.isDebug) {
+					console.log("<CMS.Link>: Search for links", this.request);
+				}
 			}
 			else {
 				this.prepareResults();
@@ -324,6 +344,9 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
 			this.search(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : undefined);
+			if (this.configSvc.isDebug) {
+				console.log(`<CMS.Link>: ${this.searching ? "Search for" : "Find"} links`, this.pageNumber, (this.pagination || {}).PageNumber, this.request);
+			}
 		}
 		else if (this.infiniteScrollCtrl !== undefined) {
 			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
@@ -341,6 +364,9 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	}
 
 	private search(onNext?: () => void) {
+		if (this.searching && this.pagination !== undefined) {
+			this.pagination.PageNumber++;
+		}
 		this.request = AppPagination.buildRequest(this.filterBy, this.searching ? undefined : this.sortBy, this.pagination);
 		const onSuccess = (data: any) => {
 			this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request, this.paginationPrefix);
@@ -348,8 +374,10 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 				this.pageNumber++;
 				this.pagination.PageNumber = this.pageNumber;
 			}
+			if (this.configSvc.isDebug) {
+				console.log(`<CMS.Link>: Prepare links (${this.searching ? "Search" : "Find"})`, this.pageNumber, (this.pagination || {}).PageNumber, data || Link.instances.toArray(object => object.SystemID === this.organization.ID && (this.module !== undefined ? object.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? object.RepositoryEntityID === this.contentType.ID : true) && object.ParentID === this.parentID).sortBy("OrderIndex", "Title"));
+			}
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			this.trackAsync(this.title.track);
 		};
 		if (this.searching) {
 			this.subscription = this.portalsCmsSvc.searchLinks(this.request, onSuccess, error => this.appFormsSvc.showErrorAsync(error).then(() => this.trackAsync(this.title.track)));
@@ -377,6 +405,9 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			const predicate: (link: Link) => boolean = object => object.SystemID === this.organization.ID && (this.module !== undefined ? object.RepositoryID === this.module.ID : true) && (this.contentType !== undefined ? object.RepositoryEntityID === this.contentType.ID : true) && object.ParentID === this.parentID;
 			const objects = (results === undefined ? Link.instances.toArray(predicate) : Link.toArray(results).filter(predicate)).sortBy("OrderIndex", "Title");
 			this.links.merge(results === undefined && this.pagination !== undefined ? objects.take(this.pageNumber * this.pagination.PageSize) : objects, true, (object, array) => array.findIndex(item => item.ID === object.ID));
+		}
+		if (this.searching || this.configSvc.isElectronApp) {
+			this.zone.run(() => this.changeDetector.detectChanges());
 		}
 		if (onNext !== undefined) {
 			onNext();

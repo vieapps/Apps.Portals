@@ -28,7 +28,7 @@
 				</ion-buttons>
 				<ion-label>
 					<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
-						{{ task.Time | time:locale }}
+						{{ task.Time | time:locale:undefined:true }}
 					</span>
 					<span [class]="'title ' + task.Status">
 						{{ task.Title }}

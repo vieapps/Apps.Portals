@@ -38,8 +38,8 @@ export class FilesService extends BaseService {
 	}
 
 	private authenticate() {
-		const url = AppAPIs.getURL("avatars/default.png", this.configSvc.appConfig.URIs.files) + "?" + AppUtility.toQuery(this.getHeaders()) + "&x-authenticate=true&x-response=json";
-		AppUtility.toAsync(this.http.get(url)).then(() => console.log("[Files]: was authenticated")).catch(error => console.error("[Files]: error occurred while authenticating with file services", error));
+		const url = AppAPIs.getURL("avatars/default.png", this.configSvc.appConfig.URIs.files) + `?x-authenticate=true&x-response=json&${AppUtility.toQuery(this.getHeaders())}`;
+		AppUtility.toAsync(this.http.get(url, { headers: this.getHeaders() })).then(() => console.log("[Files]: was authenticated")).catch(error => console.error("[Files]: error occurred while authenticating with file services", error));
 	}
 
 	readAsDataURL(file: File, onRead: (data: string) => void, limitSize?: number, onLimitExceeded?: (fileSize?: number, limitSize?: number) => void) {
@@ -193,16 +193,17 @@ export class FilesService extends BaseService {
 		}
 		attachment.friendlyFilename = attachment.Filename.length < 47
 			? attachment.Filename
-			: attachment.Filename.substr(0, 40) + "..." + attachment.Filename.substr(attachment.Filename.length - 4);
+			: attachment.Filename.substring(0, 40) + "..." + attachment.Filename.substring(attachment.Filename.length - 4);
 		return attachment;
 	}
 
 	getThumbnailURI(attachment: AttachmentInfo) {
-		return AppUtility.isObject(attachment.URIs, true)
+		const uri = AppUtility.isObject(attachment.URIs, true)
 			? attachment.URIs.Direct
 			: AppUtility.isNotEmpty(attachment.URI)
 				? attachment.URI
-				: this.configSvc.appConfig.URIs.files + "thumbnails/no-image.png";
+				: this.configSvc.appConfig.nothumbnailURI;
+		return uri + (uri.endsWith(".jpg") ? "" : ".jpg");
 	}
 
 	prepareAttachmentsFormControl(formControl: AppFormsControl, isThumbnails: boolean, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo, onCompleted?: (control: AppFormsControl) => void) {

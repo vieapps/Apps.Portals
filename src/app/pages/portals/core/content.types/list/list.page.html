@@ -59,7 +59,7 @@
 				</ion-buttons>
 				<ion-label>
 					<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
-						{{ contentType.Created | date:'h:mm a @ d/M/y' }} <br/> {{ contentType.LastModified | date:'h:mm a @ d/M/y' }}
+						{{ contentType.Created | date:'h:mm a @ d/M/y' }} <br/> {{ contentType.LastModified | time:locale:undefined:false }}
 					</span>
 					<span>
 						{{ contentType.Title }}

@@ -34,15 +34,20 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "9.2412.1",
+		version: "9.2501.1",
 		frameworks: "ionic 5 - angular 11 - cordova 11",
 		mode: "",
 		platform: "",
 		os: "",
-		shell: "",
+		shell: "Browser",
+		debounce: 1234,
 		persistence: true,
+		offline: false,
 		debug: false,
-		offline: false
+		xhr: {
+			prefer: true,
+			tokenInQuery: false
+		}
 	};
 
 	/** App session */
@@ -178,6 +183,10 @@ export class AppConfig {
 		};
 	}
 
+	static get nothumbnailURI() {
+		return `${AppConfig.URIs.files}thumbnails/no-image.png`;
+	}
+
 	/** Tracking information */
 	static tracking = {
 		google: [] as Array<string>,
@@ -217,9 +226,14 @@ export class AppConfig {
 		return this.app.mode === "NTA";
 	}
 
+	/** Gets the state that determines is Electron app */
+	static get isElectronApp() {
+		return !this.isNativeApp && this.app.shell === "Electron";
+	}
+
 	/** Gets the state that determines is web progressive app */
 	static get isWebApp() {
-		return !this.isNativeApp && this.app.shell !== "Electron";
+		return !this.isNativeApp && !this.isElectronApp;
 	}
 
 	/** Gets the state that determines the app is running on iOS (native or web browser) */
@@ -230,11 +244,6 @@ export class AppConfig {
 	/** Gets the state that determines the app is running in debug mode */
 	static get isDebug() {
 		return this.app.debug;
-	}
-
-	/** Gets the state that determines the app is running in offline mode */
-	static get isOffline() {
-		return this.app.offline;
 	}
 
 	/** Gets the token of the app (JSON Web Token that encoded by base64url) */
@@ -305,24 +314,8 @@ export class AppConfig {
 		return AppUtility.toQuery(this.getRelatedJson(undefined, service, activeID, onCompleted));
 	}
 
-	/** Gets the authenticated information for making requests to APIs */
-	static getAuthenticatedInfo(addToken: boolean = true, addAppInfo: boolean = true, addDeviceID: boolean = true) {
-		const info: { [key: string]: string } = {};
-		if (addToken && AppUtility.isObject(this.session.token, true) && AppUtility.isObject(this.session.keys, true) && AppUtility.isNotEmpty(this.session.keys.jwt)) {
-			info["x-app-token"] = this.jwt;
-		}
-		if (addAppInfo) {
-			info["x-app-name"] = this.app.name;
-			info["x-app-platform"] = this.app.platform;
-		}
-		if (addDeviceID && AppUtility.isNotEmpty(this.session.device)) {
-			info["x-device-id"] = this.session.device;
-		}
-		return info;
-	}
-
 	/** Gets the captcha information for making requests to APIs */
-	static getCaptchaInfo(captcha: string) {
+	static getCaptcha(captcha: string) {
 		return {
 			"x-captcha": "true",
 			"x-captcha-registered": AppCrypto.aesEncrypt(this.session.captcha.code),

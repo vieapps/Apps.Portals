@@ -99,19 +99,23 @@ export class AppAPIs {
 		}
 	}
 
-	/** Gets the absolute URL to send a request to APIs */
-	static getURL(url: string, endpoint?: string) {
-		return (url.startsWith("https://") || url.startsWith("http://") ? "" : endpoint || AppConfig.URIs.apis) + url;
-	}
-
 	/** Gets the headers that include the authenticated information */
 	static getHeaders(additional?: any, onCompleted?: (headers: { [key: string]: string }) => void) {
-		const headers = AppConfig.getAuthenticatedInfo();
+		const headers: { [key: string]: string } = {};
 		AppUtility.toKeyValuePair(additional, kvp => AppUtility.isNotNull(kvp.value)).forEach(kvp => headers[kvp.key.toString()] = kvp.value.toString());
+		headers["x-app-token"] = AppConfig.jwt;
+		headers["x-app-name"] = AppConfig.app.name;
+		headers["x-app-platform"] = AppConfig.app.platform;
+		headers["x-device-id"] = AppConfig.session.device;
 		if (onCompleted !== undefined) {
 			onCompleted(headers);
 		}
 		return headers;
+	}
+
+	/** Gets the absolute URL to send a request to APIs */
+	static getURL(url: string, endpoint?: string) {
+		return (url.startsWith("https://") || url.startsWith("http://") ? "" : endpoint || AppConfig.URIs.apis) + url;
 	}
 
 	/** Parses the requesting information */
@@ -475,7 +479,7 @@ export class AppAPIs {
 	}
 
 	private static canUseWebSocket(useXHR: boolean = false) {
-		let can = !useXHR && this.isWebSocketReady;
+		let can = !AppConfig.app.xhr.prefer && !useXHR && this.isWebSocketReady;
 		if (can && this.isPingPeriodTooLarge) {
 			can = false;
 			this.reopenWebSocket("[AppAPIs]: Ping period is too large...");
@@ -591,7 +595,7 @@ export class AppAPIs {
 			case "PUT":
 				return http.put(url, body, options);
 			case "PATCH":
-				return http.patch(url, options);
+				return http.patch(url, body, options);
 			case "DELETE":
 				return http.delete(url, options);
 			default:
@@ -607,7 +611,7 @@ export class AppAPIs {
 		* @param body The JSON object that contains the body to perform the request
 	*/
 	static sendXMLHttpRequestAsync(verb: string, url: string, headers?: any, body?: any) {
-		return AppUtility.toAsync(this.sendXMLHttpRequest(verb, url, { headers: this.getHeaders(headers) }, body));
+		return AppUtility.toAsync(this.sendXMLHttpRequest(verb, url, { headers: headers }, body));
 	}
 
 	/**
@@ -634,6 +638,9 @@ export class AppAPIs {
 			if (request !== undefined && AppUtility.isNotEmpty(request.ObjectIdentity)) {
 				requestMsg.Query["object-identity"] = request.ObjectIdentity;
 			}
+			if (AppConfig.isDebug) {
+				requestMsg.Query["x-logs"] = "true";
+			}
 			this.sendWebSocketRequest(requestMsg, onSuccess, onError);
 			return EmptyObservable;
 		}
@@ -647,7 +654,10 @@ export class AppAPIs {
 				path = `${requestInfo.ServiceName}${AppUtility.isNotEmpty(requestInfo.ObjectName) ? `/${requestInfo.ObjectName}` : ""}${AppUtility.isNotEmpty(objectIdentity) ? `/${objectIdentity}` : ""}${query === "?" ? "" : query}`;
 			}
 			path += requestInfo.Extra !== undefined ? (path.indexOf("?") > 0 ? "&" : "?") + `x-request-extra=${AppCrypto.jsonEncode(requestInfo.Extra)}` : "";
-			return this.sendXMLHttpRequest(requestInfo.Verb, this.getURL(path), { headers: requestInfo.Header }, requestInfo.Body);
+			const headers = this.getHeaders(requestInfo.Header);
+			const query = (AppConfig.isDebug ? "x-logs=true" : "") + (AppConfig.app.xhr.tokenInQuery ? (AppConfig.isDebug ? "&" : "") + AppUtility.toQuery(headers) : "");
+			const url = this.getURL(path);
+			return this.sendXMLHttpRequest(requestInfo.Verb, url + (query === "" ? "" : (url.indexOf("?") > 0 ? "&" : "?") + query), AppConfig.app.xhr.tokenInQuery ? undefined : { headers: headers }, requestInfo.Body);
 		}
 	}
 

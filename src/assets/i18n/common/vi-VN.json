@@ -74,7 +74,10 @@
 			"flushCache": "Xoá dữ liệu toàn bộ cache",
 			"options": {
 				"language": "Ngôn ngữ",
-				"theme": "Sử dụng theme màu tối"
+				"theme": "Sử dụng theme màu tối",
+				"xhr": "Sử dụng XHR",
+				"xhrToken": "Sử dụng XHR Query Token",
+				"debug": "Bật debug logs"
 			},
 			"apps": {
 				"desktop": "Apps cho máy tính",

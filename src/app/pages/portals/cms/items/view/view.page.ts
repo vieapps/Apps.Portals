@@ -169,6 +169,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 				if (args.Type === "Updated") {
 					this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => cfg.Name === control.Name).Hidden ? true : false);
 					this.prepareValues();
+					(this.item.attachments || []).forEach(attachment => this.filesSvc.prepareAttachment(attachment));
 				}
 				else if (args.Type === "Deleted") {
 					this.cancel();

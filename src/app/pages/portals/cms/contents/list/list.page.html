@@ -15,11 +15,11 @@
 			{{ title.page }}
 		</ion-title>
 		<ion-searchbar
-			debounce="450"
 			showCancelButton="always"
 			cancelButtonIcon="arrow-back"
 			enterkeyhint="search"
 			inputmode="search"
+			[debounce]="debounce"
 			[hidden]="!searching && !filtering"
 			[cancelButtonText]="labels.cancel"
 			(ionChange)="onSearch($event)"
@@ -47,7 +47,7 @@
 	</ion-toolbar>
 </ion-footer>
 
-<ion-content [color]="color">
+<ion-content [color]="color" role="feed">
 	<ion-fab *ngIf="canUpdate" vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button (click)="create()">
       <ion-icon name="add"></ion-icon>
@@ -55,7 +55,7 @@
   </ion-fab>
 	<ion-list>
 		<ion-item-sliding *ngFor="let content of contents; trackBy: track">
-			<ion-item [color]="color" (click)="view($event, content)" class="ion-activatable" detail="false">
+			<ion-item [color]="color" (click)="view($event, content)" class="ion-activatable" detail="false" role="article">
 				<ion-buttons slot="end">
 					<ion-button *ngIf="canUpdate" fill="clear" color="primary" [title]="buttons.edit" (click)="edit($event, content)">
 						<ion-icon name="create" slot="icon-only"></ion-icon>
@@ -72,7 +72,7 @@
 						<img [src]="content.thumbnailURI" />
 					</ion-thumbnail>
 					<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
-						{{ content.Created | date:'h:mm a @ d/M/y' }} <br/> {{ content.LastModified | time:locale }}
+						{{ content.Created | date:'h:mm a @ d/M/y' }} <br/> {{ content.LastModified | time:locale:undefined:false }}
 					</span>
 					<span [class]="'title ' + content.Status">
 						{{ content.Title }}
@@ -114,7 +114,7 @@
 			</ion-item-options>
 		</ion-item-sliding>
 	</ion-list>
-	<ion-infinite-scroll threshold="288px" position="bottom" (ionInfinite)="onInfiniteScroll()">
+	<ion-infinite-scroll threshold="500px" position="bottom" (ionInfinite)="onInfiniteScroll()">
 		<ion-infinite-scroll-content></ion-infinite-scroll-content>
 	</ion-infinite-scroll>
 </ion-content>

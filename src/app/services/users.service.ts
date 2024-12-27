@@ -131,7 +131,7 @@ export class UsersService extends BaseService {
 			}),
 			onSuccess,
 			onError,
-			this.configSvc.appConfig.getCaptchaInfo(captcha)
+			this.configSvc.appConfig.getCaptcha(captcha)
 		);
 	}
 

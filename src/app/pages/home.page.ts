@@ -19,7 +19,6 @@ export class HomePage implements OnInit, OnDestroy {
 
 	title = "Home";
 	titleResource = "common.sidebar.home";
-	changes: number;
 
 	get color() {
 		return this.configSvc.color;
@@ -35,23 +34,19 @@ export class HomePage implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		if (this.configSvc.isReady) {
-			this.prepare();
+			this.prepareAsync();
 		}
 
 		AppEvents.on("App", info => {
 			const args = info.args;
 			if ("Initialized" === args.Type) {
-				this.prepare();
+				this.prepareAsync();
 			}
 			else if ("Language" === args.Type && "Changed" === args.Mode) {
 				this.setTitleAsync();
 			}
 			else if ("Router" === args.Type && "Navigated" === args.Mode && this.configSvc.appConfig.URLs.home === args.URL) {
-				AppUtility.invoke(() => {
-					this.prepare("Return");
-					AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Return" });
-				});
-				this.changes = +new Date();
+				AppUtility.invoke(() => this.prepareAsync("Return").then(() => AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Return" })), 345, true);
 			}
 			else if ("HomePage" === args.Type && "SetTitle" === args.Mode) {
 				this.titleResource = args.ResourceID || "common.sidebar.home";
@@ -63,8 +58,8 @@ export class HomePage implements OnInit, OnDestroy {
 		AppEvents.off("App", "HomePageEvents");
 	}
 
-	private prepare(action?: string) {
-		this.setTitleAsync().then(() => TrackingUtility.trackAsync({ title: this.title, category: "Home", action: action || "Open" }));
+	private prepareAsync(action?: string) {
+		return this.setTitleAsync().then(() => TrackingUtility.trackAsync({ title: this.title, category: "Home", action: action || "Open" }));
 	}
 
 	private async setTitleAsync() {

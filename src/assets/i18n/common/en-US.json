@@ -69,7 +69,10 @@
 			"label": "Preferences",			
 			"options": {
 				"language": "Language",
-				"theme": "Use dark-theme"
+				"theme": "Use dark-theme",
+				"xhr": "Prefer XHR",
+				"xhrToken": "Prefer XHR Query Token",
+				"debug": "Turn on debug logs"
 			},
 			"notifications": "Notifications",
 			"apps": {

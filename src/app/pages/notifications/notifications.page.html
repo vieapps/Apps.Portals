@@ -30,7 +30,7 @@
 		<ion-item *ngFor="let notification of notifications; trackBy: track" [color]="color" (click)="open(notification)" class="ion-activatable" detail="false">
 			<ion-label>
 				<label class="ion-float-end ion-padding-start">
-					{{ notification.Time | time:locale }}
+					{{ notification.Time | time:locale:undefined:false }}
 					<ion-icon name="radio-button-on-outline" [class]="indicatorCss(notification)"></ion-icon>
 				</label>
 				<span>

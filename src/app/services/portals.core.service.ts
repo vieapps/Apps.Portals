@@ -109,7 +109,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	get allowSelectActiveOrganization() {
-		return false;
+		return true;
 	}
 
 	initialize() {
@@ -373,6 +373,17 @@ export class PortalsCoreService extends BaseService {
 		}
 		if (Organization.active !== undefined) {
 			this.fetchSchedulingTasks();
+			if (this.configSvc.isDebug) {
+				this.showWarning("Fetch sheduling tasks of the active organization", this.activeOrganization);
+			}
+			if (!!!Desktop.instances.first(desktop => desktop.SystemID === Organization.active.ID)) {
+				AppUtility.invoke(() => {
+					this.fetchDesktops();
+					if (this.configSvc.isDebug) {
+						this.showWarning("Fetch desktops the active organization", this.activeOrganization);
+					}
+				}, 789, true);
+			}
 		}
 		if (onNext !== undefined) {
 			onNext();
@@ -3022,7 +3033,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	searchDesktopsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false) {
+	searchDesktopsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false, fetchChildren: boolean = true) {
 		return this.searchAsync(
 			this.getSearchingPath("desktop", this.configSvc.relatedQuery),
 			request,
@@ -3113,14 +3124,14 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	private fetchDesktop(desktop: Desktop) {
+	fetchDesktop(desktop: Desktop, fetchChildren: boolean = true, useXHR: boolean = true) {
 		if (desktop !== undefined && (desktop.childrenIDs === undefined || desktop.portlets === undefined)) {
 			this.getDesktopAsync(desktop.ID, _ => {
 				const obj = Desktop.get(desktop.ID);
-				if (obj.childrenIDs !== undefined && obj.childrenIDs.length > 0) {
-					obj.Children.forEach(c => this.fetchDesktop(c));
+				if (fetchChildren && obj.childrenIDs !== undefined && obj.childrenIDs.length > 0) {
+					obj.Children.forEach(cdesktop => this.fetchDesktop(cdesktop, fetchChildren, useXHR));
 				}
-			});
+			}, undefined, useXHR);
 		}
 		return desktop;
 	}
@@ -3134,7 +3145,7 @@ export class PortalsCoreService extends BaseService {
 				]
 			},
 			SortBy: { Title: "Ascending" }
-		}, onSuccess, undefined, true, undefined, true);
+		}, onSuccess, undefined, false, undefined, true);
 	}
 
 	private updateDesktop(json: any, oldParentID?: string) {

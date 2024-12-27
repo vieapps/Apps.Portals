@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonSearchbar, IonList, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
@@ -24,6 +24,8 @@ import { ContentTypeDefinition } from "@app/models/portals.base";
 export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
@@ -298,6 +300,9 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 			.sortBy("Title", { name: "LastModified", reverse: true })
 			.take(results === undefined && this.pagination !== undefined ? this.pageNumber * this.pagination.PageSize : 0);
 		this.contentTypes = results === undefined ? objects : this.contentTypes.concat(objects);
+		if (this.configSvc.isElectronApp) {
+			this.zone.run(() => this.changeDetector.detectChanges());
+		}
 		if (onNext !== undefined) {
 			onNext();
 		}

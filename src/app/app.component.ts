@@ -42,11 +42,11 @@ export class AppComponent implements OnInit {
 		private booksSvc: BooksService,
 		router: Router
 	) {
-		console.log("<AppComponent>: Initializing...");
+		console.log("<App>: Initializing...");
 		router.events.subscribe(event => {
 			if (event instanceof RoutesRecognized) {
 				if (AppAPIs.isPingPeriodTooLarge) {
-					AppAPIs.reopenWebSocket("<AppComponent>: Ping period is too large...");
+					AppAPIs.reopenWebSocket("<Router>: Ping period is too large...");
 				}
 				this.configSvc.appConfig.URLs.routerParams = (event as RoutesRecognized).state.root.params;
 				this.configSvc.pushURL((event as RoutesRecognized).url, (event as RoutesRecognized).state.root.queryParams);
@@ -56,6 +56,9 @@ export class AppComponent implements OnInit {
 			else if (event instanceof NavigationEnd) {
 				const current = this.configSvc.getCurrentURL();
 				AppEvents.broadcast("App", { Type: "Router", Mode: "Navigated", URL: current.url, Params: current.params });
+				if (this.configSvc.isDebug) {
+					console.log(`<Router>: URLs stack [${this.configSvc.appConfig.URLs.stack.length}]`, this.configSvc.appConfig.URLs.stack);
+				}
 			}
 		});
 	}
@@ -490,23 +493,23 @@ export class AppComponent implements OnInit {
 		this.configSvc.initializeAsync(
 			() => {
 				if (this.configSvc.isReady && this.configSvc.isAuthenticated) {
-					console.log("<AppComponent>: The session is initialized & registered (user)", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+					console.log("<App>: The session is initialized & registered (user)", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 					this.finalize(onNext);
 				}
 				else {
-					console.log("<AppComponent>: Register the initialized session (anonymous)", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+					console.log("<App>: Register the initialized session (anonymous)", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 					this.configSvc.registerSessionAsync(
 						() => {
-							console.log("<AppComponent>: The session is registered (anonymous)", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+							console.log("<App>: The session is registered (anonymous)", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 							this.finalize(onNext);
 						},
 						error => {
 							if (AppUtility.isGotSecurityException(error)) {
-								console.warn("<AppComponent>: Cannot register, the session is need to be re-initialized (anonymous)");
+								console.warn("<App>: Cannot register, the session is need to be re-initialized (anonymous)");
 								this.configSvc.resetSessionAsync(() => AppUtility.invoke(() => this.initialize(onNext, noInitializeSession), 234));
 							}
 							else {
-								this.appFormsSvc.hideLoadingAsync(() => console.error(`<AppComponent>: Cannot initialize the app => ${AppUtility.getErrorMessage(error)}`, error));
+								this.appFormsSvc.hideLoadingAsync(() => console.error(`<App>: Cannot initialize the app => ${AppUtility.getErrorMessage(error)}`, error));
 							}
 						}
 					);
@@ -514,11 +517,11 @@ export class AppComponent implements OnInit {
 			},
 			error => {
 				if (AppUtility.isGotSecurityException(error)) {
-					console.warn("<AppComponent>: Cannot initialize, the session is need to be re-initialized (anonymous)");
+					console.warn("<App>: Cannot initialize, the session is need to be re-initialized (anonymous)");
 					this.configSvc.resetSessionAsync(() => AppUtility.invoke(() => this.initialize(onNext, noInitializeSession), 234));
 				}
 				else {
-					this.appFormsSvc.hideLoadingAsync(() => console.error(`<AppComponent>: Cannot initialize the app => ${AppUtility.getErrorMessage(error)}`, error));
+					this.appFormsSvc.hideLoadingAsync(() => console.error(`<App>: Cannot initialize the app => ${AppUtility.getErrorMessage(error)}`, error));
 				}
 			},
 			noInitializeSession
@@ -535,7 +538,7 @@ export class AppComponent implements OnInit {
 			.map(service => service.initializeAsync())
 			.add(this.appFormsSvc.hideLoadingAsync())
 			.add(AppUtility.invoke(() => AppAPIs.openWebSocket(() => Promise.all([
-				this.notificationsSvc.fetchNotificationsAsync(),
+				this.notificationsSvc.fetchNotificationsAsync().then(this.configSvc.isDebug ? () => console.log("<App>: Fetch notifications") : () => {}),
 				AppUtility.invoke(() => {
 					const data = {
 						URIs: this.configSvc.appConfig.URIs,
@@ -556,17 +559,17 @@ export class AppComponent implements OnInit {
 						this.configSvc.appConfig.URLs.stack.update({ url: this.configSvc.appConfig.URLs.home, params: {} }, this.configSvc.appConfig.URLs.stack.length - 1);
 						try {
 							redirect = AppCrypto.base64urlDecode(redirect);
-							if (this.configSvc.appConfig.isDebug) {
-								console.warn(`<AppComponent>: Redirect to the requested URI => ${redirect}`);
+							if (this.configSvc.isDebug) {
+								console.log(`<App>: Redirect to the requested URI => ${redirect}`);
 							}
 							this.configSvc.navigateForwardAsync(redirect);
 						}
 						catch (error) {
-							console.error(`<AppComponent>: The requested URI for redirecting is not well-form => ${redirect}`, error);
+							console.error(`<App>: The requested URI for redirecting is not well-form => ${redirect}`, error);
 						}
 					}
 				})
 			]))))
-		).then(() => console.log(`<AppComponent>: Initialized [${AppUtility.getElapsedTime(this._time)}]`, this.configSvc.appConfig.app));
+		).then(() => console.log(`<App>: Initialized [${AppUtility.getElapsedTime(this._time)}]`, this.configSvc.appConfig.app));
 	}
 }

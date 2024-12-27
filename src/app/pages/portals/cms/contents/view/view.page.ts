@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from "@angular/core";
+import { Component, OnInit, OnDestroy, NgZone, ChangeDetectorRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
@@ -27,6 +27,8 @@ import { DataLookupModalPage } from "@app/controls/portals/data.lookup.modal.pag
 export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private filesSvc: FilesService,
@@ -110,7 +112,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	ngOnDestroy() {
 		if (this.content !== undefined) {
 			AppEvents.off(this.portalsCoreSvc.name, "CMS.Contents:View:Refresh");
-			AppEvents.off(this.filesSvc.name, "CMS.Contents:View:Refresh");
+			AppEvents.off(this.filesSvc.name, "CMS.Contents:View:Refresh:Attachments");
 		}
 	}
 
@@ -198,12 +200,19 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 					this.task = undefined;
 					this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => AppUtility.isEquals(cfg.Name, control.Name)).Hidden ? true : false);
 					this.prepareValues();
+					(this.content.attachments || []).forEach(attachment => this.filesSvc.prepareAttachment(attachment));
 					if (this.canEdit) {
 						AppUtility.invoke(async () => this.actions[this.canModerate ? 3 : 2].text = await this.configSvc.getResourceAsync(this.content.Status !== "Published" ? "portals.cms.common.buttons.viewAsPublished" : "portals.cms.common.buttons.viewAsPublic"));
 					}
 				}
 				else if (info.args.Type === "Deleted") {
 					this.cancel();
+				}
+				else if (info.args.Type === "Thumbnail") {
+					this.prepareAttachments("Thumbnails", this.content.thumbnails);
+				}
+				else if (info.args.Type === "Attachment") {
+					this.prepareAttachments("Attachments", this.content.attachments);
 				}
 			}
 		}, "CMS.Contents:View:Refresh");
@@ -212,7 +221,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			if (this.content.ID === info.args.ObjectID && (info.args.Object === "Attachment" || info.args.Object === "Thumbnail")) {
 				this.prepareAttachments(`${info.args.Object}s`, undefined, info.args.Event === "Delete" ? undefined : this.filesSvc.prepareAttachment(info.args.Data), info.args.Event === "Delete" ? this.filesSvc.prepareAttachment(info.args.Data) : undefined);
 			}
-		}, "CMS.Contents:View:Refresh");
+		}, "CMS.Contents:View:Refresh:Attachments");
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: Array<AppFormsSegment>) => void) {
@@ -423,6 +432,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				control.Extras["Text"] = url;
 				control.Hidden = false;
 				this.formControls.find(ctrl => ctrl.Name === "TempLink").Extras["Text"] = this.portalsCoreSvc.getPortalURL(this.content, this.content.category, true);
+				this.zone.run(() => this.changeDetector.detectChanges());
 			}
 			else if (onUndefined !== undefined) {
 				onUndefined();

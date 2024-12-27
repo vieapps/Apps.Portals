@@ -81,7 +81,10 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		options: {
 			label: "Options",
 			language: "Language",
-			theme: "Use dark theme"
+			theme: "Use dark theme",
+			xhr: "Prefer XHR",
+			xhrToken: "Use XHR Query Token",
+			debug: "Turn on debug logs"
 		},
 		apps: {
 			desktop: "Desktop apps",
@@ -99,14 +102,20 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 
 	options = {
 		language: "vi-VN",
-		darkTheme: false
+		darkTheme: false,
+		xhr: false,
+		xhrToken: false,
+		debug: false
 	};
 
 	ngOnInit() {
 		this.prepareLabelsAsync();
 		this.options = {
 			language: this.configSvc.appConfig.language,
-			darkTheme: "dark" === this.color
+			darkTheme: "dark" === this.color,
+			xhr: this.configSvc.appConfig.app.xhr.prefer,
+			xhrToken: this.configSvc.appConfig.app.xhr.tokenInQuery,
+			debug: this.configSvc.appConfig.app.debug
 		};
 		AppEvents.on("App", info => {
 			if ("Initialized" === info.args.Type || ("Language" === info.args.Type && "Changed" === info.args.Mode)) {
@@ -125,6 +134,9 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 				label: await this.configSvc.getResourceAsync("common.preferences.label"),
 				language: await this.configSvc.getResourceAsync("common.preferences.options.language"),
 				theme: await this.configSvc.getResourceAsync("common.preferences.options.theme"),
+				xhr: await this.configSvc.getResourceAsync("common.preferences.options.xhr"),
+				xhrToken: await this.configSvc.getResourceAsync("common.preferences.options.xhrToken"),
+				debug: await this.configSvc.getResourceAsync("common.preferences.options.debug")
 			},
 			apps: {
 				desktop: await this.configSvc.getResourceAsync("common.preferences.apps.desktop"),
@@ -152,6 +164,19 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		this.options.darkTheme = AppUtility.isTrue(event.detail.checked);
 		this.configSvc.appConfig.options.theme = this.options.darkTheme ? "dark" : "light";
 		this.configSvc.storeOptionsAsync();
+	}
+
+	onPreferXHRChanged(event: any, isXHR: boolean) {
+		if (isXHR) {
+			this.options.xhr = this.configSvc.appConfig.app.xhr.prefer = AppUtility.isTrue(event.detail.checked);
+		}
+		else {
+			this.options.xhrToken = this.configSvc.appConfig.app.xhr.tokenInQuery = AppUtility.isTrue(event.detail.checked);
+		}
+	}
+
+	onDebugChanged(event: any) {
+		this.options.debug = this.configSvc.appConfig.app.debug = AppUtility.isTrue(event.detail.checked);
 	}
 
 	openNotifications() {

@@ -17,9 +17,13 @@
 				{{ labels.search }}
 			</ion-button>
 		</ion-title>
-		<ion-searchbar showCancelButton="always"
-			[cancelButtonText]="labels.cancel"
-			[hidden]="!searching"
+		<ion-searchbar [hidden]="!searching"
+			showCancelButton="always"
+			cancelButtonIcon="arrow-back"
+			enterkeyhint="search"
+			inputmode="search"
+			[debounce]="debounce"
+			[cancelButtonText]="labels.cancel"			
 			(ionChange)="onStartSearch($event)"
 			(ionClear)="onClearSearch()"
 			(ionCancel)="onCancelSearch()"></ion-searchbar>
@@ -63,7 +67,10 @@
 			</ion-label>
 		</ion-item>
 	</ion-list>
-	<ion-infinite-scroll threshold="288px" position="bottom" (ionInfinite)="onInfiniteScrollAsync()">
+	<div *ngIf="searching && searchInprogress" class="ion-padding ion-text-center">
+		<ion-spinner></ion-spinner>
+	</div>
+	<ion-infinite-scroll threshold="388px" position="bottom" (ionInfinite)="onInfiniteScroll()">
 		<ion-infinite-scroll-content></ion-infinite-scroll-content>
 	</ion-infinite-scroll>
 </ion-content>
