@@ -437,11 +437,12 @@ export class AppComponent implements OnInit {
 
 		AppEvents.on("Session", info => {
 			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
-				if ("LogOut" === info.args.Type) {
-					this.sidebar.updateHeader({ title: this.configSvc.appConfig.app.name, onClick: () => {}, updateAvatar: true });
+				if ("LogIn" === info.args.Type) {
+					this.notificationsSvc.fetchNotificationsAsync().then(this.configSvc.isDebug ? () => console.log("<App>: Fetch notifications (sign-in)") : () => {});
+					this.portalsCoreSvc.getActiveOrganizationsAsync().then(this.configSvc.isDebug ? () => console.log("<App>: Fetch active organizations (sign-in)") : () => {});
 				}
 				else {
-					this.notificationsSvc.fetchNotificationsAsync();
+					this.sidebar.updateHeader({ title: this.configSvc.appConfig.app.name, onClick: () => {}, updateAvatar: true });
 				}
 				this.updateSidebarAsync({}, true, () => this.sidebar.normalizeTopMenu());
 			}
@@ -538,7 +539,8 @@ export class AppComponent implements OnInit {
 			.map(service => service.initializeAsync())
 			.add(this.appFormsSvc.hideLoadingAsync())
 			.add(AppUtility.invoke(() => AppAPIs.openWebSocket(() => Promise.all([
-				this.notificationsSvc.fetchNotificationsAsync().then(this.configSvc.isDebug ? () => console.log("<App>: Fetch notifications") : () => {}),
+				this.configSvc.isAuthenticated ? this.notificationsSvc.fetchNotificationsAsync().then(this.configSvc.isDebug ? () => console.log("<App>: Fetch notifications (init)") : () => {}) : AppUtility.promise,
+				this.configSvc.isAuthenticated ? this.portalsCoreSvc.getActiveOrganizationsAsync().then(this.configSvc.isDebug ? () => console.log("<App>: Fetch active organizations (init)") : () => {}) : AppUtility.promise,
 				AppUtility.invoke(() => {
 					const data = {
 						URIs: this.configSvc.appConfig.URIs,

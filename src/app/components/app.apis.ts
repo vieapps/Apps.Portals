@@ -110,6 +110,7 @@ export class AppAPIs {
 		if (onCompleted !== undefined) {
 			onCompleted(headers);
 		}
+		Object.keys(headers).filter(name => AppUtility.isEmpty(headers[name])).forEach(name => delete headers[name]);
 		return headers;
 	}
 
@@ -654,9 +655,9 @@ export class AppAPIs {
 				path = `${requestInfo.ServiceName}${AppUtility.isNotEmpty(requestInfo.ObjectName) ? `/${requestInfo.ObjectName}` : ""}${AppUtility.isNotEmpty(objectIdentity) ? `/${objectIdentity}` : ""}${query === "?" ? "" : query}`;
 			}
 			path += requestInfo.Extra !== undefined ? (path.indexOf("?") > 0 ? "&" : "?") + `x-request-extra=${AppCrypto.jsonEncode(requestInfo.Extra)}` : "";
+			const url = this.getURL(path);
 			const headers = this.getHeaders(requestInfo.Header);
 			const query = (AppConfig.isDebug ? "x-logs=true" : "") + (AppConfig.app.xhr.tokenInQuery ? (AppConfig.isDebug ? "&" : "") + AppUtility.toQuery(headers) : "");
-			const url = this.getURL(path);
 			return this.sendXMLHttpRequest(requestInfo.Verb, url + (query === "" ? "" : (url.indexOf("?") > 0 ? "&" : "?") + query), AppConfig.app.xhr.tokenInQuery ? undefined : { headers: headers }, requestInfo.Body);
 		}
 	}

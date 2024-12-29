@@ -75,6 +75,21 @@ export class AppConfig {
 		}
 	};
 
+	/** App accounts */
+	static accounts = {
+		registrable: true,
+		registration: {
+			required: [],
+			hidden: ["Gender", "BirthDay", "Address", "Addresses", "Mobile"],
+			excluded: ["Language", "DarkTheme"]
+		},
+		sendInvitationRole: "Authenticated",
+		setServicePrivilegs: false,
+		setServicePrivilegsRole: "ServiceAdministrator",
+		setObjectPrivilegs: true,
+		phoneIsAllowed: false
+	};
+
 	/** App services */
 	static services = {
 		all: [
@@ -98,21 +113,6 @@ export class AppConfig {
 			service: undefined as string,
 			system: undefined as string
 		}
-	};
-
-	/** App accounts */
-	static accounts = {
-		registrable: true,
-		registration: {
-			required: [],
-			hidden: ["Gender", "BirthDay", "Address", "Addresses", "Mobile"],
-			excluded: ["Language", "DarkTheme"]
-		},
-		sendInvitationRole: "Authenticated",
-		setServicePrivilegs: false,
-		setServicePrivilegsRole: "ServiceAdministrator",
-		setObjectPrivilegs: true,
-		phoneIsAllowed: false
 	};
 
 	/** Geographic meta */

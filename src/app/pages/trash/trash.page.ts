@@ -76,7 +76,7 @@ export class TrashPage implements OnInit {
 			await this.appFormsSvc.showLoadingAsync();
 			this.title = await this.configSvc.getResourceAsync("trash.list");
 			this.all.label = await this.configSvc.getResourceAsync("trash.all");
-			this.find(() => TrackingUtility.trackAsync({ title: this.title, category: "Trash", action: "List" }));
+			this.findAsync(() => this.appFormsSvc.hideLoadingAsync(() => TrackingUtility.trackAsync({ title: this.title, category: "Trash", action: "List" })));
 		}
 		else {
 			await Promise.all([
@@ -92,9 +92,9 @@ export class TrashPage implements OnInit {
 
 	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			this.appFormsSvc.showLoadingAsync().then(() => this.find(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : () => {}));
+			this.findAsync(() => this.infiniteScrollCtrl.complete());
 		}
-		else if (this.infiniteScrollCtrl !== undefined) {
+		else {
 			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
 		}
 	}
@@ -104,12 +104,13 @@ export class TrashPage implements OnInit {
 		this.pageNumber = 0;
 		this.pagination = undefined;
 		this.all.value = event.detail.checked;
-		this.appFormsSvc.showLoadingAsync().then(() => this.find(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.disabled = false : () => {}));
+		this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = false);
+		this.appFormsSvc.showLoadingAsync().then(() => this.findAsync(() => this.appFormsSvc.hideLoadingAsync(() => this.infiniteScrollCtrl.disabled = false)));
 	}
 
-	private find(onNext?: () => void) {
+	private findAsync(onNext?: () => void) {
 		this.request = AppPagination.buildRequest(undefined, undefined, this.pagination);
-		this.portalsCoreSvc.findTrashContentsAsync(
+		return this.portalsCoreSvc.findTrashContentsAsync(
 			this.request,
 			this.all.value ? undefined : this.portalsCoreSvc.activeOrganization.ID,
 			data => {
@@ -164,7 +165,9 @@ export class TrashPage implements OnInit {
 				if (this.configSvc.isElectronApp) {
 					this.zone.run(() => this.changeDetector.detectChanges());
 				}
-				this.appFormsSvc.hideLoadingAsync(onNext);
+				if (onNext !== undefined) {
+					onNext();
+				}
 			},
 			error => this.appFormsSvc.showErrorAsync(error)
 		);
