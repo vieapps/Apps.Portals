@@ -59,16 +59,11 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		const amounts = this.configSvc.appConfig.options.extras["featured"] || {};
 		this.amount = this.amount !== undefined ? this.amount : (this._isPublished ? amounts.published : amounts.updated) || 7;
 
-		if (this.configSvc.isReady) {
-			this.prepareLabelsAsync().then(() => AppUtility.invoke(() => this.prepareContents(), 123));
-		}
-		else {
-			AppEvents.on("App", info => {
-				if ("Initialized" === info.args.Type) {
-					this.prepareLabelsAsync().then(() => AppUtility.invoke(() => this.prepareContents(), 123));
-				}
-			}, `FeaturedContents:AppInitialized:${this._isPublished}`);
-		}
+		AppEvents.on("App", info => {
+			if ("Initialized" === info.args.Type || ("HomePage" === info.args.Type && "Open" === info.args.Mode)) {
+				this.prepareLabelsAsync().then(() => this.prepareContents());
+			}
+		}, `FeaturedContents:AppInitialized:${this._isPublished}`);
 
 		AppEvents.on(this.portalsCmsSvc.name, info => {
 			const organization = this.portalsCoreSvc.activeOrganization;
@@ -87,7 +82,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 							console.log("<FeaturedContents>: Prepare when got updated");
 						}
 						this.prepareContents(true);
-					}, 345, true);
+					}, 345);
 				}
 				else if (organization.ID === info.args.SystemID && !!info.args.ID && "Thumbnail" === info.args.Type && !!info.args.ThumbnailURI) {
 					AppUtility.invoke(() => {
@@ -95,10 +90,10 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 						if (content !== undefined) {
 							content.ThumbnailURI = info.args.ThumbnailURI;
 							if (this.configSvc.isDebug) {
-								console.log(`<FeaturedContents/ThumbnailURI>: ${info.args.Object}#${info.args.ID}`);
+								console.log(`<FeaturedContents/ThumbnailURI>: ${content.Title} (#${info.args.ID})`);
 							}
 						}
-					}, 456, true);
+					}, 456);
 				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);

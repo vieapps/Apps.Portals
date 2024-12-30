@@ -93,14 +93,10 @@ export class NotificationsPage implements OnInit, OnDestroy {
 		this.label = await this.appFormsSvc.getResourceAsync("notifications.label");
 		await Promise.all(Object.keys(this.actions).map(async name => this.actions[name] = (await this.appFormsSvc.getResourceAsync("events." + name)).toLowerCase()));
 		await Promise.all(Object.keys(this.status).map(async name => this.status[name] = await this.appFormsSvc.getResourceAsync("status.approval." + name)));
-		this.getNotifications(() => this.appFormsSvc.hideLoadingAsync(() => this.searchNotificationsAsync(() => {
-			if (this.notifications.length > 20) {
-				this.pagination.PageNumber = Math.round(this.notifications.length / 20);
-			}
-			else {
-				this.searchNotificationsAsync();
-			}
-		})));
+		this.getNotifications(() => {
+			this.pagination.PageNumber = this.notifications.length > 20 ? Math.round(this.notifications.length / 20) : this.pagination.PageNumber;
+			this.appFormsSvc.hideLoadingAsync(() => this.searchNotificationsAsync());
+		});
 	}
 
 	async onInfiniteScrollAsync() {

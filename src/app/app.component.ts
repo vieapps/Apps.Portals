@@ -168,8 +168,8 @@ export class AppComponent implements OnInit {
 			const message = await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "loading"}`);
 			this.appFormsSvc.showLoadingAsync(message).then(isActivate ? () => this.activate() : () => this.initialize());
 
-			if (appConfig.isDebug && !appConfig.isNativeApp) {
-				window["__vieapps"] = { app: this, apis: AppAPIs, events: AppEvents };
+			if (!appConfig.isNativeApp) {
+				window["__vieapps"] = { apis: AppAPIs, events: AppEvents };
 			}
 		});
 	}
@@ -439,7 +439,7 @@ export class AppComponent implements OnInit {
 			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
 				if ("LogIn" === info.args.Type) {
 					this.notificationsSvc.fetchNotificationsAsync().then(this.configSvc.isDebug ? () => console.log("<App>: Fetch notifications (sign-in)") : () => {});
-					this.portalsCoreSvc.getActiveOrganizationsAsync().then(this.configSvc.isDebug ? () => console.log("<App>: Fetch active organizations (sign-in)") : () => {});
+					this.portalsCoreSvc.getActiveOrganizationsAsync(false).then(this.configSvc.isDebug ? () => console.log("<App>: Fetch active organizations (sign-in)") : () => {});
 				}
 				else {
 					this.sidebar.updateHeader({ title: this.configSvc.appConfig.app.name, onClick: () => {}, updateAvatar: true });
@@ -539,8 +539,18 @@ export class AppComponent implements OnInit {
 			.map(service => service.initializeAsync())
 			.add(this.appFormsSvc.hideLoadingAsync())
 			.add(AppUtility.invoke(() => AppAPIs.openWebSocket(() => Promise.all([
-				this.configSvc.isAuthenticated ? this.notificationsSvc.fetchNotificationsAsync().then(this.configSvc.isDebug ? () => console.log("<App>: Fetch notifications (init)") : () => {}) : AppUtility.promise,
-				this.configSvc.isAuthenticated ? this.portalsCoreSvc.getActiveOrganizationsAsync().then(this.configSvc.isDebug ? () => console.log("<App>: Fetch active organizations (init)") : () => {}) : AppUtility.promise,
+				this.configSvc.isAuthenticated ? AppUtility.invoke(() => {
+					if (this.configSvc.isDebug) {
+						console.log("<App>: Fetch notifications (init)");
+					}
+					this.notificationsSvc.fetchNotificationsAsync();
+				}, 6789) : AppUtility.promise,
+				this.configSvc.isAuthenticated ? AppUtility.invoke(() => {
+					if (this.configSvc.isDebug) {
+						console.log("<App>: Fetch active organizations (init)");
+					}
+					this.portalsCoreSvc.getActiveOrganizationsAsync(false);
+				}, 12345) : AppUtility.promise,
 				AppUtility.invoke(() => {
 					const data = {
 						URIs: this.configSvc.appConfig.URIs,

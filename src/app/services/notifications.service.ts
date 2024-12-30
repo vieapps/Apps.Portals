@@ -29,12 +29,12 @@ export class NotificationsService extends BaseService {
 	}
 
 	fetchNotificationsAsync() {
-		return AppUtility.invoke(() => this.sendRequestAsync({
+		return this.sendRequestAsync({
 			ServiceName: this.name,
 			ObjectName: "Notification",
 			Query: { "object-identity": "fetch" },
 			Header: AppAPIs.isWebSocketReady ? undefined : { "x-update-messagae": "false" }
-		}, AppAPIs.isWebSocketReady ? undefined : data => this.updateNotifications(data !== undefined ? data.Objects : [])), 1234);
+		}, AppAPIs.isWebSocketReady ? undefined : data => this.updateNotifications(data !== undefined ? data.Objects : []), undefined, false, true);
 	}
 
 	searchNotificationsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
@@ -47,15 +47,20 @@ export class NotificationsService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError("Error occurred while searching notifications", error, onError)
+			error => this.processError("Error occurred while searching notifications", error, onError),
+			false,
+			undefined,
+			false,
+			true,
+			data => this.updateNotifications(data !== undefined ? data.Objects : [])
 		);
 	}
 
 	private updateNotifications(objects: Array<any>) {
 		let broadcast = false;
 		(objects || []).forEach(obj => {
-			const read = Notification.contains(obj.ID) ? Notification.get(obj.ID).Read : undefined;
 			const notification = Notification.update(obj);
+			const read = Notification.contains(obj.ID) ? Notification.get(obj.ID).Read : undefined;
 			if (read === undefined || read !== notification.Read) {
 				broadcast = true;
 				if (notification.Read) {

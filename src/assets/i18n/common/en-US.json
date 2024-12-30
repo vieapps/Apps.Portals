@@ -70,6 +70,7 @@
 			"options": {
 				"language": "Language",
 				"theme": "Use dark-theme",
+				"preflight": "Preflight",
 				"xhr": "Prefer XHR",
 				"xhrToken": "Prefer XHR Query Token",
 				"debug": "Turn on debug logs"

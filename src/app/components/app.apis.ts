@@ -545,9 +545,10 @@ export class AppAPIs {
 			Query: requestInfo.Query || {},
 			Extra: requestInfo.Extra || {},
 			Body: requestInfo.Body || {}
-		};
+		} as AppRequestInfo;
 		const gotCallback = onSuccess !== undefined || onError !== undefined;
 		if (gotCallback) {
+			request["Sig"] = AppCrypto.hash(request);
 			request["ID"] = id;
 		}
 		const message = AppUtility.stringify(request);
@@ -621,31 +622,41 @@ export class AppAPIs {
 		* @param useXHR Set to true to always use XHR, false to let system decides
 		* @param onSuccess The callback function to handle the returning data
 		* @param onError The callback function to handle the returning error
+	 	* @param preferWebSocket Set to true to prefer WebSocker over XHR, false to let system decides
 	*/
-	static sendRequest(requestInfo: AppRequestInfo, useXHR: boolean = true, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		if (this.canUseWebSocket(useXHR)) {
-			const request = AppUtility.isNotEmpty(requestInfo.Path) ? this.parseRequestInfo(requestInfo.Path) : undefined;
-			const requestMsg = {
-				ServiceName: request !== undefined ? request.ServiceName : requestInfo.ServiceName,
-				ObjectName: request !== undefined ? request.ObjectName : requestInfo.ObjectName,
-				Verb: requestInfo.Verb || "GET",
-				Header: AppUtility.clone(requestInfo.Header || {}),
-				Query: AppUtility.clone((request !== undefined ? request.Query : requestInfo.Query) || {}),
-				Extra: requestInfo.Extra,
-				Body: requestInfo.Body
-			};
-			["x-app-token", "x-app-name", "x-app-platform", "x-device-id", "x-session-id"].forEach(name => delete requestMsg.Header[name]);
-			["service-name", "object-name"].forEach(name => delete requestMsg.Query[name]);
-			if (request !== undefined && AppUtility.isNotEmpty(request.ObjectIdentity)) {
-				requestMsg.Query["object-identity"] = request.ObjectIdentity;
-			}
-			if (AppConfig.isDebug) {
-				requestMsg.Query["x-logs"] = "true";
-			}
-			this.sendWebSocketRequest(requestMsg, onSuccess, onError);
+	static sendRequest(requestInfo: AppRequestInfo, useXHR: boolean = true, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, preferWebSocket: boolean = false) {
+		const request = AppUtility.isNotEmpty(requestInfo.Path) ? this.parseRequestInfo(requestInfo.Path) : undefined;
+		const requestMessage = {
+			ServiceName: request !== undefined ? request.ServiceName : requestInfo.ServiceName,
+			ObjectName: request !== undefined ? request.ObjectName : requestInfo.ObjectName,
+			Verb: requestInfo.Verb || "GET",
+			Header: AppUtility.clone(requestInfo.Header || {}),
+			Query: AppUtility.clone((request !== undefined ? request.Query : requestInfo.Query) || {}),
+			Extra: requestInfo.Extra || {},
+			Body: requestInfo.Body || {}
+		} as AppRequestInfo;
+		["x-app-token", "x-app-name", "x-app-platform", "x-device-id", "x-session-id"].forEach(name => delete requestMessage.Header[name]);
+		["service-name", "object-name"].forEach(name => delete requestMessage.Query[name]);
+		if (request !== undefined && AppUtility.isNotEmpty(request.ObjectIdentity)) {
+			requestMessage.Query["object-identity"] = request.ObjectIdentity;
+		}
+		if (AppConfig.isDebug) {
+			requestMessage.Query["x-logs"] = "true";
+		}
+		if ((preferWebSocket && this.isWebSocketReady) || this.canUseWebSocket(useXHR)) {
+			this.sendWebSocketRequest(requestMessage, onSuccess, onError);
 			return EmptyObservable;
 		}
 		else {
+			const sig = AppCrypto.hash(requestMessage);
+			const messages  = Object.keys(this._callbackableMessages).map(id => AppUtility.parse(this._callbackableMessages[id]));
+			const message = messages.first(msg => sig === msg.Sig);
+			if (message !== undefined) {
+				delete this._callbackableMessages[message.ID];
+				delete this._successCallbacks[message.ID];
+				delete this._errorCallbacks[message.ID];
+				this._resend.id = message.ID === this._resend.id ? undefined : this._resend.id;
+			}
 			let path = requestInfo.Path;
 			if (AppUtility.isEmpty(path)) {
 				let query = AppUtility.clone(requestInfo.Query || {});
@@ -663,15 +674,16 @@ export class AppAPIs {
 	}
 
 	/**
-	 * Sends a request to APIs
-	 * @param requestInfo The requesting information
-	 * @param onSuccess The callback function to handle the returning data
-	 * @param onError The callback function to handle the returning error
-	 * @param useXHR Set to true to always use XHR, false to let system decides
+	* Sends a request to APIs
+		* @param requestInfo The requesting information
+		* @param onSuccess The callback function to handle the returning data
+		* @param onError The callback function to handle the returning error
+		* @param useXHR Set to true to always use XHR, false to let system decides
+		* @param preferWebSocket Set to true to prefer WebSocker over XHR, false to let system decides
 	*/
-	static sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return this.canUseWebSocket(useXHR)
-			? AppUtility.toAsync(this.sendRequest(requestInfo, false, onSuccess, onError)).then(() => {}).catch(error => console.error("[AppAPIs]: Error occurred while sending a request to APIs", error))
+	static sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, preferWebSocket: boolean = false) {
+		return (preferWebSocket && this.isWebSocketReady) || this.canUseWebSocket(useXHR)
+			? AppUtility.toAsync(this.sendRequest(requestInfo, false, onSuccess, onError, preferWebSocket)).then(() => {}).catch(error => console.error("[AppAPIs]: Error occurred while sending a request to APIs", error))
 			: AppUtility.toAsync(this.sendRequest(requestInfo))
 				.then(data => {
 					if (onSuccess !== undefined) {

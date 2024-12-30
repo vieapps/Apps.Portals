@@ -316,12 +316,16 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
-			this.search(() => this.trackAsync(this.searching ? this.title.search : this.title.track).then(this.infiniteScrollCtrl !== undefined ? () => this.infiniteScrollCtrl.complete() : () => {}));
+			this.search(() => this.trackAsync(this.searching ? this.title.search : this.title.track).then(() => {
+				this.infiniteScrollCtrl.complete();
+				// const threshold = this.configSvc.appConfig.app.preflight ? 500 + (this.contents.length * (this.contents.length < 50 ? 2 : this.contents.length < 90 ? 3 : this.contents.length < 150 ? 4 : 5)) : 500;
+				// this.infiniteScrollCtrl.threshold = `${threshold > 1800 ? 1800 : threshold}px`;
+			}));
 			if (this.configSvc.isDebug) {
 				console.log(`<CMS.Content>: ${this.searching ? "Search for" : "Find"} contents`, this.pageNumber, (this.pagination || {}).PageNumber, this.request);
 			}
 		}
-		else if (this.infiniteScrollCtrl !== undefined) {
+		else {
 			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
 		}
 	}
@@ -349,14 +353,14 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			}
 			if (this.configSvc.isDebug) {
 				console.log(`<CMS.Content>: Prepare contents (${this.searching ? "Search" : "Find"})`, this.pageNumber, (this.pagination || {}).PageNumber, data);
-				if (data !== undefined) {
-					const large = (data.Objects || []).filter(object => AppUtility.isNotEmpty(object.Details) && object.Details.length > 1024 * 1024);
-					if (!!large.length) {
-						console.log("<CMS.Content>: Large contents\r\n- " + AppUtility.toStr(large.map(object => object.Title), "\r\n- "));
-					}
-				}
 			}
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
+			if (data !== undefined) {
+				const large = (data.Objects as Array<any> || []).filter(object => AppUtility.isNotEmpty(object.Details) && object.Details.length > 1024 * 1024);
+				if (!!large.length) {
+					console.log("<CMS.Content>: LARGE contents\r\n- " + AppUtility.toStr(large.map(object => object.Title), "\r\n- "));
+				}
+			}
 		};
 		if (this.searching) {
 			this.subscription = this.portalsCmsSvc.searchContents(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));

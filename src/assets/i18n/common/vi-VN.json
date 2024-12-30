@@ -75,9 +75,10 @@
 			"options": {
 				"language": "Ngôn ngữ",
 				"theme": "Sử dụng theme màu tối",
+				"preflight": "Sử dụng cơ chế tải trước",
 				"xhr": "Sử dụng XHR",
 				"xhrToken": "Sử dụng XHR Query Token",
-				"debug": "Bật debug logs"
+				"debug": "Sử dụng logs chi tiết"
 			},
 			"apps": {
 				"desktop": "Apps cho máy tính",

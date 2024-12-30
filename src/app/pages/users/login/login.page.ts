@@ -199,7 +199,8 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 					Description: "",
 					MinLength: 4,
 					MaxLength: 12,
-					AutoFocus: true
+					AutoFocus: true,
+					OnKeyUp: event => AppUtility.invoke(event.key === "Enter" ? () => this.logInOTP() : undefined)
 				}
 			}
 		];

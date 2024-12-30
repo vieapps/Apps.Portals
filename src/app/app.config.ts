@@ -44,6 +44,10 @@ export class AppConfig {
 		persistence: true,
 		offline: false,
 		debug: false,
+		preflight: {
+			enable: true,
+			defer: 2345
+		},
 		xhr: {
 			prefer: true,
 			tokenInQuery: false

@@ -186,7 +186,7 @@ export class PortalsCoreService extends BaseService {
 			else if ("LogOut" === info.args.Type) {
 				this.prepareSidebarFooterItemsAsync().then(() => this.activeSidebar(() => {
 					this.configSvc.appConfig.options.extras["organizations"] = new Array<string>();
-					AppUtility.invoke(() => this.configSvc.saveOptionsAsync(), 123, true);
+					AppUtility.invoke(() => this.configSvc.saveOptionsAsync(), 123);
 				}));
 			}
 		});
@@ -206,7 +206,7 @@ export class PortalsCoreService extends BaseService {
 				else {
 					const organizationID = this.configSvc.appConfig.options.extras["organization"] as string;
 					if (this.configSvc.isDebug) {
-						this.showWarning("Prepare to update active organization when got profile updated", organizationID);
+						console.log("[Portals]: Prepare to update active organization when got profile updated", organizationID);
 					}
 					this.getOrganizationAsync(organizationID, () => this.setActiveOrganization(Organization.get(organizationID)));
 				}
@@ -218,13 +218,13 @@ export class PortalsCoreService extends BaseService {
 		await this.getDefinitionsAsync();
 		if (Organization.active === undefined) {
 			if (this.configSvc.isDebug) {
-				this.showWarning("Prepare to get active organization on initializing");
+				console.log("[Portals]: Prepare to get active organization on initializing");
 			}
 			await this.getActiveOrganizationAsync(undefined, true);
 		}
 		else {
 			if (this.configSvc.isDebug) {
-				this.showWarning(`Prepare ${Organization.active.modules.length < 1 ? "modules" : "scheduling tasks"} when got active organization on initializing`, Organization.active);
+				console.log(`[Portals]: Prepare ${Organization.active.modules.length < 1 ? "modules" : "scheduling tasks"} when got active organization on initializing`, Organization.active);
 			}
 			if (Organization.active.modules.length < 1) {
 				await this.getOrganizationAsync(Organization.active.ID, undefined, undefined, true);
@@ -310,7 +310,7 @@ export class PortalsCoreService extends BaseService {
 		await Promise.all(this.activeOrganizations.filter(id => AppUtility.isNotEmpty(id)).map(async id => {
 			let organization = Organization.get(id);
 			if (organization === undefined) {
-				await this.getOrganizationAsync(id, _ => organization = Organization.get(id), undefined, useXHR, processModules);
+				await this.getOrganizationAsync(id, _ => organization = Organization.get(id), undefined, useXHR, processModules, !useXHR);
 			}
 			if (organization !== undefined) {
 				organizations.push(organization);
@@ -332,12 +332,12 @@ export class PortalsCoreService extends BaseService {
 			}
 			else {
 				if (this.configSvc.isDebug) {
-					this.showWarning("Get active organization", preferID);
+					console.log("[Portals]: Get active organization", preferID);
 				}
 				await this.getOrganizationAsync(preferID, () => {
 					const organization = Organization.get(preferID) || Organization.get(this.activeOrganizations.first()) || Organization.instances.first();
 					if (this.configSvc.isDebug) {
-						this.showWarning("Update active organization (when get active organization)", organization);
+						console.log("[Portals]: Update active organization (when get active organization)", organization);
 					}
 					this.setActiveOrganization(organization);
 				}, undefined, useXHR);
@@ -363,26 +363,26 @@ export class PortalsCoreService extends BaseService {
 					}
 					this.configSvc.saveOptionsAsync(() => AppEvents.broadcast("App", { Type: "Options", Mode: "Changed" }));
 					if (this.configSvc.isAuthenticated && Site.instances.first(site => site.SystemID === organization.ID) === undefined) {
-						this.searchSitesAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }));
+						this.searchSitesAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }), undefined, undefined, true, false, true);
 					}
 				});
 				if (this.configSvc.isDebug) {
-					this.showWarning("Set active organization", this.activeOrganization);
+					console.log("[Portals]: Set active organization", this.activeOrganization);
 				}
 			}
 		}
 		if (Organization.active !== undefined) {
-			this.fetchSchedulingTasks();
 			if (this.configSvc.isDebug) {
-				this.showWarning("Fetch sheduling tasks of the active organization", this.activeOrganization);
+				console.log("[Portals]: Fetch sheduling tasks of the active organization", this.activeOrganization);
 			}
+			this.fetchSchedulingTasks();
 			if (!!!Desktop.instances.first(desktop => desktop.SystemID === Organization.active.ID)) {
 				AppUtility.invoke(() => {
-					this.fetchDesktops();
 					if (this.configSvc.isDebug) {
-						this.showWarning("Fetch desktops the active organization", this.activeOrganization);
+						console.log("[Portals]: Fetch desktops the active organization", this.activeOrganization);
 					}
-				}, 789, true);
+					this.fetchDesktops();
+				}, 6789);
 			}
 		}
 		if (onNext !== undefined) {
@@ -1939,11 +1939,11 @@ export class PortalsCoreService extends BaseService {
 			this.findVersionsAsync = async () => {
 				const info = this.versions.first();
 				if (this.configSvc.isDebug) {
-					console.log(`[Versions]: ${info.name}#${info.id} [${this.versions.length}/${AppAPIs.isWebSocketReady}]`);
+					console.log(`[Versions]: ${info.name}#${info.id} (${this.versions.length})`);
 				}
-				await this.readAsync(this.getPath("versions", info.name, "object-id=" + info.id), _ => this.findNextVersions(), _ => this.findNextVersions(), AppAPIs.isWebSocketReady ? undefined : { "x-update-messagae": "false" });
+				await this.readAsync(this.getPath("versions", info.name, "object-id=" + info.id), _ => this.findNextVersions(), _ => this.findNextVersions(), AppAPIs.isWebSocketReady ? undefined : { "x-update-messagae": "false" }, false, true);
 			};
-			AppUtility.invoke(() => this.findVersionsAsync(), 567, true);
+			AppUtility.invoke(() => this.findVersionsAsync(), 567);
 		}
 	}
 
@@ -1956,7 +1956,7 @@ export class PortalsCoreService extends BaseService {
 			}
 		}
 		else {
-			AppUtility.invoke(() => this.findVersionsAsync(), 567, true);
+			AppUtility.invoke(() => this.findVersionsAsync(), 567);
 		}
 	}
 
@@ -2160,7 +2160,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	getOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, processModules: boolean = true) {
+	getOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, processModules: boolean = true, preferWebSocket: boolean = false) {
 		return Organization.contains(id) && Organization.get(id).modules.length > 0
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
@@ -2168,7 +2168,8 @@ export class PortalsCoreService extends BaseService {
 					data => this.processOrganizations({ Objects: [data] }, onSuccess, processModules),
 					error => this.processError("Error occurred while getting an organization", error, onError),
 					undefined,
-					useXHR
+					useXHR,
+					preferWebSocket
 				);
 	}
 
@@ -2896,7 +2897,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	searchSitesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false) {
+	searchSitesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false, preferWebSocket: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("site", this.configSvc.relatedQuery),
 			request,
@@ -2904,7 +2905,8 @@ export class PortalsCoreService extends BaseService {
 			error => this.processError("Error occurred while searching sites", error, onError),
 			dontProcessPagination,
 			undefined,
-			useXHR
+			useXHR,
+			preferWebSocket
 		);
 	}
 
@@ -3456,7 +3458,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	fetchSchedulingTasks() {
-		AppUtility.invoke(() => this.readAsync(this.getPath("task", "fetch"), data => this.processSchedulingTasks(data), error => this.showError("Error occurred while fetching tasks", error), { "x-system-id": this.activeOrganization.ID, "x-update-messagae": AppAPIs.isWebSocketReady.toString() }), 1234, true);
+		AppUtility.invoke(() => this.readAsync(this.getPath("task", "fetch"), data => this.processSchedulingTasks(data), error => this.showError("Error occurred while fetching tasks", error), { "x-system-id": this.activeOrganization.ID, "x-update-messagae": AppAPIs.isWebSocketReady.toString() }, false, true), 3456);
 	}
 
 	runSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {

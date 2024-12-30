@@ -131,11 +131,11 @@ export class PortalsCmsService extends BaseService {
 						}
 					}
 					else if ("Refresh" === args.Mode) {
-						AppUtility.invoke(() => this.prepareFeaturedContents(organization.ID), 123, true);
+						AppUtility.invoke(() => this.prepareFeaturedContents(organization.ID), 123);
 					}
 				}
 				else if (organization.ID === args.SystemID && ("CMS.Content" === args.Object || "CMS.Item" === args.Object || "CMS.Form" === args.Object) && ("Created" === args.Type || "Updated" === args.Type || "Deleted" === args.Type)) {
-					AppUtility.invoke(() => this.prepareFeaturedContents(organization.ID), 123, true);
+					AppUtility.invoke(() => this.prepareFeaturedContents(organization.ID), 123);
 				}
 			}
 		});
@@ -670,10 +670,10 @@ export class PortalsCmsService extends BaseService {
 		);
 		const onSuccess = (data?: any) => {
 			if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
-				AppUtility.invoke(() => this.prepareFeaturedContents(data.Objects.first().SystemID), 13, true);
+				AppUtility.invoke(() => this.prepareFeaturedContents(data.Objects.first().SystemID), 13);
 			}
 			if (index < contentTypes.length - 1) {
-				AppUtility.invoke(() => this.getFeaturedContentsAsync(contentTypes, index + 1), 123, true);
+				AppUtility.invoke(() => this.getFeaturedContentsAsync(contentTypes, index + 1), 123);
 			}
 		};
 		const onError = (error?: any) => {
@@ -711,7 +711,6 @@ export class PortalsCmsService extends BaseService {
 				const activeContentTypes = new Array<ContentType>();
 				activeOrganization.modules.forEach(module => activeContentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module)).merge(this.getContentTypesOfForm(module)));
 				AppUtility.invoke(activeContentTypes.length > 0 ? () => this.getFeaturedContentsAsync(activeContentTypes, 0) : undefined);
-				await this.portalsCoreSvc.getActiveOrganizationsAsync(false, false);
 			}
 			else {
 				await this.portalsCoreSvc.getActiveOrganizationsAsync(true, false);
@@ -1141,7 +1140,9 @@ export class PortalsCmsService extends BaseService {
 			error => this.processError("Error occurred while searching contents", error, onError),
 			false,
 			undefined,
-			useXHR
+			useXHR,
+			false,
+			data => this.processContents(data.Objects as Array<any>)
 		);
 	}
 
@@ -1319,7 +1320,9 @@ export class PortalsCmsService extends BaseService {
 			error => this.processError("Error occurred while searching items", error, onError),
 			false,
 			undefined,
-			useXHR
+			useXHR,
+			false,
+			data => this.processItems(data.Objects as Array<any>)
 		);
 	}
 

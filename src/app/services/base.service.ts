@@ -24,6 +24,16 @@ export class Base {
 		return this._name;
 	}
 
+	/** Gets state that determines the preflight mode is enabled or not */
+	get isPreflightEnabled() {
+		return AppConfig.app.preflight.enable;
+	}
+
+	/** Gets the defer times of the preflight requests */
+	get preflightDefer() {
+		return AppConfig.app.preflight.defer;
+	}
+
 	/** Gets the headers that include the authenticated information */
 	getHeaders(additional?: any, onCompleted?: (headers: { [key: string]: string }) => void) {
 		return AppAPIs.getHeaders(additional, onCompleted);
@@ -112,8 +122,8 @@ export class Base {
 		* @param onError The callback function to handle the returning error
 		* @param useXHR Set to true to always use XHR
 	*/
-	protected sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
-		return AppAPIs.sendRequestAsync(requestInfo, onSuccess, onError, useXHR);
+	protected sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, preferWebSocket: boolean = false) {
+		return AppAPIs.sendRequestAsync(requestInfo, onSuccess, onError, useXHR, preferWebSocket);
 	}
 
 	/**
@@ -156,14 +166,36 @@ export class Base {
 		* @param headers The additional header
 		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	protected async searchAsync(path: string, request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false) {
+	protected async searchAsync(path: string, request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false, preferWebSocket: boolean = false, onPreflight?: (data: any) => void) {
 		request = request || {};
 		const processPagination = AppUtility.isFalse(dontProcessPagination);
 		const requestInfo = processPagination ? AppAPIs.parseRequestInfo(path) : undefined;
 		const paginationPrefix = processPagination ? `${requestInfo.ObjectName}@${requestInfo.ServiceName}`.toLowerCase() : undefined;
 		const pagination = processPagination ? AppPagination.get(request, paginationPrefix) : undefined;
 		const pageNumber = processPagination && request.Pagination !== undefined ? request.Pagination.PageNumber : pagination !== undefined ? pagination.PageNumber : 0;
+		const preFlight = (data: any) => {
+			const prePagination = AppPagination.getDefault(data);
+			if (prePagination.PageNumber < prePagination.TotalPages) {
+				prePagination.PageNumber++;
+				const preRequest = AppUtility.clone(request, undefined, undefined, req => req.Pagination = prePagination);
+				const preRequestInfo = {
+					Path: AppUtility.format(path, { request: AppCrypto.jsonEncode(preRequest) }),
+					Verb: "GET",
+					Header: headers
+				};
+				AppUtility.invoke(() => this.sendRequestAsync(preRequestInfo, preData => {
+					AppPagination.set(preData, paginationPrefix);
+					onPreflight(preData);
+					if (AppConfig.isDebug) {
+						console.log("[AppAPIs]: ~~~>>> Preflight", `/${AppUtility.parseURI(path).Path}`, preRequest, preData);
+					}
+				}, undefined, false, true), this.preflightDefer);
+			}
+		};
 		if (pagination !== undefined && (pageNumber < pagination.PageNumber || pagination.TotalPages <= pagination.PageNumber)) {
+			if (this.isPreflightEnabled && onPreflight !== undefined && request.FilterBy !== undefined && request.FilterBy.Query === undefined) {
+				preFlight({ Pagination: pagination });
+			}
 			await AppUtility.invoke(onSuccess);
 		}
 		else {
@@ -179,13 +211,17 @@ export class Base {
 				data => {
 					if (processPagination) {
 						AppPagination.set(data, paginationPrefix);
+						if (this.isPreflightEnabled && onPreflight !== undefined && request.FilterBy !== undefined && request.FilterBy.Query === undefined) {
+							preFlight(data);
+						}
 					}
 					if (onSuccess !== undefined) {
 						onSuccess(data);
 					}
 				},
 				error => this.processError("Error occurred while searching", error, onError),
-				useXHR
+				useXHR,
+				preferWebSocket
 			);
 		}
 	}
@@ -221,7 +257,7 @@ export class Base {
 		* @param headers The additional headers to send the request
 		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	protected readAsync(path: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+	protected readAsync(path: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false, preferWebSocket: boolean = false) {
 		return this.sendRequestAsync(
 			{
 				Path: path,
@@ -230,7 +266,8 @@ export class Base {
 			},
 			onSuccess,
 			error => this.processError("Error occurred while reading", error, onError),
-			useXHR
+			useXHR,
+			preferWebSocket
 		);
 	}
 

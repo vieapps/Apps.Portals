@@ -82,6 +82,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 			label: "Options",
 			language: "Language",
 			theme: "Use dark theme",
+			preflight: "Preflight",
 			xhr: "Prefer XHR",
 			xhrToken: "Use XHR Query Token",
 			debug: "Turn on debug logs"
@@ -103,6 +104,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 	options = {
 		language: "vi-VN",
 		darkTheme: false,
+		preflight: false,
 		xhr: false,
 		xhrToken: false,
 		debug: false
@@ -113,6 +115,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		this.options = {
 			language: this.configSvc.appConfig.language,
 			darkTheme: "dark" === this.color,
+			preflight: this.configSvc.appConfig.app.preflight.enable,
 			xhr: this.configSvc.appConfig.app.xhr.prefer,
 			xhrToken: this.configSvc.appConfig.app.xhr.tokenInQuery,
 			debug: this.configSvc.appConfig.app.debug
@@ -134,6 +137,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 				label: await this.configSvc.getResourceAsync("common.preferences.label"),
 				language: await this.configSvc.getResourceAsync("common.preferences.options.language"),
 				theme: await this.configSvc.getResourceAsync("common.preferences.options.theme"),
+				preflight: await this.configSvc.getResourceAsync("common.preferences.options.preflight"),
 				xhr: await this.configSvc.getResourceAsync("common.preferences.options.xhr"),
 				xhrToken: await this.configSvc.getResourceAsync("common.preferences.options.xhrToken"),
 				debug: await this.configSvc.getResourceAsync("common.preferences.options.debug")
@@ -164,6 +168,10 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		this.options.darkTheme = AppUtility.isTrue(event.detail.checked);
 		this.configSvc.appConfig.options.theme = this.options.darkTheme ? "dark" : "light";
 		this.configSvc.storeOptionsAsync();
+	}
+
+	onPreflightChanged(event: any) {
+		this.options.preflight = this.configSvc.appConfig.app.preflight.enable = AppUtility.isTrue(event.detail.checked);
 	}
 
 	onPreferXHRChanged(event: any, isXHR: boolean) {

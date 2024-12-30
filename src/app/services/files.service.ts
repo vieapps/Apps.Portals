@@ -38,8 +38,9 @@ export class FilesService extends BaseService {
 	}
 
 	private authenticate() {
-		const url = AppAPIs.getURL("avatars/default.png", this.configSvc.appConfig.URIs.files) + `?x-authenticate=true&x-response=json&${AppUtility.toQuery(this.getHeaders())}`;
-		AppUtility.toAsync(this.http.get(url, { headers: this.getHeaders() })).then(() => console.log("[Files]: was authenticated")).catch(error => console.error("[Files]: error occurred while authenticating with file services", error));
+		AppUtility.toAsync(this.http.get(AppAPIs.getURL("avatars/ngx", this.configSvc.appConfig.URIs.files) + "?x-authenticate=true&x-response=json" + (this.configSvc.isDebug ? "&x-logs=true" : ""), { headers: this.getHeaders() }))
+			.then(() => console.log("[Files]: Authenticated"))
+			.catch(error => console.error("[Files]: Error occurred while authenticating with file services", error));
 	}
 
 	readAsDataURL(file: File, onRead: (data: string) => void, limitSize?: number, onLimitExceeded?: (fileSize?: number, limitSize?: number) => void) {
@@ -92,7 +93,7 @@ export class FilesService extends BaseService {
 	upload(path: string, data: string | Array<string> | FormData, headers: { [key: string]: string }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, onProgress?: (percentage: string) => void) {
 		const asBase64 = !(data instanceof FormData);
 		return this.http.post(
-			AppAPIs.getURL(path, this.configSvc.appConfig.URIs.files),
+			AppAPIs.getURL(path, this.configSvc.appConfig.URIs.files) + (this.configSvc.isDebug ? "?x-logs=true" : ""),
 			asBase64 ? { Data: data } : data,
 			{
 				headers: this.getUploadHeaders(headers, asBase64),

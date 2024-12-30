@@ -1,9 +1,6 @@
 <div class="options">
 	<h2>{{ labels.options.label }}</h2>
 	<ion-list lines="full">
-		<ion-item *ngIf="isAdministrator" [color]="color" (click)="openTrash()">
-			<ion-label>{{ labels.trash }}</ion-label>
-		</ion-item>
 		<ion-item *ngIf="isAuthenticated" [color]="color" (click)="openNotifications()">
 			<ion-label>{{ labels.notifications }}</ion-label>
 			<ion-badge *ngIf="!!unreadNotifications" color="danger">{{ unreadNotifications > 9 ? '9+' : unreadNotifications }}</ion-badge>
@@ -22,8 +19,8 @@
 			</ion-select>
 		</ion-item-->
 		<ion-item [color]="color">
-			<ion-label>{{ labels.options.theme }}</ion-label>
-			<ion-toggle [checked]="options.darkTheme" (ionChange)="onThemeChanged($event)"></ion-toggle>
+			<ion-label>{{ labels.options.preflight }}</ion-label>
+			<ion-toggle [checked]="options.preflight" (ionChange)="onPreflightChanged($event)"></ion-toggle>
 		</ion-item>
 		<ion-item [color]="color">
 			<ion-label>{{ labels.options.xhr }}</ion-label>
@@ -36,6 +33,13 @@
 		<ion-item [color]="color">
 			<ion-label>{{ labels.options.debug }}</ion-label>
 			<ion-toggle [checked]="options.debug" (ionChange)="onDebugChanged($event)"></ion-toggle>
+		</ion-item>
+		<ion-item [color]="color">
+			<ion-label>{{ labels.options.theme }}</ion-label>
+			<ion-toggle [checked]="options.darkTheme" (ionChange)="onThemeChanged($event)"></ion-toggle>
+		</ion-item>
+		<ion-item *ngIf="isAdministrator" [color]="color" (click)="openTrash()">
+			<ion-label>{{ labels.trash }}</ion-label>
 		</ion-item>
 		<ion-item *ngIf="isSystemAdministrator" [color]="color" (click)="openLogs()">
 			<ion-label>{{ labels.logs }}</ion-label>

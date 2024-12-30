@@ -46,7 +46,7 @@ export class HomePage implements OnInit, OnDestroy {
 				this.setTitleAsync();
 			}
 			else if ("Router" === args.Type && "Navigated" === args.Mode && this.configSvc.appConfig.URLs.home === args.URL) {
-				AppUtility.invoke(() => this.prepareAsync("Return").then(() => AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Return" })), 345, true);
+				this.prepareAsync("Return").then(() => AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Return" }));
 			}
 			else if ("HomePage" === args.Type && "SetTitle" === args.Mode) {
 				this.titleResource = args.ResourceID || "common.sidebar.home";
