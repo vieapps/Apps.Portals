@@ -49,7 +49,7 @@ export class ConfigurationService extends BaseService {
 		AppAPIs.initialize(http);
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", () => this.reloadGeoMetaAsync());
 		AppEvents.initialize();
-		AppStorage.initializeAsync(this.storage, () => this.showLog(`Storage is ready. Driver: ${this.storage.driver}`));
+		AppStorage.initializeAsync(this.storage, () => console.log(`[Configuration]: Storage is ready. Driver: ${this.storage.driver}`));
 	}
 
 	private _definitions: { [key: string]: any } = {};
@@ -315,7 +315,7 @@ export class ConfigurationService extends BaseService {
 			if (isCordova && isNativeApp) {
 				this.appVersion.getVersionCode()
 					.then(version => AppConfig.app.version = isNativeApp && !this.isRunningOnIOS ? (version + "").replace(/0/g, ".") : version + "")
-					.catch(error => this.showError("Error occurred while preparing the app version", error));
+					.catch(error => console.error(`[Configuration]: Error occurred while preparing the app version\n${AppUtility.getErrorMessage(error)}`, error));
 				PlatformUtility.setInAppBrowser(this.inappBrowser);
 				PlatformUtility.setClipboard(this.clipboard);
 				if (!this.isRunningOnIOS) {
@@ -327,7 +327,7 @@ export class ConfigurationService extends BaseService {
 		if (isCordova) {
 			TrackingUtility.initializeAsync(this.googleAnalytics);
 			if (this.isDebug) {
-				console.log(`Device Information\n- UUID: ${this.device.uuid}\n- Manufacturer: ${this.device.manufacturer}\n- Model: ${this.device.model}\n- Serial: ${this.device.serial}\n- Platform: ${this.device.platform} ${this.device.platform !== "browser" ? this.device.version : "[" + this.device.model + " v" + this.device.version + "]"}`);
+				console.log(`[Configuration]: Device Information\n- UUID: ${this.device.uuid}\n- Manufacturer: ${this.device.manufacturer}\n- Model: ${this.device.model}\n- Serial: ${this.device.serial}\n- Platform: ${this.device.platform} ${this.device.platform !== "browser" ? this.device.version : "[" + this.device.model + " v" + this.device.version + "]"}`);
 			}
 		}
 	}
@@ -345,7 +345,7 @@ export class ConfigurationService extends BaseService {
 			"users/session",
 			data => {
 				if (this.isDebug) {
-					this.showLog("The session was initialized by APIs");
+					console.log("[Configuration]: The session was initialized by APIs");
 				}
 				this.updateSessionAsync(data, _ => {
 					AppConfig.session.account = this.getAccount(!this.isAuthenticated);
@@ -369,7 +369,7 @@ export class ConfigurationService extends BaseService {
 			() => {
 				AppConfig.session.account = this.getAccount(true);
 				if (this.isDebug) {
-					this.showLog("The session was registered by APIs");
+					console.log("[Configuration]: The session was registered by APIs");
 				}
 				AppEvents.broadcast("Session", { Type: "Registered" });
 				this.storeSessionAsync(onSuccess);
@@ -412,7 +412,7 @@ export class ConfigurationService extends BaseService {
 			}
 			catch (error) {
 				AppConfig.session.token = undefined;
-				this.showError("Error occurred while decoding token =>" + session.Token, error);
+				console.error(`[Configuration]: Error occurred while decoding token => "${session.Token}\n${AppUtility.getErrorMessage(error)}`, error);
 			}
 		}
 
@@ -579,7 +579,7 @@ export class ConfigurationService extends BaseService {
 				if (response.status === "connected") {
 					AppConfig.facebook.token = response.authResponse.accessToken;
 					AppConfig.facebook.id = response.authResponse.userID;
-					this.showLog("Facebook is connected", AppConfig.isDebug ? AppConfig.facebook : "");
+					console.log("[Configuration]: Facebook is connected", AppConfig.isDebug ? AppConfig.facebook : "");
 					if (AppConfig.session.account.facebook !== undefined) {
 						this.getFacebookProfile();
 					}
@@ -602,7 +602,7 @@ export class ConfigurationService extends BaseService {
 					profileUrl: `https://www.facebook.com/app_scoped_user_id/${response.id}`,
 					pictureUrl: undefined
 				};
-				this.storeSessionAsync(() => this.showLog("Account is updated with information of Facebook profile", AppConfig.isDebug ? AppConfig.session.account : ""));
+				this.storeSessionAsync(() => console.log("[Configuration]: Account is updated with information of Facebook profile", AppConfig.isDebug ? AppConfig.session.account : ""));
 				this.getFacebookAvatar();
 			}
 		);
@@ -616,7 +616,7 @@ export class ConfigurationService extends BaseService {
 				`/${AppConfig.facebook.version}/${AppConfig.session.account.facebook.id}/picture?type=large&redirect=false&access_token=${AppConfig.facebook.token}`,
 				(response: any) => {
 					AppConfig.session.account.facebook.pictureUrl = response.data.url;
-					this.storeSessionAsync(() => this.showLog("Account is updated with information of Facebook profile (large profile picture)", AppConfig.isDebug ? response : ""));
+					this.storeSessionAsync(() => console.log("[Configuration]: Account is updated with information of Facebook profile (large profile picture)", AppConfig.isDebug ? response : ""));
 				}
 			);
 		}
@@ -708,9 +708,19 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Loads the URI settings of the app */
-	async loadURIsAsync(onNext?: (data?: any) => void) {
+	async loadURIsAsync(encodedURIs?: string, onNext?: (data?: any) => void) {
 		const uris = await AppStorage.getAsync("URIs") || {};
-		if (uris.apis !== undefined && uris.updates !== undefined && uris.files !== undefined) {
+		if (AppUtility.isNotEmpty(encodedURIs)) {
+			try {
+				const decodedURIs = AppUtility.parse(AppCrypto.base64urlDecode(encodedURIs));
+				Object.keys(decodedURIs).forEach(name => uris[name] = decodedURIs[name]);
+			}
+			catch (error) {
+				console.error(`[Configuration]: Invalid encoded URIs => ${encodedURIs}`, error);
+			}
+		}
+		if (uris.apis !== undefined && uris.files !== undefined) {
+			uris.ws = uris.ws || uris.apis;
 			AppConfig.URIs = uris;
 			await this.storeURIsAsync(onNext);
 		}
@@ -724,7 +734,7 @@ export class ConfigurationService extends BaseService {
 		return AppStorage.setAsync("URIs", AppConfig.URIs).then(() => {
 			AppEvents.broadcast("App", { Type: "URIsUpdated" });
 			if (this.isDebug) {
-				this.showLog("URIs are updated", AppConfig.URIs);
+				console.log("[Configuration]: URIs", AppConfig.URIs, AppCrypto.base64urlEncode(AppUtility.stringify(AppConfig.URIs)));
 			}
 			if (onNext !== undefined) {
 				onNext(AppConfig.URIs);
@@ -765,6 +775,9 @@ export class ConfigurationService extends BaseService {
 	/** Saves the options of the app into storage */
 	saveOptionsAsync(onNext?: (data?: any) => void) {
 		return AppStorage.setAsync("Options", AppConfig.options).then(() => {
+			if (this.isDebug) {
+				console.log("[Configuration]: Options", AppConfig.options);
+			}
 			if (onNext !== undefined) {
 				onNext(AppConfig.options);
 			}

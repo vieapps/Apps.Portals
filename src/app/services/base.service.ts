@@ -65,24 +65,9 @@ export class Base {
 		return `[${this.name}]: ${message}`;
 	}
 
-	/** Prints the log message to console/log file */
-	protected showLog(message: string, ...optionalParams: any[]) {
-		console.log(this.getMessage(message), optionalParams);
-	}
-
-	/** Prints the warning message to console/log file */
-	protected showWarning(message: string, ...optionalParams: any[]) {
-		console.log(this.getMessage(message), optionalParams);
-	}
-
-	/** Gets the error message to print to console/log file */
-	protected getError(message: string, error?: any) {
-		return this.getMessage(`${message}\n${AppUtility.getErrorMessage(error)}`);
-	}
-
 	/** Prints the error message to console/log file and run the next action */
 	protected showError(message: string, error?: any, onNext?: (error?: any) => void) {
-		console.error(this.getError(message, error), error);
+		console.error(this.getMessage(`${message}\n${AppUtility.getErrorMessage(error)}`), error);
 		if (onNext !== undefined) {
 			onNext(AppUtility.parseError(error));
 		}

@@ -171,7 +171,7 @@ export class AuthenticationService extends BaseService {
 			this.configSvc.resetSessionAsync(() =>
 				this.configSvc.initializeSessionAsync(() =>
 					this.configSvc.registerSessionAsync(() => {
-						this.showLog("Reregistered the session when got security issue");
+						console.log("[Authentication]: Reregistered the session when got security issue");
 						if (onNext !== undefined) {
 							onNext(error);
 						}
@@ -193,13 +193,13 @@ export class AuthenticationService extends BaseService {
 			},
 			data => {
 				if (AppUtility.isTrue(data.Require2FA)) {
-					this.showLog("Log in with static password successful, but need to verify with 2FA", this.configSvc.isDebug ? data : "");
+					console.log("[Authentication]: Log in with static password successful, but need to verify with 2FA", this.configSvc.isDebug ? data : "");
 					if (onSuccess !== undefined) {
 						onSuccess(data);
 					}
 				}
 				else {
-					this.showLog("Log in successful", this.configSvc.isDebug ? data : "");
+					console.log("[Authentication]: Log in successful", this.configSvc.isDebug ? data : "");
 					this.updateSessionWhenLogInAsync(data, onSuccess);
 				}
 			},
@@ -218,7 +218,7 @@ export class AuthenticationService extends BaseService {
 				OTP: AppCrypto.rsaEncrypt(otp)
 			},
 			data => {
-				this.showLog("Log in with OTP successful");
+				console.log("[Authentication]: Log in with OTP successful");
 				this.updateSessionWhenLogInAsync(data, onSuccess);
 			},
 			error => this.processError("Error occurred while logging in with OTP", error, onError),
@@ -231,7 +231,7 @@ export class AuthenticationService extends BaseService {
 		return this.deleteAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			data => this.configSvc.updateSessionAsync(data, () => this.configSvc.registerSessionAsync(() => {
-				this.showLog("Log out successful", this.configSvc.isDebug ? data : "");
+				console.log("[Authentication]: Log out successful", this.configSvc.isDebug ? data : "");
 				AppEvents.broadcast("Account", { Type: "Updated", Mode: "Apps" });
 				AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Apps" });
 				AppEvents.broadcast("Session", { Type: "LogOut" });

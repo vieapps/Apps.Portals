@@ -161,7 +161,7 @@ export class UsersService extends BaseService {
 		return this.readAsync(
 			uri,
 			async data => await this.configSvc.updateSessionAsync(data, () => {
-				this.showLog("Activated...", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+				console.log("[Users]: Activated...", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
@@ -172,7 +172,7 @@ export class UsersService extends BaseService {
 		);
 	}
 
-	getProfileAsync(id?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, force: boolean = false, relatedQuery?: string) {
+	getProfileAsync(id?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, force: boolean = false, relatedQuery?: string, preferWebSocket: boolean = false) {
 		id = id || this.configSvc.getAccount().id;
 		return !force && UserProfile.contains(id)
 			? AppUtility.invoke(onSuccess)
@@ -184,9 +184,10 @@ export class UsersService extends BaseService {
 							onSuccess(data);
 						}
 					},
-					error => this.processError("Error occurred while reading profile", error, onError),
+					error => this.processError(`Error occurred while reading profile (${id})`, error, onError),
 					{ "x-app-identity": this.configSvc.appConfig.app.id, "x-app-name": this.configSvc.appConfig.app.name },
-					useXHR
+					useXHR,
+					preferWebSocket
 				);
 	}
 
@@ -200,7 +201,7 @@ export class UsersService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError("Error occurred while updating profile", error, onError)
+			error => this.processError(`Error occurred while updating profile ${body.ID}`, error, onError)
 		);
 	}
 
@@ -286,7 +287,7 @@ export class UsersService extends BaseService {
 				switch (message.Type.Event) {
 					case "Update":
 						this.configSvc.updateSessionAsync(message.Data, () => {
-							this.showLog("The session was updated with new access token", this.configSvc.appConfig.session);
+							console.log("[Users]: The session was updated with new access token", this.configSvc.appConfig.session);
 							AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
 							AppEvents.sendToElectron("Users", { Type: "Session", Data: this.configSvc.appConfig.session });
 						}, false, false);
@@ -294,7 +295,7 @@ export class UsersService extends BaseService {
 
 					case "Revoke":
 						if (AppUtility.isGotSecurityException(message.Data)) {
-							this.showLog("Revoke the session and register new when got a security issue", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+							console.log("[Users]: Revoke the session and register new when got a security issue", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 							this.configSvc.resetSessionAsync(() =>
 								this.configSvc.initializeSessionAsync(() =>
 									this.configSvc.registerSessionAsync(() => {
@@ -308,7 +309,7 @@ export class UsersService extends BaseService {
 						}
 						else {
 							this.configSvc.updateSessionAsync(message.Data, () => this.configSvc.registerSessionAsync(() => {
-								this.showLog("The session was revoked by the APIs", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+								console.log("[Users]: The session was revoked by the APIs", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 								AppAPIs.reopenWebSocket("Reopens when the session was revoked by the APIs");
 								AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
 								AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
@@ -327,7 +328,7 @@ export class UsersService extends BaseService {
 						break;
 
 					default:
-						this.showLog("Got an update of a session", message);
+						console.log("[Users]: Got an update of a session", message);
 						break;
 				}
 				break;
@@ -388,7 +389,7 @@ export class UsersService extends BaseService {
 				break;
 
 			default:
-				this.showLog("Got an update of an user", message);
+				console.log("[Users]: Got an update of an user", message);
 				break;
 		}
 	}

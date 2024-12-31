@@ -280,17 +280,9 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	private doFetch(organization: Organization) {
-		AppUtility.invoke(() => {
-			if (AppUtility.isNotEmpty(organization.OwnerID)) {
-				this.usersSvc.getProfileAsync(organization.OwnerID).then(() => this.zone.run(() => this.changeDetector.detectChanges()));
-			}
-		}, 123, true);
-	}
-
 	private fetchInfo(organization: Organization, defer: number = 1) {
 		if (AppUtility.isEmpty(organization.owner) && AppUtility.isNotEmpty(organization.OwnerID)) {
-			AppUtility.invoke(() => this.doFetch(organization), 234 + (13 * defer), true);
+			AppUtility.invoke(() => this.usersSvc.getProfileAsync(organization.OwnerID, undefined, undefined, false, false, undefined, true).then(() => this.zone.run(() => this.changeDetector.detectChanges())), 234 + (13 * defer));
 		}
 	}
 

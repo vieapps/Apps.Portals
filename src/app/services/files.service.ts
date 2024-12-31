@@ -45,7 +45,7 @@ export class FilesService extends BaseService {
 
 	readAsDataURL(file: File, onRead: (data: string) => void, limitSize?: number, onLimitExceeded?: (fileSize?: number, limitSize?: number) => void) {
 		if (limitSize !== undefined && file.size > limitSize) {
-			this.showLog(`Limit size exceeded - Max allowed size: ${limitSize} bytes - Actual size: ${file.size} bytes`);
+			console.log(`[Files]: Limit size exceeded - Max allowed size: ${limitSize} bytes - Actual size: ${file.size} bytes`);
 			if (onLimitExceeded !== undefined) {
 				onLimitExceeded(file.size, limitSize);
 			}

@@ -1,6 +1,5 @@
 import { Injectable } from "@angular/core";
 import { AppAPIs } from "@app/components/app.apis";
-import { AppUtility } from "@app/components/app.utility";
 import { AppEvents } from "@app/components/app.events";
 import { AppDataRequest } from "@app/components/app.objects";
 import { Base as BaseService } from "@app/services/base.service";

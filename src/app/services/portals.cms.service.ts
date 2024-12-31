@@ -1072,7 +1072,7 @@ export class PortalsCmsService extends BaseService {
 				this.deleteCategory(message.Data.ID, message.Data.ParentID);
 				break;
 			default:
-				this.showLog("Got an update message of a CMS category", message);
+				console.log("[Portals]: Got an update message of a CMS category", message);
 				break;
 		}
 		if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete" || message.Type.Event === "Refresh")) {
@@ -1249,12 +1249,12 @@ export class PortalsCmsService extends BaseService {
 				Content.instances.remove(message.Data.ID);
 				break;
 			default:
-				this.showLog("Got an update message of a CMS content", message);
+				console.log("[Portals]: Got an update message of a CMS content", message);
 				break;
 		}
 		if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
 			if (this.configSvc.isDebug) {
-				this.showLog("Got an update message of a CMS content", message.Data);
+				console.log("[Portals]: Got an update message of a CMS content", message.Data);
 			}
 			AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: message.Data.CategoryID });
 			if (AppUtility.isArray(message.Data.OtherCategories)) {
@@ -1426,7 +1426,7 @@ export class PortalsCmsService extends BaseService {
 				Item.instances.remove(message.Data.ID);
 				break;
 			default:
-				this.showLog("Got an update message of a CMS item", message);
+				console.log("[Portals]: Got an update message of a CMS item", message);
 				break;
 		}
 		if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
@@ -1672,7 +1672,7 @@ export class PortalsCmsService extends BaseService {
 				this.deleteLink(message.Data.ID, message.Data.ParentID);
 				break;
 			default:
-				this.showLog("Got an update message of a CMS link", message);
+				console.log("[Portals]: Got an update message of a CMS link", message);
 				break;
 		}
 		if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
@@ -1840,7 +1840,7 @@ export class PortalsCmsService extends BaseService {
 				Form.instances.remove(message.Data.ID);
 				break;
 			default:
-				this.showLog("Got an update message of a CMS form", message);
+				console.log("[Portals]: Got an update message of a CMS form", message);
 				break;
 		}
 		if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
@@ -1991,7 +1991,7 @@ export class PortalsCmsService extends BaseService {
 				Crawler.instances.remove(message.Data.ID);
 				break;
 			default:
-				this.showLog("Got an update message of a CMS crawler", message);
+				console.log("[Portals]: Got an update message of a CMS crawler", message);
 				break;
 		}
 		if (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete") {

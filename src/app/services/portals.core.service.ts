@@ -327,20 +327,25 @@ export class PortalsCoreService extends BaseService {
 			? preferID
 			: this.configSvc.appConfig.services.active.system || this.configSvc.appConfig.options.extras["organization"];
 		if (AppUtility.isNotEmpty(preferID)) {
-			if (Organization.active !== undefined && AppUtility.isEquals(Organization.active.ID, preferID)) {
+			if (Organization.active !== undefined && Organization.active.ID === preferID) {
 				this.configSvc.appConfig.services.active.system = this.configSvc.appConfig.options.extras["organization"] = Organization.active.ID;
 			}
 			else {
 				if (this.configSvc.isDebug) {
 					console.log("[Portals]: Get active organization", preferID);
 				}
-				await this.getOrganizationAsync(preferID, () => {
-					const organization = Organization.get(preferID) || Organization.get(this.activeOrganizations.first()) || Organization.instances.first();
-					if (this.configSvc.isDebug) {
-						console.log("[Portals]: Update active organization (when get active organization)", organization);
-					}
-					this.setActiveOrganization(organization);
-				}, undefined, useXHR);
+				await this.getOrganizationAsync(
+					preferID,
+					_ => {
+						const organization = Organization.get(preferID) || Organization.get(this.activeOrganizations.first()) || Organization.instances.first();
+						if (this.configSvc.isDebug) {
+							console.log("[Portals]: Update active organization (when get active organization)", organization);
+						}
+						this.setActiveOrganization(organization);
+					},
+					error => this.removeActiveOrganization(preferID, () => console.error(`[Portals]: Cannot get active organization (${preferID})\n${AppUtility.getErrorMessage(error)}`, error)),
+					useXHR
+				);
 			}
 		}
 		if (onNext !== undefined) {
@@ -2247,7 +2252,7 @@ export class PortalsCoreService extends BaseService {
 				Organization.instances.remove(message.Data.ID);
 				break;
 			default:
-				this.showLog("Got an update message of an organization", message);
+				console.log("[Portals]: Got an update message of an organization", message);
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
@@ -2456,7 +2461,7 @@ export class PortalsCoreService extends BaseService {
 				this.deleteRole(message.Data.ID, message.Data.ParentID);
 				break;
 			default:
-				this.showLog("Got an update message of a role", message);
+				console.log("[Portals]: Got an update message of a role", message);
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
@@ -2598,7 +2603,7 @@ export class PortalsCoreService extends BaseService {
 				Module.instances.remove(message.Data.ID);
 				break;
 			default:
-				this.showLog("Got an update message of a module", message);
+				console.log("[Portals]: Got an update message of a module", message);
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
@@ -2733,7 +2738,7 @@ export class PortalsCoreService extends BaseService {
 				}
 				break;
 			default:
-				this.showLog("Got an update message of a content type", message);
+				console.log("[Portals]: Got an update message of a content type", message);
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
@@ -2862,7 +2867,7 @@ export class PortalsCoreService extends BaseService {
 				}
 				break;
 			default:
-				this.showLog("Got an update message of an expression", message);
+				console.log("[Portals]: Got an update message of an expression", message);
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
@@ -2993,7 +2998,7 @@ export class PortalsCoreService extends BaseService {
 				Site.instances.remove(message.Data.ID);
 				break;
 			default:
-				this.showLog("Got an update message of a site", message);
+				console.log("[Portals]: Got an update message of a site", message);
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
@@ -3220,7 +3225,7 @@ export class PortalsCoreService extends BaseService {
 				this.deleteDesktop(message.Data.ID, message.Data.ParentID);
 				break;
 			default:
-				this.showLog("Got an update message of a desktop", message);
+				console.log("[Portals]: Got an update message of a desktop", message);
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
@@ -3359,7 +3364,7 @@ export class PortalsCoreService extends BaseService {
 				}
 				break;
 			default:
-				this.showLog(`Got an update message of a portlet - Portlet ID: ${message.Data.ID} - Desktop ID: ${message.Data.DesktopID}`, message);
+				console.log(`[Portals]: Got an update message of a portlet - Portlet ID: ${message.Data.ID} - Desktop ID: ${message.Data.DesktopID}`, message);
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
@@ -3458,7 +3463,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	fetchSchedulingTasks() {
-		AppUtility.invoke(() => this.readAsync(this.getPath("task", "fetch"), data => this.processSchedulingTasks(data), error => this.showError("Error occurred while fetching tasks", error), { "x-system-id": this.activeOrganization.ID, "x-update-messagae": AppAPIs.isWebSocketReady.toString() }, false, true), 3456);
+		AppUtility.invoke(() => this.readAsync(this.getPath("task", "fetch"), data => this.processSchedulingTasks(data), error => console.error("[Portals]: Error occurred while fetching tasks", error), { "x-system-id": this.activeOrganization.ID, "x-update-messagae": AppAPIs.isWebSocketReady.toString() }, false, true), 3456);
 	}
 
 	runSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
@@ -3514,7 +3519,7 @@ export class PortalsCoreService extends BaseService {
 				SchedulingTask.instances.remove(message.Data.ID);
 				break;
 			default:
-				this.showLog("Got an update message of a task", message);
+				console.log("[Portals]: Got an update message of a task", message);
 				break;
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {

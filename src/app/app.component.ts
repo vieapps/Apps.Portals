@@ -115,30 +115,38 @@ export class AppComponent implements OnInit {
 
 	ngOnInit() {
 		this.platform.ready().then(async () => {
-			await this.configSvc.loadURIsAsync();
-			await this.configSvc.loadOptionsAsync();
-			await this.configSvc.prepareLanguagesAsync();
-
 			const appConfig = this.configSvc.appConfig;
-			const session = await AppStorage.getAsync("Session") || {};
-			if (AppUtility.isNotEmpty(session.device) ) {
-				appConfig.session.device = session.device;
-			}
-			this.configSvc.prepare();
-			this.prepareSidebar();
-			this.prepareEventProcessors();
+			const uri = appConfig.isWebApp ? AppUtility.parseURI() : undefined;
 
-			if (!appConfig.isNativeApp) {
-				const uri = AppUtility.parseURI();
+			if (appConfig.isWebApp) {
+				if (uri.QueryParams["debug"] !== undefined) {
+					appConfig.app.debug = true;
+				}
+				if (uri.QueryParams["account-registrable"] === "true") {
+					appConfig.accounts.registrable = true;
+				}
 				appConfig.services.all.map((svc, index) => ({ hosts: svc.availableHosts || [], index: index })).forEach(info => {
 					if (info.hosts.length > 0 && info.hosts.indexOf(uri.Host) < 0) {
 						appConfig.services.all.removeAt(info.index);
 					}
 				});
 				AppUtility.toArray(uri.QueryParams["disabled"]).filter(name => AppUtility.isNotEmpty(name)).forEach(name => {
-					appConfig.services.all.removeAt(appConfig.services.all.findIndex(svc => svc.name === name));
+					appConfig.services.all.removeAt(appConfig.services.all.findIndex(svc => AppUtility.isEquals(svc.name, name)));
 				});
 			}
+
+			await this.configSvc.loadURIsAsync(appConfig.isWebApp ? uri.QueryParams["URIs"] : undefined);
+			await this.configSvc.loadOptionsAsync();
+			await this.configSvc.prepareLanguagesAsync();
+
+			const session = await AppStorage.getAsync("Session") || {};
+			if (AppUtility.isNotEmpty(session.device) ) {
+				appConfig.session.device = session.device;
+			}
+
+			this.configSvc.prepare();
+			this.prepareSidebar();
+			this.prepareEventProcessors();
 
 			let activeService = appConfig.services.all.first(svc => svc.name === appConfig.services.active.service);
 			if (activeService === undefined) {
@@ -164,12 +172,13 @@ export class AppComponent implements OnInit {
 				}
 			}
 
-			const isActivate = this.configSvc.isWebApp && AppUtility.isEquals("activate", this.configSvc.queryParams["prego"]);
+			const isActivate = appConfig.isWebApp && AppUtility.isEquals("activate", uri.QueryParams["prego"]);
 			const message = await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "loading"}`);
 			this.appFormsSvc.showLoadingAsync(message).then(isActivate ? () => this.activate() : () => this.initialize());
 
 			if (!appConfig.isNativeApp) {
-				window["__vieapps"] = { apis: AppAPIs, events: AppEvents };
+				window["__vieapps"] = { config: appConfig, apis: AppAPIs, crypto: AppCrypto, events: AppEvents };
+				console.log("<App>: Encoded URIs", AppCrypto.base64urlEncode(AppUtility.stringify(appConfig.URIs)));
 			}
 		});
 	}

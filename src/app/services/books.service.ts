@@ -388,7 +388,7 @@ export class BooksService extends BaseService {
 					AppEvents.broadcast(this.name, { Type: "Book", Mode: "Updated", ID: message.Data.ID });
 				}
 				else if (this.configSvc.isDebug) {
-					console.warn(this.getMessage("Got an update"), message);
+					console.log(this.getMessage("Got an update"), message);
 				}
 				break;
 		}
