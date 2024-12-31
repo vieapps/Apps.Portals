@@ -51,7 +51,8 @@ export class NotificationsService extends BaseService {
 			undefined,
 			false,
 			true,
-			data => this.updateNotifications(data !== undefined ? data.Objects : [])
+			data => this.updateNotifications(data !== undefined ? data.Objects : []),
+			"notifications"
 		);
 	}
 

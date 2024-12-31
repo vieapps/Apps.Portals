@@ -151,11 +151,11 @@ export class Base {
 		* @param headers The additional header
 		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	protected async searchAsync(path: string, request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false, preferWebSocket: boolean = false, onPreflight?: (data: any) => void) {
+	protected async searchAsync(path: string, request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false, preferWebSocket: boolean = false, onPreflight?: (data: any) => void, paginationPrefix?: string) {
 		request = request || {};
 		const processPagination = AppUtility.isFalse(dontProcessPagination);
 		const requestInfo = processPagination ? AppAPIs.parseRequestInfo(path) : undefined;
-		const paginationPrefix = processPagination ? `${requestInfo.ObjectName}@${requestInfo.ServiceName}`.toLowerCase() : undefined;
+		paginationPrefix = paginationPrefix || processPagination ? `${requestInfo.ObjectName}@${requestInfo.ServiceName}`.toLowerCase() : undefined;
 		const pagination = processPagination ? AppPagination.get(request, paginationPrefix) : undefined;
 		const pageNumber = processPagination && request.Pagination !== undefined ? request.Pagination.PageNumber : pagination !== undefined ? pagination.PageNumber : 0;
 		const preFlight = (data: any) => {
@@ -168,13 +168,19 @@ export class Base {
 					Verb: "GET",
 					Header: headers
 				};
-				AppUtility.invoke(() => this.sendRequestAsync(preRequestInfo, preData => {
-					AppPagination.set(preData, paginationPrefix);
-					onPreflight(preData);
+				AppUtility.invoke(() => {
+					const time = AppConfig.isDebug ? new Date() : undefined;
 					if (AppConfig.isDebug) {
-						console.log("[AppAPIs]: ~~~>>> Preflight", `/${AppUtility.parseURI(path).Path}`, preRequest, preData);
+						console.log("[Base]: ~~~>>> Preflight", `/${AppUtility.parseURI(path).Path}`, "\nRequest", preRequest);
 					}
-				}, undefined, false, true), this.preflightDefer);
+					this.sendRequestAsync(preRequestInfo, preData => {
+						AppPagination.set(preData, paginationPrefix);
+						onPreflight(preData);
+						if (AppConfig.isDebug) {
+							console.log("[Base]: ==>> Preflight", `/${AppUtility.parseURI(path).Path}\nTimes >> ${AppUtility.getElapsedTime(time)}`, "\nResult", preData);
+						}
+					}, undefined, false, true);
+				}, this.preflightDefer);
 			}
 		};
 		if (pagination !== undefined && (pageNumber < pagination.PageNumber || pagination.TotalPages <= pagination.PageNumber)) {

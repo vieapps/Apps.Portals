@@ -39,25 +39,14 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			this.prepareLabelAsync();
 			this.prepareShortcutsAsync();
 		}
-		else {
-			AppEvents.on("App", info => {
-				if ("Initialized" === info.args.Type || ("HomePage" === info.args.Type && "Open" === info.args.Mode && "Return" === info.args.Source && this.shortcuts.length != 4)) {
-					this.prepareLabelAsync();
-					this.prepareShortcutsAsync();
-				}
-			}, "PortalsShortcutsEvents");
-		}
-		AppEvents.on("Session", info => {
-			if ("LogIn" === info.args.Type) {
-				this.shortcuts.clear();
+		AppEvents.on("App", info => {
+			if ("Initialized" === info.args.Type && this.shortcuts.length < 1) {
+				this.prepareLabelAsync();
 				this.prepareShortcutsAsync();
 			}
 		}, "PortalsShortcutsEvents");
 		AppEvents.on(this.portalsCoreSvc.name, info => {
-			if ("Changed" === info.args.Mode && ("Organization" === info.args.Type || "Module" === info.args.Type)) {
-				this.updateShortcutsAsync();
-			}
-			else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode) {
+			if (("Changed" === info.args.Mode && ("Organization" === info.args.Type || "Module" === info.args.Type)) || ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode)) {
 				this.updateShortcutsAsync();
 			}
 		}, "PortalsShortcutsEvents");

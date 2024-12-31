@@ -44,6 +44,10 @@ export class AppConfig {
 		persistence: true,
 		offline: false,
 		debug: false,
+		apis: {
+			outdated: 3,
+			defer: 789
+		},
 		preflight: {
 			enable: true,
 			defer: 2345

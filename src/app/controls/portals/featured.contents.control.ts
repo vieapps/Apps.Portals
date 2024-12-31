@@ -59,6 +59,10 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		const amounts = this.configSvc.appConfig.options.extras["featured"] || {};
 		this.amount = this.amount !== undefined ? this.amount : (this._isPublished ? amounts.published : amounts.updated) || 7;
 
+		if (this.configSvc.isReady) {
+			this.prepareLabelsAsync();
+		}
+		
 		AppEvents.on("App", info => {
 			if ("Initialized" === info.args.Type || ("HomePage" === info.args.Type && "Open" === info.args.Mode)) {
 				this.prepareLabelsAsync().then(() => this.prepareContents());

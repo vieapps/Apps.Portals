@@ -336,13 +336,7 @@ export class PortalsCoreService extends BaseService {
 				}
 				await this.getOrganizationAsync(
 					preferID,
-					_ => {
-						const organization = Organization.get(preferID) || Organization.get(this.activeOrganizations.first()) || Organization.instances.first();
-						if (this.configSvc.isDebug) {
-							console.log("[Portals]: Update active organization (when get active organization)", organization);
-						}
-						this.setActiveOrganization(organization);
-					},
+					_ => this.setActiveOrganization(Organization.get(preferID) || Organization.get(this.activeOrganizations.first()) || Organization.instances.first()),
 					error => this.removeActiveOrganization(preferID, () => console.error(`[Portals]: Cannot get active organization (${preferID})\n${AppUtility.getErrorMessage(error)}`, error)),
 					useXHR
 				);
@@ -355,36 +349,45 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	setActiveOrganization(organization: Organization, onNext?: () => void) {
+		const activeID = Organization.active !== undefined ? Organization.active.ID : undefined;
 		if (organization !== undefined) {
 			this.configSvc.appConfig.services.active.system = this.configSvc.appConfig.options.extras["organization"] = organization.ID;
 			this.activeOrganizations.merge([organization.ID], true);
 			if (Organization.active === undefined || Organization.active.ID !== organization.ID) {
 				Organization.active = organization;
+				if (this.configSvc.isDebug) {
+					console.log("[Portals]: Set active organization", this.activeOrganization);
+				}
 				AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
 				const useXHR = organization.modules.length < 1;
+				if (this.configSvc.isDebug) {
+					console.log("[Portals]: Get active modules (when set active organization)", this.activeOrganization);
+				}
 				this.getActiveModuleAsync(undefined, useXHR, undefined, false).then(() => {
 					if (useXHR) {
 						AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
 					}
 					this.configSvc.saveOptionsAsync(() => AppEvents.broadcast("App", { Type: "Options", Mode: "Changed" }));
 					if (this.configSvc.isAuthenticated && Site.instances.first(site => site.SystemID === organization.ID) === undefined) {
+						if (this.configSvc.isDebug) {
+							console.log("[Portals]: Get sites of active organization (when get active module)", this.activeOrganization);
+						}
 						this.searchSitesAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }), undefined, undefined, true, false, true);
 					}
 				});
-				if (this.configSvc.isDebug) {
-					console.log("[Portals]: Set active organization", this.activeOrganization);
-				}
 			}
 		}
 		if (Organization.active !== undefined) {
-			if (this.configSvc.isDebug) {
-				console.log("[Portals]: Fetch sheduling tasks of the active organization", this.activeOrganization);
+			if (Organization.active.ID !== activeID) {
+				if (this.configSvc.isDebug) {
+					console.log("[Portals]: Fetch sheduling tasks of the active organization (when set active organization)", this.activeOrganization);
+				}
+				this.fetchSchedulingTasks();
 			}
-			this.fetchSchedulingTasks();
 			if (!!!Desktop.instances.first(desktop => desktop.SystemID === Organization.active.ID)) {
 				AppUtility.invoke(() => {
 					if (this.configSvc.isDebug) {
-						console.log("[Portals]: Fetch desktops the active organization", this.activeOrganization);
+						console.log("[Portals]: Fetch desktops the active organization (when set active organization)", this.activeOrganization);
 					}
 					this.fetchDesktops();
 				}, 6789);
@@ -1440,12 +1443,12 @@ export class PortalsCoreService extends BaseService {
 		return controlConfig;
 	}
 
-	getAuditFormControl(ojbect: BaseModel, segment?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
-		return this.usersSvc.getAuditFormControl(ojbect.Created, ojbect.CreatedID, ojbect.LastModified, ojbect.LastModifiedID, segment, onCompleted);
+	getAuditFormControl(object: BaseModel, segment?: string, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
+		return this.usersSvc.getAuditFormControl(object.Created, object.CreatedID, object.LastModified, object.LastModifiedID, segment, onCompleted);
 	}
 
-	getAuditInfoAsync(ojbect: BaseModel) {
-		return this.usersSvc.getAuditInfoAsync(ojbect.Created, ojbect.CreatedID, ojbect.LastModified, ojbect.LastModifiedID);
+	getAuditInfoAsync(object: BaseModel) {
+		return this.usersSvc.getAuditInfoAsync(object.Created, object.CreatedID, object.LastModified, object.LastModifiedID);
 	}
 
 	getRepositoryEntityInfo(contentType: ContentType) {
@@ -1939,21 +1942,22 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	findVersions(objectName: string, objectID: string) {
-		this.versions.push({ name: objectName, id: objectID });
-		if (this.findVersionsAsync === undefined) {
+		if (this.versions.findIndex(obj => obj.id === objectID) < 0) {
+			this.versions.push({ name: objectName, id: objectID });
+		}
+		if (this.findVersionsAsync === undefined && this.versions.length > 0) {
 			this.findVersionsAsync = async () => {
-				const info = this.versions.first();
+				const info = this.versions.pop();
 				if (this.configSvc.isDebug) {
 					console.log(`[Versions]: ${info.name}#${info.id} (${this.versions.length})`);
 				}
 				await this.readAsync(this.getPath("versions", info.name, "object-id=" + info.id), _ => this.findNextVersions(), _ => this.findNextVersions(), AppAPIs.isWebSocketReady ? undefined : { "x-update-messagae": "false" }, false, true);
 			};
-			AppUtility.invoke(() => this.findVersionsAsync(), 567);
+			AppUtility.invoke(() => this.findVersionsAsync(), 345);
 		}
 	}
 
 	private findNextVersions() {
-		this.versions.removeAt(0);
 		if (this.versions.length < 1) {
 			this.findVersionsAsync = undefined;
 			if (this.configSvc.isDebug) {
@@ -1961,7 +1965,7 @@ export class PortalsCoreService extends BaseService {
 			}
 		}
 		else {
-			AppUtility.invoke(() => this.findVersionsAsync(), 567);
+			AppUtility.invoke(() => this.findVersionsAsync(), 345);
 		}
 	}
 
@@ -2124,7 +2128,12 @@ export class PortalsCoreService extends BaseService {
 			this.getSearchingPath("organization", relatedQuery || this.configSvc.relatedQuery),
 			request,
 			data => this.processOrganizations(data, onSuccess),
-			error => this.processError("Error occurred while searching organizations", error, onError)
+			error => this.processError("Error occurred while searching organizations", error, onError),
+			false,
+			undefined,
+			false,
+			false,
+			data => this.processOrganizations(data)
 		);
 	}
 
@@ -2224,6 +2233,7 @@ export class PortalsCoreService extends BaseService {
 		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
 			(data.Objects as Array<any>).forEach(org => {
 				const organization = Organization.update(org);
+				this.usersSvc.fetchProfileAsync(organization.OwnerID).then(() => organization.OwnerID === organization.CreatedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(organization.CreatedID)).then(() => organization.CreatedID === organization.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(organization.LastModifiedID));
 				if (organization.Versions === undefined) {
 					this.findVersions("Organization", organization.ID);
 				}
@@ -2911,7 +2921,8 @@ export class PortalsCoreService extends BaseService {
 			dontProcessPagination,
 			undefined,
 			useXHR,
-			preferWebSocket
+			preferWebSocket,
+			data => this.processSites(data)
 		);
 	}
 

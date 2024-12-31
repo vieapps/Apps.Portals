@@ -305,12 +305,13 @@ export class AppAPIs {
 				msg = AppUtility.parse(event.data || "{}");
 			}
 			catch (error) {
-				console.error("[AppAPIs]: Error occurred while parsing the message", error instanceof SyntaxError ? "" : error);
-				const totalQueuedMessages = AppUtility.getAttributes(this._callbackableMessages).length;
-				if (totalQueuedMessages > 0) {
-					const defer = Math.round(789 + totalQueuedMessages + (123 * totalQueuedMessages * Math.random()));
+				console.error("[AppAPIs]: Error occurred while parsing the message", error instanceof SyntaxError ? `${(event.data || "").substring(0, 170)}...` : error);
+				this.clean();
+				const ids = Object.keys(this._callbackableMessages);
+				if (ids.length > 0) {
+					const defer = Math.round(AppConfig.app.apis.defer + ids.length + (123 * ids.length * Math.random()));
 					if (AppConfig.isDebug) {
-						console.log(`[AppAPIs]: Callbackable queue still got ${totalQueuedMessages} message(s) - resend in ${defer}ms`);
+						console.log(`[AppAPIs]: Callbackable queue still got ${ids.length} message(s) - resend in ${defer}ms`, ids);
 					}
 					this._resend.id = undefined;
 					AppUtility.invoke(() => this.resendWebSocketMessages(), defer);
@@ -405,10 +406,14 @@ export class AppAPIs {
 				}
 			}
 
+			else if (AppConfig.isDebug) {
+				console.log("[AppAPIs]: Got an orphan message", msg);
+			}
+
 			// resend queued callbackable messages
 			if (this._resend.next !== undefined) {
 				if (AppUtility.isGotData(this._callbackableMessages)) {
-					AppUtility.invoke(this._resend.next, Math.round(789 + (123 * Math.random())));
+					AppUtility.invoke(this._resend.next, Math.round(AppConfig.app.apis.defer + (123 * Math.random())));
 				}
 				else {
 					this._resend.id = this._resend.next = undefined;
@@ -425,7 +430,7 @@ export class AppAPIs {
 				this._onOpened();
 				this._onOpened = undefined;
 			}
-		}, this.isWebSocketReady ? 0 : 567, true);
+		}, this.isWebSocketReady ? 0 : AppConfig.app.apis.defer / 2);
 	}
 
 	private static disposeWebSocket() {
@@ -506,7 +511,7 @@ export class AppAPIs {
 
 	private static resendWebSocketMessages() {
 		if (this.isWebSocketReady) {
-			const ids = AppUtility.getAttributes(this._callbackableMessages);
+			const ids = Object.keys(this._callbackableMessages);
 			const id = ids.sort().first();
 			if (id !== undefined) {
 				if (id !== this._resend.id) {
@@ -528,6 +533,39 @@ export class AppAPIs {
 		}
 	}
 
+	private static clean(requestInfo?: AppRequestInfo | string) {
+		const ids = new Array<string>();
+		const callbackableMessages = Object.keys(this._callbackableMessages).map(id => AppUtility.parse(this._callbackableMessages[id]));
+		callbackableMessages.forEach(message => {
+			const times = new Date().getTime() - new Date(message.Time).getTime();
+			if (times / 60000 > AppConfig.app.apis.outdated) {
+				ids.push(message.ID);
+			}
+		});
+		const nocallbackMessages = Object.keys(this._nocallbackMessages).map(id => AppUtility.parse(this._nocallbackMessages[id]));
+		nocallbackMessages.forEach(message => {
+			const times = new Date().getTime() - new Date(message.Time).getTime();
+			if (times / 60000 > AppConfig.app.apis.outdated) {
+				ids.push(message.ID);
+			}
+		});
+		if (requestInfo !== undefined) {
+			const sig = AppUtility.isNotEmpty(requestInfo) ? requestInfo as string : AppCrypto.hash(requestInfo);
+			ids.push((callbackableMessages.first(msg => sig === msg.Sig) || { ID: "" }).ID);
+			ids.push((nocallbackMessages.first(msg => sig === msg.Sig) || { ID: "" }).ID);
+		}
+		if (AppConfig.isDebug && ids.filter(id => id !== "").length > 0) {
+			console.log("[AppAPIs]: Clean out-dated messages", ids.filter(id => id !== ""));
+		}
+		ids.filter(id => id !== "").forEach(id => {
+			delete this._nocallbackMessages[id];
+			delete this._callbackableMessages[id];
+			delete this._successCallbacks[id];
+			delete this._errorCallbacks[id];
+			this._resend.id = id === this._resend.id ? undefined : this._resend.id;
+		});
+	}
+
 	/**
 		* Sends a request to APIs using WebSocket
 		* @param requestInfo The requesting information
@@ -535,8 +573,6 @@ export class AppAPIs {
 		* @param onError The callback function to handle the returning error
 	*/
 	static sendWebSocketRequest(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		this._counter++;
-		const id = AppUtility.right(`000000000${this._counter}`, 10);
 		const request = {
 			ServiceName: requestInfo.ServiceName,
 			ObjectName: requestInfo.ObjectName || "",
@@ -546,9 +582,14 @@ export class AppAPIs {
 			Extra: requestInfo.Extra || {},
 			Body: requestInfo.Body || {}
 		} as AppRequestInfo;
+		const sig = AppCrypto.hash(request);
+		this.clean(sig);
+		request["Sig"] = sig;
+		request["Time"] = new Date();
+		this._counter++;
+		const id = AppUtility.right(`000000000${this._counter}`, 10);
 		const gotCallback = onSuccess !== undefined || onError !== undefined;
 		if (gotCallback) {
-			request["Sig"] = AppCrypto.hash(request);
 			request["ID"] = id;
 		}
 		const message = AppUtility.stringify(request);
@@ -647,30 +688,20 @@ export class AppAPIs {
 			this.sendWebSocketRequest(requestMessage, onSuccess, onError);
 			return EmptyObservable;
 		}
-		else {
-			const sig = AppCrypto.hash(requestMessage);
-			const messages  = Object.keys(this._callbackableMessages).map(id => AppUtility.parse(this._callbackableMessages[id]));
-			const message = messages.first(msg => sig === msg.Sig);
-			if (message !== undefined) {
-				delete this._callbackableMessages[message.ID];
-				delete this._successCallbacks[message.ID];
-				delete this._errorCallbacks[message.ID];
-				this._resend.id = message.ID === this._resend.id ? undefined : this._resend.id;
-			}
-			let path = requestInfo.Path;
-			if (AppUtility.isEmpty(path)) {
-				let query = AppUtility.clone(requestInfo.Query || {});
-				const objectIdentity = query["object-identity"];
-				["service-name", "object-name", "object-identity"].forEach(name => delete query[name]);
-				query = `?${AppUtility.toQuery(query)}`;
-				path = `${requestInfo.ServiceName}${AppUtility.isNotEmpty(requestInfo.ObjectName) ? `/${requestInfo.ObjectName}` : ""}${AppUtility.isNotEmpty(objectIdentity) ? `/${objectIdentity}` : ""}${query === "?" ? "" : query}`;
-			}
-			path += requestInfo.Extra !== undefined ? (path.indexOf("?") > 0 ? "&" : "?") + `x-request-extra=${AppCrypto.jsonEncode(requestInfo.Extra)}` : "";
-			const url = this.getURL(path);
-			const headers = this.getHeaders(requestInfo.Header);
-			const query = (AppConfig.isDebug ? "x-logs=true" : "") + (AppConfig.app.xhr.tokenInQuery ? (AppConfig.isDebug ? "&" : "") + AppUtility.toQuery(headers) : "");
-			return this.sendXMLHttpRequest(requestInfo.Verb, url + (query === "" ? "" : (url.indexOf("?") > 0 ? "&" : "?") + query), AppConfig.app.xhr.tokenInQuery ? undefined : { headers: headers }, requestInfo.Body);
+		this.clean(requestMessage);
+		let path = requestInfo.Path;
+		if (AppUtility.isEmpty(path)) {
+			let query = AppUtility.clone(requestInfo.Query || {});
+			const objectIdentity = query["object-identity"];
+			["service-name", "object-name", "object-identity"].forEach(name => delete query[name]);
+			query = `?${AppUtility.toQuery(query)}`;
+			path = `${requestInfo.ServiceName}${AppUtility.isNotEmpty(requestInfo.ObjectName) ? `/${requestInfo.ObjectName}` : ""}${AppUtility.isNotEmpty(objectIdentity) ? `/${objectIdentity}` : ""}${query === "?" ? "" : query}`;
 		}
+		path += requestInfo.Extra !== undefined ? (path.indexOf("?") > 0 ? "&" : "?") + `x-request-extra=${AppCrypto.jsonEncode(requestInfo.Extra)}` : "";
+		const url = this.getURL(path);
+		const headers = this.getHeaders(requestInfo.Header);
+		const query = (AppConfig.isDebug ? "x-logs=true" : "") + (AppConfig.app.xhr.tokenInQuery ? (AppConfig.isDebug ? "&" : "") + AppUtility.toQuery(headers) : "");
+		return this.sendXMLHttpRequest(requestInfo.Verb, url + (query === "" ? "" : (url.indexOf("?") > 0 ? "&" : "?") + query), AppConfig.app.xhr.tokenInQuery ? undefined : { headers: headers }, requestInfo.Body);
 	}
 
 	/**

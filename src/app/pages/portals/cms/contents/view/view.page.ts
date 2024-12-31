@@ -415,6 +415,12 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 								control.value = `<ul>${relateds}</ul>`;
 							}
 							break;
+
+						case "TempLink":
+							if (this.content.Status !== "Published") {
+								control.Extras["Text"] = this.getURL(false);
+							}
+							break;
 					}
 				}
 			}
@@ -424,14 +430,19 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		});
 	}
 
+	private getURL(asPublicURL: boolean = true) {
+		const url = asPublicURL ? this.portalsCoreSvc.getPublicURL(this.content, this.content.category) : this.portalsCoreSvc.getPortalURL(this.content, this.content.category, true);
+		return AppUtility.isEmpty(url) ? undefined : url + (this.content.Status === "Published" ? "" : (url.indexOf("?") > 0 ? "&" : "?") + `x-app-token=${this.configSvc.appConfig.jwt}`);
+	}
+
 	private setPublicURL(defer?: number, onUndefined?: () => void) {
 		AppUtility.invoke(() => {
-			const url = this.portalsCoreSvc.getPublicURL(this.content, this.content.category);
+			const url = this.getURL();
 			if (AppUtility.isNotEmpty(url)) {
 				const control = this.formControls.find(ctrl => ctrl.Name === "PublicLink");
 				control.Extras["Text"] = url;
 				control.Hidden = false;
-				this.formControls.find(ctrl => ctrl.Name === "TempLink").Extras["Text"] = this.portalsCoreSvc.getPortalURL(this.content, this.content.category, true);
+				this.formControls.find(ctrl => ctrl.Name === "TempLink").Extras["Text"] = this.getURL(false);
 				this.zone.run(() => this.changeDetector.detectChanges());
 			}
 			else if (onUndefined !== undefined) {
@@ -482,14 +493,9 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	private viewAsPublic() {
-		const url = this.portalsCoreSvc.getPublicURL(this.content, this.content.category);
+		const url = this.getURL();
 		if (AppUtility.isNotEmpty(url)) {
-			if (this.content.Status === "Published") {
-				PlatformUtility.openURL(url);
-			}
-			else {
-				PlatformUtility.openURL(`${url}${url.indexOf("?") > 0 ? "&" : "?"}x-app-token=${this.configSvc.appConfig.jwt}`);
-			}
+			PlatformUtility.openURL(url);
 		}
 	}
 

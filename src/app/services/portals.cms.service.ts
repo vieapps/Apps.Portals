@@ -15,6 +15,7 @@ import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { FilesService, FileOptions } from "@app/services/files.service";
+import { UsersService } from "@app/services/users.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { AppFormsControlComponent } from "@app/components/forms.control.component";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
@@ -32,6 +33,7 @@ export class PortalsCmsService extends BaseService {
 		private authSvc: AuthenticationService,
 		private appFormsSvc: AppFormsService,
 		private filesSvc: FilesService,
+		private usersSvc: UsersService,
 		private portalsCoreSvc: PortalsCoreService
 	) {
 		super("Portals");
@@ -1227,6 +1229,7 @@ export class PortalsCmsService extends BaseService {
 	private processContents(contents: Array<any>) {
 		contents.forEach(data => {
 			const content = Content.update(data);
+			this.usersSvc.fetchProfileAsync(content.CreatedID).then(() => content.CreatedID === content.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(content.LastModifiedID));
 			if (content.Versions === undefined) {
 				this.portalsCoreSvc.findVersions("CMS.Content", content.ID);
 			}
@@ -1404,6 +1407,7 @@ export class PortalsCmsService extends BaseService {
 	private processItems(items: Array<any>) {
 		items.forEach(obj => {
 			const item = Item.update(obj);
+			this.usersSvc.fetchProfileAsync(item.CreatedID).then(() => item.CreatedID === item.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(item.LastModifiedID));
 			if (item.Versions === undefined) {
 				this.portalsCoreSvc.findVersions("CMS.Item", item.ID);
 			}

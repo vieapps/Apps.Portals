@@ -31,6 +31,9 @@ export class UsersService extends BaseService {
 		super("Users");
 	}
 
+	private _profileIDs = new Array<string>();
+	private _fetchProfileAsync: () => Promise<void>;
+
 	initialize() {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => this.processUpdateMessage(message));
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", () => {
@@ -170,6 +173,46 @@ export class UsersService extends BaseService {
 			undefined,
 			true
 		);
+	}
+
+	fetchProfileAsync(userID: string, force: boolean = false) {
+		if (AppUtility.isNotEmpty(userID)) {
+			if (force) {
+				if (!UserProfile.contains(userID)) {
+					if (this.configSvc.isDebug) {
+						console.log(`[Users]: Force to fetch an user profile #${userID} (${this._profileIDs.length})`);
+					}
+					return this.getProfileAsync(userID, undefined, undefined, true);
+				}
+			}
+			else if (this._profileIDs.findIndex(id => id === userID) < 0) {
+				this._profileIDs.push(userID);
+				if (this._fetchProfileAsync === undefined) {
+					this._fetchProfileAsync = () => {
+						const id = this._profileIDs.pop();
+						if (UserProfile.contains(id)) {
+							return this.fetchNextProfileAsync();
+						}
+						else {
+							if (this.configSvc.isDebug) {
+								console.log(`[Users]: Fetch an user profile #${id} (${this._profileIDs.length})`);
+							}
+							return this.getProfileAsync(id, _ => this.fetchNextProfileAsync(), _ => this.fetchNextProfileAsync(), false, false, undefined, true);
+						}
+					};
+					return AppUtility.invoke(() => this._fetchProfileAsync(), 234);
+				}
+			}
+		}
+		return AppUtility.promise;
+	}
+
+	private fetchNextProfileAsync() {
+		if (!!!this._profileIDs.length) {
+			this._fetchProfileAsync = undefined;
+			return AppUtility.promise;
+		}
+		return AppUtility.invoke(() => this._fetchProfileAsync(), 234);
 	}
 
 	getProfileAsync(id?: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, force: boolean = false, relatedQuery?: string, preferWebSocket: boolean = false) {
@@ -445,24 +488,18 @@ export class UsersService extends BaseService {
 	}
 
 	async getAuditInfoAsync(created: Date, createdID: string, lastModified: Date, lastModifiedID: string) {
-		let creator = UserProfile.get(createdID);
-		if (creator === undefined) {
-			if (AppUtility.isNotEmpty(createdID)) {
-				await this.getProfileAsync(createdID, _ => creator = UserProfile.get(createdID) || new UserProfile("Unknown"), _ => creator = new UserProfile("Unknown"), true);
-			}
-			else {
-				creator = new UserProfile("Unknown");
-			}
+		let writeLogs = this.configSvc.isDebug && createdID !== undefined && !UserProfile.contains(createdID);
+		if (writeLogs) {
+			console.log(`[Users]: Get an user profile (${createdID}) when get info of an user who creates the content`);
 		}
-		let modifier = UserProfile.get(lastModifiedID);
-		if (modifier === undefined) {
-			if (AppUtility.isNotEmpty(lastModifiedID)) {
-				await this.getProfileAsync(lastModifiedID, _ => modifier = UserProfile.get(lastModifiedID) || new UserProfile("Unknown"), _ => modifier = new UserProfile("Unknown"), true);
-			}
-			else {
-				modifier = new UserProfile("Unknown");
-			}
+		await this.fetchProfileAsync(createdID, true);
+		const creator = UserProfile.get(createdID) || new UserProfile("Unknown");
+		writeLogs = this.configSvc.isDebug && lastModifiedID !== undefined && !UserProfile.contains(lastModifiedID);
+		if (writeLogs) {
+			console.log(`[Users]: Get an user profile (${lastModifiedID}) when get info of an user who updates the content at the last time`);
 		}
+		await this.fetchProfileAsync(lastModifiedID, true);
+		const modifier = UserProfile.get(lastModifiedID) || new UserProfile("Unknown");
 		const params = {
 			creator: creator.Name,
 			creatorProfileURI: creator.routerURI,
