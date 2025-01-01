@@ -26,6 +26,7 @@ export class AppAPIs {
 	private static _errorCallbacks: { [id: string]: (error?: any) => void } = {};
 	private static _resend = { id: undefined as string, next: undefined as () => void };
 	private static _ping: number;
+	private static _isReopen = false;
 	private static _counter = 0;
 	private static _attempt = 0;
 	private static _time = new Date();
@@ -60,6 +61,11 @@ export class AppAPIs {
 	/** Gets state that determines the WebSocket connection is got too large ping period */
 	static get isPingPeriodTooLarge() {
 		return +new Date() - this._ping > 360000;
+	}
+
+	/** Gets state that determines the WebSocket connection is re-open or not */
+	static get isReopen() {
+		return this._isReopen;
 	}
 
 	/** Gets the HttpClient instance for working with XMLHttpRequest (XHR) */
@@ -242,8 +248,8 @@ export class AppAPIs {
 
 		// assign 'on-open' event handler
 		this._websocket.onopen = event => {
-			this._websocketStatus = "ready";
 			this.authenticateWebSocket();
+			this._websocketStatus = "ready";
 			console.log(`[AppAPIs]: The WebSocket connection was opened... [${AppUtility.getElapsedTime(this._time)} => ${AppUtility.parseURI(this._websocketURL).HostURI}]`, AppUtility.toIsoDateTime(new Date(), true));
 			if (this._onWebSocketOpened !== undefined) {
 				try {
@@ -309,7 +315,7 @@ export class AppAPIs {
 				this.clean();
 				const ids = Object.keys(this._callbackableMessages);
 				if (ids.length > 0) {
-					const defer = Math.round(AppConfig.app.apis.defer + ids.length + (123 * ids.length * Math.random()));
+					const defer = Math.round(AppConfig.app.query.defer + ids.length + (123 * ids.length * Math.random()));
 					if (AppConfig.isDebug) {
 						console.log(`[AppAPIs]: Callbackable queue still got ${ids.length} message(s) - resend in ${defer}ms`, ids);
 					}
@@ -413,7 +419,7 @@ export class AppAPIs {
 			// resend queued callbackable messages
 			if (this._resend.next !== undefined) {
 				if (AppUtility.isGotData(this._callbackableMessages)) {
-					AppUtility.invoke(this._resend.next, Math.round(AppConfig.app.apis.defer + (123 * Math.random())));
+					AppUtility.invoke(this._resend.next, Math.round(AppConfig.app.query.defer + (123 * Math.random())));
 				}
 				else {
 					this._resend.id = this._resend.next = undefined;
@@ -430,7 +436,7 @@ export class AppAPIs {
 				this._onOpened();
 				this._onOpened = undefined;
 			}
-		}, this.isWebSocketReady ? 0 : AppConfig.app.apis.defer / 2);
+		}, this.isWebSocketReady ? 0 : AppConfig.app.query.defer / 2);
 	}
 
 	private static disposeWebSocket() {
@@ -455,6 +461,7 @@ export class AppAPIs {
 		if (this._websocketStatus !== "restarting") {
 			this.disposeWebSocket();
 			this._websocketStatus = "restarting";
+			this._isReopen = true;
 			this._attempt++;
 			console.warn(`[AppAPIs]: ${reason || "Re-open because the WebSocket connection is broken"}`);
 			AppUtility.invoke(() => {
@@ -485,7 +492,7 @@ export class AppAPIs {
 	}
 
 	private static canUseWebSocket(useXHR: boolean = false) {
-		let can = !AppConfig.app.xhr.prefer && !useXHR && this.isWebSocketReady;
+		let can = !AppConfig.app.query.preferXHR && !useXHR && this.isWebSocketReady;
 		if (can && this.isPingPeriodTooLarge) {
 			can = false;
 			this.reopenWebSocket("[AppAPIs]: Ping period is too large...");
@@ -537,15 +544,15 @@ export class AppAPIs {
 		const ids = new Array<string>();
 		const callbackableMessages = Object.keys(this._callbackableMessages).map(id => AppUtility.parse(this._callbackableMessages[id]));
 		callbackableMessages.forEach(message => {
-			const times = new Date().getTime() - new Date(message.Time).getTime();
-			if (times / 60000 > AppConfig.app.apis.outdated) {
+			const minutes = (new Date().getTime() - new Date(message.Time).getTime()) / 60000;
+			if (minutes > AppConfig.app.query.outdated) {
 				ids.push(message.ID);
 			}
 		});
 		const nocallbackMessages = Object.keys(this._nocallbackMessages).map(id => AppUtility.parse(this._nocallbackMessages[id]));
 		nocallbackMessages.forEach(message => {
-			const times = new Date().getTime() - new Date(message.Time).getTime();
-			if (times / 60000 > AppConfig.app.apis.outdated) {
+			const minutes = (new Date().getTime() - new Date(message.Time).getTime()) / 60000;
+			if (minutes > AppConfig.app.query.outdated) {
 				ids.push(message.ID);
 			}
 		});
@@ -700,8 +707,8 @@ export class AppAPIs {
 		path += requestInfo.Extra !== undefined ? (path.indexOf("?") > 0 ? "&" : "?") + `x-request-extra=${AppCrypto.jsonEncode(requestInfo.Extra)}` : "";
 		const url = this.getURL(path);
 		const headers = this.getHeaders(requestInfo.Header);
-		const query = (AppConfig.isDebug ? "x-logs=true" : "") + (AppConfig.app.xhr.tokenInQuery ? (AppConfig.isDebug ? "&" : "") + AppUtility.toQuery(headers) : "");
-		return this.sendXMLHttpRequest(requestInfo.Verb, url + (query === "" ? "" : (url.indexOf("?") > 0 ? "&" : "?") + query), AppConfig.app.xhr.tokenInQuery ? undefined : { headers: headers }, requestInfo.Body);
+		const query = (AppConfig.isDebug ? "x-logs=true" : "") + (AppConfig.app.query.includeToken ? (AppConfig.isDebug ? "&" : "") + AppUtility.toQuery(headers) : "");
+		return this.sendXMLHttpRequest(requestInfo.Verb, url + (query === "" ? "" : (url.indexOf("?") > 0 ? "&" : "?") + query), AppConfig.app.query.includeToken ? undefined : { headers: headers }, requestInfo.Body);
 	}
 
 	/**

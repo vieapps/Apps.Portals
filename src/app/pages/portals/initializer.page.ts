@@ -46,15 +46,25 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 	}
 
 	private async initializeAsync() {
-		TrackingUtility.trackAsync({ title: "Initialize and open a view of CMS Portals", campaignUrl: "/portals/initializer", category: "Home", action: "Initialize" }).then(() => console.log("Initialize CMS Portals", this.configSvc.requestParams));
+		TrackingUtility.trackAsync({ title: "Initialize and open a view of CMS Portals", campaignUrl: "/portals/initializer", category: "Home", action: "Initialize" }).then(() => console.log("<Initializer>: Initialize CMS Portals", this.configSvc.requestParams));
 		const organizationID = this.configSvc.requestParams["SystemID"];
 		let forward = false;
 		let url: string;
 		if (AppUtility.isNotEmpty(organizationID)) {
 			let organization = await this.setActiveOrganizationAsync(organizationID);
 			if (organization !== undefined) {
-				const objectName = this.configSvc.requestParams["ObjectName"] as string;
 				const objectID = this.configSvc.requestParams["ObjectID"] as string;
+				const contentTypeID = this.configSvc.requestParams["RepositoryEntityID"] as string;
+				let contentType = ContentType.get(contentTypeID);
+				if (contentType === undefined && contentTypeID !== undefined && contentTypeID.length == 32) {
+					await this.portalsCoreSvc.getContentTypeAsync(contentTypeID, async _ => {
+						contentType = ContentType.get(contentTypeID);
+						if (contentType !== undefined && contentType.SystemID !== organization.ID) {
+							organization = await this.setActiveOrganizationAsync(contentType.SystemID);
+						}
+					}, undefined, true);
+				}
+				const objectName = contentType !== undefined ? contentType.getObjectName(true) : this.configSvc.requestParams["ObjectName"] as string;
 				let object: BaseModel;
 
 				if (AppUtility.isNotEmpty(objectName) && AppUtility.isNotEmpty(objectID)) {
@@ -263,15 +273,11 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							break;
 					}
 					url = object !== undefined ? object.getRouterURI({ ID: object.ID }) : undefined;
-					if (this.configSvc.isDebug) {
-						console.warn("<Portals Initializer>: prepare the requested object", objectName, objectID, object, url);
-					}
+					console.log("<Initializer>: Prepare the requested object" + "\nObject: " + objectName + "\nID: " + objectID + "\nURL: " + url, object);
 				}
 
 				if (this.portalsCoreSvc.activeModule === undefined) {
-					if (this.configSvc.isDebug) {
-						console.warn("<Portals Initializer>: prepare modules when got no active");
-					}
+					console.log("<Initializer>: Prepare modules when got no active");
 					if (object !== undefined && object instanceof Module) {
 						this.portalsCoreSvc.setActiveModule(object as Module);
 					}
@@ -287,15 +293,11 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 	private async setActiveOrganizationAsync(organizationID: string, additional?: string) {
 		let organization = Organization.get(organizationID);
 		if (organization === undefined) {
-			if (this.configSvc.isDebug) {
-				console.warn(`<Portals Initializer>: Prepare active organization ${additional || ""}`, organizationID);
-			}
+			console.log(`<Initializer>: Prepare active organization ${additional || ""}`, organizationID);
 			await this.portalsCoreSvc.getOrganizationAsync(organizationID, _ => organization = Organization.get(organizationID), undefined, true);
 		}
 		if (organization !== undefined) {
-			if (this.configSvc.isDebug) {
-				console.warn(`<Portals Initializer>: Set active organization ${additional || ""}`, organization);
-			}
+			console.log(`<Initializer>: Set active organization ${additional || ""}`, organization);
 			this.portalsCoreSvc.setActiveOrganization(organization);
 		}
 		return organization;

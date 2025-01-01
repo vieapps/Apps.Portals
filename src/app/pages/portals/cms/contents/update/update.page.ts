@@ -577,7 +577,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 								]);
 							},
 							error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false),
-							this.configSvc.appConfig.app.xhr.prefer || (content.Details as string || "").length > 524288
+							this.configSvc.appConfig.app.query.preferXHR || (content.Details as string || "").length > this.configSvc.appConfig.app.query.large
 						);
 					}
 				}
@@ -597,7 +597,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 							]);
 						},
 						error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false),
-						this.configSvc.appConfig.app.xhr.prefer || (content.Details as string || "").length > 524288
+						this.configSvc.appConfig.app.query.preferXHR || (content.Details as string || "").length > this.configSvc.appConfig.app.query.large
 					);
 				}
 			}

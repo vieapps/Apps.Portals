@@ -62,7 +62,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 	}
 
 	get downloadable() {
-		return this.configSvc.appConfig.app.shell !== "Electron" && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === "Portals") > -1;
+		return this.configSvc.isAuthenticated && this.configSvc.appConfig.app.shell !== "Electron" && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === "Portals") > -1;
 	}
 
 	get downloadURLs() {
@@ -116,8 +116,8 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 			language: this.configSvc.appConfig.language,
 			darkTheme: "dark" === this.color,
 			preflight: this.configSvc.appConfig.app.preflight.enable,
-			xhr: this.configSvc.appConfig.app.xhr.prefer,
-			xhrToken: this.configSvc.appConfig.app.xhr.tokenInQuery,
+			xhr: this.configSvc.appConfig.app.query.preferXHR,
+			xhrToken: this.configSvc.appConfig.app.query.includeToken,
 			debug: this.configSvc.appConfig.app.debug
 		};
 		AppEvents.on("App", info => {
@@ -176,10 +176,10 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 
 	onPreferXHRChanged(event: any, isXHR: boolean) {
 		if (isXHR) {
-			this.options.xhr = this.configSvc.appConfig.app.xhr.prefer = AppUtility.isTrue(event.detail.checked);
+			this.options.xhr = this.configSvc.appConfig.app.query.preferXHR = AppUtility.isTrue(event.detail.checked);
 		}
 		else {
-			this.options.xhrToken = this.configSvc.appConfig.app.xhr.tokenInQuery = AppUtility.isTrue(event.detail.checked);
+			this.options.xhrToken = this.configSvc.appConfig.app.query.includeToken = AppUtility.isTrue(event.detail.checked);
 		}
 	}
 

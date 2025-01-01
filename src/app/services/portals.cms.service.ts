@@ -1235,6 +1235,12 @@ export class PortalsCmsService extends BaseService {
 			}
 		});
 		this._noContents.remove(contents.first().SystemID);
+		AppUtility.invoke(() => {
+			const large = contents.filter(content => AppUtility.isNotEmpty(content.Details) && content.Details.length > this.configSvc.appConfig.app.query.large);
+			if (!!large.length) {
+				console.log("~~~~~~~~~~>>>>> LARGE contents ~~~~~~~~~~>>>>>\n- " + AppUtility.toStr(large.map(content => `${new Date(content.StartDate).toLocaleDateString(this.configSvc.appConfig.language)}: ${content.Title}`), "\n- ") + "\n<<<<<<<<<<~~~~~~~~~~~~~~~~~~~~");
+			}
+		}, this.configSvc.appConfig.app.preflight.defer / 2);
 	}
 
 	private processContentUpdateMessage(message: AppMessage) {

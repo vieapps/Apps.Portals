@@ -118,7 +118,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the debounce time for searching */
 	get debounce() {
-		return AppConfig.app.debounce;
+		return AppConfig.app.query.debounce;
 	}
 
 	/** Gets the locale data for working with i18n globalization */

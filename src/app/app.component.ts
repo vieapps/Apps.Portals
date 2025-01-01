@@ -125,6 +125,9 @@ export class AppComponent implements OnInit {
 				if (uri.QueryParams["account-registrable"] === "true") {
 					appConfig.accounts.registrable = true;
 				}
+				if (uri.QueryParams["reset"] !== undefined) {
+					["URIs", "Options", "GeoMeta-Country", "GeoMeta-Countries", "GeoMeta-Provinces", "Session"].forEach(name => AppStorage.removeAsync(name));
+				}
 				appConfig.services.all.map((svc, index) => ({ hosts: svc.availableHosts || [], index: index })).forEach(info => {
 					if (info.hosts.length > 0 && info.hosts.indexOf(uri.Host) < 0) {
 						appConfig.services.all.removeAt(info.index);
@@ -135,7 +138,7 @@ export class AppComponent implements OnInit {
 				});
 			}
 
-			await this.configSvc.loadURIsAsync(appConfig.isWebApp ? uri.QueryParams["URIs"] : undefined);
+			await this.configSvc.loadURIsAsync(appConfig.isWebApp && uri.QueryParams["reset"] === undefined ? uri.QueryParams["URIs"] : undefined);
 			await this.configSvc.loadOptionsAsync();
 			await this.configSvc.prepareLanguagesAsync();
 
@@ -177,8 +180,20 @@ export class AppComponent implements OnInit {
 			this.appFormsSvc.showLoadingAsync(message).then(isActivate ? () => this.activate() : () => this.initialize());
 
 			if (!appConfig.isNativeApp) {
-				window["__vieapps"] = { config: appConfig, apis: AppAPIs, crypto: AppCrypto, events: AppEvents };
-				console.log("<App>: Encoded URIs", AppCrypto.base64urlEncode(AppUtility.stringify(appConfig.URIs)));
+				window["__vieapps"] = {
+					config: appConfig,
+					apis: AppAPIs,
+					crypto: AppCrypto,
+					events: AppEvents,
+					getRedirectURL: (systemID: string, objectID: string, objectNameOrRepositoryEntityID: string) => {
+						const request = {
+							SystemID: systemID,
+							ObjectID: objectID
+						};
+						request[objectNameOrRepositoryEntityID !== undefined && objectNameOrRepositoryEntityID.length == 32 ? "RepositoryEntityID" : "ObjectName"] = objectNameOrRepositoryEntityID;
+						console.log("home?redirect=" + AppCrypto.base64urlEncode("/portals/initializer?x-request=" + AppCrypto.base64urlEncode(AppUtility.stringify(request))));
+					}
+				};
 			}
 		});
 	}
@@ -547,7 +562,7 @@ export class AppComponent implements OnInit {
 			.filter(service => this.configSvc.appConfig.services.all.findIndex(svc => svc.name === service.name) > -1)
 			.map(service => service.initializeAsync())
 			.add(this.appFormsSvc.hideLoadingAsync())
-			.add(AppUtility.invoke(() => AppAPIs.openWebSocket(() => Promise.all([
+			.add(AppUtility.invoke(() => AppAPIs.openWebSocket(() => AppAPIs.isReopen ? AppUtility.promise : Promise.all([
 				this.configSvc.isAuthenticated ? AppUtility.invoke(() => {
 					if (this.configSvc.isDebug) {
 						console.log("<App>: Fetch notifications (init)");
@@ -580,9 +595,7 @@ export class AppComponent implements OnInit {
 						this.configSvc.appConfig.URLs.stack.update({ url: this.configSvc.appConfig.URLs.home, params: {} }, this.configSvc.appConfig.URLs.stack.length - 1);
 						try {
 							redirect = AppCrypto.base64urlDecode(redirect);
-							if (this.configSvc.isDebug) {
-								console.log(`<App>: Redirect to the requested URI => ${redirect}`);
-							}
+							console.log(`<App>: Redirect to the requested URI => ${redirect}`);
 							this.configSvc.navigateForwardAsync(redirect);
 						}
 						catch (error) {

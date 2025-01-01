@@ -40,21 +40,20 @@ export class AppConfig {
 		platform: "",
 		os: "",
 		shell: "Browser",
-		debounce: 1234,
 		persistence: true,
 		offline: false,
 		debug: false,
-		apis: {
-			outdated: 3,
-			defer: 789
-		},
 		preflight: {
 			enable: true,
 			defer: 2345
 		},
-		xhr: {
-			prefer: true,
-			tokenInQuery: false
+		query: {
+			preferXHR: true,
+			includeToken: false,
+			debounce: 1234,
+			outdated: 3,
+			defer: 789,
+			large: 524288
 		}
 	};
 

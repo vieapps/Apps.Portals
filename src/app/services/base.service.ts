@@ -24,16 +24,6 @@ export class Base {
 		return this._name;
 	}
 
-	/** Gets state that determines the preflight mode is enabled or not */
-	get isPreflightEnabled() {
-		return AppConfig.app.preflight.enable;
-	}
-
-	/** Gets the defer times of the preflight requests */
-	get preflightDefer() {
-		return AppConfig.app.preflight.defer;
-	}
-
 	/** Gets the headers that include the authenticated information */
 	getHeaders(additional?: any, onCompleted?: (headers: { [key: string]: string }) => void) {
 		return AppAPIs.getHeaders(additional, onCompleted);
@@ -180,11 +170,11 @@ export class Base {
 							console.log("[Base]: ==>> Preflight", `/${AppUtility.parseURI(path).Path}\nTimes >> ${AppUtility.getElapsedTime(time)}`, "\nResult", preData);
 						}
 					}, undefined, false, true);
-				}, this.preflightDefer);
+				}, AppConfig.app.preflight.defer);
 			}
 		};
 		if (pagination !== undefined && (pageNumber < pagination.PageNumber || pagination.TotalPages <= pagination.PageNumber)) {
-			if (this.isPreflightEnabled && onPreflight !== undefined && request.FilterBy !== undefined && request.FilterBy.Query === undefined) {
+			if (AppConfig.app.preflight.enable && onPreflight !== undefined && request.FilterBy !== undefined && request.FilterBy.Query === undefined) {
 				preFlight({ Pagination: pagination });
 			}
 			await AppUtility.invoke(onSuccess);
@@ -202,7 +192,7 @@ export class Base {
 				data => {
 					if (processPagination) {
 						AppPagination.set(data, paginationPrefix);
-						if (this.isPreflightEnabled && onPreflight !== undefined && request.FilterBy !== undefined && request.FilterBy.Query === undefined) {
+						if (AppConfig.app.preflight.enable && onPreflight !== undefined && request.FilterBy !== undefined && request.FilterBy.Query === undefined) {
 							preFlight(data);
 						}
 					}

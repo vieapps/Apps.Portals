@@ -355,12 +355,6 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 				console.log(`<CMS.Content>: Prepare contents (${this.searching ? "Search" : "Find"})`, this.pageNumber, (this.pagination || {}).PageNumber, data);
 			}
 			this.prepareResults(onNext, data !== undefined ? data.Objects : undefined);
-			if (data !== undefined) {
-				const large = (data.Objects as Array<any> || []).filter(object => AppUtility.isNotEmpty(object.Details) && object.Details.length > 1024 * 1024);
-				if (!!large.length) {
-					console.log("<CMS.Content>: LARGE contents\r\n- " + AppUtility.toStr(large.map(object => object.Title), "\r\n- "));
-				}
-			}
 		};
 		if (this.searching) {
 			this.subscription = this.portalsCmsSvc.searchContents(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
