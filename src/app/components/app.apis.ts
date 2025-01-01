@@ -580,6 +580,8 @@ export class AppAPIs {
 		* @param onError The callback function to handle the returning error
 	*/
 	static sendWebSocketRequest(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		this._counter++;
+		const id = AppUtility.right(`000000000000${this._counter}`, 13);
 		const request = {
 			ServiceName: requestInfo.ServiceName,
 			ObjectName: requestInfo.ObjectName || "",
@@ -593,13 +595,9 @@ export class AppAPIs {
 		this.clean(sig);
 		request["Sig"] = sig;
 		request["Time"] = new Date();
-		this._counter++;
-		const id = AppUtility.right(`000000000${this._counter}`, 10);
-		const gotCallback = onSuccess !== undefined || onError !== undefined;
-		if (gotCallback) {
-			request["ID"] = id;
-		}
+		request["ID"] = id;
 		const message = AppUtility.stringify(request);
+		const gotCallback = onSuccess !== undefined || onError !== undefined;
 		if (gotCallback) {
 			this._callbackableMessages[id] = message;
 			this._successCallbacks[id] = onSuccess;
