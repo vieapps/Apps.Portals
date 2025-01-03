@@ -553,9 +553,6 @@ export class AppAPIs {
 			outdated.push(messages.first(msg => sig === msg.Sig));
 		}
 		outdated = outdated.filter(message => message !== undefined);
-		if (outdated.length > 0) {
-			console.log("[AppAPIs]: Clean out-dated", outdated.map(message => message.ID), AppConfig.isDebug ? outdated : "");
-		}
 		outdated.map(message => message.ID as string).forEach(id => {
 			delete this._nocallbackMessages[id];
 			delete this._callbackableMessages[id];
@@ -563,6 +560,9 @@ export class AppAPIs {
 			delete this._errorCallbacks[id];
 			this._resend.id = id === this._resend.id ? undefined : this._resend.id;
 		});
+		if (outdated.length > 0) {
+			console.log("[AppAPIs]: Clean out-dated", outdated.map(message => message.ID), AppConfig.isDebug ? outdated : "");
+		}
 	}
 
 	/**
