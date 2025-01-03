@@ -553,8 +553,8 @@ export class AppAPIs {
 			outdated.push(messages.first(msg => sig === msg.Sig));
 		}
 		outdated = outdated.filter(message => message !== undefined);
-		if (AppConfig.isDebug && outdated.length > 0) {
-			console.log("[AppAPIs]: Clean out-dated messages", outdated.map(message => message.ID), AppConfig.isDebug ? outdated : "");
+		if (outdated.length > 0) {
+			console.log("[AppAPIs]: Clean out-dated", outdated.map(message => message.ID), AppConfig.isDebug ? outdated : "");
 		}
 		outdated.map(message => message.ID as string).forEach(id => {
 			delete this._nocallbackMessages[id];
