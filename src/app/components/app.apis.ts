@@ -541,20 +541,22 @@ export class AppAPIs {
 	}
 
 	private static clean(requestInfo?: AppRequestInfo | string) {
-		const messages = Object.keys(this._callbackableMessages).map(id => AppUtility.parse(this._callbackableMessages[id])).concat(Object.keys(this._nocallbackMessages).map(id => {
-			const message = AppUtility.parse(this._nocallbackMessages[id]);
-			message["ID"] = id;
-			return message;
-		}));
-		const outdated = messages.filter(message => (new Date().getTime() - new Date(message.Time).getTime()) / 60000 > AppConfig.app.query.outdated);
+		const messages = Object.keys(this._callbackableMessages).map(id => AppUtility.parse(this._callbackableMessages[id]))
+			.concat(Object.keys(this._nocallbackMessages).map(id => {
+				const message = AppUtility.parse(this._nocallbackMessages[id]);
+				message["ID"] = id;
+				return message;
+			}));
+		let outdated = messages.filter(message => (new Date().getTime() - new Date(message.Time).getTime()) / 60000 > AppConfig.app.query.outdated);
 		if (requestInfo !== undefined) {
 			const sig = AppUtility.isNotEmpty(requestInfo) ? requestInfo as string : AppCrypto.hash(requestInfo);
 			outdated.push(messages.first(msg => sig === msg.Sig));
 		}
-		if (AppConfig.isDebug && outdated.filter(message => message !== undefined).length > 0) {
-			console.log("[AppAPIs]: Clean out-dated messages", AppConfig.isDebug ? outdated.filter(message => message !== undefined).map(message => message.ID as string) : "", AppConfig.isDebug ? outdated.filter(message => message !== undefined) : outdated.filter(message => message !== undefined).map(message => message.ID as string));
+		outdated = outdated.filter(message => message !== undefined);
+		if (AppConfig.isDebug && outdated.length > 0) {
+			console.log("[AppAPIs]: Clean out-dated messages", outdated.map(message => message.ID), AppConfig.isDebug ? outdated : "");
 		}
-		outdated.filter(message => message !== undefined).map(message => message.ID as string).forEach(id => {
+		outdated.map(message => message.ID as string).forEach(id => {
 			delete this._nocallbackMessages[id];
 			delete this._callbackableMessages[id];
 			delete this._successCallbacks[id];

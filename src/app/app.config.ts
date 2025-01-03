@@ -51,7 +51,7 @@ export class AppConfig {
 			preferXHR: true,
 			includeToken: false,
 			debounce: 1234,
-			outdated: 3,
+			outdated: 7,
 			defer: 789,
 			large: 524288
 		}
