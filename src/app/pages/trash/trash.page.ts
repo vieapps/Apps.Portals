@@ -112,30 +112,26 @@ export class TrashPage implements OnInit {
 		this.request = AppPagination.buildRequest(undefined, undefined, this.pagination);
 		return this.portalsCoreSvc.findTrashContentsAsync(
 			this.request,
-			this.all.value ? undefined : this.portalsCoreSvc.activeOrganization.ID,
+			this.all.value ? undefined : (this.portalsCoreSvc.activeOrganization || {}).ID,
 			data => {
 				this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request);
 				if (this.pagination !== undefined) {
 					this.pageNumber++;
 					this.pagination.PageNumber = this.pageNumber;
 				}
-				this.contents.merge(data.Objects, true, (object, array) => array.findIndex(item => item.ID === object.ID)).forEach(content => {
+				this.contents.merge(data.Objects, true, (object, array) => array.findIndex(item => item.ID === object.ID)).forEach(async content => {
 					content.Created = new Date(content.Created);
 					if (content["Creator"] === undefined) {
+						await this.usersSvc.fetchProfileAsync(content.CreatedID, true);
 						const profile = UserProfile.get(content.CreatedID);
-						if (profile === undefined) {
-							this.usersSvc.getProfileAsync(content.CreatedID, () => content["Creator"] = UserProfile.contains(content.CreatedID) ? UserProfile.get(content.CreatedID).Name : "Unknown");
-						}
-						else {
-							content["Creator"] = profile.Name;
-						}
+						content["Creator"] = profile !== undefined ? profile.Name : "Unknown";
 					}
 					if (content["Meta"] === undefined) {
 						let contentType = ContentType.get(content.RepositoryEntityID);
 						let module = Module.get(content.RepositoryID);
 						let organization = Organization.get(content.SystemID);
 						if (contentType === undefined && AppUtility.isNotEmpty(content.RepositoryEntityID)) {
-							Promise.all([this.portalsCoreSvc.getModuleAsync(content.RepositoryID), this.portalsCoreSvc.getOrganizationAsync(content.SystemID)])
+							await Promise.all([this.portalsCoreSvc.getModuleAsync(content.RepositoryID), this.portalsCoreSvc.getOrganizationAsync(content.SystemID)])
 							.then(() => this.portalsCoreSvc.getContentTypeAsync(content.RepositoryEntityID, () => {
 								contentType = ContentType.get(content.RepositoryEntityID);
 								module = Module.get(content.RepositoryID);
@@ -144,7 +140,7 @@ export class TrashPage implements OnInit {
 							}));
 						}
 						else if (module === undefined && AppUtility.isNotEmpty(content.RepositoryID)) {
-							this.portalsCoreSvc.getOrganizationAsync(content.SystemID)
+							await this.portalsCoreSvc.getOrganizationAsync(content.SystemID)
 							.then(() => this.portalsCoreSvc.getModuleAsync(content.RepositoryID, () => {
 								module = Module.get(content.RepositoryID);
 								organization = Organization.get(content.SystemID);	
@@ -152,7 +148,7 @@ export class TrashPage implements OnInit {
 							}));
 						}
 						else if (organization === undefined && AppUtility.isNotEmpty(content.SystemID)) {
-							this.portalsCoreSvc.getOrganizationAsync(content.SystemID, () => {
+							await this.portalsCoreSvc.getOrganizationAsync(content.SystemID, () => {
 								organization = Organization.get(content.SystemID);
 								this.updateMeta(content, contentType, module, organization);
 							});

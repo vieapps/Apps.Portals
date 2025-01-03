@@ -50,16 +50,10 @@ export class VersionsPage implements OnInit {
 		const info = await this.portalsCmsSvc.getObjectAsync(this.id, this.name);
 		if (info.gotRights) {
 			this.versions.merge(info.object.Versions);
-			this.versions.forEach(verison => {
-				if (verison["Creator"] === undefined) {
-					const profile = UserProfile.get(verison.CreatedID);
-					if (profile === undefined) {
-						this.usersSvc.getProfileAsync(verison.CreatedID, () => verison["Creator"] = UserProfile.contains(verison.CreatedID) ? UserProfile.get(verison.CreatedID).Name : "Unknown");
-					}
-					else {
-						verison["Creator"] = profile.Name;
-					}
-				}
+			this.versions.filter(version => version["Creator"] === undefined).forEach(async version => {
+				await this.usersSvc.fetchProfileAsync(version.CreatedID, true);
+				const profile = UserProfile.get(version.CreatedID);
+				version["Creator"] = profile !== undefined ? profile.Name : "Unknown";
 			});
 			this.title = await this.configSvc.getResourceAsync("versions.list", { total: info.object.TotalVersions || this.versions.length, title: info.object["Title"] });
 			await TrackingUtility.trackAsync({ title: this.title, category: "Versions", action: "List" });
