@@ -522,14 +522,13 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	save() {
+		this.appFormsSvc.showLoadingAsync(this.title.track);
 		if (this.appFormsSvc.validate(this.form)) {
 			if (this.hash.full === AppCrypto.hash(this.form.value)) {
-				this.configSvc.navigateBackAsync();
+				this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 			}
 			else {
 				this.processing = true;
-				this.appFormsSvc.showLoadingAsync(this.title.track);
-
 				const content = this.form.value;
 				delete content["Thumbnails"];
 				delete content["Attachments"];
@@ -601,6 +600,9 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 					);
 				}
 			}
+		}
+		else {
+			this.appFormsSvc.hideLoadingAsync();
 		}
 	}
 

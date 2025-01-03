@@ -27,6 +27,9 @@ export class NotificationsService extends BaseService {
 		});
 	}
 
+	deinitialize() {
+	}
+
 	fetchNotificationsAsync() {
 		return this.sendRequestAsync({
 			ServiceName: this.name,

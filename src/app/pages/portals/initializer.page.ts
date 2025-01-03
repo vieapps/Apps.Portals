@@ -48,7 +48,6 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 	private async initializeAsync() {
 		TrackingUtility.trackAsync({ title: "Initialize and open a view of CMS Portals", campaignUrl: "/portals/initializer", category: "Home", action: "Initialize" }).then(() => console.log("<Initializer>: Initialize CMS Portals", this.configSvc.requestParams));
 		const organizationID = this.configSvc.requestParams["SystemID"];
-		let forward = false;
 		let url: string;
 		if (AppUtility.isNotEmpty(organizationID)) {
 			let organization = await this.setActiveOrganizationAsync(organizationID);
@@ -209,7 +208,6 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							break;
 						case "content":
 						case "cms.content":
-							forward = true;
 							object = Content.get(objectID);
 							if (object === undefined) {
 								await this.portalsCmsSvc.getContentAsync(objectID, async _ => {
@@ -225,7 +223,6 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							break;
 						case "item":
 						case "cms.item":
-							forward = true;
 							object = Item.get(objectID);
 							if (object === undefined) {
 								await this.portalsCmsSvc.getItemAsync(objectID, async _ => {
@@ -241,7 +238,6 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							break;
 						case "link":
 						case "cms.link":
-							forward = true;
 							object = Link.get(objectID);
 							if (object === undefined) {
 								await this.portalsCmsSvc.getLinkAsync(objectID, async _ => {
@@ -257,7 +253,6 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 							break;
 						case "form":
 						case "cms.form":
-							forward = true;
 							object = Form.get(objectID);
 							if (object === undefined) {
 								await this.portalsCmsSvc.getFormAsync(objectID, async _ => {
@@ -287,7 +282,7 @@ export class PortalInitializerPage implements OnInit, OnDestroy {
 				}
 			}
 		}
-		this.configSvc.navigateAsync(forward ? "forward" : "root", url || "/home");
+		this.configSvc.navigateRootAsync(url || "/home");
 	}
 
 	private async setActiveOrganizationAsync(organizationID: string, additional?: string) {

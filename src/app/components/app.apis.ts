@@ -311,16 +311,16 @@ export class AppAPIs {
 				msg = AppUtility.parse(event.data || "{}");
 			}
 			catch (error) {
-				console.error("[AppAPIs]: Error occurred while parsing the message", error instanceof SyntaxError ? `${(event.data || "").substring(0, 170)}...` : error);
+				console.error("[AppAPIs]: Error occurred while parsing the message", error instanceof SyntaxError ? `${(event.data || "").substring(0, 120)}...` : error);
 				this.clean();
 				const ids = Object.keys(this._callbackableMessages);
 				if (ids.length > 0) {
-					const defer = Math.round(AppConfig.app.query.defer + ids.length + (123 * ids.length * Math.random()));
-					if (AppConfig.isDebug) {
-						console.log(`[AppAPIs]: Callbackable queue still got ${ids.length} message(s) - resend in ${defer}ms`, ids);
-					}
 					this._resend.id = undefined;
+					const defer = Math.round(AppConfig.app.query.defer + ids.length + (123 * ids.length * Math.random()));
 					AppUtility.invoke(() => this.resendWebSocketMessages(), defer);
+					if (AppConfig.isDebug) {
+						console.log(`[AppAPIs]: Callbackable queue still got ${ids.length} message(s) - resend in ${defer}ms`, ids, ids.map(id => this._callbackableMessages[id]));
+					}
 				}
 				return;
 			}
@@ -541,30 +541,20 @@ export class AppAPIs {
 	}
 
 	private static clean(requestInfo?: AppRequestInfo | string) {
-		const ids = new Array<string>();
-		const callbackableMessages = Object.keys(this._callbackableMessages).map(id => AppUtility.parse(this._callbackableMessages[id]));
-		callbackableMessages.forEach(message => {
-			const minutes = (new Date().getTime() - new Date(message.Time).getTime()) / 60000;
-			if (minutes > AppConfig.app.query.outdated) {
-				ids.push(message.ID);
-			}
-		});
-		const nocallbackMessages = Object.keys(this._nocallbackMessages).map(id => AppUtility.parse(this._nocallbackMessages[id]));
-		nocallbackMessages.forEach(message => {
-			const minutes = (new Date().getTime() - new Date(message.Time).getTime()) / 60000;
-			if (minutes > AppConfig.app.query.outdated) {
-				ids.push(message.ID);
-			}
-		});
+		const messages = Object.keys(this._callbackableMessages).map(id => AppUtility.parse(this._callbackableMessages[id])).concat(Object.keys(this._nocallbackMessages).map(id => {
+			const message = AppUtility.parse(this._nocallbackMessages[id]);
+			message["ID"] = id;
+			return message;
+		}));
+		const outdated = messages.filter(message => (new Date().getTime() - new Date(message.Time).getTime()) / 60000 > AppConfig.app.query.outdated);
 		if (requestInfo !== undefined) {
 			const sig = AppUtility.isNotEmpty(requestInfo) ? requestInfo as string : AppCrypto.hash(requestInfo);
-			ids.push((callbackableMessages.first(msg => sig === msg.Sig) || { ID: "" }).ID);
-			ids.push((nocallbackMessages.first(msg => sig === msg.Sig) || { ID: "" }).ID);
+			outdated.push(messages.first(msg => sig === msg.Sig));
 		}
-		if (AppConfig.isDebug && ids.filter(id => id !== "").length > 0) {
-			console.log("[AppAPIs]: Clean out-dated messages", ids.filter(id => id !== ""));
+		if (AppConfig.isDebug && outdated.filter(message => message !== undefined).length > 0) {
+			console.log("[AppAPIs]: Clean out-dated messages", AppConfig.isDebug ? outdated.filter(message => message !== undefined).map(message => message.ID as string) : "", AppConfig.isDebug ? outdated.filter(message => message !== undefined) : outdated.filter(message => message !== undefined).map(message => message.ID as string));
 		}
-		ids.filter(id => id !== "").forEach(id => {
+		outdated.filter(message => message !== undefined).map(message => message.ID as string).forEach(id => {
 			delete this._nocallbackMessages[id];
 			delete this._callbackableMessages[id];
 			delete this._successCallbacks[id];
@@ -591,13 +581,15 @@ export class AppAPIs {
 			Extra: requestInfo.Extra || {},
 			Body: requestInfo.Body || {}
 		} as AppRequestInfo;
+		const gotCallback = onSuccess !== undefined || onError !== undefined;
 		const sig = AppCrypto.hash(request);
 		this.clean(sig);
 		request["Sig"] = sig;
 		request["Time"] = new Date();
-		request["ID"] = id;
+		if (gotCallback) {
+			request["ID"] = id;
+		}
 		const message = AppUtility.stringify(request);
-		const gotCallback = onSuccess !== undefined || onError !== undefined;
 		if (gotCallback) {
 			this._callbackableMessages[id] = message;
 			this._successCallbacks[id] = onSuccess;

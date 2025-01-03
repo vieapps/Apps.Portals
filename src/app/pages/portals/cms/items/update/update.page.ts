@@ -311,69 +311,71 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	save() {
+		this.appFormsSvc.showLoadingAsync(this.title.track);
 		if (this.appFormsSvc.validate(this.form)) {
 			if (this.hash.full === AppCrypto.hash(this.form.value)) {
-				this.configSvc.navigateBackAsync();
+				this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 			}
 			else {
-				this.appFormsSvc.showLoadingAsync(this.title.track).then(() => {
-					this.processing = true;
-					const item = this.form.value;
-					delete item["Thumbnails"];
-					delete item["Attachments"];
-					delete item["Upload"];
-					if (AppUtility.isNotEmpty(item.ID)) {
-						if (this.hash.content === AppCrypto.hash(item)) {
-							const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
-							if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-								this.filesSvc.uploadThumbnailAsync(
-									control.value.new,
-									this.portalsCmsSvc.getFileOptions(this.item, options => options.Extras["x-attachment-id"] = control.value.identity),
-									_ => {
-										this.trackAsync(this.title.track, "Upload", "Thumbnail").then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")));
-										this.portalsCmsSvc.refreshItemAsync(item.ID).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
-									},
-									error => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
-								);
-							}
-							else {
-								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
-							}
+				this.processing = true;
+				const item = this.form.value;
+				delete item["Thumbnails"];
+				delete item["Attachments"];
+				delete item["Upload"];
+				if (AppUtility.isNotEmpty(item.ID)) {
+					if (this.hash.content === AppCrypto.hash(item)) {
+						const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
+						if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
+							this.filesSvc.uploadThumbnailAsync(
+								control.value.new,
+								this.portalsCmsSvc.getFileOptions(this.item, options => options.Extras["x-attachment-id"] = control.value.identity),
+								_ => {
+									this.trackAsync(this.title.track, "Upload", "Thumbnail").then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")));
+									this.portalsCmsSvc.refreshItemAsync(item.ID).then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
+								},
+								error => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
+							);
 						}
 						else {
-							this.portalsCmsSvc.updateItemAsync(
-								item,
-								async _ => {
-									const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
-									if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-										await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.item, options => options.Extras["x-attachment-id"] = control.value.identity));
-									}
-									await this.trackAsync(this.title.track, "Update");
-									await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update"));
-									await this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
-								},
-								error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
-							);
+							this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 						}
 					}
 					else {
-						this.portalsCmsSvc.createItemAsync(
+						this.portalsCmsSvc.updateItemAsync(
 							item,
-							async data => {
-								data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
+							async _ => {
 								const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
 								if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-									await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(Item.get(data.ID)));
+									await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.item, options => options.Extras["x-attachment-id"] = control.value.identity));
 								}
-								await this.trackAsync(this.title.track);
-								await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new"));
+								await this.trackAsync(this.title.track, "Update");
+								await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update"));
 								await this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 							},
-							error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
+							error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
 						);
 					}
-				});
+				}
+				else {
+					this.portalsCmsSvc.createItemAsync(
+						item,
+						async data => {
+							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
+							const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
+							if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
+								await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(Item.get(data.ID)));
+							}
+							await this.trackAsync(this.title.track);
+							await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new"));
+							await this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
+						},
+						error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
+					);
+				}
 			}
+		}
+		else {
+			this.appFormsSvc.hideLoadingAsync();
 		}
 	}
 

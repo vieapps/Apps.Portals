@@ -22,6 +22,7 @@ import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { Account } from "@app/models/account";
+import { UserProfile } from "@app/models/user";
 import { Privilege } from "@app/models/privileges";
 import { ServiceLog } from "@app/models/base";
 import { Base as BaseService } from "@app/services/base.service";
@@ -420,15 +421,22 @@ export class ConfigurationService extends BaseService {
 		if (this.isAuthenticated) {
 			AppConfig.session.account.id = AppConfig.session.token.uid;
 			if (fetch) {
-				AppAPIs.sendWebSocketRequest({
+				AppAPIs.sendRequestAsync({
 					ServiceName: "Users",
 					ObjectName: "Account",
 					Query: AppConfig.getRelatedJson({ "x-status": "true" })
+				}, AppAPIs.isWebSocketReady ? undefined : data => {
+					this.updateAccount(data);
+					AppEvents.broadcast("Account", { Type: "Updated", Mode: "Apps" });
 				});
-				AppAPIs.sendWebSocketRequest({
+				AppAPIs.sendRequestAsync({
 					ServiceName: "Users",
 					ObjectName: "Profile",
 					Query: AppConfig.getRelatedJson({ "object-identity": AppConfig.session.account.id })
+				}, AppAPIs.isWebSocketReady ? undefined : data => {
+					UserProfile.update(data);
+					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Apps" });
+					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "Apps", Data: this.getAccount().profile });
 				});
 			}
 		}

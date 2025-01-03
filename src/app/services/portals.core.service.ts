@@ -182,6 +182,9 @@ export class PortalsCoreService extends BaseService {
 		AppEvents.on("Session", info => {
 			if ("LogIn" === info.args.Type) {
 				this.prepareSidebarFooterItemsAsync().then(() => this.activeSidebar());
+				if ("Apps" === info.args.Mode) {
+					updateActiveOrganization("session");
+				}
 			}
 			else if ("LogOut" === info.args.Type) {
 				this.prepareSidebarFooterItemsAsync().then(() => this.activeSidebar(() => {
@@ -200,21 +203,38 @@ export class PortalsCoreService extends BaseService {
 
 		AppEvents.on("Profile", info => {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode) {
-				if (this.activeOrganization !== undefined) {
-					this.configSvc.appConfig.services.active.system = this.configSvc.appConfig.options.extras["organization"] = this.activeOrganization.ID;
-				}
-				else {
-					const organizationID = this.configSvc.appConfig.options.extras["organization"] as string;
-					if (this.configSvc.isDebug) {
-						console.log("[Portals]: Prepare to update active organization when got profile updated", organizationID);
-					}
-					this.getOrganizationAsync(organizationID, () => this.setActiveOrganization(Organization.get(organizationID)));
-				}
+				updateActiveOrganization("profile");
 			}
 		});
+
+		const updateActiveOrganization = (type: string) => {
+			if (this.activeOrganization !== undefined) {
+				this.configSvc.appConfig.services.active.system = this.configSvc.appConfig.options.extras["organization"] = this.activeOrganization.ID;
+			}
+			else {
+				const organizationID = this.configSvc.appConfig.options.extras["organization"] as string;
+				if (this.configSvc.isDebug) {
+					console.log(`[Portals]: Prepare to update active organization (when ${type}) updated`, organizationID);
+				}
+				this.getOrganizationAsync(
+					organizationID,
+					_ => this.setActiveOrganization(Organization.get(organizationID)),
+					async _ => {
+						const organizations = await this.getActiveOrganizationsAsync();
+						this.setActiveOrganization(organizations.firstOrDefault(organization => organization.ID === organizationID));
+					}
+				);
+			}
+		};
+	}
+
+	deinitialize() {
 	}
 
 	async initializeAsync(onNext?: () => void) {
+		if (this.configSvc.isDebug) {
+			console.log("[Portals]: Initialize Core service");
+		}
 		await this.getDefinitionsAsync();
 		if (Organization.active === undefined) {
 			if (this.configSvc.isDebug) {

@@ -118,6 +118,16 @@ export class AppComponent implements OnInit {
 			const appConfig = this.configSvc.appConfig;
 			const uri = appConfig.isWebApp ? AppUtility.parseURI() : undefined;
 
+			const resetApps = () => ["URIs", "Options", "GeoMeta-Country", "GeoMeta-Countries", "GeoMeta-Provinces", "Session"].forEach(name => AppStorage.removeAsync(name));
+			const disableServices = (services: string, updateFooter: boolean = false) => AppUtility.toArray(services).filter(name => AppUtility.isNotEmpty(name)).forEach(name => {
+				[this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc].filter(service => AppUtility.isEquals(service.name, name)).forEach(service => service.deinitialize());
+				appConfig.services.all.removeAt(appConfig.services.all.findIndex(svc => AppUtility.isEquals(svc.name, name)));
+				if (updateFooter) {
+					this.sidebar.Footer.removeAt(this.sidebar.Footer.findIndex(item => AppUtility.isEquals(item.Name, name)));
+					console.log("<App>: Available services", appConfig.services.all.map(svc => svc.name));
+				}
+			});
+
 			if (appConfig.isWebApp) {
 				if (uri.QueryParams["debug"] !== undefined) {
 					appConfig.app.debug = true;
@@ -126,15 +136,12 @@ export class AppComponent implements OnInit {
 					appConfig.accounts.registrable = true;
 				}
 				if (uri.QueryParams["reset"] !== undefined) {
-					["URIs", "Options", "GeoMeta-Country", "GeoMeta-Countries", "GeoMeta-Provinces", "Session"].forEach(name => AppStorage.removeAsync(name));
+					resetApps();
 				}
 				appConfig.services.all.map((svc, index) => ({ hosts: svc.availableHosts || [], index: index })).forEach(info => {
 					if (info.hosts.length > 0 && info.hosts.indexOf(uri.Host) < 0) {
 						appConfig.services.all.removeAt(info.index);
 					}
-				});
-				AppUtility.toArray(uri.QueryParams["disabled"]).filter(name => AppUtility.isNotEmpty(name)).forEach(name => {
-					appConfig.services.all.removeAt(appConfig.services.all.findIndex(svc => AppUtility.isEquals(svc.name, name)));
 				});
 			}
 
@@ -161,8 +168,11 @@ export class AppComponent implements OnInit {
 			this.sidebar.State.Active = activeService.sidebar || activeService.name.toLowerCase();
 
 			[this.usersSvc, this.notificationsSvc, this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc]
-				.filter(service => "Users" === service.name || "Notifications" === service.name || appConfig.services.all.findIndex(svc => svc.name === service.name) > -1)
+				.filter(service => "Users" === service.name || "Notifications" === service.name || appConfig.services.all.findIndex(svc => AppUtility.isEquals(svc.name, service.name)) > -1)
 				.forEach(service => service.initialize());
+			if (!appConfig.isNativeApp) {
+				disableServices(uri.QueryParams["disable-services"]);
+			}
 
 			this.sidebar.Header.Title = appConfig.app.name;
 			await this.updateSidebarAsync({}, true);
@@ -180,11 +190,24 @@ export class AppComponent implements OnInit {
 			this.appFormsSvc.showLoadingAsync(message).then(isActivate ? () => this.activate() : () => this.initialize());
 
 			if (!appConfig.isNativeApp) {
+				if (this.configSvc.isWebApp) {
+					PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
+				}		
 				window["__vieapps"] = {
 					config: appConfig,
 					apis: AppAPIs,
 					crypto: AppCrypto,
 					events: AppEvents,
+					reset: (apis: string, ws: string, files: string, portals: string, apps: string, disabledServices?: string, dontStoreURIs: boolean = true) => this.appFormsSvc.showLoadingAsync().then(() => {
+						resetApps();
+						disableServices(disabledServices, true);
+						this.configSvc.loadURIsAsync(AppCrypto.base64Encode(AppUtility.stringify({	apis: apis, ws: ws, files: files, portals: portals, apps: apps	})))
+							.then(() => this.configSvc.loadOptionsAsync())
+							.then(() => dontStoreURIs ? AppStorage.removeAsync("URIs") : AppUtility.promise)
+							.then(() => appConfig.session.id = appConfig.session.token = appConfig.session.account = undefined)
+							.then(() => AppAPIs.closeWebSocket())
+							.then(() => this.initialize(() => this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.users.login)));
+					}),
 					getRedirectURL: (systemID: string, objectID: string, objectNameOrRepositoryEntityID: string) => {
 						const request = {
 							SystemID: systemID,
@@ -231,19 +254,19 @@ export class AppComponent implements OnInit {
 
 		this.sidebar.normalizeTopMenu = () => {
 			if (!this.sidebar.State.Search) {
-				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.indexOf("/search") > 0));
+				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => !!item.Link && item.Link.indexOf("/search") > 0));
 			}
 			if (this.configSvc.isAuthenticated) {
-				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.login)));
-				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.register)));
+				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => !!item.Link && item.Link.startsWith(this.configSvc.appConfig.URLs.users.login)));
+				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => !!item.Link && item.Link.startsWith(this.configSvc.appConfig.URLs.users.register)));
 				if (!this.sidebar.State.Profile) {
-					this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.profile)));
+					this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => !!item.Link && item.Link.startsWith(this.configSvc.appConfig.URLs.users.profile)));
 				}
 			}
 			else {
-				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.profile)));
+				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => !!item.Link && item.Link.startsWith(this.configSvc.appConfig.URLs.users.profile)));
 				if (!this.authSvc.canRegisterNewAccounts) {
-					this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => item.Link.startsWith(this.configSvc.appConfig.URLs.users.register)));
+					this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => !!item.Link && item.Link.startsWith(this.configSvc.appConfig.URLs.users.register)));
 				}
 			}
 		};
@@ -466,14 +489,23 @@ export class AppComponent implements OnInit {
 					this.portalsCoreSvc.getActiveOrganizationsAsync(false).then(this.configSvc.isDebug ? () => console.log("<App>: Fetch active organizations (sign-in)") : () => {});
 				}
 				else {
+					if (this.configSvc.isDebug) {
+						console.log("<App>: Update sidebar header (when session got updated)", info.args);
+					}
 					this.sidebar.updateHeader({ title: this.configSvc.appConfig.app.name, onClick: () => {}, updateAvatar: true });
+				}
+				if (this.configSvc.isDebug) {
+					console.log("<App>: Update sidebar (when session got updated)", info.args);
 				}
 				this.updateSidebarAsync({}, true, () => this.sidebar.normalizeTopMenu());
 			}
 		});
 
 		AppEvents.on("Profile", info => {
-			if ("Updated" === info.args.Type && ("APIs" === info.args.Mode || "Avatar" === info.args.Mode)) {
+			if ("Updated" === info.args.Type && ("APIs" === info.args.Mode || "Apps" === info.args.Mode || "Avatar" === info.args.Mode)) {
+				if (this.configSvc.isDebug) {
+					console.log("<App>: Update sidebar header (when profile got updated)", info.args);
+				}
 				this.sidebar.updateHeader({ updateAvatar: true });
 			}
 		});
@@ -554,56 +586,52 @@ export class AppComponent implements OnInit {
 	}
 
 	private finalize(onNext?: () => void) {
-		if (this.configSvc.isWebApp) {
-			PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
-		}		
 		this.sidebar.normalizeTopMenu();
-		Promise.all([this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc]
+		this.appFormsSvc.hideLoadingAsync()
+		.then(() => Promise.all([this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc]
 			.filter(service => this.configSvc.appConfig.services.all.findIndex(svc => svc.name === service.name) > -1)
 			.map(service => service.initializeAsync())
-			.add(this.appFormsSvc.hideLoadingAsync())
-			.add(AppUtility.invoke(() => AppAPIs.openWebSocket(() => AppAPIs.isReopen ? AppUtility.promise : Promise.all([
-				this.configSvc.isAuthenticated ? AppUtility.invoke(() => {
-					if (this.configSvc.isDebug) {
-						console.log("<App>: Fetch notifications (init)");
+		).then(() => AppAPIs.openWebSocket(() => AppAPIs.isReopen ? AppUtility.promise : Promise.all([
+			this.configSvc.isAuthenticated ? AppUtility.invoke(() => {
+				if (this.configSvc.isDebug) {
+					console.log("<App>: Fetch notifications (init)");
+				}
+				this.notificationsSvc.fetchNotificationsAsync();
+			}, 6789) : AppUtility.promise,
+			this.configSvc.isAuthenticated ? AppUtility.invoke(() => {
+				if (this.configSvc.isDebug) {
+					console.log("<App>: Fetch active organizations (init)");
+				}
+				this.portalsCoreSvc.getActiveOrganizationsAsync(false);
+			}, 12345) : AppUtility.promise,
+			AppUtility.invoke(() => {
+				const data = {
+					URIs: this.configSvc.appConfig.URIs,
+					app: this.configSvc.appConfig.app,
+					session: this.configSvc.appConfig.session,
+					services: this.configSvc.appConfig.services,
+					accounts: this.configSvc.appConfig.accounts,
+					options: this.configSvc.appConfig.options,
+					languages: this.configSvc.appConfig.languages
+				};
+				AppEvents.broadcast("App", { Type: "Initialized", Data: data });
+				AppEvents.sendToElectron("App", { Type: "Initialized", Data: data });
+			}),
+			AppUtility.invoke(onNext !== undefined ? () => onNext() : () => {
+				let redirect = this.configSvc.queryParams["redirect"] as string || this.configSvc.appConfig.URLs.redirectToWhenReady;
+				if (AppUtility.isNotEmpty(redirect)) {
+					this.configSvc.appConfig.URLs.redirectToWhenReady = undefined;
+					this.configSvc.appConfig.URLs.stack.update({ url: this.configSvc.appConfig.URLs.home, params: {} }, this.configSvc.appConfig.URLs.stack.length - 1);
+					try {
+						redirect = AppCrypto.base64urlDecode(redirect);
+						console.log(`<App>: Redirect to the requested URI => ${redirect}`);
+						this.configSvc.navigateForwardAsync(redirect);
 					}
-					this.notificationsSvc.fetchNotificationsAsync();
-				}, 6789) : AppUtility.promise,
-				this.configSvc.isAuthenticated ? AppUtility.invoke(() => {
-					if (this.configSvc.isDebug) {
-						console.log("<App>: Fetch active organizations (init)");
+					catch (error) {
+						console.error(`<App>: The requested URI for redirecting is not well-form => ${redirect}`, error);
 					}
-					this.portalsCoreSvc.getActiveOrganizationsAsync(false);
-				}, 12345) : AppUtility.promise,
-				AppUtility.invoke(() => {
-					const data = {
-						URIs: this.configSvc.appConfig.URIs,
-						app: this.configSvc.appConfig.app,
-						session: this.configSvc.appConfig.session,
-						services: this.configSvc.appConfig.services,
-						accounts: this.configSvc.appConfig.accounts,
-						options: this.configSvc.appConfig.options,
-						languages: this.configSvc.appConfig.languages
-					};
-					AppEvents.broadcast("App", { Type: "Initialized", Data: data });
-					AppEvents.sendToElectron("App", { Type: "Initialized", Data: data});
-				}),
-				AppUtility.invoke(onNext !== undefined ? () => onNext() : () => {
-					let redirect = this.configSvc.queryParams["redirect"] as string || this.configSvc.appConfig.URLs.redirectToWhenReady;
-					if (AppUtility.isNotEmpty(redirect)) {
-						this.configSvc.appConfig.URLs.redirectToWhenReady = undefined;
-						this.configSvc.appConfig.URLs.stack.update({ url: this.configSvc.appConfig.URLs.home, params: {} }, this.configSvc.appConfig.URLs.stack.length - 1);
-						try {
-							redirect = AppCrypto.base64urlDecode(redirect);
-							console.log(`<App>: Redirect to the requested URI => ${redirect}`);
-							this.configSvc.navigateForwardAsync(redirect);
-						}
-						catch (error) {
-							console.error(`<App>: The requested URI for redirecting is not well-form => ${redirect}`, error);
-						}
-					}
-				})
-			]))))
-		).then(() => console.log(`<App>: Initialized [${AppUtility.getElapsedTime(this._time)}]`, this.configSvc.appConfig.app));
+				}
+			})
+		]).then(() => console.log(`<App>: Initialized [${AppUtility.getElapsedTime(this._time)}]`, this.configSvc.appConfig.app)))));
 	}
 }

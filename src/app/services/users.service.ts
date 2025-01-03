@@ -65,6 +65,9 @@ export class UsersService extends BaseService {
 		});
 	}
 
+	deinitialize() {
+	}
+
 	get completerDataSource() {
 		const convertToCompleterItem = (data: any) => {
 			const profile = data === undefined
@@ -380,7 +383,7 @@ export class UsersService extends BaseService {
 				this.configSvc.updateAccount(message.Data);
 				if (this.configSvc.isAuthenticated && account.id === message.Data.ID) {
 					AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
-					AppEvents.sendToElectron("Users", message);
+					AppEvents.sendToElectron("Users", { Type: "Account", Mode: "APIs", Data: message });
 				}
 				break;
 

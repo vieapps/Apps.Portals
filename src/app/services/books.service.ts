@@ -46,57 +46,68 @@ export class BooksService extends BaseService {
 			if (profile !== undefined) {
 				this.sendBookmarksAsync(() => profile.LastSync = new Date());
 			}
-		});
+		}, "Books");
 
-		AppAPIs.registerAsObjectScopeProcessor(this.name, "Book", message => this.processUpdateBookMessage(message));
-		AppAPIs.registerAsObjectScopeProcessor(this.name, "Statistic", message => this.processUpdateStatisticMessage(message));
-		AppAPIs.registerAsObjectScopeProcessor(this.name, "Bookmarks", message => this.processUpdateBookmarkMessage(message));
+		AppAPIs.registerAsObjectScopeProcessor(this.name, "Book", message => this.processUpdateBookMessage(message), "Messages");
+		AppAPIs.registerAsObjectScopeProcessor(this.name, "Statistic", message => this.processUpdateStatisticMessage(message), "Statistic");
+		AppAPIs.registerAsObjectScopeProcessor(this.name, "Bookmarks", message => this.processUpdateBookmarkMessage(message), "Bookmarks");
 
 		AppEvents.on(this.name, info => {
-			const args = info.args;
-			if ("Categories" === args.Type && ("Loaded" === args.Mode || "Updated" === args.Mode)) {
+			if ("Categories" === info.args.Type && ("Loaded" === info.args.Mode || "Updated" === info.args.Mode)) {
 				this.updateSidebarAsync();
 			}
-			else if (("Book" === args.Type && "Open" === args.Mode) || ("Chapter" === args.Type && "Open" === args.Mode)) {
-				const book = Book.get(args.ID);
+			else if (("Book" === info.args.Type && "Open" === info.args.Mode) || ("Chapter" === info.args.Type && "Open" === info.args.Mode)) {
+				const book = Book.get(info.args.ID);
 				if (book !== undefined && book.TotalChapters > 1) {
-					this.updateTOCItem(book, args.Chapter || 1);
+					this.updateTOCItem(book, info.args.Chapter || 1);
 				}
 			}
-			else if ("Book" === args.Type && "Close" === args.Mode && this._reading.ID !== undefined) {
+			else if ("Book" === info.args.Type && "Close" === info.args.Mode && this._reading.ID !== undefined) {
 				this.updateSidebarAsync();
 				this._reading.ID = undefined;
 				this._reading.Chapter = undefined;
 			}
-		});
+		}, "UpdateInfo");
 
 		AppEvents.on("App", info => {
-			const args = info.args;
-			if ("HomePage" === args.Type && "Open" === args.Mode && this._reading.ID !== undefined) {
+			if ("HomePage" === info.args.Type && "Open" === info.args.Mode && this._reading.ID !== undefined) {
 				this.updateSidebarAsync();
 				this._reading.ID = undefined;
 			}
-		});
+		}, "Books:UpdateSiderbar");
 
 		AppEvents.on("Session", info => {
 			if ("LogOut" === info.args.Type) {
 				this.bookmarks.clear();
 				this.storeBookmarksAsync();
 			}
-		});
+		}, "Books");
 
 		AppEvents.on("Profile", info => {
-			const args = info.args;
-			if ("Updated" === args.Type && "APIs" === args.Mode) {
+			if ("Updated" === info.args.Type && "APIs" === info.args.Mode) {
 				this.getBookmarksAsync();
 				if (this.configSvc.appConfig.services.active.service === this.name) {
 					this.updateSidebarHeader();
 				}
 			}
-		});
+		}, "Books");
+	}
+
+	deinitialize() {
+		AppAPIs.unregisterProcessor("Scheduler", "Books");
+		AppAPIs.unregisterProcessor(this.name, "Messages");
+		AppAPIs.unregisterProcessor(this.name, "Statistic");
+		AppAPIs.unregisterProcessor(this.name, "Bookmarks");
+		AppEvents.off(this.name, "UpdateInfo");
+		AppEvents.off("App", "Books");
+		AppEvents.off("Session", "Books");
+		AppEvents.off("Profile", "Books");
 	}
 
 	initializeAsync(onNext?: () => void) {
+		if (this.configSvc.isDebug) {
+			console.log("[Books]: Initialize service");
+		}
 		this.loadCategoriesAsync().then(() => this.prepareSidebarFooterItems());
 		AppUtility.invoke(() => this.fetchCategoriesAsync()
 			.then(() => this.loadInstructionsAsync(() => this.fetchInstructionsAsync()))

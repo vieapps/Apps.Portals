@@ -2,7 +2,9 @@ import { Injectable } from "@angular/core";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
+import { AppAPIs } from "@app/components/app.apis";
 import { Account } from "@app/models/account";
+import { UserProfile } from "@app/models/user";
 import { Privileges } from "@app/models/privileges";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -286,13 +288,38 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	private updateSessionWhenLogInAsync(data: any, onNext: (data?: any) => void) {
-		return this.configSvc.updateSessionAsync(data, () => {
-			AppEvents.broadcast("Session", { Type: "LogIn" });
+	private async updateSessionWhenLogInAsync(data: any, onNext: (data?: any) => void) {
+		if (onNext !== undefined) {
+			onNext(data);
+		}
+		if (this.configSvc.isDebug) {
+			console.log("[Authentication]: Update session (when login)", data);
+		}
+		await this.configSvc.updateSessionAsync(data, async _ => {
+			AppEvents.broadcast("Session", { Type: "LogIn", Mode: "Apps" });
 			AppEvents.sendToElectron("Users", { Type: "LogIn", Data: this.configSvc.appConfig.session });
-			if (onNext !== undefined) {
-				onNext(data);
-			}
+			AppUtility.invoke(async () => {
+				if (this.configSvc.getAccount().roles.length == 1) {
+					await this.readAsync(
+						this.getPath("account", undefined, AppUtility.toQuery(this.configSvc.appConfig.getRelatedJson({ "x-status": "true" })), "users"),
+						account => {
+							console.log("[Authentication]: Update account info", account);
+							this.configSvc.updateAccount(account);
+							AppEvents.broadcast("Session", { Type: "LogIn", Mode: "Apps" });
+							AppEvents.sendToElectron("Users", { Type: "Account", Mode: "Apps", Data: account });
+							this.readAsync(this.getPath("profile", undefined, AppUtility.toQuery(this.configSvc.appConfig.getRelatedJson({ "object-identity": account.id })), "users"), AppAPIs.isWebSocketReady ? undefined : profile => {
+								console.log("[Authentication]: Update profile info", profile);
+								UserProfile.update(profile);
+								AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Apps" });
+								AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "Apps", Data: profile });
+							});
+						},
+						undefined,
+						undefined,
+						true
+					);
+				}
+			}, 345);
 		});
 	}
 

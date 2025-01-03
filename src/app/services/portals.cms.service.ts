@@ -195,7 +195,13 @@ export class PortalsCmsService extends BaseService {
 		});
 	}
 
+	deinitialize() {
+	}
+
 	async initializeAsync(onNext?: () => void) {
+		if (this.configSvc.isDebug) {
+			console.log("[Portals]: Initialize CMS service");
+		}
 		const tasks = new Array<Promise<any>>();
 
 		if (Module.active === undefined || Module.active.contentTypes.length < 1) {
