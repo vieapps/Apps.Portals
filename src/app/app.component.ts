@@ -118,7 +118,10 @@ export class AppComponent implements OnInit {
 			const appConfig = this.configSvc.appConfig;
 			const uri = appConfig.isWebApp ? AppUtility.parseURI() : undefined;
 
-			const resetApps = () => ["URIs", "Options", "GeoMeta-Country", "GeoMeta-Countries", "GeoMeta-Provinces", "Session"].forEach(name => AppStorage.removeAsync(name));
+			const resetApps = () => {
+				["URIs", "Options", "GeoMeta-Country", "GeoMeta-Countries", "GeoMeta-Provinces", "Session"].forEach(name => AppStorage.removeAsync(name));
+				appConfig.options = appConfig.defaultOptions;
+			};
 			const disableServices = (services: string, updateFooter: boolean = false) => AppUtility.toArray(services).filter(name => AppUtility.isNotEmpty(name)).forEach(name => {
 				[this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc].filter(service => AppUtility.isEquals(service.name, name)).forEach(service => service.deinitialize());
 				appConfig.services.all.removeAt(appConfig.services.all.findIndex(svc => AppUtility.isEquals(svc.name, name)));

@@ -220,17 +220,15 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the file-size limits */
 	get fileLimits() {
-		let limits = AppConfig.options.extras.fileLimits as { avatar: number; thumbnail: number; file: number };
-		if (!AppUtility.isObject(limits, true)) {
-			limits = {
+		if (!AppUtility.isObject(AppConfig.options.fileLimits, true)) {
+			AppConfig.options.fileLimits = {
 				avatar: 1024000,
-				thumbnail: 524288,
+				thumbnail: 1024000,
 				file: 819200000
 			};
-			AppConfig.options.extras.fileLimits = limits;
-			this.saveOptionsAsync(() => console.log("[Configuration]: file limits were updated"));
+			this.saveOptionsAsync(() => console.log("[Configuration]: File limits were updated"));
 		}
-		return limits;
+		return AppConfig.options.fileLimits;
 	}
 
 	/** Prepare the configuration of the app */

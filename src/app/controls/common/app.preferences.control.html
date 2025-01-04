@@ -8,6 +8,26 @@
 		<ion-item *ngIf="isAuthenticated" [color]="color" (click)="openProfile()">
 			<ion-label>{{ labels.profile }}</ion-label>
 		</ion-item>
+		<ion-item *ngIf="isAuthenticated" [color]="color">
+			<ion-label>{{ labels.options.preflight }}</ion-label>
+			<ion-toggle [checked]="options.preflight" (ionChange)="onPreflightChanged($event)"></ion-toggle>
+		</ion-item>
+		<ion-item *ngIf="isAuthenticated" [color]="color">
+			<ion-label>{{ labels.options.xhr }}</ion-label>
+			<ion-toggle [checked]="options.xhr" (ionChange)="onPreferXHRChanged($event, true)"></ion-toggle>
+		</ion-item>
+		<ion-item *ngIf="isAuthenticated" [color]="color">
+			<ion-label>{{ labels.options.xhrToken }}</ion-label>
+			<ion-toggle [checked]="options.xhrToken" [disabled]="!options.xhr" (ionChange)="onPreferXHRChanged($event, false)"></ion-toggle>
+		</ion-item>
+		<ion-item *ngIf="isAuthenticated" [color]="color">
+			<ion-label>{{ labels.options.debug }}</ion-label>
+			<ion-toggle [checked]="options.debug" (ionChange)="onDebugChanged($event)"></ion-toggle>
+		</ion-item>
+		<ion-item [color]="color">
+			<ion-label>{{ labels.options.theme }}</ion-label>
+			<ion-toggle [checked]="options.darkTheme" (ionChange)="onThemeChanged($event)"></ion-toggle>
+		</ion-item>
 		<!--ion-item [color]="color">
 			<ion-label>{{ labels.options.language }}</ion-label>
 			<ion-select multiple="false" interface="alert"
@@ -18,26 +38,6 @@
 				<ion-select-option *ngFor="let lang of languages" [value]="lang.Value">{{ lang.Label }}</ion-select-option>
 			</ion-select>
 		</ion-item-->
-		<ion-item [color]="color">
-			<ion-label>{{ labels.options.preflight }}</ion-label>
-			<ion-toggle [checked]="options.preflight" (ionChange)="onPreflightChanged($event)"></ion-toggle>
-		</ion-item>
-		<ion-item [color]="color">
-			<ion-label>{{ labels.options.xhr }}</ion-label>
-			<ion-toggle [checked]="options.xhr" (ionChange)="onPreferXHRChanged($event, true)"></ion-toggle>
-		</ion-item>
-		<ion-item [color]="color">
-			<ion-label>{{ labels.options.xhrToken }}</ion-label>
-			<ion-toggle [checked]="options.xhrToken" [disabled]="!options.xhr" (ionChange)="onPreferXHRChanged($event, false)"></ion-toggle>
-		</ion-item>
-		<ion-item [color]="color">
-			<ion-label>{{ labels.options.debug }}</ion-label>
-			<ion-toggle [checked]="options.debug" (ionChange)="onDebugChanged($event)"></ion-toggle>
-		</ion-item>
-		<ion-item [color]="color">
-			<ion-label>{{ labels.options.theme }}</ion-label>
-			<ion-toggle [checked]="options.darkTheme" (ionChange)="onThemeChanged($event)"></ion-toggle>
-		</ion-item>
 		<ion-item *ngIf="isAdministrator" [color]="color" (click)="openTrash()">
 			<ion-label>{{ labels.trash }}</ion-label>
 		</ion-item>

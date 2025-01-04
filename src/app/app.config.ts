@@ -148,12 +148,25 @@ export class AppConfig {
 	};
 
 	/** App options */
-	static options = {
-		i18n: "vi-VN",
-		theme: "light",
-		timezone: +7.00,
-		extras: {} as { [key: string]: any }
-	};
+	static get defaultOptions() {
+		return {
+			i18n: "vi-VN",
+			theme: "light",
+			timezone: +7.00,
+			fileLimits: {
+				avatar: 1024000,
+				thumbnail: 1024000,
+				file: 819200000
+			},
+			thumbnails: {
+				useWebP: true,
+				width: 0
+			},
+			extras: { } as { [key: string]: any }
+		};
+	}
+
+	static options = this.defaultOptions;
 
 	/** App URLs (stack, host, ...) */
 	static URLs = {
@@ -192,6 +205,36 @@ export class AppConfig {
 
 	static get nothumbnailURI() {
 		return `${AppConfig.URIs.files}thumbnails/no-image.png`;
+	}
+
+	static getThumbnailURI(uri: string) {
+		if (AppUtility.isEmpty(uri)) {
+			return this.nothumbnailURI;
+		}
+		const settings = this.options.thumbnails || this.defaultOptions.thumbnails;
+		if (settings.useWebP) {
+			uri = uri.replace("/thumbnails/", "/thumbnailwebps/").replace("/thumbnailpngs/", "/thumbnailwebps/");
+		}
+		if (uri.indexOf("/0/0/0/") > 0) {
+			if (!!settings.width) {
+				uri = uri.replace("/0/0/0/", `/0/${settings.width}/0/`);
+			}
+			if (uri.endsWith(".jpg") || uri.endsWith(".png") || uri.endsWith(".webp")) {
+				if (settings.useWebP) {
+					uri = uri.endsWith(".webp") ? uri : uri.substring(0, uri.length - 4) + ".webp";
+				}
+				else if (uri.endsWith(".png")) {
+					uri = uri.replace("/thumbnails/", "/thumbnailpngs/");
+				}
+			}
+			else {
+				uri += settings.useWebP ? ".webp" : ".jpg";
+			}
+		}
+		else if (settings.useWebP && !uri.endsWith(".webp")) {
+			uri += ".webp";
+		}
+		return uri + (this.isDebug ? "?x-logs=true" : "");
 	}
 
 	/** Tracking information */

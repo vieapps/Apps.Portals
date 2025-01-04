@@ -199,12 +199,7 @@ export class FilesService extends BaseService {
 	}
 
 	getThumbnailURI(attachment: AttachmentInfo) {
-		const uri = AppUtility.isObject(attachment.URIs, true)
-			? attachment.URIs.Direct
-			: AppUtility.isNotEmpty(attachment.URI)
-				? attachment.URI
-				: this.configSvc.appConfig.nothumbnailURI;
-		return uri + (uri.endsWith(".jpg") ? "" : ".jpg");
+		return this.configSvc.appConfig.getThumbnailURI(AppUtility.isObject(attachment.URIs, true) ? attachment.URIs.Direct : AppUtility.isNotEmpty(attachment.URI)	? attachment.URI : undefined);
 	}
 
 	prepareAttachmentsFormControl(formControl: AppFormsControl, isThumbnails: boolean, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo, onCompleted?: (control: AppFormsControl) => void) {

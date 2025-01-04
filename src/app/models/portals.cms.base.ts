@@ -122,13 +122,7 @@ export abstract class PortalCmsBase extends BaseModel {
 	}
 
 	static getThumbnailURI(thumbnails: AttachmentInfo[]) {
-		return thumbnails !== undefined && !!thumbnails.length
-			? AppUtility.isObject(thumbnails[0].URIs, true)
-				? thumbnails[0].URIs.Direct
-				: AppUtility.isNotEmpty(thumbnails[0].URI)
-					? thumbnails[0].URI
-					: undefined
-			: undefined;
+		return AppConfig.getThumbnailURI(thumbnails !== undefined && !!thumbnails.length ? AppUtility.isObject(thumbnails[0].URIs, true)	? thumbnails[0].URIs.Direct : AppUtility.isNotEmpty(thumbnails[0].URI) ? thumbnails[0].URI : undefined : undefined);
 	}
 
 	normalizeExtendedProperties(data: any, onCompleted?: () => void) {
