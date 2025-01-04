@@ -166,7 +166,14 @@ export class AppConfig {
 		};
 	}
 
-	static options = this.defaultOptions;
+	static options = {
+		i18n: this.defaultOptions.i18n,
+		theme: this.defaultOptions.theme,
+		timezone: this.defaultOptions.timezone,
+		fileLimits: this.defaultOptions.fileLimits,
+		thumbnails: this.defaultOptions.thumbnails,
+		extras: this.defaultOptions.extras
+	};
 
 	/** App URLs (stack, host, ...) */
 	static URLs = {

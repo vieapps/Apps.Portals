@@ -220,15 +220,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the file-size limits */
 	get fileLimits() {
-		if (!AppUtility.isObject(AppConfig.options.fileLimits, true)) {
-			AppConfig.options.fileLimits = {
-				avatar: 1024000,
-				thumbnail: 1024000,
-				file: 819200000
-			};
-			this.saveOptionsAsync(() => console.log("[Configuration]: File limits were updated"));
-		}
-		return AppConfig.options.fileLimits;
+		return AppConfig.options.fileLimits || AppConfig.defaultOptions.fileLimits;
 	}
 
 	/** Prepare the configuration of the app */
@@ -750,42 +742,38 @@ export class ConfigurationService extends BaseService {
 
 	/** Loads the options of the app */
 	async loadOptionsAsync(onNext?: (data?: any) => void) {
-		const options = await AppStorage.getAsync("Options") || {};
-		if (options.i18n !== undefined && options.timezone !== undefined && options.extras !== undefined) {
-			AppConfig.options = options;
-			AppConfig.options.theme = AppConfig.options.theme || "light";
+		await this.updateOptionsAsync(await AppStorage.getAsync("Options") || AppConfig.defaultOptions, _ => {
 			AppEvents.broadcast("App", { Type: "Options", Mode: "Loaded" });
-			await this.saveOptionsAsync(onNext);
-		}
-		else if (onNext !== undefined) {
-			onNext(options);
-		}
-	}
-
-	/** Updates the options of the app */
-	updateOptionsAsync(options: any, onNext?: (data?: any) => void) {
-		AppUtility.toKeyValuePair(options).forEach(kvp => AppConfig.options[kvp.key] = kvp.value);
-		return this.saveOptionsAsync(onNext);
-	}
-
-	/** Stores the options of the app */
-	storeOptionsAsync(onNext?: (data?: any) => void) {
-		return this.saveOptionsAsync(() => {
-			AppEvents.broadcast("App", { Type: "Options", Mode: "Updated" });
 			if (onNext !== undefined) {
 				onNext(AppConfig.options);
 			}
 		});
 	}
 
-	/** Saves the options of the app into storage */
-	saveOptionsAsync(onNext?: (data?: any) => void) {
-		return AppStorage.setAsync("Options", AppConfig.options).then(() => {
-			if (this.isDebug) {
-				console.log("[Configuration]: Options", AppConfig.options);
-			}
+	/** Updates the options of the app */
+	async updateOptionsAsync(options: any, onNext?: (data?: any) => void) {
+		AppUtility.toKeyValuePair(options).forEach(kvp => AppConfig.options[kvp.key] = kvp.value);
+		await this.saveOptionsAsync(onNext);
+	}
+
+	/** Stores the options of the app */
+	async storeOptionsAsync(onNext?: (data?: any) => void) {
+		await this.saveOptionsAsync(() => {
 			if (onNext !== undefined) {
 				onNext(AppConfig.options);
+			}
+			AppEvents.broadcast("App", { Type: "Options", Mode: "Updated" });
+		});
+	}
+
+	/** Saves the options of the app into storage */
+	async saveOptionsAsync(onNext?: (data?: any) => void) {
+		await AppStorage.setAsync("Options", AppConfig.options).then(() => {
+			if (onNext !== undefined) {
+				onNext(AppConfig.options);
+			}
+			if (this.isDebug) {
+				console.log("[Configuration]: Options", AppConfig.options);
 			}
 		});
 	}
