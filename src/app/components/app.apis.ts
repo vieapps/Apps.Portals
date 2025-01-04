@@ -713,7 +713,7 @@ export class AppAPIs {
 	*/
 	static sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, preferWebSocket: boolean = false) {
 		return (preferWebSocket && this.isWebSocketReady) || this.canUseWebSocket(useXHR)
-			? AppUtility.toAsync(this.sendRequest(requestInfo, false, onSuccess, onError, preferWebSocket)).then(() => {}).catch(error => console.error("[AppAPIs]: Error occurred while sending a request to APIs", error))
+			? AppUtility.toAsync(this.sendRequest(requestInfo, false, onSuccess, onError, preferWebSocket)).then(() => {}).catch(error => console.error("[AppAPIs]: Error occurred while sending a request to APIs (WS)", error))
 			: AppUtility.toAsync(this.sendRequest(requestInfo))
 				.then(data => {
 					if (onSuccess !== undefined) {
@@ -725,7 +725,7 @@ export class AppAPIs {
 						onError(error);
 					}
 					else {
-						console.error("[AppAPIs]: Error occurred while sending a request to APIs", error);
+						console.error("[AppAPIs]: Error occurred while sending a request to APIs (XHR)", error);
 					}
 				});
 	}

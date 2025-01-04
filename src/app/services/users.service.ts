@@ -46,9 +46,19 @@ export class UsersService extends BaseService {
 				const profile = this.configSvc.getAccount().profile;
 				if (profile !== undefined) {
 					profile.Language = this.configSvc.appConfig.options.i18n;
-					profile.Options = this.configSvc.appConfig.options;
-					AppUtility.invoke(() => this.updateProfileAsync(profile));
+					profile.Options = AppUtility.clone(this.configSvc.appConfig.options, ["fileLimits", "thumbnails"]);
+					this.updateProfileAsync(profile, () => {
+						if (this.configSvc.isDebug) {
+							console.log("[Users]: Update profile (with new options) to APIs", profile.Options);
+						}
+					}, undefined, false, true);
 				}
+			}
+			else if ("Initialized" === info.args.Type && this.configSvc.isAuthenticated) {
+				this.getProfileAsync(undefined, () => {
+					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
+					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: this.configSvc.getAccount().profile });
+				});
 			}
 			else if ("Router" === info.args.Type && "Navigated" === info.args.Mode) {
 				const profile = this.configSvc.getAccount().profile;
@@ -237,7 +247,7 @@ export class UsersService extends BaseService {
 				);
 	}
 
-	updateProfileAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	updateProfileAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, preferWebSocket: boolean = false) {
 		return this.updateAsync(
 			this.getPath("profile", body.ID || this.configSvc.getAccount().id, this.configSvc.relatedQuery),
 			body,
@@ -247,7 +257,10 @@ export class UsersService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError(`Error occurred while updating profile ${body.ID}`, error, onError)
+			error => this.processError(`Error occurred while updating profile ${body.ID}`, error, onError),
+			undefined,
+			useXHR,
+			preferWebSocket
 		);
 	}
 
@@ -392,7 +405,7 @@ export class UsersService extends BaseService {
 					switch (message.Data.Status || "") {
 						case "Done":
 							if (this.configSvc.isDebug) {
-								console.log("[Users]: The export objects to Excel process was completed.");
+								console.log("[Users]: The export objects to Excel process was completed");
 							}
 							AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
 								await this.configSvc.getResourceAsync("portals.common.excel.message.export"),
@@ -403,7 +416,7 @@ export class UsersService extends BaseService {
 							break;
 						case "Error":
 							if (this.configSvc.isDebug) {
-								console.error("[Users]: Error occurred while exporting objects to Excel.`", message);
+								console.error("[Users]: Error occurred while exporting objects to Excel", message);
 							}
 							this.appFormsSvc.showErrorAsync(message.Data);
 							break;
@@ -423,6 +436,9 @@ export class UsersService extends BaseService {
 						this.configSvc.updateOptionsAsync(profile.Options).then(() => {
 							AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
 							AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "APIs", Data: profile });
+							if (this.configSvc.isDebug) {
+								console.log("[Users]: Update options (by profile) from APIs", profile.Options);
+							}
 						});
 						if (this.configSvc.appConfig.facebook.token !== undefined && this.configSvc.appConfig.facebook.id !== undefined) {
 							this.configSvc.getFacebookProfile();

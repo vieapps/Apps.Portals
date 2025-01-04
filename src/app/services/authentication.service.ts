@@ -234,6 +234,9 @@ export class AuthenticationService extends BaseService {
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			data => this.configSvc.updateSessionAsync(data, () => this.configSvc.registerSessionAsync(() => {
 				console.log("[Authentication]: Log out successful", this.configSvc.isDebug ? data : "");
+				const extras = this.configSvc.appConfig.options.extras;
+				this.configSvc.appConfig.options = this.configSvc.appConfig.defaultOptions;
+				this.configSvc.appConfig.options.extras = extras;
 				AppEvents.broadcast("Account", { Type: "Updated", Mode: "Apps" });
 				AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Apps" });
 				AppEvents.broadcast("Session", { Type: "LogOut" });
@@ -292,34 +295,10 @@ export class AuthenticationService extends BaseService {
 		if (onNext !== undefined) {
 			onNext(data);
 		}
-		if (this.configSvc.isDebug) {
-			console.log("[Authentication]: Update session (when login)", data);
-		}
-		await this.configSvc.updateSessionAsync(data, async _ => {
-			AppEvents.broadcast("Session", { Type: "LogIn", Mode: "Apps" });
-			AppEvents.sendToElectron("Users", { Type: "LogIn", Data: this.configSvc.appConfig.session });
-			AppUtility.invoke(async () => {
-				if (this.configSvc.getAccount().roles.length == 1) {
-					await this.readAsync(
-						this.getPath("account", undefined, AppUtility.toQuery(this.configSvc.appConfig.getRelatedJson({ "x-status": "true" })), "users"),
-						account => {
-							console.log("[Authentication]: Update account info", account);
-							this.configSvc.updateAccount(account);
-							AppEvents.broadcast("Session", { Type: "LogIn", Mode: "Apps" });
-							AppEvents.sendToElectron("Users", { Type: "Account", Mode: "Apps", Data: account });
-							this.readAsync(this.getPath("profile", undefined, AppUtility.toQuery(this.configSvc.appConfig.getRelatedJson({ "object-identity": account.id })), "users"), AppAPIs.isWebSocketReady ? undefined : profile => {
-								console.log("[Authentication]: Update profile info", profile);
-								UserProfile.update(profile);
-								AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Apps" });
-								AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "Apps", Data: profile });
-							});
-						},
-						undefined,
-						undefined,
-						true
-					);
-				}
-			}, 345);
+		await this.configSvc.updateSessionAsync(data, () => {
+			if (this.configSvc.isDebug) {
+				console.log("[Authentication]: Update session (when login successful)", data);
+			}
 		});
 	}
 

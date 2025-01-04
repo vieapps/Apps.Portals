@@ -166,13 +166,13 @@ export class AppConfig {
 		};
 	}
 
-	static options = {
-		i18n: this.defaultOptions.i18n,
-		theme: this.defaultOptions.theme,
-		timezone: this.defaultOptions.timezone,
-		fileLimits: this.defaultOptions.fileLimits,
-		thumbnails: this.defaultOptions.thumbnails,
-		extras: this.defaultOptions.extras
+	static options = { i18n: "vi-VN", theme: "light" } as {
+		i18n: string;
+		theme: string;
+		timezone: number;
+		fileLimits: { avatar: number; thumbnail: number; file: number; };
+		thumbnails: { useWebP: boolean; width: number; };
+		extras: { [key: string]: any }
 	};
 
 	/** App URLs (stack, host, ...) */

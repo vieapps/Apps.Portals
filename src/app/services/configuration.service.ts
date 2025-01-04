@@ -22,7 +22,6 @@ import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { Account } from "@app/models/account";
-import { UserProfile } from "@app/models/user";
 import { Privilege } from "@app/models/privileges";
 import { ServiceLog } from "@app/models/base";
 import { Base as BaseService } from "@app/services/base.service";
@@ -415,19 +414,12 @@ export class ConfigurationService extends BaseService {
 					ServiceName: "Users",
 					ObjectName: "Account",
 					Query: AppConfig.getRelatedJson({ "x-status": "true" })
-				}, AppAPIs.isWebSocketReady ? undefined : data => {
-					this.updateAccount(data);
-					AppEvents.broadcast("Account", { Type: "Updated", Mode: "Apps" });
-				});
+				}, AppAPIs.isWebSocketReady ? undefined : data => this.forward(data, "Users", "Account", "Update"), undefined, !AppAPIs.isWebSocketReady, AppAPIs.isWebSocketReady);
 				AppAPIs.sendRequestAsync({
 					ServiceName: "Users",
 					ObjectName: "Profile",
 					Query: AppConfig.getRelatedJson({ "object-identity": AppConfig.session.account.id })
-				}, AppAPIs.isWebSocketReady ? undefined : data => {
-					UserProfile.update(data);
-					AppEvents.broadcast("Profile", { Type: "Updated", Mode: "Apps" });
-					AppEvents.sendToElectron("Users", { Type: "Profile", Mode: "Apps", Data: this.getAccount().profile });
-				});
+				}, AppAPIs.isWebSocketReady ? undefined : data => this.forward(data, "Users", "Profile", "Update"), undefined, !AppAPIs.isWebSocketReady, AppAPIs.isWebSocketReady);
 			}
 		}
 
@@ -474,8 +466,8 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Stores the session into storage */
-	storeSessionAsync(onNext?: (data?: any) => void) {
-		return this.saveSessionAsync(data => {
+	async storeSessionAsync(onNext?: (data?: any) => void) {
+		await this.saveSessionAsync(data => {
 			AppEvents.broadcast("Session", { Type: "Updated" });
 			if (onNext !== undefined) {
 				onNext(data);
@@ -742,7 +734,8 @@ export class ConfigurationService extends BaseService {
 
 	/** Loads the options of the app */
 	async loadOptionsAsync(onNext?: (data?: any) => void) {
-		await this.updateOptionsAsync(await AppStorage.getAsync("Options") || AppConfig.defaultOptions, _ => {
+		AppConfig.options = AppConfig.defaultOptions;
+		await this.updateOptionsAsync(await AppStorage.getAsync("Options") || {}, _ => {
 			AppEvents.broadcast("App", { Type: "Options", Mode: "Loaded" });
 			if (onNext !== undefined) {
 				onNext(AppConfig.options);

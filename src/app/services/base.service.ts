@@ -261,7 +261,7 @@ export class Base {
 		* @param headers The additional headers to send the request
 		* @param useXHR Set to true to always use XHR, false to let system decides
 	*/
-	protected updateAsync(path: string, body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
+	protected updateAsync(path: string, body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false, preferWebSocket: boolean = false) {
 		return this.sendRequestAsync(
 			{
 				Path: path,
@@ -271,7 +271,8 @@ export class Base {
 			},
 			onSuccess,
 			error => this.processError("Error occurred while updating", error, onError),
-			useXHR
+			useXHR,
+			preferWebSocket
 		);
 	}
 

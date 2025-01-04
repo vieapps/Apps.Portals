@@ -188,8 +188,14 @@ export class PortalsCoreService extends BaseService {
 			}
 			else if ("LogOut" === info.args.Type) {
 				this.prepareSidebarFooterItemsAsync().then(() => this.activeSidebar(() => {
+					delete this.configSvc.appConfig.options.extras["organization"];
+					delete this.configSvc.appConfig.options.extras["modules"];
 					this.configSvc.appConfig.options.extras["organizations"] = new Array<string>();
-					AppUtility.invoke(() => this.configSvc.saveOptionsAsync(), 123);
+					this.configSvc.saveOptionsAsync(() => {
+						if (this.configSvc.isDebug) {
+							console.log("[Portals]: Clear options (when log out)", this.configSvc.appConfig.options);
+						}
+					});
 				}));
 			}
 		});
@@ -387,7 +393,12 @@ export class PortalsCoreService extends BaseService {
 					if (useXHR) {
 						AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
 					}
-					this.configSvc.saveOptionsAsync(() => AppEvents.broadcast("App", { Type: "Options", Mode: "Changed" }));
+					this.configSvc.saveOptionsAsync(() => {
+						AppEvents.broadcast("App", { Type: "Options", Mode: "Changed" });
+						if (this.configSvc.isDebug) {
+							console.log("[Portals]: Update options (when get active module)", this.configSvc.appConfig.options);
+						}
+					});
 					if (this.configSvc.isAuthenticated && Site.instances.first(site => site.SystemID === organization.ID) === undefined) {
 						if (this.configSvc.isDebug) {
 							console.log("[Portals]: Get sites of active organization (when get active module)", this.activeOrganization);
