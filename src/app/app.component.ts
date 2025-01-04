@@ -524,7 +524,7 @@ export class AppComponent implements OnInit {
 				() => this.initialize(async () => this.showActivationResult({
 					Header: await this.configSvc.getResourceAsync(`users.activate.header.${("account" === mode ? "account" : "password")}`),
 					Message: await this.configSvc.getResourceAsync(`users.activate.subHeader.success`),
-					SubMessage: await this.configSvc.getResourceAsync(`users.activate.success.${("account" === mode ? "account" : "password")}`)
+					SubMessage: await this.configSvc.getResourceAsync(`users.activate.messages.success.${("account" === mode ? "account" : "password")}`)
 				}), true),
 				error => this.initialize(async () => this.showActivationResult({
 					Header: await this.configSvc.getResourceAsync(`users.activate.header.${("account" === mode ? "account" : "password")}`),
