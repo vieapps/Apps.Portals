@@ -210,13 +210,13 @@ export class AppConfig {
 		};
 	}
 
-	static get nothumbnailURI() {
-		return `${AppConfig.URIs.files}thumbnails/no-image.png`;
+	static get noThumbnailURI() {
+		return `${this.URIs.files}thumbnails/no-image.png`;
 	}
 
 	static getThumbnailURI(uri: string) {
 		if (AppUtility.isEmpty(uri)) {
-			return this.nothumbnailURI;
+			return this.noThumbnailURI;
 		}
 		const settings = this.options.thumbnails || this.defaultOptions.thumbnails;
 		if (settings.useWebP) {

@@ -66,8 +66,8 @@ export abstract class PortalCmsBase extends BaseModel {
 
 	get thumbnailURI() {
 		return this._thumbnailURI !== undefined
-			? AppConfig.nothumbnailURI
-			: PortalCmsBase.getThumbnailURI(this.thumbnails) || AppConfig.nothumbnailURI;
+			? AppConfig.noThumbnailURI
+			: PortalCmsBase.getThumbnailURI(this.thumbnails) || AppConfig.noThumbnailURI;
 	}
 
 	get thumbnails() {
