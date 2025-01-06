@@ -65,8 +65,8 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		return this.configSvc.isAuthenticated && this.configSvc.appConfig.app.shell !== "Electron" && this.configSvc.appConfig.services.all.findIndex(svc => svc.name === "Portals") > -1;
 	}
 
-	get downloadURLs() {
-		return this.configSvc.appConfig.downloadURLs;
+	get downloadURIs() {
+		return this.configSvc.appConfig.downloadURIs;
 	}
 
 	get languages() {

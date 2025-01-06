@@ -38,7 +38,7 @@ export class UsersService extends BaseService {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => this.processUpdateMessage(message));
 		AppAPIs.registerAsServiceScopeProcessor("Refresher", () => {
 			if (this.configSvc.isAuthenticated) {
-				AppUtility.invoke(() => Promise.all(this.configSvc.appConfig.services.all.map(service => service.name).map(service => this.getProfileAsync(this.configSvc.appConfig.session.account.id, () => AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" }), undefined, false, true, this.configSvc.appConfig.getRelatedQuery(service)))));
+				AppUtility.invoke(() => Promise.all(this.configSvc.appConfig.services.all.map(service => service.name).map(service => this.getProfileAsync(this.configSvc.appConfig.session.account.id, () => AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" }), undefined, false, true, this.configSvc.appConfig.getQuery(undefined, service)))));
 			}
 		});
 		AppEvents.on("App", info => {

@@ -93,9 +93,9 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 				Name: "Account",
 				Required: true,
 				Options: {
-					Type: this.configSvc.appConfig.accounts.phoneIsAllowed ? "text" : "email",
-					Label: await this.configSvc.getResourceAsync(`users.login.login.controls.${this.configSvc.appConfig.accounts.phoneIsAllowed ? "Account" : "Email"}.label`),
-					PlaceHolder: await this.configSvc.getResourceAsync(`users.login.login.controls.${this.configSvc.appConfig.accounts.phoneIsAllowed ? "Account" : "Email"}.placeholder`),
+					Type: this.configSvc.appConfig.accounts.isPhoneAllowed ? "text" : "email",
+					Label: await this.configSvc.getResourceAsync(`users.login.login.controls.${this.configSvc.appConfig.accounts.isPhoneAllowed ? "Account" : "Email"}.label`),
+					PlaceHolder: await this.configSvc.getResourceAsync(`users.login.login.controls.${this.configSvc.appConfig.accounts.isPhoneAllowed ? "Account" : "Email"}.placeholder`),
 					MinLength: 1,
 					MaxLength: 150,
 					AutoFocus: true
@@ -274,9 +274,9 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 				Name: "Account",
 				Required: true,
 				Options: {
-					Type: this.configSvc.appConfig.accounts.phoneIsAllowed ? "text" : "email",
-					Label: await this.configSvc.getResourceAsync(`users.login.login.controls.${this.configSvc.appConfig.accounts.phoneIsAllowed ? "Account" : "Email"}.label`),
-					PlaceHolder: await this.configSvc.getResourceAsync(`users.login.login.controls.${this.configSvc.appConfig.accounts.phoneIsAllowed ? "Account" : "Email"}.placeholder`),
+					Type: this.configSvc.appConfig.accounts.isPhoneAllowed ? "text" : "email",
+					Label: await this.configSvc.getResourceAsync(`users.login.login.controls.${this.configSvc.appConfig.accounts.isPhoneAllowed ? "Account" : "Email"}.label`),
+					PlaceHolder: await this.configSvc.getResourceAsync(`users.login.login.controls.${this.configSvc.appConfig.accounts.isPhoneAllowed ? "Account" : "Email"}.placeholder`),
 					MinLength: 1,
 					MaxLength: 150,
 					AutoFocus: true
@@ -336,7 +336,7 @@ export class UsersLogInPage implements OnInit, OnDestroy {
 			return;
 		}
 
-		if (this.configSvc.appConfig.accounts.phoneIsAllowed && AppUtility.isPhone(account)) {
+		if (this.configSvc.appConfig.accounts.isPhoneAllowed && AppUtility.isPhone(account)) {
 			const control = this.reset.controls.find(ctrl => ctrl.Name === "OTP");
 			const otp = this.reset.form.value.OTP;
 			if (AppUtility.isEmpty(otp)) {

@@ -94,7 +94,7 @@ export class AppConfig {
 		setServicePrivilegs: false,
 		setServicePrivilegsRole: "ServiceAdministrator",
 		setObjectPrivilegs: true,
-		phoneIsAllowed: false
+		isPhoneAllowed: false
 	};
 
 	/** App services */
@@ -201,7 +201,7 @@ export class AppConfig {
 	};
 
 	/** URLs for downloading desktop apps */
-	static get downloadURLs() {
+	static get downloadURIs() {
 		const baseURL = `${this.URIs.apps}releases/${this.app.name.replace(/\s/g, "%20")}`;
 		return {
 			Windows: `${baseURL}%20Setup%20${this.app.version}.exe`,
@@ -352,8 +352,8 @@ export class AppConfig {
 		}
 	}
 
-	/** Gets the related JSON with active/related service, culture language and host */
-	static getRelatedJson(additional?: { [key: string]: string }, service?: string, activeID?: string, onCompleted?: (json: { [key: string]: string }) => void) {
+	/** Gets the related query with active/related service, culture language and host */
+	static getQuery(additional?: { [key: string]: string }, service?: string, activeID?: string, onCompleted?: (json: any) => void) {
 		const json: { [key: string]: string } = {
 			"language": this.language,
 			"related-service": (AppUtility.isNotEmpty(service) ? service : this.services.active.service || "").trim().toLowerCase(),
@@ -363,12 +363,7 @@ export class AppConfig {
 		if (onCompleted !== undefined) {
 			onCompleted(json);
 		}
-		return json;
-	}
-
-	/** Gets the related query with active/related service, culture language and host */
-	static getRelatedQuery(service?: string, activeID?: string, onCompleted?: (json: any) => void) {
-		return AppUtility.toQuery(this.getRelatedJson(undefined, service, activeID, onCompleted));
+		return AppUtility.toQuery(json);
 	}
 
 	/** Gets the captcha information for making requests to APIs */

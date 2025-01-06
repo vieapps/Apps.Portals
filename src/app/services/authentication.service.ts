@@ -195,14 +195,19 @@ export class AuthenticationService extends BaseService {
 			},
 			data => {
 				if (AppUtility.isTrue(data.Require2FA)) {
-					console.log("[Authentication]: Log in with static password successful, but need to verify with 2FA", this.configSvc.isDebug ? data : "");
+					console.log("[Authentication]: Log in with static password successful, but need to verify with OTP", this.configSvc.isDebug ? data : "");
 					if (onSuccess !== undefined) {
 						onSuccess(data);
 					}
 				}
 				else {
 					console.log("[Authentication]: Log in successful", this.configSvc.isDebug ? data : "");
-					this.updateSessionWhenLogInAsync(data, onSuccess);
+					this.configSvc.updateSessionAsync(data, () => {
+						AppEvents.broadcast("Session", { Type: "LogIn" });
+						if (onSuccess !== undefined) {
+							onSuccess(data);
+						}
+					});
 				}
 			},
 			error => this.processError("Error occurred while logging in", error, onError),
@@ -220,10 +225,15 @@ export class AuthenticationService extends BaseService {
 				OTP: AppCrypto.rsaEncrypt(otp)
 			},
 			data => {
-				console.log("[Authentication]: Log in with OTP successful");
-				this.updateSessionWhenLogInAsync(data, onSuccess);
+				console.log("[Authentication]: Log in successful (OTP)");
+				this.configSvc.updateSessionAsync(data, () => {
+					AppEvents.broadcast("Session", { Type: "LogIn" });
+					if (onSuccess !== undefined) {
+						onSuccess(data);
+					}
+				});
 			},
-			error => this.processError("Error occurred while logging in with OTP", error, onError),
+			error => this.processError("Error occurred while logging in (OTP)", error, onError),
 			undefined,
 			true
 		);
@@ -232,7 +242,7 @@ export class AuthenticationService extends BaseService {
 	logOutAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.deleteAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
-			data => this.configSvc.updateSessionAsync(data, () => this.configSvc.registerSessionAsync(() => {
+			data => this.configSvc.updateSessionAsync(data, () => {
 				console.log("[Authentication]: Log out successful", this.configSvc.isDebug ? data : "");
 				const extras = this.configSvc.appConfig.options.extras;
 				this.configSvc.appConfig.options = this.configSvc.appConfig.defaultOptions;
@@ -244,7 +254,8 @@ export class AuthenticationService extends BaseService {
 				if (onSuccess !== undefined) {
 					onSuccess(data);
 				}
-			}, onError), true),
+				this.configSvc.registerSessionAsync();
+			}, true),
 			error => this.processError("Error occurred while logging out", error, onError),
 			undefined,
 			true
@@ -289,17 +300,6 @@ export class AuthenticationService extends BaseService {
 			},
 			error => this.processError("Error occurred while registering session captcha", error, onError)
 		);
-	}
-
-	private async updateSessionWhenLogInAsync(data: any, onNext: (data?: any) => void) {
-		if (onNext !== undefined) {
-			onNext(data);
-		}
-		await this.configSvc.updateSessionAsync(data, () => {
-			if (this.configSvc.isDebug) {
-				console.log("[Authentication]: Update session (when login successful)", data);
-			}
-		});
 	}
 
 }

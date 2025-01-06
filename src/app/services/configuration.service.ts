@@ -187,7 +187,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets the query with related service, language and host */
 	get relatedQuery() {
-		return AppConfig.getRelatedQuery();
+		return AppConfig.getQuery();
 	}
 
 	/** Gets the router params of the current page/view */
@@ -330,18 +330,14 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Initializes the session with remote APIs */
-	initializeSessionAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.fetchAsync(
+	async initializeSessionAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		await this.fetchAsync(
 			"users/session",
-			data => {
+			async data => {
 				if (this.isDebug) {
 					console.log("[Configuration]: The session was initialized by APIs");
 				}
-				this.updateSessionAsync(data, _ => {
-					AppConfig.session.account = this.getAccount(!this.isAuthenticated);
-					if (this.isAuthenticated) {
-						AppConfig.session.account.id = AppConfig.session.token.uid;
-					}
+				await this.updateSessionAsync(data, _ => {
 					AppEvents.broadcast("Session", { Type: this.isAuthenticated ? "Registered" : "Initialized" });
 					if (onSuccess !== undefined) {
 						onSuccess(data);
@@ -353,23 +349,23 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Registers the initialized session (anonymous) with remote APIs */
-	registerSessionAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.fetchAsync(
+	async registerSessionAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		await this.fetchAsync(
 			`users/session?register=${AppConfig.session.id}`,
-			() => {
+			async _ => {
 				AppConfig.session.account = this.getAccount(true);
 				if (this.isDebug) {
 					console.log("[Configuration]: The session was registered by APIs");
 				}
 				AppEvents.broadcast("Session", { Type: "Registered" });
-				this.storeSessionAsync(onSuccess);
+				await this.storeSessionAsync(onSuccess);
 			},
 			error => this.showError("Error occurred while registering the session", error, onError)
 		);
 	}
 
 	/** Updates the session and stores into storage */
-	updateSessionAsync(session: any, onNext?: (data?: any) => void, dontStore: boolean = false, fetch: boolean = true) {
+	async updateSessionAsync(session: any, onNext?: (data?: any) => void, dontStore: boolean = false, fetch: boolean = true) {
 		if (AppUtility.isNotEmpty(session.ID)) {
 			AppConfig.session.id = session.ID;
 		}
@@ -409,23 +405,13 @@ export class ConfigurationService extends BaseService {
 		AppConfig.session.account = this.getAccount(!this.isAuthenticated);
 		if (this.isAuthenticated) {
 			AppConfig.session.account.id = AppConfig.session.token.uid;
-			if (fetch) {
-				AppAPIs.sendRequestAsync({
-					ServiceName: "Users",
-					ObjectName: "Account",
-					Query: AppConfig.getRelatedJson({ "x-status": "true" })
-				}, AppAPIs.isWebSocketReady ? undefined : data => this.forward(data, "Users", "Account", "Update"), undefined, !AppAPIs.isWebSocketReady, AppAPIs.isWebSocketReady);
-				AppAPIs.sendRequestAsync({
-					ServiceName: "Users",
-					ObjectName: "Profile",
-					Query: AppConfig.getRelatedJson({ "object-identity": AppConfig.session.account.id })
-				}, AppAPIs.isWebSocketReady ? undefined : data => this.forward(data, "Users", "Profile", "Update"), undefined, !AppAPIs.isWebSocketReady, AppAPIs.isWebSocketReady);
-			}
+			await (fetch ? Promise.all([
+				this.fetchAsync(`users/account?${AppConfig.getQuery({ "x-status": "true" })}`, data => this.forward(data, "Users", "Account", "Update")),
+				this.fetchAsync(`users/profile?${AppConfig.getQuery({ "object-identity": AppConfig.session.account.id })}`, data => this.forward(data, "Users", "Profile", "Update"))
+			]) : AppUtility.promise);
 		}
 
-		return dontStore
-			? AppUtility.invoke(onNext !== undefined ? () => onNext(AppConfig.session) : undefined)
-			: this.storeSessionAsync(onNext);
+		await (dontStore ? AppUtility.invoke(onNext !== undefined ? () => onNext(AppConfig.session) : undefined) : this.storeSessionAsync(onNext));
 	}
 
 	/** Loads the session from storage */
@@ -468,10 +454,10 @@ export class ConfigurationService extends BaseService {
 	/** Stores the session into storage */
 	async storeSessionAsync(onNext?: (data?: any) => void) {
 		await this.saveSessionAsync(data => {
-			AppEvents.broadcast("Session", { Type: "Updated" });
 			if (onNext !== undefined) {
 				onNext(data);
 			}
+			AppEvents.broadcast("Session", { Type: "Updated" });
 		});
 	}
 
@@ -839,7 +825,7 @@ export class ConfigurationService extends BaseService {
 		if (AppUtility.isObject(query, true)) {
 			path += `${AppUtility.toQuery(query)}&`;
 		}
-		return path + AppConfig.getRelatedQuery(serviceName, undefined, json => {
+		return path + AppConfig.getQuery(undefined, serviceName, undefined, json => {
 			if (AppUtility.isNotEmpty(serviceName) && AppUtility.isEquals(serviceName, json["related-service"])) {
 				delete json["related-service"];
 				delete json["active-id"];

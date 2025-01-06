@@ -1048,7 +1048,7 @@ export class PortalsCmsService extends BaseService {
 		categories.forEach(data => {
 			const category = Category.update(data);
 			if (category.Versions === undefined) {
-				this.portalsCoreSvc.findVersions("CMS.Category", category.ID);
+				this.portalsCoreSvc.findVersions("cms.category", category.ID);
 			}
 			if (category.childrenIDs === undefined) {
 				this.fetchCategory(category);
@@ -1237,7 +1237,7 @@ export class PortalsCmsService extends BaseService {
 			const content = Content.update(data);
 			this.usersSvc.fetchProfileAsync(content.CreatedID).then(() => content.CreatedID === content.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(content.LastModifiedID));
 			if (content.Versions === undefined) {
-				this.portalsCoreSvc.findVersions("CMS.Content", content.ID);
+				this.portalsCoreSvc.findVersions("cms.content", content.ID);
 			}
 		});
 		this._noContents.remove(contents.first().SystemID);
@@ -1421,7 +1421,7 @@ export class PortalsCmsService extends BaseService {
 			const item = Item.update(obj);
 			this.usersSvc.fetchProfileAsync(item.CreatedID).then(() => item.CreatedID === item.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(item.LastModifiedID));
 			if (item.Versions === undefined) {
-				this.portalsCoreSvc.findVersions("CMS.Item", item.ID);
+				this.portalsCoreSvc.findVersions("cms.item", item.ID);
 			}
 		});
 		this._noContents.remove(items.first().SystemID);
@@ -1668,7 +1668,7 @@ export class PortalsCmsService extends BaseService {
 				this.fetchLink(link);
 			}
 			if (link.Versions === undefined) {
-				this.portalsCoreSvc.findVersions("CMS.Link", link.ID);
+				this.portalsCoreSvc.findVersions("cms.link", link.ID);
 			}
 		});
 	}
