@@ -82,6 +82,34 @@ export class AppConfig {
 		}
 	};
 
+	/** App options */
+	static get defaultOptions() {
+		return {
+			i18n: "vi-VN",
+			theme: "light",
+			timezone: +7.00,
+			fileLimits: {
+				avatar: 1024000,
+				thumbnail: 1024000,
+				file: 819200000
+			},
+			thumbnails: {
+				useWebP: true,
+				width: 0
+			},
+			extras: { } as { [key: string]: any }
+		};
+	}
+
+	static options = { i18n: "vi-VN", theme: "light", timezone: +7.00, extras: { } } as {
+		i18n: string;
+		theme: string;
+		timezone: number;
+		fileLimits: { avatar: number; thumbnail: number; file: number; };
+		thumbnails: { useWebP: boolean; width: number; };
+		extras: { [key: string]: any }
+	};
+
 	/** App accounts */
 	static accounts = {
 		registrable: true,
@@ -147,34 +175,6 @@ export class AppConfig {
 		}
 	};
 
-	/** App options */
-	static get defaultOptions() {
-		return {
-			i18n: "vi-VN",
-			theme: "light",
-			timezone: +7.00,
-			fileLimits: {
-				avatar: 1024000,
-				thumbnail: 1024000,
-				file: 819200000
-			},
-			thumbnails: {
-				useWebP: true,
-				width: 0
-			},
-			extras: { } as { [key: string]: any }
-		};
-	}
-
-	static options = { i18n: "vi-VN", theme: "light" } as {
-		i18n: string;
-		theme: string;
-		timezone: number;
-		fileLimits: { avatar: number; thumbnail: number; file: number; };
-		thumbnails: { useWebP: boolean; width: number; };
-		extras: { [key: string]: any }
-	};
-
 	/** App URLs (stack, host, ...) */
 	static URLs = {
 		stack: [] as Array<{ url: string, params: { [key: string]: any } }>,
@@ -200,7 +200,7 @@ export class AppConfig {
 		}
 	};
 
-	/** URLs for downloading desktop apps */
+	/** Gets URIs for downloading desktop apps */
 	static get downloadURIs() {
 		const baseURL = `${this.URIs.apps}releases/${this.app.name.replace(/\s/g, "%20")}`;
 		return {
@@ -210,10 +210,12 @@ export class AppConfig {
 		};
 	}
 
+	/** Gets URI of 'no-thumbnail' image */
 	static get noThumbnailURI() {
 		return `${this.URIs.files}thumbnails/no-image.png`;
 	}
 
+	/** Gets URI of a thumbnail image */
 	static getThumbnailURI(uri: string) {
 		if (AppUtility.isEmpty(uri)) {
 			return this.noThumbnailURI;
