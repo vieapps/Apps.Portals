@@ -248,7 +248,6 @@ export class AppAPIs {
 
 		// assign 'on-open' event handler
 		this._websocket.onopen = event => {
-			this.authenticateWebSocket();
 			this._websocketStatus = "ready";
 			console.log(`[AppAPIs]: The WebSocket connection was opened... [${AppUtility.getElapsedTime(this._time)} => ${AppUtility.parseURI(this._websocketURL).HostURI}]`, AppUtility.toIsoDateTime(new Date(), true));
 			if (this._onWebSocketOpened !== undefined) {
@@ -259,6 +258,7 @@ export class AppAPIs {
 					console.error("[AppAPIs]: Error occurred while running the 'on-open' handler", error);
 				}
 			}
+			this.authenticateWebSocket();
 		};
 
 		// assign 'on-close' event handler
@@ -513,6 +513,7 @@ export class AppAPIs {
 		});
 		if (this.isWebSocketReady) {
 			this.updateWebSocket({ resendCallbackMessages: true });
+			console.log("[AppAPIs]: Authenticated", AppConfig.isDebug ? AppConfig.session : "");
 		}
 	}
 

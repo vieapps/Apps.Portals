@@ -407,13 +407,13 @@ export class ConfigurationService extends BaseService {
 			AppConfig.session.account.id = AppConfig.session.token.uid;
 			const time = new Date();
 			await (fetch ? Promise.all([
-				this.fetchAsync(`users/account?${AppConfig.getQuery({ "x-status": "true" })}`, data => {
+				this.fetchAsync("users/account?x-status=true", data => {
 					this.forward(data, "Users", "Account", "Update");
-					console.log(`[Configuration]: Account is fetched [${AppUtility.getElapsedTime(time)}]`, this.isDebug ? this.appConfig.session.account : "");
+					console.log(`[Configuration]: Account was updated [${AppUtility.getElapsedTime(time)}]`, this.isDebug ? this.appConfig.session.account : "");
 				}),
-				this.fetchAsync(`users/profile?${AppConfig.getQuery({ "object-identity": AppConfig.session.account.id })}`, data => {
+				this.fetchAsync("users/profile", data => {
 					this.forward(data, "Users", "Profile", "Update");
-					console.log(`[Configuration]: Profile is fetched [${AppUtility.getElapsedTime(time)}]`, this.isDebug ? this.appConfig.session.account : "");
+					console.log(`[Configuration]: Profile was updated [${AppUtility.getElapsedTime(time)}]`, this.isDebug ? this.appConfig.session.account.profile : "");
 				})
 			]) : AppUtility.promise);
 		}

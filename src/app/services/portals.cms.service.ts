@@ -999,7 +999,7 @@ export class PortalsCmsService extends BaseService {
 				? (json.Children as Array<any>).map(o => this.updateCategory(o)).filter(o => o !== undefined).map(o => o.ID).distinct()
 				: [];
 			if (category.Versions === undefined) {
-				this.portalsCoreSvc.findVersions("CMS.Category", category.ID);
+				this.portalsCoreSvc.findVersions("cms.category", category.ID);
 			}
 			let parentCategory = Category.get(parentID);
 			if (parentCategory !== undefined && parentCategory.childrenIDs !== undefined && parentCategory.ID !== category.ParentID) {
