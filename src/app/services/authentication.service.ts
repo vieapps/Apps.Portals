@@ -2,9 +2,7 @@ import { Injectable } from "@angular/core";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
-import { AppAPIs } from "@app/components/app.apis";
 import { Account } from "@app/models/account";
-import { UserProfile } from "@app/models/user";
 import { Privileges } from "@app/models/privileges";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -186,8 +184,10 @@ export class AuthenticationService extends BaseService {
 		}
 	}
 
-	logInAsync(account: string, password: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.createAsync(
+	async logInAsync(account: string, password: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		const time = new Date();
+		console.log("[Authentication]: Logging in...");
+		await this.createAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			{
 				Account: AppCrypto.rsaEncrypt(account),
@@ -195,13 +195,13 @@ export class AuthenticationService extends BaseService {
 			},
 			data => {
 				if (AppUtility.isTrue(data.Require2FA)) {
-					console.log("[Authentication]: Log in with static password successful, but need to verify with OTP", this.configSvc.isDebug ? data : "");
+					console.log(`[Authentication]: Log in with static password successful, but need to verify with OTP [${AppUtility.getElapsedTime(time)}]`, this.configSvc.isDebug ? data : "");
 					if (onSuccess !== undefined) {
 						onSuccess(data);
 					}
 				}
 				else {
-					console.log("[Authentication]: Log in successful", this.configSvc.isDebug ? data : "");
+					console.log(`[Authentication]: Log in successful [${AppUtility.getElapsedTime(time)}]`, this.configSvc.isDebug ? data : "");
 					this.configSvc.updateSessionAsync(data, () => {
 						AppEvents.broadcast("Session", { Type: "LogIn" });
 						if (onSuccess !== undefined) {
@@ -216,8 +216,10 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	logInOTPAsync(id: string, info: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.updateAsync(
+	async logInOTPAsync(id: string, info: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		const time = new Date();
+		console.log("[Authentication]: Logging in (OTP)...");
+		await this.updateAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			{
 				ID: AppCrypto.rsaEncrypt(id),
@@ -225,7 +227,7 @@ export class AuthenticationService extends BaseService {
 				OTP: AppCrypto.rsaEncrypt(otp)
 			},
 			data => {
-				console.log("[Authentication]: Log in successful (OTP)");
+				console.log(`[Authentication]: Log in successful (OTP) [${AppUtility.getElapsedTime(time)}]`);
 				this.configSvc.updateSessionAsync(data, () => {
 					AppEvents.broadcast("Session", { Type: "LogIn" });
 					if (onSuccess !== undefined) {
@@ -239,11 +241,13 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	logOutAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.deleteAsync(
+	async logOutAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		const time = new Date();
+		console.log("[Authentication]: Logging out...");
+		await this.deleteAsync(
 			this.getPath("session", undefined, this.configSvc.relatedQuery, "users"),
 			data => this.configSvc.updateSessionAsync(data, () => {
-				console.log("[Authentication]: Log out successful", this.configSvc.isDebug ? data : "");
+				console.log(`[Authentication]: Log out successful [${AppUtility.getElapsedTime(time)}]`, this.configSvc.isDebug ? data : "");
 				const extras = this.configSvc.appConfig.options.extras;
 				this.configSvc.appConfig.options = this.configSvc.appConfig.defaultOptions;
 				this.configSvc.appConfig.options.extras = extras;
@@ -262,8 +266,8 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	resetPasswordAsync(account: string, captcha: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.updateAsync(
+	async resetPasswordAsync(account: string, captcha: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		await this.updateAsync(
 			this.getPath("account", "reset", `uri=${this.configSvc.activateURL}&${this.configSvc.relatedQuery}`, "users"),
 			{
 				Account: AppCrypto.rsaEncrypt(account)
@@ -274,7 +278,7 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	renewPasswordAsync(account: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	async renewPasswordAsync(account: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
 			this.getPath("account", "renew", this.configSvc.relatedQuery, "users"),
 			{
@@ -286,8 +290,8 @@ export class AuthenticationService extends BaseService {
 		);
 	}
 
-	registerCaptchaAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		return this.readAsync(
+	async registerCaptchaAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		await this.readAsync(
 			this.getPath("captcha", undefined, `register=${this.configSvc.appConfig.session.id}&${this.configSvc.relatedQuery}`, "users"),
 			data => {
 				this.configSvc.appConfig.session.captcha = {

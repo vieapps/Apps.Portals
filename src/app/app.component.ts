@@ -553,14 +553,14 @@ export class AppComponent implements OnInit {
 		this.configSvc.initializeAsync(
 			() => {
 				if (this.configSvc.isReady && this.configSvc.isAuthenticated) {
-					console.log("<App>: The session is initialized & registered (user)", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+					console.log(`<App>: The session is initialized & registered (user) [${AppUtility.getElapsedTime(this._time)}]`, this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 					this.finalize(onNext);
 				}
 				else {
 					console.log("<App>: Register the initialized session (anonymous)", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 					this.configSvc.registerSessionAsync(
 						() => {
-							console.log("<App>: The session is registered (anonymous)", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+							console.log(`<App>: The session is registered (anonymous) [${AppUtility.getElapsedTime(this._time)}]`, this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
 							this.finalize(onNext);
 						},
 						error => {
