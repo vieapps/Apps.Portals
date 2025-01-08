@@ -664,9 +664,12 @@ export class PortalsCoreService extends BaseService {
 			url = desktop !== undefined
 				? `${this.getSiteURL(object)}${desktop.Alias}`
 				: undefined;
+			if (url !== undefined && parent === undefined && object.contentType !== undefined && object.contentType.getObjectName(true) === "CMS.Item") {
+				url += "/" + AppUtility.toANSI(object.contentType.Title, true);
+			}
 		}
 		return url !== undefined
-			? `${url}/${object["Alias"] || object.ID}${parent !== undefined && object.organization.AlwaysUseHtmlSuffix ? ".html" : ""}`
+			? `${url}/${object["Alias"] || object.ID}${(parent !== undefined || object.contentType !== undefined && object.contentType.getObjectName(true) === "CMS.Item") && object.organization.AlwaysUseHtmlSuffix ? ".html" : ""}`
 			: undefined;
 	}
 
@@ -679,7 +682,7 @@ export class PortalsCoreService extends BaseService {
 		}
 		return url.indexOf("_permanent") > 0
 			? this.getPermanentURL(object, usePortalURL)
-			: `${url}/${object["Alias"] || object.ID}`;
+			: `${url}/${object["Alias"] || object.ID}${(parent !== undefined || object.contentType !== undefined && object.contentType.getObjectName(true) === "CMS.Item") && object.organization.AlwaysUseHtmlSuffix ? ".html" : ""}`;
 	}
 
 	getPaginationPrefix(objectName: string) {
