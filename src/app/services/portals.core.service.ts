@@ -2266,7 +2266,7 @@ export class PortalsCoreService extends BaseService {
 				const organization = Organization.update(org);
 				this.usersSvc.fetchProfileAsync(organization.OwnerID).then(() => organization.OwnerID === organization.CreatedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(organization.CreatedID)).then(() => organization.CreatedID === organization.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(organization.LastModifiedID));
 				if (organization.Versions === undefined) {
-					this.findVersions("organization", organization.ID);
+					this.findVersions("Organization", organization.ID);
 				}
 				if (processModules) {
 					this.processModules({ Objects: org.Modules });
@@ -2471,8 +2471,9 @@ export class PortalsCoreService extends BaseService {
 			(data.Objects as Array<any>).forEach(roleData => {
 				const fetch = !Role.contains(roleData.ID);
 				const role = this.updateRole(roleData, roleData.ParentID);
+				this.usersSvc.fetchProfileAsync(role.CreatedID).then(() => role.CreatedID === role.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(role.LastModifiedID));
 				if (role.Versions === undefined) {
-					this.findVersions("role", role.ID);
+					this.findVersions("Role", role.ID);
 				}
 				if (fetch) {
 					this.fetchRole(role);
@@ -2618,8 +2619,9 @@ export class PortalsCoreService extends BaseService {
 		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
 			(data.Objects as Array<any>).forEach(moduleData => {
 				const module = Module.update(moduleData);
+				this.usersSvc.fetchProfileAsync(module.CreatedID).then(() => module.CreatedID === module.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(module.LastModifiedID));
 				if (module.Versions === undefined) {
-					this.findVersions("module", module.ID);
+					this.findVersions("Module", module.ID);
 				}
 				this.processContentTypes({ Objects: moduleData.ContentTypes });
 			});
@@ -2749,8 +2751,9 @@ export class PortalsCoreService extends BaseService {
 		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
 			(data.Objects as Array<any>).forEach(contentTypeData => {
 				const contentType = ContentType.update(contentTypeData);
+				this.usersSvc.fetchProfileAsync(contentType.CreatedID).then(() => contentType.CreatedID === contentType.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(contentType.LastModifiedID));
 				if (contentType.Versions === undefined) {
-					this.findVersions("content.type", contentType.ID);
+					this.findVersions("ContentType", contentType.ID);
 				}
 			});
 		}
@@ -2881,8 +2884,9 @@ export class PortalsCoreService extends BaseService {
 		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 			(data.Objects as Array<any>).forEach(expData => {
 				const expression = Expression.update(expData);
+				this.usersSvc.fetchProfileAsync(expression.CreatedID).then(() => expression.CreatedID === expression.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(expression.LastModifiedID));
 				if (expression.Versions === undefined) {
-					this.findVersions("expression", expression.ID);
+					this.findVersions("Expression", expression.ID);
 				}
 			});
 		}
@@ -3015,8 +3019,9 @@ export class PortalsCoreService extends BaseService {
 		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 			(data.Objects as Array<any>).forEach(siteData => {
 				const site = Site.update(siteData);
+				this.usersSvc.fetchProfileAsync(site.CreatedID).then(() => site.CreatedID === site.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(site.LastModifiedID));
 				if (site.Versions === undefined) {
-					this.findVersions("site", site.ID);
+					this.findVersions("Site", site.ID);
 				}
 			});
 		}
@@ -3239,8 +3244,9 @@ export class PortalsCoreService extends BaseService {
 			(data.Objects as Array<any>).forEach(json => {
 				const fetch = !Desktop.contains(json.ID);
 				const desktop = Desktop.update(json);
+				this.usersSvc.fetchProfileAsync(desktop.CreatedID).then(() => desktop.CreatedID === desktop.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(desktop.LastModifiedID));
 				if (desktop.Versions === undefined) {
-					this.findVersions("desktop", desktop.ID);
+					this.findVersions("Desktop", desktop.ID);
 				}
 				if (fetch || desktop.childrenIDs === undefined) {
 					this.fetchDesktop(desktop);
@@ -3372,8 +3378,9 @@ export class PortalsCoreService extends BaseService {
 		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 			(data.Objects as Array<any>).forEach(json => {
 				const portlet =  Portlet.update(json);
+				this.usersSvc.fetchProfileAsync(portlet.CreatedID).then(() => portlet.CreatedID === portlet.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(portlet.LastModifiedID));
 				if (portlet.Versions === undefined) {
-					this.findVersions("portlet", portlet.ID);
+					this.findVersions("Portlet", portlet.ID);
 				}
 			});
 		}
@@ -3533,8 +3540,9 @@ export class PortalsCoreService extends BaseService {
 		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 			(data.Objects as Array<any>).forEach(json => {
 				const task = SchedulingTask.update(json);
+				this.usersSvc.fetchProfileAsync(task.CreatedID).then(() => task.CreatedID === task.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(task.LastModifiedID));
 				if (task !== undefined && task.Persistance && task.Versions === undefined) {
-					this.findVersions("task", task.ID);
+					this.findVersions("Task", task.ID);
 				}
 			});
 		}		

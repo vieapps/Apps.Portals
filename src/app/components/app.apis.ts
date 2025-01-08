@@ -341,7 +341,7 @@ export class AppAPIs {
 			if ("Error" === msg.Type) {
 				// got a security issue
 				if (AppUtility.isGotSecurityException(data) && "UnauthorizedException" !== data.Type && "AccessDeniedException" !== data.Type) {
-					console.warn(`[AppAPIs]: ${data.Code} - ${data.Type}: ${data.Message}`, data);
+					console.error(`[AppAPIs]: ${data.Code} - ${data.Type}: ${data.Message}`, data);
 
 					// the token is expired => re-open WebSocket to renew token and reauthenticate
 					if ("TokenExpiredException" === data.Type) {

@@ -366,6 +366,8 @@ export class ConfigurationService extends BaseService {
 
 	/** Updates the session and stores into storage */
 	async updateSessionAsync(session: any, onNext?: (data?: any) => void, dontStore: boolean = false, fetch: boolean = true) {
+		AppConfig.session.status = "ready";
+
 		if (AppUtility.isNotEmpty(session.ID)) {
 			AppConfig.session.id = session.ID;
 		}

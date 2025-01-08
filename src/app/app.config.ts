@@ -79,7 +79,8 @@ export class AppConfig {
 		captcha: {
 			code: "",
 			uri: ""
-		}
+		},
+		status: "initializing"
 	};
 
 	/** App options */
@@ -97,6 +98,11 @@ export class AppConfig {
 				useWebP: true,
 				width: 0
 			},
+			preload: {
+				thumbnails: true,
+				categories: false,
+				featured: false
+			},
 			extras: { } as { [key: string]: any }
 		};
 	}
@@ -107,6 +113,7 @@ export class AppConfig {
 		timezone: number;
 		fileLimits: { avatar: number; thumbnail: number; file: number; };
 		thumbnails: { useWebP: boolean; width: number; };
+		preload: { thumbnails: boolean; categories: boolean; featured: boolean;	},
 		extras: { [key: string]: any }
 	};
 
@@ -216,9 +223,9 @@ export class AppConfig {
 	}
 
 	/** Gets URI of a thumbnail image */
-	static getThumbnailURI(uri: string) {
+	static getThumbnailURI(uri: string, undefinedAsNoThumbnailURI: boolean = false) {
 		if (AppUtility.isEmpty(uri)) {
-			return this.noThumbnailURI;
+			return undefinedAsNoThumbnailURI ? undefined : this.noThumbnailURI;
 		}
 		const settings = this.options.thumbnails || this.defaultOptions.thumbnails;
 		if (settings.useWebP) {

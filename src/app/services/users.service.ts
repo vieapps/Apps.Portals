@@ -46,7 +46,7 @@ export class UsersService extends BaseService {
 				const profile = this.configSvc.getAccount().profile;
 				if (profile !== undefined) {
 					profile.Language = this.configSvc.appConfig.options.i18n;
-					profile.Options = AppUtility.clone(this.configSvc.appConfig.options, ["fileLimits", "thumbnails"]);
+					profile.Options = AppUtility.clone(this.configSvc.appConfig.options, ["fileLimits", "thumbnails", "preload"]);
 					this.updateProfileAsync(profile, () => {
 						if (this.configSvc.isDebug) {
 							console.log("[Users]: Update profile (with new options) to APIs", profile.Options);
@@ -430,6 +430,7 @@ export class UsersService extends BaseService {
 						const profile = account.profile;
 						profile.IsOnline = true;
 						profile.LastAccess = new Date();
+						delete (profile.Options.extras || {})["fileLimits"];
 						if (this.configSvc.appConfig.options.i18n !== profile.Language) {
 							this.configSvc.changeLanguageAsync(profile.Language);
 						}
