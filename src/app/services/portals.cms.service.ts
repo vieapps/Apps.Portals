@@ -578,7 +578,7 @@ export class PortalsCmsService extends BaseService {
 						: Category.instances.toArray(category => category.SystemID === contentType.SystemID && category.RepositoryID === contentType.RepositoryID && category.ParentID === undefined).sortBy("OrderIndex", "Title");
 					const sidebar = this.getSidebarItems(categories, parent, expandedID);
 					this.updateSidebar(sidebar.Items, sidebar.Parent, onNext);
-				});
+				}, undefined, false, false, true);
 			}
 			else {
 				return AppUtility.invoke(onNext);
@@ -677,10 +677,10 @@ export class PortalsCmsService extends BaseService {
 		};
 		return this.searchSpecifiedCategoriesAsync(contentType, _ => {
 			if (this.configSvc.isDebug) {
-				console.log("[Portals]: Prepare caregories", `[${index + 1}/${contentTypes.length}]: ${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`);
+				console.log(`[Portals]: Prepare caregories [${index + 1}/${contentTypes.length}]`, [`${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`]);
 			}
 			onSuccess();
-		}, onError);
+		}, onError, false, false, true);
 	}
 
 	async prepareCategoriesOfActiveOrganizationsAsync(all: boolean = false) {
@@ -733,22 +733,22 @@ export class PortalsCmsService extends BaseService {
 					console.log(`[Portals]: Prepare featured contents [${index + 1}/${contentTypes.length}] - CMS.Form`, [`${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`]);
 				}
 				onSuccess();
-			}, onError, true)
+			}, onError, false, true)
 			: isCmsItem
 				? this.searchItemsAsync(AppPagination.buildRequest(filterBy, sortBy.created), () => {
 					if (this.configSvc.isDebug) {
 						console.log(`[Portals]: Prepare featured contents [${index + 1}/${contentTypes.length}] - CMS.Item`, [`${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`]);
 					}
 					onSuccess();
-					AppUtility.invoke(() => this.searchItemsAsync(AppPagination.buildRequest(filterBy, sortBy.lastModified), data => !!data && !!data.Objects && !!data.Objects.length ? AppUtility.invoke(() => this.prepareFeaturedContents(data.Objects.first().SystemID), 13) : AppUtility.promise, undefined, true, false), 6789);
-				}, onError, true, false)
+					AppUtility.invoke(() => this.searchItemsAsync(AppPagination.buildRequest(filterBy, sortBy.lastModified), data => !!data && !!data.Objects && !!data.Objects.length ? AppUtility.invoke(() => this.prepareFeaturedContents(data.Objects.first().SystemID), 13) : AppUtility.promise, undefined, false, true, false), 6789);
+				}, onError, false, true, false)
 				: this.searchContentsAsync(AppPagination.buildRequest(filterBy, { StartDate: "Descending", PublishedTime: "Descending" }), () => {
 					if (this.configSvc.isDebug) {
 						console.log(`[Portals]: Prepare featured contents [${index + 1}/${contentTypes.length}] - CMS.Content`, [`${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`]);
 					}
 					onSuccess();
-					AppUtility.invoke(() => this.searchContentsAsync(AppPagination.buildRequest(filterBy, sortBy.lastModified),  data => !!data && !!data.Objects && !!data.Objects.length ? AppUtility.invoke(() => this.prepareFeaturedContents(data.Objects.first().SystemID), 13) : AppUtility.promise, undefined, true, false), 6789);
-				}, onError, true, false);
+					AppUtility.invoke(() => this.searchContentsAsync(AppPagination.buildRequest(filterBy, sortBy.lastModified),  data => !!data && !!data.Objects && !!data.Objects.length ? AppUtility.invoke(() => this.prepareFeaturedContents(data.Objects.first().SystemID), 13) : AppUtility.promise, undefined, true, false, false), 6789);
+				}, onError, true, false, false);
 	}
 
 	private prepareFeaturedContents(systemID: string) {
@@ -934,13 +934,13 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	searchCategoriesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false) {
+	searchCategoriesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, headers?: { [header: string]: string }, useXHR: boolean = false, preferWebSocket: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("cms.category", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
-					this.processCategories(data.Objects as Array<any>);
+					this.processCategories(data.Objects as Array<any>, false, useXHR, preferWebSocket);
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -949,11 +949,12 @@ export class PortalsCmsService extends BaseService {
 			error => this.processError("Error occurred while searching categories", error, onError),
 			dontProcessPagination,
 			headers,
-			useXHR
+			useXHR,
+			preferWebSocket
 		);
 	}
 
-	searchSpecifiedCategoriesAsync(contentType: ContentType, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false) {
+	searchSpecifiedCategoriesAsync(contentType: ContentType, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontProcessPagination: boolean = false, useXHR: boolean = false, preferWebSocket: boolean = false) {
 		return this.searchCategoriesAsync(AppPagination.buildRequest(
 			{ And: [
 				{ SystemID: { Equals: contentType.SystemID } },
@@ -968,7 +969,7 @@ export class PortalsCmsService extends BaseService {
 				PageSize: 0,
 				PageNumber: 0
 			}
-		), onSuccess, onError, dontProcessPagination, !!dontProcessPagination ? { "x-no-cache": "x" } : undefined, useXHR);
+		), onSuccess, onError, dontProcessPagination, !!dontProcessPagination ? { "x-no-cache": "x" } : undefined, useXHR, preferWebSocket);
 	}
 
 	createCategoryAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
@@ -985,7 +986,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	getCategoryAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	getCategoryAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, preferWebSocket: boolean = false) {
 		const category = Category.get(id);
 		if (category !== undefined && category.childrenIDs !== undefined) {
 			return AppUtility.invoke(onSuccess);
@@ -1007,7 +1008,8 @@ export class PortalsCmsService extends BaseService {
 				},
 				error => this.processError("Error occurred while getting a category", error, onError),
 				undefined,
-				useXHR
+				useXHR,
+				preferWebSocket
 			);
 		}
 	}
@@ -1059,14 +1061,14 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	private fetchCategory(category: Category) {
+	private fetchCategory(category: Category, useXHR: boolean = false, preferWebSocket: boolean = false) {
 		if (category !== undefined && category.childrenIDs === undefined) {
 			this.getCategoryAsync(category.ID, _ => {
-				const o = Category.get(category.ID);
-				if (o.childrenIDs !== undefined && o.childrenIDs.length > 0) {
-					o.Children.forEach(c => this.fetchCategory(c));
+				const cat = Category.get(category.ID);
+				if (cat.childrenIDs !== undefined && cat.childrenIDs.length > 0) {
+					cat.Children.forEach(cate => this.fetchCategory(cate, useXHR, preferWebSocket));
 				}
-			});
+			}, undefined, useXHR, preferWebSocket);
 		}
 		return category;
 	}
@@ -1123,7 +1125,7 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-	processCategories(categories: Array<any>, fetchDesktops: boolean = false) {
+	processCategories(categories: Array<any>, fetchDesktops: boolean = false, useXHR: boolean = false, preferWebSocket: boolean = false) {
 		categories.forEach(data => {
 			const category = Category.update(data);
 			this.usersSvc.fetchProfileAsync(category.CreatedID).then(() => category.CreatedID === category.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(category.LastModifiedID));
@@ -1131,7 +1133,7 @@ export class PortalsCmsService extends BaseService {
 				this.portalsCoreSvc.findVersions("CMS.Category", category.ID);
 			}
 			if (category.childrenIDs === undefined) {
-				this.fetchCategory(category);
+				this.fetchCategory(category, useXHR, preferWebSocket);
 			}
 			if (fetchDesktops) {
 				this.fetchCategoryDesktops(category);
@@ -1213,7 +1215,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	searchContentsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, preflight: boolean = true) {
+	searchContentsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, preferWebSocket: boolean = false, preflight: boolean = true) {
 		return this.searchAsync(
 			this.getSearchingPath("cms.content", this.configSvc.relatedQuery),
 			request,
@@ -1229,7 +1231,7 @@ export class PortalsCmsService extends BaseService {
 			false,
 			undefined,
 			useXHR,
-			false,
+			preferWebSocket,
 			preflight ? data => this.processContents(data.Objects as Array<any>) : undefined
 		);
 	}
@@ -1400,7 +1402,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	searchItemsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, preflight: boolean = true) {
+	searchItemsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, preferWebSocket: boolean = false, preflight: boolean = true) {
 		return this.searchAsync(
 			this.getSearchingPath("cms.item", this.configSvc.relatedQuery),
 			request,
@@ -1416,7 +1418,7 @@ export class PortalsCmsService extends BaseService {
 			false,
 			undefined,
 			useXHR,
-			false,
+			preferWebSocket,
 			preflight ? data => this.processItems(data.Objects as Array<any>) : undefined
 		);
 	}
@@ -1822,7 +1824,7 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	searchFormsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	searchFormsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, preferWebSocket: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("CMS.Form", this.configSvc.relatedQuery),
 			request,
@@ -1837,7 +1839,8 @@ export class PortalsCmsService extends BaseService {
 			error => this.processError("Error occurred while searching form items", error, onError),
 			false,
 			undefined,
-			useXHR
+			useXHR,
+			preferWebSocket
 		);
 	}
 
