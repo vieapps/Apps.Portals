@@ -42,8 +42,9 @@ export class PortalsCmsService extends BaseService {
 	private _oembedProviders: Array<{ name: string; schemes: RegExp[], pattern: { expression: RegExp; position: number; html: string } }>;
 	private _sidebarCategory: Category;
 	private _sidebarContentType: ContentType;
-	private _noContents = new HashSet<string>();
 	private _featuredContents = new Dictionary<string, Array<CmsBaseModel>>();
+	private _featuredContentNones = new HashSet<string>();
+	private _featuredContentStates = new HashSet<string>();
 
 	get featuredContents() {
 		const organization = this.portalsCoreSvc.activeOrganization;
@@ -125,14 +126,16 @@ export class PortalsCmsService extends BaseService {
 					this.updateSidebarAsync();
 				}
 				else if ("FeaturedContents" === info.args.Type) {
-					if ("Request" === info.args.Mode && !this._noContents.contains(organization.ID)) {
-						if (organization.modules.flatMap(module => module.contentTypes).length > 0) {
+					if ("Request" === info.args.Mode) {
+						if (!this._featuredContentNones.contains(organization.ID) && !this._featuredContentStates.contains(organization.ID) && organization.modules.flatMap(module => module.contentTypes).length > 0) {
 							AppUtility.invoke(() => {
-								if (this.configSvc.isDebug) {
-									console.log("[Portals]: Prepare featured contents (when got request to prepare)");
+								if (!this._featuredContentNones.contains(organization.ID) && !this._featuredContentStates.contains(organization.ID)) {
+									if (this.configSvc.isDebug) {
+										console.log("[Portals]: Prepare featured contents (when got request to prepare)");
+									}
+									this._featuredContentNones.add(organization.ID);
+									this.prepareFeaturedContentsAsync();
 								}
-								this._noContents.add(organization.ID);
-								this.prepareFeaturedContentsAsync();
 							}, 456);
 						}
 					}
@@ -166,7 +169,7 @@ export class PortalsCmsService extends BaseService {
 						}
 						this.prepareFeaturedContentsAsync();
 					}
-				}, "LogIn" === info.args.Type ? 456 : 13);
+				}, "LogIn" === info.args.Type ? 456 : 123);
 			}
 		});
 
@@ -704,6 +707,10 @@ export class PortalsCmsService extends BaseService {
 			{ RepositoryID: { Equals: contentType.RepositoryID } },
 			{ RepositoryEntityID: { Equals: contentType.ID } }
 		]};
+		const sortBy = {
+			created: { Created: "Descending" },
+			lastModified: { LastModified: "Descending" }
+		};
 		const onSuccess = () => {
 			if (this.configSvc.isDebug) {
 				console.log("[Portals]: Done preparing featured contents", [`${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`]);
@@ -712,32 +719,35 @@ export class PortalsCmsService extends BaseService {
 			if (index < contentTypes.length - 1) {
 				AppUtility.invoke(() => this.getFeaturedContentsAsync(contentTypes, index + 1), 123);
 			}
+			else {
+				this._featuredContentStates.remove(contentType.SystemID);
+			}
 		};
 		const onError = (error?: any) => {
 			this.showError(`Error occurred while preparing featured contents\n${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`, error);
 			onSuccess();
 		};
 		return isCmsForm
-			? this.searchFormsAsync(AppPagination.buildRequest(filterBy, { Created: "Descending" }), () => {
+			? this.searchFormsAsync(AppPagination.buildRequest(filterBy, sortBy.created), () => {
 				if (this.configSvc.isDebug) {
 					console.log(`[Portals]: Prepare featured contents [${index + 1}/${contentTypes.length}] - CMS.Form`, [`${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`]);
 				}
 				onSuccess();
 			}, onError, true)
 			: isCmsItem
-				? this.searchItemsAsync(AppPagination.buildRequest(filterBy, { Created: "Descending" }), () => {
+				? this.searchItemsAsync(AppPagination.buildRequest(filterBy, sortBy.created), () => {
 					if (this.configSvc.isDebug) {
 						console.log(`[Portals]: Prepare featured contents [${index + 1}/${contentTypes.length}] - CMS.Item`, [`${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`]);
 					}
 					onSuccess();
-					AppUtility.invoke(() => this.searchItemsAsync(AppPagination.buildRequest(filterBy, { LastModified: "Descending" }), data => !!data && !!data.Objects && !!data.Objects.length ? AppUtility.invoke(() => this.prepareFeaturedContents(data.Objects.first().SystemID), 13) : AppUtility.promise, undefined, true, false), 6789);
+					AppUtility.invoke(() => this.searchItemsAsync(AppPagination.buildRequest(filterBy, sortBy.lastModified), data => !!data && !!data.Objects && !!data.Objects.length ? AppUtility.invoke(() => this.prepareFeaturedContents(data.Objects.first().SystemID), 13) : AppUtility.promise, undefined, true, false), 6789);
 				}, onError, true, false)
 				: this.searchContentsAsync(AppPagination.buildRequest(filterBy, { StartDate: "Descending", PublishedTime: "Descending" }), () => {
 					if (this.configSvc.isDebug) {
 						console.log(`[Portals]: Prepare featured contents [${index + 1}/${contentTypes.length}] - CMS.Content`, [`${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`]);
 					}
 					onSuccess();
-					AppUtility.invoke(() => this.searchContentsAsync(AppPagination.buildRequest(filterBy, { LastModified: "Descending" }),  data => !!data && !!data.Objects && !!data.Objects.length ? AppUtility.invoke(() => this.prepareFeaturedContents(data.Objects.first().SystemID), 13) : AppUtility.promise, undefined, true, false), 6789);
+					AppUtility.invoke(() => this.searchContentsAsync(AppPagination.buildRequest(filterBy, sortBy.lastModified),  data => !!data && !!data.Objects && !!data.Objects.length ? AppUtility.invoke(() => this.prepareFeaturedContents(data.Objects.first().SystemID), 13) : AppUtility.promise, undefined, true, false), 6789);
 				}, onError, true, false);
 	}
 
@@ -753,7 +763,7 @@ export class PortalsCmsService extends BaseService {
 			.merge(cmsContents.sortBy({ name: "LastModified", reverse: true }).take(20), object => object.ID)
 			.merge(cmsContents.sortBy({ name: "StartDate", reverse: true }, { name: "PublishedTime", reverse: true }, { name: "LastModified", reverse: true }).take(20), object => object.ID)
 			.toArray());
-		this._noContents.remove(systemID);
+		this._featuredContentNones.remove(systemID);
 		AppEvents.broadcast(this.name, { Type: "FeaturedContents", Mode: "Prepared", ID: systemID });
 	}
 
@@ -761,6 +771,7 @@ export class PortalsCmsService extends BaseService {
 		if (this.configSvc.isAuthenticated && this.configSvc.appConfig.session.status === "ready") {
 			const organization = await this.portalsCoreSvc.getActiveOrganizationAsync();
 			if (organization !== undefined) {
+				this._featuredContentStates.add(organization.ID);
 				const contentTypes = new Array<ContentType>();
 				organization.modules.forEach(module => contentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module)).merge(this.getContentTypesOfForm(module)));
 				if (contentTypes.length  > 0) {
@@ -768,6 +779,9 @@ export class PortalsCmsService extends BaseService {
 						console.log(`[Portals]: Prepare featured contents`, contentTypes.map(contentType => `${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`));
 					}
 					AppUtility.invoke(() => this.getFeaturedContentsAsync(contentTypes, 0));
+				}
+				else {
+					this._featuredContentStates.remove(organization.ID);
 				}
 			}
 			else {
@@ -1306,7 +1320,7 @@ export class PortalsCmsService extends BaseService {
 				this.portalsCoreSvc.findVersions("CMS.Content", content.ID);
 			}
 		});
-		this._noContents.remove(contents.first().SystemID);
+		this._featuredContentNones.remove(contents.first().SystemID);
 		AppUtility.invoke(() => {
 			const large = contents.filter(content => AppUtility.isNotEmpty(content.Details) && content.Details.length > this.configSvc.appConfig.app.query.large);
 			if (!!large.length) {
@@ -1320,7 +1334,7 @@ export class PortalsCmsService extends BaseService {
 			case "Create":
 			case "Update":
 				if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID) {
-					this._noContents.remove(Content.update(message.Data).SystemID);
+					this._featuredContentNones.remove(Content.update(message.Data).SystemID);
 				}
 				else if (Content.contains(message.Data.ID)) {
 					Content.get(message.Data.ID).update(message.Data);
@@ -1490,7 +1504,7 @@ export class PortalsCmsService extends BaseService {
 				this.portalsCoreSvc.findVersions("CMS.Item", item.ID);
 			}
 		});
-		this._noContents.remove(items.first().SystemID);
+		this._featuredContentNones.remove(items.first().SystemID);
 	}
 
 	private processItemUpdateMessage(message: AppMessage) {
@@ -1498,7 +1512,7 @@ export class PortalsCmsService extends BaseService {
 			case "Create":
 			case "Update":
 				if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID) {
-					this._noContents.remove(Item.update(message.Data).SystemID);
+					this._featuredContentNones.remove(Item.update(message.Data).SystemID);
 				}
 				else if (Item.contains(message.Data.ID)) {
 					Item.get(message.Data.ID).update(message.Data);
@@ -1904,7 +1918,7 @@ export class PortalsCmsService extends BaseService {
 
 	private processForms(forms: Array<any>) {
 		forms.forEach(obj => Form.update(obj));
-		this._noContents.remove(forms.first().SystemID);
+		this._featuredContentNones.remove(forms.first().SystemID);
 	}
 
 	private processFormUpdateMessage(message: AppMessage) {
@@ -1913,7 +1927,7 @@ export class PortalsCmsService extends BaseService {
 			case "Update":
 				if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID) {
 					Form.update(message.Data);
-					this._noContents.remove(message.Data.SystemID);
+					this._featuredContentNones.remove(message.Data.SystemID);
 				}
 				else if (Form.contains(message.Data.ID)) {
 					Form.get(message.Data.ID).update(message.Data);
@@ -1976,7 +1990,7 @@ export class PortalsCmsService extends BaseService {
 			data => {
 				if (data !== undefined && AppUtility.isArray(data.Objects, true) && AppUtility.isGotData(data.Objects)) {
 					(data.Objects as Array<any>).forEach(obj => Crawler.update(obj));
-					this._noContents.remove(data.Objects.first().SystemID);
+					this._featuredContentNones.remove(data.Objects.first().SystemID);
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);

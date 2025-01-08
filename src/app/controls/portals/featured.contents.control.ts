@@ -74,19 +74,23 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 			if (organization !== undefined) {
 				if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
 					AppUtility.invoke(() => {
-						if (this.configSvc.isDebug && !this._preparing) {
-							console.log("<FeaturedContents>: Prepare when change active organization");
+						if (!this._preparing) {
+							if (this.configSvc.isDebug) {
+								console.log("<FeaturedContents>: Prepare when change active organization");
+							}
+							this.prepareContents(true);
 						}
-						this.prepareContents(true);
-					}, 234);
+					}, 789 * Math.random());
 				}
 				else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode && organization.ID === info.args.ID) {
 					AppUtility.invoke(() => {
-						if (this.configSvc.isDebug && !this._preparing) {
-							console.log("<FeaturedContents>: Prepare when got updated");
+						if (!this._preparing) {
+							if (this.configSvc.isDebug) {
+								console.log("<FeaturedContents>: Prepare when got updated");
+							}
+							this.prepareContents(true);
 						}
-						this.prepareContents(true);
-					}, 345);
+					}, 789 * Math.random());
 				}
 				else if (organization.ID === info.args.SystemID && !!info.args.ID && "Thumbnail" === info.args.Type && !!info.args.ThumbnailURI) {
 					AppUtility.invoke(() => {
@@ -154,13 +158,18 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 					} as FeaturedContent;
 				}).filter(filterBy).orderBy(orderBy).take(this.amount);
 			}
+			this.zone.run(() => this.changeDetector.detectChanges());
+			AppUtility.invoke(() => this._preparing = false, 789 * Math.random());
 			if (this.contents.length < 1) {
-				AppEvents.broadcast(this.portalsCoreSvc.name, { Type: "FeaturedContents", Mode: "Request" });
+				AppUtility.invoke(() => {
+					if (this.contents.length < 1 && !this._preparing) {
+						if (this.configSvc.isDebug) {
+							console.log("<FeaturedContents>: Send request to prepare");
+						}
+						AppEvents.broadcast(this.portalsCoreSvc.name, { Type: "FeaturedContents", Mode: "Request" });
+					}
+				}, 2345 * Math.random());
 			}
-			this.zone.run(() => {
-				this.changeDetector.detectChanges();
-				this._preparing = false;
-			});
 		}
 	}
 
