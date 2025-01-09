@@ -23,7 +23,7 @@ export class AppConfig {
 		apps: "https://cms.vieapps.net/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
-		medias: ["fs.vieportal.net"]
+		medias: ["fs.vieportal.net" ]
 	};
 
 	/** App information */
@@ -223,9 +223,9 @@ export class AppConfig {
 	}
 
 	/** Gets URI of a thumbnail image */
-	static getThumbnailURI(uri: string, undefinedAsNoThumbnailURI: boolean = false) {
+	static getThumbnailURI(uri: string) {
 		if (AppUtility.isEmpty(uri)) {
-			return undefinedAsNoThumbnailURI ? undefined : this.noThumbnailURI;
+			return this.noThumbnailURI;
 		}
 		const settings = this.options.thumbnails || this.defaultOptions.thumbnails;
 		if (settings.useWebP) {

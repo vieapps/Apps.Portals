@@ -77,7 +77,6 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	ngOnDestroy() {
 		if (AppUtility.isNotEmpty(this.content.ID)) {
 			AppEvents.off(this.portalsCmsSvc.name, "CMS.Contents:Edit:Refresh");
-			AppEvents.off(this.filesSvc.name, "CMS.Contents:Edit:Refresh:Attachments");
 		}
 	}
 
@@ -158,14 +157,14 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 					else if (info.args.Type === "Deleted") {
 						this.cancel();
 					}
+					else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
+						this.prepareAttachments("Thumbnails", this.content.thumbnails);
+					}
+					else if (info.args.Type === "Attachment") {
+						this.prepareAttachments("Attachments", this.content.attachments);
+					}
 				}
 			}, "CMS.Contents:Edit:Refresh");
-			AppEvents.on(this.filesSvc.name, info => {
-				if (info.args.Object === "Attachment" && this.content.ID === info.args.ObjectID) {
-					const isDeleted = info.args.Event === "Delete";
-					this.prepareAttachments("Attachments", undefined, isDeleted ? undefined : this.filesSvc.prepareAttachment(info.args.Data), isDeleted ? this.filesSvc.prepareAttachment(info.args.Data) : undefined);
-				}
-			}, "CMS.Contents:Edit:Refresh:Attachments");
 		}
 	}
 

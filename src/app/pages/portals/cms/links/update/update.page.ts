@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppEvents } from "@app/components/app.events";
@@ -25,7 +25,7 @@ import { DataLookupModalPage } from "@app/controls/portals/data.lookup.modal.pag
 	styleUrls: ["./update.page.scss"]
 })
 
-export class CmsLinksUpdatePage implements OnInit {
+export class CmsLinksUpdatePage implements OnInit, OnDestroy {
 	constructor(
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
@@ -69,6 +69,12 @@ export class CmsLinksUpdatePage implements OnInit {
 
 	ngOnInit() {
 		this.initializeAsync();
+	}
+
+	ngOnDestroy() {
+		if (AppUtility.isNotEmpty(this.link.ID)) {
+			AppEvents.off(this.portalsCoreSvc.name, "CMS.Links:Edit:Refresh");
+		}
 	}
 
 	private async initializeAsync() {
@@ -132,6 +138,25 @@ export class CmsLinksUpdatePage implements OnInit {
 				this.portalsCmsSvc.refreshLinkAsync(this.link.ID, () => this.appFormsSvc.showToastAsync("The link was freshen-up"));
 			}
 		});
+
+		if (AppUtility.isNotEmpty(this.link.ID)) {
+			AppEvents.on(this.portalsCoreSvc.name, info => {
+				if (info.args.Object === "CMS.Link" && this.link.ID === info.args.ID) {
+					if (info.args.Type === "Updated") {
+						this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => AppUtility.isEquals(cfg.Name, control.Name)).Hidden ? true : false);
+					}
+					else if (info.args.Type === "Deleted") {
+						this.cancel();
+					}
+					else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
+						this.prepareAttachments("Thumbnails", this.link.thumbnails);
+					}
+					else if (info.args.Type === "Attachment") {
+						this.prepareAttachments("Attachments", this.link.attachments);
+					}
+				}
+			}, "CMS.Links:Edit:Refresh");
+		}
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {

@@ -86,8 +86,9 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		AppEvents.off(this.portalsCoreSvc.name, "CMS.Links:View:Refresh");
-		AppEvents.off(this.filesSvc.name, "CMS.Links:View:Refresh");
+		if (this.link !== undefined) {
+			AppEvents.off(this.portalsCoreSvc.name, "CMS.Links:View:Refresh");
+		}
 	}
 
 	private async initializeAsync() {
@@ -165,23 +166,25 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 		this.formConfig = await this.getFormControlsAsync();
 		this.trackAsync(this.title.track);
 
-		AppEvents.on(this.portalsCoreSvc.name, info => {
-			if (info.args.Object === "CMS.Link" && this.link.ID === info.args.ID) {
-				if (info.args.Type === "Updated") {
-					this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => AppUtility.isEquals(cfg.Name, control.Name)).Hidden ? true : false);
-					this.prepareValues();
+		if (this.link !== undefined) {
+			AppEvents.on(this.portalsCoreSvc.name, info => {
+				if (info.args.Object === "CMS.Link" && this.link.ID === info.args.ID) {
+					if (info.args.Type === "Updated") {
+						this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => AppUtility.isEquals(cfg.Name, control.Name)).Hidden ? true : false);
+						this.prepareValues();
+					}
+					else if (info.args.Type === "Deleted") {
+						this.cancel();
+					}
+					else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
+						this.prepareAttachments("Thumbnails", this.link.thumbnails);
+					}
+					else if (info.args.Type === "Attachment") {
+						this.prepareAttachments("Attachments", this.link.attachments);
+					}
 				}
-				else if (info.args.Type === "Deleted") {
-					this.cancel();
-				}
-			}
-		}, "CMS.Links:View:Refresh");
-
-		AppEvents.on(this.filesSvc.name, info => {
-			if (this.link.ID === info.args.ObjectID && (info.args.Object === "Attachment" || info.args.Object === "Thumbnail")) {
-				this.prepareAttachments(`${info.args.Object}s`, undefined, info.args.Event === "Delete" ? undefined : this.filesSvc.prepareAttachment(info.args.Data), info.args.Event === "Delete" ? this.filesSvc.prepareAttachment(info.args.Data) : undefined);
-			}
-		}, "CMS.Links:View:Refresh");
+			}, "CMS.Links:View:Refresh");
+		}
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: Array<AppFormsSegment>) => void) {

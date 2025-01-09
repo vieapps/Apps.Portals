@@ -112,7 +112,6 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	ngOnDestroy() {
 		if (this.content !== undefined) {
 			AppEvents.off(this.portalsCoreSvc.name, "CMS.Contents:View:Refresh");
-			AppEvents.off(this.filesSvc.name, "CMS.Contents:View:Refresh:Attachments");
 		}
 	}
 
@@ -208,7 +207,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				else if (info.args.Type === "Deleted") {
 					this.cancel();
 				}
-				else if (info.args.Type === "Thumbnail") {
+				else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
 					this.prepareAttachments("Thumbnails", this.content.thumbnails);
 				}
 				else if (info.args.Type === "Attachment") {
@@ -216,12 +215,6 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				}
 			}
 		}, "CMS.Contents:View:Refresh");
-
-		AppEvents.on(this.filesSvc.name, info => {
-			if (this.content.ID === info.args.ObjectID && (info.args.Object === "Attachment" || info.args.Object === "Thumbnail")) {
-				this.prepareAttachments(`${info.args.Object}s`, undefined, info.args.Event === "Delete" ? undefined : this.filesSvc.prepareAttachment(info.args.Data), info.args.Event === "Delete" ? this.filesSvc.prepareAttachment(info.args.Data) : undefined);
-			}
-		}, "CMS.Contents:View:Refresh:Attachments");
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: Array<AppFormsSegment>) => void) {

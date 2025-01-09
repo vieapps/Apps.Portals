@@ -309,13 +309,16 @@ export class Base {
 	}
 
 	/** Broadcasts a message to all subscribers */
-	protected broadcast(message: AppMessage) {
-		AppAPIs.broadcast(message);
+	protected broadcast(message: any) {
+		AppAPIs.broadcast({
+			Type: AppAPIs.parseMessageType((message || {}).Type || this.name),
+			Data: (message || {}).Data
+		});
 	}
 
 	/** Forwards a message to all subscribers (means broadcast to all subscribers) */
 	protected forward(message: any, serviceName?: string, objectName?: string, event?: string) {
-		this.broadcast({
+		AppAPIs.broadcast({
 			Type: {
 				Service: serviceName || this.name,
 				Object: objectName,

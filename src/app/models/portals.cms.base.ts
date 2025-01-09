@@ -19,14 +19,42 @@ export abstract class PortalCmsBase extends BaseModel {
 		return BaseModel.contentTypeDefinitions;
 	}
 
+	static prepareAttachment(attachment: AttachmentInfo) {
+		if (attachment.Created !== undefined) {
+			attachment.Created = new Date(attachment.Created);
+		}
+		if (attachment.LastModified !== undefined) {
+			attachment.LastModified = new Date(attachment.LastModified);
+		}
+		if (AppUtility.isNotEmpty(attachment.ContentType)) {
+			attachment.isImage = attachment.ContentType.indexOf("image/") > -1;
+			attachment.isVideo = attachment.ContentType.indexOf("video/") > -1;
+			attachment.isAudio = attachment.ContentType.indexOf("audio/") > -1;
+			attachment.isText = attachment.ContentType.indexOf("text/") > -1;
+			attachment.icon = attachment.isImage
+				? "image"
+				: attachment.isVideo
+				? "videocam"
+				: attachment.isAudio
+					? "volume-medium"
+					: attachment.isText
+						? "document-text"
+						: "document-attach";
+		}
+		attachment.friendlyFilename = attachment.Filename.length < 47
+			? attachment.Filename
+			: attachment.Filename.substring(0, 40) + "..." + attachment.Filename.substring(attachment.Filename.length - 4);
+		return attachment;
+	}
+
 	abstract SystemID: string;
 	abstract RepositoryID: string;
 	abstract RepositoryEntityID: string;
 	abstract Status: string;
 	public SubTitle: string;
+	private _thumbnailURI: string;
 	protected _thumbnails: AttachmentInfo[];
 	protected _attachments: AttachmentInfo[];
-	private _thumbnailURI: string;
 
 	get organization() {
 		const organization = AppUtility.isNotEmpty(this.SystemID) ? Organization.get(this.SystemID) : undefined;
@@ -67,7 +95,7 @@ export abstract class PortalCmsBase extends BaseModel {
 	get thumbnailURI() {
 		return this._thumbnailURI !== undefined
 			? AppConfig.noThumbnailURI
-			: PortalCmsBase.getThumbnailURI(this.thumbnails) || AppConfig.noThumbnailURI;
+			: AppConfig.getThumbnailURI(AppUtility.isArray(this.thumbnails, true) && this.thumbnails.length > 0 ? AppUtility.isObject(this.thumbnails[0].URIs, true) ? this.thumbnails[0].URIs.Direct : AppUtility.isNotEmpty(this.thumbnails[0].URI) ? this.thumbnails[0].URI : undefined : undefined);
 	}
 
 	get thumbnails() {
@@ -121,10 +149,6 @@ export abstract class PortalCmsBase extends BaseModel {
 		}
 	}
 
-	static getThumbnailURI(thumbnails: AttachmentInfo[], undefinedAsNoThumbnailURI: boolean = false) {
-		return AppConfig.getThumbnailURI(thumbnails !== undefined && !!thumbnails.length ? AppUtility.isObject(thumbnails[0].URIs, true)	? thumbnails[0].URIs.Direct : AppUtility.isNotEmpty(thumbnails[0].URI) ? thumbnails[0].URI : undefined : undefined, undefinedAsNoThumbnailURI);
-	}
-
 	normalizeExtendedProperties(data: any, onCompleted?: () => void) {
 		const contentType = this.contentType;
 		if (contentType !== undefined && AppUtility.isArray(contentType.ExtendedPropertyDefinitions, true)) {
@@ -155,10 +179,17 @@ export abstract class PortalCmsBase extends BaseModel {
 		}
 	}
 
-	updateThumbnails(thumbnails: AttachmentInfo[], onLoaded?: (uri: string) => void, onCompleted?: () => void) {
-		this._thumbnailURI = PortalCmsBase.getThumbnailURI(thumbnails, true);
+	updateThumbnails(thumbnails: AttachmentInfo[], onLoaded?: (thumbnailURI: string) => void, onCompleted?: () => void) {
+		this._thumbnailURI = AppUtility.isArray(thumbnails, true) && thumbnails.length > 0
+			? AppUtility.isObject(thumbnails[0].URIs, true)
+				? thumbnails[0].URIs.Direct
+				: AppUtility.isNotEmpty(thumbnails[0].URI)
+					? thumbnails[0].URI
+					: undefined
+			: undefined;
 		if (this._thumbnailURI !== undefined && AppConfig.options.preload.thumbnails) {
 			AppUtility.invoke(() => {
+				this._thumbnailURI = AppConfig.getThumbnailURI(this._thumbnailURI);
 				const image = new Image();
 				image.onload = () => {
 					if (onLoaded !== undefined) {
@@ -166,23 +197,29 @@ export abstract class PortalCmsBase extends BaseModel {
 					}
 					this._thumbnailURI = undefined;
 				};
+				image.onerror = error => {
+					console.error(`Error occurred while loading thumbnail image of an object [${this.contentType.getObjectName(true)}#${this.ID}]`, error);
+					AppUtility.invoke(() => image.src = this._thumbnailURI + (this._thumbnailURI.indexOf("?") > 0 ? "&" : "?") + "r=" + Math.random(), 1234);
+				};
 				image.src = this._thumbnailURI;
 			}, 456);
 		}
 		else {
 			this._thumbnailURI = undefined;
 		}
-		this._thumbnails = thumbnails;
+		this._thumbnails = thumbnails || [];
 		if (onCompleted !== undefined) {
 			onCompleted();
 		}
+		return this._thumbnails;
 	}
 
 	updateAttachments(attachments: AttachmentInfo[], onCompleted?: () => void) {
-		this._attachments = attachments;
+		this._attachments = (attachments || []).map(attachment => PortalCmsBase.prepareAttachment(attachment));
 		if (onCompleted !== undefined) {
 			onCompleted();
 		}
+		return this._attachments;
 	}
 
 }

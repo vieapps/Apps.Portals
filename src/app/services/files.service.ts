@@ -11,6 +11,7 @@ import { AppFormsService } from "@app/components/forms.service";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AttachmentInfo } from "@app/models/base";
+import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
 @Injectable()
 export class FilesService extends BaseService {
@@ -171,31 +172,7 @@ export class FilesService extends BaseService {
 	}
 
 	prepareAttachment(attachment: AttachmentInfo) {
-		if (attachment.Created !== undefined) {
-			attachment.Created = new Date(attachment.Created);
-		}
-		if (attachment.LastModified !== undefined) {
-			attachment.LastModified = new Date(attachment.LastModified);
-		}
-		if (AppUtility.isNotEmpty(attachment.ContentType)) {
-			attachment.isImage = attachment.ContentType.indexOf("image/") > -1;
-			attachment.isVideo = attachment.ContentType.indexOf("video/") > -1;
-			attachment.isAudio = attachment.ContentType.indexOf("audio/") > -1;
-			attachment.isText = attachment.ContentType.indexOf("text/") > -1;
-			attachment.icon = attachment.isImage
-				? "image"
-				: attachment.isVideo
-				? "videocam"
-				: attachment.isAudio
-					? "volume-medium"
-					: attachment.isText
-						? "document-text"
-						: "document-attach";
-		}
-		attachment.friendlyFilename = attachment.Filename.length < 47
-			? attachment.Filename
-			: attachment.Filename.substring(0, 40) + "..." + attachment.Filename.substring(attachment.Filename.length - 4);
-		return attachment;
+		return CmsBaseModel.prepareAttachment(attachment);
 	}
 
 	getThumbnailURI(attachment: AttachmentInfo) {
@@ -205,7 +182,7 @@ export class FilesService extends BaseService {
 	prepareAttachmentsFormControl(formControl: AppFormsControl, isThumbnails: boolean, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo, onCompleted?: (control: AppFormsControl) => void) {
 		if (formControl !== undefined) {
 			if (isThumbnails) {
-				if (AppUtility.isArray(attachments, true) && attachments.length > 0) {
+				if (AppUtility.isArray(attachments, true)) {
 					formControl.value = { current: this.getThumbnailURI(attachments[0]), new: undefined, identity: attachments[0].ID };
 				}
 				else if (AppUtility.isObject(addedOrUpdated, true)) {

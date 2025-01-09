@@ -74,7 +74,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 
 	ngOnDestroy() {
 		if (AppUtility.isNotEmpty(this.item.ID)) {
-			AppEvents.off(this.filesSvc.name, "CMS.Items:Edit:Refresh");
+			AppEvents.off(this.portalsCoreSvc.name, "CMS.Items:Edit:Refresh");
 		}
 	}
 
@@ -146,9 +146,21 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		this.formConfig = await this.getFormControlsAsync();
 
 		if (AppUtility.isNotEmpty(this.item.ID)) {
-			AppEvents.on(this.filesSvc.name, info => {
-				if (info.args.Object === "Attachment" && this.item.ID === info.args.ObjectID) {
-					this.prepareAttachments("Attachments", undefined, info.args.Event === "Delete" ? undefined : this.filesSvc.prepareAttachment(info.args.Data), info.args.Event === "Delete" ? this.filesSvc.prepareAttachment(info.args.Data) : undefined);
+			AppEvents.on(this.portalsCoreSvc.name, info => {
+				if (info.args.Object === "CMS.Item" && this.item.ID === info.args.ID) {
+					if (info.args.Type === "Updated") {
+						this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => cfg.Name === control.Name).Hidden ? true : false);
+						(this.item.attachments || []).forEach(attachment => this.filesSvc.prepareAttachment(attachment));
+					}
+					else if (info.args.Type === "Deleted") {
+						this.cancel();
+					}
+					else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
+						this.prepareAttachments("Thumbnails", this.item.thumbnails);
+					}
+					else if (info.args.Type === "Attachment") {
+						this.prepareAttachments("Attachments", this.item.attachments);
+					}
 				}
 			}, "CMS.Items:Edit:Refresh");
 		}

@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppEvents } from "@app/components/app.events";
@@ -26,7 +26,7 @@ import { DataLookupModalPage } from "@app/controls/portals/data.lookup.modal.pag
 	styleUrls: ["./update.page.scss"]
 })
 
-export class CmsCategoriesUpdatePage implements OnInit {
+export class CmsCategoriesUpdatePage implements OnInit, OnDestroy {
 	constructor(
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
@@ -68,6 +68,12 @@ export class CmsCategoriesUpdatePage implements OnInit {
 
 	ngOnInit() {
 		this.initializeAsync();
+	}
+
+	ngOnDestroy() {
+		if (AppUtility.isNotEmpty(this.category.ID)) {
+			AppEvents.off(this.portalsCoreSvc.name, "CMS.Categories:Edit:Refresh");
+		}
 	}
 
 	private async initializeAsync() {
@@ -128,6 +134,25 @@ export class CmsCategoriesUpdatePage implements OnInit {
 				this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up"), undefined, undefined, false);
 			}
 		});
+
+		if (AppUtility.isNotEmpty(this.category.ID)) {
+			AppEvents.on(this.portalsCoreSvc.name, info => {
+				if (info.args.Object === "CMS.Link" && this.category.ID === info.args.ID) {
+					if (info.args.Type === "Updated") {
+						this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => AppUtility.isEquals(cfg.Name, control.Name)).Hidden ? true : false);
+					}
+					else if (info.args.Type === "Deleted") {
+						this.cancel();
+					}
+					else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
+						this.prepareAttachments("Thumbnails", this.category.thumbnails);
+					}
+					else if (info.args.Type === "Attachment") {
+						this.prepareAttachments("Attachments", this.category.attachments);
+					}
+				}
+			}, "CMS.Categories:Edit:Refresh");
+		}
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
@@ -331,14 +356,14 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (AppUtility.isNotEmpty(this.category.ID)) {
-				if (this.category.thumbnails !== undefined) {
-					this.prepareThumbnails(this.category.thumbnails);
+				if (this.category.thumbnails !== undefined && this.category.thumbnails.length > 0) {
+					this.prepareAttachments("Thumbnails", this.category.thumbnails);
 					this.hash = AppCrypto.hash(this.form.value);
 				}
 				else {
 					this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.category), thumbnails => {
 						this.category.updateThumbnails(thumbnails);
-						this.prepareThumbnails(thumbnails);
+						this.prepareAttachments("Thumbnails", thumbnails);
 						this.hash = AppCrypto.hash(this.form.value);
 					});
 				}
@@ -346,8 +371,10 @@ export class CmsCategoriesUpdatePage implements OnInit {
 		});
 	}
 
-	private prepareThumbnails(thumbnails?: Array<AttachmentInfo>) {
-		this.filesSvc.prepareAttachmentsFormControl(this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails")), true, thumbnails);
+	private prepareAttachments(name: string, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo, onCompleted?: (control: AppFormsControl) => void) {
+		const formControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, name));
+		const isThumbnails = AppUtility.isEquals(name, "Thumbnails");
+		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, onCompleted);
 	}
 
 	save() {

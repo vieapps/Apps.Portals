@@ -140,7 +140,7 @@ export class AppAPIs {
 		return requestInfo;
 	}
 
-	private static parseMessageType(messageType: string) {
+	static parseMessageType(messageType: string) {
 		let type = this._messageTypes[messageType];
 		if (type === undefined) {
 			let pos = messageType.indexOf("#"), object = "", event = "";
