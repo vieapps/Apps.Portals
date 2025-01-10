@@ -32,6 +32,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	private desktop: Desktop;
+	private attachments: AttachmentInfo[];
 	private organization: Organization;
 	private canModerateOrganization = false;
 	private hash = "";
@@ -113,7 +114,13 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(this.desktop.ID)) {
 			AppEvents.on(this.filesSvc.name, info => {
 				if (info.args.Object === "Attachment" && this.desktop.ID === info.args.ObjectID) {
-					this.prepareAttachments(undefined, info.args.Event === "Delete" ? undefined : this.filesSvc.prepareAttachment(info.args.Data), info.args.Event === "Delete" ? this.filesSvc.prepareAttachment(info.args.Data) : undefined);
+					if (info.args.Event === "Delete") {
+						this.attachments.removeAt(this.attachments.findIndex(attachment => attachment.ID === info.args.Data.ID));
+					}
+					else {
+						this.attachments.push(info.args.Data);
+					}
+					this.prepareAttachments();
 				}
 			}, "Desktop:Refresh");
 		}
@@ -327,9 +334,8 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		} as FileOptions;
 	}
 
-	private prepareAttachments(attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo, onCompleted?: (control: AppFormsControl) => void) {
-		const formControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Attachments"));
-		this.filesSvc.prepareAttachmentsFormControl(formControl, false, attachments, addedOrUpdated, deleted, onCompleted);
+	private prepareAttachments() {
+		this.filesSvc.prepareAttachmentsFormControl(this.formControls.find(ctrl => ctrl.Name === "Attachments", this.attachments));
 	}
 
 	onFormInitialized() {
@@ -348,7 +354,10 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(async () => {
 			if (AppUtility.isNotEmpty(this.desktop.ID)) {
-				await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => this.prepareAttachments(attachments));
+				await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => {
+					this.attachments = attachments;
+					this.prepareAttachments();
+				});
 				this.hash = AppCrypto.hash(this.form.value);
 			}
 		});

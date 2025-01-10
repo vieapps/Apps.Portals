@@ -10,7 +10,6 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { FilesService } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
-import { AttachmentInfo } from "@app/models/base";
 import { Item } from "@app/models/portals.cms.item";
 
 @Component({
@@ -168,16 +167,15 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 					if (info.args.Type === "Updated") {
 						this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => cfg.Name === control.Name).Hidden ? true : false);
 						this.prepareValues();
-						(this.item.attachments || []).forEach(attachment => this.filesSvc.prepareAttachment(attachment));
 					}
 					else if (info.args.Type === "Deleted") {
 						this.cancel();
 					}
 					else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
-						this.prepareAttachments("Thumbnails", this.item.thumbnails);
+						this.prepareThumbnail();
 					}
 					else if (info.args.Type === "Attachment") {
-						this.prepareAttachments("Attachments", this.item.attachments);
+						this.prepareAttachments();
 					}
 				}
 			}, "CMS.Items:View:Refresh");
@@ -284,34 +282,31 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 		this.prepareValues();
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (this.item.thumbnails !== undefined) {
-				this.prepareAttachments("Thumbnails", this.item.thumbnails);
+				this.prepareThumbnail();
 			}
 			else {
-				this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.item), thumbnails => {
-					this.item.updateThumbnails(thumbnails);
-					this.prepareAttachments("Thumbnails", thumbnails);
-				});
+				this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.item), thumbnails => this.item.updateThumbnails(thumbnails, undefined, () => this.prepareThumbnail()));
 			}
 			if (this.item.attachments !== undefined) {
-				this.prepareAttachments("Attachments", this.item.attachments);
+				this.prepareAttachments();
 			}
 			else {
-				this.filesSvc.searchAttachmentsAsync(this.portalsCmsSvc.getFileOptions(this.item), attachments => {
-					this.item.updateAttachments(attachments);
-					this.prepareAttachments("Attachments", attachments);
-				});
+				this.filesSvc.searchAttachmentsAsync(this.portalsCmsSvc.getFileOptions(this.item), attachments => this.item.updateAttachments(attachments, () => this.prepareAttachments()));
 			}
 		});
 	}
 
-	private prepareAttachments(name: string, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo) {
-		const formControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, name));
-		const isThumbnails = AppUtility.isEquals(name, "Thumbnails");
-		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, control => {
-			control.Hidden = control.value === undefined;
-			if (isThumbnails) {
-				this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons").Hidden = control.Hidden;
-			}
+
+	private prepareThumbnail() {
+		this.filesSvc.prepareThumbnailFormControl(this.formControls.find(ctrl => ctrl.Name === "Thumbnails"), this.item.thumbnails, formControl => {
+			formControl.Hidden = formControl.value === undefined;
+			this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons").Hidden = formControl.Hidden || this.item.thumbnails === undefined || this.item.thumbnails.length < 1;
+		});
+	}
+
+	private prepareAttachments() {
+		this.filesSvc.prepareAttachmentsFormControl(this.formControls.find(ctrl => ctrl.Name === "Attachments"), this.item.attachments, formControl => {
+			formControl.Hidden = formControl.value === undefined;
 		});
 	}
 
@@ -397,9 +392,9 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.deleteThumbnail"),
 			undefined,
 			() => this.filesSvc.deleteThumbnailAsync(
-				this.item.thumbnails[0].ID,
+				this.item.thumbnails.first().ID,
 				() => {
-					this.prepareAttachments("Thumbnails", [], undefined, this.item.thumbnails[0]);
+					this.prepareThumbnail();
 					this.item.thumbnails.removeAll();
 					this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail");
 				},

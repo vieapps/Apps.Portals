@@ -95,10 +95,14 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 				else if (organization.ID === info.args.SystemID && !!info.args.ID && "ThumbnailURI" === info.args.Type && !!info.args.ThumbnailURI) {
 					AppUtility.invoke(() => {
 						const content = this.contents.find(object => object.ID === info.args.ID);
-						if (content !== undefined) {
+						this.zone.run(content === undefined ? () => {} : () => {
+							if (this.configSvc.isDebug) {
+								console.log(`<FeaturedContents/ThumbnailURI>: ${content.Title} [${content.OriginalObject.contentType.getObjectName(true)}#${content.ID}]`, info.args.ThumbnailURI);
+							}
 							content.ThumbnailURI = info.args.ThumbnailURI;
-						}
-					}, 456);
+							this.changeDetector.detectChanges();
+						});
+					}, 234);
 				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);

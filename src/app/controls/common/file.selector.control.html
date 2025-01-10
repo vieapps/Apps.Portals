@@ -20,22 +20,25 @@
 				{{ attachment.Title }}
 			</span>
 			<div *ngIf="showIcons">
-				<span>
+				<span class="ion-float-start ion-padding-top">
 					{{ attachment.friendlyFilename }} - {{ attachment.Size | number:'':locale }} bytes
 				</span>
-				<a (click)="open(attachment.URIs.Direct)" class="ion-padding-start">
+				<a (click)="open(attachment.URIs.Direct)" class="ion-float-end">
 					<ion-icon name="open" color="medium" slot="icon-only" title="Open"></ion-icon>
 				</a>
-				<a (click)="copy(attachment.URIs.Direct)" class="ion-padding-start">
-					<ion-icon name="link" color="medium" slot="icon-only" title="Copy direct URL"></ion-icon>
+				<a (click)="copy(attachment.URIs.Download)" class="ion-float-end">
+					<ion-icon name="download" color="medium" slot="icon-only" title="Copy download URI"></ion-icon>
 				</a>
-				<a (click)="copy(attachment.URIs.Download)" class="ion-padding-start">
-					<ion-icon name="download" color="medium" slot="icon-only" title="Copy download URL"></ion-icon>
+				<a (click)="copy(attachment.URIs.Direct)" class="ion-float-end">
+					<ion-icon name="link" color="medium" slot="icon-only" title="Copy direct URI"></ion-icon>
 				</a>
-				<a class="ion-padding-start">
+				<a *ngIf="attachment.isImage" (click)="copy(attachment.URIs.Thumbnail)" class="ion-float-end">
+					<ion-icon name="image" color="medium" slot="icon-only" title="Copy thumbnail URI"></ion-icon>
+				</a>
+				<a class="ion-float-end">
 					<ion-icon *ngIf="attachment.IsShared" name="share-social" color="medium" slot="icon-only"></ion-icon>
 				</a>
-				<a class="ion-padding-start">
+				<a class="ion-float-end">
 					<ion-icon *ngIf="attachment.IsTracked" name="analytics" color="medium" slot="icon-only"></ion-icon>
 				</a>
 			</div>

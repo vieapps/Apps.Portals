@@ -7,6 +7,7 @@ import { AppFormsControl } from "@app/components/forms.objects";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AttachmentInfo } from "@app/models/base";
+import { PortalBase } from "@app/models/portals.base";
 
 @Component({
 	selector: "control-files-selector",
@@ -58,7 +59,9 @@ export class FilesSelectorControl implements OnInit {
 	}
 
 	get attachments() {
-		return (this.control !== undefined ? this.control.value as Array<AttachmentInfo> : undefined) || [];
+		const attachments = (this.control !== undefined ? this.control.value as Array<AttachmentInfo> : undefined) || [];
+		attachments.filter(attachment => attachment.isImage).forEach(attachment => attachment.URIs["Thumbnail"] = PortalBase.getThumbnailURI(attachment, true));
+		return attachments;
 	}
 
 	get label() {

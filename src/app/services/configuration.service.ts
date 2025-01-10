@@ -756,7 +756,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Saves the options of the app into storage */
 	async saveOptionsAsync(onNext?: (data?: any) => void) {
-		await AppStorage.setAsync("Options", AppConfig.options).then(() => {
+		await AppStorage.setAsync("Options", AppUtility.clone(AppConfig.options, ["fileLimits", "thumbnails", "preload"])).then(() => {
 			if (onNext !== undefined) {
 				onNext(AppConfig.options);
 			}

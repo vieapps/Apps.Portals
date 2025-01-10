@@ -11,7 +11,6 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { FilesService } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
-import { AttachmentInfo } from "@app/models/base";
 import { NestedObject } from "@app/models/portals.base";
 import { Module, ContentType } from "@app/models/portals.core.all";
 import { Link, Category } from "@app/models/portals.cms.all";
@@ -177,10 +176,10 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 						this.cancel();
 					}
 					else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
-						this.prepareAttachments("Thumbnails", this.link.thumbnails);
+						this.prepareThumbnail();
 					}
 					else if (info.args.Type === "Attachment") {
-						this.prepareAttachments("Attachments", this.link.attachments);
+						this.prepareAttachments();
 					}
 				}
 			}, "CMS.Links:View:Refresh");
@@ -278,34 +277,30 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 		this.prepareValues();
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (this.link.thumbnails !== undefined) {
-				this.prepareAttachments("Thumbnails", this.link.thumbnails);
+				this.prepareThumbnail();
 			}
 			else {
-				this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.link), thumbnails => {
-					this.link.updateThumbnails(thumbnails);
-					this.prepareAttachments("Thumbnails", thumbnails);
-				});
+				this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.link), thumbnails => this.link.updateThumbnails(thumbnails, undefined, () => this.prepareThumbnail()));
 			}
 			if (this.link.attachments !== undefined) {
-				this.prepareAttachments("Attachments", this.link.attachments);
+				this.prepareAttachments();
 			}
 			else {
-				this.filesSvc.searchAttachmentsAsync(this.portalsCmsSvc.getFileOptions(this.link), attachments => {
-					this.link.updateAttachments(attachments);
-					this.prepareAttachments("Attachments", attachments);
-				});
+				this.filesSvc.searchAttachmentsAsync(this.portalsCmsSvc.getFileOptions(this.link), attachments => this.link.updateAttachments(attachments, () => this.prepareAttachments()));
 			}
 		});
 	}
 
-	private prepareAttachments(name: string, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo) {
-		const formControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, name));
-		const isThumbnails = AppUtility.isEquals(name, "Thumbnails");
-		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, control => {
-			control.Hidden = control.value === undefined;
-			if (isThumbnails) {
-				this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons").Hidden = control.Hidden;
-			}
+	private prepareThumbnail() {
+		this.filesSvc.prepareThumbnailFormControl(this.formControls.find(ctrl => ctrl.Name === "Thumbnails"), this.link.thumbnails, formControl => {
+			formControl.Hidden = formControl.value === undefined;
+			this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons").Hidden = formControl.Hidden || this.link.thumbnails === undefined || this.link.thumbnails.length < 1;
+		});
+	}
+
+	private prepareAttachments() {
+		this.filesSvc.prepareAttachmentsFormControl(this.formControls.find(ctrl => ctrl.Name === "Attachments"), this.link.attachments, formControl => {
+			formControl.Hidden = formControl.value === undefined;
 		});
 	}
 
@@ -471,7 +466,7 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 			() => this.filesSvc.deleteThumbnailAsync(
 				this.link.thumbnails[0].ID,
 				() => {
-					this.prepareAttachments("Thumbnails", [], undefined, this.link.thumbnails[0]);
+					this.prepareThumbnail();
 					this.link.thumbnails.removeAll();
 					this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail");
 				},

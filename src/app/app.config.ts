@@ -23,7 +23,7 @@ export class AppConfig {
 		apps: "https://cms.vieapps.net/",
 
 		/** Collection of all allowed embed medias (hosts/domains) */
-		medias: ["fs.vieportal.net" ]
+		medias: ["fs.vieportal.net"]
 	};
 
 	/** App information */
@@ -95,7 +95,8 @@ export class AppConfig {
 				file: 819200000
 			},
 			thumbnails: {
-				useWebP: true,
+				useWhenInsertWithLink: true,
+				preferWebP: true,
 				width: 0
 			},
 			preload: {
@@ -112,7 +113,7 @@ export class AppConfig {
 		theme: string;
 		timezone: number;
 		fileLimits: { avatar: number; thumbnail: number; file: number; };
-		thumbnails: { useWebP: boolean; width: number; };
+		thumbnails: { useWhenInsertWithLink: boolean; preferWebP: boolean; width: number; };
 		preload: { thumbnails: boolean; categories: boolean; featured: boolean;	},
 		extras: { [key: string]: any }
 	};
@@ -215,42 +216,6 @@ export class AppConfig {
 			Linux: `${baseURL}-${this.app.version}.AppImage`,
 			macOS: `${baseURL}-${this.app.version}.dmg`
 		};
-	}
-
-	/** Gets URI of 'no-thumbnail' image */
-	static get noThumbnailURI() {
-		return `${this.URIs.files}thumbnails/no-image.png`;
-	}
-
-	/** Gets URI of a thumbnail image */
-	static getThumbnailURI(uri: string) {
-		if (AppUtility.isEmpty(uri)) {
-			return this.noThumbnailURI;
-		}
-		const settings = this.options.thumbnails || this.defaultOptions.thumbnails;
-		if (settings.useWebP) {
-			uri = uri.replace("/thumbnails/", "/thumbnailwebps/").replace("/thumbnailpngs/", "/thumbnailwebps/");
-		}
-		if (uri.indexOf("/0/0/0/") > 0) {
-			if (!!settings.width) {
-				uri = uri.replace("/0/0/0/", `/0/${settings.width}/0/`);
-			}
-			if (uri.endsWith(".jpg") || uri.endsWith(".png") || uri.endsWith(".webp")) {
-				if (settings.useWebP) {
-					uri = uri.endsWith(".webp") ? uri : uri.substring(0, uri.length - 4) + ".webp";
-				}
-				else if (uri.endsWith(".png")) {
-					uri = uri.replace("/thumbnails/", "/thumbnailpngs/");
-				}
-			}
-			else {
-				uri += settings.useWebP ? ".webp" : ".jpg";
-			}
-		}
-		else if (settings.useWebP && !uri.endsWith(".webp")) {
-			uri += ".webp";
-		}
-		return uri + (this.isDebug ? "?x-logs=true" : "");
 	}
 
 	/** Tracking information */

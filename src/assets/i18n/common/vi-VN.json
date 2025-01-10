@@ -70,15 +70,16 @@
 			"label": "Hệ thống",
 			"notifications": "Thông báo",
 			"profile": "Thông tin tài khoản",
-			"logs": "Logs hệ thống",
-			"flushCache": "Xoá dữ liệu toàn bộ cache",
+			"logs": "Xem logs hệ thống",
+			"flushCache": "Xoá toàn bộ cache",
 			"options": {
 				"language": "Ngôn ngữ",
-				"theme": "Sử dụng theme màu tối",
-				"preflight": "Sử dụng cơ chế tải trước",
-				"xhr": "Sử dụng XHR",
-				"xhrToken": "Sử dụng XHR Query Token",
-				"debug": "Sử dụng logs chi tiết"
+				"thumbnails": "Dùng thumbnails khi soạn thảo",
+				"theme": "Dùng theme màu tối",
+				"preflight": "Dùng cơ chế tải trước",
+				"xhr": "Dùng XHR",
+				"xhrToken": "Dùng XHR Query Token",
+				"debug": "Ghi nhận logs chi tiết"
 			},
 			"apps": {
 				"desktop": "Apps cho máy tính",

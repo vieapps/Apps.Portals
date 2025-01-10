@@ -1,5 +1,7 @@
+import { AppConfig } from "@app/app.config";
 import { AppUtility } from "@app/components/app.utility";
 import { Base as BaseModel } from "@app/models/base";
+import { AttachmentInfo } from "@app/models/base";
 
 /** Abstract class for all portals' entity classes */
 export abstract class PortalBase extends BaseModel {
@@ -7,6 +9,9 @@ export abstract class PortalBase extends BaseModel {
 	constructor() {
 		super();
 	}
+
+	/** Get the collection of all approval statuses */
+	static approvalStatus = ["Draft", "Pending", "Rejected", "Approved", "Published", "Archieved"];
 
 	/** Get the collection of all module definitions */
 	static moduleDefinitions: ModuleDefinition[];
@@ -16,8 +21,87 @@ export abstract class PortalBase extends BaseModel {
 		return (this.moduleDefinitions || []).map(definition => definition.ContentTypeDefinitions).flatMap(definitions => definitions);
 	}
 
-	/** Get the collection of all approval statuses */
-	static approvalStatus = ["Draft", "Pending", "Rejected", "Approved", "Published", "Archieved"];
+	/** Gets URI of 'no-thumbnail' image */
+	static get noThumbnailURI() {
+		return `${AppConfig.URIs.files}thumbnails/no-image.png`;
+	}
+
+	/** Gets URI of a thumbnail image */
+	static getThumbnailURI(info: Array<AttachmentInfo> | AttachmentInfo | string, isAttachment: boolean = false) {
+		let uri: string;
+		const settings = AppConfig.options.thumbnails || AppConfig.defaultOptions.thumbnails;
+		const attachment = info === undefined || typeof info === "string"
+			? undefined
+			: AppUtility.isArray(info, true)
+				? (info as Array<AttachmentInfo>).first()
+				: info as AttachmentInfo;
+		if (attachment !== undefined) {
+			if (isAttachment) {
+				return AppConfig.URIs.files + (settings.preferWebP ? "thumbnailwebps/" : "thumbnails/") + (AppUtility.isNotEmpty(attachment.SystemID) ? attachment.SystemID : attachment.ServiceName) + `/1/${settings.width}/0/${attachment.ID}/${encodeURIComponent(attachment.Filename)}` + (settings.preferWebP && !attachment.Filename.endsWith(".webp") ? ".webp" : "");
+			}
+			uri = AppUtility.isObject(attachment, true) && AppUtility.isObject(attachment.URIs, true)
+				? attachment.URIs.Direct : AppUtility.isObject(attachment, true) && AppUtility.isNotEmpty(attachment.URI) ? attachment.URI
+				: undefined;
+		}
+		else {
+			uri = info as string;
+		}
+		if (AppUtility.isNotEmpty(uri)) {
+			if (settings.preferWebP) {
+				uri = uri.replace("/thumbnails/", "/thumbnailwebps/").replace("/thumbnailpngs/", "/thumbnailwebps/");
+			}
+			if (uri.indexOf("/0/0/0/") > 0) {
+				if (!!settings.width) {
+					uri = uri.replace("/0/0/0/", `/0/${settings.width}/0/`);
+				}
+				if (uri.endsWith(".jpg") || uri.endsWith(".png") || uri.endsWith(".webp")) {
+					if (settings.preferWebP) {
+						uri = uri.endsWith(".webp") ? uri : uri.substring(0, uri.length - 4) + ".webp";
+					}
+					else if (uri.endsWith(".png")) {
+						uri = uri.replace("/thumbnails/", "/thumbnailpngs/");
+					}
+				}
+				else {
+					uri += settings.preferWebP ? ".webp" : ".jpg";
+				}
+			}
+			else if (settings.preferWebP && !uri.endsWith(".webp")) {
+				uri += ".webp";
+			}
+			uri += (AppConfig.isDebug ? "?x-logs=true" : "");
+		}
+		return AppUtility.isEmpty(uri) ? this.noThumbnailURI : uri;
+	}
+
+	/** Prepare required information of an attachment */
+	static prepareAttachment(attachment: AttachmentInfo) {
+		if (attachment.Created !== undefined) {
+			attachment.Created = new Date(attachment.Created);
+		}
+		if (attachment.LastModified !== undefined) {
+			attachment.LastModified = new Date(attachment.LastModified);
+		}
+		if (AppUtility.isNotEmpty(attachment.ContentType)) {
+			attachment.isImage = attachment.ContentType.indexOf("image/") > -1;
+			attachment.isVideo = attachment.ContentType.indexOf("video/") > -1;
+			attachment.isAudio = attachment.ContentType.indexOf("audio/") > -1;
+			attachment.isText = attachment.ContentType.indexOf("text/") > -1;
+			attachment.icon = attachment.isImage
+				? "image"
+				: attachment.isVideo
+				? "videocam"
+				: attachment.isAudio
+					? "volume-medium"
+					: attachment.isText
+						? "document-text"
+						: "document-attach";
+		}
+		attachment.friendlyFilename = attachment.Filename.length < 47
+			? attachment.Filename
+			: attachment.Filename.substring(0, 40) + "..." + attachment.Filename.substring(attachment.Filename.length - 4);
+		return attachment;
+	}
 
 	/** The title */
 	abstract Title: string;

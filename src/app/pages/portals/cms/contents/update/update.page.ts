@@ -9,10 +9,9 @@ import { AppFormsControl, AppFormsControlConfig, AppFormsSegment, AppFormsLookup
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
-import { FilesService } from "@app/services/files.service";
+import { FilesService, FileOptions } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
-import { AttachmentInfo } from "@app/models/base";
 import { Organization, Module, ContentType } from "@app/models/portals.core.all";
 import { Category, Content } from "@app/models/portals.cms.all";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
@@ -158,10 +157,10 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 						this.cancel();
 					}
 					else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
-						this.prepareAttachments("Thumbnails", this.content.thumbnails);
+						this.prepareThumbnail();
 					}
 					else if (info.args.Type === "Attachment") {
-						this.prepareAttachments("Attachments", this.content.attachments);
+						this.prepareAttachments();
 					}
 				}
 			}, "CMS.Contents:Edit:Refresh");
@@ -462,32 +461,43 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		this.hash.content = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (AppUtility.isNotEmpty(this.content.ID)) {
-				if (this.content.thumbnails !== undefined) {
-					this.prepareAttachments("Thumbnails", this.content.thumbnails);
+				if (this.content.thumbnails !== undefined && this.content.thumbnails.length > 0) {
+					this.prepareThumbnail();
 					this.hash.full = AppCrypto.hash(this.form.value);
+					if (this.configSvc.isDebug) {
+						console.log("<CMS.Content>: Edit a content [Thumbnails]", this.hash.content, this.hash.full);
+					}
 				}
 				else {
-					this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.content), thumbnails => {
-						this.content.updateThumbnails(thumbnails);
-						this.prepareAttachments("Thumbnails", thumbnails);
+					this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.content), thumbnails => this.content.updateThumbnails(thumbnails, undefined, () => {
+						this.prepareThumbnail();
 						this.hash.full = AppCrypto.hash(this.form.value);
-					});
+						if (this.configSvc.isDebug) {
+							console.log("<CMS.Content>: Edit a content [Thumbnails/Search]", this.hash.content, this.hash.full);
+						}
+					}));
 				}
 				if (this.content.attachments !== undefined) {
-					this.prepareAttachments("Attachments", this.content.attachments);
+					this.prepareAttachments();
 					this.hash.full = AppCrypto.hash(this.form.value);
+					if (this.configSvc.isDebug) {
+						console.log("<CMS.Content>: Edit a content [Attachments]", this.hash.content, this.hash.full);
+					}
 				}
 				else {
 					this.filesSvc.searchAttachmentsAsync(this.portalsCmsSvc.getFileOptions(this.content), attachments => {
 						this.content.updateAttachments(attachments);
-						this.prepareAttachments("Attachments", attachments);
+						this.prepareAttachments();
 						this.hash.full = AppCrypto.hash(this.form.value);
+						if (this.configSvc.isDebug) {
+							console.log("<CMS.Content>: Edit a content [Attachments/Search]", this.hash.content, this.hash.full);
+						}
 					});
 				}
 			}
 		});
 		if (this.configSvc.isDebug) {
-			console.log("<CMS.Content>: edit a content", this.configSvc.requestParams, this.content);
+			console.log("<CMS.Content>: Edit a content", this.hash.content, this.configSvc.requestParams, this.content);
 		}
 	}
 
@@ -514,16 +524,22 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		}
 	}
 
-	private prepareAttachments(name: string, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo, onCompleted?: (control: AppFormsControl) => void) {
-		const formControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, name));
-		const isThumbnails = AppUtility.isEquals(name, "Thumbnails");
-		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, onCompleted);
+	private prepareThumbnail() {
+		this.filesSvc.prepareThumbnailFormControl(this.formControls.find(ctrl => ctrl.Name === "Thumbnails"), this.content.thumbnails);
+	}
+
+	private prepareAttachments() {
+		this.filesSvc.prepareAttachmentsFormControl(this.formControls.find(ctrl => ctrl.Name === "Attachments"), this.content.attachments);
 	}
 
 	save() {
 		this.appFormsSvc.showLoadingAsync(this.title.track);
 		if (this.appFormsSvc.validate(this.form)) {
-			if (this.hash.full === AppCrypto.hash(this.form.value)) {
+			const hash = {
+				full: AppCrypto.hash(this.form.value),
+				content: ""
+			};
+			if (this.hash.full === hash.full) {
 				this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 			}
 			else {
@@ -538,56 +554,60 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 				content.PublishedTime = AppUtility.toIsoDateTime(content.PublishedTime, true);
 				content.Details = this.portalsCmsSvc.normalizeTempTokens(content.Details, this.authSvc.getTempToken(this.content.Privileges), false);
 
+				const thumbnail = (this.formControls.find(ctrl => ctrl.Name === "Thumbnails") || {}).value;
+				const thumbnailBase64 = thumbnail !== undefined && AppUtility.isObject(thumbnail, true) ? thumbnail.new : undefined;
+				const uploadThumbnailAsync = async (options?: FileOptions) => {
+					if (thumbnailBase64 !== undefined) {
+						if (this.configSvc.isDebug) {
+							console.log("<CMS.Content>: Upload thumbnail", this.hash.content, hash.content, thumbnail);
+						}
+						options = options || this.portalsCmsSvc.getFileOptions(this.content);
+						options.Extras["x-attachment-id"] = thumbnail.identity;
+						await this.filesSvc.uploadThumbnailAsync(
+							thumbnailBase64,
+							options,
+							data => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(this.configSvc.isDebug ? () => console.log("<CMS.Content>: Upload thumbnail successful", data) : () => {}),
+							error => console.error("<CMS.Content>: Error occurred while uploading thumbnail", error)
+						);
+					}
+				};
+
+				hash.content = AppCrypto.hash(content);
+				if (this.configSvc.isDebug) {
+					console.log(`<CMS.Content>: ${AppUtility.isNotEmpty(content.ID) ? "Update" : "Create"} a content ${thumbnailBase64 !== undefined ? "(with thumbnail)" : ""}`, this.hash.content, hash.content);
+				}
+
 				if (AppUtility.isNotEmpty(content.ID)) {
-					if (this.hash.content === AppCrypto.hash(content)) {
-						const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
-						if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-							this.filesSvc.uploadThumbnailAsync(
-								control.value.new,
-								this.portalsCmsSvc.getFileOptions(this.content, options => options.Extras["x-attachment-id"] = control.value.identity),
-								async () => {
-									await this.portalsCmsSvc.refreshContentAsync(content.ID);
-									await Promise.all([
-										this.trackAsync(this.title.track, "Upload", "Thumbnail"),
-										this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
-										this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
-									]);
-								},
-								error => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
-							);
+					uploadThumbnailAsync().then(async () => {
+						if (this.hash.content === hash.content) {
+							if (thumbnailBase64 !== undefined) {
+								await Promise.all([
+									this.portalsCmsSvc.refreshContentAsync(content.ID),
+									this.trackAsync(this.title.track, "Upload", "Thumbnail"),
+									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
+								]);
+							}
+							this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
 						}
 						else {
-							this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
-						}
-					}
-					else {
-						this.portalsCmsSvc.updateContentAsync(
-							content,
-							async _ => {
-								const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
-								if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-									await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(this.content, options => options.Extras["x-attachment-id"] = control.value.identity), () => this.trackAsync(this.title.track, "Upload", "Thumbnail"));
-								}
-								await Promise.all([
+							await this.portalsCmsSvc.updateContentAsync(
+								content,
+								async () => await Promise.all([
 									this.trackAsync(this.title.track, "Update"),
 									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 									this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
-								]);
-							},
-							error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false),
-							this.configSvc.appConfig.app.query.preferXHR || (content.Details as string || "").length > this.configSvc.appConfig.app.query.large
-						);
-					}
+								]),
+								error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false),
+								this.configSvc.appConfig.app.query.preferXHR || (content.Details as string || "").length > this.configSvc.appConfig.app.query.large
+							);
+						}
+					});
 				}
 				else {
 					this.portalsCmsSvc.createContentAsync(
 						content,
 						async data => {
-							data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
-							const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "Thumbnails"));
-							if (control !== undefined && AppUtility.isObject(control.value, true) && AppUtility.isNotEmpty(control.value.new)) {
-								await this.filesSvc.uploadThumbnailAsync(control.value.new, this.portalsCmsSvc.getFileOptions(Content.get(data.ID)), () => this.trackAsync(this.title.track, "Upload", "Thumbnail"));
-							}
+							await uploadThumbnailAsync(this.portalsCmsSvc.getFileOptions(Content.get((AppUtility.isArray(data.Objects) ? data.Objects.first() : data).ID)));
 							await Promise.all([
 								this.trackAsync(this.title.track),
 								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.new")),

@@ -9,7 +9,6 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { FilesService } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
-import { AttachmentInfo } from "@app/models/base";
 import { Crawler } from "@app/models/portals.cms.crawler";
 
 @Component({
@@ -84,7 +83,6 @@ export class CmsCrawlersViewPage implements OnInit, OnDestroy {
 	ngOnDestroy() {
 		if (this.crawler !== undefined) {
 			AppEvents.off(this.portalsCoreSvc.name, "CMS.Crawlers:View:Refresh");
-			AppEvents.off(this.filesSvc.name, "CMS.Crawlers:View:Refresh");
 		}
 	}
 
@@ -161,13 +159,9 @@ export class CmsCrawlersViewPage implements OnInit, OnDestroy {
 				else if (args.Type === "Deleted" && !this.processing) {
 					this.cancel();
 				}
-			}
-		}, "CMS.Crawlers:View:Refresh");
-
-		AppEvents.on(this.filesSvc.name, info => {
-			const args = info.args;
-			if (this.crawler.ID === args.ObjectID && (args.Object === "Attachment" || args.Object === "Thumbnail")) {
-				this.prepareAttachments(`${args.Object}s`, undefined, args.Event === "Delete" ? undefined : this.filesSvc.prepareAttachment(args.Data), args.Event === "Delete" ? this.filesSvc.prepareAttachment(args.Data) : undefined);
+				else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
+					this.prepareThumbnail();
+				}
 			}
 		}, "CMS.Crawlers:View:Refresh");
 	}
@@ -185,9 +179,7 @@ export class CmsCrawlersViewPage implements OnInit, OnDestroy {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.crawler", undefined, { "x-content-type-id": this.crawler.RepositoryEntityID, "x-view-controls": "x" });
-		formConfig.push(
-			this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments")
-		);
+		formConfig.push(this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments"));
 		if (this.canEdit) {
 			const buttons = this.appFormsSvc.getButtonControls(
 				"attachments",
@@ -210,7 +202,7 @@ export class CmsCrawlersViewPage implements OnInit, OnDestroy {
 			formConfig.push(buttons);
 		}
 		formConfig.push(
-			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label")),
+			// this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label")),
 			this.portalsCmsSvc.getPermanentLinkFormControl(this.crawler, "basic"),
 			this.portalsCoreSvc.getAuditFormControl(this.crawler, "basic")
 		);
@@ -261,34 +253,18 @@ export class CmsCrawlersViewPage implements OnInit, OnDestroy {
 		this.prepareValues();
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (this.crawler.thumbnails !== undefined) {
-				this.prepareAttachments("Thumbnails", this.crawler.thumbnails);
+				this.prepareThumbnail();
 			}
 			else {
-				this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.crawler), thumbnails => {
-					this.crawler.updateThumbnails(thumbnails);
-					this.prepareAttachments("Thumbnails", thumbnails);
-				});
-			}
-			if (this.crawler.attachments !== undefined) {
-				this.prepareAttachments("Attachments", this.crawler.attachments);
-			}
-			else {
-				this.filesSvc.searchAttachmentsAsync(this.portalsCmsSvc.getFileOptions(this.crawler), attachments => {
-					this.crawler.updateAttachments(attachments);
-					this.prepareAttachments("Attachments", attachments);
-				});
+				this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.crawler), thumbnails => this.crawler.updateThumbnails(thumbnails, undefined, () => this.prepareThumbnail()));
 			}
 		});
 	}
 
-	private prepareAttachments(name: string, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo) {
-		const formControl = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, name));
-		const isThumbnails = AppUtility.isEquals(name, "Thumbnails");
-		this.filesSvc.prepareAttachmentsFormControl(formControl, isThumbnails, attachments, addedOrUpdated, deleted, control => {
-			control.Hidden = control.value === undefined;
-			if (isThumbnails) {
-				this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons").Hidden = control.Hidden;
-			}
+	private prepareThumbnail() {
+		this.filesSvc.prepareThumbnailFormControl(this.formControls.find(ctrl => ctrl.Name === "Thumbnails"), this.crawler.thumbnails, formControl => {
+			formControl.Hidden = formControl.value === undefined;
+			this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons").Hidden = formControl.Hidden || this.crawler.thumbnails === undefined || this.crawler.thumbnails.length < 1;
 		});
 	}
 
@@ -368,9 +344,9 @@ export class CmsCrawlersViewPage implements OnInit, OnDestroy {
 			await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.confirm.deleteThumbnail"),
 			undefined,
 			() => this.filesSvc.deleteThumbnailAsync(
-				this.crawler.thumbnails[0].ID,
+				this.crawler.thumbnails.first().ID,
 				() => {
-					this.prepareAttachments("Thumbnails", [], undefined, this.crawler.thumbnails[0]);
+					this.prepareThumbnail();
 					this.crawler.thumbnails.removeAll();
 					this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail");
 				},

@@ -82,6 +82,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 			label: "Options",
 			language: "Language",
 			theme: "Use dark theme",
+			thumbnails: "Use thumbnails on insert",
 			preflight: "Preflight",
 			xhr: "Prefer XHR",
 			xhrToken: "Use XHR Query Token",
@@ -104,6 +105,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 	options = {
 		language: "vi-VN",
 		darkTheme: false,
+		thumbnails: false,
 		preflight: false,
 		xhr: false,
 		xhrToken: false,
@@ -115,6 +117,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		this.options = {
 			language: this.configSvc.appConfig.language,
 			darkTheme: "dark" === this.color,
+			thumbnails: this.configSvc.appConfig.options.thumbnails.useWhenInsertWithLink,
 			preflight: this.configSvc.appConfig.app.preflight.enable,
 			xhr: this.configSvc.appConfig.app.query.preferXHR,
 			xhrToken: this.configSvc.appConfig.app.query.includeToken,
@@ -137,6 +140,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 				label: await this.configSvc.getResourceAsync("common.preferences.label"),
 				language: await this.configSvc.getResourceAsync("common.preferences.options.language"),
 				theme: await this.configSvc.getResourceAsync("common.preferences.options.theme"),
+				thumbnails: await this.configSvc.getResourceAsync("common.preferences.options.thumbnails"),
 				preflight: await this.configSvc.getResourceAsync("common.preferences.options.preflight"),
 				xhr: await this.configSvc.getResourceAsync("common.preferences.options.xhr"),
 				xhrToken: await this.configSvc.getResourceAsync("common.preferences.options.xhrToken"),
@@ -168,6 +172,10 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		this.options.darkTheme = AppUtility.isTrue(event.detail.checked);
 		this.configSvc.appConfig.options.theme = this.options.darkTheme ? "dark" : "light";
 		this.configSvc.storeOptionsAsync();
+	}
+
+	onUseThumbnailsChanged(event: any) {
+		this.options.thumbnails = this.configSvc.appConfig.options.thumbnails.useWhenInsertWithLink = AppUtility.isTrue(event.detail.checked);
 	}
 
 	onPreflightChanged(event: any) {

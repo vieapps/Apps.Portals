@@ -109,32 +109,29 @@ export class PortalsCmsService extends BaseService {
 				const isThumbnail = message.Type.Object === "Thumbnail";
 				const isDelete = message.Type.Event === "Delete";
 				const attachments = isThumbnail ? object.thumbnails : object.attachments;
+				const changed = AppUtility.isArray(message.Data, true) ? message.Data as Array<AttachmentInfo> : [message.Data as AttachmentInfo];
 				if (isThumbnail && isDelete) {
 					object.thumbnails.clear();
 				}
 				else {
-					const updated = AppUtility.isArray(message.Data, true) ? message.Data as Array<AttachmentInfo> : [message.Data as AttachmentInfo];
 					if (isDelete) {
-						updated.forEach(info => attachments.removeAt(attachments.findIndex(attachment => attachment.ID === info.ID)));
+						changed.forEach(info => attachments.removeAt(attachments.findIndex(attachment => attachment.ID === info.ID)));
 					}
 					else {
-						updated.forEach(info => attachments.update(info, attachments.findIndex(attachment => attachment.ID === info.ID)));
+						changed.forEach(info => attachments.update(info, attachments.findIndex(attachment => attachment.ID === info.ID)));
 					}
 				}
 				if (isThumbnail) {
-					object.updateThumbnails(attachments, thumbnailURI => AppEvents.broadcast(this.name, { Type: "ThumbnailURI", ThumbnailURI: thumbnailURI, ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID }));
+					object.updateThumbnails(attachments, thumbnailURI => AppUtility.invoke(() => AppEvents.broadcast(this.name, { Type: "ThumbnailURI", ThumbnailURI: thumbnailURI, ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID }), 234));
 				}
 				else {
 					object.updateAttachments(attachments);
 				}
 				const objectName = object.contentType.getObjectName(true);
 				if (this.configSvc.isDebug) {
-					console.log(`[Portals]: Got updated of ${message.Type.Object.toLowerCase()}s ${objectName}#${object.ID} [${message.Type.Event}]`, attachments);
+					console.log(`[Portals]: Broadcast message to update ${message.Type.Object.toLowerCase()}s ${objectName}#${object.ID} [${message.Type.Event}]`, attachments);
 				}
-				AppEvents.broadcast(this.name, { Type: message.Type.Object, Object: objectName, ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID });
-			}
-			else if (this.configSvc.isDebug) {
-				console.log(`[Portals]: Got updated of ${message.Type.Object.toLowerCase()}s but no object was found`, message);
+				AppEvents.broadcast(this.name, { Type: message.Type.Object, Mode: message.Type.Event + "d", Changed: changed, Object: objectName, ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID });
 			}
 		});
 
@@ -455,6 +452,9 @@ export class PortalsCmsService extends BaseService {
 					(attachments: AttachmentInfo[]) => {
 						const attachment = attachments !== undefined && attachments.length > 0 ? attachments[0] : undefined;
 						const link = attachment !== undefined ? attachment.URIs.Direct : undefined;
+						if (this.configSvc.isDebug) {
+							console.log(`[Portals/LinkSelector]: Insert a link into content ${object.contentType === undefined ? "" : object.contentType.getObjectName(true)}#${object.ID} - ${object.Title}`, link);
+						}
 						onSelected(link !== undefined && tempToken !== undefined ? `${link}${link.indexOf("?") > 0 ? "&" : "?"}x-temp-token=${tempToken}` : link);
 					}
 				)
@@ -468,7 +468,7 @@ export class PortalsCmsService extends BaseService {
 		return AppUtility.isNotEmpty(object.ID)
 			? {
 				label: label,
-				selectMedia: async (onSelected: (link: string, type?: string) => void) => await this.appFormsSvc.showModalAsync(
+				selectMedia: async (onSelected: (link: string, type?: string, href?: string) => void) => await this.appFormsSvc.showModalAsync(
 					FilesProcessorModalPage,
 					{
 						mode: "select",
@@ -478,9 +478,16 @@ export class PortalsCmsService extends BaseService {
 						handlers: { predicate: (attachment: AttachmentInfo) => attachment.isImage || attachment.isVideo || attachment.isAudio, onSelect: () => {} }
 					},
 					(attachments: AttachmentInfo[]) => {
+						const settings = this.configSvc.appConfig.options.thumbnails || this.configSvc.appConfig.defaultOptions.thumbnails;
 						const attachment = attachments !== undefined && attachments.length > 0 ? attachments[0] : undefined;
-						const link = attachment !== undefined ? attachment.URIs.Direct : undefined;
-						onSelected(link !== undefined && tempToken !== undefined ? `${link}${link.indexOf("?") > 0 ? "&" : "?"}x-temp-token=${tempToken}` : link, attachment !== undefined && (attachment.isVideo || attachment.isAudio) ? "media" : undefined);
+						const isImage = attachment !== undefined && attachment.isImage;
+						const isMedia = attachment !== undefined && (attachment.isVideo || attachment.isAudio);
+						const href = attachment !== undefined ? attachment.URIs.Direct : undefined;
+						const link = isImage && settings.useWhenInsertWithLink && settings.width > 0 ? BaseModel.getThumbnailURI(attachment, true) : href;
+						if (this.configSvc.isDebug) {
+							console.log(`[Portals/MediaSelector]: Insert a media into content ${object.contentType === undefined ? "" : object.contentType.getObjectName(true)}#${object.ID} - ${object.Title}`, link, isMedia ? "media" : undefined, isImage ? href : undefined);
+						}
+						onSelected(link !== undefined && tempToken !== undefined ? `${link}${link.indexOf("?") > 0 ? "&" : "?"}x-temp-token=${tempToken}` : link, isMedia ? "media" : undefined, isImage ? href : undefined);
 					}
 				)
 			}

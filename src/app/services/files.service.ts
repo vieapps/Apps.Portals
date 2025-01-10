@@ -11,7 +11,7 @@ import { AppFormsService } from "@app/components/forms.service";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AttachmentInfo } from "@app/models/base";
-import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
+import { PortalBase as PortalBaseModel } from "@app/models/portals.base";
 
 @Injectable()
 export class FilesService extends BaseService {
@@ -171,53 +171,6 @@ export class FilesService extends BaseService {
 		}));
 	}
 
-	prepareAttachment(attachment: AttachmentInfo) {
-		return CmsBaseModel.prepareAttachment(attachment);
-	}
-
-	getThumbnailURI(attachment: AttachmentInfo) {
-		return this.configSvc.appConfig.getThumbnailURI(AppUtility.isObject(attachment.URIs, true) ? attachment.URIs.Direct : AppUtility.isNotEmpty(attachment.URI)	? attachment.URI : undefined);
-	}
-
-	prepareAttachmentsFormControl(formControl: AppFormsControl, isThumbnails: boolean, attachments?: Array<AttachmentInfo>, addedOrUpdated?: AttachmentInfo, deleted?: AttachmentInfo, onCompleted?: (control: AppFormsControl) => void) {
-		if (formControl !== undefined) {
-			if (isThumbnails) {
-				if (AppUtility.isArray(attachments, true)) {
-					formControl.value = { current: this.getThumbnailURI(attachments[0]), new: undefined, identity: attachments[0].ID };
-				}
-				else if (AppUtility.isObject(addedOrUpdated, true)) {
-					formControl.value = { current: this.getThumbnailURI(addedOrUpdated), new: undefined, identity: addedOrUpdated.ID };
-				}
-				else if (AppUtility.isObject(deleted, true)) {
-					formControl.value = { current: undefined, new: undefined, identity: deleted.ID };
-				}
-			}
-			else {
-				if (AppUtility.isArray(attachments, true)) {
-					formControl.value = attachments;
-				}
-				attachments = formControl.value as Array<AttachmentInfo> || [];
-				if (AppUtility.isObject(addedOrUpdated, true)) {
-					const index = attachments.findIndex(attachment => attachment.ID === addedOrUpdated.ID);
-					if (index < 0) {
-						attachments.push(addedOrUpdated);
-					}
-					else {
-						attachments[index] = addedOrUpdated;
-					}
-				}
-				if (AppUtility.isObject(deleted, true)) {
-					attachments.removeAt(attachments.findIndex(attachment => attachment.ID === deleted.ID));
-				}
-				formControl.value = attachments.length > 0 ? attachments.sortBy("Title", "Filename") : undefined;
-			}
-			if (onCompleted !== undefined) {
-				onCompleted(formControl);
-			}
-		}
-		return formControl;
-	}
-
 	getThumbnailFormControl(name: string, segment: string, allowSelectNew: boolean = false, useDefaultHandlers: boolean = true, onCompleted?: (controlConfig: AppFormsControlConfig) => void, showCopyToClipboard: boolean = true) {
 		const controlConfig: AppFormsControlConfig = {
 			Name: name || "Thumbnails",
@@ -244,9 +197,9 @@ export class FilesService extends BaseService {
 						base64data => {
 							const value = formControl.value;
 							formControl.setValue({
-								current: AppUtility.isObject(value, true) ? value.current : undefined,
+								current: (value || {}).current,
 								new: base64data,
-								identity: AppUtility.isObject(value, true) ? value.identity : undefined
+								identity: (value || {}).identity
 							}, { onlySelf: true });
 						},
 						this.configSvc.fileLimits.thumbnail,
@@ -256,18 +209,18 @@ export class FilesService extends BaseService {
 				else {
 					const value = formControl.value;
 					formControl.setValue({
-						current: AppUtility.isObject(value, true) ? value.current : undefined,
+						current: (value || {}).current,
 						new: undefined,
-						identity: AppUtility.isObject(value, true) ? value.identity : undefined
+						identity: (value || {}).identity
 					}, { onlySelf: true });
 				}
 			};
 			controlConfig.Options.FilePickerOptions.OnDelete = (_, formControl) => {
 				const value = formControl.value;
 				formControl.setValue({
-					current: AppUtility.isObject(value, true) ? value.current : undefined,
+					current: (value || {}).current,
 					new: undefined,
-					identity: AppUtility.isObject(value, true) ? value.identity : undefined
+					identity: (value || {}).identity
 				}, { onlySelf: true });
 			};
 		}
@@ -293,13 +246,25 @@ export class FilesService extends BaseService {
 		return controlConfig;
 	}
 
+	prepareThumbnailFormControl(formControl: AppFormsControl, thumbnails?: Array<AttachmentInfo>, onCompleted?: (control: AppFormsControl) => void) {
+		if (formControl !== undefined) {
+			formControl.value = thumbnails !== undefined && thumbnails.length > 0
+				? { current: PortalBaseModel.getThumbnailURI(thumbnails), new: undefined, identity: thumbnails.first().ID }
+				: { current: undefined, new: undefined, identity: undefined };
+			if (onCompleted !== undefined) {
+				onCompleted(formControl);
+			}
+		}
+		return formControl;
+	}
+
 	searchThumbnailsAsync(options: FileOptions, onSuccess?: (thumbnails: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("thumbnails", this.configSvc.relatedQuery),
 			undefined,
 			data => {
 				if (onSuccess !== undefined) {
-					onSuccess((data as Array<AttachmentInfo> || []).map(thumbnail => this.prepareAttachment(thumbnail)));
+					onSuccess((data as Array<AttachmentInfo> || []).map(thumbnail => PortalBaseModel.prepareAttachment(thumbnail)));
 				}
 			},
 			error => this.processError("Error occurred while searching thumbnails", error, onError),
@@ -377,13 +342,23 @@ export class FilesService extends BaseService {
 		return controlConfig;
 	}
 
+	prepareAttachmentsFormControl(formControl: AppFormsControl, attachments?: Array<AttachmentInfo>, onCompleted?: (control: AppFormsControl) => void) {
+		if (formControl !== undefined) {
+			formControl.value = attachments !== undefined && attachments.length > 0 ? attachments.sortBy("Title", "Filename") : undefined;
+			if (onCompleted !== undefined) {
+				onCompleted(formControl);
+			}
+		}
+		return formControl;
+	}
+
 	searchAttachmentsAsync(options: FileOptions, onSuccess?: (attachments: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.searchAsync(
 			this.getSearchingPath("attachments", this.configSvc.relatedQuery),
 			undefined,
 			data => {
 				if (onSuccess !== undefined) {
-					onSuccess((data as Array<AttachmentInfo> || []).map(attachment => this.prepareAttachment(attachment)));
+					onSuccess((data as Array<AttachmentInfo> || []).map(attachment => PortalBaseModel.prepareAttachment(attachment)));
 				}
 			},
 			error => this.processError("Error occurred while searching attachments", error, onError),

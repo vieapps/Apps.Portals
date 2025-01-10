@@ -646,9 +646,9 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	getPermanentURL(object: CmsBaseModel, usePortalURL: boolean = false) {
-		const organization = object.organization;
+		const organization = Organization.get(object.SystemID);
 		const url = usePortalURL ? `~${organization.Alias}/` : this.getSiteURL(object);
-		return (url.indexOf("~" + organization.Alias) > -1 ? this.configSvc.appConfig.URIs.portals : url) + `_permanentlink/${object.RepositoryEntityID}/${object.ID}${object.organization.AlwaysUseHtmlSuffix ? ".html" : ""}`;
+		return (url.indexOf("~" + organization.Alias) > -1 ? this.configSvc.appConfig.URIs.portals : url) + `_permanentlink/${object.RepositoryEntityID}/${object.ID}${organization !== undefined && organization.AlwaysUseHtmlSuffix ? ".html" : ""}`;
 	}
 
 	getDesktop(object: CmsBaseModel) {
@@ -658,31 +658,35 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	getPublicURL(object: CmsBaseModel, parent?: CmsBaseModel) {
+		const organization = Organization.get(object.SystemID);
+		const contentType = ContentType.get(object.RepositoryEntityID);
+		const objectName = contentType !== undefined ? contentType.getObjectName(true) : undefined;
 		let url: string = parent !== undefined ? this.getPublicURL(parent, undefined) : undefined;
 		if (url === undefined) {
 			const desktop = this.getDesktop(object);
 			url = desktop !== undefined
 				? `${this.getSiteURL(object)}${desktop.Alias}`
 				: undefined;
-			if (url !== undefined && parent === undefined && object.contentType !== undefined && object.contentType.getObjectName(true) === "CMS.Item") {
-				url += "/" + AppUtility.toANSI(object.contentType.Title, true);
+			if (url !== undefined && parent === undefined && objectName === "CMS.Item") {
+				url += "/" + AppUtility.toANSI(contentType.Title, true);
 			}
 		}
 		return url !== undefined
-			? `${url}/${object["Alias"] || object.ID}${(parent !== undefined || object.contentType !== undefined && object.contentType.getObjectName(true) === "CMS.Item") && object.organization.AlwaysUseHtmlSuffix ? ".html" : ""}`
+			? `${url}/${object["Alias"] || object.ID}${(parent !== undefined || objectName === "CMS.Item") && organization !== undefined && organization.AlwaysUseHtmlSuffix ? ".html" : ""}`
 			: undefined;
 	}
 
 	getPortalURL(object: CmsBaseModel, parent?: CmsBaseModel, usePortalURL: boolean = false) {
+		const organization = Organization.get(object.SystemID);
+		const contentType = ContentType.get(object.RepositoryEntityID);
 		let url: string = parent !== undefined ? this.getPortalURL(parent) : undefined;
 		if (url === undefined) {
-			const organization = Organization.get(object.SystemID);
 			const desktop = this.getDesktop(object);
 			url = this.configSvc.appConfig.URIs.portals + (organization !== undefined && desktop !== undefined ? `~${organization.Alias}/${desktop.Alias}` : "_permanentlink");
 		}
 		return url.indexOf("_permanent") > 0
 			? this.getPermanentURL(object, usePortalURL)
-			: `${url}/${object["Alias"] || object.ID}${(parent !== undefined || object.contentType !== undefined && object.contentType.getObjectName(true) === "CMS.Item") && object.organization.AlwaysUseHtmlSuffix ? ".html" : ""}`;
+			: `${url}/${object["Alias"] || object.ID}${(parent !== undefined || contentType !== undefined && contentType.getObjectName(true) === "CMS.Item") && organization !== undefined && organization.AlwaysUseHtmlSuffix ? ".html" : ""}`;
 	}
 
 	getPaginationPrefix(objectName: string) {
