@@ -39,8 +39,12 @@ export abstract class PortalBase extends BaseModel {
 			if (isAttachment) {
 				return AppConfig.URIs.files + (settings.preferWebP ? "thumbnailwebps/" : "thumbnails/") + (AppUtility.isNotEmpty(attachment.SystemID) ? attachment.SystemID : attachment.ServiceName) + `/1/${settings.width}/0/${attachment.ID}/${encodeURIComponent(attachment.Filename)}` + (settings.preferWebP && !attachment.Filename.endsWith(".webp") ? ".webp" : "");
 			}
-			uri = AppUtility.isObject(attachment, true) && AppUtility.isObject(attachment.URIs, true)
-				? attachment.URIs.Direct : AppUtility.isObject(attachment, true) && AppUtility.isNotEmpty(attachment.URI) ? attachment.URI
+			uri = AppUtility.isObject(attachment, true)
+				? AppUtility.isObject(attachment.URIs, true)
+					? attachment.URIs.Direct
+					: AppUtility.isNotEmpty(attachment.URI)
+						? attachment.URI
+						: undefined
 				: undefined;
 		}
 		else {
@@ -48,10 +52,10 @@ export abstract class PortalBase extends BaseModel {
 		}
 		if (AppUtility.isNotEmpty(uri)) {
 			if (settings.preferWebP) {
-				uri = uri.replace("/thumbnails/", "/thumbnailwebps/").replace("/thumbnailpngs/", "/thumbnailwebps/");
+				uri = uri.replace("/thumbnails/", "/thumbnailwebps/").replace("/thumbnailbigs/", "/thumbnailwebps/").replace("/thumbnailpngs/", "/thumbnailwebps/");
 			}
 			if (uri.indexOf("/0/0/0/") > 0) {
-				if (!!settings.width) {
+				if (settings.width > 0) {
 					uri = uri.replace("/0/0/0/", `/0/${settings.width}/0/`);
 				}
 				if (uri.endsWith(".jpg") || uri.endsWith(".png") || uri.endsWith(".webp")) {
