@@ -178,9 +178,9 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}
 	}
 
-	private reprepareContents(mesage: string) {
+	private reprepareContents(message: string) {
 		this._preparer = this._preparer || interval(this.configSvc.isElectronApp ? 345 : 678).subscribe(_ => {
-			this.prepareContents(true, mesage !== undefined ? `<FeaturedContents/${this._isPublished}>: ${mesage}` : undefined);
+			this.prepareContents(true, message !== undefined ? `<FeaturedContents/${this._isPublished}>: ${message}` : undefined);
 			AppUtility.invoke(() => {
 				if (this._preparer !== undefined) {
 					this._preparer.unsubscribe();
