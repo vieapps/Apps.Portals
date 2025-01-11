@@ -60,7 +60,16 @@ export class FilesSelectorControl implements OnInit {
 
 	get attachments() {
 		const attachments = (this.control !== undefined ? this.control.value as Array<AttachmentInfo> : undefined) || [];
-		attachments.filter(attachment => attachment.isImage).forEach(attachment => attachment.URIs["Thumbnail"] = PortalBase.getThumbnailURI(attachment, true));
+		attachments.forEach(attachment => {
+			if (attachment.isImage) {
+				attachment.URIs["Thumbnail"] = PortalBase.getThumbnailURI(attachment, true);
+				const uri = attachment.URIs.Direct.split("/");
+				attachment.URIs["Alternative"] = `${this.configSvc.appConfig.URIs.files}images/${uri[4]}/${uri[6]}/${uri[7]}${uri[7].endsWith(".webp") ? "" : ".webp"}`;
+			}
+			else {
+				attachment.URIs["Alternative"] = attachment.URIs.Direct;
+			}
+		});
 		return attachments;
 	}
 

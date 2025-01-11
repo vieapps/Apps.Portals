@@ -71,15 +71,17 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 			if (info.args.Type === "Initialized") {
 				this.prepareLabelsAsync().then(() => this.prepareContents());
 			}
+			else if ("HomePage" === info.args.Type && "Open" === info.args.Mode && ("Sidebar" === info.args.Source || "Router" === info.args.Source)) {
+				this.reprepareContents(this.configSvc.isDebug ? `Force to re-prepare (when open homepage) [${this.contents.length}]` : undefined);
+			}
 		}, `FeaturedContents:AppInitialized:${this._isPublished}`);
 
 		AppEvents.on(this.portalsCmsSvc.name, info => {
-			const organization = this.portalsCoreSvc.activeOrganization;
-			if (organization !== undefined) {
-				if (("Organization" === info.args.Type && "Changed" === info.args.Mode) || ("HomePage" === info.args.Type && "Open" === info.args.Mode && ("Sidebar" === info.args.Source || "Router" === info.args.Source))) {
-					this.reprepareContents(this.configSvc.isDebug ? `Force to re-prepare (when ${"Organization" === info.args.Type && "Changed" === info.args.Mode ? "change organization" : "open homepage"})` : undefined);
+			if (this.configSvc.isAuthenticated) {
+				if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
+					this.reprepareContents(this.configSvc.isDebug ? "Force to re-prepare (when change organization)" : undefined);
 				}
-				else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode && organization.ID === info.args.ID) {
+				else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode && this.portalsCoreSvc.activeOrganization.ID === info.args.ID) {
 					this.reprepareContents(this.configSvc.isDebug ? `Force to re-prepare (when got update) [${this.contents.length}]` : undefined);
 				}
 				else if ("ThumbnailURI" === info.args.Type && info.args.ThumbnailURI !== undefined && info.args.ID !== undefined) {
@@ -91,12 +93,12 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 							if (this.configSvc.isDebug) {
 								console.log(`<FeaturedContents/ThumbnailURI/${this._isPublished}>: ${content.Title} [${content.OriginalObject.contentType.getObjectName(true)}#${content.ID}]`, content.ThumbnailURI);
 							}
-						}), 567);
+						}), this.configSvc.isElectronApp ? 234 : 567);
 					}
 				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
-		this._timer = interval(2 * 60 * 1000).subscribe(_ => this.prepareContents(true, this.configSvc.isDebug ? `<FeaturedContents/${this._isPublished}/Timer>: Force to re-prepare [${this.contents.length}]` : undefined));
+		this._timer = interval((this.configSvc.isElectronApp ? 30 : 120) * 1000).subscribe(_ => this.prepareContents(true, this.configSvc.isDebug ? `<FeaturedContents/Timer/${this._isPublished}>: Force to re-prepare [${this.contents.length}]` : undefined));
 	}
 
 	ngOnDestroy() {
@@ -177,12 +179,14 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 	}
 
 	private reprepareContents(mesage: string) {
-		this._preparer = this._preparer || interval(1234).subscribe(_ => {
+		this._preparer = this._preparer || interval(this.configSvc.isElectronApp ? 345 : 678).subscribe(_ => {
 			this.prepareContents(true, mesage !== undefined ? `<FeaturedContents/${this._isPublished}>: ${mesage}` : undefined);
 			AppUtility.invoke(() => {
-				this._preparer.unsubscribe();
-				this._preparer = undefined;
-			}, 13);
+				if (this._preparer !== undefined) {
+					this._preparer.unsubscribe();
+					this._preparer = undefined;
+				}
+			}, this.configSvc.isElectronApp ? 234 : 567);
 		});
 	}
 

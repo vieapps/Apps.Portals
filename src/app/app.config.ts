@@ -57,32 +57,6 @@ export class AppConfig {
 		}
 	};
 
-	/** App session */
-	static session = {
-		id: undefined as string,
-		token: undefined as { [key: string]: any },
-		account: undefined as Account,
-		keys: {
-			aes: {
-				key: undefined as string,
-				iv: undefined as string
-			},
-			rsa: {
-				encryptionExponent: undefined as string,
-				decryptionExponent: undefined as string,
-				exponent: undefined as string,
-				modulus: undefined as string
-			},
-			jwt: undefined as string
-		},
-		device: "",
-		captcha: {
-			code: "",
-			uri: ""
-		},
-		status: "initializing"
-	};
-
 	/** App options */
 	static get defaultOptions() {
 		return {
@@ -158,28 +132,29 @@ export class AppConfig {
 		}
 	};
 
-	/** Geographic meta */
-	static geoMeta = {
-		country: "VN",
-		countries: new Array<{ name: string, code: string, code3: string, telcode: string }>(),
-		provinces: {} as {
-			[key: string]: {
-				name: string,
-				title: string,
-				code: string,
-				telcode: string,
-				provinces: Array<{
-					name: string,
-					title: string,
-					code: string,
-					counties: Array<{
-						name: string,
-						type: string,
-						code: string,
-						title: string
-					}>
-				}>
-			}
+	/** App session */
+	static session = {
+		status: "initializing",
+		id: undefined as string,
+		token: undefined as { [key: string]: any },
+		account: undefined as Account,
+		device: "",
+		keys: {
+			aes: {
+				key: undefined as string,
+				iv: undefined as string
+			},
+			rsa: {
+				encryptionExponent: undefined as string,
+				decryptionExponent: undefined as string,
+				exponent: undefined as string,
+				modulus: undefined as string
+			},
+			jwt: undefined as string
+		},
+		captcha: {
+			code: "",
+			uri: ""
 		}
 	};
 
@@ -217,6 +192,31 @@ export class AppConfig {
 			macOS: `${baseURL}-${this.app.version}.dmg`
 		};
 	}
+
+	/** Geographic meta info */
+	static geoMeta = {
+		country: "VN",
+		countries: new Array<{ name: string, code: string, code3: string, telcode: string }>(),
+		provinces: {} as {
+			[key: string]: {
+				name: string,
+				title: string,
+				code: string,
+				telcode: string,
+				provinces: Array<{
+					name: string,
+					title: string,
+					code: string,
+					counties: Array<{
+						name: string,
+						type: string,
+						code: string,
+						title: string
+					}>
+				}>
+			}
+		}
+	};
 
 	/** Tracking information */
 	static tracking = {

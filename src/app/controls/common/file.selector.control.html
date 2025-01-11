@@ -23,7 +23,7 @@
 				<span class="ion-float-start margin-top-10">
 					{{ attachment.friendlyFilename }} - {{ attachment.Size | number:'':locale }} bytes
 				</span>
-				<a (click)="open(attachment.URIs.Direct)" [class]="cssIcons">
+				<a (click)="open(attachment.URIs.Alternative)" [class]="cssIcons">
 					<ion-icon name="open" color="medium" slot="icon-only" title="Open"></ion-icon>
 				</a>
 				<a (click)="copy(attachment.URIs.Download)" [class]="cssIcons">
