@@ -243,15 +243,11 @@ export class PortalsCoreService extends BaseService {
 		}
 		await this.getDefinitionsAsync();
 		if (Organization.active === undefined) {
-			if (this.configSvc.isDebug) {
-				console.log("[Portals]: Prepare to get active organization on initializing");
-			}
+			console.log("[Portals]: Prepare to get active organization on initializing");
 			await this.getActiveOrganizationAsync(undefined, true);
 		}
 		else {
-			if (this.configSvc.isDebug) {
-				console.log(`[Portals]: Prepare ${Organization.active.modules.length < 1 ? "modules" : "scheduling tasks"} when got active organization on initializing`, Organization.active);
-			}
+			console.log(`[Portals]: Prepare ${Organization.active.modules.length < 1 ? "modules" : "scheduling tasks"} when got active organization on initializing`, Organization.active);
 			if (Organization.active.modules.length < 1) {
 				await this.getOrganizationAsync(Organization.active.ID, undefined, undefined, true);
 			}
@@ -293,6 +289,8 @@ export class PortalsCoreService extends BaseService {
 					definition.ContentTypeDefinitions.forEach(contentTypeDefinition => contentTypeDefinition.ModuleDefinition = definition);
 					definition.ObjectDefinitions.forEach(objectDefinition => objectDefinition.ModuleDefinition = definition);
 				});
+				console.log("[Portals]: Definitions were fetched", BaseModel.moduleDefinitions.first());
+				AppEvents.broadcast(this.name, { Type: "Definitions" });
 			}
 		}
 		if (onNext !== undefined) {
@@ -381,9 +379,7 @@ export class PortalsCoreService extends BaseService {
 			this.activeOrganizations.merge([organization.ID], true);
 			if (Organization.active === undefined || Organization.active.ID !== organization.ID) {
 				Organization.active = organization;
-				if (this.configSvc.isDebug) {
-					console.log("[Portals]: Set active organization", this.activeOrganization);
-				}
+				console.log("[Portals]: Set active organization", this.activeOrganization);
 				AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
 				const useXHR = organization.modules.length < 1;
 				if (this.configSvc.isDebug) {
@@ -418,7 +414,7 @@ export class PortalsCoreService extends BaseService {
 			if (!!!Desktop.instances.first(desktop => desktop.SystemID === Organization.active.ID)) {
 				AppUtility.invoke(() => {
 					if (this.configSvc.isDebug) {
-						console.log("[Portals]: Fetch desktops the active organization (when set active organization)", this.activeOrganization);
+						console.log("[Portals]: Fetch desktops of the active organization (when set active organization)", this.activeOrganization);
 					}
 					this.fetchDesktops();
 				}, 6789);
@@ -608,7 +604,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	getRouterLink(contentType: ContentType, action?: string, title?: string, objectName?: string, path?: string) {
-		objectName = AppUtility.isNotEmpty(objectName) ? objectName : contentType !== undefined ? contentType.getObjectName() : "unknown";
+		objectName = AppUtility.isEmpty(objectName) ? contentType !== undefined ? contentType.getObjectName() : "unknown" : objectName;
 		return `/portals/${path || "cms"}/`
 			+ (AppUtility.isEquals(objectName, "Category") ? "categories" : `${objectName}s`).toLowerCase() + "/"
 			+ (action || "list").toLowerCase()
@@ -1559,25 +1555,25 @@ export class PortalsCoreService extends BaseService {
 				items.push(
 					{
 						Title: "{{portals.sidebar.tasks}}",
-						Link: this.getRouterLink(undefined, "list", "all", "Task", "core"),
+						Link: this.getRouterLink(undefined, "list", "all", "task", "core"),
 						Direction: "root",
 						Icon: { Name: "timer", Color: "medium", Slot: "start" }
 					},
 					{
 						Title: "{{portals.sidebar.organizations}}",
-						Link: this.getRouterLink(undefined, "list", "all", "Organization", "core"),
+						Link: this.getRouterLink(undefined, "list", "all", "organization", "core"),
 						Direction: "root",
 						Icon: { Name: "business", Color: "medium", Slot: "start" }
 					},
 					{
 						Title: "{{portals.sidebar.roles}}",
-						Link: this.getRouterLink(undefined, "list", "all", "Role", "core"),
+						Link: this.getRouterLink(undefined, "list", "all", "role", "core"),
 						Direction: "root",
 						Icon: { Name: "body", Color: "medium", Slot: "start" }
 					},
 					{
 						Title: "{{portals.sidebar.modules}}",
-						Link: this.getRouterLink(undefined, "list", "all", "Module", "core"),
+						Link: this.getRouterLink(undefined, "list", "all", "module", "core"),
 						Direction: "root",
 						Icon: { Name: "albums", Color: "medium", Slot: "start" }
 					}
@@ -1586,7 +1582,7 @@ export class PortalsCoreService extends BaseService {
 
 			items.push({
 				Title: "{{portals.sidebar.content-types}}",
-				Link: this.getRouterLink(undefined, "list", "all", "ContentType", "core"),
+				Link: this.getRouterLink(undefined, "list", "all", "content.type", "core"),
 				Direction: "root",
 				Icon: { Name: "git-branch", Color: "medium", Slot: "start" }
 			});
@@ -1594,12 +1590,12 @@ export class PortalsCoreService extends BaseService {
 			if (canModerateOrganization) {
 				items.push({
 					Title: "{{portals.sidebar.expressions}}",
-					Link: this.getRouterLink(undefined, "list", "all", "Expression", "core"),
+					Link: this.getRouterLink(undefined, "list", "all", "expression", "core"),
 					Direction: "root",
 					Icon: { Name: "extension-puzzle", Color: "medium", Slot: "start" }
 				});
 				const service = this.configSvc.appConfig.services.all.first(svc => svc.name === this.name);
-				if (!!service.specials && service.specials.indexOf("Crawler") > -1) {
+				if (!!service.specials && service.specials.indexOf("crawler") > -1) {
 					items.push({
 						Title: "{{portals.sidebar.crawlers}}",
 						Link: this.getRouterLink(undefined, "list", "all", "crawler"),
@@ -1612,7 +1608,7 @@ export class PortalsCoreService extends BaseService {
 			if (canManageOrganization) {
 				items.push({
 					Title: "{{portals.sidebar.sites}}",
-					Link: this.getRouterLink(undefined, "list", "all", "Site", "core"),
+					Link: this.getRouterLink(undefined, "list", "all", "site", "core"),
 					Direction: "root",
 					Icon: { Name: "globe", Color: "medium", Slot: "start" }
 				});
@@ -1621,7 +1617,7 @@ export class PortalsCoreService extends BaseService {
 			if (canModerateOrganization) {
 				items.push({
 					Title: "{{portals.sidebar.desktops}}",
-					Link: this.getRouterLink(undefined, "list", "all", "Desktop", "core"),
+					Link: this.getRouterLink(undefined, "list", "all", "desktop", "core"),
 					Direction: "root",
 					Icon: { Name: "Desktop", Color: "medium", Slot: "start" }
 				});

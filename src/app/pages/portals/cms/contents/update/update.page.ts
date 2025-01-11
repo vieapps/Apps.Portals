@@ -150,16 +150,25 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		if (AppUtility.isNotEmpty(this.content.ID)) {
 			AppEvents.on(this.portalsCoreSvc.name, info => {
 				if (info.args.Object === "CMS.Content" && this.content.ID === info.args.ID) {
-					if (info.args.Type === "Updated" && !!!info.args.Mode) {
+					if (info.args.Type === "Updated" && !!!info.args.Mode && !this.processing) {
+						if (this.configSvc.isDebug) {
+							console.log("<CMS.Content/Edit>: Patch new values (when got update message)");
+						}
 						this.patchValues(true);
 					}
 					else if (info.args.Type === "Deleted") {
 						this.cancel();
 					}
-					else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
+					else if (info.args.Type === "Thumbnail" && !this.processing) {
+						if (this.configSvc.isDebug) {
+							console.log("<CMS.Content/Edit>: Prepare thumbnail (when got update message)", this.content.thumbnails);
+						}
 						this.prepareThumbnail();
 					}
-					else if (info.args.Type === "Attachment") {
+					else if (info.args.Type === "Attachment" && !this.processing) {
+						if (this.configSvc.isDebug) {
+							console.log("<CMS.Content/Edit>: Prepare attachments (when got update message)", this.content.attachments);
+						}
 						this.prepareAttachments();
 					}
 				}
@@ -465,7 +474,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 					this.prepareThumbnail();
 					this.hash.full = AppCrypto.hash(this.form.value);
 					if (this.configSvc.isDebug) {
-						console.log("<CMS.Content>: Edit a content [Thumbnails]", this.hash.content, this.hash.full);
+						console.log("<CMS.Content/Thumbnails>: Edit a content", this.hash.content, this.hash.full);
 					}
 				}
 				else {
@@ -473,7 +482,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 						this.prepareThumbnail();
 						this.hash.full = AppCrypto.hash(this.form.value);
 						if (this.configSvc.isDebug) {
-							console.log("<CMS.Content>: Edit a content [Thumbnails/Search]", this.hash.content, this.hash.full);
+							console.log("<CMS.Content/Thumbnails/Search>: Edit a content", this.hash.content, this.hash.full);
 						}
 					}));
 				}
@@ -481,7 +490,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 					this.prepareAttachments();
 					this.hash.full = AppCrypto.hash(this.form.value);
 					if (this.configSvc.isDebug) {
-						console.log("<CMS.Content>: Edit a content [Attachments]", this.hash.content, this.hash.full);
+						console.log("<CMS.Content/Attachments>: Edit a content", this.hash.content, this.hash.full);
 					}
 				}
 				else {
@@ -490,7 +499,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 						this.prepareAttachments();
 						this.hash.full = AppCrypto.hash(this.form.value);
 						if (this.configSvc.isDebug) {
-							console.log("<CMS.Content>: Edit a content [Attachments/Search]", this.hash.content, this.hash.full);
+							console.log("<CMS.Content/Attachments/Search>: Edit a content", this.hash.content, this.hash.full);
 						}
 					});
 				}
@@ -559,15 +568,15 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 				const uploadThumbnailAsync = async (options?: FileOptions) => {
 					if (thumbnailBase64 !== undefined) {
 						if (this.configSvc.isDebug) {
-							console.log("<CMS.Content>: Upload thumbnail", this.hash.content, hash.content, thumbnail);
+							console.log("<CMS.Content/Edit>: Upload thumbnail", this.hash.content, hash.content, thumbnail);
 						}
 						options = options || this.portalsCmsSvc.getFileOptions(this.content);
 						options.Extras["x-attachment-id"] = thumbnail.identity;
 						await this.filesSvc.uploadThumbnailAsync(
 							thumbnailBase64,
 							options,
-							data => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(this.configSvc.isDebug ? () => console.log("<CMS.Content>: Upload thumbnail successful", data) : () => {}),
-							error => console.error("<CMS.Content>: Error occurred while uploading thumbnail", error)
+							data => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(this.configSvc.isDebug ? () => console.log("<CMS.Content/Edit>: Upload thumbnail successful", data) : () => {}),
+							error => console.error("<CMS.Content/Edit>: Error occurred while uploading thumbnail", error)
 						);
 					}
 				};

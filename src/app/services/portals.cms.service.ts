@@ -108,37 +108,44 @@ export class PortalsCmsService extends BaseService {
 			if (object !== undefined) {
 				const isThumbnail = message.Type.Object === "Thumbnail";
 				const isDelete = message.Type.Event === "Delete";
-				const attachments = isThumbnail ? object.thumbnails : object.attachments;
 				const changed = AppUtility.isArray(message.Data, true) ? message.Data as Array<AttachmentInfo> : [message.Data as AttachmentInfo];
-				if (isThumbnail && isDelete) {
-					object.thumbnails.clear();
-				}
-				else {
+				const current = ((isThumbnail ? object.thumbnails : object.attachments) || []).map(attachment => attachment);
+				const updated = isThumbnail
+					? isDelete ? [] : changed
+					: current.map(attachment => attachment);
+				if (!isThumbnail) {
 					if (isDelete) {
-						changed.forEach(info => attachments.removeAt(attachments.findIndex(attachment => attachment.ID === info.ID)));
+						changed.forEach(change => updated.removeAt(updated.findIndex(attachment => attachment.ID === change.ID)));
 					}
 					else {
-						changed.forEach(info => attachments.update(info, attachments.findIndex(attachment => attachment.ID === info.ID)));
+						changed.forEach(change => updated.update(change, updated.findIndex(attachment => attachment.ID === change.ID)));
 					}
 				}
 				if (isThumbnail) {
-					object.updateThumbnails(attachments, thumbnailURI => AppUtility.invoke(() => AppEvents.broadcast(this.name, { Type: "ThumbnailURI", ThumbnailURI: thumbnailURI, ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID }), 234));
+					object.updateThumbnails(updated, thumbnailURI => {
+						if (this.configSvc.isDebug) {
+							console.log(`[Portals]: Broadcast message to update thumbnail URI ${object.objectName}#${object.ID}`, thumbnailURI);
+						}
+						AppEvents.broadcast(this.name, { Type: "ThumbnailURI", ThumbnailURI: thumbnailURI, ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID });
+					})
 				}
 				else {
-					object.updateAttachments(attachments);
+					object.updateAttachments(updated);
 				}
-				const objectName = object.contentType.getObjectName(true);
 				if (this.configSvc.isDebug) {
-					console.log(`[Portals]: Broadcast message to update ${message.Type.Object.toLowerCase()}s ${objectName}#${object.ID} [${message.Type.Event}]`, attachments);
+					console.log(`[Portals]: Broadcast message to update ${message.Type.Object.toLowerCase()}s ${object.objectName}#${object.ID} [${message.Type.Event}]`, "\nCurrent", current, "\nChanged", changed, "\nUpdated", updated);
 				}
-				AppEvents.broadcast(this.name, { Type: message.Type.Object, Mode: message.Type.Event + "d", Changed: changed, Object: objectName, ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID });
+				AppEvents.broadcast(this.name, { Type: message.Type.Object, Mode: message.Type.Event + "d", Changed: changed, Object: object.objectName, ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID });
 			}
 		});
 
 		AppEvents.on(this.name, info => {
 			const organization = this.portalsCoreSvc.activeOrganization;
 			if (organization !== undefined) {
-				if ("UpdateSidebar" === info.args.Type) {
+				if ("Definitions" === info.args.Type) {
+					this.updateSidebarAsync();
+				}
+				else if ("UpdateSidebar" === info.args.Type) {
 					if ("ContentTypes" === info.args.Mode) {
 						this._sidebarCategory = undefined;
 						this._sidebarContentType = undefined;
@@ -147,7 +154,7 @@ export class PortalsCmsService extends BaseService {
 					else if ("Categories" === info.args.Mode) {
 						if (AppUtility.isNotEmpty(info.args.ContentTypeID)) {
 							if (this._sidebarContentType === undefined || this._sidebarContentType.ID !== info.args.ContentTypeID) {
-								this._sidebarContentType = ContentType.get(info.args.ContentTypeID);
+								this._sidebarContentType = ContentType.get(info.args.ContentTypeID) || this.getDefaultContentTypeOfContent(this.portalsCoreSvc.activeModule);
 								if (this._sidebarContentType !== undefined) {
 									this.updateSidebarWithCategoriesAsync();
 								}
@@ -581,10 +588,6 @@ export class PortalsCmsService extends BaseService {
 		return controlConfig;
 	}
 
-	setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {
-		this.portalsCoreSvc.setLookupOptions(lookupOptions, lookupModalPage, contentType, multiple, nested, onCompleted);
-	}
-
 	async getSchedulingTaskURLAsync(object: CmsBaseModel, time?: Date) {
 		const objectName = object.contentType.getObjectName(true);
 		const excluded = ["ID", "SystemID", "RepositoryID", "RepositoryEntityID", "Created", "CreatedID", "LastModified", "LastModifiedID", "Privileges", "Alias", "AllowComments", "TotalVersions", "Versions", "Parent", "Children", "ChildrenIDs", "children", "childrenIDs", "ansiTitle", "_attachments", "_thumbnails", "_routerParams"];
@@ -607,6 +610,10 @@ export class PortalsCmsService extends BaseService {
 			ObjectName: objectName
 		};
 		return `/portals/core/tasks/update/${AppUtility.toANSI(object.Title, true)}?x-request=${AppCrypto.jsonEncode(params)}`;
+	}
+
+	setLookupOptions(lookupOptions: AppFormsControlLookupOptionsConfig, lookupModalPage: any, contentType: ContentType, multiple?: boolean, nested?: boolean, onCompleted?: (options: AppFormsControlLookupOptionsConfig) => void) {
+		this.portalsCoreSvc.setLookupOptions(lookupOptions, lookupModalPage, contentType, multiple, nested, onCompleted);
 	}
 
 	private updateSidebar(items?: Array<AppSidebarMenuItem>, parent?: AppSidebarMenuItem, onNext?: () => void) {
@@ -1341,7 +1348,7 @@ export class PortalsCmsService extends BaseService {
 				console.log("[Portals]: Got an update message of a CMS content", message.Data);
 			}
 			AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: message.Data.CategoryID });
-			if (AppUtility.isArray(message.Data.OtherCategories)) {
+			if (AppUtility.isArray(message.Data.OtherCategories, true)) {
 				(message.Data.OtherCategories as Array<string>).forEach(categoryID => AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: categoryID }));
 			}
 		}

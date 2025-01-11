@@ -38,18 +38,19 @@ export class HomePage implements OnInit, OnDestroy {
 		}
 
 		AppEvents.on("App", info => {
-			const args = info.args;
-			if ("Initialized" === args.Type) {
+			if ("Initialized" === info.args.Type) {
 				this.prepareAsync();
 			}
-			else if ("Language" === args.Type && "Changed" === args.Mode) {
+			else if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
 				this.setTitleAsync();
 			}
-			else if ("Router" === args.Type && "Navigated" === args.Mode && this.configSvc.appConfig.URLs.home === args.URL) {
-				this.prepareAsync("Return").then(() => AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Return" }));
-			}
-			else if ("HomePage" === args.Type && "SetTitle" === args.Mode) {
-				this.titleResource = args.ResourceID || "common.sidebar.home";
+			else if ("HomePage" === info.args.Type) {
+				if ("Open" === info.args.Mode) {
+					this.prepareAsync("Return");
+				}
+				else if ("SetTitle" === info.args.Mode) {
+					this.titleResource = info.args.ResourceID || "common.sidebar.home";
+				}
 			}
 		}, "HomePageEvents");
 	}

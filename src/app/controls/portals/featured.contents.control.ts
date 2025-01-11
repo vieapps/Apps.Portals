@@ -1,9 +1,11 @@
+import { Subscription, interval } from "rxjs";
 import { Component, OnInit, OnDestroy, Input, NgZone, ChangeDetectorRef } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
+import { PortalBase as BaseModel } from "@app/models/portals.base";
 import { FeaturedContent } from "@app/models/portals.cms.base";
 import { Category } from "@app/models/portals.cms.category";
 
@@ -33,6 +35,8 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 	contents = new Array<FeaturedContent>();
 	private _isPublished = false;
 	private _preparing = false;
+	private _preparer: Subscription;
+	private _timer: Subscription;
 
 	get color() {
 		return this.configSvc.color;
@@ -64,7 +68,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}
 		
 		AppEvents.on("App", info => {
-			if ("Initialized" === info.args.Type || ("HomePage" === info.args.Type && "Open" === info.args.Mode)) {
+			if (info.args.Type === "Initialized") {
 				this.prepareLabelsAsync().then(() => this.prepareContents());
 			}
 		}, `FeaturedContents:AppInitialized:${this._isPublished}`);
@@ -72,43 +76,36 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		AppEvents.on(this.portalsCmsSvc.name, info => {
 			const organization = this.portalsCoreSvc.activeOrganization;
 			if (organization !== undefined) {
-				if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
-					AppUtility.invoke(() => {
-						if (!this._preparing) {
-							if (this.configSvc.isDebug) {
-								console.log("<FeaturedContents>: Prepare when change active organization");
-							}
-							this.prepareContents(true);
-						}
-					}, 789 * Math.random());
+				if (("Organization" === info.args.Type && "Changed" === info.args.Mode) || ("HomePage" === info.args.Type && "Open" === info.args.Mode && ("Sidebar" === info.args.Source || "Router" === info.args.Source))) {
+					this.reprepareContents(this.configSvc.isDebug ? `Force to re-prepare (when ${"Organization" === info.args.Type && "Changed" === info.args.Mode ? "change organization" : "open homepage"})` : undefined);
 				}
 				else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode && organization.ID === info.args.ID) {
-					AppUtility.invoke(() => {
-						if (!this._preparing) {
-							if (this.configSvc.isDebug) {
-								console.log("<FeaturedContents>: Prepare when got updated");
-							}
-							this.prepareContents(true);
-						}
-					}, 789 * Math.random());
+					this.reprepareContents(this.configSvc.isDebug ? `Force to re-prepare (when got update) [${this.contents.length}]` : undefined);
 				}
-				else if (organization.ID === info.args.SystemID && !!info.args.ID && "ThumbnailURI" === info.args.Type && !!info.args.ThumbnailURI) {
-					AppUtility.invoke(() => {
-						const content = this.contents.find(object => object.ID === info.args.ID);
-						this.zone.run(content === undefined ? () => {} : () => {
-							if (this.configSvc.isDebug) {
-								console.log(`<FeaturedContents/ThumbnailURI>: ${content.Title} [${content.OriginalObject.contentType.getObjectName(true)}#${content.ID}]`, info.args.ThumbnailURI);
-							}
-							content.ThumbnailURI = info.args.ThumbnailURI;
+				else if ("ThumbnailURI" === info.args.Type && info.args.ThumbnailURI !== undefined && info.args.ID !== undefined) {
+					const content = this.contents.find(object => object.ID === info.args.ID);
+					if (content !== undefined) {
+						AppUtility.invoke(() => this.zone.run(() => {
+							content.ThumbnailURI = typeof info.args.ThumbnailURI === "string" ? info.args.ThumbnailURI : BaseModel.noThumbnailURI;
 							this.changeDetector.detectChanges();
-						});
-					}, 234);
+							if (this.configSvc.isDebug) {
+								console.log(`<FeaturedContents/ThumbnailURI/${this._isPublished}>: ${content.Title} [${content.OriginalObject.contentType.getObjectName(true)}#${content.ID}]`, content.ThumbnailURI);
+							}
+						}), 567);
+					}
 				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
+		this._timer = interval(2 * 60 * 1000).subscribe(_ => this.prepareContents(true, this.configSvc.isDebug ? `<FeaturedContents/${this._isPublished}/Timer>: Force to re-prepare [${this.contents.length}]` : undefined));
 	}
 
 	ngOnDestroy() {
+		if (this._timer !== undefined) {
+			this._timer.unsubscribe();
+		}
+		if (this._preparer !== undefined) {
+			this._preparer.unsubscribe();
+		}
 		AppEvents.off("App", `FeaturedContents:AppInitialized:${this._isPublished}`);
 		AppEvents.off(this.portalsCmsSvc.name, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
 	}
@@ -124,9 +121,12 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		}
 	}
 
-	private prepareContents(force: boolean = false) {
+	private prepareContents(force: boolean = false, message?: string) {
 		if (this.configSvc.isAuthenticated && !this._preparing) {
 			this._preparing = true;
+			if (message !== undefined) {
+				console.log(message);
+			}
 			if (this.contents.length < 1 || force) {
 				const organization = this.portalsCoreSvc.activeOrganization;
 				const organizationID = organization !== undefined ? organization.ID : undefined;
@@ -159,19 +159,31 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 					} as FeaturedContent;
 				}).filter(filterBy).orderBy(orderBy).take(this.amount);
 			}
-			this.zone.run(() => this.changeDetector.detectChanges());
-			AppUtility.invoke(() => this._preparing = false, 789 * Math.random());
-			if (this.contents.length < 1) {
+			this.zone.run(() => {
+				this.changeDetector.detectChanges();
+				this._preparing = false;
+			});
+			if (this.contents.length < 1 && this._isPublished) {
 				AppUtility.invoke(() => {
 					if (this.contents.length < 1 && !this._preparing) {
 						if (this.configSvc.isDebug) {
-							console.log("<FeaturedContents>: Send request to prepare");
+							console.log(`<FeaturedContents/${this._isPublished}>: Send request to prepare`);
 						}
 						AppEvents.broadcast(this.portalsCoreSvc.name, { Type: "FeaturedContents", Mode: "Request" });
 					}
 				}, 2345 * Math.random());
 			}
 		}
+	}
+
+	private reprepareContents(mesage: string) {
+		this._preparer = this._preparer || interval(1234).subscribe(_ => {
+			this.prepareContents(true, mesage !== undefined ? `<FeaturedContents/${this._isPublished}>: ${mesage}` : undefined);
+			AppUtility.invoke(() => {
+				this._preparer.unsubscribe();
+				this._preparer = undefined;
+			}, 13);
+		});
 	}
 
 	track(index: number, content: FeaturedContent) {

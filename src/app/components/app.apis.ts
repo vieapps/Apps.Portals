@@ -311,7 +311,7 @@ export class AppAPIs {
 				msg = AppUtility.parse(event.data || "{}");
 			}
 			catch (error) {
-				console.error("[AppAPIs]: Error occurred while parsing the message", error instanceof SyntaxError ? `${(event.data || "").substring(0, 120)}...` : error);
+				console.error("[AppAPIs]: Error occurred while parsing the message", error instanceof SyntaxError ? `\n${(event.data || "").substring(0, 120)}...` : error);
 				this.clean();
 				const ids = Object.keys(this._callbackableMessages);
 				if (ids.length > 0) {

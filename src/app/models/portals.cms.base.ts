@@ -159,35 +159,39 @@ export abstract class PortalCmsBase extends BaseModel {
 					? thumbnails[0].URI
 					: undefined
 			: undefined;
-		if (this._thumbnailURI !== undefined && AppConfig.options.preload.thumbnails) {
+		const currentURI = BaseModel.getThumbnailURI(this.thumbnails);
+		const newURI = BaseModel.getThumbnailURI(thumbnails);
+		if (this._thumbnailURI !== undefined && AppConfig.options.preload.thumbnails && currentURI !== newURI) {
 			AppUtility.invoke(() => {
-				this._thumbnailURI = BaseModel.getThumbnailURI(thumbnails);
 				const image = new Image();
 				image.onload = () => {
-					if (AppConfig.isDebug) {
-						console.log(`<CmsBase/ThumbnailURI>: ${this.Title} [${this.contentType.getObjectName(true)}#${this.ID}]`, this._thumbnailURI);
-					}
 					this._thumbnailURI = undefined;
 					if (onLoaded !== undefined) {
-						onLoaded(this.thumbnailURI);
+						AppUtility.invoke(() => onLoaded(newURI), 1234);
+					}
+					if (AppConfig.isDebug) {
+						console.log(`<CmsBase/ThumbnailURI>: ${this.Title} [${this.contentType.getObjectName(true)}#${this.ID}]`, currentURI, newURI);
 					}
 				};
 				image.onerror = () => {
-					if (AppConfig.isDebug) {
-						console.error(`<CmsBase/ThumbnailURI>: ${this.Title} [${this.contentType.getObjectName(true)}#${this.ID}]`, this._thumbnailURI);
-					}
 					this._thumbnailURI = undefined;
-					if (onLoaded !== undefined) {
-						onLoaded(this.thumbnailURI);
+					AppUtility.invoke(() => {
+						new Image().src = newURI;
+						if (onLoaded !== undefined) {
+							AppUtility.invoke(() => onLoaded(newURI), 1234);
+						}
+					}, 6789);
+					if (AppConfig.isDebug) {
+						console.error(`<CmsBase/ThumbnailURI>: ${this.Title} [${this.contentType.getObjectName(true)}#${this.ID}]`, currentURI, newURI);
 					}
 				};
-				image.src = this._thumbnailURI;
-			}, 456);
+				image.src = newURI;
+			}, 1234);
 		}
 		else {
 			this._thumbnailURI = undefined;
-			if (onLoaded !== undefined) {
-				onLoaded(this.thumbnailURI);
+			if (onLoaded !== undefined && currentURI !== newURI) {
+				AppUtility.invoke(() => onLoaded(newURI), 1234);
 			}
 		}
 		this._thumbnails = thumbnails || [];

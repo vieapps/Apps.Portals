@@ -56,6 +56,9 @@ export class AppComponent implements OnInit {
 			else if (event instanceof NavigationEnd) {
 				const current = this.configSvc.getCurrentURL();
 				AppEvents.broadcast("App", { Type: "Router", Mode: "Navigated", URL: current.url, Params: current.params });
+				if (current.url === this.configSvc.appConfig.URLs.home) {
+					AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Router" });
+				}	
 				if (this.configSvc.isDebug) {
 					console.log(`<Router>: URLs stack [${this.configSvc.appConfig.URLs.stack.length}]`, this.configSvc.appConfig.URLs.stack);
 				}

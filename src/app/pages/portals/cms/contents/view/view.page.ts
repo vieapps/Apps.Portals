@@ -205,10 +205,16 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				else if (info.args.Type === "Deleted") {
 					this.cancel();
 				}
-				else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
+				else if (info.args.Type === "Thumbnail") {
+					if (this.configSvc.isDebug) {
+						console.log("<CMS.Content/View>: Prepare thumbnail (when got update message)", this.content.thumbnails);
+					}
 					this.prepareThumbnail();
 				}
 				else if (info.args.Type === "Attachment") {
+					if (this.configSvc.isDebug) {
+						console.log("<CMS.Content/View>: Prepare attachments (when got update message)", this.content.attachments);
+					}
 					this.prepareAttachments();
 				}
 			}
@@ -678,6 +684,9 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				() => this.filesSvc.deleteThumbnailAsync(
 					this.content.thumbnails.first().ID,
 					() => {
+						if (this.configSvc.isDebug) {
+							console.log("<CMS.Content/View>: Prepare thumbnail (when delete old thumbnail)");
+						}
 						this.prepareThumbnail();
 						this.content.thumbnails.removeAll();
 						this.trackAsync(this.resources.deleteThumbnail, "Delete", "Thumbnail");

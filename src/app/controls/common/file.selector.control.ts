@@ -68,6 +68,10 @@ export class FilesSelectorControl implements OnInit {
 		return this.settings !== undefined ? this.settings.Label || this.settings.label : undefined;
 	}
 
+	get cssIcons() {
+		return `ion-float-${this.allowEdit || this.allowDelete ? "start" : "end"}`;
+	}
+
 	ngOnInit() {
 		this.settings = AppUtility.isObject(this.settings, true)
 			? this.settings

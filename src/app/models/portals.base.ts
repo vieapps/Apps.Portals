@@ -27,14 +27,14 @@ export abstract class PortalBase extends BaseModel {
 	}
 
 	/** Gets URI of a thumbnail image */
-	static getThumbnailURI(info: Array<AttachmentInfo> | AttachmentInfo | string, isAttachment: boolean = false) {
+	static getThumbnailURI(data: Array<AttachmentInfo> | AttachmentInfo | string, isAttachment: boolean = false) {
 		let uri: string;
 		const settings = AppConfig.options.thumbnails || AppConfig.defaultOptions.thumbnails;
-		const attachment = info === undefined || typeof info === "string"
+		const attachment = data === undefined || typeof data === "string"
 			? undefined
-			: AppUtility.isArray(info, true)
-				? (info as Array<AttachmentInfo>).first()
-				: info as AttachmentInfo;
+			: AppUtility.isArray(data, true)
+				? (data as Array<AttachmentInfo>).first()
+				: data as AttachmentInfo;
 		if (attachment !== undefined) {
 			if (isAttachment) {
 				return AppConfig.URIs.files + (settings.preferWebP ? "thumbnailwebps/" : "thumbnails/") + (AppUtility.isNotEmpty(attachment.SystemID) ? attachment.SystemID : attachment.ServiceName) + `/1/${settings.width}/0/${attachment.ID}/${encodeURIComponent(attachment.Filename)}` + (settings.preferWebP && !attachment.Filename.endsWith(".webp") ? ".webp" : "");
@@ -48,7 +48,7 @@ export abstract class PortalBase extends BaseModel {
 				: undefined;
 		}
 		else {
-			uri = info as string;
+			uri = data as string;
 		}
 		if (AppUtility.isNotEmpty(uri)) {
 			if (settings.preferWebP) {
