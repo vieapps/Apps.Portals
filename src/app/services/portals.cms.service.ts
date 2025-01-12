@@ -1318,10 +1318,11 @@ export class PortalsCmsService extends BaseService {
 		});
 		this._featuredContentNones.remove(contents.first().SystemID);
 		AppUtility.invoke(() => {
-			const large = contents.filter(content => AppUtility.isNotEmpty(content.Details) && content.Details.length > this.configSvc.appConfig.app.query.large).map(content => Content.get(content.ID));
-			if (!!large.length) {
+			const large = contents.filter(content => AppUtility.isNotEmpty(content.Details) && content.Details.length > this.configSvc.appConfig.app.query.large).map(content => Content.get(content.ID)).filter(content => content !== undefined);
+			if (large.length > 0) {
+				const language = this.configSvc.appConfig.language;
 				const appURL = this.configSvc.appConfig.URIs.apps.substring(0, this.configSvc.appConfig.URIs.apps.length - 1);
-				console.log("~~~~~~~~~~>>>>> LARGE contents ~~~~~~~~~~>>>>>\n- " + AppUtility.toStr(large.map(content => `${content.StartDate.toLocaleDateString(this.configSvc.appConfig.language)}: ${content.Title}\nApp: ${appURL}${content.routerURI.replace("/view/", "/update/")}&prepare=true${this.configSvc.isDebug ? "&debug=true&r=" + Math.random() : ""}\nPublic: ${this.portalsCoreSvc.getPermanentURL(content)}`), "\n- ") + "\n<<<<<<<<<<~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+				console.log("~~~~~~~~~~>>>>> LARGE contents ~~~~~~~~~~>>>>>\n- " + AppUtility.toStr(large.map(content => `${content.StartDate.toLocaleDateString(language)}: ${content.Title}\nApp: ${appURL}${content.routerURI.replace("/view/", "/update/")}&prepare=true${this.configSvc.isDebug ? "&debug=true&r=" + Math.random() : ""}\nPublic: ${this.portalsCoreSvc.getPermanentURL(content)}`), "\n- ") + "\n<<<<<<<<<<~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 			}
 		}, this.configSvc.appConfig.app.preflight.defer / 2);
 	}
