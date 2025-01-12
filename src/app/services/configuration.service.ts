@@ -619,7 +619,12 @@ export class ConfigurationService extends BaseService {
 			await this.navController.navigateBack(AppUtility.getURI({ url: url, params: params }));
 		}
 		else {
-			this.popURL();
+			if (this.appConfig.URLs.stack.length > 1) {
+				this.popURL();
+			}
+			else {
+				await this.navigateRootAsync();
+			}
 		}
 	}
 

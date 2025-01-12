@@ -176,10 +176,13 @@ export abstract class PortalCmsBase extends BaseModel {
 				image.onerror = () => {
 					this._thumbnailURI = undefined;
 					AppUtility.invoke(() => {
-						new Image().src = newURI;
-						if (onLoaded !== undefined) {
-							AppUtility.invoke(() => onLoaded(newURI), 1234);
-						}
+						const img = new Image();
+						img.onload = () => {
+							if (onLoaded !== undefined) {
+								AppUtility.invoke(() => onLoaded(newURI), 1234);
+							}
+						};
+						img.src = newURI;
 					}, 6789);
 					if (AppConfig.isDebug) {
 						console.error(`<CmsBase/ThumbnailURI>: ${this.Title} [${this.contentType.getObjectName(true)}#${this.ID}]`, currentURI, newURI);

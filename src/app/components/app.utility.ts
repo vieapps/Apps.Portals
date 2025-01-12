@@ -346,7 +346,7 @@ export class AppUtility {
 	/** Copies 'left' string */
 	static left(str: string, length: number) {
 		return this.isNotEmpty(str) && str.length > length
-			? str.substring(0, str.length - length)
+			? str.substring(0, length)
 			: str;
 	}
 

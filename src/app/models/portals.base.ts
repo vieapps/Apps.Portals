@@ -35,21 +35,18 @@ export abstract class PortalBase extends BaseModel {
 			: AppUtility.isArray(data, true)
 				? (data as Array<AttachmentInfo>).first()
 				: data as AttachmentInfo;
-		if (attachment !== undefined) {
-			if (isAttachment) {
-				return AppConfig.URIs.files + (settings.preferWebP ? "thumbnailwebps/" : "thumbnails/") + (AppUtility.isNotEmpty(attachment.SystemID) ? attachment.SystemID : attachment.ServiceName) + `/1/${settings.width}/0/${attachment.ID}/${encodeURIComponent(attachment.Filename)}` + (settings.preferWebP && !attachment.Filename.endsWith(".webp") ? ".webp" : "");
-			}
-			uri = AppUtility.isObject(attachment, true)
-				? AppUtility.isObject(attachment.URIs, true)
-					? attachment.URIs.Direct
-					: AppUtility.isNotEmpty(attachment.URI)
-						? attachment.URI
-						: undefined
+		if (attachment !== undefined && isAttachment) {
+			return AppConfig.URIs.files + (settings.preferWebP ? "thumbnailwebps/" : "thumbnails/") + (AppUtility.isNotEmpty(attachment.SystemID) ? attachment.SystemID : attachment.ServiceName) + `/1/${settings.width}/0/${attachment.ID}/${encodeURIComponent(attachment.Filename)}` + (settings.preferWebP && !attachment.Filename.endsWith(".webp") ? ".webp" : "");
+		}
+		uri = attachment !== undefined
+			? AppUtility.isObject(attachment.URIs, true)
+				? attachment.URIs.Direct
+				: AppUtility.isNotEmpty(attachment.URI)
+					? attachment.URI
+					: undefined
+			: AppUtility.isNotEmpty(data)
+				? data as string
 				: undefined;
-		}
-		else {
-			uri = data as string;
-		}
 		if (AppUtility.isNotEmpty(uri)) {
 			if (settings.preferWebP) {
 				uri = uri.replace("/thumbnails/", "/thumbnailwebps/").replace("/thumbnailbigs/", "/thumbnailwebps/").replace("/thumbnailpngs/", "/thumbnailwebps/");

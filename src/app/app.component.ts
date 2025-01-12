@@ -221,6 +221,14 @@ export class AppComponent implements OnInit {
 						};
 						request[objectNameOrRepositoryEntityID !== undefined && objectNameOrRepositoryEntityID.length == 32 ? "RepositoryEntityID" : "ObjectName"] = objectNameOrRepositoryEntityID;
 						console.log("home?redirect=" + AppCrypto.base64urlEncode("/portals/initializer?x-request=" + AppCrypto.base64urlEncode(AppUtility.stringify(request))));
+					},
+					services: {
+						config: this.configSvc,
+						auth: this.authSvc,
+						users: this.usersSvc,
+						portals: this.portalsCoreSvc,
+						cms: this.portalsCmsSvc,
+						books: this.booksSvc
 					}
 				};
 			}

@@ -117,6 +117,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
 		const contentID = this.configSvc.requestParams["ID"];
+
 		this.content = Content.get(contentID);
 		if (this.content === undefined) {
 			await this.portalsCmsSvc.getContentAsync(contentID, _ => this.content = Content.get(contentID), undefined, true);
@@ -127,6 +128,31 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			this.appFormsSvc.showToastAsync("Hmmmmmm....");
 			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 			return;
+		}
+
+		if (!!this.configSvc.queryParams["prepare"]) {
+			await this.portalsCoreSvc.getOrganizationAsync(this.content.SystemID, () => {
+				this.portalsCoreSvc.setActiveOrganization(Organization.get(this.content.SystemID));
+				if (this.configSvc.isDebug) {
+					console.log("<CMS.Content/View>: Get and set the active organization", Organization.get(this.content.SystemID));
+				}
+			}, undefined, true);
+			await this.portalsCoreSvc.getModuleAsync(this.content.RepositoryID, () => {
+				this.portalsCoreSvc.setActiveModule(Module.get(this.content.RepositoryID));
+				if (this.configSvc.isDebug) {
+					console.log("<CMS.Content/View>: Get and set the active module", Module.get(this.content.RepositoryID));
+				}
+			}, undefined, true);
+			await this.portalsCoreSvc.getContentTypeAsync(this.content.RepositoryEntityID, () => {
+				if (this.configSvc.isDebug) {
+					console.log("<CMS.Content/View>: Get the content-type", ContentType.get(this.content.RepositoryEntityID));
+				}
+			}, undefined, true);
+			await this.portalsCmsSvc.getCategoryAsync(this.content.CategoryID, () => {
+				if (this.configSvc.isDebug) {
+					console.log("<CMS.Content/View>: Get the category", Category.get(this.content.CategoryID));
+				}
+			}, undefined, true);
 		}
 
 		let canView = false;

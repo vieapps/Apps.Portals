@@ -311,7 +311,9 @@ export class AppAPIs {
 				msg = AppUtility.parse(event.data || "{}");
 			}
 			catch (error) {
-				console.error("[AppAPIs]: Error occurred while parsing the message", error instanceof SyntaxError ? `\n${(event.data || "").substring(0, 120)}...` : error);
+				if (AppConfig.isDebug) {
+					console.error("[AppAPIs]: Error occurred while parsing the message", error instanceof SyntaxError ? `\n${(event.data || "").substring(0, 120)}...` : error);
+				}
 				this.clean();
 				const ids = Object.keys(this._callbackableMessages);
 				if (ids.length > 0) {
@@ -561,8 +563,8 @@ export class AppAPIs {
 			delete this._errorCallbacks[id];
 			this._resend.id = id === this._resend.id ? undefined : this._resend.id;
 		});
-		if (outdated.length > 0) {
-			console.log("[AppAPIs]: Clean out-dated", outdated.map(message => message.ID), AppConfig.isDebug ? outdated : "");
+		if (AppConfig.isDebug && outdated.length > 0) {
+			console.log("[AppAPIs]: Clean out-dated", outdated.map(message => message.ID), outdated);
 		}
 	}
 

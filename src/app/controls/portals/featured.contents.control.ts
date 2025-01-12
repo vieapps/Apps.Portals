@@ -84,21 +84,19 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 				else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode && this.portalsCoreSvc.activeOrganization.ID === info.args.ID) {
 					this.reprepareContents(this.configSvc.isDebug ? `Force to re-prepare (when got update) [${this.contents.length}]` : undefined);
 				}
-				else if ("ThumbnailURI" === info.args.Type && info.args.ThumbnailURI !== undefined && info.args.ID !== undefined) {
-					const content = this.contents.find(object => object.ID === info.args.ID);
-					if (content !== undefined) {
-						AppUtility.invoke(() => this.zone.run(() => {
-							content.ThumbnailURI = typeof info.args.ThumbnailURI === "string" ? info.args.ThumbnailURI : BaseModel.noThumbnailURI;
-							this.changeDetector.detectChanges();
-							if (this.configSvc.isDebug) {
-								console.log(`<FeaturedContents/ThumbnailURI/${this._isPublished}>: ${content.Title} [${content.OriginalObject.contentType.getObjectName(true)}#${content.ID}]`, content.ThumbnailURI);
-							}
-						}), this.configSvc.isElectronApp ? 234 : 567);
-					}
+				else if ("ThumbnailURI" === info.args.Type && info.args.ID !== undefined && this.contents.find(object => object.ID === info.args.ID) !== undefined) {
+					AppUtility.invoke(() => this.zone.run(() => {
+						this.contents.find(object => object.ID === info.args.ID).ThumbnailURI = AppUtility.isNotEmpty(info.args.ThumbnailURI) ? info.args.ThumbnailURI : BaseModel.noThumbnailURI;
+						this.changeDetector.detectChanges();
+						if (this.configSvc.isDebug) {
+							const content = this.contents.find(object => object.ID === info.args.ID);
+							console.log(`<FeaturedContents/ThumbnailURI/${this._isPublished}>: ${content.Title} [${content.OriginalObject.contentType.getObjectName(true)}#${content.ID}]`, info.args.ThumbnailURI, content.ThumbnailURI);
+						}
+					}), this.configSvc.isElectronApp ? 234 : 567);
 				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
-		this._timer = interval((this.configSvc.isElectronApp ? 30 : 120) * 1000).subscribe(_ => this.prepareContents(true, this.configSvc.isDebug ? `<FeaturedContents/Timer/${this._isPublished}>: Force to re-prepare [${this.contents.length}]` : undefined));
+		this._timer = interval((this.configSvc.isElectronApp ? 30 : 180) * 1000).subscribe(_ => this.prepareContents(true, this.configSvc.isDebug ? `<FeaturedContents/Timer/${this._isPublished}>: Force to re-prepare [${this.contents.length}]` : undefined));
 	}
 
 	ngOnDestroy() {

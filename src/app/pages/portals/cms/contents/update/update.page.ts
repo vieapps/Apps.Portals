@@ -82,11 +82,46 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	private async initializeAsync() {
 		await this.appFormsSvc.showLoadingAsync();
 		const contentID = this.configSvc.requestParams["ID"];
+
 		if (AppUtility.isNotEmpty(contentID)) {
 			this.content = Content.get(contentID);
 			if (this.content === undefined) {
-				await this.portalsCmsSvc.getContentAsync(contentID, _ => this.content = Content.get(contentID), undefined, true);
+				await this.portalsCmsSvc.getContentAsync(contentID, _ => {
+					this.content = Content.get(contentID);
+					if (this.configSvc.isDebug) {
+						console.log("<CMS.Content/Edit>: Query APIs for the content", this.content);
+					}
+				}, undefined, true);
 			}
+		}
+
+		if (this.content !== undefined && !!this.configSvc.queryParams["prepare"]) {
+			await this.portalsCoreSvc.getOrganizationAsync(this.content.SystemID, () => {
+				this.organization = Organization.get(this.content.SystemID);
+				this.portalsCoreSvc.setActiveOrganization(this.organization);
+				if (this.configSvc.isDebug) {
+					console.log("<CMS.Content/Edit>: Get and set the active organization", this.organization);
+				}
+			}, undefined, true);
+			await this.portalsCoreSvc.getModuleAsync(this.content.RepositoryID, () => {
+				this.module = Module.get(this.content.RepositoryID);
+				this.portalsCoreSvc.setActiveModule(this.module);
+				if (this.configSvc.isDebug) {
+					console.log("<CMS.Content/Edit>: Get and set the active module", this.module);
+				}
+			}, undefined, true);
+			await this.portalsCoreSvc.getContentTypeAsync(this.content.RepositoryEntityID, () => {
+				this.contentType = ContentType.get(this.content.RepositoryEntityID);
+				if (this.configSvc.isDebug) {
+					console.log("<CMS.Content/Edit>: Get the content-type", this.contentType);
+				}
+			}, undefined, true);
+			await this.portalsCmsSvc.getCategoryAsync(this.content.CategoryID, () => {
+				this.category = Category.get(this.content.CategoryID);
+				if (this.configSvc.isDebug) {
+					console.log("<CMS.Content/Edit>: Get the category", this.category);
+				}
+			}, undefined, true);
 		}
 
 		this.contentType = this.content !== undefined
@@ -656,10 +691,13 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	cancel(message?: string, url?: string) {
+		this.processing = true;
 		if (message === undefined && this.hash.full === AppCrypto.hash(this.form.value)) {
+			this.processing = false;
 			this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url));
 		}
 		else {
+			this.processing = false;
 			AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
 				message || await this.configSvc.getResourceAsync(`portals.cms.contents.update.messages.confirm.${AppUtility.isNotEmpty(this.content.ID) ? "cancel" : "new"}`),
 				() => this.trackAsync(this.title.track, "Cancel").then(() => this.configSvc.navigateBackAsync(url)),
