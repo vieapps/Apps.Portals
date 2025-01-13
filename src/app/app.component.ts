@@ -510,38 +510,38 @@ export class AppComponent implements OnInit {
 	}
 
 	private preflightAsync(fetchMessage: string, preloadMessage: string) {
+		const isDebug = this.configSvc.isDebug;
+		const settings = this.configSvc.appConfig.options.preload || this.configSvc.appConfig.defaultOptions.preload;
 		return AppUtility.invoke(() => {
-			this.notificationsSvc.fetchNotificationsAsync().then(this.configSvc.isDebug ? () => console.log(fetchMessage) : () => {})
+			this.notificationsSvc.fetchNotificationsAsync().then(isDebug ? () => console.log(fetchMessage) : () => {})
 			.then(() => AppUtility.invoke(() => {
-				this.portalsCoreSvc.getActiveOrganizationsAsync(false).then(this.configSvc.isDebug ? () => console.log(preloadMessage) : () => {})
+				this.portalsCoreSvc.getActiveOrganizationsAsync(false).then(isDebug ? () => console.log(preloadMessage) : () => {})
 				.then(() => AppUtility.invoke(() => {
-					const organizations = this.portalsCoreSvc.activeOrganizations.map(id => Organization.get(id)).filter(organization => organization !== undefined && organization.ID !== this.portalsCoreSvc.activeOrganization.ID);
-					if (this.configSvc.isDebug) {
+					const organizations = this.portalsCoreSvc.activeOrganizations.map(id => Organization.get(id)).filter(organization => organization !== undefined && (Organization.active === undefined || organization.ID !== Organization.active.ID));
+					if (isDebug) {
 						console.log("<App>: Preload tasks, sites & desktops", organizations.map(organization => organization.Title));
 					}
 					Promise.all(organizations.map((organization, index) => Promise.all([
 						!!SchedulingTask.instances.first(schedulingTask => schedulingTask.SystemID === organization.ID) ? AppUtility.promise : AppUtility.invoke(() => {
-							if (this.configSvc.isDebug) {
+							if (isDebug) {
 								console.log("<App>: Fetch scheduling tasks", organization);
 							}
 							this.portalsCoreSvc.fetchSchedulingTasks(organization.ID);
 						}, 4567 + (123 * index)),
 						!!Site.instances.first(site => site.SystemID === organization.ID) ? AppUtility.promise : AppUtility.invoke(() => {
-							if (this.configSvc.isDebug) {
+							if (isDebug) {
 								console.log("<App>: Fetch sites", organization);
 							}
 							this.portalsCoreSvc.fetchSites(organization.ID);
 						}, 6789 + (123 * index)),
 						!!Desktop.instances.first(desktop => desktop.SystemID === organization.ID) ? AppUtility.promise : AppUtility.invoke(() => {
-							if (this.configSvc.isDebug) {
+							if (isDebug) {
 								console.log("<App>: Fetch desktops", organization);
 							}
 							this.portalsCoreSvc.fetchDesktops(organization.ID);
 						}, 12345 + (123 * index))
 					])))
-					.then(() => AppUtility.invoke(() => (this.configSvc.appConfig.options.preload.categories ? this.portalsCmsSvc.prepareCategoriesOfActiveOrganizationsAsync() : AppUtility.promise)
-						.then(() => AppUtility.invoke(() => this.configSvc.appConfig.options.preload.featured ? this.portalsCmsSvc.prepareFeaturedContentsOfActiveOrganizationsAsync() : AppUtility.promise, this.configSvc.appConfig.options.preload.featured ? 234567 : 0)), this.configSvc.appConfig.options.preload.categories ? 123456 : 0)
-					);
+					.then(() => AppUtility.invoke(() => (settings.categories ? this.portalsCmsSvc.prepareCategoriesOfActiveOrganizationsAsync() : AppUtility.promise).then(() => AppUtility.invoke(() => settings.featured ? this.portalsCmsSvc.prepareFeaturedContentsOfActiveOrganizationsAsync() : AppUtility.promise, settings.featured ? 234567 : 0)), settings.categories ? 123456 : 0));
 				}, 12345));
 			}, 6789));
 		}, 3456);

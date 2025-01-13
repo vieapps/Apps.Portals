@@ -373,11 +373,11 @@ export class PortalsCoreService extends BaseService {
 			this.activeOrganizations.merge([organization.ID], true);
 			if (Organization.active === undefined || Organization.active.ID !== organization.ID) {
 				Organization.active = organization;
-				console.log("[Portals]: Set active organization", this.activeOrganization);
+				console.log("[Portals]: Set active organization", Organization.active);
 				AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
 				const useXHR = organization.modules.length < 1;
 				if (this.configSvc.isDebug) {
-					console.log("[Portals]: Get active modules (when set active organization)", this.activeOrganization);
+					console.log("[Portals]: Get active modules (when set active organization)", Organization.active);
 				}
 				this.getActiveModuleAsync(undefined, useXHR, undefined, false).then(() => {
 					if (useXHR) {
@@ -396,7 +396,7 @@ export class PortalsCoreService extends BaseService {
 			if (!!!SchedulingTask.instances.first(schedulingTask => schedulingTask.SystemID === Organization.active.ID)) {
 				AppUtility.invoke(() => {
 					if (this.configSvc.isDebug) {
-						console.log("[Portals]: Fetch sheduling tasks of the active organization (when set active organization)", this.activeOrganization);
+						console.log("[Portals]: Fetch sheduling tasks of the active organization (when set active organization)", Organization.active);
 					}
 					this.fetchSchedulingTasks(Organization.active.ID);
 				}, 4567);
@@ -404,7 +404,7 @@ export class PortalsCoreService extends BaseService {
 			if (!!!Site.instances.first(site => site.SystemID === Organization.active.ID)) {
 				AppUtility.invoke(() => {
 					if (this.configSvc.isDebug) {
-						console.log("[Portals]: Fetch sites of the active organization (when set active organization)", this.activeOrganization);
+						console.log("[Portals]: Fetch sites of the active organization (when set active organization)", Organization.active);
 					}
 					this.fetchSites(Organization.active.ID);
 				}, 5678);
@@ -412,7 +412,7 @@ export class PortalsCoreService extends BaseService {
 			if (!!!Desktop.instances.first(desktop => desktop.SystemID === Organization.active.ID)) {
 				AppUtility.invoke(() => {
 					if (this.configSvc.isDebug) {
-						console.log("[Portals]: Fetch desktops of the active organization (when set active organization)", this.activeOrganization);
+						console.log("[Portals]: Fetch desktops of the active organization (when set active organization)", Organization.active);
 					}
 					this.fetchDesktops(Organization.active.ID);
 				}, 6789);
