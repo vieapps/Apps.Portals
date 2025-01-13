@@ -449,7 +449,7 @@ export class ConfigurationService extends BaseService {
 	async saveSessionAsync(onNext?: (data?: any) => void) {
 		if (AppConfig.app.persistence) {
 			try {
-				await AppStorage.setAsync("Session", AppUtility.clone(AppConfig.session, ["jwt", "captcha"]));
+				await AppStorage.setAsync("Session", AppUtility.clone(AppConfig.session, ["jwt", "captcha", "status"]));
 			}
 			catch (error) {
 				this.showError("Error occurred while storing the session into storage", error);
