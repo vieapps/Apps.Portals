@@ -99,6 +99,26 @@ export class ContentType extends CoreBaseModel {
 		return `/portals/core/content.types/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}
 
+	get isCmsCategory() {
+		return this.ContentTypeDefinitionID === "B0000000000000000000000000000001";
+	}
+
+	get isCmsContent() {
+		return this.ContentTypeDefinitionID === "B0000000000000000000000000000002";
+	}
+
+	get isCmsItem() {
+		return this.ContentTypeDefinitionID === "B0000000000000000000000000000003";
+	}
+
+	get isCmsLink() {
+		return this.ContentTypeDefinitionID === "B0000000000000000000000000000004";
+	}
+
+	get isCmsForm() {
+		return this.ContentTypeDefinitionID === "B0000000000000000000000000000005";
+	}
+
 	getObjectName(includePrefixAndSuffix: boolean = false) {
 		const definition = this.contentTypeDefinition;
 		return definition !== undefined

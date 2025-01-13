@@ -773,8 +773,6 @@ export class PortalsCmsService extends BaseService {
 
 	private getFeaturedContentsAsync(contentTypes: Array<ContentType>, index: number, addMoreDefer: boolean = false) {
 		const contentType = contentTypes[index];
-		const isCmsItem = contentType.ContentTypeDefinitionID === "B0000000000000000000000000000003";
-		const isCmsForm = contentType.ContentTypeDefinitionID === "B0000000000000000000000000000005";
 		const filterBy = { And: [
 			{ SystemID: { Equals: contentType.SystemID } },
 			{ RepositoryID: { Equals: contentType.RepositoryID } },
@@ -800,7 +798,7 @@ export class PortalsCmsService extends BaseService {
 			this.showError(`Error occurred while preparing featured contents\n${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`, error);
 			onSuccess();
 		};
-		return isCmsForm
+		return contentType.isCmsForm
 			? this.searchFormsAsync(AppPagination.buildRequest(filterBy, sortBy.created), () => {
 				if (this.configSvc.isDebug) {
 					console.log(`[Portals]: Prepare featured contents [${index + 1}/${contentTypes.length}] - CMS.Form`, [`${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`]);
@@ -808,7 +806,7 @@ export class PortalsCmsService extends BaseService {
 				onSuccess();
 				AppUtility.invoke(() => this.searchFormsAsync(AppPagination.buildRequest(filterBy, sortBy.lastModified), () => this.prepareFeaturedContents(contentType.SystemID), undefined, false, true), 5678 + 5678 * Math.random() + (addMoreDefer ? 1234 * Math.random() : 0));
 			}, onError, false, true)
-			: isCmsItem
+			: contentType.isCmsItem
 				? this.searchItemsAsync(AppPagination.buildRequest(filterBy, sortBy.created), () => {
 					if (this.configSvc.isDebug) {
 						console.log(`[Portals]: Prepare featured contents [${index + 1}/${contentTypes.length}] - CMS.Item`, [`${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`]);

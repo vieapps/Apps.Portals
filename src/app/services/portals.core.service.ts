@@ -2683,7 +2683,7 @@ export class PortalsCoreService extends BaseService {
 
 	searchContentTypes(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
-			this.getSearchingPath("ContentType", this.configSvc.relatedQuery),
+			this.getSearchingPath("Content.Type", this.configSvc.relatedQuery),
 			request,
 			data => this.processContentTypes(data, onSuccess),
 			error => this.processError("Error occurred while searching content-types", error, onError)
@@ -2692,7 +2692,7 @@ export class PortalsCoreService extends BaseService {
 
 	searchContentTypesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
 		return this.searchAsync(
-			this.getSearchingPath("ContentType", this.configSvc.relatedQuery),
+			this.getSearchingPath("Content.Type", this.configSvc.relatedQuery),
 			request,
 			data => this.processContentTypes(data, onSuccess),
 			error => this.processError("Error occurred while searching content-types", error, onError),
@@ -2704,7 +2704,7 @@ export class PortalsCoreService extends BaseService {
 
 	createContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
-			this.getPath("ContentType"),
+			this.getPath("Content.Type"),
 			body,
 			data => this.processContentTypes({ Objects: [data] }, onSuccess),
 			error => this.processError("Error occurred while creating new a content type", error, onError)
@@ -2715,7 +2715,7 @@ export class PortalsCoreService extends BaseService {
 		return ContentType.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
-					this.getPath("ContentType", id),
+					this.getPath("Content.Type", id),
 					data => this.processContentTypes({ Objects: [data] }, onSuccess),
 					error => this.processError("Error occurred while getting a content type", error, onError),
 					undefined,
@@ -2725,7 +2725,7 @@ export class PortalsCoreService extends BaseService {
 
 	updateContentTypeAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
-			this.getPath("ContentType", body.ID),
+			this.getPath("Content.Type", body.ID),
 			body,
 			data => this.processContentTypes({ Objects: [data] }, onSuccess),
 			error => this.processError("Error occurred while updating a content type", error, onError)
@@ -2734,7 +2734,7 @@ export class PortalsCoreService extends BaseService {
 
 	deleteContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.deleteAsync(
-			this.getPath("ContentType", id),
+			this.getPath("Content.Type", id),
 			data => {
 				ContentType.instances.remove(data.ID);
 				if (onSuccess !== undefined) {
@@ -2747,7 +2747,7 @@ export class PortalsCoreService extends BaseService {
 
 	refreshContentTypeAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = true) {
 		return this.refreshAsync(
-			"ContentType",
+			"Content.Type",
 			id,
 			data => this.processContentTypes({ Objects: [data] }, onSuccess),
 			onError,
@@ -2762,7 +2762,7 @@ export class PortalsCoreService extends BaseService {
 				const contentType = ContentType.update(contentTypeData);
 				this.usersSvc.fetchProfileAsync(contentType.CreatedID).then(() => contentType.CreatedID === contentType.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(contentType.LastModifiedID));
 				if (contentType.Versions === undefined) {
-					this.findVersions("ContentType", contentType.ID);
+					this.findVersions("Content.Type", contentType.ID);
 				}
 			});
 		}

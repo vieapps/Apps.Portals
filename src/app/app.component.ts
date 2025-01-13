@@ -204,6 +204,19 @@ export class AppComponent implements OnInit {
 					apis: AppAPIs,
 					crypto: AppCrypto,
 					events: AppEvents,
+					utils: AppUtility,
+					services: {
+						config: this.configSvc,
+						auth: this.authSvc,
+						users: this.usersSvc,
+						forms: this.appFormsSvc,
+						notifications: this.notificationsSvc,
+						books: this.booksSvc,
+						portals: {
+							core: this.portalsCoreSvc,
+							cms: this.portalsCmsSvc
+						}
+					},
 					reset: (apis: string, ws: string, files: string, portals: string, apps: string, disabledServices?: string, dontStoreURIs: boolean = true) => this.appFormsSvc.showLoadingAsync().then(() => {
 						resetApps();
 						disableServices(disabledServices, true);
@@ -214,6 +227,9 @@ export class AppComponent implements OnInit {
 							.then(() => AppAPIs.closeWebSocket())
 							.then(() => this.initialize(() => this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.users.login)));
 					}),
+					resetApps: function(domain: string, disabledServices?: string, dontStoreURIs: boolean = true) {
+						this.reset(`https://apis.${domain}/`, `https://apis.${domain}/`, `https://files.${domain}/`, `https://portals.${domain}/`, `https://cms.${domain}/`, disabledServices, dontStoreURIs);
+					},
 					getRedirectURL: (systemID: string, objectID: string, objectNameOrRepositoryEntityID: string) => {
 						const request = {
 							SystemID: systemID,
@@ -221,14 +237,6 @@ export class AppComponent implements OnInit {
 						};
 						request[objectNameOrRepositoryEntityID !== undefined && objectNameOrRepositoryEntityID.length == 32 ? "RepositoryEntityID" : "ObjectName"] = objectNameOrRepositoryEntityID;
 						console.log("home?redirect=" + AppCrypto.base64urlEncode("/portals/initializer?x-request=" + AppCrypto.base64urlEncode(AppUtility.stringify(request))));
-					},
-					services: {
-						config: this.configSvc,
-						auth: this.authSvc,
-						users: this.usersSvc,
-						portals: this.portalsCoreSvc,
-						cms: this.portalsCmsSvc,
-						books: this.booksSvc
 					}
 				};
 			}
