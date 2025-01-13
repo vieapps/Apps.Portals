@@ -168,6 +168,9 @@ export class PortalsCmsService extends BaseService {
 				else if ("Changed" === info.args.Mode && ("Organization" === info.args.Type || "Module" === info.args.Type)) {
 					this._sidebarCategory = undefined;
 					this._sidebarContentType = undefined;
+					if ("Module" === info.args.Type) {
+						this.getContentTypesOfCategory(Module.active);
+					}
 					this.updateSidebarAsync();
 				}
 				else if ("FeaturedContents" === info.args.Type) {
@@ -668,7 +671,7 @@ export class PortalsCmsService extends BaseService {
 	private async updateSidebarWithContentTypesAsync(definitionID?: string, onNext?: () => void) {
 		const filterBy: (contentType: ContentType) => boolean = AppUtility.isNotEmpty(definitionID)
 			? contentType => contentType.ContentTypeDefinitionID === definitionID
-			: contentType => contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000001" && contentType.ContentTypeDefinitionID !== "B0000000000000000000000000000002";
+			: contentType => !contentType.isCmsCategory && !contentType.isCmsContent;
 		const contentTypes = this.portalsCoreSvc.activeModule !== undefined
 			? this.portalsCoreSvc.activeModule.contentTypes
 			: new Array<ContentType>();
@@ -903,7 +906,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	getContentTypesOfCategory(module: Module) {
-		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000001");
+		return (module || new Module()).contentTypes.filter(contentType => contentType.isCmsCategory);
 	}
 
 	getDefaultContentTypeOfCategory(module: Module) {
@@ -1184,7 +1187,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	getContentTypesOfContent(module: Module) {
-		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000002");
+		return (module || new Module()).contentTypes.filter(contentType => contentType.isCmsContent);
 	}
 
 	getDefaultContentTypeOfContent(module: Module) {

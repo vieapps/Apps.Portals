@@ -379,7 +379,7 @@ export class PortalsCoreService extends BaseService {
 				if (this.configSvc.isDebug) {
 					console.log("[Portals]: Get active modules (when set active organization)", Organization.active);
 				}
-				this.getActiveModuleAsync(undefined, useXHR, undefined, false).then(() => {
+				this.getActiveModuleAsync(undefined, useXHR, undefined, true).then(() => {
 					if (useXHR) {
 						AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
 					}
