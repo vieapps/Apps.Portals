@@ -96,7 +96,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 				}
 			}
 		}, `${(AppUtility.isNotEmpty(this.name) ? this.name + ":" : "")}FeaturedContents:${this._isPublished}`);
-		this._timer = interval((this.configSvc.isElectronApp ? 30 : 180) * 1000).subscribe(_ => this.prepareContents(true, this.configSvc.isDebug ? `<FeaturedContents/Timer/${this._isPublished}>: Force to re-prepare [${this.contents.length}]` : undefined));
+		this._timer = interval((this.configSvc.isElectronApp || this.configSvc.isDebug ? 30 : 180) * 1000).subscribe(_ => this.prepareContents(true, this.configSvc.isDebug ? `<FeaturedContents/Timer/${this._isPublished}>: Force to re-prepare [${this.contents.length}]` : undefined));
 	}
 
 	ngOnDestroy() {
@@ -177,14 +177,14 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 	}
 
 	private reprepareContents(message: string) {
-		this._preparer = this._preparer || interval(this.configSvc.isElectronApp ? 345 : 678).subscribe(_ => {
+		this._preparer = this._preparer || interval(this.configSvc.isElectronApp || this.configSvc.isDebug ? 345 : 678).subscribe(_ => {
 			this.prepareContents(true, message !== undefined ? `<FeaturedContents/${this._isPublished}>: ${message}` : undefined);
 			AppUtility.invoke(() => {
 				if (this._preparer !== undefined) {
 					this._preparer.unsubscribe();
 					this._preparer = undefined;
 				}
-			}, this.configSvc.isElectronApp ? 234 : 567);
+			}, this.configSvc.isElectronApp || this.configSvc.isDebug ? 234 : 567);
 		});
 	}
 

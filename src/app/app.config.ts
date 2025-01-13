@@ -75,8 +75,8 @@ export class AppConfig {
 			},
 			preload: {
 				thumbnails: true,
-				categories: false,
-				featured: false
+				categories: true,
+				featured: true
 			},
 			extras: { } as { [key: string]: any }
 		};

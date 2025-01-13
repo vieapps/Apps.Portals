@@ -246,14 +246,9 @@ export class PortalsCoreService extends BaseService {
 			console.log("[Portals]: Prepare to get active organization on initializing");
 			await this.getActiveOrganizationAsync(undefined, true);
 		}
-		else {
-			console.log(`[Portals]: Prepare ${Organization.active.modules.length < 1 ? "modules" : "scheduling tasks"} when got active organization on initializing`, Organization.active);
-			if (Organization.active.modules.length < 1) {
-				await this.getOrganizationAsync(Organization.active.ID, undefined, undefined, true);
-			}
-			else {
-				this.fetchSchedulingTasks();
-			}
+		else if (Organization.active.modules.length < 1) {
+			console.log("[Portals]: Prepare modules when got active organization on initializing", Organization.active);
+			await this.getOrganizationAsync(Organization.active.ID, undefined, undefined, true);
 		}
 		if (this.configSvc.appConfig.services.active.service === this.name) {
 			this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
@@ -373,7 +368,6 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	setActiveOrganization(organization: Organization, onNext?: () => void) {
-		const activeID = Organization.active !== undefined ? Organization.active.ID : undefined;
 		if (organization !== undefined) {
 			this.configSvc.appConfig.services.active.system = this.configSvc.appConfig.options.extras["organization"] = organization.ID;
 			this.activeOrganizations.merge([organization.ID], true);
@@ -395,28 +389,32 @@ export class PortalsCoreService extends BaseService {
 							console.log("[Portals]: Update options (when get active module)", this.configSvc.appConfig.options);
 						}
 					});
-					if (this.configSvc.isAuthenticated && Site.instances.first(site => site.SystemID === organization.ID) === undefined) {
-						if (this.configSvc.isDebug) {
-							console.log("[Portals]: Get sites of active organization (when get active module)", this.activeOrganization);
-						}
-						this.searchSitesAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }), undefined, undefined, true, false, true);
-					}
 				});
 			}
 		}
-		if (Organization.active !== undefined) {
-			if (Organization.active.ID !== activeID) {
-				if (this.configSvc.isDebug) {
-					console.log("[Portals]: Fetch sheduling tasks of the active organization (when set active organization)", this.activeOrganization);
-				}
-				this.fetchSchedulingTasks();
+		if (this.configSvc.isAuthenticated && Organization.active !== undefined) {
+			if (!!!SchedulingTask.instances.first(schedulingTask => schedulingTask.SystemID === Organization.active.ID)) {
+				AppUtility.invoke(() => {
+					if (this.configSvc.isDebug) {
+						console.log("[Portals]: Fetch sheduling tasks of the active organization (when set active organization)", this.activeOrganization);
+					}
+					this.fetchSchedulingTasks(Organization.active.ID);
+				}, 4567);
+			}
+			if (!!!Site.instances.first(site => site.SystemID === Organization.active.ID)) {
+				AppUtility.invoke(() => {
+					if (this.configSvc.isDebug) {
+						console.log("[Portals]: Fetch sites of the active organization (when set active organization)", this.activeOrganization);
+					}
+					this.fetchSites(Organization.active.ID);
+				}, 5678);
 			}
 			if (!!!Desktop.instances.first(desktop => desktop.SystemID === Organization.active.ID)) {
 				AppUtility.invoke(() => {
 					if (this.configSvc.isDebug) {
 						console.log("[Portals]: Fetch desktops of the active organization (when set active organization)", this.activeOrganization);
 					}
-					this.fetchDesktops();
+					this.fetchDesktops(Organization.active.ID);
 				}, 6789);
 			}
 		}
@@ -3024,6 +3022,17 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
+	fetchSites(systemID?: string, onSuccess?: () => void) {
+		this.searchSitesAsync({
+			FilterBy: {
+				And: [
+					{ SystemID: { Equals: systemID || this.activeOrganization.ID } }
+				]
+			},
+			SortBy: { Title: "Ascending" }
+		}, onSuccess, undefined, true, false, true);
+	}
+
 	processSites(data: any, onNext?: (data?: any) => void) {
 		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
 			(data.Objects as Array<any>).forEach(siteData => {
@@ -3203,7 +3212,7 @@ export class PortalsCoreService extends BaseService {
 		this.searchDesktopsAsync({
 			FilterBy: {
 				And: [
-					{ SystemID: { Equals: systemID ?? this.activeOrganization.ID } },
+					{ SystemID: { Equals: systemID || this.activeOrganization.ID } },
 					{ ParentID: "IsNull" }
 				]
 			},
@@ -3520,8 +3529,8 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	fetchSchedulingTasks() {
-		AppUtility.invoke(() => this.readAsync(this.getPath("Task", "fetch"), data => this.processSchedulingTasks(data), error => console.error("[Portals]: Error occurred while fetching tasks", error), { "x-system-id": this.activeOrganization.ID, "x-update-messagae": AppAPIs.isWebSocketReady.toString() }, false, true), 3456);
+	fetchSchedulingTasks(systemID?: string) {
+		AppUtility.invoke(() => this.readAsync(this.getPath("Task", "fetch"), data => this.processSchedulingTasks(data), error => console.error("[Portals]: Error occurred while fetching tasks", error), { "x-system-id": systemID || this.activeOrganization.ID, "x-update-messagae": AppAPIs.isWebSocketReady.toString() }, false, true), 3456);
 	}
 
 	runSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {

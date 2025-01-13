@@ -268,6 +268,9 @@ export class AppComponent implements OnInit {
 							};
 						}, 1234);
 						AppEvents.off("App", "AssignAppDebugInfo");
+						if (this.configSvc.isDebug) {
+							console.log("<App>: Debug info", window["__vieapps"]);
+						}
 					}
 				}, "AssignAppDebugInfo");
 			}
@@ -506,8 +509,42 @@ export class AppComponent implements OnInit {
 		return `${item.ID || item.Name || item.Title}@${index}`;
 	}
 
-	private fetchAndPreloadAsync(fetchMessage: string, preloadMessage: string) {
-		return AppUtility.invoke(() => this.notificationsSvc.fetchNotificationsAsync().then(this.configSvc.isDebug ? () => console.log(fetchMessage) : () => {}).then(() => AppUtility.invoke(() => this.portalsCoreSvc.getActiveOrganizationsAsync(false).then(this.configSvc.isDebug ? () => console.log(preloadMessage) : () => {}).then(() => AppUtility.invoke(() => (this.configSvc.appConfig.options.preload.categories ? this.portalsCmsSvc.prepareCategoriesOfActiveOrganizationsAsync() : AppUtility.promise).then(() => AppUtility.invoke(() => this.configSvc.appConfig.options.preload.featured ? this.portalsCmsSvc.prepareFeaturedContentsOfActiveOrganizationsAsync() : AppUtility.promise, this.configSvc.appConfig.options.preload.featured ? 123456 : 0)), this.configSvc.appConfig.options.preload.categories ? 123456 : 0)), 6789)), 6789);
+	private preflightAsync(fetchMessage: string, preloadMessage: string) {
+		return AppUtility.invoke(() => {
+			this.notificationsSvc.fetchNotificationsAsync().then(this.configSvc.isDebug ? () => console.log(fetchMessage) : () => {})
+			.then(() => AppUtility.invoke(() => {
+				this.portalsCoreSvc.getActiveOrganizationsAsync(false).then(this.configSvc.isDebug ? () => console.log(preloadMessage) : () => {})
+				.then(() => AppUtility.invoke(() => {
+					const organizations = this.portalsCoreSvc.activeOrganizations.map(id => Organization.get(id)).filter(organization => organization !== undefined && organization.ID !== this.portalsCoreSvc.activeOrganization.ID);
+					if (this.configSvc.isDebug) {
+						console.log("<App>: Preload tasks, sites & desktops", organizations.map(organization => organization.Title));
+					}
+					Promise.all(organizations.map((organization, index) => Promise.all([
+						!!SchedulingTask.instances.first(schedulingTask => schedulingTask.SystemID === organization.ID) ? AppUtility.promise : AppUtility.invoke(() => {
+							if (this.configSvc.isDebug) {
+								console.log("<App>: Fetch scheduling tasks", organization);
+							}
+							this.portalsCoreSvc.fetchSchedulingTasks(organization.ID);
+						}, 4567 + (123 * index)),
+						!!Site.instances.first(site => site.SystemID === organization.ID) ? AppUtility.promise : AppUtility.invoke(() => {
+							if (this.configSvc.isDebug) {
+								console.log("<App>: Fetch sites", organization);
+							}
+							this.portalsCoreSvc.fetchSites(organization.ID);
+						}, 6789 + (123 * index)),
+						!!Desktop.instances.first(desktop => desktop.SystemID === organization.ID) ? AppUtility.promise : AppUtility.invoke(() => {
+							if (this.configSvc.isDebug) {
+								console.log("<App>: Fetch desktops", organization);
+							}
+							this.portalsCoreSvc.fetchDesktops(organization.ID);
+						}, 12345 + (123 * index))
+					])))
+					.then(() => AppUtility.invoke(() => (this.configSvc.appConfig.options.preload.categories ? this.portalsCmsSvc.prepareCategoriesOfActiveOrganizationsAsync() : AppUtility.promise)
+						.then(() => AppUtility.invoke(() => this.configSvc.appConfig.options.preload.featured ? this.portalsCmsSvc.prepareFeaturedContentsOfActiveOrganizationsAsync() : AppUtility.promise, this.configSvc.appConfig.options.preload.featured ? 234567 : 0)), this.configSvc.appConfig.options.preload.categories ? 123456 : 0)
+					);
+				}, 12345));
+			}, 6789));
+		}, 3456);
 	}
 
 	private prepareEventProcessors() {
@@ -542,7 +579,7 @@ export class AppComponent implements OnInit {
 		AppEvents.on("Session", info => {
 			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
 				if ("LogIn" === info.args.Type) {
-					this.fetchAndPreloadAsync("<App>: Fetch notifications (log in)", "<App>: Fetch active organizations (log in)");
+					this.preflightAsync("<App>: Fetch notifications (log in)", "<App>: Fetch active organizations (log in)");
 				}
 				else {
 					if (this.configSvc.isDebug) {
@@ -648,7 +685,7 @@ export class AppComponent implements OnInit {
 			.filter(service => this.configSvc.appConfig.services.all.findIndex(svc => svc.name === service.name) > -1)
 			.map(service => service.initializeAsync())
 		).then(() => AppAPIs.openWebSocket(() => AppAPIs.isReopen ? AppUtility.promise : Promise.all([
-			this.configSvc.isAuthenticated ? this.fetchAndPreloadAsync("<App>: Fetch notifications (app init)", "<App>: Fetch active organizations (app init)") : AppUtility.promise,
+			this.configSvc.isAuthenticated ? this.preflightAsync("<App>: Fetch notifications (app init)", "<App>: Fetch active organizations (app init)") : AppUtility.promise,
 			AppUtility.invoke(() => {
 				const data = {
 					URIs: this.configSvc.appConfig.URIs,
