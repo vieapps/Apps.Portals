@@ -19,7 +19,11 @@ import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { BooksService } from "@app/services/books.service";
 import { NotificationsService } from "@app/services/notifications.service";
+import { Organization, Role, Module, ContentType, Expression, Site, Desktop, Portlet, SchedulingTask } from "@app/models/portals.core.all";
+import { Category, Content, Item, Link, Form, Crawler } from "@app/models/portals.cms.all";
 import { Notification } from "@app/models/notification";
+import { UserProfile } from "@app/models/user";
+import { Book } from "@app/models/book";
 
 @Component({
 	selector: "app-root",
@@ -200,23 +204,11 @@ export class AppComponent implements OnInit {
 					PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
 				}		
 				window["__vieapps"] = {
-					config: appConfig,
 					apis: AppAPIs,
+					config: appConfig,
 					crypto: AppCrypto,
 					events: AppEvents,
 					utils: AppUtility,
-					services: {
-						config: this.configSvc,
-						auth: this.authSvc,
-						users: this.usersSvc,
-						forms: this.appFormsSvc,
-						notifications: this.notificationsSvc,
-						books: this.booksSvc,
-						portals: {
-							core: this.portalsCoreSvc,
-							cms: this.portalsCmsSvc
-						}
-					},
 					reset: (apis: string, ws: string, files: string, portals: string, apps: string, disabledServices?: string, dontStoreURIs: boolean = true) => this.appFormsSvc.showLoadingAsync().then(() => {
 						resetApps();
 						disableServices(disabledServices, true);
@@ -239,6 +231,45 @@ export class AppComponent implements OnInit {
 						console.log("home?redirect=" + AppCrypto.base64urlEncode("/portals/initializer?x-request=" + AppCrypto.base64urlEncode(AppUtility.stringify(request))));
 					}
 				};
+				AppEvents.on("App", info => {
+					if ("Initialized" === info.args.Type) {
+						AppUtility.invoke(() => {
+							window["__vieapps"]["services"] = {
+								config: this.configSvc,
+								forms: this.appFormsSvc,
+								users: this.usersSvc,
+								authentication: this.authSvc,
+								notifications: this.notificationsSvc,
+								books: this.booksSvc,
+								portals: {
+									core: this.portalsCoreSvc,
+									cms: this.portalsCmsSvc
+								}
+							};
+							window["__vieapps"]["data"] = {
+								users: UserProfile.instances,
+								notifications: Notification.instances,
+								organizations: Organization.instances,
+								roles: Role.instances, 
+								modules: Module.instances,
+								contentTypes: ContentType.instances,
+								expressions: Expression.instances,
+								sites: Site.instances,
+								desktops: Desktop.instances,
+								portlets: Portlet.instances,
+								schedulingTasks: SchedulingTask.instances,
+								categories: Category.instances,
+								contents: Content.instances,
+								items: Item.instances,
+								links: Link.instances,
+								forms: Form.instances,
+								crawlers: Crawler.instances,
+								books: Book.instances
+							};
+						}, 1234);
+						AppEvents.off("App", "AssignAppDebugInfo");
+					}
+				}, "AssignAppDebugInfo");
 			}
 		});
 	}
