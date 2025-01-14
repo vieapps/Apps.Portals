@@ -10,6 +10,7 @@ import { AppUtility } from "@app/components/app.utility";
 import { AppStorage } from "@app/components/app.storage";
 import { AppFormsService } from "@app/components/forms.service";
 import { AppSidebar, AppSidebarMenuItem, AppSidebarFooterItem } from "@app/components/app.objects";
+import { AppPagination } from "@app/components/app.pagination";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -19,11 +20,12 @@ import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { BooksService } from "@app/services/books.service";
 import { NotificationsService } from "@app/services/notifications.service";
+import { Account } from "@app/models/account";
+import { UserProfile } from "@app/models/user";
+import { Notification } from "@app/models/notification";
+import { Book } from "@app/models/book";
 import { Organization, Role, Module, ContentType, Expression, Site, Desktop, Portlet, SchedulingTask } from "@app/models/portals.core.all";
 import { Category, Content, Item, Link, Form, Crawler } from "@app/models/portals.cms.all";
-import { Notification } from "@app/models/notification";
-import { UserProfile } from "@app/models/user";
-import { Book } from "@app/models/book";
 
 @Component({
 	selector: "app-root",
@@ -247,7 +249,10 @@ export class AppComponent implements OnInit {
 								}
 							};
 							window["__vieapps"]["data"] = {
+								accounts: Account.instances,
 								users: UserProfile.instances,
+								books: Book.instances,
+								paginations: AppPagination.instances,
 								notifications: Notification.instances,
 								organizations: Organization.instances,
 								roles: Role.instances, 
@@ -263,14 +268,13 @@ export class AppComponent implements OnInit {
 								items: Item.instances,
 								links: Link.instances,
 								forms: Form.instances,
-								crawlers: Crawler.instances,
-								books: Book.instances
+								crawlers: Crawler.instances
 							};
+							AppEvents.off("App", "AssignAppDebugInfo");
+							if (this.configSvc.isDebug) {
+								console.log("<App>: Debug info", window["__vieapps"]);
+							}
 						}, 1234);
-						AppEvents.off("App", "AssignAppDebugInfo");
-						if (this.configSvc.isDebug) {
-							console.log("<App>: Debug info", window["__vieapps"]);
-						}
 					}
 				}, "AssignAppDebugInfo");
 			}
