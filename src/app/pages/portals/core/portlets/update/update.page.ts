@@ -794,6 +794,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 	private async updateAsync() {
 		this.processing = true;
 		const portlet = this.form.value;
+
 		let options = AppUtility.isObject(portlet.ListSettings, true)
 			? portlet.ListSettings.Options
 			: undefined;
@@ -802,13 +803,13 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				portlet.ListSettings.Options = AppUtility.stringify(AppUtility.parse(options));
 			}
 			catch (error) {
-				this.processing = false;
 				console.error("Error occurred while parsing JSON of list settings", error);
 				await this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.portlets.update.messages.json") }, undefined, _ => {
-					const control = this.formControls.find(ctrl => ctrl.Name === "ListSettings").SubControls.Controls.find(ctrl => ctrl.Name === "Options");
+					const control = this.formControls.find(ctrl => ctrl.Name === "ListSettings");
 					this.formSegments.current = control.Segment;
-					control.focus();
+					control.SubControls.Controls.find(ctrl => ctrl.Name === "Options").focus();
 				});
+				this.processing = false;
 				return;
 			}
 		}
@@ -817,6 +818,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				? AppUtility.stringify(options)
 				: undefined;
 		}
+
 		options = AppUtility.isObject(portlet.ViewSettings, true)
 			? portlet.ViewSettings.Options
 			: undefined;
@@ -825,13 +827,13 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 				portlet.ViewSettings.Options = AppUtility.stringify(AppUtility.parse(options));
 			}
 			catch (error) {
-				this.processing = false;
 				console.error("Error occurred while parsing JSON of view settings", error);
 				await this.appFormsSvc.showErrorAsync({ Message: await this.configSvc.getResourceAsync("portals.portlets.update.messages.json") }, undefined, _ => {
-					const control = this.formControls.find(ctrl => ctrl.Name === "ViewSettings").SubControls.Controls.find(ctrl => ctrl.Name === "Options");
+					const control = this.formControls.find(ctrl => ctrl.Name === "ViewSettings");
 					this.formSegments.current = control.Segment;
-					control.focus();
+					control.SubControls.Controls.find(ctrl => ctrl.Name === "Options").focus();
 				});
+				this.processing = false;
 				return;
 			}
 		}
