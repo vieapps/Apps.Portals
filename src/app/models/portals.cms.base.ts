@@ -19,6 +19,28 @@ export abstract class PortalCmsBase extends BaseModel {
 		return BaseModel.contentTypeDefinitions;
 	}
 
+	private static broadcast(object: PortalCmsBase, type: string, additional?: { [key: string]: string }, objectName?: string) {
+		const args = {
+			Type: type,
+			Mode: "Updated",
+			Object: objectName || object.contentType.getObjectName(true),
+			ID: object.ID,
+			SystemID: object.SystemID,
+			RepositoryID: object.RepositoryID,
+			RepositoryEntityID: object.RepositoryEntityID
+		};
+		const categoryID = object["CategoryID"];
+		if (AppUtility.isNotEmpty(categoryID)) {
+			args["CategoryID"] = categoryID;
+		}
+		const categoryIDs = object["OtherCategories"];
+		if (AppUtility.isArray(categoryIDs, true)) {
+			args["CategoryIDs"] = categoryIDs;
+		}
+		AppUtility.toKeyValuePair(additional).forEach(kvp => args[kvp.key] = kvp.value);
+		AppEvents.broadcast("Portals", args);
+	}
+
 	abstract SystemID: string;
 	abstract RepositoryID: string;
 	abstract RepositoryEntityID: string;
@@ -151,7 +173,7 @@ export abstract class PortalCmsBase extends BaseModel {
 		}
 	}
 
-	updateThumbnails(thumbnails: AttachmentInfo[], onLoaded?: (thumbnailURI: string) => void, onCompleted?: () => void) {
+	updateThumbnails(thumbnails: AttachmentInfo[], onCompleted?: () => void) {
 		this._thumbnailURI = AppUtility.isArray(thumbnails, true) && thumbnails.length > 0
 			? AppUtility.isObject(thumbnails[0].URIs, true)
 				? thumbnails[0].URIs.Direct
@@ -159,6 +181,7 @@ export abstract class PortalCmsBase extends BaseModel {
 					? thumbnails[0].URI
 					: undefined
 			: undefined;
+		const objectName = this.contentType.getObjectName(true);
 		const currentURI = BaseModel.getThumbnailURI(this.thumbnails);
 		const newURI = BaseModel.getThumbnailURI(thumbnails);
 		if (this._thumbnailURI !== undefined && AppConfig.options.preload.thumbnails && currentURI !== newURI) {
@@ -166,26 +189,20 @@ export abstract class PortalCmsBase extends BaseModel {
 				const image = new Image();
 				image.onload = () => {
 					this._thumbnailURI = undefined;
-					if (onLoaded !== undefined) {
-						AppUtility.invoke(() => onLoaded(newURI), 1234);
-					}
+					AppUtility.invoke(() => PortalCmsBase.broadcast(this, "ThumbnailURI", { ThumbnailURI: newURI }, objectName), 1234);
 					if (AppConfig.isDebug) {
-						console.log(`<CmsBase/ThumbnailURI>: ${this.Title} [${this.contentType.getObjectName(true)}#${this.ID}]`, currentURI, newURI);
+						console.log(`<CmsBase/ThumbnailURI>: ${this.Title} [${objectName}#${this.ID}]`, currentURI, newURI);
 					}
 				};
 				image.onerror = () => {
 					this._thumbnailURI = undefined;
 					AppUtility.invoke(() => {
 						const img = new Image();
-						img.onload = () => {
-							if (onLoaded !== undefined) {
-								AppUtility.invoke(() => onLoaded(newURI), 1234);
-							}
-						};
+						img.onload = () => AppUtility.invoke(() => PortalCmsBase.broadcast(this, "ThumbnailURI", { ThumbnailURI: newURI }, objectName), 1234);
 						img.src = newURI;
 					}, 6789);
 					if (AppConfig.isDebug) {
-						console.error(`<CmsBase/ThumbnailURI>: ${this.Title} [${this.contentType.getObjectName(true)}#${this.ID}]`, currentURI, newURI);
+						console.error(`<CmsBase/ThumbnailURI>: ${this.Title} [${objectName}#${this.ID}]`, currentURI, newURI);
 					}
 				};
 				image.src = newURI;
@@ -193,11 +210,12 @@ export abstract class PortalCmsBase extends BaseModel {
 		}
 		else {
 			this._thumbnailURI = undefined;
-			if (onLoaded !== undefined && currentURI !== newURI) {
-				AppUtility.invoke(() => onLoaded(newURI), 1234);
+			if (currentURI !== newURI) {
+				AppUtility.invoke(() => PortalCmsBase.broadcast(this, "ThumbnailURI", { ThumbnailURI: newURI }, objectName), 1234);
 			}
 		}
-		this._thumbnails = thumbnails || [];
+		this._thumbnails = (thumbnails || []).map(thumbnail => BaseModel.prepareAttachment(thumbnail));
+		PortalCmsBase.broadcast(this, "Thumbnail", undefined, objectName);
 		if (onCompleted !== undefined) {
 			onCompleted();
 		}
@@ -206,6 +224,7 @@ export abstract class PortalCmsBase extends BaseModel {
 
 	updateAttachments(attachments: AttachmentInfo[], onCompleted?: () => void) {
 		this._attachments = (attachments || []).map(attachment => BaseModel.prepareAttachment(attachment));
+		PortalCmsBase.broadcast(this, "Attachment");
 		if (onCompleted !== undefined) {
 			onCompleted();
 		}

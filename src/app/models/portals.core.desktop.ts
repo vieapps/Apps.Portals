@@ -2,6 +2,7 @@ import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { NestedObject, ElementUISettings } from "@app/models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
+import { AttachmentInfo } from "@app/models/base";
 import { Organization } from "@app/models/portals.core.organization";
 import { Portlet } from "@app/models/portals.core.portlet";
 
@@ -56,6 +57,7 @@ export class Desktop extends CoreBaseModel implements NestedObject {
 	ID = undefined as string;
 
 	ansiTitle: string;
+	attachments: AttachmentInfo[];
 	childrenIDs: Array<string>;
 	portlets: Array<Portlet>;
 

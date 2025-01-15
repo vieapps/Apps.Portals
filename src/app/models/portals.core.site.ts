@@ -1,6 +1,7 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { ElementUISettings } from "@app/models/portals.base";
+import { AttachmentInfo } from "@app/models/base";
 import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
 import { Organization } from "@app/models/portals.core.organization";
 
@@ -55,6 +56,7 @@ export class Site extends CoreBaseModel {
 	ID = undefined as string;
 
 	ansiTitle: string;
+	attachments: AttachmentInfo[];
 
 	/** Deserializes data to object */
 	static deserialize(json: any, site?: Site) {

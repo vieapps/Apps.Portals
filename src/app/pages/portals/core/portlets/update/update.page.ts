@@ -11,8 +11,7 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { FilesService, FileOptions } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { AttachmentInfo } from "@app/models/base";
-import { Organization, ContentType, Expression, Desktop, Portlet } from "@app/models/portals.core.all";
+import { PortalBase as BaseModel, Organization, ContentType, Expression, Desktop, Portlet } from "@app/models/portals.core.all";
 import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selector.modal.page";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 import { DataLookupModalPage } from "@app/controls/portals/data.lookup.modal.page";
@@ -44,7 +43,6 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 	private canModerateOrganization = false;
 	private isAdvancedMode = false;
 	private unspecified = "Unspecified";
-	private attachments: AttachmentInfo[];
 	private hash = "";
 
 	title = "";
@@ -121,7 +119,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 
 		if (this.organization.contentTypes === undefined || this.organization.contentTypes.length < 1) {
 			this.trackAsync(`${this.title} | Invalid Organization`, "Check"),
-			await this.appFormsSvc.hideLoadingAsync(async () => await this.cancel(await this.configSvc.getResourceAsync("portals.contenttypes.list.no")));
+			await this.appFormsSvc.hideLoadingAsync(async () => this.cancel(await this.configSvc.getResourceAsync("portals.contenttypes.list.no")));
 			return;
 		}
 
@@ -195,7 +193,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			}
 			const contentTypeID = this.originalPortlet !== undefined ? this.originalPortlet.RepositoryEntityID : this.portlet.RepositoryEntityID;
 			this.contentType = ContentType.get(contentTypeID);
-			if (this.contentType === undefined && AppUtility.isNotEmpty(contentTypeID)) {
+			if (this.contentType === undefined && AppUtility.isNotEmpty(contentTypeID) && contentTypeID !== "-") {
 				await this.portalsCoreSvc.getContentTypeAsync(contentTypeID, _ => this.contentType = ContentType.get(contentTypeID), undefined, true);
 			}
 			this.otherDesktops = this.originalPortlet !== undefined ? this.originalPortlet.otherDesktops : this.portlet.otherDesktops;
@@ -225,10 +223,12 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		AppEvents.on(this.filesSvc.name, info => {
 			if (info.args.Object === "Attachment" && this.desktop.ID === info.args.ObjectID) {
 				if (info.args.Event === "Delete") {
-					this.attachments.removeAt(this.attachments.findIndex(attachment => attachment.ID === info.args.Data.ID));
+					if (this.desktop.attachments !== undefined) {
+						this.desktop.attachments.removeAt(this.desktop.attachments.findIndex(attachment => attachment.ID === info.args.Data.ID));
+					}
 				}
 				else {
-					this.attachments.push(info.args.Data);
+					this.desktop.attachments = (this.desktop.attachments || []).concat([BaseModel.prepareAttachment(info.args.Data)]);
 				}
 				this.prepareAttachments();
 			}
@@ -693,7 +693,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	private prepareAttachments() {
-		this.filesSvc.prepareAttachmentsFormControl(this.formControls.find(ctrl => ctrl.Name === "Attachments", this.attachments));
+		this.filesSvc.prepareAttachmentsFormControl(this.formControls.find(ctrl => ctrl.Name === "Attachments"), this.desktop.attachments);
 	}
 
 	onFormInitialized() {
@@ -729,12 +729,21 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 			(this.form.controls.ViewSettings as FormGroup).controls.Options.setValue(AppUtility.isObject(portlet.ViewSettings, true) && AppUtility.isObject(portlet.ViewSettings.Options, true) ? JSON.stringify(portlet.ViewSettings.Options) : undefined);
 		}
 		this.hash = AppCrypto.hash(this.form.value);
-		this.appFormsSvc.hideLoadingAsync(async () => {
-			await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => {
-				this.attachments = attachments;
+		this.appFormsSvc.hideLoadingAsync(() => {
+			if (this.desktop.attachments !== undefined) {
 				this.prepareAttachments();
-			});
-			this.hash = AppCrypto.hash(this.form.value);
+				this.hash = AppCrypto.hash(this.form.value);
+			}
+			else {
+				this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => {
+					this.desktop.attachments = attachments;
+					this.prepareAttachments();
+					this.hash = AppCrypto.hash(this.form.value);
+				});
+			}
+			if (this.configSvc.isDebug) {
+				console.log("<Portlet/Edit>: Edit a portlet\n", this.portlet.Title, this.portlet, this.configSvc.requestParams, this.hash);
+			}
 		});
 	}
 

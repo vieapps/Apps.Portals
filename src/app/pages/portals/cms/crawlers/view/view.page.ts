@@ -159,7 +159,7 @@ export class CmsCrawlersViewPage implements OnInit, OnDestroy {
 				else if (args.Type === "Deleted" && !this.processing) {
 					this.cancel();
 				}
-				else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
+				else if (info.args.Type === "Thumbnail") {
 					this.prepareThumbnail();
 				}
 			}
@@ -256,7 +256,7 @@ export class CmsCrawlersViewPage implements OnInit, OnDestroy {
 				this.prepareThumbnail();
 			}
 			else {
-				this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.crawler), thumbnails => this.crawler.updateThumbnails(thumbnails, undefined, () => this.prepareThumbnail()));
+				this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.crawler), thumbnails => this.crawler.updateThumbnails(thumbnails, () => this.prepareThumbnail()));
 			}
 		});
 	}

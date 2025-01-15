@@ -115,10 +115,10 @@ export class Link extends CmsBaseModel implements NestedObject {
 		return super.copy(source, data => {
 			this.normalizeExtendedProperties(data);
 			if (AppUtility.isArray(data.Thumbnails, true)) {
-				this.updateThumbnails(data.Thumbnails, uri => AppEvents.broadcast("Portals", { Object: "CMS.Link", Type: "Thumbnail", ID: this.ID, SystemID: this.SystemID, RepositoryID: this.RepositoryID, RepositoryEntityID: this.RepositoryEntityID, ParentID: this.ParentID, ThumbnailURI: uri }));
+				this.updateThumbnails(data.Thumbnails);
 			}
 			if (AppUtility.isArray(data.Attachments, true)) {
-				this.updateAttachments(data.Attachments, () => AppEvents.broadcast("Portals", { Object: "CMS.Link", Type: "Attachment", ID: this.ID, SystemID: this.SystemID, RepositoryID: this.RepositoryID, RepositoryEntityID: this.RepositoryEntityID, ParentID: this.ParentID }));
+				this.updateAttachments(data.Attachments);
 			}
 			if (onCompleted !== undefined) {
 				onCompleted(data, this);

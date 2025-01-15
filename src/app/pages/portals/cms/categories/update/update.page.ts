@@ -143,7 +143,7 @@ export class CmsCategoriesUpdatePage implements OnInit, OnDestroy {
 					else if (info.args.Type === "Deleted") {
 						this.cancel();
 					}
-					else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
+					else if (info.args.Type === "Thumbnail") {
 						this.prepareThumbnail();
 					}
 				}
@@ -357,11 +357,14 @@ export class CmsCategoriesUpdatePage implements OnInit, OnDestroy {
 					this.hash = AppCrypto.hash(this.form.value);
 				}
 				else {
-					this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.category), thumbnails => this.category.updateThumbnails(thumbnails, undefined, () => {
+					this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.category), thumbnails => this.category.updateThumbnails(thumbnails, () => {
 						this.prepareThumbnail();
 						this.hash = AppCrypto.hash(this.form.value);
 					}));
 				}
+			}
+			if (this.configSvc.isDebug) {
+				console.log("<CMS.Category/Edit>: Edit a category\n", this.category.Title, this.category, this.configSvc.requestParams, this.hash);
 			}
 		});
 	}
@@ -371,62 +374,66 @@ export class CmsCategoriesUpdatePage implements OnInit, OnDestroy {
 	}
 
 	save() {
-		if (this.appFormsSvc.validate(this.form)) {
-			if (this.hash === AppCrypto.hash(this.form.value)) {
-				this.configSvc.navigateBackAsync();
-			}
-			else {
-				this.processing = true;
-				this.appFormsSvc.showLoadingAsync(this.title.track);
-
-				const category = this.form.value;
-				category.PrimaryContentID = this.contentTypes.length > 1 ? category.PrimaryContentID : undefined;
-				category.OriginalPrivileges = Privileges.getPrivileges(category.OriginalPrivileges);
-				this.portalsCoreSvc.normalizeNotificationSettings(category.Notifications, this.emailsByApprovalStatus);
-				this.portalsCoreSvc.normalizeEmailSettings(category.EmailSettings);
-
-				const thumbnail = (this.formControls.find(ctrl => ctrl.Name === "Thumbnails") || {}).value;
-				const thumbnailBase64 = thumbnail !== undefined && AppUtility.isObject(thumbnail, true) ? thumbnail.new : undefined;
-				const uploadThumbnailAsync = async (options?: FileOptions) => {
-					if (thumbnailBase64 !== undefined) {
-						if (this.configSvc.isDebug) {
-							console.log("<CMS.Category>: Upload thumbnail", this.hash, thumbnail);
-						}
-						options = options || this.portalsCmsSvc.getFileOptions(this.category);
-						options.Extras["x-attachment-id"] = thumbnail.identity;
-						await this.filesSvc.uploadThumbnailAsync(
-							thumbnailBase64,
-							options,
-							data => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(this.configSvc.isDebug ? () => console.log("<CMS.Category>: Upload thumbnail successful", data) : () => {}),
-							error => console.error("<CMS.Category>: Error occurred while uploading thumbnail", error)
-						);
-					}
-				};
-
-				if (AppUtility.isNotEmpty(category.ID)) {
-					uploadThumbnailAsync().then(() => this.portalsCmsSvc.updateCategoryAsync(
-						category,
-						async () => await Promise.all([
-							this.trackAsync(this.title.track, "Update"),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.update")),
-							this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
-						]),
-						error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
-					));
+		this.processing = true;
+		this.appFormsSvc.showLoadingAsync(this.title.track).then(() => {
+			if (this.appFormsSvc.validate(this.form)) {
+				if (this.hash === AppCrypto.hash(this.form.value)) {
+					this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 				}
 				else {
-					this.portalsCmsSvc.createCategoryAsync(
-						category,
-						async () => await Promise.all([
-							this.trackAsync(this.title.track),
-							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.new")),
-							this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
-						]),
-						error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
-					);
+					const category = this.form.value;
+					category.PrimaryContentID = this.contentTypes.length > 1 ? category.PrimaryContentID : undefined;
+					category.OriginalPrivileges = Privileges.getPrivileges(category.OriginalPrivileges);
+					this.portalsCoreSvc.normalizeNotificationSettings(category.Notifications, this.emailsByApprovalStatus);
+					this.portalsCoreSvc.normalizeEmailSettings(category.EmailSettings);
+	
+					const thumbnail = (this.formControls.find(ctrl => ctrl.Name === "Thumbnails") || {}).value;
+					const thumbnailBase64 = thumbnail !== undefined && AppUtility.isObject(thumbnail, true) ? thumbnail.new : undefined;
+					const uploadThumbnailAsync = async (options?: FileOptions) => {
+						if (thumbnailBase64 !== undefined) {
+							if (this.configSvc.isDebug) {
+								console.log("<CMS.Category>: Upload thumbnail", this.hash, thumbnail);
+							}
+							options = options || this.portalsCmsSvc.getFileOptions(this.category);
+							options.Extras["x-attachment-id"] = thumbnail.identity;
+							await this.filesSvc.uploadThumbnailAsync(
+								thumbnailBase64,
+								options,
+								data => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(this.configSvc.isDebug ? () => console.log("<CMS.Category>: Upload thumbnail successful", data) : () => {}),
+								error => console.error("<CMS.Category>: Error occurred while uploading thumbnail", error)
+							);
+						}
+					};
+	
+					if (AppUtility.isNotEmpty(category.ID)) {
+						uploadThumbnailAsync().then(() => this.portalsCmsSvc.updateCategoryAsync(
+							category,
+							async () => await Promise.all([
+								this.trackAsync(this.title.track, "Update"),
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.update")),
+								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
+							]),
+							error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
+						));
+					}
+					else {
+						this.portalsCmsSvc.createCategoryAsync(
+							category,
+							async () => await Promise.all([
+								this.trackAsync(this.title.track),
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.categories.update.messages.success.new")),
+								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
+							]),
+							error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
+						);
+					}
 				}
 			}
-		}
+			else {
+				this.appFormsSvc.hideLoadingAsync();
+				this.processing = false;
+			}
+		});
 	}
 
 	delete() {

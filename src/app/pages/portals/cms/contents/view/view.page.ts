@@ -223,6 +223,9 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				if (info.args.Type === "Updated") {
 					this.task = undefined;
 					this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => AppUtility.isEquals(cfg.Name, control.Name)).Hidden ? true : false);
+					if (this.configSvc.isDebug) {
+						console.log("<CMS.Content/View>: Patch new values (when got update message)\n", this.content.Title, this.content);
+					}
 					this.prepareValues();
 					if (this.canEdit) {
 						AppUtility.invoke(async () => this.actions[this.canModerate ? 3 : 2].text = await this.configSvc.getResourceAsync(this.content.Status !== "Published" ? "portals.cms.common.buttons.viewAsPublished" : "portals.cms.common.buttons.viewAsPublic"));
@@ -233,13 +236,13 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				}
 				else if (info.args.Type === "Thumbnail") {
 					if (this.configSvc.isDebug) {
-						console.log("<CMS.Content/View>: Prepare thumbnail (when got update message)", this.content.thumbnails);
+						console.log("<CMS.Content/View>: Prepare thumbnail (when got update message)\n", this.content.Title, this.content.thumbnails);
 					}
 					this.prepareThumbnail();
 				}
 				else if (info.args.Type === "Attachment") {
 					if (this.configSvc.isDebug) {
-						console.log("<CMS.Content/View>: Prepare attachments (when got update message)", this.content.attachments);
+						console.log("<CMS.Content/View>: Prepare attachments (when got update message)\n", this.content.Title, this.content.attachments);
 					}
 					this.prepareAttachments();
 				}
@@ -340,7 +343,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				this.prepareThumbnail();
 			}
 			else {
-				this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.content), thumbnails => this.content.updateThumbnails(thumbnails, undefined, () => this.prepareThumbnail()));
+				this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.content), thumbnails => this.content.updateThumbnails(thumbnails, () => this.prepareThumbnail()));
 			}
 			if (this.content.attachments !== undefined) {
 				this.prepareAttachments();

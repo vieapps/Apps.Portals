@@ -47,8 +47,7 @@ export class PortalsCmsService extends BaseService {
 	private _featuredContentStates = new HashSet<string>();
 
 	get featuredContents() {
-		const organization = this.portalsCoreSvc.activeOrganization;
-		return organization !== undefined ? this._featuredContents.get(organization.ID) || [] : [];
+		return Organization.active !== undefined ? this._featuredContents.get(Organization.active.ID) || [] : [];
 	}
 
 	initialize() {
@@ -122,20 +121,11 @@ export class PortalsCmsService extends BaseService {
 					}
 				}
 				if (isThumbnail) {
-					object.updateThumbnails(updated, thumbnailURI => {
-						if (this.configSvc.isDebug) {
-							console.log(`[Portals]: Broadcast message to update thumbnail URI ${object.objectName}#${object.ID}`, thumbnailURI);
-						}
-						AppEvents.broadcast(this.name, { Type: "ThumbnailURI", ThumbnailURI: thumbnailURI, ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID });
-					})
+					object.updateThumbnails(updated);
 				}
 				else {
 					object.updateAttachments(updated);
 				}
-				if (this.configSvc.isDebug) {
-					console.log(`[Portals]: Broadcast message to update ${message.Type.Object.toLowerCase()}s ${object.objectName}#${object.ID} [${message.Type.Event}]`, "\nCurrent", current, "\nChanged", changed, "\nUpdated", updated);
-				}
-				AppEvents.broadcast(this.name, { Type: message.Type.Object, Mode: message.Type.Event + "d", Changed: changed, Object: object.objectName, ID: object.ID, SystemID: object.SystemID, RepositoryID: object.RepositoryID, RepositoryEntityID: object.RepositoryEntityID });
 			}
 		});
 
@@ -1343,12 +1333,12 @@ export class PortalsCmsService extends BaseService {
 				Content.instances.remove(message.Data.ID);
 				break;
 			default:
-				console.log("[Portals]: Got an update message of a CMS content", message);
+				console.log("[Portals]: Got an orphan updating message of a CMS content\n", (message.Data || {}).Title, message);
 				break;
 		}
 		if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
 			if (this.configSvc.isDebug) {
-				console.log("[Portals]: Got an update message of a CMS content", message.Data);
+				console.log("[Portals]: Got an update message of a CMS content\n", (message.Data || {}).Title, message);
 			}
 			AppEvents.broadcast(this.name, { Object: "CMS.Content", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID, CategoryID: message.Data.CategoryID });
 			if (AppUtility.isArray(message.Data.OtherCategories, true)) {

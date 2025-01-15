@@ -171,7 +171,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 					else if (info.args.Type === "Deleted") {
 						this.cancel();
 					}
-					else if (info.args.Type === "Thumbnail" || info.args.Type === "ThumbnailURI") {
+					else if (info.args.Type === "Thumbnail") {
 						this.prepareThumbnail();
 					}
 					else if (info.args.Type === "Attachment") {
@@ -285,7 +285,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 				this.prepareThumbnail();
 			}
 			else {
-				this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.item), thumbnails => this.item.updateThumbnails(thumbnails, undefined, () => this.prepareThumbnail()));
+				this.filesSvc.searchThumbnailsAsync(this.portalsCmsSvc.getFileOptions(this.item), thumbnails => this.item.updateThumbnails(thumbnails, () => this.prepareThumbnail()));
 			}
 			if (this.item.attachments !== undefined) {
 				this.prepareAttachments();

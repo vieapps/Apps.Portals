@@ -57,7 +57,7 @@ export class ContentType extends CoreBaseModel {
 
 	/** Gets by identity */
 	static get(id: string) {
-		return AppUtility.isNotEmpty(id)
+		return AppUtility.isNotEmpty(id) && id !== "-"
 			? this.instances.get(id)
 			: undefined;
 	}

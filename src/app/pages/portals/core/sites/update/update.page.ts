@@ -12,7 +12,7 @@ import { AuthenticationService } from "@app/services/authentication.service";
 import { FilesService, FileOptions } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { AttachmentInfo } from "@app/models/base";
-import { Organization, Site, Desktop } from "@app/models/portals.core.all";
+import { PortalBase as BaseModel, Organization, Site, Desktop } from "@app/models/portals.core.all";
 import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selector.modal.page";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 
@@ -36,7 +36,6 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 	private organization: Organization;
 	private isSystemModerator = false;
 	private canModerateOrganization = false;
-	private attachments: AttachmentInfo[];
 	private hash = "";
 
 	title = "";
@@ -118,10 +117,12 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 			AppEvents.on(this.filesSvc.name, info => {
 				if (info.args.Object === "Attachment" && this.site.ID === info.args.ObjectID) {
 					if (info.args.Event === "Delete") {
-						this.attachments.removeAt(this.attachments.findIndex(attachment => attachment.ID === info.args.Data.ID));
+						if (this.site.attachments !== undefined) {
+							this.site.attachments.removeAt(this.site.attachments.findIndex(attachment => attachment.ID === info.args.Data.ID));
+						}
 					}
 					else {
-						this.attachments.push(info.args.Data);
+						this.site.attachments = (this.site.attachments || []).concat([BaseModel.prepareAttachment(info.args.Data)]);
 					}
 					this.prepareAttachments();
 				}
@@ -343,7 +344,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 	}
 
 	private prepareAttachments() {
-		this.filesSvc.prepareAttachmentsFormControl(this.formControls.find(ctrl => ctrl.Name === "Attachments", this.attachments));
+		this.filesSvc.prepareAttachmentsFormControl(this.formControls.find(ctrl => ctrl.Name === "Attachments"), this.site.attachments);
 	}
 
 	onFormInitialized() {
@@ -353,13 +354,22 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		site.UISettings = site.UISettings || {};
 		this.form.patchValue(site);
 		this.hash = AppCrypto.hash(this.form.value);
-		this.appFormsSvc.hideLoadingAsync(async () => {
+		this.appFormsSvc.hideLoadingAsync(() => {
 			if (AppUtility.isNotEmpty(this.site.ID)) {
-				await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => {
-					this.attachments = attachments;
+				if (this.site.attachments !== undefined) {
 					this.prepareAttachments();
-				});
-				this.hash = AppCrypto.hash(this.form.value);
+					this.hash = AppCrypto.hash(this.form.value);
+				}
+				else {
+					this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => {
+						this.site.attachments = attachments;
+						this.prepareAttachments();
+						this.hash = AppCrypto.hash(this.form.value);
+					});
+				}
+			}
+			if (this.configSvc.isDebug) {
+				console.log("<Site/Edit>: Edit a site\n", this.site.Title, this.site, this.configSvc.requestParams, this.hash);
 			}
 		});
 	}

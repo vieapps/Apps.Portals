@@ -113,10 +113,10 @@ export class Category extends CmsBaseModel implements NestedObject {
 	copy(source: any, onCompleted?: (data: any, instance: Category) => void) {
 		return super.copy(source, data => {
 			if (AppUtility.isArray(data.Thumbnails, true)) {
-				this.updateThumbnails(data.Thumbnails, uri => AppEvents.broadcast("Portals", { Object: "CMS.Category", Type: "Thumbnail", ID: this.ID, SystemID: this.SystemID, RepositoryID: this.RepositoryID, RepositoryEntityID: this.RepositoryEntityID, ThumbnailURI: uri }));
+				this.updateThumbnails(data.Thumbnails);
 			}
 			if (AppUtility.isArray(data.Attachments, true)) {
-				this.updateAttachments(data.Attachments, () => AppEvents.broadcast("Portals", { Object: "CMS.Category", Type: "Attachment", ID: this.ID, SystemID: this.SystemID, RepositoryID: this.RepositoryID, RepositoryEntityID: this.RepositoryEntityID }));
+				this.updateAttachments(data.Attachments);
 			}
 			if (onCompleted !== undefined) {
 				onCompleted(data, this);

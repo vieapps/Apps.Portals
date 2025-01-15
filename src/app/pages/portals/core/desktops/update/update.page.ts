@@ -11,8 +11,7 @@ import { AppFormsControlComponent } from "@app/components/forms.control.componen
 import { ConfigurationService } from "@app/services/configuration.service";
 import { FilesService, FileOptions } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { AttachmentInfo } from "@app/models/base";
-import { Organization, Desktop } from "@app/models/portals.core.all";
+import { PortalBase as BaseModel, Organization, Desktop } from "@app/models/portals.core.all";
 import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selector.modal.page";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 
@@ -32,7 +31,6 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	private desktop: Desktop;
-	private attachments: AttachmentInfo[];
 	private organization: Organization;
 	private canModerateOrganization = false;
 	private hash = "";
@@ -115,10 +113,12 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 			AppEvents.on(this.filesSvc.name, info => {
 				if (info.args.Object === "Attachment" && this.desktop.ID === info.args.ObjectID) {
 					if (info.args.Event === "Delete") {
-						this.attachments.removeAt(this.attachments.findIndex(attachment => attachment.ID === info.args.Data.ID));
+						if (this.desktop.attachments !== undefined) {
+							this.desktop.attachments.removeAt(this.desktop.attachments.findIndex(attachment => attachment.ID === info.args.Data.ID));
+						}
 					}
 					else {
-						this.attachments.push(info.args.Data);
+						this.desktop.attachments = (this.desktop.attachments || []).concat([BaseModel.prepareAttachment(info.args.Data)]);
 					}
 					this.prepareAttachments();
 				}
@@ -335,7 +335,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	private prepareAttachments() {
-		this.filesSvc.prepareAttachmentsFormControl(this.formControls.find(ctrl => ctrl.Name === "Attachments", this.attachments));
+		this.filesSvc.prepareAttachmentsFormControl(this.formControls.find(ctrl => ctrl.Name === "Attachments"), this.desktop.attachments);
 	}
 
 	onFormInitialized() {
@@ -352,13 +352,22 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 			});
 		}));
 		this.hash = AppCrypto.hash(this.form.value);
-		this.appFormsSvc.hideLoadingAsync(async () => {
+		this.appFormsSvc.hideLoadingAsync(() => {
 			if (AppUtility.isNotEmpty(this.desktop.ID)) {
-				await this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => {
-					this.attachments = attachments;
+				if (this.desktop.attachments !== undefined) {
 					this.prepareAttachments();
-				});
-				this.hash = AppCrypto.hash(this.form.value);
+					this.hash = AppCrypto.hash(this.form.value);
+				}
+				else {
+					this.filesSvc.searchAttachmentsAsync(this.fileOptions, attachments => {
+						this.desktop.attachments = attachments;
+						this.prepareAttachments();
+						this.hash = AppCrypto.hash(this.form.value);
+					});
+				}
+			}
+			if (this.configSvc.isDebug) {
+				console.log("<Desktop/Edit>: Edit a desktop\n", this.desktop.Title, this.desktop, this.configSvc.requestParams, this.hash);
 			}
 		});
 	}
