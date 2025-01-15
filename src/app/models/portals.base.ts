@@ -76,14 +76,14 @@ export abstract class PortalBase extends BaseModel {
 	}
 
 	/** Prepare required information of an attachment */
-	static prepareAttachment(attachment: AttachmentInfo) {
+	static prepareAttachment(attachment: AttachmentInfo, isAttachment: boolean = true) {
 		if (attachment.Created !== undefined) {
 			attachment.Created = new Date(attachment.Created);
 		}
 		if (attachment.LastModified !== undefined) {
 			attachment.LastModified = new Date(attachment.LastModified);
 		}
-		if (AppUtility.isNotEmpty(attachment.ContentType)) {
+		if (isAttachment && AppUtility.isNotEmpty(attachment.ContentType)) {
 			attachment.isImage = attachment.ContentType.indexOf("image/") > -1;
 			attachment.isVideo = attachment.ContentType.indexOf("video/") > -1;
 			attachment.isAudio = attachment.ContentType.indexOf("audio/") > -1;
@@ -97,6 +97,14 @@ export abstract class PortalBase extends BaseModel {
 					: attachment.isText
 						? "document-text"
 						: "document-attach";
+			if (attachment.isImage && !attachment.Filename.endsWith(".ico") && !attachment.Filename.endsWith(".svg")) {
+				attachment.URIs["Thumbnail"] = this.getThumbnailURI(attachment, true);
+				const uri = attachment.URIs.Direct.split("/");
+				attachment.URIs["Alternative"] = `${AppConfig.URIs.files}images/${uri[4]}/${uri[6]}/${uri[7]}${uri[7].endsWith(".webp") ? "" : ".webp"}`;
+			}
+			else {
+				attachment.URIs["Alternative"] = attachment.URIs.Direct;
+			}
 		}
 		attachment.friendlyFilename = attachment.Filename.length < 47
 			? attachment.Filename

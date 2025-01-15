@@ -11,7 +11,7 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { FilesService, FileOptions } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { PortalBase as BaseModel, Organization, ContentType, Expression, Desktop, Portlet } from "@app/models/portals.core.all";
+import { Organization, ContentType, Expression, Desktop, Portlet } from "@app/models/portals.core.all";
 import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selector.modal.page";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 import { DataLookupModalPage } from "@app/controls/portals/data.lookup.modal.page";
@@ -69,7 +69,7 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		AppEvents.off(this.filesSvc.name, "Portlet:Refresh");
+		AppEvents.off(this.portalsCoreSvc.name, "Portlet:Refresh:Attachments");
 	}
 
 	private async initializeAsync() {
@@ -220,19 +220,11 @@ export class PortalsPortletsUpdatePage implements OnInit, OnDestroy {
 		this.formConfig = await this.getFormControlsAsync();
 		await this.trackAsync(this.title);
 
-		AppEvents.on(this.filesSvc.name, info => {
-			if (info.args.Object === "Attachment" && this.desktop.ID === info.args.ObjectID) {
-				if (info.args.Event === "Delete") {
-					if (this.desktop.attachments !== undefined) {
-						this.desktop.attachments.removeAt(this.desktop.attachments.findIndex(attachment => attachment.ID === info.args.Data.ID));
-					}
-				}
-				else {
-					this.desktop.attachments = (this.desktop.attachments || []).concat([BaseModel.prepareAttachment(info.args.Data)]);
-				}
+		AppEvents.on(this.portalsCoreSvc.name, info => {
+			if (info.args.Type === "Attachment" && info.args.Object === "Desktop" && this.desktop.ID === info.args.ID) {
 				this.prepareAttachments();
 			}
-		}, "Portlet:Refresh");
+		}, "Portlet:Refresh:Attachments");
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {

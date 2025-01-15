@@ -179,6 +179,28 @@ export class PortalsCoreService extends BaseService {
 			}
 		});
 
+		AppAPIs.registerAsServiceScopeProcessor(this.filesSvc.name, message => {
+			const object = message.Type.Object === "Attachment"
+				? Site.contains(message.Data.ObjectID)
+					? Site.get(message.Data.ObjectID)
+					: Desktop.contains(message.Data.ObjectID)
+						? Desktop.get(message.Data.ObjectID)
+						: undefined
+				: undefined;
+			if (object !== undefined) {
+				const changed = AppUtility.isArray(message.Data, true) ? message.Data as Array<AttachmentInfo> : [message.Data as AttachmentInfo];
+				const updated = (object.attachments || []).map(attachment => attachment);
+				if (message.Type.Event === "Delete") {
+					changed.forEach(change => updated.removeAt(updated.findIndex(attachment => attachment.ID === change.ID)));
+				}
+				else {
+					changed.forEach(change => updated.update(BaseModel.prepareAttachment(change), updated.findIndex(attachment => attachment.ID === change.ID)));
+				}
+				object.attachments = updated;
+				AppEvents.broadcast(this.name, { Type: "Attachment", Mode: "Updated", Event: message.Type.Event, Attachments: updated, Object: Site.contains(object.ID) ? "Site" : "Desktop", ID: object.ID });
+			}			
+		});
+
 		AppEvents.on("Session", info => {
 			if ("LogIn" === info.args.Type) {
 				this.prepareSidebarFooterItemsAsync().then(() => this.activeSidebar());

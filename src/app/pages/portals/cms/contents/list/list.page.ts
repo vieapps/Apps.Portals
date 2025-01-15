@@ -462,15 +462,15 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	private reload() {
-		this.do(() => this.prepareForReloading(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync(() => {
+		this.do(() => this.prepareForReloading(() => this.startSearch(() => {
 			this.infiniteScrollCtrl.disabled = false;
-			if (this.category !== undefined && this.category.childrenIDs === undefined) {
-				this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up, and the list was reloaded"));
+			if (this.category !== undefined) {
+				this.portalsCmsSvc.refreshCategoryAsync(this.category.ID).then(() => this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("The category was freshen-up, and the list was reloaded")));
 			}
 			else {
-				this.appFormsSvc.showToastAsync("Re-loaded");
+				this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("Re-loaded"));
 			}
-		}))));
+		})));
 	}
 
 	private customizeFilterAndSort() {

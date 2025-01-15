@@ -71,8 +71,8 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 			if (info.args.Type === "Initialized") {
 				this.prepareLabelsAsync().then(() => this.prepareContents());
 			}
-			else if ("HomePage" === info.args.Type && "Open" === info.args.Mode && ("Sidebar" === info.args.Source || "Router" === info.args.Source)) {
-				this.reprepareContents(this.configSvc.isDebug ? `Force to re-prepare (when open homepage) [${this.contents.length}]` : undefined);
+			else if ("HomePage" === info.args.Type && "Open" === info.args.Mode && "Sidebar" === info.args.Source && this.configSvc.appConfig.URLs.home !== info.args.PreviousURL) {
+				this.reprepareContents(this.configSvc.isDebug ? `Force to re-prepare (when navigated to homepage from sidebar) [${this.contents.length}]` : undefined);
 			}
 		}, `FeaturedContents:AppInitialized:${this._isPublished}`);
 

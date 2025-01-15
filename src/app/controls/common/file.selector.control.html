@@ -32,7 +32,7 @@
 				<a (click)="copy(attachment.URIs.Direct)" [class]="cssIcons">
 					<ion-icon name="link" color="medium" slot="icon-only" title="Copy direct URI"></ion-icon>
 				</a>
-				<a *ngIf="attachment.isImage" (click)="copy(attachment.URIs.Thumbnail)" [class]="cssIcons">
+				<a *ngIf="attachment.isImage && !!attachment.URIs.Thumbnail" (click)="copy(attachment.URIs.Thumbnail)" [class]="cssIcons">
 					<ion-icon name="image" color="medium" slot="icon-only" title="Copy thumbnail URI"></ion-icon>
 				</a>
 				<a [class]="cssIcons">

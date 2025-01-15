@@ -423,7 +423,10 @@ export class AppComponent implements OnInit {
 					Title: await this.configSvc.getResourceAsync("common.sidebar.home"),
 					Link: this.configSvc.appConfig.URLs.home,
 					Icon: { Name: "home", Color: "primary", Slot: "start" },
-					OnClick: data => this.configSvc.navigateRootAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.State.Active }))
+					OnClick: data => {
+						const previousURL = this.configSvc.currentURL;
+						this.configSvc.navigateRootAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.State.Active, PreviousURL: previousURL }));
+					}
 				},
 				{
 					Title: await this.configSvc.getResourceAsync("common.sidebar.login"),

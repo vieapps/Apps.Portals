@@ -11,7 +11,7 @@ import { AppFormsControlComponent } from "@app/components/forms.control.componen
 import { ConfigurationService } from "@app/services/configuration.service";
 import { FilesService, FileOptions } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { PortalBase as BaseModel, Organization, Desktop } from "@app/models/portals.core.all";
+import { Organization, Desktop } from "@app/models/portals.core.all";
 import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selector.modal.page";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 
@@ -60,7 +60,7 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 
 	ngOnDestroy() {
 		if (AppUtility.isNotEmpty(this.desktop.ID)) {
-			AppEvents.off(this.filesSvc.name, "Desktop:Refresh");
+			AppEvents.off(this.portalsCoreSvc.name, "Desktop:Refresh:Attachments");
 		}
 	}
 
@@ -110,19 +110,11 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 		await this.trackAsync(this.title);
 
 		if (AppUtility.isNotEmpty(this.desktop.ID)) {
-			AppEvents.on(this.filesSvc.name, info => {
-				if (info.args.Object === "Attachment" && this.desktop.ID === info.args.ObjectID) {
-					if (info.args.Event === "Delete") {
-						if (this.desktop.attachments !== undefined) {
-							this.desktop.attachments.removeAt(this.desktop.attachments.findIndex(attachment => attachment.ID === info.args.Data.ID));
-						}
-					}
-					else {
-						this.desktop.attachments = (this.desktop.attachments || []).concat([BaseModel.prepareAttachment(info.args.Data)]);
-					}
+			AppEvents.on(this.portalsCoreSvc.name, info => {
+				if (info.args.Type === "Attachment" && info.args.Object === "Desktop" && this.desktop.ID === info.args.ID) {
 					this.prepareAttachments();
 				}
-			}, "Desktop:Refresh");
+			}, "Desktop:Refresh:Attachments");
 		}
 
 		if (AppUtility.isNotEmpty(this.desktop.ID) && this.desktop.childrenIDs === undefined) {

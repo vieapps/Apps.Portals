@@ -211,6 +211,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 					this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.common.buttons.duplicate"), "copy-outline", () => this.duplicateAsync()), 6);
 				}
 			}
+			this.actions.insert(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("common.buttons.refresh"), "refresh", () => this.refresh()), this.actions.length - 1);
 		}
 
 		this.formSegments.items = await this.getFormSegmentsAsync();
@@ -681,6 +682,17 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			category: undefined as Category,
 			otherCategories: undefined as Array<Category>
 		};
+	}
+
+	refresh() {
+		this.appFormsSvc.showLoadingAsync(this.actions[this.actions.length - 2].text)
+		.then(() => this.portalsCmsSvc.refreshContentAsync(this.content.ID))
+		.then(() => this.appFormsSvc.hideLoadingAsync(() => {
+			this.appFormsSvc.showToastAsync("The content was freshen-up");
+			if (this.configSvc.isDebug) {
+				console.log("<CMS.Content/View>: Content was freshen-up\n", this.content.Title, this.content);
+			}
+		}));
 	}
 
 	delete() {

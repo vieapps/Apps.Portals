@@ -12,7 +12,7 @@ import { AuthenticationService } from "@app/services/authentication.service";
 import { FilesService, FileOptions } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { AttachmentInfo } from "@app/models/base";
-import { PortalBase as BaseModel, Organization, Site, Desktop } from "@app/models/portals.core.all";
+import { Organization, Site, Desktop } from "@app/models/portals.core.all";
 import { DesktopsSelectorModalPage } from "@app/controls/portals/desktop.selector.modal.page";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 
@@ -63,7 +63,7 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 
 	ngOnDestroy() {
 		if (AppUtility.isNotEmpty(this.site.ID)) {
-			AppEvents.off(this.filesSvc.name, "Site:Refresh");
+			AppEvents.off(this.portalsCoreSvc.name, "Site:Refresh:Attachments");
 		}
 	}
 
@@ -114,19 +114,11 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 		await this.trackAsync(this.title);
 
 		if (AppUtility.isNotEmpty(this.site.ID)) {
-			AppEvents.on(this.filesSvc.name, info => {
-				if (info.args.Object === "Attachment" && this.site.ID === info.args.ObjectID) {
-					if (info.args.Event === "Delete") {
-						if (this.site.attachments !== undefined) {
-							this.site.attachments.removeAt(this.site.attachments.findIndex(attachment => attachment.ID === info.args.Data.ID));
-						}
-					}
-					else {
-						this.site.attachments = (this.site.attachments || []).concat([BaseModel.prepareAttachment(info.args.Data)]);
-					}
+			AppEvents.on(this.portalsCoreSvc.name, info => {
+				if (info.args.Type === "Attachment" && info.args.Object === "Site" && this.site.ID === info.args.ID) {
 					this.prepareAttachments();
 				}
-			}, "Site:Refresh");
+			}, "Site:Refresh:Attachments");
 		}
 	}
 

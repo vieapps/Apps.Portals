@@ -214,7 +214,7 @@ export abstract class PortalCmsBase extends BaseModel {
 				AppUtility.invoke(() => PortalCmsBase.broadcast(this, "ThumbnailURI", { ThumbnailURI: newURI }, objectName), 1234);
 			}
 		}
-		this._thumbnails = (thumbnails || []).map(thumbnail => BaseModel.prepareAttachment(thumbnail));
+		this._thumbnails = (thumbnails || []).map(thumbnail => BaseModel.prepareAttachment(thumbnail, false));
 		PortalCmsBase.broadcast(this, "Thumbnail", undefined, objectName);
 		if (onCompleted !== undefined) {
 			onCompleted();
