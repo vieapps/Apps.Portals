@@ -1313,7 +1313,11 @@ export class PortalsCmsService extends BaseService {
 			if (large.length > 0) {
 				const language = this.configSvc.appConfig.language;
 				const appURL = this.configSvc.appConfig.URIs.apps.substring(0, this.configSvc.appConfig.URIs.apps.length - 1);
-				console.log("~~~~~~~~~~>>>>> LARGE contents ~~~~~~~~~~>>>>>\n- " + AppUtility.toStr(large.map(content => `${content.StartDate.toLocaleDateString(language)}: ${content.Title}\nApp: ${appURL}${content.routerURI.replace("/view/", "/update/")}&prepare=true${this.configSvc.isDebug ? "&debug=true&r=" + Math.random() : ""}\nPublic: ${this.portalsCoreSvc.getPermanentURL(content)}`), "\n- ") + "\n<<<<<<<<<<~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+				const largeContents = large.map(content => `${content.StartDate.toLocaleDateString(language)}: ${content.Title}\n`
+					+ `App: ${appURL}${content.routerURI.replace("/view/", "/update/")}&prepare=true${this.configSvc.isDebug ? "&debug=true&r=" + Math.random() : ""}\n`
+					+ `Public: ${this.portalsCoreSvc.getPermanentURL(content)}\n`
+					+ `Script: __vieapps.open("${content.getRouterURI()}")`);
+				console.log("~~~~~~~~~~>>>>> LARGE contents ~~~~~~~~~~>>>>>\n- " + AppUtility.toStr(largeContents, "\n- ") + "\n<<<<<<<<<<~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 			}
 		}, this.configSvc.appConfig.app.preflight.defer / 2);
 	}

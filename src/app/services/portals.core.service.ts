@@ -395,7 +395,7 @@ export class PortalsCoreService extends BaseService {
 			this.activeOrganizations.merge([organization.ID], true);
 			if (Organization.active === undefined || Organization.active.ID !== organization.ID) {
 				Organization.active = organization;
-				console.log("[Portals]: Set active organization", Organization.active);
+				console.log("[Portals]: Set active organization", this.configSvc.isDebug ? Organization.active : "=> " + Organization.active.Title);
 				AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
 				const useXHR = organization.modules.length < 1;
 				if (this.configSvc.isDebug) {

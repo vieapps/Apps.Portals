@@ -515,7 +515,7 @@ export class AppAPIs {
 		});
 		if (this.isWebSocketReady) {
 			this.updateWebSocket({ resendCallbackMessages: true });
-			console.log("[AppAPIs]: Authenticated", AppConfig.isDebug ? AppConfig.session : "");
+			console.log("[AppAPIs]: Authenticated", AppConfig.session.account !== undefined && AppConfig.session.account.profile !== undefined ? "=> " + AppConfig.session.account.profile.Name + " (" + AppConfig.session.account.profile.Email + ")" : "", AppConfig.isDebug ? AppConfig.session : "");
 		}
 	}
 

@@ -40,7 +40,7 @@ export class FilesService extends BaseService {
 
 	private authenticate() {
 		AppUtility.toAsync(this.http.get(AppAPIs.getURL("avatars/ngx", this.configSvc.appConfig.URIs.files) + "?x-authenticate=true&x-response=json" + (this.configSvc.isDebug ? "&x-logs=true" : ""), { headers: this.getHeaders() }))
-			.then(() => console.log("[Files]: Authenticated"))
+			.then(() => console.log("[Files]: Authenticated", this.configSvc.appConfig.session.account !== undefined && this.configSvc.appConfig.session.account.profile !== undefined ? "=> " + this.configSvc.appConfig.session.account.profile.Name + " (" + this.configSvc.appConfig.session.account.profile.Email + ")" : ""))
 			.catch(error => console.error("[Files]: Error occurred while authenticating with file services", error));
 	}
 
