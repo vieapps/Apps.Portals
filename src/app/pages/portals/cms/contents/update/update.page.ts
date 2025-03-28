@@ -71,12 +71,37 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.initializeAsync();
+		AppEvents.on(this.portalsCoreSvc.name, info => {
+			if (info.args.Object === "CMS.Content" && AppUtility.isNotEmpty(this.content.ID) && this.content.ID === info.args.ID) {
+				if (info.args.Type === "Deleted") {
+					this.cancel();
+				}
+				else if (!this.processing) {
+					if (info.args.Type === "Updated") {
+						if (this.configSvc.isDebug) {
+							console.log("<CMS.Content/Edit>: Patch new values (when got update message)\n", this.content.Title, this.content);
+						}
+						this.patchValues(true);
+					}
+					else if (info.args.Type === "Thumbnail") {
+						if (this.configSvc.isDebug) {
+							console.log("<CMS.Content/Edit>: Prepare thumbnail (when got update message)\n", this.content.Title, this.content.thumbnails);
+						}
+						this.prepareThumbnail();
+					}
+					else if (info.args.Type === "Attachment") {
+						if (this.configSvc.isDebug) {
+							console.log("<CMS.Content/Edit>: Prepare attachments (when got update message)\n", this.content.Title, this.content.attachments);
+						}
+						this.prepareAttachments();
+					}
+				}
+			}
+		}, "CMS.Contents:Edit:Refresh");
 	}
 
 	ngOnDestroy() {
-		if (AppUtility.isNotEmpty(this.content.ID)) {
-			AppEvents.off(this.portalsCmsSvc.name, "CMS.Contents:Edit:Refresh");
-		}
+		AppEvents.off(this.portalsCmsSvc.name, "CMS.Contents:Edit:Refresh");
 	}
 
 	private async initializeAsync() {
@@ -181,36 +206,6 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		this.formConfig = await this.getFormControlsAsync();
 		this.trackAsync(this.title.track);
 		this.portalsCoreSvc.setActiveOrganization(this.content.organization);
-
-		if (AppUtility.isNotEmpty(this.content.ID)) {
-			AppEvents.on(this.portalsCoreSvc.name, info => {
-				if (info.args.Object === "CMS.Content" && this.content.ID === info.args.ID) {
-					if (info.args.Type === "Deleted") {
-						this.cancel();
-					}
-					else if (!this.processing) {
-						if (info.args.Type === "Updated") {
-							if (this.configSvc.isDebug) {
-								console.log("<CMS.Content/Edit>: Patch new values (when got update message)\n", this.content.Title, this.content);
-							}
-							this.patchValues(true);
-						}
-						else if (info.args.Type === "Thumbnail") {
-							if (this.configSvc.isDebug) {
-								console.log("<CMS.Content/Edit>: Prepare thumbnail (when got update message)\n", this.content.Title, this.content.thumbnails);
-							}
-							this.prepareThumbnail();
-						}
-						else if (info.args.Type === "Attachment") {
-							if (this.configSvc.isDebug) {
-								console.log("<CMS.Content/Edit>: Prepare attachments (when got update message)\n", this.content.Title, this.content.attachments);
-							}
-							this.prepareAttachments();
-						}
-					}
-				}
-			}, "CMS.Contents:Edit:Refresh");
-		}
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: Array<AppFormsSegment>) => void) {
@@ -602,21 +597,19 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	
 					const thumbnail = (this.formControls.find(ctrl => ctrl.Name === "Thumbnails") || {}).value;
 					const thumbnailBase64 = thumbnail !== undefined && AppUtility.isObject(thumbnail, true) ? thumbnail.new : undefined;
-					const uploadThumbnailAsync = async (options?: FileOptions) => {
-						if (thumbnailBase64 !== undefined) {
-							if (this.configSvc.isDebug) {
-								console.log("<CMS.Content/Edit>: Upload thumbnail", this.hash.content, hash.content, thumbnail);
-							}
-							options = options || this.portalsCmsSvc.getFileOptions(this.content);
-							options.Extras["x-attachment-id"] = thumbnail.identity;
-							await this.filesSvc.uploadThumbnailAsync(
-								thumbnailBase64,
-								options,
-								data => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(this.configSvc.isDebug ? () => console.log("<CMS.Content/Edit>: Upload thumbnail successful", data) : () => {}),
-								error => console.error("<CMS.Content/Edit>: Error occurred while uploading thumbnail", error)
-							);
+					const uploadThumbnailAsync = thumbnailBase64 !== undefined ? async (options?: FileOptions) => {
+						if (this.configSvc.isDebug) {
+							console.log("<CMS.Content/Edit>: Upload thumbnail", this.hash.content, hash.content, thumbnail);
 						}
-					};
+						options = options || this.portalsCmsSvc.getFileOptions(this.content);
+						options.Extras["x-attachment-id"] = thumbnail.identity;
+						await this.filesSvc.uploadThumbnailAsync(
+							thumbnailBase64,
+							options,
+							data => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(this.configSvc.isDebug ? () => console.log("<CMS.Content/Edit>: Upload thumbnail successful", data) : () => {}),
+							error => console.error("<CMS.Content/Edit>: Error occurred while uploading thumbnail", error)
+						);
+					} : () => AppUtility.promise;
 	
 					hash.content = AppCrypto.hash(content);
 					if (this.configSvc.isDebug) {

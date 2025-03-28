@@ -68,12 +68,26 @@ export class CmsLinksUpdatePage implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.initializeAsync();
+		AppEvents.on(this.portalsCoreSvc.name, info => {
+			if (info.args.Object === "CMS.Link" && AppUtility.isNotEmpty(this.link.ID) && this.link.ID === info.args.ID) {
+				if (info.args.Type === "Updated") {
+					this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => AppUtility.isEquals(cfg.Name, control.Name)).Hidden ? true : false);
+				}
+				else if (info.args.Type === "Deleted") {
+					this.cancel();
+				}
+				else if (info.args.Type === "Thumbnail") {
+					this.prepareThumbnail();
+				}
+				else if (info.args.Type === "Attachment") {
+					this.prepareAttachments();
+				}
+			}
+		}, "CMS.Links:Edit:Refresh");
 	}
 
 	ngOnDestroy() {
-		if (AppUtility.isNotEmpty(this.link.ID)) {
-			AppEvents.off(this.portalsCoreSvc.name, "CMS.Links:Edit:Refresh");
-		}
+		AppEvents.off(this.portalsCoreSvc.name, "CMS.Links:Edit:Refresh");
 	}
 
 	private async initializeAsync() {
@@ -137,25 +151,6 @@ export class CmsLinksUpdatePage implements OnInit, OnDestroy {
 				this.portalsCmsSvc.refreshLinkAsync(this.link.ID, () => this.appFormsSvc.showToastAsync("The link was freshen-up"));
 			}
 		});
-
-		if (AppUtility.isNotEmpty(this.link.ID)) {
-			AppEvents.on(this.portalsCoreSvc.name, info => {
-				if (info.args.Object === "CMS.Link" && this.link.ID === info.args.ID) {
-					if (info.args.Type === "Updated") {
-						this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => AppUtility.isEquals(cfg.Name, control.Name)).Hidden ? true : false);
-					}
-					else if (info.args.Type === "Deleted") {
-						this.cancel();
-					}
-					else if (info.args.Type === "Thumbnail") {
-						this.prepareThumbnail();
-					}
-					else if (info.args.Type === "Attachment") {
-						this.prepareAttachments();
-					}
-				}
-			}, "CMS.Links:Edit:Refresh");
-		}
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
@@ -439,21 +434,19 @@ export class CmsLinksUpdatePage implements OnInit, OnDestroy {
 	
 					const thumbnail = (this.formControls.find(ctrl => ctrl.Name === "Thumbnails") || {}).value;
 					const thumbnailBase64 = thumbnail !== undefined && AppUtility.isObject(thumbnail, true) ? thumbnail.new : undefined;
-					const uploadThumbnailAsync = async (options?: FileOptions) => {
-						if (thumbnailBase64 !== undefined) {
-							if (this.configSvc.isDebug) {
-								console.log("<CMS.Link>: Upload thumbnail", this.hash.content, hash.content, thumbnail);
-							}
-							options = options || this.portalsCmsSvc.getFileOptions(this.link);
-							options.Extras["x-attachment-id"] = thumbnail.identity;
-							await this.filesSvc.uploadThumbnailAsync(
-								thumbnailBase64,
-								options,
-								data => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(this.configSvc.isDebug ? () => console.log("<CMS.Link>: Upload thumbnail successful", data) : () => {}),
-								error => console.error("<CMS.Link>: Error occurred while uploading thumbnail", error)
-							);
+					const uploadThumbnailAsync = thumbnailBase64 !== undefined ? async (options?: FileOptions) => {
+						if (this.configSvc.isDebug) {
+							console.log("<CMS.Link>: Upload thumbnail", this.hash.content, hash.content, thumbnail);
 						}
-					};
+						options = options || this.portalsCmsSvc.getFileOptions(this.link);
+						options.Extras["x-attachment-id"] = thumbnail.identity;
+						await this.filesSvc.uploadThumbnailAsync(
+							thumbnailBase64,
+							options,
+							data => this.trackAsync(this.title.track, "Upload", "Thumbnail").then(this.configSvc.isDebug ? () => console.log("<CMS.Link>: Upload thumbnail successful", data) : () => {}),
+							error => console.error("<CMS.Link>: Error occurred while uploading thumbnail", error)
+						);
+					} : () => AppUtility.promise;
 	
 					hash.content = AppCrypto.hash(link);
 					if (this.configSvc.isDebug) {

@@ -157,6 +157,11 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 			control.Options.Type = "toggle";
 		}
 
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IsDefault"));
+		if (control !== undefined) {
+			control.Options.Type = "toggle";
+		}
+
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
 		this.portalsCoreSvc.prepareApprovalStatusControl(control);
 		if (!this.canModerateOrganization) {
@@ -341,10 +346,17 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 
 	onFormInitialized() {
 		const site = AppUtility.clone(this.site, false);
+		if (Site.instances.toArray(s => s.SystemID === this.site.SystemID).length < 2) {
+			site.IsDefault = true;
+			const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "IsDefault"));
+			if (control !== undefined) {
+				control.Options.Disabled = true;
+			}
+		}
+		this.form.patchValue(site);
 		site.Title = AppUtility.isNotEmpty(site.ID) ? site.Title : this.organization.Title;
 		site.Theme = AppUtility.isNotEmpty(site.Theme) ? site.Theme : "-";
 		site.UISettings = site.UISettings || {};
-		this.form.patchValue(site);
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (AppUtility.isNotEmpty(this.site.ID)) {

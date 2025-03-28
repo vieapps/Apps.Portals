@@ -853,6 +853,20 @@ export class PortalsCoreService extends BaseService {
 						}
 					},
 					{
+						Name: "SignaturePrefix",
+						Options: {
+							Label: "{{portals.common.controls.webhooks.signaturePrefix.label}}",
+							Description: "{{portals.common.controls.webhooks.signaturePrefix.description}}"
+						}
+					},
+					{
+						Name: "SignatureSuffix",
+						Options: {
+							Label: "{{portals.common.controls.webhooks.signatureSuffix.label}}",
+							Description: "{{portals.common.controls.webhooks.signatureSuffix.description}}"
+						}
+					},
+					{
 						Name: "SignatureAsHex",
 						Type: "YesNo",
 						Options: {

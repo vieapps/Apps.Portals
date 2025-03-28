@@ -188,6 +188,14 @@
 						"label": "Tên của tham số chữ ký",
 						"description": "Chỉ định tên của tham số chữ ký để kiểm tra tính hợp lệ của tín hiệu web-hook.<br/>Nếu không có giá trị, hệ thống sẽ sử dụng tên của phương pháp, vd: HmacSha256Signature"
 					},
+					"signaturePrefix": {
+						"label": "Tiền tố (prefix) của chữ ký",
+						"description": "Chỉ định giá trị sẽ thêm vào phía trước chữ ký để kiểm tra tính hợp lệ của tín hiệu web-hook"
+					},
+					"signatureSuffix": {
+						"label": "Hậu tố (suffix) của chữ ký",
+						"description": "Chỉ định giá trị sẽ thêm vào phía sau chữ ký để kiểm tra tính hợp lệ của tín hiệu web-hook"
+					},
 					"signatureAsHex": {
 						"label": "Chữ ký dạng hex (tắt nếu muốn chữ ký dạng base64)"
 					},
@@ -641,6 +649,11 @@
 				},
 				"AlwaysReturnHTTPs": {
 					"label": "Luôn trả về các liên kết sử dụng các kết nối an toàn HTTPS (sử dụng khi SSL ở proxy/load balancers)",
+					"placeholder": "",
+					"description": ""
+				},
+				"IsDefault": {
+					"label": "Chỉ định là site mặc định",
 					"placeholder": "",
 					"description": ""
 				},

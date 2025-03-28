@@ -67,12 +67,23 @@ export class CmsCategoriesUpdatePage implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.initializeAsync();
+		AppEvents.on(this.portalsCoreSvc.name, info => {
+			if (info.args.Object === "CMS.Category" && AppUtility.isNotEmpty(this.category.ID) && this.category.ID === info.args.ID) {
+				if (info.args.Type === "Updated") {
+					this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => AppUtility.isEquals(cfg.Name, control.Name)).Hidden ? true : false);
+				}
+				else if (info.args.Type === "Deleted") {
+					this.cancel();
+				}
+				else if (info.args.Type === "Thumbnail") {
+					this.prepareThumbnail();
+				}
+			}
+		}, "CMS.Categories:Edit:Refresh");
 	}
 
 	ngOnDestroy() {
-		if (AppUtility.isNotEmpty(this.category.ID)) {
-			AppEvents.off(this.portalsCoreSvc.name, "CMS.Categories:Edit:Refresh");
-		}
+		AppEvents.off(this.portalsCoreSvc.name, "CMS.Categories:Edit:Refresh");
 	}
 
 	private async initializeAsync() {
@@ -133,22 +144,6 @@ export class CmsCategoriesUpdatePage implements OnInit, OnDestroy {
 				this.portalsCmsSvc.refreshCategoryAsync(this.category.ID, () => this.appFormsSvc.showToastAsync("The category was freshen-up"), undefined, undefined, false);
 			}
 		});
-
-		if (AppUtility.isNotEmpty(this.category.ID)) {
-			AppEvents.on(this.portalsCoreSvc.name, info => {
-				if (info.args.Object === "CMS.Link" && this.category.ID === info.args.ID) {
-					if (info.args.Type === "Updated") {
-						this.formControls.filter(control => control.Hidden).forEach(control => control.Hidden = this.formConfig.find(cfg => AppUtility.isEquals(cfg.Name, control.Name)).Hidden ? true : false);
-					}
-					else if (info.args.Type === "Deleted") {
-						this.cancel();
-					}
-					else if (info.args.Type === "Thumbnail") {
-						this.prepareThumbnail();
-					}
-				}
-			}, "CMS.Categories:Edit:Refresh");
-		}
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: AppFormsSegment[]) => void) {
