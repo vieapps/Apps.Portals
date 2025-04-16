@@ -5,7 +5,7 @@ import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
-import { AppMessage } from "@app/components/app.objects";
+import { AppMessage, AppDataRequest } from "@app/components/app.objects";
 import { AppFormsControlConfig, AppFormsControl } from "@app/components/forms.objects";
 import { AppFormsService } from "@app/components/forms.service";
 import { Base as BaseService } from "@app/services/base.service";
@@ -350,6 +350,19 @@ export class FilesService extends BaseService {
 			}
 		}
 		return formControl;
+	}
+
+	searchAttachments(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.search(
+			this.getSearchingPath("attachments", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while searching attachments", error, onError)
+		);
 	}
 
 	searchAttachmentsAsync(options: FileOptions, onSuccess?: (attachments: AttachmentInfo[]) => void, onError?: (error?: any) => void, useXHR: boolean = false) {

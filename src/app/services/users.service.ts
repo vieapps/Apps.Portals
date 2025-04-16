@@ -101,12 +101,8 @@ export class UsersService extends BaseService {
 			this.getSearchingPath("profile", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!UserProfile.contains(obj.ID)) {
-							UserProfile.update(obj);
-						}
-					});
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+					this.processProfiles(data.Objects as Array<any>);
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -121,12 +117,8 @@ export class UsersService extends BaseService {
 			this.getSearchingPath("profile", this.configSvc.relatedQuery),
 			request,
 			data => {
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<any>).forEach(obj => {
-						if (!UserProfile.contains(obj.ID)) {
-							UserProfile.update(obj);
-						}
-					});
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+					this.processProfiles(data.Objects as Array<any>);
 				}
 				if (onSuccess !== undefined) {
 					onSuccess(data);
@@ -337,6 +329,12 @@ export class UsersService extends BaseService {
 			data => this.configSvc.updateAccount(data, onSuccess, true),
 			error => this.processError("Error occurred while updating privileges", error, onError)
 		);
+	}
+
+	processProfiles(profiles: Array<any>) {
+		const objects = new Array<UserProfile>();
+		profiles.forEach(data => objects.push(UserProfile.update(data)));
+		return objects;
 	}
 
 	private processUpdateMessage(message: AppMessage) {

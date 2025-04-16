@@ -1,7 +1,6 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
-import { AppEvents } from "@app/components/app.events";
 import { NestedObject } from "@app/models/portals.base";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 

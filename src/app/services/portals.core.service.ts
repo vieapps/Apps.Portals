@@ -273,7 +273,7 @@ export class PortalsCoreService extends BaseService {
 			await this.getOrganizationAsync(Organization.active.ID, undefined, undefined, true);
 		}
 		if (this.configSvc.appConfig.services.active.service === this.name) {
-			this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
+			this.updateSearchURL();
 			if (Organization.active === undefined) {
 				this.prepareSidebar();
 			}
@@ -1553,6 +1553,10 @@ export class PortalsCoreService extends BaseService {
 		return this.readAsync(this.getPath(objectName, "refresh", `object-id=${id}`), onSuccess, onError, headers, useXHR);
 	}
 
+	private updateSearchURL() {
+		this.configSvc.appConfig.URLs.search = "/search";
+	}
+
 	private updateSidebarHeader() {
 		const organization = this.configSvc.isAuthenticated ? this.activeOrganization : undefined;
 		AppEvents.broadcast("UpdateSidebarHeader", {
@@ -1569,7 +1573,7 @@ export class PortalsCoreService extends BaseService {
 			sidebar.State.Active = name;
 			if (sidebar.State.Active === "cms" || sidebar.State.Active === "portals") {
 				this.configSvc.appConfig.services.active.service = this.name;
-				this.configSvc.appConfig.URLs.search = "/portals/cms/contents/search";
+				this.updateSearchURL();
 			}
 		}
 		if (!sidebar.State.Visible) {

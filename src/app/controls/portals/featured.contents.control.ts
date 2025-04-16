@@ -203,7 +203,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		if (this.portalsCoreSvc.activeModule === undefined || this.portalsCoreSvc.activeModule.ID !== object.OriginalObject.RepositoryID) {
 			await this.portalsCoreSvc.getActiveModuleAsync(object.OriginalObject.RepositoryID);
 		}
-		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(object.OriginalObject.contentType, "view", object.Category ? object.CategoryTitle : undefined, { ID: object.ID }));
+		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(object.OriginalObject.contentType, "view", object.Title, { ID: object.ID }));
 	}
 
 }

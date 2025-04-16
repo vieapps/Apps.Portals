@@ -115,9 +115,13 @@ export class BooksService extends BaseService {
 			.then(() => this.loadStatisticsAsync())
 			.then(() => AppUtility.invoke(this.configSvc.isAuthenticated ? () => this.loadBookmarksAsync(() => this.fetchBookmarksAsync()) : undefined, this.configSvc.appConfig.services.active.service === this.name ? 0 : 789)), this.configSvc.appConfig.services.active.service === this.name ? 0 : 789);
 		if (this.configSvc.appConfig.services.active.service === this.name) {
-			this.configSvc.appConfig.URLs.search = "/books/search";
+			this.updateSearchURL();
 		}
 		return AppUtility.invoke(onNext);
+	}
+
+	private updateSearchURL() {
+		this.configSvc.appConfig.URLs.search = "/books/search";
 	}
 
 	private updateSidebarHeader() {
@@ -152,7 +156,7 @@ export class BooksService extends BaseService {
 				if (sidebar.State.Active !== name) {
 					sidebar.State.Active = name;
 					this.configSvc.appConfig.services.active.service = this.name;
-					this.configSvc.appConfig.URLs.search = "/books/search";
+					this.updateSearchURL();
 					this.updateSidebarHeader();
 					if (!sidebar.State.Visible) {
 						sidebar.active(name, true);

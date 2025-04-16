@@ -231,6 +231,147 @@ export class PortalsCmsService extends BaseService {
 			const data = await this.getObjectAsync(notification.ObjectID, contentType !== undefined ? contentType.getObjectName() : notification.ObjectName, true);
 			await this.appFormsSvc.hideLoadingAsync(data.gotRights && data.object !== undefined && AppUtility.isNotEmpty(data.object.ID) ? () => this.configSvc.navigateForwardAsync(data.object.routerURI) : () => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
 		});
+
+		AppEvents.on("Searcher", info => {
+			if (info.args.Type === "GetObjectOfAttachment" && AppUtility.isNotEmpty(info.args.ObjectInfo.ID)) {
+				AppUtility.invoke(async () => {
+					let contentType = ContentType.get(info.args.ObjectInfo.RepositoryEntityID);
+					if (contentType === undefined) {
+						await this.portalsCoreSvc.getContentTypeAsync(info.args.ObjectInfo.RepositoryEntityID, async _ => {
+							contentType = ContentType.get(info.args.ObjectInfo.RepositoryEntityID);
+							if (contentType !== undefined) {
+								await this.portalsCoreSvc.getOrganizationAsync(contentType.SystemID);
+								await this.portalsCoreSvc.getModuleAsync(contentType.RepositoryID);
+							}
+						}, undefined, true);
+					}
+					const data = await this.getObjectAsync(info.args.ObjectInfo.ID, contentType !== undefined ? contentType.getObjectName() : info.args.ObjectInfo.ObjectName, true);
+					if (data.object !== undefined) {
+						const category = data.object["category"] as Category;
+						AppEvents.broadcast("Searcher", {
+							Type: "UpdateObjectOfAttachment",
+							ID: info.args.ID,
+							ObjectInfo: {
+								SubTitle: contentType !== undefined ? category !== undefined ? `${category.FullTitle} > ${data.object.Title}` : `${data.object.Title} (${contentType.Title})` : undefined,
+								OpenURI: contentType !== undefined ? this.portalsCoreSvc.getAppURL(contentType, "view", data.object.Title, { ID: data.object.ID }) : data.object.routerURI
+							}
+						});
+					}
+				});
+			}
+			else if (info.args.Type === "PrepareAdapters") {
+				AppEvents.broadcast("Searcher", {
+					Type: "AdaptersPrepared",
+					Adapters: [
+						{
+							Name: "CMS.Category",
+							Label: "Category",
+							Searcher: (request: AppDataRequest, onSuccess: (data?: any) => void, onError: (data?: any) => void) => this.searchCategories(request, onSuccess, onError),
+							Preparer: (data?: any) => {
+								const objects = data !== undefined && AppUtility.isGotData(data.Objects) ? this.processCategories(data.Objects as Array<any>) : [];
+								return objects.map(object => ({
+									ID: object.ID,
+									Title: object.Title,
+									Created: object.Created,
+									LastModified: object.LastModified,
+									Status: object.Status,
+									StartDate: object.Created,
+									PublishedTime: undefined,
+									SubTitle: `${object.module.Title} > ${object.contentType.Title}`,
+									OpenURI: object.routerURI,
+									ThumbnailURI: object.thumbnailURI,
+								}));
+							},
+							FilterConditions: [{ SystemID: { Equals: this.portalsCoreSvc.activeOrganization.ID } }]
+						},
+						{
+							Name: "CMS.Form",
+							Label: "Form",
+							Searcher: (request: AppDataRequest, onSuccess: (data?: any) => void, onError: (data?: any) => void) => this.searchForms(request, onSuccess, onError),
+							Preparer: (data?: any) => {
+								const objects = data !== undefined && AppUtility.isGotData(data.Objects) ? this.processForms(data.Objects as Array<any>) : [];
+								return objects.map(object => ({
+									ID: object.ID,
+									Title: object.Title,
+									Created: object.Created,
+									LastModified: object.LastModified,
+									Status: object.Status,
+									StartDate: object.Created,
+									PublishedTime: undefined,
+									SubTitle: `${object.module.Title} > ${object.contentType.Title}`,
+									OpenURI: this.portalsCoreSvc.getAppURL(object.contentType, "view", object.Title, { ID: object.ID }),
+									ThumbnailURI: object.thumbnailURI,
+								}));
+							},
+							FilterConditions: [{ SystemID: { Equals: this.portalsCoreSvc.activeOrganization.ID } }]
+						},
+						{
+							Name: "CMS.Link",
+							Label: "Link", 
+							Searcher: (request: AppDataRequest, onSuccess: (data?: any) => void, onError: (data?: any) => void) => this.searchLinks(request, onSuccess, onError),
+							Preparer: (data?: any) => {
+								const objects = data !== undefined && AppUtility.isGotData(data.Objects) ? this.processLinks(data.Objects as Array<any>) : [];
+								return objects.map(object => ({
+									ID: object.ID,
+									Title: object.Title,
+									Created: object.Created,
+									LastModified: object.LastModified,
+									Status: object.Status,
+									StartDate: object.Created,
+									PublishedTime: undefined,
+									SubTitle: `${object.module.Title} > ${object.contentType.Title}`,
+									OpenURI: this.portalsCoreSvc.getAppURL(object.contentType, "view", object.Title, { ID: object.ID }),
+									ThumbnailURI: object.thumbnailURI,
+								}));
+							},
+							FilterConditions: [{ SystemID: { Equals: this.portalsCoreSvc.activeOrganization.ID } }]
+						},
+						{
+							Name: "CMS.Item",
+							Label: "Item", 
+							Searcher: (request: AppDataRequest, onSuccess: (data?: any) => void, onError: (data?: any) => void) => this.searchItems(request, onSuccess, onError),
+							Preparer: (data?: any) => {
+								const objects = data !== undefined && AppUtility.isGotData(data.Objects) ? this.processItems(data.Objects as Array<any>) : [];
+								return objects.map(object => ({
+									ID: object.ID,
+									Title: object.Title,
+									Created: object.Created,
+									LastModified: object.LastModified,
+									Status: object.Status,
+									StartDate: object.Created,
+									PublishedTime: undefined,
+									SubTitle: `${object.module.Title} > ${object.contentType.Title}`,
+									OpenURI: this.portalsCoreSvc.getAppURL(object.contentType, "view", object.Title, { ID: object.ID }),
+									ThumbnailURI: object.thumbnailURI,
+								}));
+							},
+							FilterConditions: [{ SystemID: { Equals: this.portalsCoreSvc.activeOrganization.ID } }]
+						},
+						{
+							Name: "CMS.Content",
+							Label: "Content", 
+							Searcher: (request: AppDataRequest, onSuccess: (data?: any) => void, onError: (data?: any) => void) => this.searchContents(request, onSuccess, onError),
+							Preparer: (data?: any) => {
+								const objects = data !== undefined && AppUtility.isGotData(data.Objects) ? this.processContents(data.Objects as Array<any>, false) : [];
+								return objects.map(object => ({
+									ID: object.ID,
+									Title: object.Title,
+									Created: object.Created,
+									LastModified: object.LastModified,
+									Status: object.Status,
+									StartDate: object.StartDate,
+									PublishedTime: object.PublishedTime,
+									SubTitle: object.category === undefined ? `${object.module.Title} > ${object.contentType.Title}` : object.category.FullTitle,
+									OpenURI: this.portalsCoreSvc.getAppURL(object.contentType, "view", object.Title, { ID: object.ID }),
+									ThumbnailURI: object.thumbnailURI,
+								}));
+							},
+							FilterConditions: [{ SystemID: { Equals: this.portalsCoreSvc.activeOrganization.ID } }]
+						}
+					]
+				});
+			}
+		});
 	}
 
 	deinitialize() {
@@ -1111,6 +1252,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	processCategories(categories: Array<any>, fetchDesktops: boolean = false, useXHR: boolean = false, preferWebSocket: boolean = false) {
+		const objects = new Array<Category>();
 		categories.forEach(data => {
 			const category = Category.update(data);
 			this.usersSvc.fetchProfileAsync(category.CreatedID).then(() => category.CreatedID === category.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(category.LastModifiedID));
@@ -1123,7 +1265,9 @@ export class PortalsCmsService extends BaseService {
 			if (fetchDesktops) {
 				this.fetchCategoryDesktops(category);
 			}
+			objects.push(category);;
 		});
+		return objects;
 	}
 
 	private processCategoryUpdateMessage(message: AppMessage) {
@@ -1299,27 +1443,32 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	private processContents(contents: Array<any>) {
+	private processContents(contents: Array<any>, findLargeContents: boolean = true) {
+		const objects = new Array<Content>();
 		contents.forEach(data => {
 			const content = Content.update(data);
 			this.usersSvc.fetchProfileAsync(content.CreatedID).then(() => content.CreatedID === content.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(content.LastModifiedID));
 			if (content.Versions === undefined) {
 				this.portalsCoreSvc.findVersions("CMS.Content", content.ID);
 			}
+			objects.push(content);
 		});
 		this._featuredContentNones.remove(contents.first().SystemID);
-		AppUtility.invoke(() => {
-			const large = contents.filter(content => AppUtility.isNotEmpty(content.Details) && content.Details.length > this.configSvc.appConfig.app.query.large).map(content => Content.get(content.ID)).filter(content => content !== undefined);
-			if (large.length > 0) {
-				const language = this.configSvc.appConfig.language;
-				const appURL = this.configSvc.appConfig.URIs.apps.substring(0, this.configSvc.appConfig.URIs.apps.length - 1);
-				const largeContents = large.map(content => `${content.StartDate.toLocaleDateString(language)}: ${content.Title}\n`
-					+ `App: ${appURL}${content.routerURI.replace("/view/", "/update/")}&prepare=true${this.configSvc.isDebug ? "&debug=true&r=" + Math.random() : ""}\n`
-					+ `Public: ${this.portalsCoreSvc.getPermanentURL(content)}\n`
-					+ `Script: __vieapps.open("${content.getRouterURI()}")`);
-				console.log("~~~~~~~~~~>>>>> LARGE contents ~~~~~~~~~~>>>>>\n- " + AppUtility.toStr(largeContents, "\n- ") + "\n<<<<<<<<<<~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-			}
-		}, this.configSvc.appConfig.app.preflight.defer / 2);
+		if (findLargeContents) {
+			AppUtility.invoke(() => {
+				const large = contents.filter(content => AppUtility.isNotEmpty(content.Details) && content.Details.length > this.configSvc.appConfig.app.query.large).map(content => Content.get(content.ID)).filter(content => content !== undefined);
+				if (large.length > 0) {
+					const language = this.configSvc.appConfig.language;
+					const appURL = this.configSvc.appConfig.URIs.apps.substring(0, this.configSvc.appConfig.URIs.apps.length - 1);
+					const largeContents = large.map(content => `${content.StartDate.toLocaleDateString(language)}: ${content.Title}\n`
+						+ `App: ${appURL}${content.routerURI.replace("/view/", "/update/")}&prepare=true${this.configSvc.isDebug ? "&debug=true&r=" + Math.random() : ""}\n`
+						+ `Public: ${this.portalsCoreSvc.getPermanentURL(content)}\n`
+						+ `Script: __vieapps.open("${content.getRouterURI()}")`);
+					console.log("~~~~~~~~~~>>>>> LARGE contents ~~~~~~~~~~>>>>>\n- " + AppUtility.toStr(largeContents, "\n- ") + "\n<<<<<<<<<<~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+				}
+			}, this.configSvc.appConfig.app.preflight.defer / 2);
+		}
+		return objects;
 	}
 
 	private processContentUpdateMessage(message: AppMessage) {
@@ -1490,14 +1639,17 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	private processItems(items: Array<any>) {
-		items.forEach(obj => {
-			const item = Item.update(obj);
+		const objects = new Array<Item>();
+		items.forEach(data => {
+			const item = Item.update(data);
 			this.usersSvc.fetchProfileAsync(item.CreatedID).then(() => item.CreatedID === item.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(item.LastModifiedID));
 			if (item.Versions === undefined) {
 				this.portalsCoreSvc.findVersions("CMS.Item", item.ID);
 			}
+			objects.push(item);
 		});
 		this._featuredContentNones.remove(items.first().SystemID);
+		return objects;
 	}
 
 	private processItemUpdateMessage(message: AppMessage) {
@@ -1735,6 +1887,7 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	processLinks(links: Array<any>) {
+		const objects = new Array<Link>();
 		links.forEach(data => {
 			const link = Link.update(data);
 			this.usersSvc.fetchProfileAsync(link.CreatedID).then(() => link.CreatedID === link.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(link.LastModifiedID));
@@ -1744,7 +1897,9 @@ export class PortalsCmsService extends BaseService {
 			if (link.Versions === undefined) {
 				this.portalsCoreSvc.findVersions("CMS.Link", link.ID);
 			}
+			objects.push(link);
 		});
+		return objects;
 	}
 
 	private processLinkUpdateMessage(message: AppMessage) {
@@ -1911,8 +2066,10 @@ export class PortalsCmsService extends BaseService {
 	}
 
 	private processForms(forms: Array<any>) {
-		forms.forEach(obj => Form.update(obj));
+		const objects = new Array<Form>();
+		forms.forEach(data => objects.push(Form.update(data)));
 		this._featuredContentNones.remove(forms.first().SystemID);
+		return objects;
 	}
 
 	private processFormUpdateMessage(message: AppMessage) {

@@ -1,6 +1,5 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
-import { AppEvents } from "@app/components/app.events";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
 export class Item extends CmsBaseModel {

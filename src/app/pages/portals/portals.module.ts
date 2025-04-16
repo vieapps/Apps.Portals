@@ -20,12 +20,7 @@ export const routes: Routes = [
 		path: "cms",
 		canActivate: [AuthenticatedGuardService],
 		loadChildren: "@app/pages/portals/cms/cms.module#PortalsCmsModule"
-	},
-	// {
-	// 	path: "search",
-	// 	canActivate: [AuthenticatedGuardService],
-	// 	loadChildren: "@app/pages/portals/search/search.module#PortalsSearchModule"
-	// }
+	}
 ];
 
 @NgModule({

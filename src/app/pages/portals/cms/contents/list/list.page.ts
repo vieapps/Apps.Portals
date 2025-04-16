@@ -250,7 +250,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 						this.zone.run(() => this.changeDetector.detectChanges());
 					}
 				}
-			}, `CMS.Contents:${(this.contentType !== undefined ? this.contentType.ID +":" : "")}${(this.category !== undefined ? this.category.ID + ":" : "")}Refresh`);
+			}, `CMS.Contents:${(this.contentType !== undefined ? this.contentType.ID + ":" : "")}${(this.category !== undefined ? this.category.ID + ":" : "")}Refresh`);
 		}
 	}
 
