@@ -180,7 +180,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			? Module.get(this.contentType.RepositoryID)
 			: await this.portalsCoreSvc.getActiveModuleAsync();
 
-		this.contentType = this.contentType || this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.module);
+		this.contentType = this.contentType || this.module.defaultContentTypeOfCategory;
 
 		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canUpdate = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
@@ -428,7 +428,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	view(event: Event, category: Category) {
-		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(ContentType.get(category.PrimaryContentID) || this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module), "list", category.Title, { CategoryID: category.ID })), event);
+		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(ContentType.get(category.PrimaryContentID) || category.module.defaultContentTypeOfContent, "list", category.Title, { CategoryID: category.ID })), event);
 	}
 
 	doRefresh(categories: Category[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
@@ -454,7 +454,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	refreshAll() {
 		const categories = Category.instances.toArray(category => category.SystemID === this.organization.ID);
 		if (categories.length > 0) {
-			this.doRefresh(categories, 0, false, () => Promise.all(this.organization.modules.map(module => this.portalsCmsSvc.getContentTypesOfCategory(module))
+			this.doRefresh(categories, 0, false, () => Promise.all(this.organization.modules.map(module => module.contentTypesOfCategory)
 				.flatMap(contentypes => contentypes)
 				.map(contentType => this.portalsCmsSvc.searchSpecifiedCategoriesAsync(contentType, undefined, undefined, true, true))).then(() => this.appFormsSvc.showToastAsync("All the categories were freshen-up"))
 			);
@@ -462,7 +462,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	createExpression(event: Event, category: Category) {
-		const contentType = ContentType.get(category.PrimaryContentID) || this.portalsCmsSvc.getDefaultContentTypeOfContent(category.module);
+		const contentType = ContentType.get(category.PrimaryContentID) || category.module.defaultContentTypeOfContent;
 		const params = {
 			Title: `Contents of ${category.Title}`,
 			RepositoryID: contentType === undefined ? undefined : contentType.RepositoryID,

@@ -120,7 +120,7 @@ export class CmsCategoriesUpdatePage implements OnInit, OnDestroy {
 		}
 
 		this.module = Module.get(this.contentType.RepositoryID);
-		this.contentTypes = this.portalsCmsSvc.getContentTypesOfContent(this.module).merge(this.portalsCmsSvc.getContentTypesOfProduct(this.module));
+		this.contentTypes = this.module.contentTypesOfContent;
 
 		const canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.category !== undefined ? this.category.Privileges : this.module.Privileges);
 		if (!canUpdate) {
@@ -337,7 +337,7 @@ export class CmsCategoriesUpdatePage implements OnInit, OnDestroy {
 	onFormInitialized() {
 		this.form.patchValue(AppUtility.clone(this.category, false, ["Privileges", "Notifications", "EmailSettings"], category => {
 			if (this.contentTypes.length > 1) {
-				const contentType = ContentType.get(this.category.PrimaryContentID) || this.portalsCmsSvc.getDefaultContentTypeOfContent(this.module);
+				const contentType = ContentType.get(this.category.PrimaryContentID) || this.module.defaultContentTypeOfContent;
 				category.PrimaryContentID = contentType !== undefined ? contentType.ID : undefined;
 			}
 			category.OriginalPrivileges = Privileges.clonePrivileges(this.category.OriginalPrivileges);

@@ -4,7 +4,6 @@ import { Privileges } from "@app/models/privileges";
 import { NotificationSettings, EmailSettings, WebHookSettings } from "@app/models/portals.base";
 import { PortalCoreBase as CoreBaseModel } from "@app/models/portals.core.base";
 import { Module } from "@app/models/portals.core.module";
-import { ContentType } from "@app/models/portals.core.content.type";
 import { UserProfile } from "@app/models/user";
 
 export class Organization extends CoreBaseModel {
@@ -123,16 +122,16 @@ export class Organization extends CoreBaseModel {
 		return Module.instances.toArray(module => module.SystemID === this.ID).sortBy("Title");
 	}
 
+	get defaultModule() {
+		return this.modules.firstOrDefault(module => module.ModuleDefinitionID === "A0000000000000000000000000000001");
+	}
+
 	get contentTypes() {
-		return ContentType.instances.toArray(contentType => contentType.SystemID === this.ID).sortBy("Title");
+		return this.modules.map(module => module.contentTypes).flatMap(contentTypes => contentTypes);
 	}
 
 	get routerLink() {
 		return `/portals/core/organizations/update/${AppUtility.toURI(this.ansiTitle)}`;
-	}
-
-	get defaultModule() {
-		return this.modules.firstOrDefault(module => module.ModuleDefinitionID === "A0000000000000000000000000000001");
 	}
 
 	get owner() {

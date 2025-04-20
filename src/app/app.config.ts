@@ -34,7 +34,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "10.2504.1",
+		version: "10.2504.4",
 		frameworks: "ionic 5 - angular 11 - cordova 11",
 		mode: "",
 		platform: "",
@@ -94,7 +94,7 @@ export class AppConfig {
 
 	/** App accounts */
 	static accounts = {
-		registrable: true,
+		registrable: false,
 		registration: {
 			required: [],
 			hidden: ["Gender", "BirthDay", "Address", "Addresses", "Mobile"],

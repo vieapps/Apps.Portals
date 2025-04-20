@@ -158,7 +158,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			? Module.get(this.contentType.RepositoryID)
 			: await this.portalsCoreSvc.getActiveModuleAsync();
 
-		this.contentType = this.contentType || this.portalsCmsSvc.getDefaultContentTypeOfContent(this.module);
+		this.contentType = this.contentType || this.module.defaultContentTypeOfContent;
 		AppEvents.broadcast(this.portalsCmsSvc.name, { Type: "UpdateSidebar", Mode: "Categories", ContentTypeID: this.contentType !== undefined ? this.contentType.ID : undefined });
 
 		this.categoryID = this.configSvc.requestParams["CategoryID"];
@@ -211,7 +211,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 				this.actions.push(this.appFormsSvc.getActionSheetButton(this.labels.refresh, "refresh", () => this.reload()));
 			}
 
-			if (this.module !== undefined && this.portalsCmsSvc.getContentTypesOfContent(this.module).length > 1) {
+			if (this.module !== undefined && this.module.contentTypesOfContent.length > 1) {
 				this.actions.push(
 					this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.cms.contents.list.change"), "git-branch", () => this.changeContentType())
 				);
@@ -530,7 +530,7 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			},
 			await this.configSvc.getResourceAsync("common.buttons.select"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel"),
-			this.portalsCmsSvc.getContentTypesOfContent(this.module).map(contentType => ({
+			this.module.contentTypesOfContent.map(contentType => ({
 				type: "radio",
 				label: contentType.Title,
 				value: contentType.ID,

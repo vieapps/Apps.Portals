@@ -561,14 +561,14 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 			assigner = data => this.duplicate.module = this.portalsCoreSvc.getModule(data.first().ID);
 		}
 		else if (this.duplicate.contentType === undefined) {
-			items = this.portalsCmsSvc.getContentTypesOfContent(this.duplicate.module);
+			items = this.duplicate.module.contentTypesOfContent;
 			selected = !!items.length ? items.first().ID : undefined;
 			labels.title = await this.configSvc.getResourceAsync("portals.cms.contents.view.duplicate.contentType");
 			assigner = data => this.duplicate.contentType = this.duplicate.module.contentTypes.first(cntType => cntType.ID === data.first().ID);
 		}
 		else if (this.duplicate.category === undefined || this.duplicate.otherCategories === undefined) {
 			nested = true;
-			const contentType = this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.duplicate.module)
+			const contentType = this.duplicate.module.defaultContentTypeOfCategory;
 			items = Category.instances.toArray(category => category.SystemID === contentType.SystemID && category.RepositoryID === contentType.RepositoryID && category.ParentID === undefined);
 			if (!!!items.length) {
 				await this.portalsCmsSvc.searchSpecifiedCategoriesAsync(

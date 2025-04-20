@@ -97,6 +97,46 @@ export class Module extends CoreBaseModel {
 		return ContentType.instances.toArray(contentType => contentType.RepositoryID === this.ID).sortBy("Title");
 	}
 
+	get contentTypesOfCategory() {
+		return this.contentTypes.filter(contentType => contentType.isCmsCategory);
+	}
+
+	get defaultContentTypeOfCategory() {
+		return this.contentTypesOfCategory.firstOrDefault();
+	}
+
+	get contentTypesOfContent() {
+		return this.contentTypes.filter(contentType => contentType.isCmsContent);
+	}
+
+	get defaultContentTypeOfContent() {
+		return this.contentTypesOfContent.firstOrDefault();
+	}
+
+	get contentTypesOfItem() {
+		return this.contentTypes.filter(contentType => contentType.isCmsItem);
+	}
+
+	get defaultContentTypeOfItem() {
+		return this.contentTypesOfItem.firstOrDefault();
+	}
+
+	get contentTypesOfLink() {
+		return this.contentTypes.filter(contentType => contentType.isCmsLink);
+	}
+
+	get defaultContentTypeOfLink() {
+		return this.contentTypesOfLink.firstOrDefault();
+	}
+
+	get contentTypesOfForm() {
+		return this.contentTypes.filter(contentType => contentType.isCmsForm);
+	}
+
+	get defaultContentTypeOfForm() {
+		return this.contentTypesOfForm.firstOrDefault();
+	}
+
 	get routerLink() {
 		return `/portals/core/modules/update/${AppUtility.toURI(this.ansiTitle)}`;
 	}

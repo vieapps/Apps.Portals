@@ -20,7 +20,7 @@ import { PortalsCoreService } from "@app/services/portals.core.service";
 import { AppFormsControlComponent } from "@app/components/forms.control.component";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 import { Account } from "@app/models/account";
-import { AttachmentInfo } from "@app/models/base";
+import { Base, AttachmentInfo } from "@app/models/base";
 import { PortalBase as BaseModel, Organization, Role, Module, ContentType, Expression, Site, Desktop, Portlet, SchedulingTask } from "@app/models/portals.core.all";
 import { PortalCmsBase as CmsBaseModel, Category, Content, Item, Link, Form, Crawler } from "@app/models/portals.cms.all";
 
@@ -144,7 +144,7 @@ export class PortalsCmsService extends BaseService {
 					else if ("Categories" === info.args.Mode) {
 						if (AppUtility.isNotEmpty(info.args.ContentTypeID)) {
 							if (this._sidebarContentType === undefined || this._sidebarContentType.ID !== info.args.ContentTypeID) {
-								this._sidebarContentType = ContentType.get(info.args.ContentTypeID) || this.getDefaultContentTypeOfContent(this.portalsCoreSvc.activeModule);
+								this._sidebarContentType = ContentType.get(info.args.ContentTypeID) || this.portalsCoreSvc.activeModule.defaultContentTypeOfContent;
 								if (this._sidebarContentType !== undefined) {
 									this.updateSidebarWithCategoriesAsync();
 								}
@@ -158,9 +158,6 @@ export class PortalsCmsService extends BaseService {
 				else if ("Changed" === info.args.Mode && ("Organization" === info.args.Type || "Module" === info.args.Type)) {
 					this._sidebarCategory = undefined;
 					this._sidebarContentType = undefined;
-					if ("Module" === info.args.Type) {
-						this.getContentTypesOfCategory(Module.active);
-					}
 					this.updateSidebarAsync();
 				}
 				else if ("FeaturedContents" === info.args.Type) {
@@ -240,8 +237,8 @@ export class PortalsCmsService extends BaseService {
 						await this.portalsCoreSvc.getContentTypeAsync(info.args.ObjectInfo.RepositoryEntityID, async _ => {
 							contentType = ContentType.get(info.args.ObjectInfo.RepositoryEntityID);
 							if (contentType !== undefined) {
-								await this.portalsCoreSvc.getOrganizationAsync(contentType.SystemID);
-								await this.portalsCoreSvc.getModuleAsync(contentType.RepositoryID);
+								await this.portalsCoreSvc.getOrganizationAsync(contentType.SystemID, undefined, undefined, true, false);
+								await this.portalsCoreSvc.getModuleAsync(contentType.RepositoryID, undefined, undefined, true);
 							}
 						}, undefined, true);
 					}
@@ -252,8 +249,8 @@ export class PortalsCmsService extends BaseService {
 							Type: "UpdateObjectOfAttachment",
 							ID: info.args.ID,
 							ObjectInfo: {
-								SubTitle: contentType !== undefined ? category !== undefined ? `${category.FullTitle} > ${data.object.Title}` : `${data.object.Title} (${contentType.Title})` : undefined,
-								OpenURI: contentType !== undefined ? this.portalsCoreSvc.getAppURL(contentType, "view", data.object.Title, { ID: data.object.ID }) : data.object.routerURI
+								SubTitle: category !== undefined ? `${category.FullTitle} > ${data.object.Title}` : `${data.object.Title}${contentType !== undefined ? ` [${contentType.Title}]` : ""}`,
+								OpenURI: data.object.routerURI
 							}
 						});
 					}
@@ -299,7 +296,7 @@ export class PortalsCmsService extends BaseService {
 									StartDate: object.Created,
 									PublishedTime: undefined,
 									SubTitle: `${object.module.Title} > ${object.contentType.Title}`,
-									OpenURI: this.portalsCoreSvc.getAppURL(object.contentType, "view", object.Title, { ID: object.ID }),
+									OpenURI: object.routerURI,
 									ThumbnailURI: object.thumbnailURI,
 								}));
 							},
@@ -320,7 +317,7 @@ export class PortalsCmsService extends BaseService {
 									StartDate: object.Created,
 									PublishedTime: undefined,
 									SubTitle: `${object.module.Title} > ${object.contentType.Title}`,
-									OpenURI: this.portalsCoreSvc.getAppURL(object.contentType, "view", object.Title, { ID: object.ID }),
+									OpenURI: object.routerURI,
 									ThumbnailURI: object.thumbnailURI,
 								}));
 							},
@@ -341,7 +338,7 @@ export class PortalsCmsService extends BaseService {
 									StartDate: object.Created,
 									PublishedTime: undefined,
 									SubTitle: `${object.module.Title} > ${object.contentType.Title}`,
-									OpenURI: this.portalsCoreSvc.getAppURL(object.contentType, "view", object.Title, { ID: object.ID }),
+									OpenURI: object.routerURI,
 									ThumbnailURI: object.thumbnailURI,
 								}));
 							},
@@ -362,7 +359,7 @@ export class PortalsCmsService extends BaseService {
 									StartDate: object.StartDate,
 									PublishedTime: object.PublishedTime,
 									SubTitle: object.category === undefined ? `${object.module.Title} > ${object.contentType.Title}` : object.category.FullTitle,
-									OpenURI: this.portalsCoreSvc.getAppURL(object.contentType, "view", object.Title, { ID: object.ID }),
+									OpenURI: object.routerURI,
 									ThumbnailURI: object.thumbnailURI,
 								}));
 							},
@@ -624,7 +621,7 @@ export class PortalsCmsService extends BaseService {
 						const isImage = attachment !== undefined && attachment.isImage;
 						const isMedia = attachment !== undefined && (attachment.isVideo || attachment.isAudio);
 						const href = attachment !== undefined ? attachment.URIs.Direct : undefined;
-						const link = isImage && settings.useWhenInsertWithLink && settings.width > 0 ? BaseModel.getThumbnailURI(attachment, true) : href;
+						const link = isImage && settings.useWhenInsertWithLink && settings.width > 0 ? Base.getThumbnailURI(attachment, true) : href;
 						if (this.configSvc.isDebug) {
 							console.log(`[Portals/MediaSelector]: Insert a media into content ${object.contentType === undefined ? "" : object.contentType.getObjectName(true)}#${object.ID} - ${object.Title}`, link, isMedia ? "media" : undefined, isImage ? href : undefined);
 						}
@@ -765,7 +762,7 @@ export class PortalsCmsService extends BaseService {
 	private updateSidebarAsync() {
 		const activeModule = this.configSvc.isAuthenticated ? this.portalsCoreSvc.activeModule : undefined;
 		return this.configSvc.isAuthenticated
-			? this.getDefaultContentTypeOfCategory(activeModule) !== undefined
+			? activeModule.defaultContentTypeOfCategory !== undefined
 				? this.updateSidebarWithCategoriesAsync()
 				: activeModule !== undefined
 					? this.updateSidebarWithContentTypesAsync()
@@ -776,15 +773,15 @@ export class PortalsCmsService extends BaseService {
 	private updateSidebarWithCategoriesAsync(parent?: Category, expandedID?: string, onNext?: () => void) {
 		if (parent !== undefined) {
 			this._sidebarCategory = parent;
-			this._sidebarContentType = this._sidebarContentType || this.getDefaultContentTypeOfContent(parent.module);
+			this._sidebarContentType = this._sidebarContentType || parent.module.defaultContentTypeOfContent;
 			const sidebar = this.getSidebarItems(parent.Children, parent, expandedID);
 			return AppUtility.invoke(() => this.updateSidebar(sidebar.Items, sidebar.Parent, onNext));
 		}
 		else {
-			const contentType = this.getDefaultContentTypeOfCategory(this.portalsCoreSvc.activeModule);
+			const contentType = this.portalsCoreSvc.activeModule.defaultContentTypeOfCategory;
 			if (contentType !== undefined) {
 				this._sidebarCategory = undefined;
-				this._sidebarContentType = this._sidebarContentType || this.getDefaultContentTypeOfContent(this.portalsCoreSvc.activeModule);
+				this._sidebarContentType = this._sidebarContentType || this.portalsCoreSvc.activeModule.defaultContentTypeOfContent;
 				return this.searchSpecifiedCategoriesAsync(contentType, data => {
 					const categories = data !== undefined
 						? Category.toArray(data.Objects)
@@ -895,7 +892,7 @@ export class PortalsCmsService extends BaseService {
 			const contentTypes = new Array<ContentType>();
 			const activeOrganization = this.portalsCoreSvc.activeOrganization;
 			const organizations = await this.portalsCoreSvc.getActiveOrganizationsAsync(false);
-			organizations.filter(organization => all || organization.ID !== activeOrganization.ID).forEach(organization => organization.modules.forEach(module => contentTypes.push(this.getDefaultContentTypeOfCategory(module))));
+			organizations.filter(organization => all || organization.ID !== activeOrganization.ID).forEach(organization => organization.modules.forEach(module => contentTypes.push(module.defaultContentTypeOfCategory)));
 			if (contentTypes.length  > 0) {
 				if (this.configSvc.isDebug) {
 					console.log(`[Portals]: Prepare categories all ${organizations.length} active organization(s)`, contentTypes.map(contentType => `${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`));
@@ -979,7 +976,7 @@ export class PortalsCmsService extends BaseService {
 			if (organization !== undefined) {
 				this._featuredContentStates.add(organization.ID);
 				const contentTypes = new Array<ContentType>();
-				organization.modules.forEach(module => contentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module)).merge(this.getContentTypesOfForm(module)));
+				organization.modules.forEach(module => contentTypes.merge(module.contentTypesOfContent).merge(module.contentTypesOfItem).merge(module.contentTypesOfForm));
 				if (contentTypes.length  > 0) {
 					if (this.configSvc.isDebug) {
 						console.log(`[Portals]: Prepare featured contents`, contentTypes.map(contentType => `${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`));
@@ -1001,7 +998,7 @@ export class PortalsCmsService extends BaseService {
 			const contentTypes = new Array<ContentType>();
 			const activeOrganization = this.portalsCoreSvc.activeOrganization;
 			const organizations = await this.portalsCoreSvc.getActiveOrganizationsAsync(false);
-			organizations.filter(organization => all || organization.ID !== activeOrganization.ID).forEach(organization => organization.modules.forEach(module => contentTypes.merge(this.getContentTypesOfContent(module)).merge(this.getContentTypesOfItem(module)).merge(this.getContentTypesOfForm(module))));
+			organizations.filter(organization => all || organization.ID !== activeOrganization.ID).forEach(organization => organization.modules.forEach(module => contentTypes.merge(module.contentTypesOfContent).merge(module.contentTypesOfItem).merge(module.contentTypesOfForm)));
 			if (contentTypes.length  > 0) {
 				if (this.configSvc.isDebug) {
 					console.log(`[Portals]: Prepare featured contents of all ${organizations.length} active organization(s)`, contentTypes.map(contentType => `${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`));
@@ -1034,14 +1031,6 @@ export class PortalsCmsService extends BaseService {
 			}),
 			convertToCompleterItem
 		);
-	}
-
-	getContentTypesOfCategory(module: Module) {
-		return (module || new Module()).contentTypes.filter(contentType => contentType.isCmsCategory);
-	}
-
-	getDefaultContentTypeOfCategory(module: Module) {
-		return this.getContentTypesOfCategory(module).first();
 	}
 
 	searchCategories(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
@@ -1320,14 +1309,6 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	getContentTypesOfContent(module: Module) {
-		return (module || new Module()).contentTypes.filter(contentType => contentType.isCmsContent);
-	}
-
-	getDefaultContentTypeOfContent(module: Module) {
-		return this.getContentTypesOfContent(module).first();
-	}
-
 	searchContents(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("CMS.Content", this.configSvc.relatedQuery),
@@ -1518,14 +1499,6 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	getContentTypesOfItem(module: Module) {
-		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000003");
-	}
-
-	getDefaultContentTypeOfItem(module: Module) {
-		return this.getContentTypesOfItem(module).first();
-	}
-
 	searchItems(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("CMS.Item", this.configSvc.relatedQuery),
@@ -1698,14 +1671,6 @@ export class PortalsCmsService extends BaseService {
 			}),
 			convertToCompleterItem
 		);
-	}
-
-	getContentTypesOfLink(module: Module) {
-		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000004");
-	}
-
-	getDefaultContentTypeOfLink(module: Module) {
-		return this.getContentTypesOfLink(module).first();
 	}
 
 	searchLinks(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
@@ -1946,14 +1911,6 @@ export class PortalsCmsService extends BaseService {
 		);
 	}
 
-	getContentTypesOfForm(module: Module) {
-		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000005");
-	}
-
-	getDefaultContentTypeOfForm(module: Module) {
-		return this.getContentTypesOfForm(module).first();
-	}
-
 	searchForms(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("CMS.Form", this.configSvc.relatedQuery),
@@ -2094,10 +2051,6 @@ export class PortalsCmsService extends BaseService {
 		if (!!message.Data.RepositoryID && !!message.Data.RepositoryEntityID && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
 			AppEvents.broadcast(this.name, { Object: "CMS.Form", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
 		}
-	}
-
-	getContentTypesOfProduct(module: Module) {
-		return (module || new Module()).contentTypes.filter(contentType => contentType.ContentTypeDefinitionID === "B0000000000000000000000000000006");
 	}
 
 	get crawlerCompleterDataSource() {

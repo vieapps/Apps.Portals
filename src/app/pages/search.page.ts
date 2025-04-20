@@ -1,7 +1,7 @@
 import { Subscription } from "rxjs";
 import { Component, OnInit, OnDestroy, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
-import { IonSearchbar, IonInfiniteScroll, IonSelect } from "@ionic/angular";
+import { IonSearchbar, IonInfiniteScroll, IonSelect, ViewDidEnter } from "@ionic/angular";
 import { Dictionary } from "@app/components/app.collections";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
@@ -13,8 +13,7 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { UsersService } from "@app/services/users.service";
 import { FilesService } from "@app/services/files.service";
-import { PortalsCoreService } from "@app/services/portals.core.service";
-import { AttachmentInfo } from "@app/models/base";
+import { Base } from "@app/models/base";
 
 @Component({
 	selector: "page-search",
@@ -22,7 +21,7 @@ import { AttachmentInfo } from "@app/models/base";
 	styleUrls: ["./search.page.scss"],
 })
 
-export class SearchPage implements OnInit, OnDestroy {
+export class SearchPage implements OnInit, OnDestroy, ViewDidEnter {
 
 	constructor(
 		private zone: NgZone,
@@ -31,8 +30,7 @@ export class SearchPage implements OnInit, OnDestroy {
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
 		private filesSvc: FilesService,
-		private usersSvc: UsersService,
-		private portalsCoreSvc: PortalsCoreService
+		private usersSvc: UsersService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
@@ -65,7 +63,7 @@ export class SearchPage implements OnInit, OnDestroy {
 	}
 
 	get noThumbnailURI() {
-		return `${this.configSvc.appConfig.URIs.files}thumbnails/no-image.png`;
+		return Base.noThumbnailURI;
 	}
 
 	get totalDisplays() {
@@ -115,6 +113,10 @@ export class SearchPage implements OnInit, OnDestroy {
 		AppEvents.off("Portals", "Searcher:PrepareThumbnailURI");
 	}
 
+	ionViewDidEnter() {
+		this.configSvc.appTitle = "Search";
+	}
+
 	private async initializeAsync(onNext?: () => void) {
 		await this.appFormsSvc.showLoadingAsync("Preparing...");
 		if (!this.configSvc.isAuthenticated) {
@@ -149,22 +151,22 @@ export class SearchPage implements OnInit, OnDestroy {
 			Label: "Attachment",
 			Searcher: (request: AppDataRequest, onSuccess: (data?: any) => void, onError: (data?: any) => void) => this.filesSvc.searchAttachments(request, onSuccess, onError),
 			Preparer: (data?: any) => {
-				const results = new Array<SearchResult>();
-				if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-					(data.Objects as Array<AttachmentInfo>).forEach(attachment => {
-						results.push({
+				const attachments = new Array<SearchResult>();
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+					(data.Objects as Array<any>).map(attachment => Base.prepareAttachment(attachment)).forEach(attachment => {
+						attachments.push({
 							ID: attachment.ID,
 							Title: attachment.Title,
-							Created: new Date(attachment.Created),
-							LastModified: new Date(attachment.LastModified),
+							Created: attachment.Created,
+							LastModified: attachment.LastModified,
 							Status: "Published",
-							StartDate: new Date(attachment.Created),
+							StartDate: attachment.Created,
 							PublishedTime: undefined,
 							SubTitle: undefined,
 							OpenURI: undefined,
-							ThumbnailURI: undefined
+							ThumbnailURI: attachment.URIs["Thumbnail"]
 						});
-						if ((attachment.ServiceName === "portals" || attachment.ServiceName === "Portals") && AppUtility.isNotEmpty(attachment.ObjectName)) {
+						if (AppUtility.isEquals(attachment.ServiceName, "Portals") && AppUtility.isNotEmpty(attachment.ObjectName)) {
 							AppEvents.broadcast("Searcher", { 
 								Type: "GetObjectOfAttachment",
 								ID: attachment.ID,
@@ -179,9 +181,9 @@ export class SearchPage implements OnInit, OnDestroy {
 						}
 					});
 				}
-				return results;
+				return attachments;
 			},
-			FilterConditions: this.configSvc.appConfig.services.active.service === this.portalsCoreSvc.name && this.portalsCoreSvc.activeOrganization !== undefined ? [{ SystemID: { Equals: this.portalsCoreSvc.activeOrganization.ID } }] : []
+			FilterConditions: this.configSvc.appConfig.services.active.service === "Portals" && AppUtility.isNotEmpty(this.configSvc.appConfig.services.active.system) ? [{ SystemID: { Equals: this.configSvc.appConfig.services.active.system } }] : []
 		});
 		this.prepareAdapters(adapters);
 
@@ -192,11 +194,11 @@ export class SearchPage implements OnInit, OnDestroy {
 
 	onSearch(event: any) {
 		if (AppUtility.isNotEmpty(event.detail.value)) {
+			this.results = [];
+			this.pageNumber = 0;
 			this.filterBy.Query = event.detail.value.replace(/%20/g, " ").replace(/\+/g, " ").trim();
 			this.pagination = AppPagination.getDefault();
 			this.pagination.PageNumber++;
-			this.pageNumber = 0;
-			this.results = [];
 			this.appFormsSvc.showLoadingAsync("Searching...");
 			this.search(() => this.appFormsSvc.hideLoadingAsync());
 		}
@@ -206,10 +208,10 @@ export class SearchPage implements OnInit, OnDestroy {
 	}
 
 	onClear(isChangeType: boolean = false) {
+		this.results = [];
 		this.filterBy.Query = undefined;
 		this.filterBy.And = AppUtility.clone(this.adapters.get(this.typeCtrl.value).FilterConditions);
 		this.infiniteScrollCtrl.disabled = false;
-		this.results = [];
 		if (isChangeType) {
 			this.searchCtrl.value = undefined;
 			PlatformUtility.focus(this.searchCtrl);
@@ -256,12 +258,12 @@ export class SearchPage implements OnInit, OnDestroy {
 			this.subscription.unsubscribe();
 		}
 
-		const adapter = this.adapters.get(this.typeCtrl.value);
 		const request = AppPagination.buildRequest(this.filterBy, undefined, this.pagination);
 		if (this.configSvc.isDebug) {
 			console.log(`<Search>: Perform (${this.typeCtrl.value})`, request);
 		}
 
+		const adapter = this.adapters.get(this.typeCtrl.value);
 		this.subscription = adapter.Searcher(request, (data?: any) => {
 			const results = adapter.Preparer(data);
 			this.pagination = AppPagination.getDefault(data);

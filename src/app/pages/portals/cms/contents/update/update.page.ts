@@ -235,7 +235,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 
 		control = formConfig.find(ctrl => ctrl.Name === "CategoryID");
 		control.Extras = { LookupDisplayValues: this.category !== undefined ? [{ Value: this.category.ID, Label: this.category.FullTitle }] : undefined };
-		const categoryContentType = this.portalsCmsSvc.getDefaultContentTypeOfCategory(this.module);
+		const categoryContentType = this.module.defaultContentTypeOfCategory;
 		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, categoryContentType, false, true, options => {
 			options.OnDelete = (_, formControl) => {
 				formControl.setValue(undefined);

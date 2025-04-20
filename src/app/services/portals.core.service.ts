@@ -17,8 +17,8 @@ import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { UsersService } from "@app/services/users.service";
 import { FilesService, FileOptions } from "@app/services/files.service";
-import { AttachmentInfo } from "@app/models/base";
 import { Account } from "@app/models/account";
+import { Base, AttachmentInfo } from "@app/models/base";
 import { PortalBase as BaseModel, NotificationSettings, EmailNotificationSettings, WebHookNotificationSettings, EmailSettings, WebHookSettings } from "@app/models/portals.base";
 import { Organization, Role, Module, ContentType, Expression, Site, Desktop, Portlet, SchedulingTask } from "@app/models/portals.core.all";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.all";
@@ -194,7 +194,7 @@ export class PortalsCoreService extends BaseService {
 					changed.forEach(change => updated.removeAt(updated.findIndex(attachment => attachment.ID === change.ID)));
 				}
 				else {
-					changed.forEach(change => updated.update(BaseModel.prepareAttachment(change), updated.findIndex(attachment => attachment.ID === change.ID)));
+					changed.forEach(change => updated.update(Base.prepareAttachment(change), updated.findIndex(attachment => attachment.ID === change.ID)));
 				}
 				object.attachments = updated;
 				AppEvents.broadcast(this.name, { Type: "Attachment", Mode: "Updated", Event: message.Type.Event, Attachments: updated, Object: Site.contains(object.ID) ? "Site" : "Desktop", ID: object.ID });

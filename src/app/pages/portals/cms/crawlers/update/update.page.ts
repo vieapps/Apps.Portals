@@ -125,7 +125,7 @@ export class CmsCrawlersUpdatePage implements OnInit, OnDestroy {
 		this.crawler = this.crawler || new Crawler(this.organization.ID);
 		if (AppUtility.isEmpty(this.crawler.ID)) {
 			const module = this.organization.modules.first();
-			const contentTypes = this.portalsCmsSvc.getContentTypesOfContent(module);
+			const contentTypes = module !== undefined ? module.contentTypesOfItem : [];
 			this.crawler.RepositoryID = module !== undefined ? module.ID : undefined;
 			this.crawler.RepositoryEntityID = contentTypes.length ? contentTypes.first().ID : undefined;
 			this.crawler.URL = "https://blogchamsoc.com";
@@ -199,9 +199,9 @@ export class CmsCrawlersUpdatePage implements OnInit, OnDestroy {
 			control.Options.OnChanged = (_, formControl) => {
 				const module = Module.get(formControl.value);
 				const contentTypeControl = this.formControls.find(ctrl => ctrl.Name === "RepositoryEntityID");
-				contentTypeControl.Options.SelectOptions.Values = this.portalsCmsSvc.getContentTypesOfContent(module).map(contentType => ({ Value: contentType.ID, Label: contentType.Title }));
+				contentTypeControl.Options.SelectOptions.Values = module.contentTypesOfContent.map(contentType => ({ Value: contentType.ID, Label: contentType.Title }));
 				contentTypeControl.controlRef.setValue(contentTypeControl.Options.SelectOptions.Values.length ? contentTypeControl.Options.SelectOptions.Values.first().Value : undefined);
-				const categoryContentType = this.portalsCmsSvc.getDefaultContentTypeOfCategory(module);
+				const categoryContentType = module.defaultContentTypeOfCategory;
 				const categoryControl = this.formControls.find(ctrl => ctrl.Name === "DefaultCategoryID");
 				const mappingsControl = this.formControls.find(c => c.Name === "CategoryMappings");
 				categoryControl.Options.LookupOptions.ModalOptions.ComponentProps.moduleID = mappingsControl.Options.LookupOptions.ModalOptions.ComponentProps.moduleID = categoryContentType === undefined ? undefined : categoryContentType.RepositoryID;
@@ -210,7 +210,7 @@ export class CmsCrawlersUpdatePage implements OnInit, OnDestroy {
 				categoryControl.controlRef.setValue(undefined);
 			};
 			control = formConfig.find(ctrl => ctrl.Name === "RepositoryEntityID");
-			control.Options.SelectOptions.Values = this.portalsCmsSvc.getContentTypesOfContent(Module.get(this.crawler.RepositoryID)).map(contentType => ({ Value: contentType.ID, Label: contentType.Title }));
+			control.Options.SelectOptions.Values = Module.get(this.crawler.RepositoryID).contentTypesOfContent.map(contentType => ({ Value: contentType.ID, Label: contentType.Title }));
 		}
 
 		control = formConfig.find(ctrl => ctrl.Name === "SelectedCategories");
@@ -278,7 +278,7 @@ export class CmsCrawlersUpdatePage implements OnInit, OnDestroy {
 				ctrl.controlRef.lookup();
 			}
 		};
-		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, this.portalsCmsSvc.getDefaultContentTypeOfCategory(Module.get(this.crawler.RepositoryID)), false, true, options => {
+		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, Module.get(this.crawler.RepositoryID).defaultContentTypeOfCategory, false, true, options => {
 			options.ModalOptions.ComponentProps.objectName = "cms.category";
 			options.ModalOptions.OnDismiss = (data, formControl) => {
 				const category: Category = AppUtility.isArray(data, true) ? data[0] : undefined;
@@ -294,7 +294,7 @@ export class CmsCrawlersUpdatePage implements OnInit, OnDestroy {
 		const defaultCategory = Category.get(this.crawler.DefaultCategoryID);
 		control = formConfig.find(ctrl => ctrl.Name === "DefaultCategoryID");
 		control.Extras = { LookupDisplayValues: defaultCategory !== undefined ? [{ Value: defaultCategory.ID, Label: defaultCategory.FullTitle }] : undefined };
-		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, this.portalsCmsSvc.getDefaultContentTypeOfCategory(Module.get(this.crawler.RepositoryID)), false, true, options => {
+		this.portalsCmsSvc.setLookupOptions(control.Options.LookupOptions, DataLookupModalPage, Module.get(this.crawler.RepositoryID).defaultContentTypeOfCategory, false, true, options => {
 			options.ModalOptions.ComponentProps.objectName = "cms.category";
 			options.OnDelete = (_, formControl) => {
 				formControl.setValue(undefined);

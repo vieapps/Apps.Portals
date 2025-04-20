@@ -146,7 +146,7 @@ export class CmsFormsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			? Module.get(this.contentType.RepositoryID)
 			: await this.portalsCoreSvc.getActiveModuleAsync();
 
-		this.contentType = this.contentType || this.portalsCmsSvc.getDefaultContentTypeOfContent(this.module);
+		this.contentType = this.contentType || this.module.defaultContentTypeOfContent;
 
 		this.canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Item", this.contentType === undefined ? undefined : this.contentType.Privileges);
 		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Item", this.contentType === undefined ? undefined : this.contentType.Privileges);

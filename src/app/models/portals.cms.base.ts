@@ -1,7 +1,7 @@
 import { AppConfig } from "@app/app.config";
 import { AppUtility } from "@app/components/app.utility";
 import { AppEvents } from "@app/components/app.events";
-import { AttachmentInfo } from "@app/models/base";
+import { Base, AttachmentInfo } from "@app/models/base";
 import { PortalBase as BaseModel, Organization, Module, ContentType, SchedulingTask } from "@app/models/portals.core.all";
 
 /** Abstract class for all portals' CMS entity classes */
@@ -88,8 +88,8 @@ export abstract class PortalCmsBase extends BaseModel {
 
 	get thumbnailURI() {
 		return this._thumbnailURI !== undefined
-			? BaseModel.noThumbnailURI
-			: BaseModel.getThumbnailURI(this.thumbnails);
+			? Base.noThumbnailURI
+			: Base.getThumbnailURI(this.thumbnails);
 	}
 
 	get thumbnails() {
@@ -182,8 +182,8 @@ export abstract class PortalCmsBase extends BaseModel {
 					: undefined
 			: undefined;
 		const objectName = this.contentType.getObjectName(true);
-		const currentURI = BaseModel.getThumbnailURI(this.thumbnails);
-		const newURI = BaseModel.getThumbnailURI(thumbnails);
+		const currentURI = Base.getThumbnailURI(this.thumbnails);
+		const newURI = Base.getThumbnailURI(thumbnails);
 		if (this._thumbnailURI !== undefined && AppConfig.options.preload.thumbnails && currentURI !== newURI) {
 			AppUtility.invoke(() => {
 				const image = new Image();
@@ -214,7 +214,7 @@ export abstract class PortalCmsBase extends BaseModel {
 				AppUtility.invoke(() => PortalCmsBase.broadcast(this, "ThumbnailURI", { ThumbnailURI: newURI }, objectName), 1234);
 			}
 		}
-		this._thumbnails = (thumbnails || []).map(thumbnail => BaseModel.prepareAttachment(thumbnail, false));
+		this._thumbnails = (thumbnails || []).map(thumbnail => Base.prepareAttachment(thumbnail, false));
 		PortalCmsBase.broadcast(this, "Thumbnail", undefined, objectName);
 		if (onCompleted !== undefined) {
 			onCompleted();
@@ -223,7 +223,7 @@ export abstract class PortalCmsBase extends BaseModel {
 	}
 
 	updateAttachments(attachments: AttachmentInfo[], onCompleted?: () => void) {
-		this._attachments = (attachments || []).map(attachment => BaseModel.prepareAttachment(attachment));
+		this._attachments = (attachments || []).map(attachment => Base.prepareAttachment(attachment));
 		PortalCmsBase.broadcast(this, "Attachment");
 		if (onCompleted !== undefined) {
 			onCompleted();

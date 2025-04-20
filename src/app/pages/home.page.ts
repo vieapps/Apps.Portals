@@ -58,8 +58,8 @@ export class HomePage implements OnInit, OnDestroy {
 		AppEvents.off("App", "HomePageEvents");
 	}
 
-	private prepareAsync(action?: string) {
-		return this.setTitleAsync().then(() => TrackingUtility.trackAsync({ title: this.title, category: "Home", action: action || "Open" }));
+	private async prepareAsync(action?: string) {
+		await this.setTitleAsync().then(() => TrackingUtility.trackAsync({ title: this.title, category: "Home", action: action || "Open" }));
 	}
 
 	private async setTitleAsync() {

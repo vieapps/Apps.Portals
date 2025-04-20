@@ -171,7 +171,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 			? Module.get(this.contentType.RepositoryID)
 			: await this.portalsCoreSvc.getActiveModuleAsync();
 
-		this.contentType = this.contentType || this.portalsCmsSvc.getDefaultContentTypeOfLink(this.module);
+		this.contentType = this.contentType || this.module.defaultContentTypeOfLink;
 
 		this.canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Link", this.contentType === undefined ? undefined : this.contentType.Privileges);
 		this.canContribute = this.canUpdate || this.authSvc.isContributor(this.portalsCoreSvc.name, "Link", this.contentType === undefined ? undefined : this.contentType.Privileges);
@@ -469,7 +469,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	refreshAll() {
 		const links = Link.instances.toArray(link => link.SystemID === this.organization.ID);
 		if (links.length > 0) {
-			this.doRefresh(links, 0, false, () => Promise.all(this.organization.modules.map(module => this.portalsCmsSvc.getContentTypesOfLink(module))
+			this.doRefresh(links, 0, false, () => Promise.all(this.organization.modules.map(module => module.contentTypesOfLink)
 				.flatMap(contentypes => contentypes)
 				.map(contentType => this.portalsCmsSvc.searchSpecifiedLinksAsync(contentType, undefined, undefined, true))).then(() => this.appFormsSvc.showToastAsync("All links was freshen-up"))
 			);

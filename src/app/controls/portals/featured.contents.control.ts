@@ -5,9 +5,8 @@ import { AppUtility } from "@app/components/app.utility";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
-import { PortalBase as BaseModel } from "@app/models/portals.base";
-import { FeaturedContent } from "@app/models/portals.cms.base";
-import { Category } from "@app/models/portals.cms.category";
+import { Base } from "@app/models/base";
+import { FeaturedContent, Category } from "@app/models/portals.cms.all";
 
 @Component({
 	selector: "control-cms-portals-featured-contents",
@@ -88,7 +87,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 					const content = this.contents.find(object => object.ID === info.args.ID);
 					if (content !== undefined) {
 						AppUtility.invoke(() => this.zone.run(() => {
-							content.ThumbnailURI = AppUtility.isNotEmpty(info.args.ThumbnailURI) ? info.args.ThumbnailURI : BaseModel.noThumbnailURI;
+							content.ThumbnailURI = AppUtility.isNotEmpty(info.args.ThumbnailURI) ? info.args.ThumbnailURI : Base.noThumbnailURI;
 							this.changeDetector.detectChanges();
 							if (this.configSvc.isDebug) {
 								const objectName = content.OriginalObject !== undefined && content.OriginalObject.contentType !== undefined ? content.OriginalObject.contentType.getObjectName(true) : "Unknown";
@@ -203,7 +202,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		if (this.portalsCoreSvc.activeModule === undefined || this.portalsCoreSvc.activeModule.ID !== object.OriginalObject.RepositoryID) {
 			await this.portalsCoreSvc.getActiveModuleAsync(object.OriginalObject.RepositoryID);
 		}
-		await this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(object.OriginalObject.contentType, "view", object.Title, { ID: object.ID }));
+		await this.configSvc.navigateForwardAsync(object.OriginalObject.routerURI);
 	}
 
 }

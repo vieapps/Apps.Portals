@@ -10,8 +10,7 @@ import { AppFormsControlConfig, AppFormsControl } from "@app/components/forms.ob
 import { AppFormsService } from "@app/components/forms.service";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
-import { AttachmentInfo } from "@app/models/base";
-import { PortalBase as PortalBaseModel } from "@app/models/portals.base";
+import { Base, AttachmentInfo } from "@app/models/base";
 
 @Injectable()
 export class FilesService extends BaseService {
@@ -249,7 +248,7 @@ export class FilesService extends BaseService {
 	prepareThumbnailFormControl(formControl: AppFormsControl, thumbnails?: Array<AttachmentInfo>, onCompleted?: (control: AppFormsControl) => void) {
 		if (formControl !== undefined) {
 			formControl.value = thumbnails !== undefined && thumbnails.length > 0
-				? { current: PortalBaseModel.getThumbnailURI(thumbnails), new: undefined, identity: thumbnails.first().ID }
+				? { current: Base.getThumbnailURI(thumbnails), new: undefined, identity: thumbnails.first().ID }
 				: { current: undefined, new: undefined, identity: undefined };
 			if (onCompleted !== undefined) {
 				onCompleted(formControl);
@@ -264,7 +263,7 @@ export class FilesService extends BaseService {
 			undefined,
 			data => {
 				if (onSuccess !== undefined) {
-					onSuccess((data as Array<AttachmentInfo> || []).map(thumbnail => PortalBaseModel.prepareAttachment(thumbnail)));
+					onSuccess((data as Array<AttachmentInfo> || []).map(thumbnail => Base.prepareAttachment(thumbnail)));
 				}
 			},
 			error => this.processError("Error occurred while searching thumbnails", error, onError),
@@ -371,7 +370,7 @@ export class FilesService extends BaseService {
 			undefined,
 			data => {
 				if (onSuccess !== undefined) {
-					onSuccess((data as Array<AttachmentInfo> || []).map(attachment => PortalBaseModel.prepareAttachment(attachment)));
+					onSuccess((data as Array<AttachmentInfo> || []).map(attachment => Base.prepareAttachment(attachment)));
 				}
 			},
 			error => this.processError("Error occurred while searching attachments", error, onError),

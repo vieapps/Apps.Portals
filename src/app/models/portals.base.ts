@@ -1,7 +1,5 @@
-import { AppConfig } from "@app/app.config";
 import { AppUtility } from "@app/components/app.utility";
 import { Base as BaseModel } from "@app/models/base";
-import { AttachmentInfo } from "@app/models/base";
 
 /** Abstract class for all portals' entity classes */
 export abstract class PortalBase extends BaseModel {
@@ -19,97 +17,6 @@ export abstract class PortalBase extends BaseModel {
 	/** Get the collection of all content-type definition */
 	static get contentTypeDefinitions() {
 		return (this.moduleDefinitions || []).map(definition => definition.ContentTypeDefinitions).flatMap(definitions => definitions);
-	}
-
-	/** Gets URI of 'no-thumbnail' image */
-	static get noThumbnailURI() {
-		return `${AppConfig.URIs.files}thumbnails/no-image.png`;
-	}
-
-	/** Gets URI of a thumbnail image */
-	static getThumbnailURI(data: Array<AttachmentInfo> | AttachmentInfo | string, isAttachment: boolean = false) {
-		let uri: string;
-		const settings = AppConfig.options.thumbnails || AppConfig.defaultOptions.thumbnails;
-		const attachment = data === undefined || typeof data === "string"
-			? undefined
-			: AppUtility.isArray(data, true)
-				? (data as Array<AttachmentInfo>).first()
-				: data as AttachmentInfo;
-		if (attachment !== undefined && isAttachment) {
-			return AppConfig.URIs.files + (settings.preferWebP ? "thumbnailwebps/" : "thumbnails/") + (AppUtility.isNotEmpty(attachment.SystemID) ? attachment.SystemID : attachment.ServiceName) + `/1/${settings.width}/0/${attachment.ID}/${encodeURIComponent(attachment.Filename)}` + (settings.preferWebP && !attachment.Filename.endsWith(".webp") ? ".webp" : "");
-		}
-		uri = attachment !== undefined
-			? AppUtility.isObject(attachment.URIs, true)
-				? attachment.URIs.Direct
-				: AppUtility.isNotEmpty(attachment.URI)
-					? attachment.URI
-					: undefined
-			: AppUtility.isNotEmpty(data)
-				? data as string
-				: undefined;
-		if (AppUtility.isNotEmpty(uri)) {
-			if (settings.preferWebP) {
-				uri = uri.replace("/thumbnails/", "/thumbnailwebps/").replace("/thumbnailbigs/", "/thumbnailwebps/").replace("/thumbnailpngs/", "/thumbnailwebps/");
-			}
-			if (uri.indexOf("/0/0/0/") > 0) {
-				if (settings.width > 0) {
-					uri = uri.replace("/0/0/0/", `/0/${settings.width}/0/`);
-				}
-				if (uri.endsWith(".jpg") || uri.endsWith(".png") || uri.endsWith(".webp")) {
-					if (settings.preferWebP) {
-						uri = uri.endsWith(".webp") ? uri : uri.substring(0, uri.length - 4) + ".webp";
-					}
-					else if (uri.endsWith(".png")) {
-						uri = uri.replace("/thumbnails/", "/thumbnailpngs/");
-					}
-				}
-				else {
-					uri += settings.preferWebP ? ".webp" : ".jpg";
-				}
-			}
-			else if (settings.preferWebP && !uri.endsWith(".webp")) {
-				uri += ".webp";
-			}
-			uri += (AppConfig.isDebug ? "?x-logs=true" : "");
-		}
-		return AppUtility.isEmpty(uri) ? this.noThumbnailURI : uri;
-	}
-
-	/** Prepare required information of an attachment */
-	static prepareAttachment(attachment: AttachmentInfo, isAttachment: boolean = true) {
-		if (attachment.Created !== undefined) {
-			attachment.Created = new Date(attachment.Created);
-		}
-		if (attachment.LastModified !== undefined) {
-			attachment.LastModified = new Date(attachment.LastModified);
-		}
-		if (isAttachment && AppUtility.isNotEmpty(attachment.ContentType)) {
-			attachment.isImage = attachment.ContentType.indexOf("image/") > -1;
-			attachment.isVideo = attachment.ContentType.indexOf("video/") > -1;
-			attachment.isAudio = attachment.ContentType.indexOf("audio/") > -1;
-			attachment.isText = attachment.ContentType.indexOf("text/") > -1;
-			attachment.icon = attachment.isImage
-				? "image"
-				: attachment.isVideo
-				? "videocam"
-				: attachment.isAudio
-					? "volume-medium"
-					: attachment.isText
-						? "document-text"
-						: "document-attach";
-			if (attachment.isImage && !attachment.Filename.endsWith(".ico") && !attachment.Filename.endsWith(".svg")) {
-				attachment.URIs["Thumbnail"] = this.getThumbnailURI(attachment, true);
-				const uri = attachment.URIs.Direct.split("/");
-				attachment.URIs["Alternative"] = `${AppConfig.URIs.files}images/${uri[4]}/${uri[6]}/${uri[7]}${uri[7].endsWith(".webp") ? "" : ".webp"}`;
-			}
-			else {
-				attachment.URIs["Alternative"] = attachment.URIs.Direct;
-			}
-		}
-		attachment.friendlyFilename = attachment.Filename.length < 47
-			? attachment.Filename
-			: attachment.Filename.substring(0, 40) + "..." + attachment.Filename.substring(attachment.Filename.length - 4);
-		return attachment;
 	}
 
 	/** The title */
@@ -135,7 +42,7 @@ export abstract class PortalBase extends BaseModel {
 			}
 		});
 	}
-
+	
 }
 
 /** Interface of a module definition */
