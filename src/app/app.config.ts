@@ -94,7 +94,7 @@ export class AppConfig {
 
 	/** App accounts */
 	static accounts = {
-		registrable: false,
+		registrable: true,
 		registration: {
 			required: [],
 			hidden: ["Gender", "BirthDay", "Address", "Addresses", "Mobile"],
