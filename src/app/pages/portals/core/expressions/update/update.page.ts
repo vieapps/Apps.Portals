@@ -1,7 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@app/components/app.crypto";
-import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppPagination } from "@app/components/app.pagination";
@@ -10,7 +9,7 @@ import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { Organization, Module, ContentType, Expression } from "@app/models/portals.core.all";
+import { Organization, Module, ContentType, Expression, FilterBy, SortBy } from "@app/models/portals.core.all";
 
 @Component({
 	selector: "page-portals-core-expressions-update",
@@ -307,7 +306,24 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 					Segment: "integrations",
 					Options: {
 						Label: "JSON of x-request (FilterBy, SortBy, Pagination)",
-						Rows: 12
+						Rows: 8
+					}
+				},
+				{
+					Name: "ExpressionXRequest",
+					Type: "YesNo",
+					Segment: "integrations",
+					Options: {
+						Label: "Include expression in 'x-expression' query parameter",
+						Rows: 4
+					}
+				},
+				{
+					Name: "TokenXRequest",
+					Type: "YesNo",
+					Segment: "integrations",
+					Options: {
+						Label: "Include app token in 'x-app-token' query parameter"
 					}
 				},
 				{
@@ -319,6 +335,15 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 						Rows: 4
 					}
 				},
+				{
+					Name: "URLXRequest",
+					Type: "TextArea",
+					Segment: "integrations",
+					Options: {
+						Label: "Requesting URL",
+						Rows: 10
+					}
+				},
 				this.appFormsSvc.getButtonControls(
 					"integrations",
 					{
@@ -326,7 +351,9 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 						Label: "JSON > Base64Url",
 						OnClick: async () => {
 							try {
-								this.form.controls.EncodedXRequest.setValue(AppCrypto.jsonEncode(AppUtility.parse(this.form.controls.JSONXRequest.value)));
+								const encodedXRequest = AppCrypto.jsonEncode(AppUtility.parse(this.form.controls.JSONXRequest.value));
+								this.form.controls.EncodedXRequest.setValue(encodedXRequest, { onlySelf: true });
+								this.form.controls.URLXRequest.setValue(this.expression.contentType !== undefined ? this.configSvc.appConfig.URIs.apis + `${this.portalsCoreSvc.name.toLowerCase()}/${this.expression.contentType.getObjectName(true).toLowerCase()}/search?x-request=${encodedXRequest}${AppUtility.isTrue(this.form.controls.ExpressionXRequest.value) ? `&x-expression=${this.expression.ID}` : ""}${AppUtility.isTrue(this.form.controls.TokenXRequest.value) ? `&${AppUtility.toQuery(this.portalsCoreSvc.getHeaders())}` : ""}` : undefined, { onlySelf: true });
 							}
 							catch (error) {
 								await this.appFormsSvc.showErrorAsync(error);
@@ -363,7 +390,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 						Label: "Text > Base64",
 						OnClick: async () => {
 							try {
-								this.form.controls.Base64Encoded.setValue(AppCrypto.base64Encode(this.form.controls.PlainText.value));
+								this.form.controls.Base64Encoded.setValue(AppCrypto.base64Encode(this.form.controls.PlainText.value), { onlySelf: true });
 							}
 							catch (error) {
 								await this.appFormsSvc.showErrorAsync(error);
@@ -391,7 +418,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 						Label: "Text > Base64Url",
 						OnClick: async () => {
 							try {
-								this.form.controls.Base64UrlEncoded.setValue(AppCrypto.base64urlEncode(this.form.controls.PlainText.value));
+								this.form.controls.Base64UrlEncoded.setValue(AppCrypto.base64urlEncode(this.form.controls.PlainText.value), { onlySelf: true });
 							}
 							catch (error) {
 								await this.appFormsSvc.showErrorAsync(error);
@@ -429,7 +456,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 			? ContentType.get(this.formControls.find(ctrl => ctrl.Name === "RepositoryEntityID").value || this.configSvc.requestParams["RepositoryEntityID"])
 			: ContentType.get(this.configSvc.requestParams["RepositoryEntityID"]);
 		const objectName = contentType !== undefined ? contentType.getObjectName(true) : undefined;
-		const filterBy: Array<{ Attribute?: string; Operator: string; Value?: string; Children?: Array<{ Attribute: string; Operator: string; Value?: string }> }> = contentType !== undefined
+		const filterBy: Array<FilterBy> = contentType !== undefined
 			? [
 				{
 					Attribute: "SystemID",
@@ -491,12 +518,12 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 					Children: [
 						{
 							Attribute: "EndDate",
-							Operator: "GreaterOrEquals",
-							Value: "@today"
+							Operator: "IsNull"
 						},
 						{
 							Attribute: "EndDate",
-							Operator: "IsNull"
+							Operator: "GreaterOrEquals",
+							Value: "@today"
 						}
 					]
 				}
@@ -525,24 +552,109 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				this.form.controls.ContentTypeDefinitionID.setValue(this.expression.ContentTypeDefinitionID || Module.get(this.expression.RepositoryID).contentTypeDefinitions.first().ID, { onlySelf: true });
 			}
 			else if (this.isAdvancedMode) {
-				this.form.controls.JSONXRequest.setValue(JSON.stringify({
-					FilterBy: {
+				const expression = {
+					FilterBy: AppUtility.isNotEmpty(this.expression.ID) ? this.getFilterBy(this.expression.Filter, this.expression.contentType, true) : {
 						And: [{
 							SystemID: {
 								Equals: this.organization.ID
 							}
 						}]
 					},
-					SortBy: { Created: "Descending" },
+					SortBy: AppUtility.isNotEmpty(this.expression.ID) ? this.getSortBy((this.expression.Sorts || []).firstOrDefault(), this.expression.contentType) : { Created: "Descending" },
 					Pagination: {
 						TotalRecords: -1,
 						TotalPages: 0,
 						PageSize: 20,
-						PageNumber: 0
+						PageNumber: 1
 					}
-				}));
+				};
+				this.form.controls.JSONXRequest.setValue(JSON.stringify(expression), { onlySelf: true });
 			}
 		});
+	}
+
+	private getFilterBy(filterBy: FilterBy, contentType?: ContentType, additional: boolean = false) {
+		const object = {} as { [key: string]: Array<{ [key: string]: any }> };
+		if (filterBy !== undefined) {
+			object[filterBy.Operator || "And"] = (filterBy.Children || []).map(element => {
+				var specialOp = element.Operator === "IsNull" || element.Operator === "IsNotNull" || element.Operator === "IsEmpty" || element.Operator === "IsNotEmpty";
+				var value = {} as { [key: string]: any };
+				if (!specialOp && !!!element.Children) {
+					value[element.Operator] = element.Value;
+				}
+				const exp = {} as { [key: string]: any };
+				exp[element.Attribute] = specialOp
+					? element.Operator
+					: !!element.Children
+						? this.getFilterBy(element)
+						: value;
+				return exp;
+			});
+		}
+		else {
+			object["And"] = [{
+				SystemID: {
+					Equals: this.organization.ID
+				}
+			}];
+		}
+		if (contentType !== undefined && AppUtility.isGotData(object.And)) {
+			const index = object.And.findIndex(exp => exp["SystemID"] !== undefined) + 1;
+			if (object.And.filter(exp => exp["RepositoryEntityID"] !== undefined).length < 1) {
+				object.And.insert({ RepositoryEntityID: { Equals: contentType.ID } }, index);
+			}
+			if (object.And.filter(exp => exp["RepositoryID"] !== undefined).length < 1) {
+				object.And.insert({ RepositoryID: { Equals: contentType.RepositoryID } }, index);
+			}
+			if (object.And.filter(exp => exp["SystemID"] !== undefined).length < 1) {
+				object.And.insert({ SystemID: { Equals: contentType.SystemID } }, index);
+			}
+			if (additional) {
+				object.And.push({ Status: { Equals: "Published" } });
+				if ("CMS.Content" === contentType.getObjectName(true)) {
+					object.And.push(
+						{
+							StartDate: { LessThanOrEquals: "@today" }
+						},
+						{
+							Or: [{
+								EndDate: "IsNull"
+							},
+							{
+								EndDate: { "GreaterOrEquals": "@today" }
+							}]
+						}
+					);
+				}
+			}
+		}
+		return object;
+	}
+
+	private getSortBy(sortBy: SortBy, contentType?: ContentType) {
+		const object = {} as { [key: string]: string };
+		if (sortBy !== undefined) {
+			object[sortBy.Attribute] = sortBy.Mode;
+			let thenBy = sortBy.ThenBy;
+			while (!!thenBy) {
+				object[thenBy.Attribute] = thenBy.Mode;
+				thenBy = thenBy.ThenBy;
+			}
+		}
+		else {
+			const objectName = contentType !== undefined ? contentType.getObjectName(true) : undefined;
+			if ("CMS.Content" === objectName) {
+				object["StartDate"] = "Descending";
+				object["PublishedTime"] = "Descending";
+			}
+			else if ("CMS.Link" === objectName) {
+				object["OrderIndex"] = "Ascending";
+			}
+			else {
+				object["Created"] = "Descending";
+			}
+		}
+		return object;
 	}
 
 	async saveAsync() {
