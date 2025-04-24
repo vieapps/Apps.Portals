@@ -44,6 +44,7 @@ export class Site extends CoreBaseModel {
 	RedirectToNoneWWW = true;
 	UseInlineStylesheets = false;
 	UseInlineScripts = false;
+	CanonicalHost = undefined as string;
 	SEOInfo = undefined as {
 		Title?: string;
 		Description?: string;
