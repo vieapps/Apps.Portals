@@ -271,7 +271,7 @@ export class PortalsCmsService extends BaseService {
 									Title: object.Title,
 									Created: object.Created,
 									LastModified: object.LastModified,
-									Status: object.Status,
+									Status: "Published",
 									StartDate: object.Created,
 									PublishedTime: undefined,
 									SubTitle: `${object.module.Title} > ${object.contentType.Title}`,
@@ -761,13 +761,11 @@ export class PortalsCmsService extends BaseService {
 
 	private updateSidebarAsync() {
 		const activeModule = this.configSvc.isAuthenticated ? this.portalsCoreSvc.activeModule : undefined;
-		return this.configSvc.isAuthenticated
-			? activeModule.defaultContentTypeOfCategory !== undefined
+		return activeModule === undefined
+			? AppUtility.promise
+			: activeModule.defaultContentTypeOfCategory !== undefined
 				? this.updateSidebarWithCategoriesAsync()
-				: activeModule !== undefined
-					? this.updateSidebarWithContentTypesAsync()
-					: AppUtility.promise
-			: AppUtility.invoke(() => this.updateSidebar());
+				: this.updateSidebarWithContentTypesAsync();
 	}
 
 	private updateSidebarWithCategoriesAsync(parent?: Category, expandedID?: string, onNext?: () => void) {
@@ -778,10 +776,11 @@ export class PortalsCmsService extends BaseService {
 			return AppUtility.invoke(() => this.updateSidebar(sidebar.Items, sidebar.Parent, onNext));
 		}
 		else {
-			const contentType = this.portalsCoreSvc.activeModule.defaultContentTypeOfCategory;
+			const activeModule = this.configSvc.isAuthenticated ? this.portalsCoreSvc.activeModule : undefined;
+			const contentType = activeModule !== undefined ? activeModule.defaultContentTypeOfCategory : undefined;
 			if (contentType !== undefined) {
 				this._sidebarCategory = undefined;
-				this._sidebarContentType = this._sidebarContentType || this.portalsCoreSvc.activeModule.defaultContentTypeOfContent;
+				this._sidebarContentType = this._sidebarContentType || activeModule.defaultContentTypeOfContent;
 				return this.searchSpecifiedCategoriesAsync(contentType, data => {
 					const categories = data !== undefined
 						? Category.toArray(data.Objects)

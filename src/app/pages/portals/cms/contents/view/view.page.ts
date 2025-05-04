@@ -473,7 +473,10 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	private prepareThumbnail() {
 		this.filesSvc.prepareThumbnailFormControl(this.formControls.find(ctrl => ctrl.Name === "Thumbnails"), this.content.thumbnails, formControl => {
 			formControl.Hidden = formControl.value === undefined;
-			this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons").Hidden = formControl.Hidden || this.content.thumbnails === undefined || this.content.thumbnails.length < 1;
+			const ctrl = this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons");
+			if (ctrl !== undefined) {
+				ctrl.Hidden = formControl.Hidden || this.content.thumbnails === undefined || this.content.thumbnails.length < 1;
+			}
 		});
 	}
 

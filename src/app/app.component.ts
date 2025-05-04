@@ -548,7 +548,7 @@ export class AppComponent implements OnInit {
 							if (isDebug) {
 								console.log("<App>: Fetch sites", organization);
 							}
-							this.portalsCoreSvc.fetchSites(organization.ID);
+							this.portalsCoreSvc.fetchSitesAsync(organization);
 						}, 6789 + (123 * index)),
 						!!Desktop.instances.first(desktop => desktop.SystemID === organization.ID) ? AppUtility.promise : AppUtility.invoke(() => {
 							if (isDebug) {

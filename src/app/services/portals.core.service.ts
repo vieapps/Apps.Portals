@@ -428,7 +428,7 @@ export class PortalsCoreService extends BaseService {
 					if (this.configSvc.isDebug) {
 						console.log("[Portals]: Fetch sites of the active organization (when set active organization)", Organization.active);
 					}
-					this.fetchSites(Organization.active.ID);
+					this.fetchSitesAsync();
 				}, 5678);
 			}
 			if (!!!Desktop.instances.first(desktop => desktop.SystemID === Organization.active.ID)) {
@@ -3062,15 +3062,16 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	fetchSites(systemID?: string, onSuccess?: () => void) {
-		this.searchSitesAsync({
-			FilterBy: {
-				And: [
-					{ SystemID: { Equals: systemID || this.activeOrganization.ID } }
-				]
-			},
-			SortBy: { Title: "Ascending" }
-		}, onSuccess, undefined, true, false, true);
+	fetchSitesAsync(organization?: Organization, onSuccess?: () => void, onError?: (error?: any) => void) {
+		return this.canModerateOrganization(organization || this.activeOrganization)
+			? this.searchSitesAsync(
+				{
+					FilterBy: {	And: [
+						{ SystemID: { Equals: (organization || this.activeOrganization).ID } }
+					]},
+					SortBy: { Title: "Ascending" }
+				}, onSuccess, onError, true, false, true)
+			: this.readAsync(this.getPath("Organization", (organization || this.activeOrganization).ID), undefined, undefined, undefined, false, true);
 	}
 
 	processSites(data: any, onNext?: (data?: any) => void) {

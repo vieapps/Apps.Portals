@@ -1,5 +1,4 @@
 import { GoogleAnalytics } from "@ionic-native/google-analytics/ngx";
-import { AppConfig } from "@app/app.config";
 import { AppUtility } from "@app/components/app.utility";
 
 /** Servicing component for tracking use of app */

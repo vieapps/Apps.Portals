@@ -49,12 +49,11 @@ export class VersionsPage implements OnInit {
 		this.name = this.configSvc.requestParams["name"];
 		const info = await this.portalsCmsSvc.getObjectAsync(this.id, this.name);
 		if (info.gotRights) {
-			this.versions.merge(info.object.Versions);
-			this.versions.filter(version => version["Creator"] === undefined).forEach(async version => {
+			await Promise.all(this.versions.merge(info.object.Versions).filter(version => version["Creator"] === undefined).map(async version => {
 				await this.usersSvc.fetchProfileAsync(version.CreatedID, true);
 				const profile = UserProfile.get(version.CreatedID);
 				version["Creator"] = profile !== undefined ? profile.Name : "Unknown";
-			});
+			}));
 			this.title = await this.configSvc.getResourceAsync("versions.list", { total: info.object.TotalVersions || this.versions.length, title: info.object["Title"] });
 			await TrackingUtility.trackAsync({ title: this.title, category: "Versions", action: "List" });
 		}

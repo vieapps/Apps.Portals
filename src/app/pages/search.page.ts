@@ -202,18 +202,14 @@ export class SearchPage implements OnInit, OnDestroy, ViewDidEnter {
 			this.appFormsSvc.showLoadingAsync("Searching...");
 			this.search(() => this.appFormsSvc.hideLoadingAsync());
 		}
-		else {
-			this.onClear();
-		}
 	}
 
 	onClear(isChangeType: boolean = false) {
 		this.results = [];
-		this.filterBy.Query = undefined;
-		this.filterBy.And = AppUtility.clone(this.adapters.get(this.typeCtrl.value).FilterConditions);
+		this.filterBy.Query = this.searchCtrl.value = undefined;
 		this.infiniteScrollCtrl.disabled = false;
 		if (isChangeType) {
-			this.searchCtrl.value = undefined;
+			this.filterBy.And = AppUtility.clone(this.adapters.get(this.typeCtrl.value).FilterConditions);
 			PlatformUtility.focus(this.searchCtrl);
 		}
 		this.zone.run(() => this.changeDetector.detectChanges());

@@ -87,7 +87,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 	ngOnInit() {
 		const account = this.configSvc.getAccount();
 		if (this.authSvc.isSystemAdministrator(account) || this.portalsCoreSvc.canManageOrganization(this.portalsCoreSvc.activeOrganization, account)) {
-			this.initializeAsync().then(() => this.appFormsSvc.showAlertAsync("Filter", "Click the Refresh button to start search for logs"));
+			this.initializeAsync().then(() => this.filterAsync());
 		}
 		else {
 			Promise.all([

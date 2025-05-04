@@ -1,7 +1,6 @@
 import { Dictionary } from "@app/components/app.collections";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
-import { AppEvents } from "@app/components/app.events";
 import { NestedObject, NotificationSettings, EmailSettings } from "@app/models/portals.base";
 import { PortalCmsBase as CmsBaseModel } from "@app/models/portals.cms.base";
 
@@ -22,7 +21,7 @@ export class Category extends CmsBaseModel implements NestedObject {
 
 	static instances = new Dictionary<string, Category>();
 
-	Status = undefined as string;
+	Status = "Published";
 	ParentID = undefined as string;
 	OrderIndex = 0;
 	Title = undefined as string;

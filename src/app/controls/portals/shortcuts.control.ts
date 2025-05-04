@@ -6,7 +6,6 @@ import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
-import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { DataLookupModalPage } from "@app/controls/portals/data.lookup.modal.page";
 import { Organization } from "@app/models/portals.core.organization";
 
@@ -22,8 +21,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private appFormsSvc: AppFormsService,
-		private portalsCoreSvc: PortalsCoreService,
-		private portalsCmsSvc: PortalsCmsService
+		private portalsCoreSvc: PortalsCoreService
 	) {
 	}
 
@@ -76,7 +74,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			OnClick: () => this.changeOrganizationAsync(),
 			OnRemove: () => this.removeOrganizationAsync(),
 			OtherAction: this.portalsCoreSvc.allowSelectActiveOrganization || this.authSvc.isSystemAdministrator()
-				? { Icon: "add-circle-outline", OnClick: () => this.selectOrganizationAsync(this.portalsCoreSvc.activeOrganization !== undefined ? this.portalsCoreSvc.activeOrganization.ID : undefined) }
+				? { Icon: "add-circle-outline", OnClick: () => this.selectOrganizationAsync(organization !== undefined ? organization.ID : undefined) }
 				: undefined
 		}, 0);
 
@@ -90,7 +88,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 
 		this.shortcuts.insert({
 			Title: shortcuts.contents as string || await this.configSvc.getResourceAsync("portals.cms.common.shortcuts.labels.contents"),
-			Link: this.configSvc.isAuthenticated ? this.portalsCoreSvc.getRouterLink(undefined, "list", "all", "category") : undefined,
+			Link: this.configSvc.isAuthenticated && module !== undefined && module.defaultContentTypeOfCategory !== undefined ? this.portalsCoreSvc.getRouterLink(undefined, "list", "all", "category") : undefined,
 			Icon: { Name: "logo-firebase" },
 			Editable: false,
 			Removable: false,

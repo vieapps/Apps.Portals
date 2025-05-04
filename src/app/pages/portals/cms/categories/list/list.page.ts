@@ -180,7 +180,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			? Module.get(this.contentType.RepositoryID)
 			: await this.portalsCoreSvc.getActiveModuleAsync();
 
-		this.contentType = this.contentType || this.module.defaultContentTypeOfCategory;
+		this.contentType = this.contentType || (this.module || new Module()).defaultContentTypeOfCategory;
 
 		this.isSystemAdministrator = this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined);
 		this.canUpdate = this.isSystemAdministrator || this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.module === undefined ? undefined : this.module.Privileges);
