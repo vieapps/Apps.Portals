@@ -278,158 +278,144 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		if (AppUtility.isNotEmpty(this.expression.ID)) {
 			formConfig.push(
 				this.portalsCoreSvc.getAuditFormControl(this.expression, "basic"),
-				this.appFormsSvc.getButtonControls(
-					"basic",
-					{
-						Name: "Delete",
-						Label: "{{portals.expressions.update.buttons.delete}}",
-						OnClick: async () => await this.deleteAsync(),
-						Options: {
-							Fill: "clear",
-							Color: "danger",
-							Css: "ion-float-end",
-							Icon: {
-								Name: "trash",
-								Slot: "start"
-							}
+				this.appFormsSvc.getButtonControls("basic", {
+					Name: "Delete",
+					Label: "{{portals.expressions.update.buttons.delete}}",
+					OnClick: _ => this.deleteAsync(),
+					Options: {
+						Fill: "clear",
+						Color: "danger",
+						Css: "ion-float-end",
+						Icon: {
+							Name: "trash",
+							Slot: "start"
 						}
 					}
-				)
+				})
 			);
 		}
 
 		if (this.isAdvancedMode) {
 			formConfig.push(
 				{
-					Name: "JSONXRequest",
+					Name: "XRequestJSON",
 					Type: "TextArea",
 					Segment: "integrations",
 					Options: {
-						Label: "JSON of x-request (FilterBy, SortBy, Pagination)",
+						Label: "JSON of 'x-request' query parameters",
 						Rows: 8
 					}
 				},
 				{
-					Name: "ExpressionXRequest",
-					Type: "YesNo",
+					Name: "XRequestEncoded",
+					Type: "TextArea",
 					Segment: "integrations",
 					Options: {
-						Label: "Include expression in 'x-expression' query parameter",
-						Rows: 4
+						Label: "Base64Url of 'x-request' query parameter",
+						Rows: 5
 					}
 				},
 				{
-					Name: "TokenXRequest",
+					Name: "XRequestURL",
+					Type: "TextArea",
+					Segment: "integrations",
+					Options: {
+						Label: "Requesting URL with all required parameters",
+						Rows: 12
+					}
+				},
+				{
+					Name: "XRequestExpression",
+					Type: "YesNo",
+					Segment: "integrations",
+					Options: {
+						Label: "Include expression in 'x-expression' query parameter"
+					}
+				},
+				{
+					Name: "XRequestAppToken",
 					Type: "YesNo",
 					Segment: "integrations",
 					Options: {
 						Label: "Include app token in 'x-app-token' query parameter"
 					}
 				},
-				{
-					Name: "EncodedXRequest",
-					Type: "TextArea",
-					Segment: "integrations",
-					Options: {
-						Label: "Url-Encoded of x-request",
-						Rows: 4
-					}
-				},
-				{
-					Name: "URLXRequest",
-					Type: "TextArea",
-					Segment: "integrations",
-					Options: {
-						Label: "Requesting URL",
-						Rows: 10
-					}
-				},
-				this.appFormsSvc.getButtonControls(
-					"integrations",
-					{
-						Name: "EncodeJson",
-						Label: "JSON > Base64Url",
-						OnClick: async () => {
-							try {
-								const encodedXRequest = AppCrypto.jsonEncode(AppUtility.parse(this.form.controls.JSONXRequest.value));
-								this.form.controls.EncodedXRequest.setValue(encodedXRequest, { onlySelf: true });
-								this.form.controls.URLXRequest.setValue(this.expression.contentType !== undefined ? this.configSvc.appConfig.URIs.apis + `${this.portalsCoreSvc.name.toLowerCase()}/${this.expression.contentType.getObjectName(true).toLowerCase()}/search?x-request=${encodedXRequest}${AppUtility.isTrue(this.form.controls.ExpressionXRequest.value) ? `&x-expression=${this.expression.ID}` : ""}${AppUtility.isTrue(this.form.controls.TokenXRequest.value) ? `&${AppUtility.toQuery(this.portalsCoreSvc.getHeaders())}` : ""}` : undefined, { onlySelf: true });
-							}
-							catch (error) {
-								await this.appFormsSvc.showErrorAsync(error);
-							}
-						},
-						Options: {
-							Fill: "clear",
-							Css: "ion-float-end"
+				this.appFormsSvc.getButtonControls("integrations", {
+					Name: "XRequestButton",
+					Label: "JSON > Base64Url",
+					OnClick: _ => {
+						try {
+							const encodedXRequest = AppCrypto.jsonEncode(AppUtility.parse(this.form.controls.XRequestJSON.value));
+							this.form.controls.XRequestEncoded.setValue(encodedXRequest, { onlySelf: true });
+							const useExpression = AppUtility.isTrue(this.form.controls.XRequestExpression.value);
+							const url = this.expression.contentType !== undefined
+								? this.configSvc.appConfig.URIs.apis + `${this.portalsCoreSvc.name.toLowerCase()}/${this.expression.contentType.getObjectName(true).toLowerCase()}/search?${useExpression ? "" : `&x-request=${encodedXRequest}`}${useExpression ? `&x-expression=${this.expression.ID}` : ""}${AppUtility.isTrue(this.form.controls.XRequestAppToken.value) ? `&${AppUtility.toQuery(this.portalsCoreSvc.getHeaders())}` : ""}`
+								: "";
+							this.form.controls.XRequestURL.setValue(url.replace("?&", "?"), { onlySelf: true });
 						}
-					}
-				),
-				{
-					Name: "PlainText",
-					Type: "TextArea",
-					Segment: "integrations",
-					Options: {
-						Label: "Plain text",
-						Rows: 2
-					}
-				},
-				{
-					Name: "Base64Encoded",
-					Type: "TextArea",
-					Segment: "integrations",
-					Options: {
-						Label: "Base64-Encoded",
-						Rows: 2
-					}
-				},
-				this.appFormsSvc.getButtonControls(
-					"integrations",
-					{
-						Name: "EncodeBase64",
-						Label: "Text > Base64",
-						OnClick: async () => {
-							try {
-								this.form.controls.Base64Encoded.setValue(AppCrypto.base64Encode(this.form.controls.PlainText.value), { onlySelf: true });
-							}
-							catch (error) {
-								await this.appFormsSvc.showErrorAsync(error);
-							}
-						},
-						Options: {
-							Fill: "clear",
-							Css: "ion-float-end"
+						catch (error) {
+							this.appFormsSvc.showErrorAsync(error);
 						}
+					},
+					Options: {
+						Fill: "clear",
+						Css: "ion-float-end"
 					}
-				),
+				}),
 				{
-					Name: "Base64UrlEncoded",
+					Name: "ConvertInput",
 					Type: "TextArea",
 					Segment: "integrations",
 					Options: {
-						Label: "Base64Url-Encoded",
-						Rows: 2
+						Label: "Plain/Encoded Text",
+						Rows: 12
 					}
 				},
-				this.appFormsSvc.getButtonControls(
-					"integrations",
-					{
-						Name: "EncodeBase64Url",
-						Label: "Text > Base64Url",
-						OnClick: async () => {
-							try {
-								this.form.controls.Base64UrlEncoded.setValue(AppCrypto.base64urlEncode(this.form.controls.PlainText.value), { onlySelf: true });
-							}
-							catch (error) {
-								await this.appFormsSvc.showErrorAsync(error);
-							}
-						},
-						Options: {
-							Fill: "clear",
-							Css: "ion-float-end"
-						}
+				{
+					Name: "ConvertOutput",
+					Type: "TextArea",
+					Segment: "integrations",
+					Options: {
+						Label: "Encoded/Decoded Text",
+						Rows: 12
 					}
-				)
+				},
+				{
+					Name: "ConvertIsBase64",
+					Type: "YesNo",
+					Segment: "integrations",
+					Options: {
+						Label: "Base64 encoded"
+					}
+				},
+				{
+					Name: "ConvertIsBase64Url",
+					Type: "YesNo",
+					Segment: "integrations",
+					Options: {
+						Label: "Base64-URL encoded"
+					}
+				},
+				this.appFormsSvc.getButtonControls("integrations", {
+					Name: "ConvertButton",
+					Label: "Text <> Base64",
+					OnClick: _ => {
+						try {
+							const input = this.form.controls.ConvertInput.value || "";
+							const output = AppUtility.isTrue(this.form.controls.ConvertIsBase64.value)
+								? AppUtility.isTrue(this.form.controls.ConvertIsBase64Url.value) ? AppCrypto.base64urlDecode(input) : AppCrypto.base64Decode(input)
+								: AppUtility.isTrue(this.form.controls.ConvertIsBase64Url.value) ? AppCrypto.base64urlEncode(input) : AppCrypto.base64Encode(input);
+							this.form.controls.ConvertOutput.setValue(output, { onlySelf: true });
+						}
+						catch (error) {
+							this.appFormsSvc.showErrorAsync(error);
+						}
+					},
+					Options: {
+						Fill: "clear",
+						Css: "ion-float-end"
+					}
+				})
 			);
 		}
 
@@ -568,7 +554,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 						PageNumber: 1
 					}
 				};
-				this.form.controls.JSONXRequest.setValue(JSON.stringify(expression), { onlySelf: true });
+				this.form.controls.XRequestJSON.setValue(JSON.stringify(expression), { onlySelf: true });
 			}
 		});
 	}
@@ -577,17 +563,20 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		const object = {} as { [key: string]: Array<{ [key: string]: any }> };
 		if (filterBy !== undefined) {
 			object[filterBy.Operator || "And"] = (filterBy.Children || []).map(element => {
-				var specialOp = element.Operator === "IsNull" || element.Operator === "IsNotNull" || element.Operator === "IsEmpty" || element.Operator === "IsNotEmpty";
-				var value = {} as { [key: string]: any };
-				if (!specialOp && !!!element.Children) {
-					value[element.Operator] = element.Value;
-				}
 				const exp = {} as { [key: string]: any };
-				exp[element.Attribute] = specialOp
-					? element.Operator
-					: !!element.Children
-						? this.getFilterBy(element)
-						: value;
+				if (!!element.Children) {
+					exp[element.Operator] = this.getFilterBy(element)[element.Operator];
+				}
+				else {
+					if (element.Operator === "IsNull" || element.Operator === "IsNotNull" || element.Operator === "IsEmpty" || element.Operator === "IsNotEmpty") {
+						exp[element.Attribute] = element.Operator;
+					}
+					else {
+						var value = {} as { [key: string]: any };
+						value[element.Operator] = element.Value;
+						exp[element.Attribute] = value;
+					}
+				}
 				return exp;
 			});
 		}
@@ -610,8 +599,10 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				object.And.insert({ SystemID: { Equals: contentType.SystemID } }, index);
 			}
 			if (additional) {
-				object.And.push({ Status: { Equals: "Published" } });
-				if ("CMS.Content" === contentType.getObjectName(true)) {
+				if (object.And.filter(exp => exp["Status"] !== undefined).length < 1) {
+					object.And.push({ Status: { Equals: "Published" } });
+				}
+				if ("CMS.Content" === contentType.getObjectName(true) && object.And.filter(exp => exp["StartDate"] !== undefined).length < 1) {
 					object.And.push(
 						{
 							StartDate: { LessThanOrEquals: "@today" }

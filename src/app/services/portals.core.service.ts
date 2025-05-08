@@ -175,7 +175,7 @@ export class PortalsCoreService extends BaseService {
 			}
 			else if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
 				this.updateSidebarHeader();
-				this.prepareSidebar();
+				this.prepareSidebarFooterItemsAsync(() => this.prepareSidebar(() => this.activeSidebar()));
 			}
 		});
 
@@ -203,13 +203,13 @@ export class PortalsCoreService extends BaseService {
 
 		AppEvents.on("Session", info => {
 			if ("LogIn" === info.args.Type) {
-				this.prepareSidebarFooterItemsAsync().then(() => this.activeSidebar());
+				this.prepareSidebarFooterItemsAsync(() => this.activeSidebar());
 				if ("Apps" === info.args.Mode) {
 					updateActiveOrganization("session");
 				}
 			}
 			else if ("LogOut" === info.args.Type) {
-				this.prepareSidebarFooterItemsAsync().then(() => this.activeSidebar(() => {
+				this.prepareSidebarFooterItemsAsync(() => this.activeSidebar(() => {
 					delete this.configSvc.appConfig.options.extras["organization"];
 					delete this.configSvc.appConfig.options.extras["modules"];
 					this.configSvc.appConfig.options.extras["organizations"] = new Array<string>();
@@ -225,7 +225,7 @@ export class PortalsCoreService extends BaseService {
 		AppEvents.on("Account", info => {
 			if ("Updated" === info.args.Type && "APIs" === info.args.Mode) {
 				this.updateSidebarHeader();
-				this.prepareSidebarFooterItemsAsync().then(() => this.prepareSidebar());
+				this.prepareSidebarFooterItemsAsync(() => this.prepareSidebar());
 			}
 		});
 
@@ -278,8 +278,7 @@ export class PortalsCoreService extends BaseService {
 				this.prepareSidebar();
 			}
 		}
-		await this.prepareSidebarFooterItemsAsync();
-		this.activeSidebar(onNext);
+		await this.prepareSidebarFooterItemsAsync(() => this.activeSidebar(onNext));
 	}
 
 	canManageOrganization(organization?: Organization, account?: Account) {
@@ -291,9 +290,9 @@ export class PortalsCoreService extends BaseService {
 
 	canModerateOrganization(organization?: Organization, account?: Account) {
 		account = account || this.configSvc.getAccount();
-		return organization !== undefined && AppUtility.isNotEmpty(organization.ID)
+		return this.canManageOrganization(organization, account) || (organization !== undefined && AppUtility.isNotEmpty(organization.ID)
 			? AppUtility.isEquals(organization.OwnerID, account.id) || this.authSvc.isModerator(this.name, "Organization", organization.Privileges, account)
-			: this.authSvc.isModerator(this.name, "Organization", undefined, account);
+			: this.authSvc.isModerator(this.name, "Organization", undefined, account));
 	}
 
 	async getDefinitionsAsync(onNext?: () => void) {
@@ -302,9 +301,9 @@ export class PortalsCoreService extends BaseService {
 			BaseModel.moduleDefinitions = this.configSvc.getDefinition(path);
 			if (BaseModel.moduleDefinitions === undefined) {
 				BaseModel.moduleDefinitions = await this.configSvc.fetchDefinitionAsync(path, false);
-				BaseModel.moduleDefinitions.forEach(definition => {
-					definition.ContentTypeDefinitions.forEach(contentTypeDefinition => contentTypeDefinition.ModuleDefinition = definition);
-					definition.ObjectDefinitions.forEach(objectDefinition => objectDefinition.ModuleDefinition = definition);
+				BaseModel.moduleDefinitions.forEach(moduleDefinition => {
+					moduleDefinition.ContentTypeDefinitions.forEach(contentTypeDefinition => contentTypeDefinition.ModuleDefinition = moduleDefinition);
+					moduleDefinition.ObjectDefinitions.forEach(objectDefinition => objectDefinition.ModuleDefinition = moduleDefinition);
 				});
 				console.log("[Portals]: Definitions were fetched", BaseModel.moduleDefinitions.first());
 				AppEvents.broadcast(this.name, { Type: "Definitions" });
@@ -395,7 +394,7 @@ export class PortalsCoreService extends BaseService {
 			this.activeOrganizations.merge([organization.ID], true);
 			if (Organization.active === undefined || Organization.active.ID !== organization.ID) {
 				Organization.active = organization;
-				console.log("[Portals]: Set active organization", this.configSvc.isDebug ? Organization.active : "=> " + Organization.active.Title);
+				console.log("[Portals]: Set active organization", this.configSvc.isDebug ? Organization.active : ` => ${Organization.active.Title}`);
 				AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
 				const useXHR = organization.modules.length < 1;
 				if (this.configSvc.isDebug) {
@@ -412,6 +411,15 @@ export class PortalsCoreService extends BaseService {
 						}
 					});
 				});
+				if (Organization.active.Privileges !== undefined && Organization.active.Privileges.AdministrativeRoles !== undefined && Organization.active.Privileges.AdministrativeRoles.size < 1) {
+					AppUtility.invoke(() => this.getOrganizationAsync(Organization.active.ID, data => {
+						this.updateSidebarHeader();
+						this.prepareSidebarFooterItemsAsync(() => this.prepareSidebar());
+						if (this.configSvc.isDebug) {
+							console.log("[Portals]: Refresh to get sites & the privileges (when set active organization)", data, Organization.active);
+						}
+					}, undefined, true, true, false, { "x-sites": "true" }, true), 1234);
+				}
 			}
 		}
 		if (this.configSvc.isAuthenticated && Organization.active !== undefined) {
@@ -1583,12 +1591,12 @@ export class PortalsCoreService extends BaseService {
 
 	private prepareSidebar(onNext?: () => void) {
 		const items = new Array<AppSidebarMenuItem>();
+		const account = this.configSvc.getAccount();
+		const isSystemAdministrator = this.authSvc.isSystemAdministrator(account);
+		const canManageOrganization = isSystemAdministrator || this.canManageOrganization(this.activeOrganization, account);
+		const canModerateOrganization = this.configSvc.isAuthenticated && (canManageOrganization || this.canModerateOrganization(this.activeOrganization, account));
 
-		if (this.configSvc.isAuthenticated) {
-			const account = this.configSvc.getAccount();
-			const canManageOrganization = this.authSvc.isSystemAdministrator(account) || this.canManageOrganization(this.activeOrganization, account);
-			const canModerateOrganization = canManageOrganization || this.canModerateOrganization(this.activeOrganization, account);
-
+		if (canModerateOrganization) {
 			if (canManageOrganization) {
 				items.push(
 					{
@@ -1623,24 +1631,22 @@ export class PortalsCoreService extends BaseService {
 				Link: this.getRouterLink(undefined, "list", "all", "content.type", "core"),
 				Direction: "root",
 				Icon: { Name: "git-branch", Color: "medium", Slot: "start" }
+			},
+			{
+				Title: "{{portals.sidebar.expressions}}",
+				Link: this.getRouterLink(undefined, "list", "all", "expression", "core"),
+				Direction: "root",
+				Icon: { Name: "extension-puzzle", Color: "medium", Slot: "start" }
 			});
 
-			if (canModerateOrganization) {
+			const service = this.configSvc.appConfig.services.all.first(svc => svc.name === this.name);
+			if (!!service.specials && service.specials.indexOf("crawler") > -1) {
 				items.push({
-					Title: "{{portals.sidebar.expressions}}",
-					Link: this.getRouterLink(undefined, "list", "all", "expression", "core"),
+					Title: "{{portals.sidebar.crawlers}}",
+					Link: this.getRouterLink(undefined, "list", "all", "crawler"),
 					Direction: "root",
-					Icon: { Name: "extension-puzzle", Color: "medium", Slot: "start" }
+					Icon: { Name: "sparkles", Color: "medium", Slot: "start" }
 				});
-				const service = this.configSvc.appConfig.services.all.first(svc => svc.name === this.name);
-				if (!!service.specials && service.specials.indexOf("crawler") > -1) {
-					items.push({
-						Title: "{{portals.sidebar.crawlers}}",
-						Link: this.getRouterLink(undefined, "list", "all", "crawler"),
-						Direction: "root",
-						Icon: { Name: "sparkles", Color: "medium", Slot: "start" }
-					});
-				}
 			}
 
 			if (canManageOrganization) {
@@ -1651,17 +1657,14 @@ export class PortalsCoreService extends BaseService {
 					Icon: { Name: "globe", Color: "medium", Slot: "start" }
 				});
 			}
-
-			if (canModerateOrganization) {
-				items.push({
-					Title: "{{portals.sidebar.desktops}}",
-					Link: this.getRouterLink(undefined, "list", "all", "desktop", "core"),
-					Direction: "root",
-					Icon: { Name: "Desktop", Color: "medium", Slot: "start" }
-				});
-			}
-
+	
 			items.push({
+				Title: "{{portals.sidebar.desktops}}",
+				Link: this.getRouterLink(undefined, "list", "all", "desktop", "core"),
+				Direction: "root",
+				Icon: { Name: "Desktop", Color: "medium", Slot: "start" }
+			},
+			{
 				Title: "{{portals.sidebar.titles.categories}}",
 				Link: this.getRouterLink(undefined, "list", "all", "category"),
 				Direction: "root",
@@ -1700,20 +1703,26 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	private async prepareSidebarFooterItemsAsync(onNext?: () => void) {
-		AppEvents.broadcast("UpdateSidebarFooter", { items: [{
+		const items = [{
 			Name: "cms",
 			Icon: "logo-firebase",
 			Title: await this.configSvc.getResourceAsync("portals.preferences.cms"),
 			OnClick: (name: string, sidebar: AppSidebar) => this.openSidebar(name, sidebar),
 			Position: this.menuIndex
-		},
-		{
-			Name: this.configSvc.isAuthenticated ? "portals" : undefined,
-			Icon: this.configSvc.isAuthenticated ? "cog" : undefined,
-			Title: await this.configSvc.getResourceAsync("portals.preferences.portals"),
-			OnClick: (name: string, sidebar: AppSidebar) => this.openSidebar(name, sidebar),
-			Position: this.menuIndex  + 1
-		}]});
+		}];
+		if (this.configSvc.isAuthenticated && (this.authSvc.isSystemAdministrator() || this.canModerateOrganization(this.activeOrganization))) {
+			items.push({
+				Name: "portals",
+				Icon: "cog",
+				Title: await this.configSvc.getResourceAsync("portals.preferences.portals"),
+				OnClick: (name: string, sidebar: AppSidebar) => this.openSidebar(name, sidebar),
+				Position: this.menuIndex  + 1
+			});
+		}
+		else {
+			AppEvents.broadcast("UpdateSidebarFooter", { beRemoved: ["portals"] });
+		}
+		AppEvents.broadcast("UpdateSidebarFooter", { items: items });
 		if (onNext !== undefined) {
 			onNext();
 		}
@@ -2252,17 +2261,17 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	getOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, processModules: boolean = true, preferWebSocket: boolean = false) {
-		return Organization.contains(id) && Organization.get(id).modules.length > 0
+	getOrganizationAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, processModules: boolean = true, preferWebSocket: boolean = false, headers?: { [header: string]: string }, force: boolean = false) {
+		return !force && Organization.contains(id) && Organization.get(id).modules.length > 0
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
-					this.getPath("Organization", id),
-					data => this.processOrganizations({ Objects: [data] }, onSuccess, processModules),
-					error => this.processError("Error occurred while getting an organization", error, onError),
-					undefined,
-					useXHR,
-					preferWebSocket
-				);
+				this.getPath("Organization", id),
+				data => this.processOrganizations({ Objects: [data] }, onSuccess, processModules),
+				error => this.processError("Error occurred while getting an organization", error, onError),
+				headers,
+				useXHR,
+				preferWebSocket
+			);
 	}
 
 	getOrganization(id: string, getActiveOrganizationWhenNotFound: boolean = true) {
@@ -2307,16 +2316,19 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	processOrganizations(data: any, onNext?: (data?: any) => void, processModules: boolean = true) {
+	processOrganizations(data: any, onNext?: (data?: any) => void, processModules: boolean = true, processSites: boolean = true) {
 		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
-			(data.Objects as Array<any>).forEach(org => {
-				const organization = Organization.update(org);
+			(data.Objects as Array<any>).forEach(odata => {
+				const organization = Organization.update(odata);
 				this.usersSvc.fetchProfileAsync(organization.OwnerID).then(() => organization.OwnerID === organization.CreatedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(organization.CreatedID)).then(() => organization.CreatedID === organization.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(organization.LastModifiedID));
 				if (organization.Versions === undefined) {
 					this.findVersions("Organization", organization.ID);
 				}
 				if (processModules) {
-					this.processModules({ Objects: org.Modules });
+					this.processModules({ Objects: odata.Modules });
+				}
+				if (processSites) {
+					this.processSites({ Objects: odata.Sites });
 				}
 			});
 		}
@@ -2662,15 +2674,17 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	private processModules(data: any, onNext?: (data?: any) => void) {
+	private processModules(data: any, onNext?: (data?: any) => void, processContentTypes: boolean = true) {
 		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
-			(data.Objects as Array<any>).forEach(moduleData => {
-				const module = Module.update(moduleData);
+			(data.Objects as Array<any>).forEach(mdata => {
+				const module = Module.update(mdata);
 				this.usersSvc.fetchProfileAsync(module.CreatedID).then(() => module.CreatedID === module.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(module.LastModifiedID));
 				if (module.Versions === undefined) {
 					this.findVersions("Module", module.ID);
 				}
-				this.processContentTypes({ Objects: moduleData.ContentTypes });
+				if (processContentTypes) {
+					this.processContentTypes({ Objects: mdata.ContentTypes });
+				}
 			});
 		}
 		if (onNext !== undefined) {
@@ -2796,8 +2810,8 @@ export class PortalsCoreService extends BaseService {
 
 	private processContentTypes(data: any, onNext?: (data?: any) => void) {
 		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
-			(data.Objects as Array<any>).forEach(contentTypeData => {
-				const contentType = ContentType.update(contentTypeData);
+			(data.Objects as Array<any>).forEach(cdata => {
+				const contentType = ContentType.update(cdata);
 				this.usersSvc.fetchProfileAsync(contentType.CreatedID).then(() => contentType.CreatedID === contentType.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(contentType.LastModifiedID));
 				if (contentType.Versions === undefined) {
 					this.findVersions("Content.Type", contentType.ID);
@@ -3062,7 +3076,7 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-	fetchSitesAsync(organization?: Organization, onSuccess?: () => void, onError?: (error?: any) => void) {
+	fetchSitesAsync(organization?: Organization, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.canModerateOrganization(organization || this.activeOrganization)
 			? this.searchSitesAsync(
 				{
@@ -3070,14 +3084,17 @@ export class PortalsCoreService extends BaseService {
 						{ SystemID: { Equals: (organization || this.activeOrganization).ID } }
 					]},
 					SortBy: { Title: "Ascending" }
-				}, onSuccess, onError, true, false, true)
-			: this.readAsync(this.getPath("Organization", (organization || this.activeOrganization).ID), undefined, undefined, undefined, false, true);
+				},
+				data => this.processSites(data, onSuccess),
+				error => this.getOrganizationAsync((organization || this.activeOrganization).ID, undefined, undefined, true, true, false, { "x-sites": "true" }, true).then(() => this.processError("Error occurred while fetching sites", error, onError)),
+				true, false, true)
+			: this.getOrganizationAsync((organization || this.activeOrganization).ID, undefined, undefined, true, true, false, { "x-sites": "true" }, true);
 	}
 
 	processSites(data: any, onNext?: (data?: any) => void) {
-		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-			(data.Objects as Array<any>).forEach(siteData => {
-				const site = Site.update(siteData);
+		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+			(data.Objects as Array<any>).forEach(sdata => {
+				const site = Site.update(sdata);
 				this.usersSvc.fetchProfileAsync(site.CreatedID).then(() => site.CreatedID === site.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(site.LastModifiedID));
 				if (site.Versions === undefined) {
 					this.findVersions("Site", site.ID);
@@ -3300,9 +3317,9 @@ export class PortalsCoreService extends BaseService {
 
 	private processDesktops(data: any, onNext?: (data?: any) => void) {
 		if (data !== undefined && AppUtility.isGotData(data.Objects)) {
-			(data.Objects as Array<any>).forEach(json => {
-				const fetch = !Desktop.contains(json.ID);
-				const desktop = Desktop.update(json);
+			(data.Objects as Array<any>).forEach(ddata => {
+				const fetch = !Desktop.contains(ddata.ID);
+				const desktop = Desktop.update(ddata);
 				this.usersSvc.fetchProfileAsync(desktop.CreatedID).then(() => desktop.CreatedID === desktop.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(desktop.LastModifiedID));
 				if (desktop.Versions === undefined) {
 					this.findVersions("Desktop", desktop.ID);
@@ -3435,8 +3452,8 @@ export class PortalsCoreService extends BaseService {
 
 	private processPortlets(data: any, onNext?: (data?: any) => void) {
 		if (data !== undefined && AppUtility.isArray(data.Objects, true)) {
-			(data.Objects as Array<any>).forEach(json => {
-				const portlet =  Portlet.update(json);
+			(data.Objects as Array<any>).forEach(pdata => {
+				const portlet =  Portlet.update(pdata);
 				this.usersSvc.fetchProfileAsync(portlet.CreatedID).then(() => portlet.CreatedID === portlet.LastModifiedID ? AppUtility.promise : this.usersSvc.fetchProfileAsync(portlet.LastModifiedID));
 				if (portlet.Versions === undefined) {
 					this.findVersions("Portlet", portlet.ID);

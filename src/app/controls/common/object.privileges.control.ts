@@ -172,35 +172,28 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 	private prepareRolesAndUsers(sections?: Array<string>) {
 		const arraysOfPrivileges = Privileges.getPrivileges(this.privileges, sections);
 		(sections || this.sections).forEach(section => {
-			this.roles[section] = arraysOfPrivileges[`${section}Roles`].map(id => {
-				return { Value: id, Label: undefined };
-			});
-			this.users[section] = arraysOfPrivileges[`${section}Users`].map(id => {
-				return { Value: id, Label: undefined };
-			});
+			this.roles[section] = arraysOfPrivileges[`${section}Roles`].map(id => ({ Value: id, Label: undefined }));
+			this.users[section] = arraysOfPrivileges[`${section}Users`].map(id => ({ Value: id, Label: undefined }));
 		});
 	}
 
 	private async prepareRolesAndUsersAsync(sections?: Array<string>) {
-		await Promise.all((sections || this.sections).map(async section => await Promise.all([
-			Promise.all(this.roles[section].filter(role => role.Label === undefined).map(async role => {
-				if (Privilege.systemRoles.indexOf(role.Value) > -1) {
-					role.Label = await this.appFormsSvc.getResourceAsync(`privileges.roles.systems.${role.Value}`);
-				}
-				else {
-					await this.rolesSelector.prepare(role);
-				}
-			})),
-			Promise.all(this.users[section].filter(user => user.Label === undefined).map(async user => {
-				let profile = UserProfile.get(user.Value);
-				if (profile === undefined) {
-					await this.userSvc.getProfileAsync(user.Value, _ => profile = (UserProfile.get(user.Value) || new UserProfile()), undefined, true);
-				}
-				user.Label = profile.Name;
-				user.Description = profile.getEmail();
-				user.Image = profile.avatarURI;
-			}))
-		])));
+		await Promise.all((sections || this.sections).map(async section => await Promise.all(this.roles[section].filter(role => role.Label === undefined).map(async role => {
+			if (Privilege.systemRoles.indexOf(role.Value) > -1) {
+				role.Label = await this.appFormsSvc.getResourceAsync(`privileges.roles.systems.${role.Value}`);
+			}
+			else {
+				await this.rolesSelector.prepare(role);
+			}
+		}).merge(this.users[section].filter(user => user.Label === undefined).map(async user => {
+			let profile = UserProfile.get(user.Value);
+			if (profile === undefined) {
+				await this.userSvc.getProfileAsync(user.Value, _ => profile = (UserProfile.get(user.Value) || new UserProfile()), undefined, true);
+			}
+			user.Label = profile.Name;
+			user.Description = profile.getEmail();
+			user.Image = profile.avatarURI;
+		})))));
 		(sections || this.sections).forEach(section => this.users[section] = this.users[section].sortBy("Label", "Description"));
 	}
 

@@ -141,6 +141,12 @@ export class AppComponent implements OnInit {
 			});
 
 			if (appConfig.isWebApp) {
+				if (uri.QueryParams["xhr"] !== undefined) {
+					appConfig.app.query.preferXHR = true;
+				}
+				if (uri.QueryParams["xhrToken"] !== undefined || uri.QueryParams["xhr-token"] !== undefined) {
+					appConfig.app.query.includeToken = true;
+				}
 				if (uri.QueryParams["debug"] !== undefined) {
 					appConfig.app.debug = true;
 				}
@@ -365,12 +371,12 @@ export class AppComponent implements OnInit {
 			}
 		};
 
-		this.sidebar.updateFooter = (args: { items: Array<AppSidebarFooterItem>; reset?: boolean; predicate?: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean; onUpdated?: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void; }) => {
-			const predicate: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean = typeof args.predicate === "function"
-				? (sidebar, item) => args.predicate(sidebar, item)
-				: (sidebar, item) => sidebar.Footer.findIndex(icon => icon.Name === item.Name) < 0;
-			const onUpdated: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void = typeof args.onUpdated === "function" ? args.onUpdated : () => {};
+		this.sidebar.updateFooter = (args: { items?: Array<AppSidebarFooterItem>; predicate?: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean; onUpdated?: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void; beRemoved?: Array<string>; }) => {
 			if (AppUtility.isArray(args.items, true)) {
+				const predicate: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean = typeof args.predicate === "function"
+					? (sidebar, item) => args.predicate(sidebar, item)
+					: (sidebar, item) => sidebar.Footer.findIndex(icon => icon.Name === item.Name) < 0;
+				const onUpdated: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void = typeof args.onUpdated === "function" ? args.onUpdated : () => {};
 				args.items.filter(item => predicate(this.sidebar, item)).forEach(item => {
 					const position = item.Position !== undefined ? item.Position : this.sidebar.Footer.length;
 					while (this.sidebar.Footer.length <= position) {
@@ -380,6 +386,9 @@ export class AppComponent implements OnInit {
 					onUpdated(this.sidebar, item);
 				});
 				this.sidebar.normalizeFooter();
+			}
+			if (AppUtility.isArray(args.beRemoved, true)) {
+				args.beRemoved.forEach(name => this.sidebar.Footer.removeAt(this.sidebar.Footer.findIndex(item => item.Name === name)));
 			}
 		};
 
@@ -483,7 +492,7 @@ export class AppComponent implements OnInit {
 	}
 
 	private async updateSidebarMainMenuItemAsync(args: any) {
-		let menuIndex = args.menuIndex !== undefined ? args.menuIndex as number : -1;
+		let menuIndex = args.menuIndex !== undefined ? +args.menuIndex : -1;
 		if (menuIndex < 0) {
 			menuIndex = 0;
 		}
@@ -493,7 +502,7 @@ export class AppComponent implements OnInit {
 		}
 		const menuItem = this.getSidebarMainMenuItem(args.itemInfo);
 		menuItem.Title = await this.appFormsSvc.normalizeResourceAsync(menuItem.Title);
-		this.sidebar.MainMenu[menuIndex].Items.update(menuItem, args.itemIndex !== undefined ? args.itemIndex as number : -1);
+		this.sidebar.MainMenu[menuIndex].Items.update(menuItem, args.itemIndex !== undefined ? +args.itemIndex : -1);
 	}
 
 	private getSidebarMainMenuItem(args: any, expanded?: boolean, onClick?: (data?: any, sidebar?: AppSidebar, event?: Event) => void): AppSidebarMenuItem {
@@ -655,7 +664,7 @@ export class AppComponent implements OnInit {
 		this.appFormsSvc.showAlertAsync(data.Header, data.Message, data.SubMessage, () => this.configSvc.navigateRootAsync());
 	}
 
-	private initialize(onNext?: () => void, noInitializeSession?: boolean) {
+	private initialize(onNext?: () => void, dontInitializeSession?: boolean) {
 		this.configSvc.initializeAsync(
 			() => {
 				if (this.configSvc.isReady && this.configSvc.isAuthenticated) {
@@ -672,7 +681,7 @@ export class AppComponent implements OnInit {
 						error => {
 							if (AppUtility.isGotSecurityException(error)) {
 								console.warn("<App>: Cannot register, the session is need to be re-initialized (anonymous)");
-								this.configSvc.resetSessionAsync(() => AppUtility.invoke(() => this.initialize(onNext, noInitializeSession), 234));
+								this.configSvc.resetSessionAsync(() => AppUtility.invoke(() => this.initialize(onNext, dontInitializeSession), 234));
 							}
 							else {
 								this.appFormsSvc.hideLoadingAsync(() => console.error(`<App>: Cannot initialize the app => ${AppUtility.getErrorMessage(error)}`, error));
@@ -684,13 +693,13 @@ export class AppComponent implements OnInit {
 			error => {
 				if (AppUtility.isGotSecurityException(error)) {
 					console.warn("<App>: Cannot initialize, the session is need to be re-initialized (anonymous)");
-					this.configSvc.resetSessionAsync(() => AppUtility.invoke(() => this.initialize(onNext, noInitializeSession), 234));
+					this.configSvc.resetSessionAsync(() => AppUtility.invoke(() => this.initialize(onNext, dontInitializeSession), 234));
 				}
 				else {
 					this.appFormsSvc.hideLoadingAsync(() => console.error(`<App>: Cannot initialize the app => ${AppUtility.getErrorMessage(error)}`, error));
 				}
 			},
-			noInitializeSession
+			dontInitializeSession
 		);
 	}
 

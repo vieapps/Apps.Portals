@@ -155,20 +155,28 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 					await this.portalsCoreSvc.searchSitesAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: systemID } }] }, { Title: "Ascending" }), () => this.sites = Site.instances.filter(site => site.SystemID === systemID).toArray(), undefined, true, true);
 				}
 			}
-			else if (this.portalsCoreSvc.activeOrganizations.length <= 100) {
+			else if (this.portalsCoreSvc.activeOrganizations.length > 0) {
 				this.configSvc.appTitle = this.title.page = this.title.track;
-				const organizations = new Array<Organization>();
-				await Promise.all(this.portalsCoreSvc.activeOrganizations.map(async id => {
-					await this.portalsCoreSvc.getOrganizationAsync(id);
-					const organization = Organization.get(id);
-					if (organization !== undefined && this.portalsCoreSvc.canModerateOrganization(organization)) {
-						organizations.push(organization);
-						if (Site.instances.find(site => site.SystemID === organization.ID) === undefined) {
-							await this.portalsCoreSvc.searchSitesAsync(AppPagination.buildRequest({ And: [{ SystemID: { Equals: organization.ID } }] }, { Title: "Ascending" }), undefined, undefined, true, true);
+				const ids = this.portalsCoreSvc.activeOrganizations.toHashSet();
+				this.sites = Site.instances.filter(site => ids.contains(site.SystemID)).toArray();
+				if (this.sites.length > 0) {
+					this.sites = this.sites.filter(site => {
+						const organization = Organization.get(site.SystemID);
+						return organization !== undefined && this.portalsCoreSvc.canManageOrganization(organization);
+					});
+				}
+				else {
+					const organizations = new Array<Organization>();
+					await Promise.all(this.portalsCoreSvc.activeOrganizations.map(async id => {
+						await this.portalsCoreSvc.getOrganizationAsync(id, undefined, undefined, true, true, false, { "x-sites": "true" }, true);
+						const organization = Organization.get(id);
+						if (organization !== undefined && this.portalsCoreSvc.canModerateOrganization(organization)) {
+							organizations.push(organization);
 						}
-					}
-				}));
-				this.sites = organizations.flatMap(organization => Site.instances.toArray(site => site.SystemID === organization.ID));
+					}));
+					const ids = organizations.map(organization => organization.ID).toHashSet();
+					this.sites = Site.instances.filter(site => ids.contains(site.SystemID)).toArray();
+				}
 			}
 			await this.appFormsSvc.hideLoadingAsync();
 		}

@@ -82,7 +82,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			await Promise.all([
 				this.trackAsync(`${this.title} | No Permission`, "Check"),
 				this.appFormsSvc.showToastAsync("Hmmmmmm...."),
-				this.configSvc.navigateBackAsync()
+				this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
 			]);
 			return;
 		}
@@ -643,9 +643,11 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		}));
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(() => AppUtility.invoke(() => {
-			// hack the Completer component to update correct form value & validity status
 			this.form.controls.OwnerID.setValue(this.organization.OwnerID, { onlySelf: true });
 			this.hash = AppCrypto.hash(this.form.value);
+			if (this.configSvc.isDebug) {
+				console.log(`<Organization>: Update an organization => ${this.organization.Title}`, this.hash, this.organization);
+			}
 		}, 234));
 	}
 

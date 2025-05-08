@@ -21,6 +21,7 @@
 			cancelButtonIcon="arrow-back"
 			enterkeyhint="search"
 			inputmode="search"
+			[debounce]="debounce"
 			[cancelButtonText]="labels.cancel"
 			[hidden]="!searching"
 			(ionChange)="onStartSearch($event)"

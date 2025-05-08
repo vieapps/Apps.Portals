@@ -181,7 +181,7 @@ export abstract class PortalCmsBase extends BaseModel {
 					? thumbnails[0].URI
 					: undefined
 			: undefined;
-		const objectName = this.contentType.getObjectName(true);
+		const objectName = this.objectName
 		const currentURI = Base.getThumbnailURI(this.thumbnails);
 		const newURI = Base.getThumbnailURI(thumbnails);
 		if (this._thumbnailURI !== undefined && AppConfig.options.preload.thumbnails && currentURI !== newURI) {

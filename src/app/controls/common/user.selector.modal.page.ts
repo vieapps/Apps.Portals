@@ -44,6 +44,10 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 		return this.configSvc.color;
 	}
 
+	get debounce() {
+		return this.configSvc.debounce;
+	}
+
 	private subscription: Subscription;
 
 	profiles = new Array<UserProfile>();

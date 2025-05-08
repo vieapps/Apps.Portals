@@ -25,7 +25,7 @@ export interface AppSidebar {
 	normalizeTopMenu: () => void;
 	updateMainMenu: (name: string, parent: AppSidebarMenuItem, items: Array<AppSidebarMenuItem>, index?: number) => void;
 	updateHeader: (args: { title?: string; onClick?: (sidebar?: AppSidebar, event?: Event) => void; updateAvatar?: boolean; }) => void;
-	updateFooter: (args: { items: Array<AppSidebarFooterItem>; reset?: boolean; predicate?: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean; onUpdated?: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void; }) => void;
+	updateFooter: (args: { items?: Array<AppSidebarFooterItem>; predicate?: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean; onUpdated?: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void; beRemoved?: Array<string>; }) => void;
 	normalizeFooter: () => void;
 	updateBadge: (name: string, badge: number) => void;
 }

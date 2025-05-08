@@ -137,7 +137,7 @@ export class Account {
 	 * @param privileges The role privileges to check with this accounts' privileges
 	*/
 	isEditor(serviceName?: string, objectName?: string, privileges?: Privileges) {
-		return this.isInPrivilegeRole(serviceName, objectName, "Editor") || this.isInPrivilege(privileges !== undefined ? privileges.EditableUsers : undefined, privileges !== undefined ? privileges.EditableRoles : undefined)  || this.isModerator(serviceName, objectName, privileges);
+		return this.isInPrivilegeRole(serviceName, objectName, "Editor") || this.isInPrivilege(privileges !== undefined ? privileges.EditableUsers : undefined, privileges !== undefined ? privileges.EditableRoles : undefined) || this.isModerator(serviceName, objectName, privileges);
 	}
 
 	/**
@@ -157,7 +157,7 @@ export class Account {
 	 * @param privileges The role privileges to check with this accounts' privileges
 	*/
 	isViewer(serviceName?: string, objectName?: string, privileges?: Privileges) {
-		return this.isInPrivilegeRole(serviceName, objectName, "Viewer") || this.isInPrivilege(privileges !== undefined ? privileges.ViewableUsers : undefined, privileges !== undefined ? privileges.ViewableRoles : undefined)  || this.isContributor(serviceName, objectName, privileges);
+		return this.isInPrivilegeRole(serviceName, objectName, "Viewer") || this.isInPrivilege(privileges !== undefined ? privileges.ViewableUsers : undefined, privileges !== undefined ? privileges.ViewableRoles : undefined) || this.isContributor(serviceName, objectName, privileges);
 	}
 
 	/**
@@ -167,7 +167,7 @@ export class Account {
 	 * @param privileges The role privileges to check with this accounts' privileges
 	*/
 	isDownloader(serviceName?: string, objectName?: string, privileges?: Privileges) {
-		return this.isInPrivilegeRole(serviceName, objectName, "Downloader") || this.isInPrivilege(privileges !== undefined ? privileges.DownloadableUsers : undefined, privileges !== undefined ? privileges.DownloadableRoles : undefined)  || this.isViewer(serviceName, objectName, privileges);
+		return this.isInPrivilegeRole(serviceName, objectName, "Downloader") || this.isInPrivilege(privileges !== undefined ? privileges.DownloadableUsers : undefined, privileges !== undefined ? privileges.DownloadableRoles : undefined) || this.isViewer(serviceName, objectName, privileges);
 	}
 
 }
