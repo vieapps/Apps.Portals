@@ -480,7 +480,7 @@
 					}
 				},
 				"AlwaysUseHtmlSuffix": "Luôn dùng hậu tố .html đối với toàn bộ liên kết",
-				"RefreshUrls": {
+				"RefreshURLs": {
 					"label": "Các URLs sẽ làm tươi",
 					"Addresses": {
 						"label": "Các địa chỉ URLs sẽ làm tươi định kỳ",
@@ -491,7 +491,7 @@
 						"description": "Chỉ định thời gian (phút) để làm tươi định kỳ các URLs đã chỉ định."
 					}
 				},
-				"RedirectUrls": {
+				"RedirectURLs": {
 					"label": "Các URLs sẽ chuyển hướng",
 					"Addresses": {
 						"label": "Các địa chỉ URLs sẽ chuyển hướng",
@@ -499,16 +499,18 @@
 					},
 					"AllHttp404": "Chuyển hướng toàn bộ các liên kết không tìm thấy (HTTP 404) về liên kết toàn bộ (*) hoặc về trang chủ"
 				},
-				"FakeURIs": {
-					"label": "Các địa chỉ 'máy chủ rởm':"
-				},
+				"specials": "Các thiết đặt đặc biệt",
 				"FakeFilesHttpURI": {
-					"label": "Địa chỉ máy chủ dịch vụ files",
-					"description": "Chỉ định địa chỉ 'máy chủ chủ dịch vụ files rởm' để sử dụng trong mã HTML nhằm che dấu địa chỉ thật của máy chủ dịch vụ files (thông thường sử dụng qua proxy như CloudFlare)"
+					"label": "Địa chỉ 'máy chủ dịch vụ files rởm'",
+					"description": "Chỉ định địa chỉ máy chủ chủ dịch vụ files để sử dụng trong mã HTML nhằm che dấu địa chỉ thật của máy chủ dịch vụ files (thông thường sử dụng qua proxy như CloudFlare)"
 				},
 				"FakePortalsHttpURI": {
-					"label": "Địa chỉ máy chủ dịch vụ portals",
-					"description": "Chỉ định địa chỉ 'máy chủ chủ dịch vụ portals rởm' để sử dụng trong mã HTML nhằm che dấu địa chỉ thật của máy chủ dịch vụ portals (thông thường sử dụng qua proxy như CloudFlare)"
+					"label": "Địa chỉ 'máy chủ dịch vụ portals rởm'",
+					"description": "Chỉ định địa chỉ máy chủ chủ dịch vụ portals để sử dụng trong mã HTML nhằm che dấu địa chỉ thật của máy chủ dịch vụ portals (thông thường sử dụng qua proxy như CloudFlare)"
+				},
+				"ExamineURLs": {
+					"label": "Các URLs cần sát hạch",
+					"description": "Nội dung JSON của các URLs cần sát hạch"
 				}
 			},
 			"list": {

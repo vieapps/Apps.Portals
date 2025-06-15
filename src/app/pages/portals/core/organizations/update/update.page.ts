@@ -218,10 +218,10 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				}
 			},
 			{
-				Name: "RefreshUrls",
+				Name: "RefreshURLs",
 				Segment: "urls",
 				Options: {
-					Label: "{{portals.organizations.controls.RefreshUrls.label}}",
+					Label: "{{portals.organizations.controls.RefreshURLs.label}}",
 				},
 				SubControls: {
 					Controls: [
@@ -229,8 +229,8 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 							Name: "Addresses",
 							Type: "TextArea",
 							Options: {
-								Label: "{{portals.organizations.controls.RefreshUrls.Addresses.label}}",
-								Description: "{{portals.organizations.controls.RefreshUrls.Addresses.description}}",
+								Label: "{{portals.organizations.controls.RefreshURLs.Addresses.label}}",
+								Description: "{{portals.organizations.controls.RefreshURLs.Addresses.description}}",
 								Rows: 10
 							}
 						},
@@ -238,8 +238,8 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 							Name: "Interval",
 							Type: "Range",
 							Options: {
-								Label: "{{portals.organizations.controls.RefreshUrls.Interval.label}}",
-								Description: "{{portals.organizations.controls.RefreshUrls.Interval.description}}",
+								Label: "{{portals.organizations.controls.RefreshURLs.Interval.label}}",
+								Description: "{{portals.organizations.controls.RefreshURLs.Interval.description}}",
 								Type: "number",
 								MinValue: 5,
 								MaxValue: 120,
@@ -258,10 +258,10 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				}
 			},
 			{
-				Name: "RedirectUrls",
+				Name: "RedirectURLs",
 				Segment: "urls",
 				Options: {
-					Label: await this.appFormsSvc.getResourceAsync("portals.organizations.controls.RedirectUrls.label")
+					Label: await this.appFormsSvc.getResourceAsync("portals.organizations.controls.RedirectURLs.label")
 				},
 				SubControls: {
 					Controls: [
@@ -269,8 +269,8 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 							Name: "Addresses",
 							Type: "TextArea",
 							Options: {
-								Label: "{{portals.organizations.controls.RedirectUrls.Addresses.label}}",
-								Description: "{{portals.organizations.controls.RedirectUrls.Addresses.description}}",
+								Label: "{{portals.organizations.controls.RedirectURLs.Addresses.label}}",
+								Description: "{{portals.organizations.controls.RedirectURLs.Addresses.description}}",
 								Rows: 10
 							}
 						},
@@ -278,7 +278,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 							Name: "AllHttp404",
 							Type: "YesNo",
 							Options: {
-								Label: "{{portals.organizations.controls.RedirectUrls.AllHttp404}}",
+								Label: "{{portals.organizations.controls.RedirectURLs.AllHttp404}}",
 								Type: "toggle"
 							}
 						}
@@ -289,7 +289,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				Name: "FakeURIs",
 				Segment: "urls",
 				Options: {
-					Label: await this.appFormsSvc.getResourceAsync("portals.organizations.controls.FakeURIs.label")
+					Label: await this.appFormsSvc.getResourceAsync("portals.organizations.controls.specials")
 				},
 				SubControls: {
 					Controls: [
@@ -314,6 +314,16 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 							}
 						}
 					]
+				}
+			},
+			{
+				Name: "ExamineURLs",
+				Segment: "urls",
+				Type: "TextArea",
+				Options: {
+					Label: "{{portals.organizations.controls.ExamineURLs.label}}",
+					Description: "{{portals.organizations.controls.ExamineURLs.description}}",
+					Rows: 12
 				}
 			},
 			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "emails", false),
@@ -451,6 +461,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 
 		control = formConfig.find(ctrl => ctrl.Name === "OwnerID");
 		control.Required = true;
+		control.Options.Disabled = !this.isSystemAdministrator;
 		if (this.canModerateOrganization) {
 			let initialValue: any;
 			if (AppUtility.isNotEmpty(this.organization.OwnerID)) {
@@ -488,7 +499,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 
 		control = formConfig.find(ctrl => ctrl.Name === "Status");
 		this.portalsCoreSvc.prepareApprovalStatusControl(control);
-		if (!this.canModerateOrganization) {
+		if (!this.isSystemAdministrator) {
 			control.Options.Disabled = true;
 		}
 
@@ -496,7 +507,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		control.Type = "DatePicker";
 		control.Required = false;
 		control.Options.DatePickerOptions = { AllowTimes: false };
-		if (!this.canModerateOrganization) {
+		if (!this.isSystemAdministrator) {
 			control.Options.Disabled = true;
 		}
 
@@ -514,7 +525,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				End: "cloud"
 			}
 		};
-		if (!this.canModerateOrganization) {
+		if (!this.isSystemAdministrator) {
 			control.Options.Disabled = true;
 		}
 
@@ -592,7 +603,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		}
 		control.SubControls.Controls.forEach((ctrl, index) => ctrl.Options.Label = `#${index + 1}`);
 
-		formConfig.find(ctrl => ctrl.Name === "FakeURIs").Hidden = !this.isSystemAdministrator;
+		formConfig.find(ctrl => ctrl.Name === "FakeURIs").Hidden = formConfig.find(ctrl => ctrl.Name === "ExamineURLs").Hidden = !this.isSystemAdministrator;
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (AppUtility.isNotEmpty(this.organization.ID)) {
@@ -617,12 +628,12 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			organization.EmailSettings = this.portalsCoreSvc.getEmailSettings(this.organization.EmailSettings, false);
 			organization.WebHookSettings = this.portalsCoreSvc.getWebHookSettings(this.organization.WebHookSettings, settings => settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.Alias || ""}`);
 			organization.Others = { MetaTags: this.organization.MetaTags, ScriptLibraries: this.organization.ScriptLibraries, Scripts: this.organization.Scripts };
-			organization.RefreshUrls = organization.RefreshUrls || {};
-			organization.RefreshUrls.Addresses = AppUtility.toStr(organization.RefreshUrls.Addresses, "\n");
-			organization.RefreshUrls.Interval = organization.RefreshUrls.Interval || 25;
-			organization.RedirectUrls = organization.RedirectUrls || {};
-			organization.RedirectUrls.Addresses = AppUtility.toStr(organization.RedirectUrls.Addresses, "\n");
-			organization.RedirectUrls.AllHttp404 = organization.RedirectUrls.AllHttp404 !== undefined ? !!organization.RedirectUrls.AllHttp404 : false;
+			organization.RefreshURLs = organization.RefreshURLs || {};
+			organization.RefreshURLs.Addresses = AppUtility.toStr(organization.RefreshURLs.Addresses, "\n");
+			organization.RefreshURLs.Interval = organization.RefreshURLs.Interval || 25;
+			organization.RedirectURLs = organization.RedirectURLs || {};
+			organization.RedirectURLs.Addresses = AppUtility.toStr(organization.RedirectURLs.Addresses, "\n");
+			organization.RedirectURLs.AllHttp404 = organization.RedirectURLs.AllHttp404 !== undefined ? !!organization.RedirectURLs.AllHttp404 : false;
 			organization.FakeURIs = { FakeFilesHttpURI: this.organization.FakeFilesHttpURI, FakePortalsHttpURI: this.organization.FakePortalsHttpURI };
 			this.instructions = organization.Instructions || {};
 			Organization.instructionElements.forEach(type => {
@@ -652,26 +663,30 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 	}
 
 	async saveAsync() {
+		this.processing = true;
+		await this.appFormsSvc.showLoadingAsync(this.title);
+
 		if (this.appFormsSvc.validate(this.form)) {
 			const organization = this.form.value;
 			organization.Instructions = this.instructions;
 
 			if (this.hash === AppCrypto.hash(organization)) {
-				await this.configSvc.navigateBackAsync();
+				await this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 			}
 			else {
-				this.processing = true;
-				await this.appFormsSvc.showLoadingAsync(this.title);
-
 				organization.ExpiredDate = organization.ExpiredDate !== undefined ? AppUtility.toIsoDate(organization.ExpiredDate).replace(/\-/g, "/") : "-";
 				organization.MetaTags = organization.Others.MetaTags;
 				organization.ScriptLibraries = organization.Others.ScriptLibraries;
 				organization.Scripts = organization.Others.Scripts;
-				organization.RefreshUrls.Addresses = AppUtility.toArray(organization.RefreshUrls.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));
-				organization.RedirectUrls.Addresses = AppUtility.toArray(organization.RedirectUrls.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));
+				organization.RefreshURLs.Addresses = AppUtility.toArray(organization.RefreshURLs.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));
+				organization.RedirectURLs.Addresses = AppUtility.toArray(organization.RedirectURLs.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));
 				organization.FakeFilesHttpURI = organization.FakeURIs.FakeFilesHttpURI;
 				organization.FakePortalsHttpURI = organization.FakeURIs.FakePortalsHttpURI;
 				organization.OriginalPrivileges = Privileges.getPrivileges(organization.Privileges);
+				try {
+					organization.ExamineURLs = AppUtility.parse(organization.ExamineURLs);
+				}
+				catch {}
 				this.portalsCoreSvc.normalizeNotificationSettings(organization.Notifications, this.emailsByApprovalStatus);
 
 				delete organization["Others"];
@@ -685,7 +700,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 						async _ => await Promise.all([
 							this.trackAsync(this.title, "Update"),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.update")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
 						]),
 						async error => {
 							this.processing = false;
@@ -702,7 +717,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 						async _ => await Promise.all([
 							this.trackAsync(this.title),
 							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.organizations.update.messages.success.new")),
-							this.appFormsSvc.hideLoadingAsync(async () => await this.configSvc.navigateBackAsync())
+							this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
 						]),
 						async error => {
 							this.processing = false;
@@ -714,6 +729,10 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 					);
 				}
 			}
+		}
+		else {
+			this.processing = false;
+			await this.appFormsSvc.hideLoadingAsync();
 		}
 	}
 

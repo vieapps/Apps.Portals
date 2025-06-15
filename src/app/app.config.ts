@@ -34,14 +34,13 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "10.2505.2",
+		version: "10.2506.1",
 		frameworks: "ionic 5 - angular 11 - cordova 11",
 		mode: "",
 		platform: "",
 		os: "",
 		shell: "Browser",
 		persistence: true,
-		offline: false,
 		debug: false,
 		preflight: {
 			enable: true,
@@ -78,6 +77,7 @@ export class AppConfig {
 				categories: true,
 				featured: true
 			},
+			selectOrganization: false,
 			extras: { } as { [key: string]: any }
 		};
 	}
@@ -89,6 +89,7 @@ export class AppConfig {
 		fileLimits: { avatar: number; thumbnail: number; file: number; };
 		thumbnails: { useWhenInsertWithLink: boolean; preferWebP: boolean; width: number; };
 		preload: { thumbnails: boolean; categories: boolean; featured: boolean;	},
+		selectOrganization: boolean;
 		extras: { [key: string]: any }
 	};
 

@@ -108,10 +108,6 @@ export class PortalsCoreService extends BaseService {
 		return 0;
 	}
 
-	get allowSelectActiveOrganization() {
-		return true;
-	}
-
 	initialize() {
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => {
 			if (message.Data !== undefined) {
@@ -2154,7 +2150,8 @@ export class PortalsCoreService extends BaseService {
 			resources.firstConfirm,
 			resources.explanation,
 			firstData => validate(firstData)
-				? this.appFormsSvc.showAlertAsync(
+				? this.appFormsSvc.showAlertAsync
+				(
 					move,
 					resources.lastConfirm,
 					resources.explanation,
@@ -2176,7 +2173,7 @@ export class PortalsCoreService extends BaseService {
 					cancel,
 					inputs
 				)
-			: this.appFormsSvc.showAlertAsync(move, resources.noData),
+				: this.appFormsSvc.showAlertAsync(move, resources.noData),
 			move,
 			cancel,
 			inputs

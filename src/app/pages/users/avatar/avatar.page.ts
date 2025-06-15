@@ -64,14 +64,15 @@ export class UsersAvatarPage implements OnInit {
 	async updateAsync() {
 		this.processing = true;
 		await (AppUtility.isEquals(this.mode, "Avatar") && this.imageCropper.data !== undefined
-			? this.filesSvc.uploadAvatarAsync(
-					this.imageCropper.data,
-					async data => await this.closeAsync(this.mode, data.URI),
-					error => {
-						console.error(`Error occurred while uploading avatar image => ${AppUtility.getErrorMessage(error)}`);
-						this.processing = false;
-					}
-				)
+			? this.filesSvc.uploadAvatarAsync
+			(
+				this.imageCropper.data,
+				async data => await this.closeAsync(this.mode, data.URI),
+				error => {
+					console.error(`Error occurred while uploading avatar image => ${AppUtility.getErrorMessage(error)}`);
+					this.processing = false;
+				}
+			)
 			: this.closeAsync(this.mode));
 	}
 

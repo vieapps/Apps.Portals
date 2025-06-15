@@ -73,7 +73,7 @@ export class ShortcutsControl implements OnInit, OnDestroy {
 			Removable: true,
 			OnClick: () => this.changeOrganizationAsync(),
 			OnRemove: () => this.removeOrganizationAsync(),
-			OtherAction: this.portalsCoreSvc.allowSelectActiveOrganization || this.authSvc.isSystemAdministrator()
+			OtherAction: this.configSvc.appConfig.options.selectOrganization || this.authSvc.isSystemAdministrator()
 				? { Icon: "add-circle-outline", OnClick: () => this.selectOrganizationAsync(organization !== undefined ? organization.ID : undefined) }
 				: undefined
 		}, 0);

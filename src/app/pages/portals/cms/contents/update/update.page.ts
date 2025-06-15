@@ -72,7 +72,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.initializeAsync();
 		AppEvents.on(this.portalsCoreSvc.name, info => {
-			if (info.args.Object === "CMS.Content" && AppUtility.isNotEmpty(this.content.ID) && this.content.ID === info.args.ID) {
+			if (info.args.Object === "CMS.Content" && this.content !== undefined && AppUtility.isNotEmpty(this.content.ID) && this.content.ID === info.args.ID) {
 				if (info.args.Type === "Deleted") {
 					this.cancel();
 				}
@@ -181,8 +181,9 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		this.module = Module.get(this.contentType.RepositoryID);
 		this.category = this.content !== undefined ? this.content.category : Category.get(this.configSvc.requestParams["CategoryID"]);
 
-		this.canModerate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Content", this.category !== undefined ? this.category.Privileges : this.module.Privileges);
-		let canUpdate = this.canModerate || this.authSvc.isEditor(this.portalsCoreSvc.name, "Content", this.category !== undefined ? this.category.Privileges : this.module.Privileges);
+		const privileges = this.category !== undefined ? this.category.Privileges : this.contentType !== undefined ? this.contentType.Privileges : this.module.Privileges;
+		this.canModerate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Content", privileges);
+		let canUpdate = this.canModerate || this.authSvc.isEditor(this.portalsCoreSvc.name, "Content", privileges);
 		if (!canUpdate && this.content !== undefined && (AppUtility.isEquals(this.content.Status, "Draft") || AppUtility.isEquals(this.content.Status, "Pending"))) {
 			canUpdate = AppUtility.isEquals(this.content.CreatedID, this.configSvc.getAccount().id);
 		}
@@ -537,7 +538,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 				}
 			}
 			if (this.configSvc.isDebug) {
-				console.log("<CMS.Content/Edit>: Edit a content\n", this.content.Title, this.content, this.configSvc.requestParams, this.hash.content, this.hash.full);
+				console.log("<CMS.Content/Edit>: Edit a content\n", this.content.Title, this.content, this.category, this.category !== undefined ? this.category.Privileges : this.contentType !== undefined ? this.contentType.Privileges : this.module.Privileges, this.canModerate, this.configSvc.requestParams, this.hash.content, this.hash.full);
 			}
 		});
 	}

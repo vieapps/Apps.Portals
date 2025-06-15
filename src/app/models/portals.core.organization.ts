@@ -55,11 +55,11 @@ export class Organization extends CoreBaseModel {
 	ScriptLibraries = undefined as string;
 	Scripts = undefined as string;
 	AlwaysUseHtmlSuffix = true;
-	RefreshUrls = undefined as {
+	RefreshURLs = undefined as {
 		Addresses?: Array<string>;
 		Interval?: number;
 	};
-	RedirectUrls = undefined as {
+	RedirectURLs = undefined as {
 		Addresses?: Array<string>;
 		AllHttp404?: boolean;
 	};
@@ -71,6 +71,7 @@ export class Organization extends CoreBaseModel {
 	}>;
 	FakeFilesHttpURI = undefined as string;
 	FakePortalsHttpURI = undefined as string;
+	ExamineURLs = undefined as string;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;
@@ -137,6 +138,15 @@ export class Organization extends CoreBaseModel {
 	get owner() {
 		const profile = UserProfile.get(this.OwnerID);
 		return profile !== undefined ? profile.Name : "";
+	}
+
+	copy(source: any, onCompleted?: (data: any, instance: Organization) => void) {
+		return super.copy(source, data => {
+			this.ExamineURLs = AppUtility.isObject(data.ExamineURLs, true) ? AppUtility.stringify(data.ExamineURLs) : data.ExamineURLs;
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
 	}
 
 }
