@@ -98,7 +98,7 @@ export class UsersService extends BaseService {
 
 	searchProfiles(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
-			this.getSearchingPath("profile", this.configSvc.relatedQuery),
+			this.getSearchingPath("Profile", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
@@ -114,7 +114,7 @@ export class UsersService extends BaseService {
 
 	searchProfilesAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.searchAsync(
-			this.getSearchingPath("profile", this.configSvc.relatedQuery),
+			this.getSearchingPath("Profile", this.configSvc.relatedQuery),
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
@@ -130,7 +130,7 @@ export class UsersService extends BaseService {
 
 	registerAsync(registerInfo: any, captcha: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.createAsync(
-			this.getPath("account", undefined, `uri=${this.configSvc.activateURL}&${this.configSvc.relatedQuery}`),
+			this.getPath("Account", undefined, `uri=${this.configSvc.activateURL}&${this.configSvc.relatedQuery}`),
 			AppUtility.clone(registerInfo, ["ConfirmEmail", "ConfirmPassword", "Captcha"], undefined, body => {
 				body.Email = AppCrypto.rsaEncrypt(body.Email);
 				body.Password = AppCrypto.rsaEncrypt(body.Password);
@@ -157,7 +157,7 @@ export class UsersService extends BaseService {
 			body["RelatedInfo"] = AppCrypto.aesEncrypt(JSON.stringify(relatedInfo));
 		}
 		return this.createAsync(
-			this.getPath("account", "invite", `uri=${this.configSvc.activateURL}&${this.configSvc.relatedQuery}`),
+			this.getPath("Account", "invite", `uri=${this.configSvc.activateURL}&${this.configSvc.relatedQuery}`),
 			body,
 			onSuccess,
 			error => this.processError("Error occurred while sending an invitation", error, onError)
@@ -165,7 +165,7 @@ export class UsersService extends BaseService {
 	}
 
 	activateAsync(mode: string, code: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
-		const uri = this.configSvc.appConfig.URIs.apis + this.getPath("activate", undefined, `mode=${mode}&code=${code}&${this.configSvc.relatedQuery}`);
+		const uri = this.configSvc.appConfig.URIs.apis + this.getPath("Activate", undefined, `mode=${mode}&code=${code}&${this.configSvc.relatedQuery}`);
 		return this.readAsync(
 			uri,
 			async data => await this.configSvc.updateSessionAsync(data, () => {
@@ -225,7 +225,7 @@ export class UsersService extends BaseService {
 		return !force && UserProfile.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
-					this.getPath("profile", id, relatedQuery || this.configSvc.relatedQuery),
+					this.getPath("Profile", id, relatedQuery || this.configSvc.relatedQuery),
 					data => {
 						UserProfile.update(data);
 						if (onSuccess !== undefined) {
@@ -241,7 +241,7 @@ export class UsersService extends BaseService {
 
 	updateProfileAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, preferWebSocket: boolean = false) {
 		return this.updateAsync(
-			this.getPath("profile", body.ID || this.configSvc.getAccount().id, this.configSvc.relatedQuery),
+			this.getPath("Profile", body.ID || this.configSvc.getAccount().id, this.configSvc.relatedQuery),
 			body,
 			data => {
 				UserProfile.update(data);
@@ -258,7 +258,7 @@ export class UsersService extends BaseService {
 
 	updatePasswordAsync(password: string, newPassword: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
-			this.getPath("account", "password", this.configSvc.relatedQuery),
+			this.getPath("Account", "password", this.configSvc.relatedQuery),
 			{
 				OldPassword: AppCrypto.rsaEncrypt(password),
 				Password: AppCrypto.rsaEncrypt(newPassword)
@@ -270,7 +270,7 @@ export class UsersService extends BaseService {
 
 	updateEmailAsync(password: string, newEmail: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
-			this.getPath("account", "email", this.configSvc.relatedQuery),
+			this.getPath("Account", "email", this.configSvc.relatedQuery),
 			{
 				OldPassword: AppCrypto.rsaEncrypt(password),
 				Email: AppCrypto.rsaEncrypt(newEmail)
@@ -282,7 +282,7 @@ export class UsersService extends BaseService {
 
 	prepare2FAMethodAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, query?: string) {
 		return this.readAsync(
-			this.getPath("otp", undefined, `${AppUtility.isNotEmpty(query) ? `${query}&` : ""}${this.configSvc.relatedQuery}`),
+			this.getPath("OTP", undefined, `${AppUtility.isNotEmpty(query) ? `${query}&` : ""}${this.configSvc.relatedQuery}`),
 			onSuccess,
 			error => this.processError("Error occurred while preparing an 2FA method", error, onError)
 		);
@@ -290,7 +290,7 @@ export class UsersService extends BaseService {
 
 	add2FAMethodAsync(password: string, provisioning: string, otp: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
-			this.getPath("otp", undefined, this.configSvc.relatedQuery),
+			this.getPath("OTP", undefined, this.configSvc.relatedQuery),
 			{
 				Provisioning: provisioning,
 				OTP: otp
@@ -303,7 +303,7 @@ export class UsersService extends BaseService {
 
 	delete2FAMethodAsync(password: string, info: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.deleteAsync(
-			this.getPath("otp", undefined, `info=${info}&${this.configSvc.relatedQuery}`),
+			this.getPath("OTP", undefined, `info=${info}&${this.configSvc.relatedQuery}`),
 			data => this.configSvc.updateAccount(data, onSuccess),
 			error => this.processError("Error occurred while deleting an 2FA method", error, onError),
 			{ "x-password": AppCrypto.rsaEncrypt(password) }
@@ -314,7 +314,7 @@ export class UsersService extends BaseService {
 		return Account.contains(id)
 			? AppUtility.invoke(onSuccess)
 			: this.readAsync(
-					this.getPath("account", id, this.configSvc.relatedQuery),
+					this.getPath("Account", id, this.configSvc.relatedQuery),
 					data => this.configSvc.updateAccount(data, onSuccess, true),
 					error => this.processError("Error occurred while reading privileges", error, onError)
 				);
@@ -322,7 +322,7 @@ export class UsersService extends BaseService {
 
 	updateServicePrivilegesAsync(id: string, privileges: { [key: string]: Array<Privilege> }, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.updateAsync(
-			this.getPath("account", id, this.configSvc.relatedQuery),
+			this.getPath("Account", id, this.configSvc.relatedQuery),
 			{
 				Privileges: AppCrypto.aesEncrypt(JSON.stringify(privileges))
 			},
@@ -332,9 +332,7 @@ export class UsersService extends BaseService {
 	}
 
 	processProfiles(profiles: Array<any>) {
-		const objects = new Array<UserProfile>();
-		profiles.forEach(data => objects.push(UserProfile.update(data)));
-		return objects;
+		return profiles.map(data => UserProfile.update(data));
 	}
 
 	private processUpdateMessage(message: AppMessage) {

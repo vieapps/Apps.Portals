@@ -463,33 +463,38 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		control.Required = true;
 		control.Options.Disabled = !this.isSystemAdministrator;
 		if (this.canModerateOrganization) {
-			let initialValue: any;
+			let owner: UserProfile;
 			if (AppUtility.isNotEmpty(this.organization.OwnerID)) {
-				initialValue = UserProfile.get(this.organization.OwnerID);
-				if (initialValue === undefined) {
-					await this.usersSvc.getProfileAsync(this.organization.OwnerID, _ => initialValue = UserProfile.get(this.organization.OwnerID), undefined, true);
+				owner = UserProfile.get(this.organization.OwnerID);
+				if (owner === undefined) {
+					await this.usersSvc.getProfileAsync(this.organization.OwnerID, _ => owner = UserProfile.get(this.organization.OwnerID), undefined, true);
 				}
 			}
 			control.Type = "Lookup";
+			control.Extras = { LookupDisplayValues: owner !== undefined ? [{ Value: owner.ID, Label: owner.Name }] : undefined };
 			control.Options.LookupOptions = {
 				Multiple: false,
-				AsModal: false,
-				AsCompleter: true,
-				CompleterOptions: {
-					DataSource: this.usersSvc.completerDataSource,
-					InitialValue: initialValue,
-					AllowLookupByModal: true,
-					OnSelected: (event, formControl) => formControl.setValue(AppUtility.isObject(event, true) && event.originalObject !== undefined && AppUtility.isNotEmpty(event.originalObject.ID) ? event.originalObject.ID : undefined)
-				},
+				AllowDelete: false,
 				ModalOptions: {
 					Component: UsersSelectorModalPage,
 					ComponentProps: { multiple: false },
 					OnDismiss: (data, formControl) => {
 						if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
-							formControl.completerInitialValue = UserProfile.get(data[0]);
+							const profile = UserProfile.get(data[0]);
+							formControl.setValue(profile.ID);
+							formControl.lookupDisplayValues = [{ Value: profile.ID, Label: profile.Name }];
+							// formControl.completerInitialValue = profile;
 						}
 					}
-				}
+				},
+				// AsModal: false,
+				// AsCompleter: true,
+				// CompleterOptions: {
+				// 	DataSource: this.usersSvc.completerDataSource,
+				// 	InitialValue: owner,
+				// 	AllowLookupByModal: true,
+				// 	OnSelected: (event, formControl) => formControl.setValue(AppUtility.isObject(event, true) && event.originalObject !== undefined && AppUtility.isNotEmpty(event.originalObject.ID) ? event.originalObject.ID : undefined)
+				// }
 			};
 		}
 		else {

@@ -84,6 +84,7 @@ export interface AppFormsControlSelectOptionsConfig {
 /** Presents the lookup options of a control in the dynamic forms */
 export interface AppFormsControlLookupOptionsConfig {
 	Multiple?: boolean;
+	AllowDelete?: boolean;
 	OnDelete?: (data: Array<string>, control: AppFormsControlComponent) => void;
 	WarningOnDelete?: string;
 	AsModal?: boolean;
@@ -315,6 +316,7 @@ export class AppFormsControl {
 		},
 		LookupOptions: {
 			Multiple: false,
+			AllowDelete: true,
 			OnDelete: undefined as (data: Array<string>, control: AppFormsControlComponent) => void,
 			WarningOnDelete: undefined as string,
 			AsModal: true,
@@ -584,6 +586,10 @@ export class AppFormsControl {
 				const asSelector = !asModal && !asCompleter && (lookupOptions.AsSelector !== undefined || lookupOptions.asSelector !== undefined || lookupOptions.asselector !== undefined ? !!(lookupOptions.AsSelector || lookupOptions.asSelector || lookupOptions.asselector) : false);
 				const selectorOptions = lookupOptions.SelectorOptions || lookupOptions.selectorOptions || lookupOptions.selectoroptions || {};
 				control.Options.LookupOptions = {
+					Multiple: lookupOptions.Multiple !== undefined || lookupOptions.multiple !== undefined ? !!(lookupOptions.Multiple || lookupOptions.multiple) : !asCompleter,
+					AllowDelete: lookupOptions.AllowDelete !== undefined || lookupOptions.allowDelete !== undefined || lookupOptions.allowdelete !== undefined ? !!(lookupOptions.AllowDelete || lookupOptions.allowDelete || lookupOptions.allowdelete) : true,
+					OnDelete: lookupOptions.OnDelete || lookupOptions.onDelete || lookupOptions.ondelete,
+					WarningOnDelete: lookupOptions.WarningOnDelete || lookupOptions.warningOnDelete || lookupOptions.warningondelete,
 					AsModal: asModal,
 					ModalOptions: {
 						Component: modalOptions.Component || modalOptions.component,
@@ -596,7 +602,7 @@ export class AppFormsControl {
 					CompleterOptions: {
 						SearchingText: completerOptions.SearchingText || completerOptions.searchingText || completerOptions.searchingtext || "{{common.messages.completer.searching}}",
 						NoResultsText: completerOptions.NoResultsText || completerOptions.noResultsText || completerOptions.noresultstext || "{{common.messages.completer.noresults}}",
-						PauseMiliseconds: completerOptions.PauseMiliseconds || completerOptions.pauseMiliseconds || completerOptions.pausemiliseconds || 123,
+						PauseMiliseconds: completerOptions.PauseMiliseconds || completerOptions.pauseMiliseconds || completerOptions.pausemiliseconds || 789,
 						ClearSelected: !!(completerOptions.ClearSelected || completerOptions.clearSelected || completerOptions.clearselected),
 						DataSource: completerOptions.DataSource || completerOptions.dataSource || completerOptions.datasource,
 						InitialValue: completerOptions.InitialValue || completerOptions.initialValue || completerOptions.initialvalue,
@@ -611,10 +617,7 @@ export class AppFormsControl {
 						OkText: selectorOptions.OkText || selectorOptions.okText || selectorOptions.oktext || "{{common.buttons.ok}}",
 						CancelText: selectorOptions.CancelText || selectorOptions.cancelText || selectorOptions.canceltext || "{{common.buttons.cancel}}",
 						OnAdd: selectorOptions.OnAdd || selectorOptions.onAdd || selectorOptions.onadd
-					},
-					Multiple: lookupOptions.Multiple !== undefined || lookupOptions.multiple !== undefined ? !!(lookupOptions.Multiple || lookupOptions.multiple) : !asCompleter,
-					OnDelete: lookupOptions.OnDelete || lookupOptions.onDelete || lookupOptions.ondelete,
-					WarningOnDelete: lookupOptions.WarningOnDelete || lookupOptions.warningOnDelete || lookupOptions.warningondelete
+					}
 				};
 			}
 

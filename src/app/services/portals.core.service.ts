@@ -390,7 +390,7 @@ export class PortalsCoreService extends BaseService {
 			this.activeOrganizations.merge([organization.ID], true);
 			if (Organization.active === undefined || Organization.active.ID !== organization.ID) {
 				Organization.active = organization;
-				console.log("[Portals]: Set active organization", this.configSvc.isDebug ? Organization.active : ` => ${Organization.active.Title}`);
+				console.log("[Portals]: Set active organization", this.configSvc.isDebug ? Organization.active : `=> ${Organization.active.Title}`);
 				AppEvents.broadcast(this.name, { Type: "Organization", Mode: "Changed", ID: Organization.active.ID });
 				const useXHR = organization.modules.length < 1;
 				if (this.configSvc.isDebug) {
@@ -498,6 +498,7 @@ export class PortalsCoreService extends BaseService {
 		if (module !== undefined && (Module.active === undefined || Module.active.ID !== module.ID)) {
 			Module.active = module;
 			this.activeModules[module.SystemID] = module.ID;
+			console.log("[Portals]: Set active module", this.configSvc.isDebug ? Module.active : `=> ${Module.active.Title}`);
 			if (broadcast) {
 				AppEvents.broadcast(this.name, { Type: "Module", Mode: "Changed", ID: Module.active.ID });
 				this.configSvc.saveOptionsAsync(() => AppEvents.broadcast("App", { Type: "Options", Mode: "Changed" }));
@@ -2223,7 +2224,7 @@ export class PortalsCoreService extends BaseService {
 
 	private fetchOrganizationsAsync(pagination?: AppDataPagination) {
 		return this.searchAsync(
-			this.getSearchingPath("Organization", this.configSvc.relatedQuery + "&x-fetch=ngx-apps"),
+			this.getSearchingPath("Organization", this.configSvc.relatedQuery + "&x-fetch=" + this.configSvc.appConfig.app.id),
 			AppPagination.buildRequest(undefined, undefined, pagination),
 			data => {
 				const ids = new Array<string>();

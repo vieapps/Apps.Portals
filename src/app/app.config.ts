@@ -34,7 +34,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "10.2506.1",
+		version: "10.2507.1",
 		frameworks: "ionic 5 - angular 11 - cordova 11",
 		mode: "",
 		platform: "",
@@ -77,7 +77,7 @@ export class AppConfig {
 				categories: true,
 				featured: true
 			},
-			selectOrganization: false,
+			selectOrganization: true,
 			extras: { } as { [key: string]: any }
 		};
 	}

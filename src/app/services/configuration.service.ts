@@ -779,9 +779,9 @@ export class ConfigurationService extends BaseService {
 	}
 
 	/** Changes the language & locale of resources to use in the app */
-	changeLanguageAsync(language: string, saveOptions: boolean = true) {
+	async changeLanguageAsync(language: string, saveOptions: boolean = true) {
 		AppConfig.options.i18n = language;
-		return this.setResourceLanguageAsync(language).then(() => {
+		await this.setResourceLanguageAsync(language).then(() => {
 			AppEvents.broadcast("App", { Type: "Language", Mode: "Changed", Language: language });
 			AppEvents.sendToElectron("App", { Type: "Language", Mode: "Changed", Language: language });
 			AppUtility.invoke(saveOptions ? () => this.saveOptionsAsync() : undefined);

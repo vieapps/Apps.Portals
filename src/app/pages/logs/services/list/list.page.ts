@@ -42,6 +42,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 	};
 	filterBy: AppDataFilter = {};
 	selected = new HashSet<string>();
+	logs = new Array<ServiceLog>();
 
 	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
 	@ViewChild("selectAll", { static: true }) private selectAllCtrl: IonCheckbox;
@@ -77,11 +78,6 @@ export class LogsListPage implements OnInit, OnDestroy {
 			return predicate;
 		}
 		return undefined;
-	}
-
-	get logs() {
-		const predicate = this.predicate;
-		return predicate !== undefined ? this.configSvc.serviceLogs.filter(predicate) : this.configSvc.serviceLogs;
 	}
 
 	ngOnInit() {
@@ -172,6 +168,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 					object.Time = new Date(object.Time);
 					return object as ServiceLog;
 				}));
+				this.logs = this.configSvc.serviceLogs.filter(this.predicate).sortBy({ name: "Time", reverse: true });
 				if (this.configSvc.isElectronApp) {
 					this.zone.run(() => this.changeDetector.detectChanges());
 				}

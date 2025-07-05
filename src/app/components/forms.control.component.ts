@@ -584,6 +584,10 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this.isLookupControl && this.control.Options.LookupOptions.Multiple;
 	}
 
+	get lookupAllowDelete() {
+		return !this.lookupMultiple && this.control.Options.LookupOptions.AllowDelete;
+	}
+
 	get lookupValues() {
 		const value = this.formControl.value;
 		return (this.lookupMultiple ? value as Array<string> : value !== undefined ? [value.toString()] : []) || [];
