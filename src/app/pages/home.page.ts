@@ -1,6 +1,8 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
+import { registerLocaleData } from "@angular/common";
 import { AppEvents } from "@app/components/app.events";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { AuthenticationService } from "@app/services/authentication.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 
 @Component({
@@ -12,8 +14,10 @@ import { ConfigurationService } from "@app/services/configuration.service";
 export class HomePage implements OnInit, OnDestroy {
 
 	constructor(
+		private authSvc: AuthenticationService,
 		private configSvc: ConfigurationService
 	) {
+		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
 
 	title = "Home";
@@ -23,8 +27,20 @@ export class HomePage implements OnInit, OnDestroy {
 		return this.configSvc.color;
 	}
 
+	get locale() {
+		return this.configSvc.locale;
+	}
+
 	get isAuthenticated() {
 		return this.configSvc.isAuthenticated;
+	}
+
+	get showStatistics() {
+		return this.configSvc.appConfig.options.showStatistics || this.authSvc.isSystemAdministrator();
+	}
+
+	get statistics() {
+		return this.configSvc.statistics;
 	}
 
 	get activeService() {

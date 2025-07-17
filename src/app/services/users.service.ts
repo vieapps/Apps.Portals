@@ -335,6 +335,10 @@ export class UsersService extends BaseService {
 		return profiles.map(data => UserProfile.update(data));
 	}
 
+	fetchStatisticsAsync() {
+		return this.readAsync(this.getPath("Statistics", "fetch"), undefined, undefined, undefined, false, true);
+	}
+
 	private processUpdateMessage(message: AppMessage) {
 		const account = this.configSvc.getAccount();
 		switch (message.Type.Object) {
@@ -380,6 +384,10 @@ export class UsersService extends BaseService {
 							userProfile.LastAccess = new Date();
 							AppEvents.sendToElectron("Users", message);
 						}
+						break;
+
+					case "Statistics":
+						Object.assign(this.configSvc.statistics, message.Data);
 						break;
 
 					default:

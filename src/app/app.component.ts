@@ -710,6 +710,7 @@ export class AppComponent implements OnInit {
 			.filter(service => this.configSvc.appConfig.services.all.findIndex(svc => svc.name === service.name) > -1)
 			.map(service => service.initializeAsync())
 		).then(() => AppAPIs.openWebSocket(() => AppAPIs.isReopen ? AppUtility.promise : Promise.all([
+			this.configSvc.isAuthenticated ? this.usersSvc.fetchStatisticsAsync() : AppUtility.promise,
 			this.configSvc.isAuthenticated ? this.preflightAsync("<App>: Fetch notifications (app init)", "<App>: Fetch active organizations (app init)") : AppUtility.promise,
 			AppUtility.invoke(() => {
 				const data = {

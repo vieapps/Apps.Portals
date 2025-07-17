@@ -77,7 +77,8 @@ export class AppConfig {
 				categories: true,
 				featured: true
 			},
-			selectOrganization: true,
+			showStatistics: false,
+			selectOrganization: false,
 			extras: { } as { [key: string]: any }
 		};
 	}
@@ -88,7 +89,8 @@ export class AppConfig {
 		timezone: number;
 		fileLimits: { avatar: number; thumbnail: number; file: number; };
 		thumbnails: { useWhenInsertWithLink: boolean; preferWebP: boolean; width: number; };
-		preload: { thumbnails: boolean; categories: boolean; featured: boolean;	},
+		preload: { thumbnails: boolean; categories: boolean; featured: boolean;	};
+		showStatistics: boolean;
 		selectOrganization: boolean;
 		extras: { [key: string]: any }
 	};

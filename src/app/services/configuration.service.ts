@@ -53,8 +53,11 @@ export class ConfigurationService extends BaseService {
 	}
 
 	private _definitions: { [key: string]: any } = {};
-
 	serviceLogs = new Array<ServiceLog>();
+	statistics = {
+		Sessions: { Total: 0, User: 0, Crawler: 0, Visitor: 0 },
+		Visits: { Total: 0, Year: 0, Month: 0 }
+	};
 
 	/** Gets the configuration of the app */
 	get appConfig() {

@@ -3,6 +3,24 @@
 		<ion-buttons slot="start">
 			<ion-menu-button></ion-menu-button>
 		</ion-buttons>
+		<div *ngIf="isAuthenticated && showStatistics && statistics.Sessions && statistics.Sessions.Total" slot="end" class="ion-padding-end">
+			<ion-icon name="person-circle-outline" color="primary" slot="start"></ion-icon>
+			<span>
+				{{ statistics.Sessions.User | number:'':locale }}
+			</span>
+			<ion-icon name="people-circle-outline" color="secondary" slot="start"></ion-icon>
+			<span>
+				{{ statistics.Sessions.Visitor | number:'':locale }}
+			</span>
+			<ion-icon name="people-outline" color="warning" lot="start"></ion-icon>
+			<span>
+				{{ statistics.Sessions.Total | number:'':locale }}
+			</span>
+			<ion-icon name="pulse-outline" color="danger" slot="start"></ion-icon>
+			<span>
+				{{ statistics.Visits.Month | number:'':locale }}
+			</span>
+		</div>
 		<ion-title>
 			{{ title }}
 		</ion-title>

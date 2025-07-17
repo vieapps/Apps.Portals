@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
+import { PlatformUtility } from "@app/components/app.utility.platform";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { AppFormsService } from "@app/components/forms.service";
@@ -97,6 +98,8 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		logs: "Logs",
 		trash: "Trash",
 		flushCache: "Flush cache",
+		sessions: "Sessions statistics",
+		visits: "Visits statistics",
 		about: "About",
 		ok: "OK",
 		cancel: "Cancel"
@@ -155,6 +158,8 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 			logs: await this.configSvc.getResourceAsync("common.preferences.logs"),
 			trash: await this.configSvc.getResourceAsync("trash.list"),
 			flushCache: await this.configSvc.getResourceAsync("common.preferences.flushCache"),
+			sessions: "Sessions statistics",
+			visits: "Visits statistics",
 			about: await this.configSvc.getResourceAsync("common.preferences.about"),
 			ok: await this.configSvc.getResourceAsync("common.buttons.ok"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
@@ -209,6 +214,10 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 
 	openProfile() {
 		this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.users.profile + "/my");
+	}
+
+	openAPIs(path: string, query?: string) {
+		PlatformUtility.openURL(`${this.configSvc.appConfig.URIs.apis}${path}?x-app-token=${this.configSvc.appConfig.jwt}&x-app-token-expires=123456789${query !== undefined ? `&${query}` : ""}`);
 	}
 
 	async flushCacheAsync() {
