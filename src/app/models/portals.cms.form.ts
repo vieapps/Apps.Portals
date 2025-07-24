@@ -23,7 +23,7 @@ export class Form extends CmsBaseModel {
 	Phone = undefined as string;
 	Email = undefined as string;
 	Address = undefined as string;
-	County = undefined as string;
+	Unit = undefined as string;
 	Province = undefined as string;
 	Postal = undefined as string;
 	Country = undefined as string;
@@ -91,7 +91,7 @@ export class Form extends CmsBaseModel {
 	get fullAddress() {
 		return (this.Address ?? "")
 			+ (AppUtility.isNotEmpty(this.Province) ? (AppUtility.isNotEmpty(this.Address) ? ", " : "")
-			+ this.County + ", " + this.Province + ", " + this.Country : "");
+			+ this.Unit + ", " + this.Province + ", " + this.Country : "");
 	}
 
 	copy(source: any, onCompleted?: (data: any, instance: Form) => void) {

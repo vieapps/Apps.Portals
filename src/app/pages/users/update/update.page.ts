@@ -120,6 +120,9 @@ export class UsersUpdatePage implements OnInit {
 				this.update.form.controls.DarkTheme.setValue(this.update.darkTheme);
 			}
 			this.update.hash = AppCrypto.hash(this.update.form.value);
+			if (this.configSvc.isDebug) {
+				console.log("<Profile>: Update an user profile", this.update.hash, this.profile);
+			}
 		}
 	}
 
@@ -277,6 +280,7 @@ export class UsersUpdatePage implements OnInit {
 	}
 
 	async updateProfileAsync() {
+		console.log("<Profile>: Submit an user profile", this.update.form.value);
 		if (!this.appFormsSvc.validate(this.update.form)) {
 			return;
 		}

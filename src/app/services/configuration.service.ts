@@ -56,7 +56,7 @@ export class ConfigurationService extends BaseService {
 	serviceLogs = new Array<ServiceLog>();
 	statistics = {
 		Sessions: { Total: 0, User: 0, Crawler: 0, Visitor: 0 },
-		Visits: { Total: 0, Year: 0, Month: 0 }
+		Visits: { Total: 0, Year: 0, Month: 0, Day: 0 }
 	};
 
 	/** Gets the configuration of the app */
@@ -662,9 +662,9 @@ export class ConfigurationService extends BaseService {
 		}
 
 		await this.fetchAsync(
-			`statics/geo/provinces/${AppConfig.geoMeta.country || "VN"}.json`,
+			`statics/geo/provinces/${AppConfig.geoMeta.country || "VN"}.json?v=${Math.random()}`,
 			provinces => AppUtility.invoke(() => this.saveGeoMetaAsync(provinces, () => this.fetchAsync(
-				"statics/geo/countries.json",
+				`statics/geo/countries.json?v=${Math.random()}`,
 				countries => this.saveGeoMetaAsync(countries),
 				error => this.showError("Error occurred while fetching the meta countries", error)
 			)), 1234),

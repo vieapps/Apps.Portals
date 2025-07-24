@@ -488,7 +488,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	completerInit() {
 		if (this.isCompleterOfAddress) {
-			this.control.Options.LookupOptions.CompleterOptions.DataSource = this.completerSvc.local(this.appFormsSvc.getMetaCounties(), "Title,TitleANSI", "Title");
+			this.control.Options.LookupOptions.CompleterOptions.DataSource = this.completerSvc.local(this.appFormsSvc.getMetaUnits(), "Title,TitleANSI", "Title");
 		}
 		else if (this.control.Options.LookupOptions.CompleterOptions.OnInitialized !== undefined) {
 			this.control.Options.LookupOptions.CompleterOptions.OnInitialized(this);
@@ -532,15 +532,15 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	private completerGetInitialValue() {
 		if (this.isCompleterOfAddress) {
 			const value = {
-				County: "",
+				Unit: "",
 				Province: "",
 				Country: ""
 			};
-			["County", "Province", "Country"].forEach(name => {
+			["Unit", "Province", "Country"].forEach(name => {
 				const formControl = this.formGroup.controls[name];
 				value[name] = formControl !== undefined ? formControl.value : "";
 			});
-			this._completerInitialValue = this.appFormsSvc.getMetaCounties().find(address => AppUtility.isEquals(address.County, value.County) && AppUtility.isEquals(address.Province, value.Province) && AppUtility.isEquals(address.Country, value.Country));
+			this._completerInitialValue = this.appFormsSvc.getMetaUnits().find(address => AppUtility.isEquals(address.Unit, value.Unit) && AppUtility.isEquals(address.Province, value.Province) && AppUtility.isEquals(address.Country, value.Country));
 		}
 		else {
 			this._completerInitialValue = this.control.Options.LookupOptions.CompleterOptions.InitialValue !== undefined
@@ -884,7 +884,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		else if (this.isCompleter) {
 			if (this.isCompleterOfAddress) {
 				const address = (AppUtility.isObject(event, true) ? event.originalObject : undefined) || this.completerInitialValue;
-				["County", "Province", "Country"].forEach(name => {
+				["Unit", "Province", "Country"].forEach(name => {
 					const formControl = this.formGroup.controls[name];
 					if (formControl !== undefined) {
 						formControl.setValue(address !== undefined ? address[name] || "" : "");

@@ -82,7 +82,7 @@
 				"BirthDay": "Ngày sinh",
 				"Address": {
 					"label": "Địa chỉ",
-					"placeholder": "Quận/Huyện, Thành phố/Tỉnh"
+					"placeholder": "Phường/Xã, Thành phố/Tỉnh"
 				},
 				"Mobile": "Mobile",
 				"Language": {

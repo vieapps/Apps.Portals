@@ -34,7 +34,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "10.2507.1",
+		version: "10.2507.2",
 		frameworks: "ionic 5 - angular 11 - cordova 11",
 		mode: "",
 		platform: "",
@@ -205,15 +205,10 @@ export class AppConfig {
 				name: string,
 				title: string,
 				code: string,
-				telcode: string,
 				provinces: Array<{
 					name: string,
-					title: string,
-					code: string,
-					counties: Array<{
+					units: Array<{
 						name: string,
-						type: string,
-						code: string,
 						title: string
 					}>
 				}>

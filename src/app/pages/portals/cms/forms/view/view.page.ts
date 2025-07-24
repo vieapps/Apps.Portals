@@ -160,7 +160,7 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 		let control = formConfig.find(ctrl => ctrl.Name === "Address");
 		control.Name = "fullAddress";
 
-		formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "County"));
+		formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Unit"));
 		formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Province"));
 		formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Country"));
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);

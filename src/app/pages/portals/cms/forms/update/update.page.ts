@@ -147,7 +147,7 @@ export class CmsFormsUpdatePage implements OnInit {
 					}
 				}
 			}, control.Order + 1);
-			formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "County"));
+			formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Unit"));
 			formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Province"));
 			formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Country"));
 		}

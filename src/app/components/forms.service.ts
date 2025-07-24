@@ -36,8 +36,8 @@ export class AppFormsService {
 		text: ["text", "password", "email", "search", "tel", "url"],
 		datetime: ["date", "datetime", "datetime-local"]
 	};
-	private _metaCounties: {
-		[key: string]: Array<{ County: string, Province: string, Country: string, Title: string, TitleANSI: string}>
+	private _metaUnits: {
+		[key: string]: Array<{ Unit: string, Province: string, Country: string, Title: string, TitleANSI: string}>
 	} = {};
 
 	private get canModifyDatePickers() {
@@ -231,7 +231,7 @@ export class AppFormsService {
 		formGroup = formGroup || new FormGroup({}, validators, asyncValidators);
 		formControls.forEach(formControl => {
 			if (formControl.SubControls === undefined && AppUtility.isEquals(formControl.Type, "Lookup") && formControl.Options.LookupOptions.AsCompleter && AppUtility.isEquals(formControl.Options.Type, "Address")) {
-				["County", "Province", "Country"].forEach(name => formGroup.addControl(name, this.getFormControl(formControl)));
+				["Unit", "Province", "Country"].forEach(name => formGroup.addControl(name, this.getFormControl(formControl)));
 			}
 			else {
 				const frmControl = formControl.SubControls === undefined
@@ -257,7 +257,7 @@ export class AppFormsService {
 		formControl.SubControls.Controls.forEach(subFormControl => {
 			if (subFormControl.SubControls === undefined && AppUtility.isEquals(subFormControl.Type, "Lookup") && formControl.Options.LookupOptions.AsCompleter && AppUtility.isEquals(subFormControl.Options.Type, "Address")) {
 				const formGroup = new FormGroup({}, this.getValidators(subFormControl), this.getAsyncValidators(subFormControl));
-				["County", "Province", "Country"].forEach(name => formGroup.addControl(name, this.getFormControl(subFormControl)));
+				["Unit", "Province", "Country"].forEach(name => formGroup.addControl(name, this.getFormControl(subFormControl)));
 				formArray.push(formGroup);
 			}
 			else {
@@ -507,28 +507,28 @@ export class AppFormsService {
 		};
 	}
 
-	/** Gets the listing of meta counties of a specified country */
-	getMetaCounties(country?: string) {
+	/** Gets the listing of meta units of a specified country */
+	getMetaUnits(country?: string) {
 		country = country || AppConfig.geoMeta.country;
-		if (this._metaCounties[country] === undefined && AppConfig.geoMeta.provinces[country] !== undefined) {
-			const counties = new Array<{
-				County: string,
+		if (this._metaUnits[country] === undefined && AppConfig.geoMeta.provinces[country] !== undefined) {
+			const units = new Array<{
+				Unit: string,
 				Province: string,
 				Country: string,
 				Title: string,
 				TitleANSI: string
 			}>();
 			const provinces = AppConfig.geoMeta.provinces[country].provinces || [];
-			provinces.forEach(province => province.counties.forEach(county => counties.push({
-				County: county.title,
-				Province: province.title,
+			provinces.forEach(province => province.units.forEach(unit => units.push({
+				Unit: unit.name,
+				Province: province.name,
 				Country: country,
-				Title: `${county.title}, ${province.title}, ${country}`,
-				TitleANSI: AppUtility.toANSI(`${county.title}, ${province.title}, ${country}`)
+				Title: `${unit.name}, ${province.name}, ${country}`,
+				TitleANSI: AppUtility.toANSI(`${unit.name}, ${province.name}, ${country}`)
 			})));
-			this._metaCounties[country] = counties;
+			this._metaUnits[country] = units;
 		}
-		return this._metaCounties[country] || [];
+		return this._metaUnits[country] || [];
 	}
 
 	/** Gets the resource of current language by a key */

@@ -27,7 +27,7 @@ export class UserProfileBase extends BaseModel {
 	BirthDay = "";
 	Gender = "NotProvided";
 	Address = "";
-	County = "";
+	Unit = "";
 	Province = "";
 	Country = "";
 	PostalCode = "";
@@ -91,7 +91,7 @@ export class UserProfileBase extends BaseModel {
 	get fullAddress() {
 		return (this.Address ?? "")
 			+ (AppUtility.isNotEmpty(this.Province) ? (AppUtility.isNotEmpty(this.Address) ? ", " : "")
-			+ this.County + ", " + this.Province + ", " + this.Country : "");
+			+ this.Unit + ", " + this.Province + ", " + this.Country : "");
 	}
 
 	copy(source: any, onCompleted?: (data: any, instance: UserProfileBase) => void) {

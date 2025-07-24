@@ -12,11 +12,15 @@
 			<span>
 				{{ statistics.Sessions.Visitor | number:'':locale }}
 			</span>
-			<ion-icon name="people-outline" color="warning" lot="start"></ion-icon>
+			<ion-icon name="people-outline" color="medium" lot="start"></ion-icon>
 			<span>
 				{{ statistics.Sessions.Total | number:'':locale }}
 			</span>
 			<ion-icon name="pulse-outline" color="danger" slot="start"></ion-icon>
+			<span>
+				{{ statistics.Visits.Day | number:'':locale }}
+			</span>
+			<ion-icon name="pulse-outline" color="warning" slot="start"></ion-icon>
 			<span>
 				{{ statistics.Visits.Month | number:'':locale }}
 			</span>
