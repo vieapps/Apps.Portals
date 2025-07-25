@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { AppEvents } from "@app/components/app.events";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
-import { AuthenticationService } from "@app/services/authentication.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 
 @Component({
@@ -14,7 +13,6 @@ import { ConfigurationService } from "@app/services/configuration.service";
 export class HomePage implements OnInit, OnDestroy {
 
 	constructor(
-		private authSvc: AuthenticationService,
 		private configSvc: ConfigurationService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
