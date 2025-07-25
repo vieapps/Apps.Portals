@@ -36,7 +36,7 @@ export class HomePage implements OnInit, OnDestroy {
 	}
 
 	get showStatistics() {
-		return this.configSvc.appConfig.options.showStatistics || this.authSvc.isSystemAdministrator();
+		return this.isAuthenticated && this.configSvc.appConfig.options.showStatistics;
 	}
 
 	get statistics() {
