@@ -83,6 +83,10 @@ export class AppConfig {
 		};
 	}
 
+	static get excludedOptions() {
+		return ["fileLimits", "thumbnails", "preload", "showStatistics", "selectOrganization"];
+	}
+
 	static options = { i18n: "vi-VN", theme: "light", timezone: +7.00, extras: { } } as {
 		i18n: string;
 		theme: string;

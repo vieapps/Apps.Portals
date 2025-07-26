@@ -46,7 +46,7 @@ export class UsersService extends BaseService {
 				const profile = this.configSvc.getAccount().profile;
 				if (profile !== undefined) {
 					profile.Language = this.configSvc.appConfig.options.i18n;
-					profile.Options = AppUtility.clone(this.configSvc.appConfig.options, ["fileLimits", "thumbnails", "preload"]);
+					profile.Options = AppUtility.clone(this.configSvc.appConfig.options, this.configSvc.appConfig.excludedOptions);
 					this.updateProfileAsync(profile, () => {
 						if (this.configSvc.isDebug) {
 							console.log("[Users]: Update profile (with new options) to APIs", profile.Options);
