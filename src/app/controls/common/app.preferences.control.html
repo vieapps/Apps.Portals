@@ -48,10 +48,10 @@
 		<ion-item *ngIf="isAdministrator" [color]="color" (click)="openTrash()">
 			<ion-label>{{ labels.trash }}</ion-label>
 		</ion-item>
-		<ion-item *ngIf="isSystemAdministrator" [color]="color" (click)="openAPIs('sessions', 'x-user&x-no-day-details')">
+		<ion-item *ngIf="isSystemAdministrator && showStatistics" [color]="color" (click)="openAPIs('sessions', 'x-user&x-no-day-details')">
 			<ion-label>{{ labels.sessions }}</ion-label>
 		</ion-item>
-		<ion-item *ngIf="isSystemAdministrator" [color]="color" (click)="openAPIs('visits', 'x-sum&x-no-hour-details')">
+		<ion-item *ngIf="isSystemAdministrator && showStatistics" [color]="color" (click)="openAPIs('visits', 'x-sum&x-no-hour-details')">
 			<ion-label>{{ labels.visits }}</ion-label>
 		</ion-item>
 		<ion-item *ngIf="isSystemAdministrator" [color]="color" (click)="flushCacheAsync()">

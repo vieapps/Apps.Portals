@@ -40,6 +40,10 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		return this.isSystemAdministrator || this.portalsCoreSvc.canManageOrganization(this.portalsCoreSvc.activeOrganization);
 	}
 
+	get showStatistics() {
+		return this.configSvc.appConfig.options.showStatistics;
+	}
+
 	get logo() {
 		return "./assets/images/icon.png";
 	}
