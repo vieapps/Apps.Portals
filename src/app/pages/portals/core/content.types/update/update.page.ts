@@ -360,7 +360,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 									Label: "{{portals.contenttypes.controls.WebHookAdapters.Name.label}}",
 									Description: "{{portals.contenttypes.controls.WebHookAdapters.Name.description}}",
 									OnBlur: (_, formControl) => {
-										formControl.setValue(AppUtility.toANSI(formControl.value, true).replace(/-/g, ""));
+										formControl.setValue("vieapps-ngx.js" === formControl.value || "vieapps-ngx.webp" === formControl.value || "vieapps-ngx.jpg" === formControl.value || "vieapps-ngx.png" === formControl.value ? formControl.value : AppUtility.toANSI(formControl.value, true).replace(/-/g, ""));
 										formControl.parentControl.SubControls.Controls.find(ctrl => ctrl.Name === "URL").controlRef.setValue(`${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.Alias}/${this.contentType.ID}${formControl.value !== "default" ? `/${formControl.value}` : ""}`, { onlySelf: true });
 									}
 								}

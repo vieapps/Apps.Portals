@@ -896,6 +896,13 @@ export class PortalsCoreService extends BaseService {
 						}
 					},
 					{
+						Name: "SecretTokenName",
+						Options: {
+							Label: "{{portals.common.controls.webhooks.secretTokenName.label}}",
+							Description: "{{portals.common.controls.webhooks.secretTokenName.description}}"
+						}
+					},
+					{
 						Name: "Query",
 						Type: "TextArea",
 						Options: {
@@ -960,7 +967,7 @@ export class PortalsCoreService extends BaseService {
 
 	getWebHookNotificationFormControl(allowInheritFromParent: boolean = true, inheritFromParent: boolean = false, onCompleted?: (controlConfig: AppFormsControlConfig) => void) {
 		const controlConfig = this.getWebHookFormControl("WebHooks", "{{portals.common.controls.notifications.webhooks.label}}");
-		controlConfig.SubControls.Controls.removeAt(controlConfig.SubControls.Controls.findIndex(ctrl => ctrl.Name === "SecretToken")).forEach(ctrl => ctrl.Hidden = inheritFromParent);
+		controlConfig.SubControls.Controls.removeAt(controlConfig.SubControls.Controls.findIndex(ctrl => ctrl.Name === "SecretToken")).removeAt(controlConfig.SubControls.Controls.findIndex(ctrl => ctrl.Name === "SecretTokenName")).forEach(ctrl => ctrl.Hidden = inheritFromParent);
 		controlConfig.SubControls.Controls.insert({
 			Name: "EndpointURLs",
 			Type: "TextArea",
