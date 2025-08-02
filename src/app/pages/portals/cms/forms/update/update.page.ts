@@ -1,4 +1,5 @@
 import { Component, OnInit } from "@angular/core";
+import { DatePipe } from "@angular/common";
 import { FormGroup } from "@angular/forms";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
@@ -21,6 +22,7 @@ import { PortalBase as BaseModel, Form } from "@app/models/portals.cms.all";
 export class CmsFormsUpdatePage implements OnInit {
 
 	constructor(
+		private datePipe: DatePipe,
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private appFormsSvc: AppFormsService,
@@ -209,6 +211,26 @@ export class CmsFormsUpdatePage implements OnInit {
 			control.Options.ReadOnly = true;
 		}
 
+		if (this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined) || this.portalsCoreSvc.canModerateOrganization(this.organization)) {
+			["Tags", "ConfirmationIsOpened", "ConfirmationOpenedTime", "Confirmed", "DeviceID", "IPAddress", "Extras"].forEach(name => {
+				const control = formConfig.find(ctrl => ctrl.Name === name);
+				if (control !== undefined) {
+					control.Hidden = false;
+					control.Options.ReadOnly = name !== "Tags";
+					if (name === "ConfirmationIsOpened" || name === "Confirmed") {
+						control.Options.Disabled = true;
+					}
+					else if (name === "ConfirmationOpenedTime") {
+						control.Type = "Text";
+						control.Options.Type = "text";
+					}
+					else if (name === "Extras") {
+						control.Options.Rows = 20;
+					}
+				}
+			});
+		}
+
 		if (onCompleted !== undefined) {
 			onCompleted(formConfig);
 		}
@@ -218,6 +240,9 @@ export class CmsFormsUpdatePage implements OnInit {
 
 	onFormInitialized() {
 		this.form.patchValue(AppUtility.clone(this.item, false, undefined, obj => Form.normalizeClonedProperties(this.item, obj)));
+		if (this.item.ConfirmationOpenedTime !== undefined) {
+			this.formControls.find(ctrl => ctrl.Name === "ConfirmationOpenedTime").Extras["Text"] = this.datePipe.transform(this.item.ConfirmationOpenedTime, "h:mm a @ d/M/y");
+		}
 		this.hash = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync();
 	}

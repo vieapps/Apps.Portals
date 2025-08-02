@@ -30,10 +30,16 @@ export class Form extends CmsBaseModel {
 	Notes = undefined as string;
 	Title = undefined as string;
 	Details = undefined as string;
+	Tags = undefined as string;
+	Confirmed = undefined as boolean;
+	ConfirmationIsOpened = undefined as boolean;
+	ConfirmationOpenedTime = undefined as Date;
+	DeviceID = undefined as string;
 	IPAddress = undefined as string;
-	Status = undefined as string;
-	AllowComments = false;
+	Extras = undefined as string;
 	Profiles = undefined as Dictionary<string, string>;
+	AllowComments = false;
+	Status = undefined as string;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;
@@ -97,6 +103,9 @@ export class Form extends CmsBaseModel {
 	copy(source: any, onCompleted?: (data: any, instance: Form) => void) {
 		return super.copy(source, data => {
 			this.normalizeExtendedProperties(data);
+			if (AppUtility.isNotEmpty(data.ConfirmationOpenedTime)) {
+				this.ConfirmationOpenedTime = new Date(data.ConfirmationOpenedTime);
+			}
 			this.Profiles = new Dictionary<string, string>();
 			AppUtility.toKeyValuePair(data.Profiles).forEach(kvp => this.Profiles.add(kvp.key, kvp.value));
 			if (onCompleted !== undefined) {

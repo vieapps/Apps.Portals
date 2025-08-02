@@ -951,7 +951,7 @@ export class PortalsCoreService extends BaseService {
 							Label: "{{portals.common.controls.webhooks.prepareBodyScript.label}}",
 							PlaceHolder: "{{portals.common.controls.webhooks.prepareBodyScript.placeholder}}",
 							Description: "{{portals.common.controls.webhooks.prepareBodyScript.description}}",
-							Rows: 30
+							Rows: 40
 						}
 					}
 				]

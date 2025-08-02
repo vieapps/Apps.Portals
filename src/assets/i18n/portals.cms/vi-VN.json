@@ -505,6 +505,41 @@
 						"placeholder": "",
 						"description": ""
 					},
+					"Tags": {
+						"label": "Thẻ phân loại",
+						"placeholder": "",
+						"description": "Thẻ phân loại, phân cách bởi dấu chấm phẩy (;)"
+					},
+					"ConfirmationIsOpened": {
+						"label": "Đã mở đọc email xác thực",
+						"placeholder": "",
+						"description": ""
+					},
+					"ConfirmationOpenedTime": {
+						"label": "Thời điểm mở đọc email xác thực",
+						"placeholder": "",
+						"description": ""
+					},
+					"Confirmed": {
+						"label": "Đã xác thực yêu cầu",
+						"placeholder": "",
+						"description": ""
+					},
+					"DeviceID": {
+						"label": "Mã thiết bị",
+						"placeholder": "",
+						"description": "Mã thiết bị lúc gửi yêu cầu - sử dụng trong các luồng follow-up"
+					},
+					"IPAddress": {
+						"label": "Địa chỉ IP",
+						"placeholder": "",
+						"description": "Địa chỉ IP lúc gửi yêu cầu - sử dụng trong các luồng follow-up"
+					},
+					"Extras": {
+						"label": "Thông tin hệ thống bổ sung",
+						"placeholder": "",
+						"description": "Các thông tin bổ sung ở mức độ hệ thống về hoạt động của người dùng - sử dụng trong các luồng follow-up"
+					},
 					"Profiles": {
 						"label": "Tài khoản",
 						"placeholder": "",

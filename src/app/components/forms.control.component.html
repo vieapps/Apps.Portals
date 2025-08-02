@@ -103,7 +103,7 @@
 
 	<ion-checkbox *ngIf="isCheckboxControl" slot="end" #elementRef
 		[name]="name"
-		[disabled]="!!disabled"
+		[disabled]="!!disabled || readonly"
 		[color]="color.control"
 		[checked]="yesnoChecked"
 		[title]="description"

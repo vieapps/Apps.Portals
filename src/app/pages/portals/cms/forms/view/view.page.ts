@@ -6,6 +6,7 @@ import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { AppFormsControlConfig, AppFormsControl, AppFormsSegment } from "@app/components/forms.objects";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { PortalBase as BaseModel, Form } from "@app/models/portals.cms.all";
@@ -20,6 +21,7 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 
 	constructor(
 		private configSvc: ConfigurationService,
+		private authSvc: AuthenticationService,
 		private appFormsSvc: AppFormsService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService
@@ -196,6 +198,21 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 					}
 				}
 			));
+		}
+
+		if (this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined) || this.portalsCoreSvc.canModerateOrganization(this.item.organization)) {
+			["Tags", "ConfirmationIsOpened", "ConfirmationOpenedTime", "Confirmed", "DeviceID", "IPAddress", "Extras"].forEach(name => {
+				const control = formConfig.find(ctrl => ctrl.Name === name);
+				if (control !== undefined) {
+					control.Hidden = false;
+					if (name === "ConfirmationOpenedTime") {
+						control.Options.DatePickerOptions.AllowTimes = true;
+					}
+					else if (name === "Extras") {
+						control.Options.Rows = 20;
+					}
+				}
+			});
 		}
 
 		if (onCompleted !== undefined) {
