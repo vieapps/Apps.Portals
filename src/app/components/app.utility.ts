@@ -520,7 +520,7 @@ export class AppUtility {
 
 	/** Formats the mustache-style (double braces) template with params */
 	static format(template: string, params: { [key: string]: any }) {
-		const parameters = (template.match(/{{([^{}]*)}}/g) || []).map(param => ({ token: param, name: param.match(/[\w\.]+/)[0] }));
+		const parameters = (template.match(/{{([^{}]*)}}/g) || []).map(param => ({ token: param, name: param.match(/[\w\.]+/)[0] }));		
 		this.getAttributes(params).forEach(key => {
 			const value: string = (params[key] || "").toString();
 			parameters.filter(parameter => parameter.name === key).forEach(parameter => template = template.replace(this.toRegExp(`/${parameter.token}/g`), value));

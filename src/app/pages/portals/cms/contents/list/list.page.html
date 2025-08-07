@@ -49,9 +49,9 @@
 
 <ion-content [color]="color" role="feed">
 	<ion-fab *ngIf="canUpdate" vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="create()">
-      <ion-icon name="add"></ion-icon>
-    </ion-fab-button>
+		<ion-fab-button (click)="create()">
+			<ion-icon name="add"></ion-icon>
+		</ion-fab-button>
   </ion-fab>
 	<ion-list>
 		<ion-item-sliding *ngFor="let content of contents; trackBy: track">

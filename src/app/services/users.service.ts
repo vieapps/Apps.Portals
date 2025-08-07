@@ -9,7 +9,7 @@ import { AppCustomCompleter } from "@app/components/app.completer";
 import { AppPagination } from "@app/components/app.pagination";
 import { AppFormsControlConfig } from "@app/components/forms.objects";
 import { Account } from "@app/models/account";
-import { UserProfile } from "@app/models/user";
+import { UserProfile, UserToken } from "@app/models/user";
 import { Privilege } from "@app/models/privileges";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -335,6 +335,73 @@ export class UsersService extends BaseService {
 		return profiles.map(data => UserProfile.update(data));
 	}
 
+	searchTokens(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.search(
+			this.getSearchingPath("Token", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+					(data.Objects as Array<any>).forEach(data => {
+						this.fetchProfileAsync(data.UserID);
+						UserToken.update(data);
+					});
+				}
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while searching", error, onError)
+		);
+	}
+
+	searchTokensAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.searchAsync(
+			this.getSearchingPath("Token", this.configSvc.relatedQuery),
+			request,
+			data => {
+				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
+					(data.Objects as Array<any>).forEach(data => {
+						this.fetchProfileAsync(data.UserID);
+						UserToken.update(data);
+					});
+				}
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while searching", error, onError)
+		);
+	}
+
+	createTokenAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.createAsync(
+			this.getPath("Token"),
+			body,
+			data => {
+				UserToken.update(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError(`Error occurred while updating profile ${body.ID}`, error, onError),
+			undefined,
+			false
+		);
+	}
+
+	deleteTokenAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.deleteAsync(
+			this.getPath("Token", id, this.configSvc.relatedQuery),
+			data => {
+				UserToken.instances.remove(data.ID);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while deleting a token", error, onError)
+		);
+	}
+
 	fetchStatisticsAsync() {
 		return this.readAsync(this.getPath("Statistics", "fetch"), undefined, undefined, undefined, false, true);
 	}
@@ -394,6 +461,16 @@ export class UsersService extends BaseService {
 						console.log("[Users]: Got an update of a session", message);
 						break;
 				}
+				break;
+
+			case "Token":
+				if (message.Type.Event === "Delete") {
+					UserToken.instances.remove(message.Data.ID);
+				}
+				else {
+					UserToken.update(message.Data);
+				}
+				AppEvents.broadcast("Token", { Type: `${message.Type.Event}ed`, Mode: "APIs", ID: message.Data.ID });
 				break;
 
 			case "Account":

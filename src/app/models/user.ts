@@ -184,3 +184,77 @@ export class UserProfile extends UserProfileBase {
 	}
 
 }
+
+export class UserToken extends BaseModel {
+
+	constructor(
+	) {
+		super();
+		delete this["Privileges"];
+		delete this["OriginalPrivileges"];
+	}
+
+	/** All user profile instances */
+	static instances = new Dictionary<string, UserToken>();
+
+	// standard properties
+	ID = undefined as string;
+	Title = undefined as string;
+	UserID = undefined as string;
+	SessionID = undefined as string;
+	Expires = undefined as Date;
+	Created = undefined as Date;
+	CreatedID = undefined as string;
+	LastAccess = undefined as Date;
+
+	Token = undefined as {
+		Bearer: string;
+		Basic: string;
+	};
+	ansiTitle = "";
+
+	get user() {
+		return UserProfile.get(this.UserID);
+	}
+
+	/** Deserializes data to object */
+	static deserialize(json: any, token?: UserToken) {
+		return (token || new UserToken()).copy(json);
+	}
+
+	/** Gets by identity */
+	static get(id: string) {
+		return id !== undefined ? this.instances.get(id) : undefined;
+	}
+
+	/** Sets by identity */
+	static set(token: UserToken) {
+		return token === undefined ? undefined : this.instances.add(token.ID, token);
+	}
+
+	/** Checks to see the dictionary is contains the object by identity or not */
+	static contains(id: string) {
+		return id !== undefined && this.instances.contains(id);
+	}
+
+	/** Updates into dictionary */
+	static update(data: any) {
+		return AppUtility.isObject(data, true)
+			? this.set(data instanceof UserToken ? data as UserToken : this.deserialize(data, this.get(data.ID)))
+			: undefined;
+	}
+
+	/** Deserializes the collection of objects to array */
+	static toArray(objects: Array<any>) {
+		return objects.map(obj => this.get(obj.ID) || this.deserialize(obj, this.get(obj.ID)));
+	}
+
+	/** Deserializes the collection of objects to list */
+	static toList(objects: Array<any>) {
+		return this.toArray(objects).toList();
+	}
+
+	get routerLink() {
+		return `${AppConfig.URLs.users.root}/tokens/view/${AppUtility.toANSI(this.Title, true)}`;
+	}
+}

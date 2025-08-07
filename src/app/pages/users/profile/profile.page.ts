@@ -161,6 +161,10 @@ export class UsersProfilePage implements OnInit {
 				}
 			}
 
+			if (this.authSvc.isSystemAdministrator(account)) {
+				this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.tokens"), "qr-code", () => this.openTokensAsync()));
+			}
+
 			if (this.id === undefined || this.id === account.id) {
 				this.actions.push(this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("users.profile.actions.logout"), "log-out", () => this.logoutAsync()));
 			}
@@ -316,6 +320,10 @@ export class UsersProfilePage implements OnInit {
 				])
 			);
 		}
+	}
+
+	openTokensAsync() {
+		return this.configSvc.navigateForwardAsync(`${this.configSvc.appConfig.URLs.users.root}/tokens/list`);
 	}
 
 	async logoutAsync() {

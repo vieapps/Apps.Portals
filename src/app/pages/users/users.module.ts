@@ -42,6 +42,11 @@ export const routes: Routes = [
 		path: "search",
 		canActivate: [AuthenticatedGuardService],
 		loadChildren: "@app/pages/users/list/list.module#UsersListPageModule"
+	},
+	{
+		path: "tokens",
+		canActivate: [AuthenticatedGuardService],
+		loadChildren: "@app/pages/users/tokens/tokens.module#TokensModule"
 	}
 ];
 
