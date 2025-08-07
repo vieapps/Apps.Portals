@@ -36,6 +36,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 	private _preparing = false;
 	private _preparer: Subscription;
 	private _timer: Subscription;
+	private _forcingTimes = 0;
 
 	get color() {
 		return this.configSvc.color;
@@ -165,7 +166,8 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 				this.changeDetector.detectChanges();
 				this._preparing = false;
 			});
-			if (this.contents.length < 1 && this._isPublished) {
+			if (this.contents.length < 1 && this._isPublished && this._forcingTimes < 4) {
+				this._forcingTimes++;
 				AppUtility.invoke(() => {
 					if (this.contents.length < 1 && !this._preparing) {
 						if (this.configSvc.isDebug) {
