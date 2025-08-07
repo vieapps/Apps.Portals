@@ -21,7 +21,7 @@ import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { BooksService } from "@app/services/books.service";
 import { NotificationsService } from "@app/services/notifications.service";
 import { Account } from "@app/models/account";
-import { UserProfile } from "@app/models/user";
+import { UserProfile, UserToken } from "@app/models/user";
 import { Notification } from "@app/models/notification";
 import { Book } from "@app/models/book";
 import { Organization, Role, Module, ContentType, Expression, Site, Desktop, Portlet, SchedulingTask } from "@app/models/portals.core.all";
@@ -266,6 +266,7 @@ export class AppComponent implements OnInit {
 							window["__vieapps"]["data"] = {
 								accounts: Account.instances,
 								users: UserProfile.instances,
+								tokens: UserToken.instances,
 								books: Book.instances,
 								paginations: AppPagination.instances,
 								notifications: Notification.instances,
