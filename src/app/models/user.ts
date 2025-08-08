@@ -203,18 +203,23 @@ export class UserToken extends BaseModel {
 	UserID = undefined as string;
 	SessionID = undefined as string;
 	Expires = undefined as Date;
+	LastAccess = undefined as Date;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
-	LastAccess = undefined as Date;
 
 	Token = undefined as {
 		Bearer: string;
 		Basic: string;
 	};
+
 	ansiTitle = "";
 
 	get user() {
 		return UserProfile.get(this.UserID);
+	}
+
+	get routerLink() {
+		return `${AppConfig.URLs.users.root}/tokens/view/${AppUtility.toANSI(this.Title, true)}`;
 	}
 
 	/** Deserializes data to object */
@@ -254,7 +259,13 @@ export class UserToken extends BaseModel {
 		return this.toArray(objects).toList();
 	}
 
-	get routerLink() {
-		return `${AppConfig.URLs.users.root}/tokens/view/${AppUtility.toANSI(this.Title, true)}`;
+	copy(source: any, onCompleted?: (data: any, instance: UserToken) => void) {
+		return super.copy(source, data => {
+			this.Expires = new Date(data.Expires);
+			this.LastAccess = new Date(data.LastAccess);
+			if (onCompleted !== undefined) {
+				onCompleted(data, this);
+			}
+		});
 	}
 }
