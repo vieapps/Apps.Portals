@@ -343,6 +343,7 @@ export class UsersService extends BaseService {
 				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
 					(data.Objects as Array<any>).forEach(data => {
 						this.fetchProfileAsync(data.UserID);
+						this.fetchProfileAsync(data.CreatedID);
 						UserToken.update(data);
 					});
 				}
@@ -362,6 +363,7 @@ export class UsersService extends BaseService {
 				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
 					(data.Objects as Array<any>).forEach(data => {
 						this.fetchProfileAsync(data.UserID);
+						this.fetchProfileAsync(data.CreatedID);
 						UserToken.update(data);
 					});
 				}
@@ -369,7 +371,10 @@ export class UsersService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError("Error occurred while searching", error, onError)
+			error => this.processError("Error occurred while searching tokens", error, onError),
+			false,
+			undefined,
+			false
 		);
 	}
 
@@ -383,7 +388,22 @@ export class UsersService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError(`Error occurred while updating profile ${body.ID}`, error, onError),
+			error => this.processError(`Error occurred while updating a token ${body.ID}`, error, onError),
+			undefined,
+			false
+		);
+	}
+
+	getTokenAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+		return this.readAsync(
+			this.getPath("Token", id, "x-as-json&" + this.configSvc.relatedQuery),
+			data => {
+				UserToken.update(data);
+				if (onSuccess !== undefined) {
+					onSuccess(data);
+				}
+			},
+			error => this.processError("Error occurred while getting a token", error, onError),
 			undefined,
 			false
 		);
@@ -398,7 +418,9 @@ export class UsersService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError("Error occurred while deleting a token", error, onError)
+			error => this.processError("Error occurred while deleting a token", error, onError),
+			undefined,
+			false
 		);
 	}
 
@@ -468,6 +490,8 @@ export class UsersService extends BaseService {
 					UserToken.instances.remove(message.Data.ID);
 				}
 				else {
+					this.fetchProfileAsync(message.Data.UserID);
+					this.fetchProfileAsync(message.Data.CreatedID);
 					UserToken.update(message.Data);
 				}
 				AppEvents.broadcast("Token", { Type: `${message.Type.Event}ed`, Mode: "APIs", ID: message.Data.ID });

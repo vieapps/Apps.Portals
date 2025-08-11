@@ -58,6 +58,7 @@ export class TokensViewPage implements OnInit {
 			]);
 			return;
 		}
+
 		const creator = UserProfile.get(this.token.CreatedID);
 		
 		const config: Array<AppFormsControlConfig> = [
@@ -103,7 +104,7 @@ export class TokensViewPage implements OnInit {
 			{
 				Name: "BearerToken",
 				Type: "Text",
-				Extras: { "Text": this.token.Token.Bearer },
+				Extras: { "Text": (this.token.Token || {}).Bearer },
 				Options: {
 					Type: "text",
 					Label: await this.configSvc.getResourceAsync("tokens.view.controls.Token.Bearer"),
@@ -122,7 +123,7 @@ export class TokensViewPage implements OnInit {
 			{
 				Name: "BasicToken",
 				Type: "Text",
-				Extras: { "Text": this.token.Token.Basic },
+				Extras: { "Text": (this.token.Token || {}).Basic },
 				Options: {
 					Type: "text",
 					Label: await this.configSvc.getResourceAsync("tokens.view.controls.Token.Basic"),
@@ -152,6 +153,22 @@ export class TokensViewPage implements OnInit {
 		this.button = await this.configSvc.getResourceAsync("tokens.view.button");
 		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("tokens.view.title");
 		this.config = config;
+	}
+
+	onFormInitialized() {
+		if (!!!this.token.Token) {
+			this.usersSvc.getTokenAsync(this.token.ID, _ => {
+				this.token = UserToken.get(this.token.ID);
+				let control = this.controls.find(ctrl => ctrl.Name === "BearerToken");
+				if (control !== undefined) {
+					control.Extras["Text"] = (this.token.Token || {}).Bearer;
+				}
+				control = this.controls.find(ctrl => ctrl.Name === "BasicToken");
+				if (control !== undefined) {
+					control.Extras["Text"] = (this.token.Token || {}).Basic;
+				}
+			});
+		}
 	}
 
 	async deleteAsync() {

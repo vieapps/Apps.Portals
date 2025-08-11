@@ -263,6 +263,7 @@ export class UserToken extends BaseModel {
 		return super.copy(source, data => {
 			this.Expires = new Date(data.Expires);
 			this.LastAccess = new Date(data.LastAccess);
+			this.ansiTitle = AppUtility.toANSI(this.Title).toLowerCase();
 			if (onCompleted !== undefined) {
 				onCompleted(data, this);
 			}

@@ -97,12 +97,12 @@ export class TokensListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	track(index: number, profile: UserToken) {
-		return `${profile.ID}@${index}`;
+	track(index: number, token: UserToken) {
+		return `${token.ID}@${index}`;
 	}
 
 	openSearchAsync() {
-		return this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.users.search);
+		return this.configSvc.navigateForwardAsync(`${this.configSvc.appConfig.URLs.users.root}/tokens/search`);
 	}
 
 	onStartSearch(event: any) {
@@ -199,8 +199,8 @@ export class TokensListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	create() {
-		this.configSvc.navigateForwardAsync(`${this.configSvc.appConfig.URLs.users.root}/tokens/create`);
+	createAsync() {
+		return this.configSvc.navigateForwardAsync(`${this.configSvc.appConfig.URLs.users.root}/tokens/create`);
 	}
 
 }
