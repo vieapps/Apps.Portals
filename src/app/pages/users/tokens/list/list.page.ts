@@ -64,8 +64,8 @@ export class TokensListPage implements OnInit, OnDestroy {
 		if (this.authSvc.isSystemAdministrator()) {
 			this.initializeAsync();
 			AppEvents.on("Token", _ => {
-				this.tokens = UserToken.instances.toArray().sortBy({ name: "Title" }, { name: "Created", reverse: true });
-			}, "UserTokenUpdater");
+				this.tokens = UserToken.instances.toArray().sortBy({ name: "Title" }, { name: "LastAccess", reverse: true });
+			}, "UserTokenUpdater:List");
 		}
 		else {
 			Promise.all([
@@ -79,11 +79,11 @@ export class TokensListPage implements OnInit, OnDestroy {
 		if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();
 		}
-		AppEvents.off("Token", "UserTokenUpdater");
+		AppEvents.off("Token", "UserTokenUpdater:List");
 	}
 
 	async initializeAsync() {
-		this.searching = this.configSvc.currentURL.startsWith(this.configSvc.appConfig.URLs.users.search);
+		this.searching = this.configSvc.currentURL.endsWith("/search");
 		this.configSvc.appTitle = this.title = this.searching
 			? await this.configSvc.getResourceAsync("users.list.title.search")
 			: await this.configSvc.getResourceAsync("tokens.list.title");

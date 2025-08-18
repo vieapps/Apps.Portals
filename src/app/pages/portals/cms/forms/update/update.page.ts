@@ -39,8 +39,8 @@ export class CmsFormsUpdatePage implements OnInit {
 	private hash = "";
 
 	title = {
-		page: "Item",
-		track: "Item"
+		page: "Form",
+		track: "Form"
 	};
 	form = new FormGroup({});
 	formConfig: Array<AppFormsControlConfig>;
@@ -128,9 +128,11 @@ export class CmsFormsUpdatePage implements OnInit {
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.form", undefined, { "x-content-type-id": this.contentType.ID });
 
-		let control = formConfig.find(ctrl => ctrl.Name === "Name");
+		let control = formConfig.find(ctrl => ctrl.Name === "Status");
 		if (!!control) {
-			control.Options.AutoFocus = true;
+			control.Hidden = false;
+			control.Options.Label = "{{portals.cms.forms.controls.Status.label}}";
+			control.Options.SelectOptions.Values = BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{portals.cms.forms.controls.Status.${value}}}` }));
 		}
 
 		control = formConfig.find(ctrl => ctrl.Name === "Address");
@@ -149,39 +151,44 @@ export class CmsFormsUpdatePage implements OnInit {
 					}
 				}
 			}, control.Order + 1);
-			formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Unit"));
-			formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Province"));
-			formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === "Country"));
+			["Unit", "Province", "Country"].forEach(name => formConfig.removeAt(formConfig.findIndex(ctrl => ctrl.Name === name)));
 		}
 
-		formConfig.filter(ctrl => ctrl.Name === "TextArea").forEach(ctrl => ctrl.Options.Rows = 7);
-
-		control = formConfig.find(ctrl => ctrl.Name === "Notes");
-		if (!!control) {
-			control.Type = "TextArea";
-			control.Options.Rows = 3;
-		}
-
-		control = formConfig.find(ctrl => ctrl.Name === "Title");
-		if (!!control) {
-			control.Hidden = false;
-		}
-
-		control = formConfig.find(ctrl => ctrl.Name === "Details");
-		if (!!control) {
-			control.Hidden = false;
-			control.Type = "TextArea";
-			control.Options.Rows = 10;
-		}
-
-		control = formConfig.find(ctrl => ctrl.Name === "Status");
-		if (!!control) {
-			control.Hidden = false;
-			control.Options.Label = "{{portals.cms.forms.controls.Status.label}}";
-			control.Options.SelectOptions.Values = BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{portals.cms.forms.controls.Status.${value}}}` }));
-		}
+		["Title", "Details", "Notes", "Tags", "Extras"].forEach(name => {
+			const control = formConfig.find(ctrl => ctrl.Name === name);
+			if (!!control) {
+				control.Hidden = name === "Extras";
+				control.Options.Rows = 20;
+			}
+		});
 
 		if (AppUtility.isNotEmpty(this.item.ID)) {
+			const isSystemAdministrator = this.authSvc.isSystemAdministrator();
+			
+			if (isSystemAdministrator || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined) || this.portalsCoreSvc.canModerateOrganization(this.organization)) {
+				["ConfirmationIsOpened", "ConfirmationOpenedTime", "Confirmed", "DeviceID", "IPAddress", "Extras"].forEach(name => {
+					const control = formConfig.find(ctrl => ctrl.Name === name);
+					if (!!control) {
+						control.Hidden = false;
+						control.Options.ReadOnly = true;
+						if (name === "ConfirmationIsOpened" || name === "Confirmed") {
+							control.Options.Disabled = true;
+						}
+						else if (name === "ConfirmationOpenedTime") {
+							control.Type = "Text";
+							control.Options.Type = "text";
+						}
+					}
+				});
+			}
+			
+			if (isSystemAdministrator && AppUtility.isTrue(this.configSvc.requestParams["Advanced"])) {
+				control = formConfig.find(ctrl => ctrl.Name === "Extras");
+				if (!!control) {
+					control.Options.ReadOnly = false;
+				}
+			}
+
 			formConfig.push(
 				this.portalsCmsSvc.getPermanentLinkFormControl(this.item),
 				this.portalsCoreSvc.getAuditFormControl(this.item),
@@ -211,24 +218,9 @@ export class CmsFormsUpdatePage implements OnInit {
 			control.Options.ReadOnly = true;
 		}
 
-		if (this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined) || this.portalsCoreSvc.canModerateOrganization(this.organization)) {
-			["Tags", "ConfirmationIsOpened", "ConfirmationOpenedTime", "Confirmed", "DeviceID", "IPAddress", "Extras"].forEach(name => {
-				const control = formConfig.find(ctrl => ctrl.Name === name);
-				if (control !== undefined) {
-					control.Hidden = false;
-					control.Options.ReadOnly = name !== "Tags";
-					if (name === "ConfirmationIsOpened" || name === "Confirmed") {
-						control.Options.Disabled = true;
-					}
-					else if (name === "ConfirmationOpenedTime") {
-						control.Type = "Text";
-						control.Options.Type = "text";
-					}
-					else if (name === "Extras") {
-						control.Options.Rows = 20;
-					}
-				}
-			});
+		control = formConfig.find(ctrl => ctrl.Name === "Name");
+		if (!!control) {
+			control.Options.AutoFocus = true;
 		}
 
 		if (onCompleted !== undefined) {

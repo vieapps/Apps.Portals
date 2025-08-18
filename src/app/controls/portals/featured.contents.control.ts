@@ -79,6 +79,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		AppEvents.on(this.portalsCmsSvc.name, info => {
 			if (this.configSvc.isAuthenticated) {
 				if ("Organization" === info.args.Type && "Changed" === info.args.Mode) {
+					this._forcingTimes = 0;
 					this.reprepareContents(this.configSvc.isDebug ? "Force to re-prepare (when change organization)" : undefined);
 				}
 				else if ("FeaturedContents" === info.args.Type && "Prepared" === info.args.Mode && this.portalsCoreSvc.activeOrganization.ID === info.args.ID) {
@@ -171,7 +172,7 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 				AppUtility.invoke(() => {
 					if (this.contents.length < 1 && !this._preparing) {
 						if (this.configSvc.isDebug) {
-							console.log(`<FeaturedContents/${this._isPublished}>: Send request to prepare`);
+							console.log(`<FeaturedContents/${this._isPublished}>: Send request to prepare (${this._forcingTimes})`);
 						}
 						AppEvents.broadcast(this.portalsCoreSvc.name, { Type: "FeaturedContents", Mode: "Request" });
 					}

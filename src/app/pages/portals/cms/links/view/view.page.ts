@@ -52,6 +52,7 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 		update: "Update",
 		moderate: "Moderate",
 		versions: "Versions",
+		refresh: "Refresh",
 		delete: "Delete",
 		deleteThumbnail: "Delete Thumbnail"
 	};
@@ -147,6 +148,7 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 			update: await this.configSvc.getResourceAsync("common.buttons.update"),
 			moderate: await this.configSvc.getResourceAsync("common.buttons.approve"),
 			versions: await this.configSvc.getResourceAsync("versions.view"),
+			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			delete: await this.configSvc.getResourceAsync("portals.cms.links.update.buttons.delete"),
 			deleteThumbnail: await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.deleteThumbnail")
 		};
@@ -157,6 +159,7 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()),
 				this.appFormsSvc.getActionSheetButton(this.resources.versions, "layers-outline", () => this.viewVersions()),
 				this.appFormsSvc.getActionSheetButton(await this.configSvc.getResourceAsync("portals.tasks.scheduled.update.action"), "timer", () => this.createSchedulingTaskAsync()),
+				this.appFormsSvc.getActionSheetButton(this.resources.refresh, "refresh", () => this.refresh()),
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.delete())
 			];
 		}
@@ -409,6 +412,14 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 		}
 		const currentStatus = availableStatuses.indexOf(this.link.Status) > -1 ? this.link.Status : "Draft";
 		this.portalsCoreSvc.showApprovalDialogAsync(this.link.contentType.ID, this.link.ID, currentStatus, availableStatuses);
+	}
+
+	refresh() {
+		this.appFormsSvc.showLoadingAsync(this.actions[this.actions.length - 2].text).then(() => this.portalsCmsSvc.refreshLinkAsync(
+			this.link.ID,
+			_ => this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("The link was freshen-up")),
+			error => this.appFormsSvc.showErrorAsync(error)
+		));
 	}
 
 	viewVersions() {

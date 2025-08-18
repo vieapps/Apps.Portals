@@ -12,7 +12,7 @@ import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { PortalBase as BaseModel, Form } from "@app/models/portals.cms.all";
 
 @Component({
-	selector: "page-portals-cms-items-view",
+	selector: "page-portals-cms-forms-view",
 	templateUrl: "./view.page.html",
 	styleUrls: ["./view.page.scss"]
 })
@@ -33,8 +33,8 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 	canModerate = false;
 	canEdit = false;
 	title = {
-		page: "Item",
-		track: "Item"
+		page: "Form",
+		track: "Form"
 	};
 	formConfig: Array<AppFormsControlConfig>;
 	formSegments = {
@@ -47,6 +47,7 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 		status: "Status",
 		update: "Update",
 		moderate: "Moderate",
+		refresh: "Refresh",
 		delete: "Delete"
 	};
 	actions: Array<{
@@ -123,6 +124,7 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 			status: await this.configSvc.getResourceAsync("portals.cms.forms.controls.Status.label"),
 			update: await this.configSvc.getResourceAsync("common.buttons.update"),
 			moderate: await this.configSvc.getResourceAsync("portals.cms.forms.buttons.change"),
+			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			delete: await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete")
 		};
 
@@ -130,6 +132,7 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 			this.actions = [
 				this.appFormsSvc.getActionSheetButton(this.resources.update, "create", () => this.update()),
 				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()),
+				this.appFormsSvc.getActionSheetButton(this.resources.refresh, "refresh", () => this.refresh()),
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.delete())
 			];
 			this.prepareStatus();
@@ -300,6 +303,14 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 				() => this.prepareStatus()
 			);
 		}
+	}
+
+	refresh() {
+		this.appFormsSvc.showLoadingAsync(this.actions[this.actions.length - 2].text).then(() => this.portalsCmsSvc.refreshFormAsync(
+			this.item.ID,
+			_ => this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("The form was freshen-up")),
+			error => this.appFormsSvc.showErrorAsync(error)
+		));
 	}
 
 	delete() {

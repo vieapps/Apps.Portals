@@ -228,6 +228,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 						console.log("<CMS.Content/View>: Patch new values (when got update message)\n", this.content.Title, this.content);
 					}
 					this.prepareValues();
+					this.setPublicURL();
 					if (this.canEdit) {
 						AppUtility.invoke(async () => this.actions[this.canModerate ? 3 : 2].text = await this.configSvc.getResourceAsync(this.content.Status !== "Published" ? "portals.cms.common.buttons.viewAsPublished" : "portals.cms.common.buttons.viewAsPublic"));
 					}
@@ -688,14 +689,16 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	refresh() {
-		this.appFormsSvc.showLoadingAsync(this.actions[this.actions.length - 2].text)
-		.then(() => this.portalsCmsSvc.refreshContentAsync(this.content.ID))
-		.then(() => this.appFormsSvc.hideLoadingAsync(() => {
-			this.appFormsSvc.showToastAsync("The content was freshen-up");
-			if (this.configSvc.isDebug) {
-				console.log("<CMS.Content/View>: Content was freshen-up\n", this.content.Title, this.content);
-			}
-		}));
+		this.appFormsSvc.showLoadingAsync(this.actions[this.actions.length - 2].text).then(() => this.portalsCmsSvc.refreshContentAsync(
+			this.content.ID,
+			_ => this.appFormsSvc.hideLoadingAsync(() => {
+				this.appFormsSvc.showToastAsync("The content was freshen-up");
+				if (this.configSvc.isDebug) {
+					console.log("<CMS.Content/View>: Content was freshen-up\n", this.content.Title, this.content);
+				}
+			}),
+			error => this.appFormsSvc.showErrorAsync(error)
+		));
 	}
 
 	delete() {

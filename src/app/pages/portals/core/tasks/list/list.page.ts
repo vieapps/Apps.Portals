@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
+import { Component, OnInit, OnDestroy, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
 import { IonList, IonInfiniteScroll } from "@ionic/angular";
 import { AppEvents } from "@app/components/app.events";
@@ -20,6 +20,8 @@ import { Organization, SchedulingTask } from "@app/models/portals.core.all";
 export class PortalsTasksListPage implements OnInit, OnDestroy {
 
 	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
 		private configSvc: ConfigurationService,
 		private appFormsSvc: AppFormsService,
 		private authSvc: AuthenticationService,
@@ -62,6 +64,15 @@ export class PortalsTasksListPage implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.initializeAsync();
+		AppEvents.on(this.portalsCoreSvc.name, info => {
+			if (info.args.Object === "SchedulingTask") {
+				if (info.args.Type === "Deleted") {
+					SchedulingTask.instances.remove(info.args.ID);
+					this.tasks.removeAt(this.tasks.findIndex(task => task.ID === info.args.ID));
+				}
+				this.prepare();
+			}
+		}, "SchedulingTasks:Refresh");
 	}
 
 	ngOnDestroy() {
@@ -100,16 +111,6 @@ export class PortalsTasksListPage implements OnInit, OnDestroy {
 		this.systemID = this.organization.ID;
 		this.configSvc.appTitle = this.title.page = await this.configSvc.getResourceAsync("portals.tasks.title.list", { info: `[${this.organization.Title}]` });
 		this.prepare(() => this.appFormsSvc.hideLoadingAsync());
-
-		AppEvents.on(this.portalsCoreSvc.name, info => {
-			if (info.args.Object === "SchedulingTask") {
-				if (info.args.Type === "Deleted") {
-					SchedulingTask.instances.remove(info.args.ID);
-					this.tasks.removeAt(this.tasks.findIndex(task => task.ID === info.args.ID));
-				}
-				this.prepare();
-			}
-		}, "SchedulingTasks:Refresh");
 	}
 
 	track(index: number, task: SchedulingTask) {
@@ -119,6 +120,9 @@ export class PortalsTasksListPage implements OnInit, OnDestroy {
 	private prepare(onNext?: () => void) {
 		const tasks = SchedulingTask.instances.toArray(object => object.SystemID === this.systemID);
 		this.tasks = tasks.filter(object => object.Status !== "Completed").sortBy({ name: "Time", reverse: false }, "Title").merge(tasks.filter(object => object.Status === "Completed").sortBy({ name: "Time", reverse: false }, "Title"));
+		if (this.configSvc.isElectronApp) {
+			this.zone.run(() => this.changeDetector.detectChanges());
+		}
 		if (onNext !== undefined) {
 			onNext();
 		}

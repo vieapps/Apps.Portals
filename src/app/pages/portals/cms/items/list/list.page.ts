@@ -421,7 +421,7 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	refresh(event: Event, item: Item) {
-		this.do(() => this.portalsCmsSvc.refreshContentAsync(item.ID, () => this.appFormsSvc.showToastAsync("The item was freshen-up")), event);
+		this.do(() => this.portalsCmsSvc.refreshItemAsync(item.ID, () => this.appFormsSvc.showToastAsync("The item was freshen-up")), event);
 	}
 
 	viewVersions(event: Event, item: Item) {

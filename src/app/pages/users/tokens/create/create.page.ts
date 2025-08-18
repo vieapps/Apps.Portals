@@ -48,7 +48,9 @@ export class TokensCreatePage implements OnInit {
 	}
 
 	private async prepareAsync() {
-		const config: Array<AppFormsControlConfig> = [
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("tokens.create.title");
+		this.button = await this.configSvc.getResourceAsync("tokens.create.button");
+		this.config = [
 			{
 				Name: "Title",
 				Required: true,
@@ -76,9 +78,9 @@ export class TokensCreatePage implements OnInit {
 							ComponentProps: { multiple: false },
 							OnDismiss: (data, formControl) => {
 								if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
-									const profile = UserProfile.get(data[0]);
-									formControl.setValue(profile.ID);
-									formControl.lookupDisplayValues = [{ Value: profile.ID, Label: profile.Name }];
+									const user = UserProfile.get(data[0]);
+									formControl.setValue(user.ID);
+									formControl.lookupDisplayValues = [{ Value: user.ID, Label: user.Name }];
 								}
 							}
 						}
@@ -101,10 +103,6 @@ export class TokensCreatePage implements OnInit {
 				}
 			}
 		];
-
-		this.button = await this.configSvc.getResourceAsync("tokens.create.button");
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("tokens.create.title");
-		this.config = config;
 	}
 
 	onFormInitialized() {

@@ -110,7 +110,7 @@ export class PortalsTasksUpdatePage implements OnInit {
 		control.Options.AutoFocus = true;
 
 		control = formConfig.find(ctrl => ctrl.Name === "Description");
-		control.Options.Rows = 2;
+		control.Options.Rows = 5;
 
 		control = formConfig.find(ctrl => ctrl.Name === "Status");
 		control.Options.SelectOptions.Values = AppUtility.map(control.Options.SelectOptions.Values, value => ({ Value: value, Label: `{{portals.tasks.status.${value}}}` }));

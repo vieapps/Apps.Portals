@@ -364,8 +364,8 @@ export class CmsFormsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.do(() => this.configSvc.navigateForwardAsync(item.routerURI), event);
 	}
 
-	edit(event: Event, item: Form) {
-		this.do(this.canUpdate ? () => this.configSvc.navigateForwardAsync(item.routerURI.replace("/view/", "/update/")) : () => {}, event);
+	edit(event: Event, item: Form, isAdvancedMode: boolean = false) {
+		this.do(this.canUpdate ? () => this.configSvc.navigateForwardAsync(item.getRouterURI({ ID: item.ID, Advanced: isAdvancedMode }).replace("/view/", "/update/")) : () => {}, event);
 	}
 
 	back(message: string, url?: string) {

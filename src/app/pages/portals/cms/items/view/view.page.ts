@@ -50,6 +50,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 		moderate: "Moderate",
 		versions: "Versions",
 		tasks: "Tasks",
+		refresh: "Refresh",
 		delete: "Delete",
 		deleteThumbnail: "Delete Thumbnail"
 	};
@@ -140,6 +141,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 			tasks: await this.configSvc.getResourceAsync("portals.tasks.scheduled.update.action"),
 			update: await this.configSvc.getResourceAsync("common.buttons.update"),
 			moderate: await this.configSvc.getResourceAsync("common.buttons.approve"),
+			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
 			delete: await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.delete"),
 			deleteThumbnail: await this.configSvc.getResourceAsync("portals.cms.contents.update.buttons.deleteThumbnail")
 		};
@@ -150,6 +152,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 				this.appFormsSvc.getActionSheetButton(this.resources.moderate, "checkmark-done", () => this.moderate()),
 				this.appFormsSvc.getActionSheetButton(this.resources.versions, "layers-outline", () => this.viewVersions()),
 				this.appFormsSvc.getActionSheetButton(this.resources.tasks, "timer", () => this.createSchedulingTaskAsync()),
+				this.appFormsSvc.getActionSheetButton(this.resources.refresh, "refresh", () => this.refresh()),
 				this.appFormsSvc.getActionSheetButton(this.resources.delete, "trash", () => this.delete())
 			];
 			if (this.canModerate) {
@@ -372,6 +375,14 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 		}
 		const currentStatus = availableStatuses.indexOf(this.item.Status) > -1 ? this.item.Status : "Draft";
 		this.portalsCoreSvc.showApprovalDialogAsync(this.item.contentType.ID, this.item.ID, currentStatus, availableStatuses);
+	}
+
+	refresh() {
+		this.appFormsSvc.showLoadingAsync(this.actions[this.actions.length - 2].text).then(() => this.portalsCmsSvc.refreshItemAsync(
+			this.item.ID,
+			_ => this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("The item was freshen-up")),
+			error => this.appFormsSvc.showErrorAsync(error)
+		));
 	}
 
 	delete() {

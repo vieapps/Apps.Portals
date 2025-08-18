@@ -1,7 +1,8 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { DatePipe } from "@angular/common";
 import { FormGroup } from "@angular/forms";
 import { PlatformUtility } from "@app/components/app.utility.platform";
+import { AppEvents } from "@app/components/app.events";
 import { AppFormsControl, AppFormsControlConfig } from "@app/components/forms.objects";
 import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
@@ -15,7 +16,7 @@ import { UserProfile, UserToken } from "@app/models/user";
 	styleUrls: ["./view.page.scss"]
 })
 
-export class TokensViewPage implements OnInit {
+export class TokensViewPage implements OnInit, OnDestroy {
 
 	constructor(
 		private datePipe: DatePipe,
@@ -40,6 +41,12 @@ export class TokensViewPage implements OnInit {
 	ngOnInit() {
 		if (this.authSvc.isSystemAdministrator()) {
 			this.prepareAsync();
+			AppEvents.on("Token", info => {
+				if (info.args.ID == this.token.ID) {
+					this.token = UserToken.get(info.args.ID);
+					this.onFormInitialized();
+				}
+			}, "UserTokenUpdater:View");
 		}
 		else {
 			Promise.all([
@@ -47,6 +54,10 @@ export class TokensViewPage implements OnInit {
 				this.configSvc.navigateRootAsync()
 			]);
 		}
+	}
+
+	ngOnDestroy() {
+		AppEvents.off("Token", "UserTokenUpdater:View");
 	}
 
 	private async prepareAsync() {
@@ -60,8 +71,9 @@ export class TokensViewPage implements OnInit {
 		}
 
 		const creator = UserProfile.get(this.token.CreatedID);
-		
-		const config: Array<AppFormsControlConfig> = [
+		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("tokens.view.title");
+		this.button = await this.configSvc.getResourceAsync("tokens.view.button");
+		this.config = [
 			{
 				Name: "Title",
 				Type: "Text",
@@ -149,10 +161,6 @@ export class TokensViewPage implements OnInit {
 				}
 			}
  		];
-
-		this.button = await this.configSvc.getResourceAsync("tokens.view.button");
-		this.configSvc.appTitle = this.title = await this.configSvc.getResourceAsync("tokens.view.title");
-		this.config = config;
 	}
 
 	onFormInitialized() {
