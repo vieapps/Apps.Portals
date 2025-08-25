@@ -502,7 +502,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 				});
 				if (contentType.WebHookNotifications.length < 1) {
 					contentType.WebHookNotifications.push(this.portalsCoreSvc.defaultWebHookNotificationSettings);
-				}
+				}				
 				contentType.WebHookAdapters = [];
 				(this.contentType.WebHookAdapters || new Dictionary<string, WebHookSettings>()).forEach((webhookAdapter, name) => contentType.WebHookAdapters.push(this.portalsCoreSvc.getWebHookSettings(webhookAdapter, settings => {
 					settings.Name = name;
@@ -535,6 +535,27 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 				this.hash = AppCrypto.hash(this.form.value);
 			}
 		});
+	}
+
+	private reupdateWebHooks(webhookNotifications: WebHookNotificationSettings[], webhookAdapters: Dictionary<string, WebHookSettings>) {
+		const webHookNotifications = (webhookNotifications || this.contentType.WebHookNotifications || []).map(notification => {
+			const webhookNotification = AppUtility.clone(notification);
+			webhookNotification.EndpointURLs = AppUtility.toStr(webhookNotification.EndpointURLs, "\n");
+			return webhookNotification;
+		});
+		if (webHookNotifications.length < 1) {
+			webHookNotifications.push(this.portalsCoreSvc.defaultWebHookNotificationSettings);
+		}
+		this.formControls.find(ctrl => ctrl.Name === "WebHookNotifications").value = webHookNotifications;
+		const webHookAdapters = [];
+		(webhookAdapters || this.contentType.WebHookAdapters || new Dictionary<string, WebHookSettings>()).forEach((webhookAdapter, name) => webHookAdapters.push(this.portalsCoreSvc.getWebHookSettings(webhookAdapter, settings => {
+			settings.Name = name;
+			settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.Alias}/${this.contentType.ID}${name !== "default" ? `/${name}` : ""}`;
+		})));
+		if (webHookAdapters.length < 1) {
+			webHookAdapters.push(this.portalsCoreSvc.getWebHookSettings(undefined, settings => settings.URL = `${this.configSvc.appConfig.URIs.apis}webhooks/${this.portalsCoreSvc.name.toLowerCase()}/${this.organization.Alias}/${this.contentType.ID}`));
+		}
+		this.formControls.find(ctrl => ctrl.Name === "WebHookAdapters").value = webHookAdapters;
 	}
 
 	save() {
@@ -672,20 +693,28 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 								data = AppUtility.isArray(data.Objects) ? data.Objects.first() : data;
 								this.configSvc.removeDefinition(this.portalsCoreSvc.name, ContentType.get(data.ID).getObjectName(true), undefined, { "x-content-type-id": data.ID });
 								this.configSvc.removeDefinition(this.portalsCoreSvc.name, ContentType.get(data.ID).getObjectName(true), undefined, { "x-content-type-id": data.ID, "x-view-controls": "x" });
-								this.trackAsync(this.title, "Update")
-									.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.update")))
-									.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync()));
+								this.trackAsync(this.title, "Update").then(async () => await Promise.all([
+									this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.update")),
+									this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
+								]));
 							},
-							error => this.trackAsync(this.title, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
+							error => this.trackAsync(this.title, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => {
+								this.processing = false;
+								this.reupdateWebHooks(contentType.WebHookNotifications, contentType.WebHookAdapters);
+							})
 						);
 					}
 					else {
 						this.portalsCoreSvc.createContentTypeAsync(
 							contentType,
-							_ => this.trackAsync(this.title)
-								.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.new")))
-								.then(() => this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())),
-							error => this.trackAsync(this.title).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
+							_ => this.trackAsync(this.title).then(async () => await Promise.all([
+								this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.new")),
+								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
+							])),
+							error => this.trackAsync(this.title).then(() => this.appFormsSvc.showErrorAsync(error)).then(() => {
+								this.processing = false;
+								this.reupdateWebHooks(contentType.WebHookNotifications, contentType.WebHookAdapters);
+							})
 						);
 					}
 				});
@@ -703,9 +732,10 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 				async () => this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.buttons.delete"))
 					.then(() => this.portalsCoreSvc.deleteContentTypeAsync(
 						this.contentType.ID,
-						_ => this.trackAsync(this.title, "Delete")
-							.then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.delete")))
-							.then(() => this.appFormsSvc.hideLoadingAsync()),
+						_ => this.trackAsync(this.title, "Delete").then(async () => await Promise.all([
+							this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.contenttypes.update.messages.success.delete")),
+							this.appFormsSvc.hideLoadingAsync()
+						])),
 						error => this.trackAsync(this.title, "Delete").then(() => this.appFormsSvc.showErrorAsync(error))
 					)
 				),

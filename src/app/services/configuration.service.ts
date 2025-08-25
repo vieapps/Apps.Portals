@@ -414,7 +414,7 @@ export class ConfigurationService extends BaseService {
 			await (fetch ? Promise.all([
 				this.fetchAsync("users/account?x-status=true", data => {
 					this.forward(data, "Users", "Account", "Update");
-					console.log(`[Configuration]: Account was updated [${AppUtility.getElapsedTime(time)}]`, this.isDebug ? this.appConfig.session.account : "");
+					console.log(`[Configuration]: Account was updated [${AppUtility.getElapsedTime(time)}]`, `\n- ID: ${data["ID"]}\n- IP: ${data["IP"]}\n- Location: ${data["Location"]}`, this.isDebug ? this.appConfig.session.account : "");
 				}),
 				this.fetchAsync("users/profile", data => {
 					this.forward(data, "Users", "Profile", "Update");

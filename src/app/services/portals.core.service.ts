@@ -903,6 +903,28 @@ export class PortalsCoreService extends BaseService {
 						}
 					},
 					{
+						Name: "SignWithTimestamp",
+						Type: "YesNo",
+						Options: {
+							Label: "{{portals.common.controls.webhooks.signWithTimestamp.label}}",
+							Type: "toggle"
+						}
+					},
+					{
+						Name: "SignWithTimestampName",
+						Options: {
+							Label: "{{portals.common.controls.webhooks.signWithTimestampName.label}}",
+							Description: "{{portals.common.controls.webhooks.signWithTimestampName.description}}"
+						}
+					},
+					{
+						Name: "SignWithTimestampConnect",
+						Options: {
+							Label: "{{portals.common.controls.webhooks.signWithTimestampConnect.label}}",
+							Description: "{{portals.common.controls.webhooks.signWithTimestampConnect.description}}"
+						}
+					},
+					{
 						Name: "Query",
 						Type: "TextArea",
 						Options: {

@@ -210,6 +210,17 @@
 						"label": "Tên của khoá bí mật",
 						"description": "Chỉ định tên của khoá bí mật để có thể xác thực và đảm bảo toàn vẹn dữ liệu theo cách thức khác (thay thế cho phương pháp kiểm tra qua chữ ký - tuy nhiên kém an toàn hơn).<br/>Các tín hiệu web-hook gửi đến phải chứa khoá bí mật này trong tham số có tên được chỉ định như ở trên, nếu không chỉ định tên thì tên của khoá bí mật sẽ là <b>x-webhook-secret-token</b>, khoá bí mật có tên này sẽ được được đặt tại header hoặc query-string."
 					},
+					"signWithTimestamp": {
+						"label": "Chỉ định sử dụng nhãn thời gian (timestamp) khi ký"
+					},
+					"signWithTimestampName": {
+						"label": "Tên tham số nhãn thời gian",
+						"description": "Chỉ định tên tham số nhãn thời gian, nếu không chỉ định tên tham số mặc định (x-webhook-timestamp) sẽ được sử dụng"
+					},
+					"signWithTimestampConnect": {
+						"label": "Thông số kết nối giữa tham số nhãn thời gian và body",
+						"description": "Chỉ định giá trị để kết nối giữa tham số nhãn thời gian và body khi ký, nếu không chỉ định thì sẽ sử dụng giá trị mặc định là 'dấu chấm' (.)"
+					},
 					"query": {
 						"label": "Tham số phải có trong query-string",
 						"description": "Chỉ định các tham số buộc phải có trong query-string đối với thông tin truyền vào (dạng JSON).<br/>Ví dụ:<br/>{<br/>&nbsp;&nbsp;\"webhook.query\":\"this is web hook query\"<br/>}"
