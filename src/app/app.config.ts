@@ -196,7 +196,7 @@ export class AppConfig {
 		return {
 			Windows: `${baseURL}%20Setup%20${this.app.version}.exe`,
 			Linux: `${baseURL}-${this.app.version}.AppImage`,
-			macOS: `${baseURL}-${this.app.version}.dmg`
+			macOS: `${baseURL}-${this.app.version}-universal.dmg`
 		};
 	}
 
