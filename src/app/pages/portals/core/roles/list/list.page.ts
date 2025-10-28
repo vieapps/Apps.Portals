@@ -89,7 +89,7 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 	get totalDisplays() {
 		return this.parentRole !== undefined
 			? this.parentRole.childrenIDs.length
-			: AppPagination.computeTotal(this.pageNumber, this.pagination);
+			: AppPagination.computeTotal(this.pageNumber, this.pagination) || this.pagination.TotalRecords;
 	}
 
 	get totalRecords() {

@@ -56,8 +56,9 @@
 					<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
 						{{ site.Created | date:'h:mm a @ d/M/y' }} <br/> {{ site.LastModified | time:locale:undefined:false }}
 					</span>
-					<span>
+					<span [class]="'title ' + site.Status">
 						{{ site.Title }}
+						<ion-icon *ngIf="site.Status !== 'Approved' && site.Status !== 'Published'" name="radio" slot="icon-only"></ion-icon>
 					</span>
 					<div>
 						{{ getInfo(site) }}

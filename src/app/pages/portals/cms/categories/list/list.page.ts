@@ -80,6 +80,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		children: "View the children",
 		view: "View the list of contents",
 		refresh: "Refresh",
+		cache: "Clear cache",
 		expression: "Create new expression",
 		versions: "versions",
 		save: "Save",
@@ -111,7 +112,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	get totalDisplays() {
 		return this.parentCategory !== undefined
 			? this.parentCategory.childrenIDs.length
-			: AppPagination.computeTotal(this.pageNumber, this.pagination);
+			: AppPagination.computeTotal(this.pageNumber, this.pagination) || this.pagination.TotalRecords;
 	}
 
 	get totalRecords() {
@@ -199,6 +200,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 			view: await this.configSvc.getResourceAsync("portals.cms.categories.list.labels.view"),
 			expression: await this.configSvc.getResourceAsync("portals.expressions.title.create"),
 			refresh: await this.configSvc.getResourceAsync("common.buttons.refresh"),
+			cache: await this.configSvc.getResourceAsync("portals.common.cache.title"),
 			versions: await this.configSvc.getResourceAsync("versions.view"),
 			save: await this.configSvc.getResourceAsync("common.buttons.save"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel"),
@@ -431,7 +433,7 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		this.do(() => this.configSvc.navigateForwardAsync(this.portalsCoreSvc.getAppURL(ContentType.get(category.PrimaryContentID) || category.module.defaultContentTypeOfContent, "list", category.Title, { CategoryID: category.ID })), event);
 	}
 
-	doRefresh(categories: Category[], index: number, useXHR: boolean = false, onFreshenUp?: () => void) {
+	doRefresh(categories: Category[], index: number, useXHR: boolean = false, onFreshenUp?: () => void, headers?: { [header: string]: string }) {
 		const refreshNext: () => void = () => {
 			this.trackAsync(this.title.track, "Refresh");
 			if (index < categories.length - 1) {
@@ -444,11 +446,11 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		if (index === 0 && categories.length > 1) {
 			this.appFormsSvc.showLoadingAsync(this.actions.last().text).then(this.configSvc.isDebug ? () => console.log(`--- Start to refresh ${categories.length} CMS categories -----------------`) : () => {});
 		}
-		this.portalsCmsSvc.refreshCategoryAsync(categories[index].ID, refreshNext, refreshNext, undefined, useXHR);
+		this.portalsCmsSvc.refreshCategoryAsync(categories[index].ID, refreshNext, refreshNext, headers, useXHR);
 	}
 
-	refresh(event: Event, category: Category) {
-		this.do(() => this.doRefresh([category], 0, true, () => this.appFormsSvc.showToastAsync("The category was freshen-up")), event);
+	refresh(event: Event, category: Category, clearCache: boolean = false) {
+		this.do(() => this.doRefresh([category], 0, true, () => this.appFormsSvc.showToastAsync(`The${clearCache ? " cached was clean and the" : ""} category was freshen-up`), clearCache ? { "x-clear-cache": "true" } : undefined), event);
 	}
 
 	refreshAll() {

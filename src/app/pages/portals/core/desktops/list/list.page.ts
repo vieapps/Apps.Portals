@@ -93,7 +93,7 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 	get totalDisplays() {
 		return this.parentDesktop !== undefined
 			? this.parentDesktop.childrenIDs.length
-			: AppPagination.computeTotal(this.pageNumber, this.pagination);
+			: AppPagination.computeTotal(this.pageNumber, this.pagination) || this.pagination.TotalRecords;
 	}
 
 	get totalRecords() {

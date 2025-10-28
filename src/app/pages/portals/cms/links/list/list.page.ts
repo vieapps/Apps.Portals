@@ -109,7 +109,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	get totalDisplays() {
 		return this.parentLink !== undefined
 			? this.parentLink.childrenIDs.length
-			: AppPagination.computeTotal(this.pageNumber, this.pagination);
+			: AppPagination.computeTotal(this.pageNumber, this.pagination) || this.pagination.TotalRecords;
 	}
 
 	get totalRecords() {

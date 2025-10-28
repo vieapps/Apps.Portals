@@ -99,7 +99,7 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 	}
 
 	get totalDisplays() {
-		return AppPagination.computeTotal(this.pageNumber, this.pagination);
+		return AppPagination.computeTotal(this.pageNumber, this.pagination) || this.pagination.TotalRecords;
 	}
 
 	get totalRecords() {
