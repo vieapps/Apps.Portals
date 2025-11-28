@@ -138,12 +138,8 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 		if (AppUtility.isNotEmpty(this.expression.ID)) {
 			formSegments.push(
 				new AppFormsSegment("filter", await this.configSvc.getResourceAsync("portals.expressions.update.segments.filter")),
-				new AppFormsSegment("sorts", await this.configSvc.getResourceAsync("portals.expressions.update.segments.sorts"))
-			);
-		}
-		if (this.isAdvancedMode) {
-			formSegments.push(
-				new AppFormsSegment("integrations", "Integrations")
+				new AppFormsSegment("sorts", await this.configSvc.getResourceAsync("portals.expressions.update.segments.sorts")),
+				new AppFormsSegment("integrations", await this.configSvc.getResourceAsync("portals.expressions.update.segments.integrations"))
 			);
 		}
 		if (onCompleted !== undefined) {
@@ -275,6 +271,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 				}
 			}
 		);
+
 		if (AppUtility.isNotEmpty(this.expression.ID)) {
 			formConfig.push(
 				this.portalsCoreSvc.getAuditFormControl(this.expression, "basic"),
@@ -293,6 +290,10 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 					}
 				})
 			);
+			formConfig.find(ctrl => ctrl.Name === "SearchTransformScript").Options.Rows = formConfig.find(ctrl => ctrl.Name === "GetTransformScript").Options.Rows = 10;
+		}
+		else {
+			formConfig.find(ctrl => ctrl.Name === "UseCursor").Hidden = formConfig.find(ctrl => ctrl.Name === "SearchTransformScript").Hidden = formConfig.find(ctrl => ctrl.Name === "GetTransformScript").Hidden = true;
 		}
 
 		if (this.isAdvancedMode) {
@@ -409,6 +410,32 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 						}
 						catch (error) {
 							this.appFormsSvc.showErrorAsync(error);
+						}
+					},
+					Options: {
+						Fill: "clear",
+						Css: "ion-float-end"
+					}
+				}),
+				{
+					Name: "Stringify",
+					Type: "TextArea",
+					Segment: "integrations",
+					Options: {
+						Label: "Stringify JSON/Text",
+						Rows: 20
+					}
+				},
+				this.appFormsSvc.getButtonControls("integrations", {
+					Name: "StringifyButton",
+					Label: "Stringify",
+					OnClick: _ => {
+						const input = this.form.controls.Stringify.value || "";
+						try {
+							this.form.controls.Stringify.setValue(AppUtility.stringify(AppUtility.parse(input)), { onlySelf: true });
+						}
+						catch (error) {
+							this.form.controls.Stringify.setValue(AppUtility.stringify({ "input": input.trim() } ), { onlySelf: true });
 						}
 					},
 					Options: {

@@ -21,26 +21,10 @@ export class FilesService extends BaseService {
 	) {
 		super("Files");
 		AppAPIs.registerAsServiceScopeProcessor(this.name, message => AppEvents.broadcast(this.name, { Object: message.Type.Object, Event: message.Type.Event, ObjectID: message.Data.ObjectID, Data: message.Data }));
-		AppEvents.on("Session", info => {
-			if (info.args.Type === "LogIn") {
-				this.authenticate();
-			}
-		});
-		AppEvents.on("App", info => {
-			if (info.args.Type === "Initialized" && this.configSvc.isReady && this.configSvc.isAuthenticated) {
-				this.authenticate();
-			}
-		});
 	}
 
 	private get http() {
 		return AppAPIs.http;
-	}
-
-	private authenticate() {
-		AppUtility.toAsync(this.http.get(AppAPIs.getURL("avatars/ngx", this.configSvc.appConfig.URIs.files) + "?x-authenticate=true&x-response=json" + (this.configSvc.isDebug ? "&x-logs=true" : ""), { headers: this.getHeaders() }))
-			.then(() => console.log("[Files]: Authenticated", this.configSvc.appConfig.session.account !== undefined && this.configSvc.appConfig.session.account.profile !== undefined ? "=> " + this.configSvc.appConfig.session.account.profile.Name + " (" + this.configSvc.appConfig.session.account.profile.Email + ")" : ""))
-			.catch(error => console.error("[Files]: Error occurred while authenticating with file services", error));
 	}
 
 	readAsDataURL(file: File, onRead: (data: string) => void, limitSize?: number, onLimitExceeded?: (fileSize?: number, limitSize?: number) => void) {

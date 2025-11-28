@@ -72,6 +72,7 @@ export class Organization extends CoreBaseModel {
 	FakeFilesHttpURI = undefined as string;
 	FakePortalsHttpURI = undefined as string;
 	ExamineURLs = undefined as string;
+	McpSettings = undefined as string;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;

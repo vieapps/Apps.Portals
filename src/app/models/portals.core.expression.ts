@@ -33,6 +33,9 @@ export class Expression extends CoreBaseModel {
 	RepositoryEntityID = undefined as string;
 	Filter = undefined as FilterBy;
 	Sorts = undefined as Array<SortBy>;
+	UseCursor = undefined as boolean;
+	SearchTransformScript = undefined as string;
+	GetTransformScript = undefined as string;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;

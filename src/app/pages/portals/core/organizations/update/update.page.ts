@@ -398,6 +398,16 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				}
 			},
 			{
+				Name: "McpSettings",
+				Segment: "socials",
+				Type: "TextArea",
+				Options: {
+					Label: "{{portals.organizations.controls.McpSettings.label}}",
+					Description: "{{portals.organizations.controls.McpSettings.description}}",
+					Rows: 30
+				}
+			},
+			{
 				Name: "HttpIndicators",
 				Segment: "socials",
 				Options: {
