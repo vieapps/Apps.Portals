@@ -447,7 +447,7 @@ export class UsersService extends BaseService {
 							this.configSvc.resetSessionAsync(() =>
 								this.configSvc.initializeSessionAsync(() =>
 									this.configSvc.registerSessionAsync(() => {
-										AppAPIs.reopenWebSocket("Reopens when got a security issue");
+										AppAPIs.reopen("Reopens when got a security issue");
 										AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
 										AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
 										AppEvents.sendToElectron("Users", { Type: "LogOut" });
@@ -458,7 +458,7 @@ export class UsersService extends BaseService {
 						else {
 							this.configSvc.updateSessionAsync(message.Data, () => this.configSvc.registerSessionAsync(() => {
 								console.log("[Users]: The session was revoked by the APIs", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
-								AppAPIs.reopenWebSocket("Reopens when the session was revoked by the APIs");
+								AppAPIs.reopen("Reopens when the session was revoked by the APIs");
 								AppEvents.broadcast("Account", { Type: "Updated", Mode: "APIs" });
 								AppEvents.broadcast("Profile", { Type: "Updated", Mode: "APIs" });
 								AppEvents.sendToElectron("Users", { Type: "LogOut" });

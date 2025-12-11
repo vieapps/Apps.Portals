@@ -52,7 +52,7 @@ export class AppComponent implements OnInit {
 		router.events.subscribe(event => {
 			if (event instanceof RoutesRecognized) {
 				if (AppAPIs.isPingPeriodTooLarge) {
-					AppAPIs.reopenWebSocket("<Router>: Ping period is too large...");
+					AppAPIs.reopen("<Router>: Ping period is too large...");
 				}
 				this.configSvc.appConfig.URLs.routerParams = (event as RoutesRecognized).state.root.params;
 				this.configSvc.pushURL((event as RoutesRecognized).url, (event as RoutesRecognized).state.root.queryParams);
@@ -224,7 +224,7 @@ export class AppComponent implements OnInit {
 							.then(() => this.configSvc.loadOptionsAsync())
 							.then(() => dontStoreURIs ? AppStorage.removeAsync("URIs") : AppUtility.promise)
 							.then(() => appConfig.session.id = appConfig.session.token = appConfig.session.account = undefined)
-							.then(() => AppAPIs.closeWebSocket())
+							.then(() => AppAPIs.close())
 							.then(() => this.initialize(() => this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.users.login)));
 					}),
 					resetApps: function(domain: string, disabledServices?: string, dontStoreURIs: boolean = true) {
@@ -710,7 +710,7 @@ export class AppComponent implements OnInit {
 		.then(() => Promise.all([this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc]
 			.filter(service => this.configSvc.appConfig.services.all.findIndex(svc => svc.name === service.name) > -1)
 			.map(service => service.initializeAsync())
-		).then(() => AppAPIs.openWebSocket(() => AppAPIs.isReopen ? AppUtility.promise : Promise.all([
+		).then(() => AppAPIs.open(() => AppAPIs.isReopen ? AppUtility.promise : Promise.all([
 			this.configSvc.isAuthenticated ? this.usersSvc.fetchStatisticsAsync() : AppUtility.promise,
 			this.configSvc.isAuthenticated ? this.preflightAsync("<App>: Fetch notifications (app init)", "<App>: Fetch active organizations (app init)") : AppUtility.promise,
 			AppUtility.invoke(() => {

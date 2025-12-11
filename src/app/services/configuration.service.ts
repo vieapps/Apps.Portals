@@ -399,7 +399,7 @@ export class ConfigurationService extends BaseService {
 		if (AppUtility.isNotEmpty(session.Token)) {
 			try {
 				AppConfig.session.token = AppCrypto.jwtDecode(session.Token);
-				AppAPIs.authenticateWebSocket();
+				AppAPIs.authenticate();
 			}
 			catch (error) {
 				AppConfig.session.token = undefined;

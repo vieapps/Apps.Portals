@@ -2065,7 +2065,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	private findNextVersions(message?: any) {
-		if (!AppAPIs.isWebSocketReady && !!message) {
+		if (!AppAPIs.isReady && !!message) {
 			if (this.configSvc.isDebug) {
 				console.log("[Versions]: Broadcast message", message);
 			}
@@ -3615,7 +3615,7 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	fetchSchedulingTasks(systemID?: string) {
-		AppUtility.invoke(() => this.readAsync(this.getPath("Task", "fetch"), data => this.processSchedulingTasks(data), error => console.error("[Portals]: Error occurred while fetching tasks", error), { "x-system-id": systemID || this.activeOrganization.ID, "x-update-messagae": AppAPIs.isWebSocketReady.toString() }, false, true), 3456);
+		AppUtility.invoke(() => this.readAsync(this.getPath("Task", "fetch"), data => this.processSchedulingTasks(data), error => console.error("[Portals]: Error occurred while fetching tasks", error), { "x-system-id": systemID || this.activeOrganization.ID, "x-update-messagae": AppAPIs.isReady.toString() }, false, true), 3456);
 	}
 
 	runSchedulingTaskAsync(id: string, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {

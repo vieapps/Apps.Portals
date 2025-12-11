@@ -23,7 +23,7 @@ export abstract class PortalCmsBase extends BaseModel {
 		const args = {
 			Type: type,
 			Mode: "Updated",
-			Object: objectName || object.contentType.getObjectName(true),
+			Object: objectName || (object.contentType !== undefined ? object.contentType.getObjectName(true) : undefined),
 			ID: object.ID,
 			SystemID: object.SystemID,
 			RepositoryID: object.RepositoryID,

@@ -34,7 +34,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "10.2512.1",
+		version: "10.2601.1",
 		frameworks: "ionic 5 - angular 11 - cordova 11",
 		mode: "",
 		platform: "",
@@ -42,6 +42,7 @@ export class AppConfig {
 		shell: "Browser",
 		persistence: true,
 		debug: false,
+		websocketAsTunnel: true,
 		preflight: {
 			enable: true,
 			defer: 2345

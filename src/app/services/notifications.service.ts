@@ -35,8 +35,8 @@ export class NotificationsService extends BaseService {
 			ServiceName: this.name,
 			ObjectName: "Notification",
 			Query: { "object-identity": "fetch" },
-			Header: AppAPIs.isWebSocketReady ? undefined : { "x-update-messagae": "false" }
-		}, AppAPIs.isWebSocketReady ? undefined : data => this.updateNotifications(data !== undefined ? data.Objects : []), undefined, false, true);
+			Header: AppAPIs.isReady ? undefined : { "x-update-messagae": "false" }
+		}, AppAPIs.isReady ? undefined : data => this.updateNotifications(data !== undefined ? data.Objects : []), undefined, false, true);
 	}
 
 	searchNotificationsAsync(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {

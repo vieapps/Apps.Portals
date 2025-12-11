@@ -8,13 +8,13 @@ import { AppRequestInfo, AppMessage } from "@app/components/app.objects";
 /** Servicing component for working with APIs */
 export class AppAPIs {
 
-	private static _websocket: WebSocket;
-	private static _websocketStatus: string;
-	private static _websocketURL: string;
-	private static _onWebSocketOpened: (event: Event) => void;
-	private static _onWebSocketClosed: (event: CloseEvent) => void;
-	private static _onWebSocketGotError: (event: Event) => void;
-	private static _onWebSocketGotMessage: (event: MessageEvent) => void;
+	private static _webSocket: WebSocket;
+	private static _eventStream: EventSource;
+	private static _status: string;
+	private static _onOpened: (event: Event) => void;
+	private static _onClosed: (event: CloseEvent) => void;
+	private static _onError: (event: Event) => void;
+	private static _onMessage: (event: MessageEvent) => void;
 	private static _messageTypes: { [key: string]: { Service: string; Object?: string; Event?: string; } } = {};
 	private static _serviceScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
 	private static _objectScopeHandlers: { [key: string]: Array<{ func: (message: AppMessage) => void, identity: string }> } = {};
@@ -29,33 +29,34 @@ export class AppAPIs {
 	private static _isReopen = false;
 	private static _counter = 0;
 	private static _attempt = 0;
+	private static _totalOfReconnects = 0;
 	private static _time = new Date();
 	private static _http: HttpClient;
-	private static _onOpened: () => void;
+	private static _onTunnelOpened: () => void;
 
-	/** Sets the action to fire when the WebSocket connection is opened */
-	static set onWebSocketOpened(func: (event: Event) => void) {
-		this._onWebSocketOpened = func;
+	/** Sets the action to fire when the tunnel was opened */
+	static set onOpened(func: (event: Event) => void) {
+		this._onOpened = func;
 	}
 
-	/** Sets the action to fire when the WebSocket connection is closed */
-	static set onWebSocketClosed(func: (event: CloseEvent) => void) {
-		this._onWebSocketClosed = func;
+	/** Sets the action to fire when the tunnel was closed */
+	static set onClosed(func: (event: CloseEvent) => void) {
+		this._onClosed = func;
 	}
 
-	/** Sets the action to fire when the WebSocket connection got any error */
-	static set onWebSocketGotError(func: (event: Event) => void) {
-		this._onWebSocketGotError = func;
+	/** Sets the action to fire when the tunnel was got any error */
+	static set onError(func: (event: Event) => void) {
+		this._onError = func;
 	}
 
-	/** Sets the action to fire when the WebSocket connection got any message */
-	static set onWebSocketGotMessage(func: (event: MessageEvent) => void) {
-		this._onWebSocketGotMessage = func;
+	/** Sets the action to fire when the tunnel was got any message */
+	static set onMessage(func: (event: MessageEvent) => void) {
+		this._onMessage = func;
 	}
 
-	/** Gets state that determines the WebSocket connection is ready or not */
-	static get isWebSocketReady() {
-		return this._websocket !== undefined && this._websocketStatus === "ready";
+	/** Gets state that determines the tunnel is ready or not */
+	static get isReady() {
+		return (AppConfig.app.websocketAsTunnel ? this._webSocket !== undefined : this._eventStream !== undefined) && this._status === "ready";
 	}
 
 	/** Gets state that determines the WebSocket connection is got too large ping period */
@@ -226,66 +227,181 @@ export class AppAPIs {
 		}
 	}
 
-	/** Opens the WebSocket connection */
-	static openWebSocket(onOpened?: () => void, isReopenOrRestart: boolean = false) {
-		// check
-		if (typeof WebSocket === "undefined" || this._websocket !== undefined) {
-			if (this._websocket === undefined) {
-				console.warn("[AppAPIs]: Its requires a modern component that supports WebSocket");
+	private static closeWebSocket() {
+		if (this._webSocket !== undefined) {
+			this._webSocket.close();
+			this._webSocket = undefined;
+		}
+	}
+
+	private static reopenWebSocket(reason?: string, defer?: number) {
+		if (this._status !== "restarting") {
+			this.closeWebSocket();
+			this._status = "restarting";
+			this._isReopen = true;
+			this._attempt++;
+			console.log(`[AppAPIs]: ${reason || "Re-open because the WebSocket connection is broken"}`);
+			AppUtility.invoke(() => {
+				console.log(`[AppAPIs]: The WebSocket connection is re-opening... #${this._attempt}`);
+				this.open(() => {
+					if (this.isReady) {
+						console.log(`[AppAPIs]: The WebSocket connection was re-opened... #${this._attempt}`);
+						this._attempt = 0;
+					}
+					if (this._onTunnelOpened !== undefined) {
+						this._onTunnelOpened();
+					}
+				}, this._isReopen);
+			}, defer || 123 + (this._attempt * 13));
+		}
+	}
+
+	private static updateWebSocket(options?: { message?: string; resendCallbackMessages?: boolean } ) {
+		AppUtility.getAttributes(this._nocallbackMessages).sort().forEach(id => this._webSocket.send(this._nocallbackMessages[id]));
+		this._nocallbackMessages = {};
+		if (options !== undefined && AppUtility.isNotEmpty(options.message)) {
+			this._webSocket.send(options.message);
+		}
+		if (options !== undefined && options.resendCallbackMessages) {
+			this._resend.id = this._resend.next = undefined;
+			this.resendWebSocketMessages();
+		}
+	}
+
+	private static resendWebSocketMessages() {
+		if (this.isReady) {
+			const ids = Object.keys(this._callbackableMessages);
+			const id = ids.sort().first();
+			if (id !== undefined) {
+				if (id !== this._resend.id) {
+					this._resend.id = id;
+					this._webSocket.send(this._callbackableMessages[id]);
+				}
+				this._resend.next = ids.length > 1 ? () => {
+					if (AppUtility.isGotData(this._callbackableMessages)) {
+						this.resendWebSocketMessages();
+					}
+					else {
+						this._resend.id = this._resend.next = undefined;
+					}
+				} : undefined;
 			}
+			else {
+				this._resend.id = this._resend.next = undefined;
+			}
+		}
+	}
+
+	private static canUseWebSocket(useXHR: boolean = false, preferWebSocket: boolean = false) {
+		let canUse = false;
+		if (this.isReady && this._webSocket !== undefined) {
+			canUse = preferWebSocket || (!AppConfig.app.query.preferXHR && !useXHR);
+			if (canUse && this.isPingPeriodTooLarge) {
+				canUse = false;
+				this.reopenWebSocket("[AppAPIs]: Ping period is too large...");
+			}
+		}
+		return canUse;
+	}
+
+	private static getEndpointURL(isWebSocket: boolean = false, isReopenOrRestart: boolean = false) {
+		const url = isWebSocket
+			? (AppConfig.URIs.ws || AppConfig.URIs.apis).replace("http://", "ws://").replace("https://", "wss://")
+			: AppConfig.URIs.ws || AppConfig.URIs.apis;
+		return `${url}~tunnel?x-app-token=${AppConfig.jwt}&x-session-id=${AppCrypto.base64urlEncode(AppConfig.session.id)}&x-device-id=${AppCrypto.base64urlEncode(AppConfig.session.device)}&x-app-name=${AppCrypto.base64urlEncode(AppConfig.app.name)}&x-app-platform=${AppCrypto.base64urlEncode(AppConfig.app.platform)}` + (isReopenOrRestart ? "&x-restart" : "");
+	}
+
+	/** Opens the APIs tunnel */
+	static open(onOpened?: () => void, isReopenOrRestart: boolean = false) {
+		// prepare
+		this._status = "initializing";
+		this._onTunnelOpened = this._onTunnelOpened || onOpened;
+		this._ping = +new Date();
+		if (!isReopenOrRestart) {
+			this._time = new Date();
+		}
+
+		// open the tunnel
+		if (AppConfig.app.websocketAsTunnel) {
+			if (typeof WebSocket !== "undefined") {
+				this._webSocket = new WebSocket(this.getEndpointURL(true, isReopenOrRestart));
+			}
+			AppUtility.invoke(() => {
+				if (!this.isReady) {
+					this.close();
+					this._time = new Date();
+					AppConfig.app.websocketAsTunnel = false;
+					AppUtility.invoke(() => this.open(onOpened), 123);
+					console.log("[AppAPIs]: Switch the tunnel to EventSource because WebSocket is not connected in the period of times.");
+				}
+			}, 13 * 1000);
+		}
+		else if (typeof EventSource !== "undefined") {
+			this._eventStream = new EventSource(this.getEndpointURL());
+		}
+
+		// check instances
+		const tunnel = this._webSocket || this._eventStream;
+		if (tunnel === undefined) {
+			console.log("[AppAPIs]: Its requires a modern component that supports WebSocket or EventSource");
 			if (onOpened !== undefined) {
 				onOpened();
 			}
 			return;
 		}
 
-		// prepare
-		this._websocketStatus = "initializing";
-		this._websocketURL = (AppConfig.URIs.ws || AppConfig.URIs.apis).replace("http://", "ws://").replace("https://", "wss://");
-		this._websocket = new WebSocket(`${this._websocketURL}ws?x-app-token=${AppConfig.jwt}&x-session-id=${AppCrypto.base64urlEncode(AppConfig.session.id)}&x-device-id=${AppCrypto.base64urlEncode(AppConfig.session.device)}&x-app-name=${AppCrypto.base64urlEncode(AppConfig.app.name)}&x-app-platform=${AppCrypto.base64urlEncode(AppConfig.app.platform)}` + (isReopenOrRestart ? "&x-restart=" : ""));
-		this._onOpened = this._onOpened || onOpened;
-		this._ping = +new Date();
-
 		// assign 'on-open' event handler
-		this._websocket.onopen = event => {
-			this._websocketStatus = "ready";
-			console.log(`[AppAPIs]: The WebSocket connection was opened... [${AppUtility.getElapsedTime(this._time)} => ${AppUtility.parseURI(this._websocketURL).HostURI}]`, AppUtility.toIsoDateTime(new Date(), true));
-			if (this._onWebSocketOpened !== undefined) {
+		tunnel.onopen = event => {
+			this._status = "ready";
+			console.log(`[AppAPIs]: The ${this._webSocket !== undefined ? "WebSocket" : "EventStream"} connection was opened... [${AppUtility.getElapsedTime(this._time)} => ${AppUtility.parseURI(tunnel.url).HostURI}]`, AppUtility.toIsoDateTime(new Date(), true));
+			if (this._onOpened !== undefined) {
 				try {
-					this._onWebSocketOpened(event);
+					this._onOpened(event);
 				}
 				catch (error) {
 					console.error("[AppAPIs]: Error occurred while running the 'on-open' handler", error);
 				}
 			}
-			this.authenticateWebSocket();
+			this.authenticate();
 		};
 
 		// assign 'on-close' event handler
-		this._websocket.onclose = event => {
-			this._websocketStatus = "close";
-			this._time = new Date();
-			console.log(`[AppAPIs]: The WebSocket connection was closed [${event.reason}]`, AppUtility.toIsoDateTime(this._time, true));
-			if (this._onWebSocketClosed !== undefined) {
-				try {
-					this._onWebSocketClosed(event);
+		if (this._webSocket !== undefined) {
+			this._webSocket.onclose = event => {
+				this._status = "close";
+				this._time = new Date();
+				console.log(`[AppAPIs]: The WebSocket connection was closed [${event.reason}]`, AppUtility.toIsoDateTime(this._time, true));
+				if (this._onClosed !== undefined) {
+					try {
+						this._onClosed(event);
+					}
+					catch (error) {
+						console.error("[AppAPIs]: Error occurred while running the 'on-close' handler", error);
+					}
 				}
-				catch (error) {
-					console.error("[AppAPIs]: Error occurred while running the 'on-close' handler", error);
+				if (1007 !== event.code) {
+					if (this._totalOfReconnects > 13) {
+						AppUtility.invoke(() => {
+							this.close();
+							AppConfig.app.websocketAsTunnel = false;
+							this.open();
+						}, 123);
+					}
+					else {
+						this._totalOfReconnects++;
+						this.reopenWebSocket();
+					}
 				}
-			}
-			if (AppUtility.isNotEmpty(this._websocketURL) && 1007 !== event.code) {
-				this.reopenWebSocket();
-			}
-		};
+			};
+		}
 
 		// assign 'on-error' event handler
-		this._websocket.onerror = event => {
-			this._websocketStatus = "error";
-			console.warn("[AppAPIs]: The WebSocket connection was got an error...", AppConfig.isDebug ? event : "");
-			if (this._onWebSocketGotError !== undefined) {
+		tunnel.onerror = event => {
+			this._status = "error";
+			console.log(`[AppAPIs]: The ${this._webSocket !== undefined ? "WebSocket" : "EventStream"} connection was got an error...`, AppConfig.isDebug ? event : "");
+			if (this._onError !== undefined) {
 				try {
-					this._onWebSocketGotError(event);
+					this._onError(event);
 				}
 				catch (error) {
 					console.error("[AppAPIs]: Error occurred while running the 'on-error' handler", error);
@@ -294,11 +410,11 @@ export class AppAPIs {
 		};
 
 		// assign 'on-message' event handler
-		this._websocket.onmessage = event => {
+		tunnel.onmessage = event => {
 			// run the dedicated handler first
-			if (this._onWebSocketGotMessage !== undefined) {
+			if (this._onMessage !== undefined) {
 				try {
-					this._onWebSocketGotMessage(event);
+					this._onMessage(event);
 				}
 				catch (error) {
 					console.error("[AppAPIs]: Error occurred while running the 'on-message' handler", error);
@@ -306,7 +422,7 @@ export class AppAPIs {
 			}
 
 			// prepare
-			let msg: { ID?: string; CorrelationID?: string; Type: string; Data: any; };
+			let msg: { ID?: string; CorrelationID?: string; Type?: string; Data: any; };
 			try {
 				msg = AppUtility.parse(event.data || "{}");
 			}
@@ -316,7 +432,7 @@ export class AppAPIs {
 				}
 				this.clean();
 				const ids = Object.keys(this._callbackableMessages);
-				if (ids.length > 0) {
+				if (this._webSocket !== undefined && ids.length > 0) {
 					this._resend.id = undefined;
 					const defer = Math.round(AppConfig.app.query.defer + ids.length + (123 * ids.length * Math.random()));
 					AppUtility.invoke(() => this.resendWebSocketMessages(), defer);
@@ -327,7 +443,6 @@ export class AppAPIs {
 				return;
 			}
 
-			// prepare
 			const data = msg.Data || {};
 			const gotID = AppUtility.isNotEmpty(msg.ID);
 			const successCallback = gotID ? this._successCallbacks[msg.ID] : undefined;
@@ -346,7 +461,7 @@ export class AppAPIs {
 					console.error(`[AppAPIs]: ${data.Code} - ${data.Type}: ${data.Message}`, data);
 
 					// the token is expired => re-open WebSocket to renew token and reauthenticate
-					if ("TokenExpiredException" === data.Type) {
+					if ("TokenExpiredException" === data.Type && this._webSocket !== undefined) {
 						this.reopenWebSocket("[AppAPIs]: Re-open WebSocket connection because the token is expired");
 					}
 
@@ -392,10 +507,12 @@ export class AppAPIs {
 				// send PONG
 				else if (messageType.Service === "Ping") {
 					this._ping = +new Date();
-					this.sendWebSocketRequest({
-						ServiceName: "Session",
-						Verb: "PONG"
-					});
+					if (this._webSocket !== undefined) {
+						this.sendWebSocketRequest({
+							ServiceName: "Session",
+							Verb: "PONG"
+						});
+					}
 				}
 
 				// run schedulers
@@ -434,111 +551,50 @@ export class AppAPIs {
 			if (onOpened !== undefined) {
 				onOpened();
 			}
-			else if (this._onOpened !== undefined) {
-				this._onOpened();
-				this._onOpened = undefined;
+			else if (this._onTunnelOpened !== undefined) {
+				this._onTunnelOpened();
+				this._onTunnelOpened = undefined;
 			}
-		}, this.isWebSocketReady ? 0 : AppConfig.app.query.defer / 2);
+		}, this.isReady ? 0 : AppConfig.app.query.defer / 2);
 	}
 
-	private static disposeWebSocket() {
-		if (this._websocket !== undefined) {
-			this._websocket.close();
-			this._websocket = undefined;
+	/** Re-Opens the APIs tunnel */
+	static reopen(reason?: string, defer?: number) {
+		if (this._webSocket !== undefined) {
+			this.reopenWebSocket(reason, defer);
 		}
 	}
 
-	/** Closes the WebSocket connection */
-	static closeWebSocket(onClosed?: () => void) {
-		this.disposeWebSocket();
-		this._websocketURL = undefined;
-		this._websocketStatus = "close";
+	/** Closes the APIs tunnel */
+	static close(onClosed?: () => void) {
+		if (this._eventStream !== undefined) {
+			this._eventStream.close();
+			this._eventStream = undefined;
+		}
+		else {
+			this.closeWebSocket();
+		}
+		this._status = "close";
 		if (onClosed !== undefined) {
 			onClosed();
 		}
 	}
 
-	/** Reopens the WebSocket connection */
-	static reopenWebSocket(reason?: string, defer?: number) {
-		if (this._websocketStatus !== "restarting") {
-			this.disposeWebSocket();
-			this._websocketStatus = "restarting";
-			this._isReopen = true;
-			this._attempt++;
-			console.warn(`[AppAPIs]: ${reason || "Re-open because the WebSocket connection is broken"}`);
-			AppUtility.invoke(() => {
-				console.log(`[AppAPIs]: The WebSocket connection is re-opening... #${this._attempt}`);
-				this.openWebSocket(() => {
-					if (this.isWebSocketReady) {
-						console.log(`[AppAPIs]: The WebSocket connection was re-opened... #${this._attempt}`);
-						this._attempt = 0;
-					}
-					if (this._onOpened !== undefined) {
-						this._onOpened();
-					}
-				})
-			}, defer || 123 + (this._attempt * 13));
-		}
-	}
-
-	private static updateWebSocket(options?: { message?: string; resendCallbackMessages?: boolean } ) {
-		AppUtility.getAttributes(this._nocallbackMessages).sort().forEach(id => this._websocket.send(this._nocallbackMessages[id]));
-		this._nocallbackMessages = {};
-		if (options !== undefined && AppUtility.isNotEmpty(options.message)) {
-			this._websocket.send(options.message);
-		}
-		if (options !== undefined && options.resendCallbackMessages) {
-			this._resend.id = this._resend.next = undefined;
-			this.resendWebSocketMessages();
-		}
-	}
-
-	private static canUseWebSocket(useXHR: boolean = false) {
-		let can = !AppConfig.app.query.preferXHR && !useXHR && this.isWebSocketReady;
-		if (can && this.isPingPeriodTooLarge) {
-			can = false;
-			this.reopenWebSocket("[AppAPIs]: Ping period is too large...");
-		}
-		return can;
-	}
-
-	/** Sends a message to APIs to authenticate the WebSocket connection */
-	static authenticateWebSocket() {
-		this._nocallbackMessages["0"] = AppUtility.stringify({
-			ServiceName: "Session",
-			Verb: "AUTH",
-			Header: {
-				"x-session-id": AppCrypto.aesEncrypt(AppConfig.session.id),
-				"x-device-id": AppCrypto.aesEncrypt(AppConfig.session.device)
-			},
-			Body: this.getHeaders()
-		});
-		if (this.isWebSocketReady) {
-			this.updateWebSocket({ resendCallbackMessages: true });
-			console.log("[AppAPIs]: Authenticated", AppConfig.session.account !== undefined && AppConfig.session.account.profile !== undefined ? "=> " + AppConfig.session.account.profile.Name + " (" + AppConfig.session.account.profile.Email + ")" : "", AppConfig.isDebug ? AppConfig.session : "");
-		}
-	}
-
-	private static resendWebSocketMessages() {
-		if (this.isWebSocketReady) {
-			const ids = Object.keys(this._callbackableMessages);
-			const id = ids.sort().first();
-			if (id !== undefined) {
-				if (id !== this._resend.id) {
-					this._resend.id = id;
-					this._websocket.send(this._callbackableMessages[id]);
-				}
-				this._resend.next = ids.length > 1 ? () => {
-					if (AppUtility.isGotData(this._callbackableMessages)) {
-						this.resendWebSocketMessages();
-					}
-					else {
-						this._resend.id = this._resend.next = undefined;
-					}
-				} : undefined;
-			}
-			else {
-				this._resend.id = this._resend.next = undefined;
+	/** Sends a message to APIs to authenticate the tunnel */
+	static authenticate() {
+		if (this._webSocket !== undefined) {
+			this._nocallbackMessages["0"] = AppUtility.stringify({
+				ServiceName: "Session",
+				Verb: "AUTH",
+				Header: {
+					"x-session-id": AppCrypto.aesEncrypt(AppConfig.session.id),
+					"x-device-id": AppCrypto.aesEncrypt(AppConfig.session.device)
+				},
+				Body: this.getHeaders()
+			});
+			if (this.isReady) {
+				this.updateWebSocket({ resendCallbackMessages: true });
+				console.log("[AppAPIs]: Authenticated", AppConfig.session.account !== undefined && AppConfig.session.account.profile !== undefined ? "=> " + AppConfig.session.account.profile.Name + " (" + AppConfig.session.account.profile.Email + ")" : "", AppConfig.isDebug ? AppConfig.session : "");
 			}
 		}
 	}
@@ -600,7 +656,7 @@ export class AppAPIs {
 			this._successCallbacks[id] = onSuccess;
 			this._errorCallbacks[id] = onError;
 		}
-		if (this.isWebSocketReady) {
+		if (this.isReady) {
 			this.updateWebSocket({ message: message });
 		}
 		else if (!gotCallback) {
@@ -684,9 +740,9 @@ export class AppAPIs {
 			requestMessage.Query["object-identity"] = request.ObjectIdentity;
 		}
 		if (AppConfig.isDebug) {
-			requestMessage.Query["x-logs"] = "true";
+			requestMessage.Query["x-logs"] = "1";
 		}
-		if ((preferWebSocket && this.isWebSocketReady) || this.canUseWebSocket(useXHR)) {
+		if (this.canUseWebSocket(useXHR, preferWebSocket)) {
 			this.sendWebSocketRequest(requestMessage, onSuccess, onError);
 			return EmptyObservable;
 		}
@@ -702,7 +758,7 @@ export class AppAPIs {
 		path += requestInfo.Extra !== undefined ? (path.indexOf("?") > 0 ? "&" : "?") + `x-request-extra=${AppCrypto.jsonEncode(requestInfo.Extra)}` : "";
 		const url = this.getURL(path);
 		const headers = this.getHeaders(requestInfo.Header);
-		const query = (AppConfig.isDebug ? "x-logs=true" : "") + (AppConfig.app.query.includeToken ? (AppConfig.isDebug ? "&" : "") + AppUtility.toQuery(headers) : "");
+		const query = (AppConfig.isDebug ? "x-logs" : "") + (AppConfig.app.query.includeToken ? (AppConfig.isDebug ? "&" : "") + AppUtility.toQuery(headers) : "");
 		return this.sendXMLHttpRequest(requestInfo.Verb, url + (query === "" ? "" : (url.indexOf("?") > 0 ? "&" : "?") + query), AppConfig.app.query.includeToken ? undefined : { headers: headers }, requestInfo.Body);
 	}
 
@@ -715,7 +771,7 @@ export class AppAPIs {
 		* @param preferWebSocket Set to true to prefer WebSocker over XHR, false to let system decides
 	*/
 	static sendRequestAsync(requestInfo: AppRequestInfo, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false, preferWebSocket: boolean = false) {
-		return (preferWebSocket && this.isWebSocketReady) || this.canUseWebSocket(useXHR)
+		return this.canUseWebSocket(useXHR, preferWebSocket)
 			? AppUtility.toAsync(this.sendRequest(requestInfo, false, onSuccess, onError, preferWebSocket)).then(() => {}).catch(error => console.error("[AppAPIs]: Error occurred while sending a request to APIs (WS)", error))
 			: AppUtility.toAsync(this.sendRequest(requestInfo))
 				.then(data => {
