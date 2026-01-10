@@ -878,12 +878,14 @@ export class PortalsCmsService extends BaseService {
 			this.showError(`Error occurred while preparing categories\n${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`, error);
 			onSuccess();
 		};
-		return this.searchSpecifiedCategoriesAsync(contentType, _ => {
-			if (this.configSvc.isDebug) {
-				console.log(`[Portals]: Prepare caregories [${index + 1}/${contentTypes.length}]`, [`${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`]);
-			}
-			onSuccess();
-		}, onError, false, false, true);
+		return contentType === undefined
+			? AppUtility.promise
+			: this.searchSpecifiedCategoriesAsync(contentType, _ => {
+				if (this.configSvc.isDebug) {
+					console.log(`[Portals]: Prepare categories [${index + 1}/${contentTypes.length}]`, [`${contentType.Title} @ ${Organization.get(contentType.SystemID).Title}`]);
+				}
+				onSuccess();
+			}, onError, false, false, true);
 	}
 
 	async prepareCategoriesOfActiveOrganizationsAsync(all: boolean = false) {

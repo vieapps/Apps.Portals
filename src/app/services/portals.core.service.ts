@@ -2384,6 +2384,9 @@ export class PortalsCoreService extends BaseService {
 		}
 		if (!!message.Data.Title && (message.Type.Event === "Create" || message.Type.Event === "Update" || message.Type.Event === "Delete")) {
 			AppEvents.broadcast(this.name, { Object: "Organization", Type: `${message.Type.Event}d`, ID: message.Data.ID });
+			if (message.Type.Event === "Update" && !!message.Data.Alias && Organization.active !== undefined && Organization.active.ID === message.Data.ID) {
+				AppEvents.broadcast("UpdateSidebarHeader", { title: message.Data.Alias });
+			}
 		}
 	}
 

@@ -144,8 +144,11 @@ export class AppComponent implements OnInit {
 				if (uri.QueryParams["xhr"] !== undefined) {
 					appConfig.app.query.preferXHR = true;
 				}
-				if (uri.QueryParams["xhrToken"] !== undefined || uri.QueryParams["xhr-token"] !== undefined) {
+				if (uri.QueryParams["xhr-token"] !== undefined) {
 					appConfig.app.query.includeToken = true;
+				}
+				if (uri.QueryParams["tunnel-as-sse"] !== undefined) {
+					appConfig.app.websocketAsTunnel = false;
 				}
 				if (uri.QueryParams["debug"] !== undefined) {
 					appConfig.app.debug = true;
@@ -204,7 +207,7 @@ export class AppComponent implements OnInit {
 			}
 
 			const isActivate = appConfig.isWebApp && AppUtility.isEquals("activate", uri.QueryParams["prego"]);
-			const message = await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "loading"}`);
+			const message = await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "initializing"}`);
 			this.appFormsSvc.showLoadingAsync(message).then(isActivate ? () => this.activate() : () => this.initialize());
 
 			if (!appConfig.isNativeApp) {

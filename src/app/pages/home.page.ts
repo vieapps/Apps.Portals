@@ -3,6 +3,7 @@ import { registerLocaleData } from "@angular/common";
 import { AppEvents } from "@app/components/app.events";
 import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
 
 @Component({
 	selector: "page-home",
@@ -13,7 +14,8 @@ import { ConfigurationService } from "@app/services/configuration.service";
 export class HomePage implements OnInit, OnDestroy {
 
 	constructor(
-		private configSvc: ConfigurationService
+		private configSvc: ConfigurationService,
+		private authSvc: AuthenticationService
 	) {
 		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
 	}
@@ -34,7 +36,7 @@ export class HomePage implements OnInit, OnDestroy {
 	}
 
 	get showStatistics() {
-		return this.isAuthenticated && this.configSvc.appConfig.options.showStatistics;
+		return this.isAuthenticated && (this.authSvc.isSystemAdministrator() || this.configSvc.appConfig.options.showStatistics);
 	}
 
 	get statistics() {

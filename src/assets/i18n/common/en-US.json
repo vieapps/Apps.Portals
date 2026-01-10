@@ -43,6 +43,7 @@
 			"submit": "Submit"
 		},
 		"messages": {
+			"initializing": "Initializing session...",
 			"loading": "Loading...",
 			"activating": "Activating...",
 			"processing": "Processing...",

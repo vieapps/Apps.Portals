@@ -43,6 +43,7 @@
 			"submit": "Gửi"
 		},
 		"messages": {
+			"initializing": "Khởi tạo phiên làm việc...",
 			"loading": "Tải dữ liệu...",
 			"searching": "Tìm kiếm dữ liệu...",
 			"activating": "Kích hoạt...",

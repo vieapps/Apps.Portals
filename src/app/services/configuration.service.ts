@@ -327,9 +327,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Initializes the configuration settings of the app */
 	initializeAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontInitializeSession: boolean = false) {
-		return this.loadSessionAsync()
-			.then(() => dontInitializeSession ? AppUtility.invoke(onSuccess) : this.initializeSessionAsync(onSuccess, onError))
-			.then(() => AppUtility.invoke(() => this.loadGeoMetaAsync(), 1234));
+		return this.loadSessionAsync(() => dontInitializeSession ? AppUtility.invoke(onSuccess) : this.initializeSessionAsync(onSuccess, onError)).then(() => AppUtility.invoke(() => this.loadGeoMetaAsync(), 1234));
 	}
 
 	/** Initializes the session with remote APIs */
@@ -432,10 +430,16 @@ export class ConfigurationService extends BaseService {
 			const session = await AppStorage.getAsync("Session");
 			if (AppUtility.isObject(session, true)) {
 				AppConfig.session = AppUtility.parse(AppUtility.stringify(session));
+				if (this.isDebug) {
+					console.log("[Configuration]: The session was loaded (storage)");
+				}
 				AppEvents.broadcast("Session", { Type: "Loaded", Mode: "Storage" });
 				AppConfig.session.account = Account.deserialize(AppConfig.session.account);
 				if (AppConfig.session.account.id !== undefined) {
 					Account.set(AppConfig.session.account);
+					if (this.isDebug) {
+						console.log("[Configuration]: The account was loaded (storage)");
+					}
 					AppEvents.broadcast("Account", { Type: "Loaded", Mode: "Storage" });
 				}
 			}
