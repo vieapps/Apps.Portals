@@ -370,7 +370,11 @@ export class CmsLinksUpdatePage implements OnInit, OnDestroy {
 	}
 
 	onFormInitialized() {
-		this.form.patchValue(AppUtility.clone(this.link, false, undefined, link => Link.normalizeClonedProperties(this.link, link)));
+		this.form.patchValue(AppUtility.clone(this.link, false, ["StartDate", "EndDate"], link => {
+			link.StartDate = AppUtility.toIsoDate(this.link.StartDate);
+			link.EndDate = AppUtility.toIsoDate(this.link.EndDate);
+			Link.normalizeClonedProperties(this.link, link);
+		}));
 		this.hash.content = this.hash.full = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (AppUtility.isNotEmpty(this.link.ID)) {

@@ -369,11 +369,6 @@
 						"placeholder": "",
 						"description": ""
 					},
-					"OrderIndex": {
-						"label": "Thứ tự hiển thị",
-						"placeholder": "",
-						"description": ""
-					},
 					"Title": {
 						"label": "Tiêu đề",
 						"placeholder": "",
@@ -415,6 +410,21 @@
 						"label": "Dữ liệu nghiệp vụ",
 						"placeholder": "",
 						"description": "Hệ thống sẽ lấy các nội dung cấp dưới của dữ liệu đã chỉ định ở trên để tạo các liên kết cấp dưới của mục liên kết này"
+					},
+					"OrderIndex": {
+						"label": "Thứ tự hiển thị",
+						"placeholder": "",
+						"description": ""
+					},
+					"StartDate": {
+						"label": "Ngày bắt đầu",
+						"placeholder": "",
+						"description": "Chỉ định ngày mà liên kết sẽ bắt đầu xuất hiện"
+					},
+					"EndDate": {
+						"label": "Ngày kết thúc",
+						"placeholder": "",
+						"description": "Chỉ định ngày mà liên kết sẽ kết thúc (không xuất hiện công khai). Không thiết đặt giá trị để chỉ định không bao giờ kết thúc."
 					},
 					"Status": {
 						"label": "Trạng thái",

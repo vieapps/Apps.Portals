@@ -159,11 +159,6 @@ export class AppComponent implements OnInit {
 				if (uri.QueryParams["reset"] !== undefined) {
 					resetApps();
 				}
-				appConfig.services.all.map((svc, index) => ({ hosts: svc.availableHosts || [], index: index })).forEach(info => {
-					if (info.hosts.length > 0 && info.hosts.indexOf(uri.Host) < 0) {
-						appConfig.services.all.removeAt(info.index);
-					}
-				});
 			}
 
 			await this.configSvc.loadURIsAsync(appConfig.isWebApp && uri.QueryParams["reset"] === undefined ? uri.QueryParams["URIs"] : undefined);
@@ -183,8 +178,6 @@ export class AppComponent implements OnInit {
 			if (activeService === undefined) {
 				activeService = appConfig.services.all.first();
 				appConfig.services.active.service = activeService.name;
-				appConfig.app.name = activeService.appName || appConfig.app.name;
-				appConfig.app.description = activeService.appDescription || appConfig.app.description;
 			}
 			this.sidebar.State.Active = activeService.sidebar || activeService.name.toLowerCase();
 

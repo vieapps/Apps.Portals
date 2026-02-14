@@ -72,7 +72,17 @@
 						<ion-icon name="radio" slot="icon-only"></ion-icon>
 					</span>
 					<div>
-						{{ getInfo(link) }}
+						<span *ngIf="link.StartDate">
+							<ion-icon name="time" slot="icon-only" color="medium"></ion-icon>
+							{{ link.StartDate | date:'d/M/y' }}
+						</span>
+						<span *ngIf="link.EndDate">
+							<ion-icon name="time" slot="icon-only" color="danger"></ion-icon>
+							{{ link.EndDate | date:'d/M/y' }}
+						</span>
+						<span>
+							{{ getInfo(link) }}
+						</span>
 					</div>
 				</ion-label>
 			</ion-item>

@@ -34,7 +34,7 @@ export class AppConfig {
 		license: "Apache-2.0",
 		homepage: "https://cms.vieapps.net",
 		id: "vieapps-ngx",
-		version: "10.2601.1",
+		version: "10.2602.1",
 		frameworks: "ionic 5 - angular 11 - cordova 11",
 		mode: "",
 		platform: "",
@@ -122,18 +122,15 @@ export class AppConfig {
 				name: "Portals",
 				objects: ["Organization", "Module", "ContentType", "Expression", "Role", "Site", "Desktop", "Portlet", "SchedulingTask", "Category", "Content", "Item", "Link", "Form", "Crawler"],
 				specials: [],
-				sidebar: "cms",
-				availableHosts: [/**"cms.vieapps.net"/**/]
+				sidebar: "cms"
 			},
 			{
 				name: "Books",
 				objects: ["Book", "Category", "Statistic"],
 				menuIndex: 3,
-				canSetPrivilegs: true,
-				appName: "NGX Books",
-				appDescription: "Free online books & EPUB/MOBI e-books"
+				canSetPrivilegs: true
 			}
-		] as Array<{ name: string; objects: Array<string>; specials?: Array<string>; menuIndex?: number; sidebar?: string; availableHosts?: Array<string>; canSetPrivilegs?: boolean; appName?: string; appDescription?: string; }>,
+		] as Array<{ name: string; objects: Array<string>; specials?: Array<string>; menuIndex?: number; sidebar?: string; canSetPrivilegs?: boolean; }>,
 		active: {
 			service: undefined as string,
 			system: undefined as string

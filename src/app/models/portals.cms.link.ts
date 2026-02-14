@@ -24,16 +24,18 @@ export class Link extends CmsBaseModel implements NestedObject {
 	static instances = new Dictionary<string, Link>();
 
 	ParentID = undefined as string;
-	OrderIndex = 0;
 	Title = undefined as string;
 	Summary = undefined as string;
 	URL = undefined as string;
 	Target = undefined as string;
-	Status = undefined as string;
 	ChildrenMode = "Normal";
 	LookupRepositoryID = undefined as string;
 	LookupRepositoryEntityID = undefined as string;
 	LookupRepositoryObjectID = undefined as string;
+	OrderIndex = 0;
+	StartDate = undefined as Date;
+	EndDate = undefined as Date;
+	Status = undefined as string;
 	Created = undefined as Date;
 	CreatedID = undefined as string;
 	LastModified = undefined as Date;
@@ -112,6 +114,8 @@ export class Link extends CmsBaseModel implements NestedObject {
 
 	copy(source: any, onCompleted?: (data: any, instance: Link) => void) {
 		return super.copy(source, data => {
+			this.StartDate = AppUtility.isNotEmpty(data.StartDate) ? new Date(data.StartDate) : undefined;
+			this.EndDate = AppUtility.isNotEmpty(data.EndDate) ? new Date(data.EndDate) : undefined;
 			this.normalizeExtendedProperties(data);
 			if (AppUtility.isArray(data.Thumbnails, true)) {
 				this.updateThumbnails(data.Thumbnails);
