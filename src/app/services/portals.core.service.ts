@@ -975,6 +975,14 @@ export class PortalsCoreService extends BaseService {
 							Description: "{{portals.common.controls.webhooks.prepareBodyScript.description}}",
 							Rows: 40
 						}
+					},
+					{
+						Name: "PrepareBodyScriptTimeout",
+						Options: {
+							Label: "{{portals.common.controls.webhooks.prepareBodyScriptTimeout.label}}",
+							Description: "{{portals.common.controls.webhooks.prepareBodyScriptTimeout.description}}",
+							Type: "number"
+						}
 					}
 				]
 			}

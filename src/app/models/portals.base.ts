@@ -131,6 +131,7 @@ export interface WebHookNotificationSettings {
 	EncryptionIV?: string;
 	GenerateIdentity?: boolean;
 	PrepareBodyScript?: string;
+	PrepareBodyScriptTimeout?: number;
 }
 
 export interface NotificationSettings {
@@ -169,6 +170,7 @@ export interface WebHookSettings {
 	EncryptionIV?: string;
 	GenerateIdentity?: boolean;
 	PrepareBodyScript?: string;
+	PrepareBodyScriptTimeout?: number;
 }
 
 /** Interface of UI settings of all elements */

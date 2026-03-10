@@ -312,6 +312,24 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 								Description: "{{portals.organizations.controls.FakePortalsHttpURI.description}}",
 								MaxLength: 250
 							}
+						},
+						{
+							Name: "CloudFlareZoneID",
+							Type: "TextBox",
+							Options: {
+								Label: "{{portals.organizations.controls.CloudFlareZoneID.label}}",
+								Description: "{{portals.organizations.controls.CloudFlareZoneID.description}}",
+								MaxLength: 250
+							}
+						},
+						{
+							Name: "CloudFlareApiToken",
+							Type: "TextBox",
+							Options: {
+								Label: "{{portals.organizations.controls.CloudFlareApiToken.label}}",
+								Description: "{{portals.organizations.controls.CloudFlareApiToken.description}}",
+								MaxLength: 250
+							}
 						}
 					]
 				}
@@ -649,7 +667,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			organization.RedirectURLs = organization.RedirectURLs || {};
 			organization.RedirectURLs.Addresses = AppUtility.toStr(organization.RedirectURLs.Addresses, "\n");
 			organization.RedirectURLs.AllHttp404 = organization.RedirectURLs.AllHttp404 !== undefined ? !!organization.RedirectURLs.AllHttp404 : false;
-			organization.FakeURIs = { FakeFilesHttpURI: this.organization.FakeFilesHttpURI, FakePortalsHttpURI: this.organization.FakePortalsHttpURI };
+			organization.FakeURIs = { FakeFilesHttpURI: this.organization.FakeFilesHttpURI, FakePortalsHttpURI: this.organization.FakePortalsHttpURI, CloudFlareZoneID: this.organization.CloudFlareZoneID, CloudFlareApiToken: this.organization.CloudFlareApiToken };
 			this.instructions = organization.Instructions || {};
 			Organization.instructionElements.forEach(type => {
 				this.instructions[type] = this.instructions[type] || {};
@@ -697,6 +715,8 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				organization.RedirectURLs.Addresses = AppUtility.toArray(organization.RedirectURLs.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));
 				organization.FakeFilesHttpURI = organization.FakeURIs.FakeFilesHttpURI;
 				organization.FakePortalsHttpURI = organization.FakeURIs.FakePortalsHttpURI;
+				organization.CloudFlareZoneID = organization.FakeURIs.CloudFlareZoneID;
+				organization.CloudFlareApiToken = organization.FakeURIs.CloudFlareApiToken;
 				organization.OriginalPrivileges = Privileges.getPrivileges(organization.Privileges);
 				try {
 					organization.ExamineURLs = AppUtility.parse(organization.ExamineURLs);
