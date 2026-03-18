@@ -37,7 +37,7 @@ export class BooksService extends BaseService {
 	}
 
 	get appsURL() {
-		return "https://viebooks.net/";
+		return "https://books.vieapps.net/";
 	}
 
 	initialize() {
