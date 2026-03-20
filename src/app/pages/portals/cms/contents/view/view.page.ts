@@ -500,8 +500,8 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		}
 	}
 
-	update(rawHtmlEditors: boolean = false) {
-		const uri = rawHtmlEditors ? this.content.getRouterURI({ ID: this.content.ID, RawHtmlEditors: !!rawHtmlEditors }) : this.content.routerURI;
+	update(isAdvancedMode: boolean = false) {
+		const uri = isAdvancedMode ? this.content.getRouterURI({ ID: this.content.ID, AdvancedMode: true }) : this.content.routerURI;
 		this.configSvc.navigateForwardAsync(uri.replace("/view/", "/update/"));
 	}
 

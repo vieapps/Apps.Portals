@@ -9,12 +9,15 @@ import { AppFormsService } from "@app/components/forms.service";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { FilesService, FileOptions } from "@app/services/files.service";
+import { UsersService } from "@app/services/users.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
+import { UserProfile } from "@app/models/user";
 import { Organization, Module, ContentType } from "@app/models/portals.core.all";
 import { Item } from "@app/models/portals.cms.item";
 import { FilesProcessorModalPage } from "@app/controls/common/file.processor.modal.page";
 import { DataLookupModalPage } from "@app/controls/portals/data.lookup.modal.page";
+import { UsersSelectorModalPage } from "@app/controls/common/user.selector.modal.page";
 
 @Component({
 	selector: "page-portals-cms-items-update",
@@ -29,6 +32,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		private authSvc: AuthenticationService,
 		private filesSvc: FilesService,
 		private appFormsSvc: AppFormsService,
+		private usersSvc: UsersService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService
 	) {
@@ -38,8 +42,9 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 	private module: Module;
 	private contentType: ContentType;
 	private item: Item;
+	private canManage = false;
 	private canModerate = false;
-	private rawHtmlEditors = false;
+	private isAdvancedMode = false;
 	private hash = {
 		content: "",
 		full: ""
@@ -133,6 +138,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 
 		this.module = Module.get(this.contentType.RepositoryID);
 
+		this.canManage = this.portalsCoreSvc.canManageOrganization(this.organization);
 		this.canModerate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Item", this.contentType !== undefined ? this.contentType.Privileges : this.module.Privileges);
 		let canUpdate = this.canModerate || this.authSvc.isEditor(this.portalsCoreSvc.name, "Item", this.contentType !== undefined ? this.contentType.Privileges : this.module.Privileges);
 		if (!canUpdate && this.item !== undefined && (AppUtility.isEquals(this.item.Status, "Draft") || AppUtility.isEquals(this.item.Status, "Pending"))) {
@@ -154,9 +160,11 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
 
-		this.rawHtmlEditors = this.canModerate && !!this.configSvc.requestParams["RawHtmlEditors"];
+		this.isAdvancedMode = (this.canManage || this.canModerate) && AppUtility.isNotEmpty(this.item.ID) && !!this.configSvc.requestParams["AdvancedMode"];
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
+		this.trackAsync(this.title.track);
+		this.portalsCoreSvc.setActiveOrganization(this.item.organization);
 	}
 
 	private async getFormSegmentsAsync(onCompleted?: (formSegments: Array<AppFormsSegment>) => void) {
@@ -174,7 +182,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
 		let formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.item", undefined, { "x-content-type-id": this.contentType.ID });
-		formConfig = this.rawHtmlEditors ? AppUtility.clone(formConfig) : formConfig;
+		formConfig = this.isAdvancedMode ? AppUtility.clone(formConfig) : formConfig;
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
 		this.portalsCoreSvc.prepareApprovalStatusControl(control);
@@ -186,11 +194,52 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		control.Options.Type = "toggle";
 		control.Hidden = !this.contentType.AllowComments;
 
-		if (this.rawHtmlEditors) {
+		if (this.isAdvancedMode) {
 			formConfig.filter(ctrl => ctrl.Type === "TextEditor").forEach(ctrl => {
 				ctrl.Type = "TextArea";
 				ctrl.Options.Rows = 30;
 			});
+			if (this.canManage) {
+				control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "LastModified"));
+				if (control !== undefined) {
+					control.Hidden = false;
+					control.Required = true;
+					control.Options.Label = await this.appFormsSvc.getResourceAsync("portals.cms.common.advanced.controls.LastModified.label");
+					control.Options.Description = await this.appFormsSvc.getResourceAsync("portals.cms.common.advanced.controls.LastModified.description");
+					control.Options.DatePickerOptions.AllowTimes = true;
+				}
+				control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "LastModifiedID"));
+				if (control !== undefined) {
+					let user: UserProfile;
+					if (AppUtility.isNotEmpty(this.item.LastModifiedID)) {
+						user = UserProfile.get(this.item.LastModifiedID);
+						if (user === undefined) {
+							await this.usersSvc.getProfileAsync(this.item.LastModifiedID, _ => user = UserProfile.get(this.item.LastModifiedID), undefined, true);
+						}
+					}
+					control.Hidden = false;
+					control.Required = true;
+					control.Type = "Lookup";
+					control.Extras = { LookupDisplayValues: user !== undefined ? [{ Value: user.ID, Label: user.Name }] : undefined };
+					control.Options.Label = await this.appFormsSvc.getResourceAsync("portals.cms.common.advanced.controls.LastModifiedID.label");
+					control.Options.Description = await this.appFormsSvc.getResourceAsync("portals.cms.common.advanced.controls.LastModifiedID.description");
+					control.Options.LookupOptions = {
+						Multiple: false,
+						AllowDelete: false,
+						ModalOptions: {
+							Component: UsersSelectorModalPage,
+							ComponentProps: { multiple: false },
+							OnDismiss: (data, formControl) => {
+								if (AppUtility.isArray(data, true) && data[0] !== formControl.value) {
+									const profile = UserProfile.get(data[0]);
+									formControl.setValue(profile.ID);
+									formControl.lookupDisplayValues = [{ Value: profile.ID, Label: profile.Name }];
+								}
+							}
+						}
+					};
+				}
+			}
 		}
 		else {
 			const linkSelectorOptions = {
@@ -278,7 +327,11 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 	}
 
 	onFormInitialized() {
-		this.form.patchValue(AppUtility.clone(this.item, false, undefined, item => Item.normalizeClonedProperties(this.item, item)));
+		this.form.patchValue(AppUtility.clone(this.item, false, undefined, item => Item.normalizeClonedProperties(this.item, item, () => {
+			if (this.isAdvancedMode && this.canManage) {
+				item.LastModified = AppUtility.toIsoDateTime(this.item.LastModified, true);
+			}
+		})));
 		this.hash.content = AppCrypto.hash(this.form.value);
 		this.appFormsSvc.hideLoadingAsync(() => {
 			if (AppUtility.isNotEmpty(this.item.ID)) {
@@ -350,6 +403,11 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 							error => console.error("<CMS.Item>: Error occurred while uploading thumbnail", error)
 						);
 					} : () => AppUtility.promise;
+
+					const headers = {} as { [header: string]: string };
+					if (this.isAdvancedMode && this.canManage) {
+						headers["x-advanced-update"] = "true";
+					}
 	
 					hash.content = AppCrypto.hash(item);
 					if (this.configSvc.isDebug) {
@@ -376,7 +434,8 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 										this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 										this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
 									]),
-									error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false)
+									error => this.trackAsync(this.title.track, "Update").then(() => this.appFormsSvc.showErrorAsync(error)).then(() => this.processing = false),
+									headers
 								);
 							}
 						});

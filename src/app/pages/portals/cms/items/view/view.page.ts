@@ -356,8 +356,8 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 		await this.configSvc.navigateForwardAsync(await this.portalsCmsSvc.getSchedulingTaskURLAsync(this.item));
 	}
 
-	update(rawHtmlEditors: boolean = false) {
-		const uri = rawHtmlEditors ? this.item.getRouterURI({ ID: this.item.ID, RawHtmlEditors: !!rawHtmlEditors }) : this.item.routerURI;
+	update(isAdvancedMode: boolean = false) {
+		const uri = isAdvancedMode ? this.item.getRouterURI({ ID: this.item.ID, AdvancedMode: true }) : this.item.routerURI;
 		this.configSvc.navigateForwardAsync(uri.replace("/view/", "/update/"));
 	}
 

@@ -1380,7 +1380,7 @@ export class PortalsCmsService extends BaseService {
 			);
 	}
 
-	updateContentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
+	updateContentAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }, useXHR: boolean = false) {
 		return this.updateAsync(
 			this.getPath("CMS.Content", body.ID),
 			body,
@@ -1391,7 +1391,7 @@ export class PortalsCmsService extends BaseService {
 				}
 			},
 			error => this.processError("Error occurred while updating a content", error, onError),
-			undefined,
+			headers,
 			useXHR
 		);
 	}
@@ -1568,7 +1568,7 @@ export class PortalsCmsService extends BaseService {
 				);
 	}
 
-	updateItemAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
+	updateItemAsync(body: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, headers?: { [header: string]: string }) {
 		return this.updateAsync(
 			this.getPath("CMS.Item", body.ID),
 			body,
@@ -1578,7 +1578,8 @@ export class PortalsCmsService extends BaseService {
 					onSuccess(data);
 				}
 			},
-			error => this.processError("Error occurred while updating an item", error, onError)
+			error => this.processError("Error occurred while updating an item", error, onError),
+			headers
 		);
 	}
 

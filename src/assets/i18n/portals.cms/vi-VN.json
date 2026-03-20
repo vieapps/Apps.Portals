@@ -67,6 +67,16 @@
 							"email": "Thông báo qua email",
 							"webhook": "Tín hiệu web-hook"
 						}
+					},
+					"controls": {
+						"LastModified": {
+							"label": "Thời gian cập nhật cuối",
+							"description": "Chỉ định lại giá trị của 'Thời gian cập nhật cuối cùng' đối với nội dung này"
+						},
+						"LastModifiedID": {
+							"label": "Người cập nhật cuối",
+							"description": "Chỉ định lại thông tin của 'Người thực hiện cập nhật cuối cùng' đối với nội dung này"
+						}
 					}
 				}
 			},
