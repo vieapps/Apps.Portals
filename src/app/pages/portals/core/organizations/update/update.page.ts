@@ -286,10 +286,10 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				}
 			},
 			{
-				Name: "FakeURIs",
+				Name: "Specials",
 				Segment: "urls",
 				Options: {
-					Label: await this.appFormsSvc.getResourceAsync("portals.organizations.controls.specials")
+					Label: await this.appFormsSvc.getResourceAsync("portals.organizations.controls.Specials")
 				},
 				SubControls: {
 					Controls: [
@@ -314,34 +314,45 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 							}
 						},
 						{
-							Name: "CloudFlareZoneID",
+						Name: "CDNProvider",
+							Type: "Select",
+							Options: {
+								Label: "{{portals.organizations.controls.CDNProvider.label}}",
+								Description: "{{portals.organizations.controls.CDNProvider.description}}",
+								SelectOptions: {
+									Interface: "alert",
+									Values: ["Cloudflare"]
+								}
+							}
+						},
+						{
+							Name: "CDNZoneID",
 							Type: "TextBox",
 							Options: {
-								Label: "{{portals.organizations.controls.CloudFlareZoneID.label}}",
-								Description: "{{portals.organizations.controls.CloudFlareZoneID.description}}",
+								Label: "{{portals.organizations.controls.CDNZoneID.label}}",
+								Description: "{{portals.organizations.controls.CDNZoneID.description}}",
 								MaxLength: 250
 							}
 						},
 						{
-							Name: "CloudFlareApiToken",
+							Name: "CDNApiToken",
 							Type: "TextBox",
 							Options: {
-								Label: "{{portals.organizations.controls.CloudFlareApiToken.label}}",
-								Description: "{{portals.organizations.controls.CloudFlareApiToken.description}}",
+								Label: "{{portals.organizations.controls.CDNApiToken.label}}",
+								Description: "{{portals.organizations.controls.CDNApiToken.description}}",
 								MaxLength: 250
+							}
+						},
+						{
+							Name: "ExamineURLs",
+							Type: "TextArea",
+							Options: {
+								Label: "{{portals.organizations.controls.ExamineURLs.label}}",
+								Description: "{{portals.organizations.controls.ExamineURLs.description}}",
+								Rows: 12
 							}
 						}
 					]
-				}
-			},
-			{
-				Name: "ExamineURLs",
-				Segment: "urls",
-				Type: "TextArea",
-				Options: {
-					Label: "{{portals.organizations.controls.ExamineURLs.label}}",
-					Description: "{{portals.organizations.controls.ExamineURLs.description}}",
-					Rows: 12
 				}
 			},
 			this.portalsCoreSvc.getEmailSettingsFormControl("EmailSettings", "emails", false),
@@ -636,7 +647,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		}
 		control.SubControls.Controls.forEach((ctrl, index) => ctrl.Options.Label = `#${index + 1}`);
 
-		formConfig.find(ctrl => ctrl.Name === "FakeURIs").Hidden = formConfig.find(ctrl => ctrl.Name === "ExamineURLs").Hidden = !this.isSystemAdministrator;
+		formConfig.find(ctrl => ctrl.Name === "Specials").Hidden = !this.isSystemAdministrator;
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		if (AppUtility.isNotEmpty(this.organization.ID)) {
@@ -667,7 +678,7 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 			organization.RedirectURLs = organization.RedirectURLs || {};
 			organization.RedirectURLs.Addresses = AppUtility.toStr(organization.RedirectURLs.Addresses, "\n");
 			organization.RedirectURLs.AllHttp404 = organization.RedirectURLs.AllHttp404 !== undefined ? !!organization.RedirectURLs.AllHttp404 : false;
-			organization.FakeURIs = { FakeFilesHttpURI: this.organization.FakeFilesHttpURI, FakePortalsHttpURI: this.organization.FakePortalsHttpURI, CloudFlareZoneID: this.organization.CloudFlareZoneID, CloudFlareApiToken: this.organization.CloudFlareApiToken };
+			organization.Specials = { FakeFilesHttpURI: this.organization.FakeFilesHttpURI, FakePortalsHttpURI: this.organization.FakePortalsHttpURI, CDNProvider: this.organization.CDNProvider, CDNZoneID: this.organization.CDNZoneID, CDNApiToken: this.organization.CDNApiToken, ExamineURLs: this.organization.ExamineURLs };
 			this.instructions = organization.Instructions || {};
 			Organization.instructionElements.forEach(type => {
 				this.instructions[type] = this.instructions[type] || {};
@@ -713,13 +724,14 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 				organization.Scripts = organization.Others.Scripts;
 				organization.RefreshURLs.Addresses = AppUtility.toArray(organization.RefreshURLs.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));
 				organization.RedirectURLs.Addresses = AppUtility.toArray(organization.RedirectURLs.Addresses, "\n").filter(value => AppUtility.isNotEmpty(value));
-				organization.FakeFilesHttpURI = organization.FakeURIs.FakeFilesHttpURI;
-				organization.FakePortalsHttpURI = organization.FakeURIs.FakePortalsHttpURI;
-				organization.CloudFlareZoneID = organization.FakeURIs.CloudFlareZoneID;
-				organization.CloudFlareApiToken = organization.FakeURIs.CloudFlareApiToken;
+				organization.FakeFilesHttpURI = organization.Specials.FakeFilesHttpURI;
+				organization.FakePortalsHttpURI = organization.Specials.FakePortalsHttpURI;
+				organization.CDNProvider = organization.Specials.CDNProvider;
+				organization.CDNZoneID = organization.Specials.CDNZoneID;
+				organization.CDNApiToken = organization.Specials.CDNApiToken;
 				organization.OriginalPrivileges = Privileges.getPrivileges(organization.Privileges);
 				try {
-					organization.ExamineURLs = AppUtility.parse(organization.ExamineURLs);
+					organization.ExamineURLs = AppUtility.parse(organization.Specials.ExamineURLs);
 				}
 				catch {}
 				this.portalsCoreSvc.normalizeNotificationSettings(organization.Notifications, this.emailsByApprovalStatus);

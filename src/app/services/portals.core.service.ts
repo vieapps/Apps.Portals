@@ -194,7 +194,7 @@ export class PortalsCoreService extends BaseService {
 				}
 				object.attachments = updated;
 				AppEvents.broadcast(this.name, { Type: "Attachment", Mode: "Updated", Event: message.Type.Event, Attachments: updated, Object: Site.contains(object.ID) ? "Site" : "Desktop", ID: object.ID });
-			}			
+			}
 		});
 
 		AppEvents.on("Session", info => {
@@ -1691,7 +1691,7 @@ export class PortalsCoreService extends BaseService {
 					Icon: { Name: "globe", Color: "medium", Slot: "start" }
 				});
 			}
-	
+
 			items.push({
 				Title: "{{portals.sidebar.desktops}}",
 				Link: this.getRouterLink(undefined, "list", "all", "desktop", "core"),
@@ -2271,9 +2271,9 @@ export class PortalsCoreService extends BaseService {
 						ids.push(org.ID);
 					});
 				}
-				const pagination = AppPagination.getDefault(data);
-				if (pagination.PageNumber < pagination.TotalPages) {
-					AppUtility.invoke(() => this.fetchOrganizationsAsync(pagination), 123);
+				const paginationInfo = AppPagination.getDefault(data);
+				if (paginationInfo.PageNumber < paginationInfo.TotalPages) {
+					AppUtility.invoke(() => this.fetchOrganizationsAsync(paginationInfo), 123);
 				}
 				AppUtility.invoke(() => ids.forEach(id => this.getOrganizationAsync(id)), 456);
 			},
@@ -3659,7 +3659,7 @@ export class PortalsCoreService extends BaseService {
 					this.findVersions("Task", task.ID);
 				}
 			});
-		}		
+		}
 		if (onNext !== undefined) {
 			onNext(data);
 		}

@@ -67,8 +67,9 @@
 					<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
 						{{ category.Created | date:'h:mm a @ d/M/y' }} <br/> {{ category.LastModified | time:locale:undefined:false }}
 					</span>
-					<span>
+					<span [class]="'title ' + category.Status">
 						{{ category.Title }}
+						<ion-icon *ngIf="category.Status != 'Published'" name="radio" slot="icon-only"></ion-icon>
 					</span>
 					<div>
 						{{ getInfo(category) }}

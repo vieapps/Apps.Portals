@@ -41,6 +41,7 @@ export class CmsCategoriesUpdatePage implements OnInit, OnDestroy {
 	private contentType: ContentType;
 	private contentTypes: ContentType[];
 	private category: Category;
+	private canUpdate = false;
 	private emailsByApprovalStatus = {} as { [status: string]: EmailNotificationSettings };
 	private hash = "";
 
@@ -122,8 +123,8 @@ export class CmsCategoriesUpdatePage implements OnInit, OnDestroy {
 		this.module = Module.get(this.contentType.RepositoryID);
 		this.contentTypes = this.module.contentTypesOfContent;
 
-		const canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.category !== undefined ? this.category.Privileges : this.module.Privileges);
-		if (!canUpdate) {
+		this.canUpdate = this.portalsCoreSvc.canModerateOrganization(this.organization) || this.authSvc.isModerator(this.portalsCoreSvc.name, "Category", this.category !== undefined ? this.category.Privileges : this.module.Privileges);
+		if (!this.canUpdate) {
 			this.trackAsync(`${this.title.track} | No Permission`, "Check").then(() => this.appFormsSvc.showToastAsync("Hmmmmmm...."));
 			this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 			return;
@@ -198,6 +199,12 @@ export class CmsCategoriesUpdatePage implements OnInit, OnDestroy {
 				}
 			};
 		});
+
+		control = formConfig.find(ctrl => ctrl.Name === "Status");
+		this.portalsCoreSvc.prepareApprovalStatusControl(control);
+		if (!this.canUpdate) {
+			control.Options.Disabled = true;
+		}
 
 		let desktop = Desktop.get(this.category.DesktopID);
 		if (desktop === undefined && AppUtility.isNotEmpty(this.category.DesktopID)) {

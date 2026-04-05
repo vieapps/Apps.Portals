@@ -522,22 +522,26 @@
 					},
 					"AllHttp404": "Chuyển hướng toàn bộ các liên kết không tìm thấy (HTTP 404) về liên kết toàn bộ (*) hoặc về trang chủ"
 				},
-				"specials": "Các thiết đặt đặc biệt",
+				"Specials": "Các thiết đặt đặc biệt",
 				"FakeFilesHttpURI": {
 					"label": "Địa chỉ 'máy chủ dịch vụ files rởm'",
-					"description": "Chỉ định địa chỉ máy chủ chủ dịch vụ files để sử dụng trong mã HTML nhằm che dấu địa chỉ thật của máy chủ dịch vụ files (thông thường sử dụng qua proxy như CloudFlare)"
+					"description": "Chỉ định địa chỉ máy chủ chủ dịch vụ files để sử dụng trong mã HTML nhằm che dấu địa chỉ thật của máy chủ dịch vụ files (thông thường sử dụng qua proxy/CDN như Cloudflare)"
 				},
 				"FakePortalsHttpURI": {
 					"label": "Địa chỉ 'máy chủ dịch vụ portals rởm'",
-					"description": "Chỉ định địa chỉ máy chủ chủ dịch vụ portals để sử dụng trong mã HTML nhằm che dấu địa chỉ thật của máy chủ dịch vụ portals (thông thường sử dụng qua proxy như CloudFlare)"
+					"description": "Chỉ định địa chỉ máy chủ chủ dịch vụ portals để sử dụng trong mã HTML nhằm che dấu địa chỉ thật của máy chủ dịch vụ portals (thông thường sử dụng qua proxy/CDN như Cloudflare)"
 				},
-				"CloudFlareZoneID": {
-					"label": "CloudFlare - ZoneID",
-					"description": "Chỉ định mã định danh vùng (zone) của CloudFlare để xoá cache - chỉ có tác dụng khi hệ thống nằm sau CloudFlare"
+				"CDNProvider": {
+					"label": "Nhà cung cấp CDN",
+					"description": "Chỉ định nhà cung cấp dịch vụ CDN đang sử dụng"
 				},
-				"CloudFlareApiToken": {
-					"label": "CloudFlare - API Token",
-					"description": "Chỉ định mã khoá API của CloudFlare để xoá cache - chỉ có tác dụng khi hệ thống nằm sau CloudFlare"
+				"CDNZoneID": {
+					"label": "CDN Zone ID",
+					"description": "Chỉ định mã định danh vùng (zone) của CDN để xoá cache - chỉ có tác dụng khi hệ thống nằm sau CDN (ví dụ: Cloudflare)"
+				},
+				"CDNApiToken": {
+					"label": "CDN API Token",
+					"description": "Chỉ định mã khoá API của CDN để xoá cache - chỉ có tác dụng khi hệ thống nằm sau CDN (ví dụ: Cloudflare)"
 				},
 				"ExamineURLs": {
 					"label": "Các URLs cần sát hạch",

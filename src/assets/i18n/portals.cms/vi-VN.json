@@ -142,6 +142,11 @@
 						"label": "Ghi chú",
 						"placeholder": "",
 						"description": "Sử dụng để ghi chú hoặc ghi nhận một số thông tin đặc biệt"
+					},
+					"Status": {
+						"label": "Trạng thái",
+						"placeholder": "",
+						"description": "Phân loại sẽ chỉ được sử dụng khi trạng thái là 'Xuất bản'"
 					}
 				},
 				"list": {

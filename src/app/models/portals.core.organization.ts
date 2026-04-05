@@ -71,8 +71,9 @@ export class Organization extends CoreBaseModel {
 	}>;
 	FakeFilesHttpURI = undefined as string;
 	FakePortalsHttpURI = undefined as string;
-	CloudFlareZoneID = undefined as string;
-	CloudFlareApiToken = undefined as string;
+	CDNProvider = "Cloudflare";
+	CDNZoneID = undefined as string;
+	CDNApiToken = undefined as string;
 	ExamineURLs = undefined as string;
 	McpSettings = undefined as string;
 	Created = undefined as Date;
