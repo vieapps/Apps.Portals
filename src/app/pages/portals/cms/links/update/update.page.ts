@@ -168,6 +168,10 @@ export class CmsLinksUpdatePage implements OnInit, OnDestroy {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.link", undefined, { "x-content-type-id": this.contentType.ID });
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
 
 		let parentLink = this.link.Parent;
 		if (parentLink === undefined && AppUtility.isNotEmpty(this.link.ParentID)) {
@@ -430,12 +434,12 @@ export class CmsLinksUpdatePage implements OnInit, OnDestroy {
 					delete link["Thumbnails"];
 					delete link["Attachments"];
 					delete link["Upload"];
-	
+
 					if (link.ChildrenMode !== "Normal" && !AppUtility.isNotEmpty(link.LookupRepositoryObjectID)) {
 						link.ChildrenMode = "Normal";
 						link.LookupRepositoryID = link.LookupRepositoryEntityID = link.LookupRepositoryObjectID = undefined;
 					}
-	
+
 					const thumbnail = (this.formControls.find(ctrl => ctrl.Name === "Thumbnails") || {}).value;
 					const thumbnailBase64 = thumbnail !== undefined && AppUtility.isObject(thumbnail, true) ? thumbnail.new : undefined;
 					const uploadThumbnailAsync = thumbnailBase64 !== undefined ? async (options?: FileOptions) => {
@@ -451,12 +455,12 @@ export class CmsLinksUpdatePage implements OnInit, OnDestroy {
 							error => console.error("<CMS.Link>: Error occurred while uploading thumbnail", error)
 						);
 					} : () => AppUtility.promise;
-	
+
 					hash.content = AppCrypto.hash(link);
 					if (this.configSvc.isDebug) {
 						console.log(`<CMS.Link>: ${AppUtility.isNotEmpty(link.ID) ? "Update" : "Create"} a content ${thumbnailBase64 !== undefined ? "(with thumbnail)" : ""}`, this.hash.content, hash.content);
 					}
-	
+
 					if (AppUtility.isNotEmpty(link.ID)) {
 						uploadThumbnailAsync().then(async () => {
 							if (this.hash.content === hash.content) {
@@ -467,7 +471,7 @@ export class CmsLinksUpdatePage implements OnInit, OnDestroy {
 										this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 									]);
 								}
-								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
+								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 							}
 							else {
 								await this.portalsCmsSvc.updateLinkAsync(

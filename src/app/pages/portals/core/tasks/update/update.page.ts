@@ -104,6 +104,10 @@ export class PortalsTasksUpdatePage implements OnInit {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "task");
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
 		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.tasks.controls.Organization}}", this.organization);
 
 		let control = formConfig.find(ctrl => ctrl.Name === "Title");

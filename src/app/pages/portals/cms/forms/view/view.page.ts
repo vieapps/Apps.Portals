@@ -157,6 +157,11 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.form", undefined, { "x-content-type-id": this.item.RepositoryEntityID, "x-view-controls": "x" });
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
+
 		formConfig.push(
 			this.portalsCmsSvc.getPermanentLinkFormControl(this.item, "basic"),
 			this.portalsCoreSvc.getAuditFormControl(this.item, "basic")
@@ -205,7 +210,7 @@ export class CmsFormsViewPage implements OnInit, OnDestroy {
 
 		if (this.authSvc.isSystemAdministrator() || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined) || this.portalsCoreSvc.canModerateOrganization(this.item.organization)) {
 			["Tags", "ConfirmationIsOpened", "ConfirmationOpenedTime", "Confirmed", "DeviceID", "IPAddress", "Extras"].forEach(name => {
-				const control = formConfig.find(ctrl => ctrl.Name === name);
+				control = formConfig.find(ctrl => ctrl.Name === name);
 				if (control !== undefined) {
 					control.Hidden = false;
 					if (name === "ConfirmationOpenedTime") {

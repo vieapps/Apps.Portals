@@ -127,6 +127,10 @@ export class CmsFormsUpdatePage implements OnInit {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.form", undefined, { "x-content-type-id": this.contentType.ID });
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
 
 		let control = formConfig.find(ctrl => ctrl.Name === "Status");
 		if (!!control) {
@@ -155,7 +159,7 @@ export class CmsFormsUpdatePage implements OnInit {
 		}
 
 		["Title", "Details", "Notes", "Tags", "Extras"].forEach(name => {
-			const control = formConfig.find(ctrl => ctrl.Name === name);
+			control = formConfig.find(ctrl => ctrl.Name === name);
 			if (!!control) {
 				control.Hidden = name === "Extras";
 				control.Options.Rows = 20;
@@ -164,10 +168,10 @@ export class CmsFormsUpdatePage implements OnInit {
 
 		if (AppUtility.isNotEmpty(this.item.ID)) {
 			const isSystemAdministrator = this.authSvc.isSystemAdministrator();
-			
+
 			if (isSystemAdministrator || this.authSvc.isModerator(this.portalsCoreSvc.name, "Organization", undefined) || this.portalsCoreSvc.canModerateOrganization(this.organization)) {
 				["ConfirmationIsOpened", "ConfirmationOpenedTime", "Confirmed", "DeviceID", "IPAddress", "Extras"].forEach(name => {
-					const control = formConfig.find(ctrl => ctrl.Name === name);
+					control = formConfig.find(ctrl => ctrl.Name === name);
 					if (!!control) {
 						control.Hidden = false;
 						control.Options.ReadOnly = true;
@@ -181,7 +185,7 @@ export class CmsFormsUpdatePage implements OnInit {
 					}
 				});
 			}
-			
+
 			if (isSystemAdministrator && AppUtility.isTrue(this.configSvc.requestParams["Advanced"])) {
 				control = formConfig.find(ctrl => ctrl.Name === "Extras");
 				if (!!control) {

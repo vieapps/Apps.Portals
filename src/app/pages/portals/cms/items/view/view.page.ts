@@ -198,9 +198,15 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.item", undefined, { "x-content-type-id": this.item.RepositoryEntityID, "x-view-controls": "x" });
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
+
 		formConfig.push(
 			this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments")
 		);
+
 		if (this.canEdit) {
 			const buttons = this.appFormsSvc.getButtonControls(
 				"attachments",
@@ -222,6 +228,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 			buttons.Name = "ThumbnailButtons";
 			formConfig.push(buttons);
 		}
+
 		formConfig.push(
 			this.filesSvc.getAttachmentsFormControl("Attachments", "attachments", await this.appFormsSvc.getResourceAsync("files.attachments.label")),
 			this.portalsCmsSvc.getPermanentLinkFormControl(this.item, "basic"),
@@ -249,11 +256,14 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 		});
 
 		const control = formConfig.find(ctrl => ctrl.Name === "ID");
-		control.Order = formConfig.find(ctrl => ctrl.Name === "Audits").Order + 1;
-		control.Segment = "basic";
-		control.Hidden = false;
-		control.Options.Label = "{{common.audits.identity}}";
-		control.Options.ReadOnly = true;
+		if (control !== undefined) {
+			const auditsCtrl = formConfig.find(ctrl => ctrl.Name === "Audits");
+			control.Order = auditsCtrl !== undefined ? auditsCtrl.Order + 1 : formConfig.length;
+			control.Segment = "basic";
+			control.Hidden = false;
+			control.Options.Label = "{{common.audits.identity}}";
+			control.Options.ReadOnly = true;
+		}
 
 		if (this.canEdit) {
 			formConfig.push(this.appFormsSvc.getButtonControls(
@@ -299,13 +309,12 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 		});
 	}
 
-
 	private prepareThumbnail() {
 		this.filesSvc.prepareThumbnailFormControl(this.formControls.find(ctrl => ctrl.Name === "Thumbnails"), this.item.thumbnails, formControl => {
 			formControl.Hidden = formControl.value === undefined;
-			const ctrl = this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons");
-			if (ctrl !== undefined) {
-				ctrl.Hidden = formControl.Hidden || this.item.thumbnails === undefined || this.item.thumbnails.length < 1;
+			const control = this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons");
+			if (control !== undefined) {
+				control.Hidden = formControl.Hidden || this.item.thumbnails === undefined || this.item.thumbnails.length < 1;
 			}
 		});
 	}

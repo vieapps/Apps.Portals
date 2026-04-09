@@ -139,6 +139,10 @@ export class PortalsDesktopsUpdatePage implements OnInit, OnDestroy {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "desktop");
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
 		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.desktops.controls.Organization}}");
 
 		if (!AppUtility.isNotEmpty(this.desktop.ID)) {

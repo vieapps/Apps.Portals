@@ -42,7 +42,7 @@ export abstract class PortalBase extends BaseModel {
 			}
 		});
 	}
-	
+
 }
 
 /** Interface of a module definition */

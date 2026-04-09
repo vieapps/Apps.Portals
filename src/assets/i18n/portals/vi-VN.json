@@ -24,6 +24,7 @@
 		"common": {
 			"unspecified": "Không xác định",
 			"advancedEdit": "Cập nhật (cao cấp)",
+			"emptyDefinition": "Chưa lấy được thông tin phù hợp, vui lòng thử lại thêm một lần nữa.",
 			"excel": {
 				"action": {
 					"export": "Kết xuất dữ liệu ra Excel",

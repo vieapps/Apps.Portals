@@ -819,17 +819,25 @@ export class ConfigurationService extends BaseService {
 		return this._definitions[AppCrypto.md5(path.toLowerCase())];
 	}
 
-	async fetchDefinitionAsync(path: string, doClone: boolean = true) {
+	async fetchDefinitionAsync(path: string, doClone: boolean = true, onRetryWhenEmpty?: (definition: any) => void) {
 		let definition = this.getDefinition(path);
 		if (definition === undefined) {
 			await this.fetchAsync(
 				path,
-				data => this.addDefinition(path, data),
+				data => {
+					if (AppUtility.isArray(data) ? !!data.length : !!Object.keys(data).length) {
+						this.addDefinition(path, data);
+					}
+					else if (onRetryWhenEmpty !== undefined) {
+						AppUtility.invoke(() => onRetryWhenEmpty(this.fetchDefinitionAsync(path, doClone)), 789);
+						return undefined;
+					}
+				},
 				error => this.showError("Error occurred while working with definitions", error)
 			);
 			definition = this.getDefinition(path);
 		}
-		return doClone ? AppUtility.clone(definition) : definition;
+		return definition === undefined ? undefined : doClone ? AppUtility.clone(definition) : definition;
 	}
 
 	getDefinitionPath(serviceName?: string, objectName?: string, definitionName?: string, query?: { [key: string]: string }) {

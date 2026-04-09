@@ -195,6 +195,10 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "content.type");
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
 		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.contenttypes.controls.Organization}}", this.organization);
 
 		let control = formConfig.find(ctrl => ctrl.Name === "Title");
@@ -502,7 +506,7 @@ export class PortalsContentTypesUpdatePage implements OnInit, OnDestroy {
 				});
 				if (contentType.WebHookNotifications.length < 1) {
 					contentType.WebHookNotifications.push(this.portalsCoreSvc.defaultWebHookNotificationSettings);
-				}				
+				}
 				contentType.WebHookAdapters = [];
 				(this.contentType.WebHookAdapters || new Dictionary<string, WebHookSettings>()).forEach((webhookAdapter, name) => contentType.WebHookAdapters.push(this.portalsCoreSvc.getWebHookSettings(webhookAdapter, settings => {
 					settings.Name = name;

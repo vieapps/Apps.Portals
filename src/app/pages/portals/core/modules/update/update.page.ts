@@ -117,6 +117,10 @@ export class PortalsModulesUpdatePage implements OnInit {
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "module");
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
 		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.modules.controls.Organization}}", this.organization);
 
 		let control = formConfig.find(ctrl => ctrl.Name === "Title");

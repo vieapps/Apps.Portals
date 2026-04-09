@@ -266,6 +266,11 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content", undefined, { "x-content-type-id": this.content.RepositoryEntityID, "x-view-controls": "x" });
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
+
 		formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Relateds")).Segment = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ExternalRelateds")).Segment = "basic";
 
 		formConfig.push(this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments"));
@@ -308,11 +313,14 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 
 		formConfig.forEach((ctrl, index) => ctrl.Order = index);
 		const control = formConfig.find(ctrl => ctrl.Name === "ID");
-		control.Order = formConfig.find(ctrl => ctrl.Name === "Audits").Order + 1;
-		control.Segment = "management";
-		control.Hidden = false;
-		control.Options.Label = "{{common.audits.identity}}";
-		control.Options.ReadOnly = true;
+		if (control !== undefined) {
+			const autditsCtrl = formConfig.find(ctrl => ctrl.Name === "Audits");
+			control.Order = autditsCtrl !== undefined ? autditsCtrl.Order + 1 : formConfig.length;
+			control.Segment = "management";
+			control.Hidden = false;
+			control.Options.Label = "{{common.audits.identity}}";
+			control.Options.ReadOnly = true;
+		}
 
 		if (this.canEdit) {
 			formConfig.push(this.appFormsSvc.getButtonControls("management", {
@@ -474,9 +482,9 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	private prepareThumbnail() {
 		this.filesSvc.prepareThumbnailFormControl(this.formControls.find(ctrl => ctrl.Name === "Thumbnails"), this.content.thumbnails, formControl => {
 			formControl.Hidden = formControl.value === undefined;
-			const ctrl = this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons");
-			if (ctrl !== undefined) {
-				ctrl.Hidden = formControl.Hidden || this.content.thumbnails === undefined || this.content.thumbnails.length < 1;
+			const control = this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons");
+			if (control !== undefined) {
+				control.Hidden = formControl.Hidden || this.content.thumbnails === undefined || this.content.thumbnails.length < 1;
 			}
 		});
 	}
@@ -533,19 +541,19 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	}
 
 	private async duplicateNextStepAsync() {
-		let items: Array<any> = undefined;
-		let selected: string = undefined;
+		let items: Array<any>;
+		let selected: string;
 		let nested = false;
 		let multiple = false;
 		let allowEmpty = false;
-		let labels: { [key: string]: string } = { select: await this.configSvc.getResourceAsync("common.buttons.continue") };
-		let sortBy: { [key: string]: string } = { Title: "Ascending" };
+		const labels: { [key: string]: string } = { select: await this.configSvc.getResourceAsync("common.buttons.continue") };
+		const sortBy: { [key: string]: string } = { Title: "Ascending" };
 		let mapper: (item: any) => { [key: string]: any } = item => ({
 			ID: item.ID,
 			Title: item.Title,
 			Info: item.Description
 		});
-		let assigner: (data: any[]) => void = undefined;
+		let assigner: (data: any[]) => void;
 
 		if (this.duplicate.organization === undefined) {
 			items = await this.portalsCoreSvc.getActiveOrganizationsAsync();
@@ -559,7 +567,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 		}
 		else if (this.duplicate.module === undefined) {
 			items = this.duplicate.organization.modules;
-			selected = this.portalsCoreSvc.activeModule != undefined ? this.portalsCoreSvc.activeModule.ID : (items.first() || {}).ID;
+			selected = this.portalsCoreSvc.activeModule !== undefined ? this.portalsCoreSvc.activeModule.ID : (items.first() || {}).ID;
 			selected = selected === undefined || items.first(m => m.ID === selected) === undefined ? items.first().ID : selected;
 			labels.title = await this.configSvc.getResourceAsync("portals.cms.contents.view.duplicate.module");
 			assigner = data => this.duplicate.module = this.portalsCoreSvc.getModule(data.first().ID);
@@ -635,7 +643,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 				},
 				true,
 				true
-			);			
+			);
 		}
 		else {
 			await this.duplicateFinalStepAsync();

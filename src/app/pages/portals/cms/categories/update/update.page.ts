@@ -161,6 +161,10 @@ export class CmsCategoriesUpdatePage implements OnInit, OnDestroy {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.category", undefined, { "x-content-type-id": this.contentType.ID });
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
 
 		formConfig.insert({
 			Name: "Info",
@@ -388,7 +392,7 @@ export class CmsCategoriesUpdatePage implements OnInit, OnDestroy {
 					category.OriginalPrivileges = Privileges.getPrivileges(category.OriginalPrivileges);
 					this.portalsCoreSvc.normalizeNotificationSettings(category.Notifications, this.emailsByApprovalStatus);
 					this.portalsCoreSvc.normalizeEmailSettings(category.EmailSettings);
-	
+
 					const thumbnail = (this.formControls.find(ctrl => ctrl.Name === "Thumbnails") || {}).value;
 					const thumbnailBase64 = thumbnail !== undefined && AppUtility.isObject(thumbnail, true) ? thumbnail.new : undefined;
 					const uploadThumbnailAsync = async (options?: FileOptions) => {
@@ -406,7 +410,7 @@ export class CmsCategoriesUpdatePage implements OnInit, OnDestroy {
 							);
 						}
 					};
-	
+
 					if (AppUtility.isNotEmpty(category.ID)) {
 						uploadThumbnailAsync().then(() => this.portalsCmsSvc.updateCategoryAsync(
 							category,

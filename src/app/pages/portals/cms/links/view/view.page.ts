@@ -202,9 +202,15 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.link", undefined, { "x-content-type-id": this.link.RepositoryEntityID, "x-view-controls": "x" });
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
+
 		formConfig.push(
 			this.filesSvc.getThumbnailFormControl("Thumbnails", "attachments")
 		);
+
 		if (this.canEdit) {
 			const buttons = this.appFormsSvc.getButtonControls(
 				"attachments",
@@ -297,9 +303,9 @@ export class CmsLinksViewPage implements OnInit, OnDestroy {
 	private prepareThumbnail() {
 		this.filesSvc.prepareThumbnailFormControl(this.formControls.find(ctrl => ctrl.Name === "Thumbnails"), this.link.thumbnails, formControl => {
 			formControl.Hidden = formControl.value === undefined;
-			const ctrl = this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons");
-			if (ctrl !== undefined) {
-				ctrl.Hidden = formControl.Hidden || this.link.thumbnails === undefined || this.link.thumbnails.length < 1;
+			const control = this.formControls.find(ctrl => ctrl.Name === "ThumbnailButtons");
+			if (control !== undefined) {
+				control.Hidden = formControl.Hidden || this.link.thumbnails === undefined || this.link.thumbnails.length < 1;
 			}
 		});
 	}

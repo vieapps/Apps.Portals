@@ -191,7 +191,7 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 					if (info.args.Object === "CMS.Item" && info.args.Type === "Thumbnail" && (this.contentType !== undefined ? this.contentType.ID === info.args.RepositoryEntityID : true)) {
 						this.zone.run(() => this.changeDetector.detectChanges());
 					}
-				}, `CMS.Items:${(this.contentType !== undefined ? this.contentType.ID +":" : "")}Refresh`);
+				}, `CMS.Items:${(this.contentType !== undefined ? this.contentType.ID + ":" : "")}Refresh`);
 			}
 		}
 		else {
@@ -312,13 +312,13 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		return this.portalsCoreSvc.getPaginationPrefix("cms.item");
 	}
 
-	startSearch(onNext?: () => void, pagination?: AppDataPagination) {
-		this.pagination = pagination || AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
+	startSearch(onNext?: () => void, headers?: { [header: string]: string }) {
+		this.pagination = AppPagination.get({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix) || AppPagination.getDefault();
 		this.pagination.PageNumber = this.pageNumber = 0;
-		this.search(onNext);
+		this.search(onNext, headers);
 	}
 
-	search(onNext?: () => void) {
+	search(onNext?: () => void, headers?: { [header: string]: string }) {
 		if (this.searching && this.pagination !== undefined) {
 			this.pagination.PageNumber++;
 		}
@@ -338,7 +338,7 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 			this.subscription = this.portalsCmsSvc.searchItems(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
 		}
 		else {
-			this.portalsCmsSvc.searchItemsAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)));
+			this.portalsCmsSvc.searchItemsAsync(this.request, onSuccess, error => this.trackAsync(this.title.track).then(() => this.appFormsSvc.showErrorAsync(error)), headers);
 		}
 	}
 
@@ -429,6 +429,8 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 	}
 
 	private prepareForReloading(onNext: () => void) {
+		this.configSvc.removeDefinition(this.portalsCmsSvc.name, "cms.item", undefined, { "x-content-type-id": this.contentType.ID });
+		this.configSvc.removeDefinition(this.portalsCmsSvc.name, "cms.item", undefined, { "x-content-type-id": this.contentType.ID, "x-view-controls": "x" });
 		AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
 		this.pagination = undefined;
 		this.pageNumber = 0;
@@ -440,7 +442,7 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.do(() => this.prepareForReloading(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync(() => {
 			this.infiniteScrollCtrl.disabled = false;
 			this.appFormsSvc.showToastAsync("Re-loaded");
-		}))));
+		}), { "x-refresh": "true" })));
 	}
 
 	private customizeFilterAndSort() {
@@ -579,7 +581,7 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 					undefined,
 					await this.configSvc.getResourceAsync("portals.cms.common.advanced.delete.confirm.last"),
 					await this.configSvc.getResourceAsync("portals.cms.common.advanced.delete.confirm.next"),
-					async _ => await Promise.all(ids.map(id => this.portalsCmsSvc.deleteItemAsync(id))).then(async () => {
+					async () => await Promise.all(ids.map(id => this.portalsCmsSvc.deleteItemAsync(id))).then(async () => {
 						ids.forEach(id => this.items.removeAt(this.items.findIndex(obj => obj.ID === id)));
 						this.clearSelected();
 						await this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.common.advanced.delete.message"));

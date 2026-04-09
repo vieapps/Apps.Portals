@@ -341,10 +341,10 @@ export class UsersService extends BaseService {
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
-					(data.Objects as Array<any>).forEach(data => {
-						this.fetchProfileAsync(data.UserID);
-						this.fetchProfileAsync(data.CreatedID);
-						UserToken.update(data);
+					(data.Objects as Array<any>).forEach(token => {
+						this.fetchProfileAsync(token.UserID);
+						this.fetchProfileAsync(token.CreatedID);
+						UserToken.update(token);
 					});
 				}
 				if (onSuccess !== undefined) {
@@ -361,10 +361,10 @@ export class UsersService extends BaseService {
 			request,
 			data => {
 				if (data !== undefined && AppUtility.isGotData(data.Objects)) {
-					(data.Objects as Array<any>).forEach(data => {
-						this.fetchProfileAsync(data.UserID);
-						this.fetchProfileAsync(data.CreatedID);
-						UserToken.update(data);
+					(data.Objects as Array<any>).forEach(token => {
+						this.fetchProfileAsync(token.UserID);
+						this.fetchProfileAsync(token.CreatedID);
+						UserToken.update(token);
 					});
 				}
 				if (onSuccess !== undefined) {

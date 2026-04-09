@@ -207,7 +207,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 			save: await this.configSvc.getResourceAsync(`common.buttons.${(AppUtility.isNotEmpty(this.content.ID) ? "save" : "create")}`),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
 		};
-		
+
 		this.isAdvancedMode = (this.canManage || this.canModerate) && AppUtility.isNotEmpty(this.content.ID) && !!this.configSvc.requestParams["AdvancedMode"];
 		this.formSegments.items = await this.getFormSegmentsAsync();
 		this.formConfig = await this.getFormControlsAsync();
@@ -232,6 +232,11 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
 		let formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.content", undefined, { "x-content-type-id": this.contentType.ID });
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
+
 		formConfig = this.isAdvancedMode ? AppUtility.clone(formConfig) : formConfig;
 
 		let control = formConfig.find(ctrl => ctrl.Name === "Status");
@@ -297,29 +302,41 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 		});
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "StartDate"));
-		control.Required = true;
+		if (control !== undefined) {
+			control.Required = true;
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "EndDate"));
-		control.Required = false;
+		if (control !== undefined) {
+			control.Required = false;
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "PublishedTime"));
-		control.Required = false;
+		if (control !== undefined) {
+			control.Required = false;
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "AllowComments"));
-		control.Options.Type = "toggle";
-		control.Hidden = !this.contentType.AllowComments;
+		if (control !== undefined) {
+			control.Options.Type = "toggle";
+			control.Hidden = !this.contentType.AllowComments;
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Summary"));
-		control.Options.Rows = 5;
+		if (control !== undefined) {
+			control.Options.Rows = 5;
+		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "SourceURL"));
-		control.Options.Icon = {
-			Name: "globe",
-			Fill: "clear",
-			Color: "medium",
-			Slot: "end",
-			OnClick: (_, formControl) => PlatformUtility.openURL(formControl.value)
-		};
+		if (control !== undefined) {
+			control.Options.Icon = {
+				Name: "globe",
+				Fill: "clear",
+				Color: "medium",
+				Slot: "end",
+				OnClick: (_, formControl) => PlatformUtility.openURL(formControl.value)
+			};
+		}
 
 		if (this.isAdvancedMode) {
 			formConfig.filter(ctrl => ctrl.Type === "TextEditor").forEach(ctrl => {
@@ -642,12 +659,12 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 					delete content["Thumbnails"];
 					delete content["Attachments"];
 					delete content["Upload"];
-	
+
 					content.StartDate = AppUtility.toStrDate(content.StartDate);
 					content.EndDate = AppUtility.toStrDate(content.EndDate);
 					content.PublishedTime = AppUtility.toIsoDateTime(content.PublishedTime, true);
 					content.Details = this.portalsCmsSvc.normalizeTempTokens(content.Details, this.authSvc.getTempToken(this.content.Privileges), false);
-	
+
 					const thumbnail = (this.formControls.find(ctrl => ctrl.Name === "Thumbnails") || {}).value;
 					const thumbnailBase64 = thumbnail !== undefined && AppUtility.isObject(thumbnail, true) ? thumbnail.new : undefined;
 					const uploadThumbnailAsync = thumbnailBase64 !== undefined ? async (options?: FileOptions) => {
@@ -663,7 +680,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 							error => console.error("<CMS.Content/Edit>: Error occurred while uploading thumbnail", error)
 						);
 					} : () => AppUtility.promise;
-	
+
 					const headers = {} as { [header: string]: string };
 					if (this.isAdvancedMode && this.canManage) {
 						headers["x-advanced-update"] = "true";
@@ -673,7 +690,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 					if (this.configSvc.isDebug) {
 						console.log(`<CMS.Content/Edit>: ${AppUtility.isNotEmpty(content.ID) ? "Update" : "Create"} a content ${thumbnailBase64 !== undefined ? "(with thumbnail)" : ""}\n`, content.Title, content, this.hash.content, hash.content);
 					}
-	
+
 					if (AppUtility.isNotEmpty(content.ID)) {
 						uploadThumbnailAsync().then(async () => {
 							if (this.hash.content === hash.content) {
@@ -684,7 +701,7 @@ export class CmsContentsUpdatePage implements OnInit, OnDestroy {
 										this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 									]);
 								}
-								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
+								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 							}
 							else {
 								await this.portalsCmsSvc.updateContentAsync(

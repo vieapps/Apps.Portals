@@ -182,6 +182,11 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: Array<AppFormsControlConfig>) => void) {
 		let formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "cms.item", undefined, { "x-content-type-id": this.contentType.ID });
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
+
 		formConfig = this.isAdvancedMode ? AppUtility.clone(formConfig) : formConfig;
 
 		let control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Status"));
@@ -191,8 +196,10 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "AllowComments"));
-		control.Options.Type = "toggle";
-		control.Hidden = !this.contentType.AllowComments;
+		if (control !== undefined) {
+			control.Options.Type = "toggle";
+			control.Hidden = !this.contentType.AllowComments;
+		}
 
 		if (this.isAdvancedMode) {
 			formConfig.filter(ctrl => ctrl.Type === "TextEditor").forEach(ctrl => {
@@ -263,7 +270,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 		}
 
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Title"));
-		if (!control.Hidden) {
+		if (control !== undefined && !control.Hidden) {
 			control.Options.AutoFocus = true;
 		}
 
@@ -312,11 +319,14 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 
 		if (AppUtility.isNotEmpty(this.item.ID)) {
 			control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "ID"));
-			control.Order = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Audits")).Order + 1;
-			control.Segment = "basic";
-			control.Hidden = false;
-			control.Options.Label = "{{common.audits.identity}}";
-			control.Options.ReadOnly = true;
+			if (control !== undefined) {
+				const auditsCtrl = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "Audits"));
+				control.Order = auditsCtrl !== undefined ? auditsCtrl.Order + 1 : formConfig.length;
+				control.Segment = "basic";
+				control.Hidden = false;
+				control.Options.Label = "{{common.audits.identity}}";
+				control.Options.ReadOnly = true;
+			}
 		}
 
 		if (onCompleted !== undefined) {
@@ -387,7 +397,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 					delete item["Thumbnails"];
 					delete item["Attachments"];
 					delete item["Upload"];
-	
+
 					const thumbnail = (this.formControls.find(ctrl => ctrl.Name === "Thumbnails") || {}).value;
 					const thumbnailBase64 = thumbnail !== undefined && AppUtility.isObject(thumbnail, true) ? thumbnail.new : undefined;
 					const uploadThumbnailAsync = thumbnailBase64 !== undefined ? async (options?: FileOptions) => {
@@ -408,12 +418,12 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 					if (this.isAdvancedMode && this.canManage) {
 						headers["x-advanced-update"] = "true";
 					}
-	
+
 					hash.content = AppCrypto.hash(item);
 					if (this.configSvc.isDebug) {
 						console.log(`<CMS.Item>: ${AppUtility.isNotEmpty(item.ID) ? "Update" : "Create"} a content ${thumbnailBase64 !== undefined ? "(with thumbnail)" : ""}`, this.hash.content, hash.content);
 					}
-	
+
 					if (AppUtility.isNotEmpty(item.ID)) {
 						uploadThumbnailAsync().then(async () => {
 							if (this.hash.content === hash.content) {
@@ -424,7 +434,7 @@ export class CmsItemsUpdatePage implements OnInit, OnDestroy {
 										this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("portals.cms.contents.update.messages.success.update")),
 									]);
 								}
-								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync())
+								this.appFormsSvc.hideLoadingAsync(() => this.configSvc.navigateBackAsync());
 							}
 							else {
 								await this.portalsCmsSvc.updateItemAsync(

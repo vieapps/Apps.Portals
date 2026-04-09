@@ -119,6 +119,10 @@ export class PortalsOrganizationsUpdatePage implements OnInit {
 		const trackings: Array<string> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "trackings");
 
 		const formConfig: Array<AppFormsControlConfig> = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "organization");
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
 		formConfig.forEach(ctrl => ctrl.Segment = "basic");
 
 		if (AppUtility.isNotEmpty(this.organization.ID)) {

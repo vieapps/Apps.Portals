@@ -296,17 +296,33 @@ export class PortalsCoreService extends BaseService {
 			const path = this.configSvc.getDefinitionPath(this.name, "module.definitions");
 			BaseModel.moduleDefinitions = this.configSvc.getDefinition(path);
 			if (BaseModel.moduleDefinitions === undefined) {
-				BaseModel.moduleDefinitions = await this.configSvc.fetchDefinitionAsync(path, false);
-				BaseModel.moduleDefinitions.forEach(moduleDefinition => {
-					moduleDefinition.ContentTypeDefinitions.forEach(contentTypeDefinition => contentTypeDefinition.ModuleDefinition = moduleDefinition);
-					moduleDefinition.ObjectDefinitions.forEach(objectDefinition => objectDefinition.ModuleDefinition = moduleDefinition);
+				BaseModel.moduleDefinitions = await this.configSvc.fetchDefinitionAsync(path, false, definitions => {
+					BaseModel.moduleDefinitions = definitions;
+					this.updateDefinitions(onNext);
 				});
-				console.log("[Portals]: Definitions were fetched", BaseModel.moduleDefinitions.first());
-				AppEvents.broadcast(this.name, { Type: "Definitions" });
+				this.updateDefinitions();
 			}
 		}
 		if (onNext !== undefined) {
 			onNext();
+		}
+		return BaseModel.moduleDefinitions;
+	}
+
+	updateDefinitions(onNext?: () => void) {
+		if (AppUtility.isArray(BaseModel.moduleDefinitions, true)) {
+			BaseModel.moduleDefinitions.forEach(moduleDefinition => {
+				moduleDefinition.ContentTypeDefinitions.forEach(contentTypeDefinition => contentTypeDefinition.ModuleDefinition = moduleDefinition);
+				moduleDefinition.ObjectDefinitions.forEach(objectDefinition => objectDefinition.ModuleDefinition = moduleDefinition);
+			});
+			console.log("[Portals]: Definitions were fetched", BaseModel.moduleDefinitions.first());
+			AppEvents.broadcast(this.name, { Type: "Definitions" });
+			if (onNext !== undefined) {
+				onNext();
+			}
+		}
+		else {
+			BaseModel.moduleDefinitions = undefined;
 		}
 		return BaseModel.moduleDefinitions;
 	}
@@ -1777,10 +1793,12 @@ export class PortalsCoreService extends BaseService {
 	}
 
 	prepareApprovalStatusControl(controlConfig: AppFormsControlConfig) {
-		this.appFormsSvc.prepareSelectControl(controlConfig, controlConfig.Options.SelectOptions.Values, _ => controlConfig.Options.SelectOptions.Values = AppUtility.isGotData(controlConfig.Options.SelectOptions.Values)
-			? (controlConfig.Options.SelectOptions.Values as AppFormsLookupValue[]).map(kvp => ({ Value: kvp.Value, Label: `{{status.approval.${kvp.Value}}}` }) as AppFormsLookupValue)
-			: BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{status.approval.${value}}}` }) as AppFormsLookupValue)
-		);
+		if (controlConfig !== undefined) {
+			this.appFormsSvc.prepareSelectControl(controlConfig, controlConfig.Options.SelectOptions.Values, _ => controlConfig.Options.SelectOptions.Values = AppUtility.isGotData(controlConfig.Options.SelectOptions.Values)
+				? (controlConfig.Options.SelectOptions.Values as AppFormsLookupValue[]).map(kvp => ({ Value: kvp.Value, Label: `{{status.approval.${kvp.Value}}}` }) as AppFormsLookupValue)
+				: BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{status.approval.${value}}}` }) as AppFormsLookupValue)
+			);
+		}
 		return controlConfig;
 	}
 

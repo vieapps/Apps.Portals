@@ -150,6 +150,10 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 
 	private async getFormControlsAsync(onCompleted?: (formConfig: AppFormsControlConfig[]) => void) {
 		const formConfig: AppFormsControlConfig[] = await this.configSvc.getDefinitionAsync(this.portalsCoreSvc.name, "expression");
+		if (formConfig === undefined || !!!formConfig.length) {
+			this.appFormsSvc.showAlertAsync(undefined, await this.appFormsSvc.getResourceAsync("portals.common.emptyDefinition"), undefined, () => this.configSvc.navigateBackAsync());
+			return;
+		}
 		this.portalsCoreSvc.addOrganizationControl(formConfig, "{{portals.expressions.controls.Organization}}", this.organization);
 
 		let control = formConfig.find(ctrl => ctrl.Name === "Title");
@@ -599,7 +603,7 @@ export class PortalsExpressionsUpdatePage implements OnInit {
 						exp[element.Attribute] = element.Operator;
 					}
 					else {
-						var value = {} as { [key: string]: any };
+						const value = {} as { [key: string]: any };
 						value[element.Operator] = element.Value;
 						exp[element.Attribute] = value;
 					}
