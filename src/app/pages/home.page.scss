@@ -5,3 +5,46 @@ ion-header > ion-toolbar > div > ion-icon {
 ion-header > ion-toolbar > div > span {
 	margin-right: 15px;
 }
+.metrics > div,
+.metrics > div > div > section,
+.metrics > div > div > section > section,
+.metrics > div > div > section > section > section {
+	padding-bottom: 15px;
+}
+.metrics > section {
+	padding: 15px 0;
+}
+.metrics > section > span {
+	font-size: larger;
+}
+.metrics > section > span.upstream {
+	color: darkblue;
+}
+.metrics > section > span.downstream {
+	color: darkred;	
+}
+.metrics > section > span,
+.metrics > div > div > span {
+	font-weight: bold;
+	text-transform: uppercase;
+}
+.metrics > div > div > div,
+.metrics > div > div > section,
+.metrics > div > div > section > section,
+.metrics > div > div > section > section > section > section {
+	margin-left: 15px;
+	padding: 7px 0;
+}
+.metrics > div > div > section > span {
+	font-weight: bold;
+	font-style: italic;
+}
+.metrics > div > div > section > div,
+.metrics > div > div > section > div > div,
+.metrics > div > div > section > section > section > section > div,
+.metrics > div > div > section > section > section > section > div > div {
+	margin-left: 15px;
+}
+.metrics > div > div > section > section > section > ion-icon {
+	cursor: pointer;
+}

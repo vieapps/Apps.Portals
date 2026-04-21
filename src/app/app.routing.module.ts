@@ -10,6 +10,11 @@ export const routes: Routes = [
 		loadChildren: "@app/pages/home.module#HomePageModule"
 	},
 	{
+		path: "metrics",
+		data: { preload: true },
+		loadChildren: "@app/pages/home.module#HomePageModule"
+	},
+	{
 		path: "search",
 		canActivate: [AppReadyGuardService],
 		loadChildren: "@app/pages/search.module#SearchPageModule"

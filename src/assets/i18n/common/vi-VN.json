@@ -5,7 +5,8 @@
 			"login": "Đăng nhập",
 			"register": "Đăng ký tài khoản",
 			"profile": "Thông tin tài khoản",
-			"search": "Tìm kiếm"
+			"search": "Tìm kiếm",
+			"metrics": "Thông số hệ thống"
 		},
 		"alert": {
 			"header": {
@@ -48,6 +49,7 @@
 			"searching": "Tìm kiếm dữ liệu...",
 			"activating": "Kích hoạt...",
 			"processing": "Xử lý...",
+			"refreshen": "Dữ liệu đã được tải lại và làm tươi...",
 			"errors": {
 				"general": "Đã xảy ra lỗi!",
 				"wrongAccountOrPassword": "Tài khoản hoặc mật khẩu không đúng!",

@@ -64,7 +64,7 @@ export class AppComponent implements OnInit {
 				AppEvents.broadcast("App", { Type: "Router", Mode: "Navigated", URL: current.url, Params: current.params });
 				if (current.url === this.configSvc.appConfig.URLs.home) {
 					AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Router" });
-				}	
+				}
 				if (this.configSvc.isDebug) {
 					console.log(`<Router>: URLs stack [${this.configSvc.appConfig.URLs.stack.length}]`, this.configSvc.appConfig.URLs.stack);
 				}
@@ -213,7 +213,7 @@ export class AppComponent implements OnInit {
 			if (!appConfig.isNativeApp) {
 				if (this.configSvc.isWebApp) {
 					PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
-				}		
+				}
 				window["__vieapps"] = {
 					apis: AppAPIs,
 					config: appConfig,
@@ -238,7 +238,7 @@ export class AppComponent implements OnInit {
 							SystemID: systemID,
 							ObjectID: objectID
 						};
-						request[objectNameOrRepositoryEntityID !== undefined && objectNameOrRepositoryEntityID.length == 32 ? "RepositoryEntityID" : "ObjectName"] = objectNameOrRepositoryEntityID;
+						request[objectNameOrRepositoryEntityID !== undefined && objectNameOrRepositoryEntityID.length === 32 ? "RepositoryEntityID" : "ObjectName"] = objectNameOrRepositoryEntityID;
 						console.log("home?redirect=" + AppCrypto.base64urlEncode("/portals/initializer?x-request=" + AppCrypto.base64urlEncode(AppUtility.stringify(request))));
 					},
 					open: (uri: string) => {
@@ -274,7 +274,7 @@ export class AppComponent implements OnInit {
 								paginations: AppPagination.instances,
 								notifications: Notification.instances,
 								organizations: Organization.instances,
-								roles: Role.instances, 
+								roles: Role.instances,
 								modules: Module.instances,
 								contentTypes: ContentType.instances,
 								expressions: Expression.instances,

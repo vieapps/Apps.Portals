@@ -32,9 +32,282 @@
 </ion-header>
 
 <ion-content [color]="color">
-	<control-cms-portals-shortcuts *ngIf="isAuthenticated && activeService === 'Portals'"></control-cms-portals-shortcuts>
-	<control-cms-portals-featured-contents *ngIf="isAuthenticated && activeService === 'Portals'" name="updated"></control-cms-portals-featured-contents>
-	<control-cms-portals-featured-contents *ngIf="isAuthenticated && activeService === 'Portals'" name="published" status="Published" orderBy="Date"></control-cms-portals-featured-contents>
-	<control-app-preferences *ngIf="!isAuthenticated && activeService === 'Portals'"></control-app-preferences>
-	<control-books-featured *ngIf="activeService === 'Books'"></control-books-featured>
+	<control-cms-portals-shortcuts *ngIf="isAuthenticated && isHomePage && activeService === 'Portals'"></control-cms-portals-shortcuts>
+	<control-cms-portals-featured-contents *ngIf="isAuthenticated && isHomePage && activeService === 'Portals'" name="updated"></control-cms-portals-featured-contents>
+	<control-cms-portals-featured-contents *ngIf="isAuthenticated && isHomePage && activeService === 'Portals'" name="published" status="Published" orderBy="Date"></control-cms-portals-featured-contents>
+	<control-app-preferences *ngIf="isHomePage && !isAuthenticated && activeService === 'Portals'"></control-app-preferences>
+	<control-books-featured *ngIf="isHomePage && activeService === 'Books'"></control-books-featured>
+	<div *ngIf="isMetricsPage && isSystemAdministrator" class="metrics ion-padding">
+		<div *ngIf="!metrics">
+			Waiting for signal...
+		</div>
+		<section *ngIf="metrics && metrics.Upstream">
+			<span class="upstream">UP-STREAM</span>
+		</section>
+		<div *ngIf="metrics && metrics.Upstream && metrics.Upstream.Environment">
+			<div>
+				<span>Environment</span>
+			</div>
+			<div>
+				<div>
+					CPU &amp; RAM (max/average/min) - CPU: <b>{{ metrics.Upstream.Environment.CPU.Max | number }}%</b> / {{ metrics.Upstream.Environment.CPU.Average | number }}% / {{ metrics.Upstream.Environment.CPU.Min | number }}% | RAM: <b>{{ metrics.Upstream.Environment.Memory.Max | number }}MB</b> / {{ metrics.Upstream.Environment.Memory.Average | number }}MB / {{ metrics.Upstream.Environment.Memory.Min | number }}MB | Total - CPU: {{ metrics.Upstream.Environment.CPU.Total | number }}% - RAM: {{ metrics.Upstream.Environment.Memory.Total | number }}MB
+				</div>
+			</div>
+			<div>
+				<div>
+					ThreadPool - Usage: <b>{{ metrics.Upstream.Environment.ThreadPool.Usage | number }}%</b> | Workers: <b>{{ metrics.Upstream.Environment.ThreadPool.Workers | number }}</b> / {{ metrics.Upstream.Environment.ThreadPool.MaxWorkers | number }} | Async IO: <b>{{ metrics.Upstream.Environment.ThreadPool.AsyncIO | number }}</b> / {{ metrics.Upstream.Environment.ThreadPool.MaxAsyncIO | number }} | Node max: {{ metrics.Upstream.Environment.NodeMax.ID }} - Usage: {{ metrics.Upstream.Environment.NodeMax.Usage | number }}% - Workers: {{ metrics.Upstream.Environment.NodeMax.Workers | number }}
+				</div>
+			</div>
+		</div>
+		<div *ngIf="metrics && metrics.Upstream && metrics.Upstream.Cache">
+			<div>
+				<span>Cache</span>
+			</div>
+			<div>
+				<div>
+					Status: {{ metrics.Upstream.Cache.Status }} | Ping (max): <b>{{ metrics.Upstream.Cache.Ping.Max | number }}ms</b> | Ping (average): {{ metrics.Upstream.Cache.Ping.Average | number }}ms | Queue (max): <b>{{ metrics.Upstream.Cache.Queue.Max | number }}</b> | Queue (average): {{ metrics.Upstream.Cache.Queue.Average | number }}
+				</div>
+			</div>
+		</div>
+		<div *ngIf="metrics && metrics.Upstream && metrics.Upstream.Router">
+			<div>
+				<span>Router</span>
+			</div>
+			<div>
+				<div>
+					RPC Gate - Usage: <b>{{ metrics.Upstream.Router.Gate.Usage | number }}%</b> | Current: <b>{{ metrics.Upstream.Router.Gate.Current | number }}</b> | Available: {{ metrics.Upstream.Router.Gate.Available | number }} | Max: {{ metrics.Upstream.Router.Gate.Max | number }}
+				</div>
+			</div>
+			<div>
+				<div>
+					RPC Call - Backpressure: <b>{{ metrics.Upstream.Router.Call.Backpressure | number }}</b> | Completion Ratio: <b>{{ metrics.Upstream.Router.Call.CompletionRatio | number }}%</b> | Reject Rate: {{ metrics.Upstream.Router.Call.RejectRate | number }}/s | Rejected: {{ metrics.Upstream.Router.Call.TotalRejected | number }} | InFlight: {{ metrics.Upstream.Router.Call.TotalInFlight | number }} | Completed: {{ metrics.Upstream.Router.Call.TotalCompleted | number }} | Entered: {{ metrics.Upstream.Router.Call.TotalEntered | number }}
+				</div>
+			</div>
+			<div>
+				<div>
+					Latency - Average: <b>{{ metrics.Upstream.Router.Call.AverageLatency | number }}ms</b> | Max: {{ metrics.Upstream.Router.Call.MaxLatency | number }}ms
+				</div>
+			</div>
+		</div>
+		<div *ngIf="metrics && metrics.Upstream && metrics.Upstream.Services">
+			<div>
+				<span>Services</span>
+			</div>
+			<div *ngFor="let service of metrics.Upstream.Services; trackBy: track">
+				<section>
+					<span>{{ service.ServiceName }}</span>
+				</section>
+				<section>
+					<div>
+						CPU &amp; RAM (max/average/min) - CPU: <b>{{ service.CpuMax | number }}%</b> / {{ service.CpuAverage | number }}% / {{ service.CpuMin | number }}% | RAM: <b>{{ service.MemoryMax | number }}MB</b> / {{ service.MemoryAverage | number }}MB / {{ service.MemoryMin | number }}MB
+					</div>
+				</section>
+				<section>
+					<div>
+						ThreadPool - Workers: <b>{{ service.ThreadPoolWorkers | number }}</b> / {{ service.ThreadPoolMaxWorkers | number }} | Async IO: <b>{{ service.ThreadPoolAsyncIO | number }}</b> / {{ service.ThreadPoolMaxAsyncIO | number }}
+					</div>
+				</section>
+				<section>
+					<div>
+						Requests - Rate: <b>{{ service.RequestsRate | number }}/s</b>  | InFlight: <b>{{ service.RequestsInFlight | number }}</b> | Total: {{ service.RequestsTotal | number }}
+					</div>
+				</section>
+				<section>
+					<div>
+						Cache - Status: {{ service.CacheStatus }} | Queue: {{ service.CacheTotalQueue | number }} | Ping: {{ service.CachePingMilliseconds | number }}ms
+					</div>
+				</section>
+				<section *ngIf="service.CacheL1HitRatio">
+					<div>
+						<div>
+							L1 - Hit Ratio: {{ service.CacheL1HitRatio | number }}% | Miss Ratio: {{ service.CacheL1MissRatio | number }}% | Bypass Ratio: {{ service.CacheL1BypassRatio | number }}% | Miss: {{ service.CacheL1Miss | number }} | Bypass: {{ service.CacheL1Bypass | number }} | 200: {{ service.CacheL1Hit200 | number }} | 304: {{ service.CacheL1Hit304 | number }}
+						</div>
+					</div>
+				</section>
+				<section *ngIf="service.CacheL2HitRatio">
+					<div>
+						<div>
+							L2 - Hit Ratio: {{ service.CacheL2HitRatio | number }}% | Miss Ratio: {{ service.CacheL2MissRatio | number }}% | Bypass Ratio: {{ service.CacheL2BypassRatio | number }}% | Miss: {{ service.CacheL2Miss | number }} | Bypass: {{ service.CacheL2Bypass | number }} | 200: {{ service.CacheL2Hit200 | number }} | 304: {{ service.CacheL2Hit304 | number }}
+						</div>
+					</div>
+				</section>
+				<section>
+					<div>
+						RPC
+					</div>
+				</section>
+				<section>
+					<div>
+						<div>
+							Gate - Usage: <b>{{ service.RpcGateUsage | number }}%</b> | Current: <b>{{ service.RpcGateCurrent | number }}</b> | Available: {{ service.RpcGateAvailable | number }} | Max: {{ service.RpcGateMax | number }}
+						</div>
+					</div>
+				</section>
+				<section>
+					<div>
+						<div>
+							Call - In: {{ service.RpcEnteredRate | number }}/s | Out: {{ service.RpcCompletedRate | number }}/s | Rejected: {{ service.RpcRejected | number }} | InFlight: {{ service.RpcInFlight | number }} | Completed: {{ service.RpcCompleted | number }} | Entered: {{ service.RpcEntered | number }}
+						</div>
+					</div>
+				</section>
+				<section>
+					<div>
+						<div>
+							Latency - Average: <b>{{ service.RpcAverageLatency | number }}ms</b> | Max: {{ service.RpcMaxLatency | number }}ms
+						</div>
+					</div>
+				</section>
+				<section *ngIf="service.Nodes && service.Nodes.length > 1">
+					<section *ngFor="let node of service.Nodes; trackBy: track">
+						<section>
+							<ion-icon *ngIf="!states.Upstream[service.ServiceName][node.NodeID]" (click)="changeState(service.ServiceName, node.NodeID)" fill="clear" name="caret-forward-outline" slot="icon-only"></ion-icon>
+							<ion-icon *ngIf="states.Upstream[service.ServiceName][node.NodeID]" (click)="changeState(service.ServiceName, node.NodeID)" fill="clear" name="caret-down-outline" slot="icon-only"></ion-icon>
+							<span>Node: {{ node.NodeID }}</span>
+						</section>
+						<section *ngIf="states.Upstream[service.ServiceName][node.NodeID]">
+							<section>
+								<div>
+									CPU &amp; RAM (max/average/min) - CPU: <b>{{ node.CpuMax | number }}%</b> / {{ node.CpuAverage | number }}% / {{ node.CpuMin | number }}% | RAM: <b>{{ node.MemoryMax | number }}MB</b> / {{ node.MemoryAverage | number }}MB / {{ node.MemoryMin | number }}MB
+								</div>
+							</section>
+							<section>
+								<div>
+									ThreadPool - Workers: <b>{{ node.ThreadPoolWorkers | number }}</b> / {{ node.ThreadPoolMaxWorkers | number }} | Async IO: <b>{{ node.ThreadPoolAsyncIO | number }}</b> / {{ node.ThreadPoolMaxAsyncIO | number }}
+								</div>
+							</section>
+							<section>
+								<div>
+									Requests - Rate: <b>{{ node.RequestsRate | number }}/s</b>  | InFlight: {{ node.RequestsInFlight | number }} | Total: {{ node.RequestsTotal | number }}
+								</div>
+							</section>
+							<section>
+								<div>
+									Cache - Status: {{ node.CacheStatus }} | Queue: {{ node.CacheTotalQueue | number }} | Ping: {{ node.CachePingMilliseconds | number }}ms
+								</div>
+							</section>
+							<section *ngIf="node.CacheL1HitRatio">
+								<div>
+									<div>
+										L1 - Hit Ratio: {{ node.CacheL1HitRatio | number }}% | Miss Ratio: {{ node.CacheL1MissRatio | number }}% | Bypass Ratio: {{ node.CacheL1BypassRatio | number }}% | Miss: {{ node.CacheL1Miss | number }} | Bypass: {{ node.CacheL1Bypass | number }} | 200: {{ node.CacheL1Hit200 | number }} | 304: {{ node.CacheL1Hit304 | number }}
+									</div>
+								</div>
+							</section>
+							<section *ngIf="node.CacheL2HitRatio">
+								<div>
+									<div>
+										L2 - Hit Ratio: {{ node.CacheL2HitRatio | number }}% | Miss Ratio: {{ node.CacheL2MissRatio | number }}% | Bypass Ratio: {{ node.CacheL2BypassRatio | number }}% | Miss: {{ node.CacheL2Miss | number }} | Bypass: {{ node.CacheL2Bypass | number }} | 200: {{ node.CacheL2Hit200 | number }} | 304: {{ node.CacheL2Hit304 | number }}
+									</div>
+								</div>
+							</section>
+							<section>
+								<div>
+									RPC
+								</div>
+							</section>
+							<section>
+								<div>
+									<div>
+										Gate - Usage: <b>{{ node.RpcGateUsage | number }}%</b> | Current: <b>{{ node.RpcGateCurrent | number }}</b> | Available: {{ node.RpcGateAvailable | number }} | Max: {{ node.RpcGateMax | number }}
+									</div>
+								</div>
+							</section>
+							<section>
+								<div>
+									<div>
+										Call - In: {{ node.RpcEnteredRate | number }}/s | Out: {{ node.RpcCompletedRate | number }}/s | Rejected: {{ node.RpcRejected | number }} | InFlight: {{ node.RpcInFlight | number }} | Completed: {{ node.RpcCompleted | number }} | Entered: {{ node.RpcEntered | number }}
+									</div>
+								</div>
+							</section>
+							<section>
+								<div>
+									<div>
+										Latency - Average: {{ node.RpcAverageLatency | number }}ms | Max: {{ node.RpcMaxLatency | number }}ms
+									</div>
+								</div>
+							</section>
+						</section>
+					</section>
+				</section>
+			</div>
+		</div>
+		<section *ngIf="metrics && metrics.Downstream">
+			<span class="downstream">DOWN-STREAM</span>
+		</section>
+		<div *ngIf="metrics && metrics.Downstream && metrics.Downstream.Environment">
+			<div>
+				<span>Environment</span>
+			</div>
+			<div>
+				<div>
+					CPU &amp; RAM (max/average/min) - CPU: <b>{{ metrics.Downstream.Environment.CPU.Max | number }}%</b> / {{ metrics.Downstream.Environment.CPU.Average | number }}% / {{ metrics.Downstream.Environment.CPU.Min | number }}% | RAM: <b>{{ metrics.Downstream.Environment.Memory.Max | number }}MB</b> / {{ metrics.Downstream.Environment.Memory.Average | number }}MB / {{ metrics.Downstream.Environment.Memory.Min | number }}MB | Total - CPU: {{ metrics.Downstream.Environment.CPU.Total | number }}% - RAM: {{ metrics.Downstream.Environment.Memory.Total | number }}MB
+				</div>
+			</div>
+			<div>
+				<div>
+					ThreadPool - Usage: <b>{{ metrics.Downstream.Environment.ThreadPool.Usage | number }}%</b> | Workers: <b>{{ metrics.Downstream.Environment.ThreadPool.Workers | number }}</b> / {{ metrics.Downstream.Environment.ThreadPool.MaxWorkers | number }} | Async IO: <b>{{ metrics.Downstream.Environment.ThreadPool.AsyncIO | number }}</b> / {{ metrics.Downstream.Environment.ThreadPool.MaxAsyncIO | number }} | Node max: {{ metrics.Downstream.Environment.NodeMax.ID }} - Usage: {{ metrics.Downstream.Environment.NodeMax.Usage | number }}% | Workers: {{ metrics.Downstream.Environment.NodeMax.Workers | number }}
+				</div>
+			</div>
+		</div>
+		<div *ngIf="metrics && metrics.Downstream && metrics.Downstream.Cache">
+			<div>
+				<span>Cache</span>
+			</div>
+			<div>
+				<div>
+					Status: {{ metrics.Downstream.Cache.Status }} | Ping (max): <b>{{ metrics.Downstream.Cache.Ping.Max | number }}ms</b> | Ping (average): {{ metrics.Downstream.Cache.Ping.Average | number }}ms | Queue (max): <b>{{ metrics.Downstream.Cache.Queue.Max | number }}</b> | Queue (average): {{ metrics.Downstream.Cache.Queue.Average | number }}
+				</div>
+			</div>
+		</div>
+		<div *ngIf="metrics && metrics.Downstream && metrics.Downstream.Services">
+			<div>
+				<span>Services</span>
+			</div>
+			<div *ngFor="let service of metrics.Downstream.Services; trackBy: track">
+				<section>
+					<span>{{ service.ServiceName }}</span>
+				</section>
+				<section>
+					<div>
+						CPU &amp; RAM (max/average/min) - CPU: <b>{{ service.CpuMax | number }}%</b> / {{ service.CpuAverage | number }}% / {{ service.CpuMin | number }}% | RAM: <b>{{ service.MemoryMax | number }}MB</b> / {{ service.MemoryAverage | number }}MB / {{ service.MemoryMin | number }}MB
+					</div>
+				</section>
+				<section>
+					<div>
+						ThreadPool - Workers: <b>{{ service.ThreadPoolWorkers | number }}</b> / {{ service.ThreadPoolMaxWorkers | number }} | Async IO: <b>{{ service.ThreadPoolAsyncIO | number }}</b> / {{ service.ThreadPoolMaxAsyncIO | number }}
+					</div>
+				</section>
+				<section>
+					<div>
+						Cache - Status: {{ service.CacheStatus }} | Queue: {{ service.CacheTotalQueue | number }} | Ping: {{ service.CachePingMilliseconds | number }}ms
+					</div>
+				</section>
+				<section *ngIf="service.Nodes && service.Nodes.length > 1">
+					<section *ngFor="let node of service.Nodes; trackBy: track">
+						<section>
+							<ion-icon *ngIf="!states.Downstream[service.ServiceName][node.NodeID]" (click)="changeState(service.ServiceName, node.NodeID, false)" fill="clear" name="caret-forward-outline" slot="icon-only"></ion-icon>
+							<ion-icon *ngIf="states.Downstream[service.ServiceName][node.NodeID]" (click)="changeState(service.ServiceName, node.NodeID, false)" fill="clear" name="caret-down-outline" slot="icon-only"></ion-icon>
+							<span>Node: {{ node.NodeID }}</span>
+						</section>
+						<section *ngIf="states.Downstream[service.ServiceName][node.NodeID]">
+							<section>
+								<div>
+									CPU &amp; RAM (max/average/min) - CPU: <b>{{ node.CpuMax | number }}%</b> / {{ node.CpuAverage | number }}% / {{ node.CpuMin | number }}% | RAM: <b>{{ node.MemoryMax | number }}MB</b> / {{ node.MemoryAverage | number }}MB / {{ node.MemoryMin | number }}MB
+								</div>
+							</section>
+							<section>
+								<div>
+									ThreadPool - Workers: <b>{{ node.ThreadPoolWorkers | number }}</b> / {{ node.ThreadPoolMaxWorkers | number }} | Async IO: <b>{{ node.ThreadPoolAsyncIO | number }}</b> / {{ node.ThreadPoolMaxAsyncIO | number }}
+								</div>
+							</section>
+							<section>
+								<div>
+									Cache - Status: {{ node.CacheStatus }} | Queue: {{ node.CacheTotalQueue | number }} | Ping: {{ node.CachePingMilliseconds | number }}ms
+								</div>
+							</section>
+						</section>
+					</section>
+				</section>
+			</div>
+		</div>
+	</div>
 </ion-content>

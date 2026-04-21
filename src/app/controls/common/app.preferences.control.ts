@@ -104,6 +104,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 		flushCache: "Flush cache",
 		sessions: "Sessions statistics",
 		visits: "Visits statistics",
+		system: "System metrics",
 		about: "About",
 		ok: "OK",
 		cancel: "Cancel"
@@ -164,6 +165,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 			flushCache: await this.configSvc.getResourceAsync("common.preferences.flushCache"),
 			sessions: "Sessions statistics",
 			visits: "Visits statistics",
+			system: "System metrics",
 			about: await this.configSvc.getResourceAsync("common.preferences.about"),
 			ok: await this.configSvc.getResourceAsync("common.buttons.ok"),
 			cancel: await this.configSvc.getResourceAsync("common.buttons.cancel")
@@ -233,6 +235,10 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 			await this.configSvc.getResourceAsync("common.buttons.ok"),
 			await this.configSvc.getResourceAsync("common.buttons.cancel")
 		);
+	}
+
+	openSystemStatistics() {
+		this.configSvc.navigateRootAsync("/metrics");
 	}
 
 }

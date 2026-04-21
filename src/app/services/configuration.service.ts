@@ -58,6 +58,13 @@ export class ConfigurationService extends BaseService {
 		Sessions: { Total: 0, User: 0, Crawler: 0, Visitor: 0 },
 		Visits: { Total: 0, Year: 0, Month: 0, Day: 0 }
 	};
+	metrics = {
+		Data: undefined,
+		States: {
+			Upstream: {},
+			Downstream: {}
+		}
+	};
 
 	/** Gets the configuration of the app */
 	get appConfig() {
@@ -323,6 +330,37 @@ export class ConfigurationService extends BaseService {
 				console.log(`[Configuration]: Device Information\n- UUID: ${this.device.uuid}\n- Manufacturer: ${this.device.manufacturer}\n- Model: ${this.device.model}\n- Serial: ${this.device.serial}\n- Platform: ${this.device.platform} ${this.device.platform !== "browser" ? this.device.version : "[" + this.device.model + " v" + this.device.version + "]"}`);
 			}
 		}
+
+		AppAPIs.registerAsObjectScopeProcessor("System", "Statistics", message => {
+			this.metrics.Data = message.Data;
+			this.metrics.Data.Upstream.Services = message.Data.Upstream.Services.sortBy({ name: "ServiceName", reverse: true });
+			this.metrics.Data.Upstream.Services.forEach(service => {
+				if (this.metrics.States.Upstream[service.ServiceName] === undefined) {
+					this.metrics.States.Upstream[service.ServiceName] = {};
+				}
+				service.Nodes = service.Nodes.sortBy({ name: "NodeID" });
+				service.Nodes.forEach(node => {
+					if (this.metrics.States.Upstream[service.ServiceName][node.NodeID] === undefined) {
+						this.metrics.States.Upstream[service.ServiceName][node.NodeID] = false;
+					}
+				});
+			});
+			this.metrics.Data.Downstream.Services = message.Data.Downstream.Services.sortBy({ name: "ServiceName" });
+			this.metrics.Data.Downstream.Services.forEach(service => {
+				if (this.metrics.States.Downstream[service.ServiceName] === undefined) {
+					this.metrics.States.Downstream[service.ServiceName] = {};
+				}
+				service.Nodes = service.Nodes.sortBy({ name: "NodeID" });
+				service.Nodes.forEach(node => {
+					if (this.metrics.States.Downstream[service.ServiceName][node.NodeID] === undefined) {
+						this.metrics.States.Downstream[service.ServiceName][node.NodeID] = false;
+					}
+				});
+			});
+			if (this.isDebug) {
+				console.log("Got system metrics", this.metrics.Data);
+			}
+		});
 	}
 
 	/** Initializes the configuration settings of the app */
