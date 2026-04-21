@@ -699,12 +699,7 @@ export class CmsContentsViewPage implements OnInit, OnDestroy {
 	refresh() {
 		this.appFormsSvc.showLoadingAsync(this.actions[this.actions.length - 2].text).then(() => this.portalsCmsSvc.refreshContentAsync(
 			this.content.ID,
-			_ => this.appFormsSvc.hideLoadingAsync(() => {
-				this.appFormsSvc.showToastAsync("The content was freshen-up");
-				if (this.configSvc.isDebug) {
-					console.log("<CMS.Content/View>: Content was freshen-up\n", this.content.Title, this.content);
-				}
-			}),
+			_ => this.appFormsSvc.hideLoadingAsync(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("common.messages.refreshen"))),
 			error => this.appFormsSvc.showErrorAsync(error)
 		));
 	}

@@ -389,7 +389,7 @@ export class CmsItemsViewPage implements OnInit, OnDestroy {
 	refresh() {
 		this.appFormsSvc.showLoadingAsync(this.actions[this.actions.length - 2].text).then(() => this.portalsCmsSvc.refreshItemAsync(
 			this.item.ID,
-			_ => this.appFormsSvc.hideLoadingAsync(() => this.appFormsSvc.showToastAsync("The item was freshen-up")),
+			_ => this.appFormsSvc.hideLoadingAsync(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("common.messages.refreshen"))),
 			error => this.appFormsSvc.showErrorAsync(error)
 		));
 	}

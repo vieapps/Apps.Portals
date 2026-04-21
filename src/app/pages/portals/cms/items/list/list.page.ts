@@ -420,15 +420,11 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.do(() => this.appFormsSvc.showConfirmAsync(message, () => this.configSvc.navigateBackAsync(url)));
 	}
 
-	refresh(event: Event, item: Item) {
-		this.do(() => this.portalsCmsSvc.refreshItemAsync(item.ID, () => this.appFormsSvc.showToastAsync("The item was freshen-up")), event);
-	}
-
 	viewVersions(event: Event, item: Item) {
 		this.do(() => this.configSvc.navigateForwardAsync("/versions/" + AppUtility.toANSI(item.Title, true) + "?x-request=" + AppCrypto.jsonEncode({ name: "CMS.Item", id: item.ID })), event);
 	}
 
-	private prepareForReloading(onNext: () => void) {
+	private prepareForRefreshing(onNext: () => void) {
 		this.configSvc.removeDefinition(this.portalsCmsSvc.name, "cms.item", undefined, { "x-content-type-id": this.contentType.ID });
 		this.configSvc.removeDefinition(this.portalsCmsSvc.name, "cms.item", undefined, { "x-content-type-id": this.contentType.ID, "x-view-controls": "x" });
 		AppPagination.remove({ FilterBy: this.filterBy, SortBy: this.sortBy }, this.paginationPrefix);
@@ -438,10 +434,17 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		this.appFormsSvc.showLoadingAsync(this.labels.refresh).then(() => onNext());
 	}
 
+	refresh(event: Event, item: Item) {
+		this.do(() => this.prepareForRefreshing(() => this.portalsCmsSvc.refreshItemAsync(
+			item.ID,
+			() => this.appFormsSvc.hideLoadingAsync(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("common.messages.refreshen")))
+		)), event);
+	}
+
 	private reload() {
-		this.do(() => this.prepareForReloading(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync(() => {
+		this.do(() => this.prepareForRefreshing(() => this.startSearch(() => this.appFormsSvc.hideLoadingAsync(async () => {
 			this.infiniteScrollCtrl.disabled = false;
-			this.appFormsSvc.showToastAsync("Re-loaded");
+			this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("common.messages.refreshen"));
 		}), { "x-refresh": "true" })));
 	}
 
@@ -461,7 +464,7 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 						if (gotSortBy) {
 							this.sortBy = AppUtility.parse(data.sort);
 						}
-						this.prepareForReloading(() => {
+						this.prepareForRefreshing(() => {
 							this.prepareFilterByAndSort(!gotFilterBy, !gotSortBy);
 							this.startSearch(() => this.appFormsSvc.hideLoadingAsync());
 						});

@@ -206,7 +206,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 					if (info.args.Object === "CMS.Link" && info.args.Type === "Thumbnail" && (this.contentType !== undefined ? this.contentType.ID === info.args.RepositoryEntityID : true)) {
 						this.zone.run(() => this.changeDetector.detectChanges());
 					}
-				}, `CMS.Links:${(this.contentType !== undefined ? this.contentType.ID +":" : "")}Refresh`);
+				}, `CMS.Links:${(this.contentType !== undefined ? this.contentType.ID + ":" : "")}Refresh`);
 			}
 		}
 		else {
@@ -463,7 +463,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 	}
 
 	refresh(event: Event, link: Link) {
-		this.do(() => this.doRefresh([link], 0, true, () => this.appFormsSvc.showToastAsync("The link was freshen-up")), event);
+		this.do(() => this.doRefresh([link], 0, true, async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("common.messages.refreshen"))), event);
 	}
 
 	refreshAll() {
@@ -471,7 +471,7 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		if (links.length > 0) {
 			this.doRefresh(links, 0, false, () => Promise.all(this.organization.modules.map(module => module.contentTypesOfLink)
 				.flatMap(contentypes => contentypes)
-				.map(contentType => this.portalsCmsSvc.searchSpecifiedLinksAsync(contentType, undefined, undefined, true))).then(() => this.appFormsSvc.showToastAsync("All links was freshen-up"))
+				.map(contentType => this.portalsCmsSvc.searchSpecifiedLinksAsync(contentType, undefined, undefined, true))).then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("common.messages.refreshen")))
 			);
 		}
 	}

@@ -450,15 +450,20 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 	}
 
 	refresh(event: Event, category: Category, clearCache: boolean = false) {
-		this.do(() => this.doRefresh([category], 0, true, () => this.appFormsSvc.showToastAsync(`The${clearCache ? " cached was clean and the" : ""} category was freshen-up`), clearCache ? { "x-clear-cache": "true" } : undefined), event);
+		this.do(() => this.doRefresh([category], 0, true, async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("common.messages.refreshen")), clearCache ? { "x-clear-cache": "true" } : undefined), event);
 	}
 
 	refreshAll() {
 		const categories = Category.instances.toArray(category => category.SystemID === this.organization.ID);
 		if (categories.length > 0) {
-			this.doRefresh(categories, 0, false, () => Promise.all(this.organization.modules.map(module => module.contentTypesOfCategory)
-				.flatMap(contentypes => contentypes)
-				.map(contentType => this.portalsCmsSvc.searchSpecifiedCategoriesAsync(contentType, undefined, undefined, true, true))).then(() => this.appFormsSvc.showToastAsync("All the categories were freshen-up"))
+			this.doRefresh(
+				categories,
+				0,
+				false,
+				() => Promise.all(this.organization.modules.map(module => module.contentTypesOfCategory)
+					.flatMap(contentypes => contentypes)
+					.map(contentType => this.portalsCmsSvc.searchSpecifiedCategoriesAsync(contentType, undefined, undefined, true, true))).then(async () => this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("common.messages.refreshen"))),
+				{ "x-clear-cache": "1" }
 			);
 		}
 	}
