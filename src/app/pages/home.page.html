@@ -38,13 +38,38 @@
 	<control-app-preferences *ngIf="isHomePage && !isAuthenticated && activeService === 'Portals'"></control-app-preferences>
 	<control-books-featured *ngIf="isHomePage && activeService === 'Books'"></control-books-featured>
 	<div *ngIf="isMetricsPage && isSystemAdministrator" class="metrics ion-padding">
-		<div *ngIf="!metrics">
+		<div *ngIf="!metrics.Router">
 			Waiting for signal...
 		</div>
-		<section *ngIf="metrics && metrics.Upstream">
+		<section *ngIf="metrics.Router">
+			<span>ROUTER</span>
+		</section>
+		<div *ngIf="metrics.Router">
+			<div>
+				<div>
+					CPU &amp; RAM (max/average/min) - CPU: <b>{{ metrics.Router.CPU.Max | number }}%</b> / {{ metrics.Router.CPU.Average | number }}% / {{ metrics.Router.CPU.Min | number }}% | RAM: <b>{{ metrics.Router.Memory.Max | number }}MB</b> / {{ metrics.Router.Memory.Average | number }}MB / {{ metrics.Router.Memory.Min | number }}MB
+				</div>
+			</div>
+			<div>
+				<div>
+					RPC Gate - Usage: <b>{{ metrics.Router.Gate.Usage | number }}%</b> | Current: <b>{{ metrics.Router.Gate.Current | number }}</b> | Available: {{ metrics.Router.Gate.Available | number }} | Max: {{ metrics.Router.Gate.Max | number }}
+				</div>
+			</div>
+			<div>
+				<div>
+					RPC Call - Backpressure: <b>{{ metrics.Router.Call.Backpressure | number }}</b> | Completion Ratio: <b>{{ metrics.Router.Call.CompletionRatio | number }}%</b> | Reject Rate: {{ metrics.Router.Call.RejectRate | number }}/s | Rejected: {{ metrics.Router.Call.TotalRejected | number }} | InFlight: {{ metrics.Router.Call.TotalInFlight | number }} | Completed: {{ metrics.Router.Call.TotalCompleted | number }} | Entered: {{ metrics.Router.Call.TotalEntered | number }}
+				</div>
+			</div>
+			<div>
+				<div>
+					RPC Call Latency - Average: <b>{{ metrics.Router.Call.AverageLatency | number }}ms</b> | Max: {{ metrics.Router.Call.MaxLatency | number }}ms
+				</div>
+			</div>
+		</div>
+		<section *ngIf="metrics.Upstream">
 			<span class="upstream">UP-STREAM</span>
 		</section>
-		<div *ngIf="metrics && metrics.Upstream && metrics.Upstream.Environment">
+		<div *ngIf="metrics.Upstream && metrics.Upstream.Environment">
 			<div>
 				<span>Environment</span>
 			</div>
@@ -59,7 +84,7 @@
 				</div>
 			</div>
 		</div>
-		<div *ngIf="metrics && metrics.Upstream && metrics.Upstream.Cache">
+		<div *ngIf="metrics.Upstream && metrics.Upstream.Cache">
 			<div>
 				<span>Cache</span>
 			</div>
@@ -69,27 +94,7 @@
 				</div>
 			</div>
 		</div>
-		<div *ngIf="metrics && metrics.Upstream && metrics.Upstream.Router">
-			<div>
-				<span>Router</span>
-			</div>
-			<div>
-				<div>
-					RPC Gate - Usage: <b>{{ metrics.Upstream.Router.Gate.Usage | number }}%</b> | Current: <b>{{ metrics.Upstream.Router.Gate.Current | number }}</b> | Available: {{ metrics.Upstream.Router.Gate.Available | number }} | Max: {{ metrics.Upstream.Router.Gate.Max | number }}
-				</div>
-			</div>
-			<div>
-				<div>
-					RPC Call - Backpressure: <b>{{ metrics.Upstream.Router.Call.Backpressure | number }}</b> | Completion Ratio: <b>{{ metrics.Upstream.Router.Call.CompletionRatio | number }}%</b> | Reject Rate: {{ metrics.Upstream.Router.Call.RejectRate | number }}/s | Rejected: {{ metrics.Upstream.Router.Call.TotalRejected | number }} | InFlight: {{ metrics.Upstream.Router.Call.TotalInFlight | number }} | Completed: {{ metrics.Upstream.Router.Call.TotalCompleted | number }} | Entered: {{ metrics.Upstream.Router.Call.TotalEntered | number }}
-				</div>
-			</div>
-			<div>
-				<div>
-					Latency - Average: <b>{{ metrics.Upstream.Router.Call.AverageLatency | number }}ms</b> | Max: {{ metrics.Upstream.Router.Call.MaxLatency | number }}ms
-				</div>
-			</div>
-		</div>
-		<div *ngIf="metrics && metrics.Upstream && metrics.Upstream.Services">
+		<div *ngIf="metrics.Upstream && metrics.Upstream.Services">
 			<div>
 				<span>Services</span>
 			</div>
@@ -230,10 +235,10 @@
 				</section>
 			</div>
 		</div>
-		<section *ngIf="metrics && metrics.Downstream">
+		<section *ngIf="metrics.Downstream">
 			<span class="downstream">DOWN-STREAM</span>
 		</section>
-		<div *ngIf="metrics && metrics.Downstream && metrics.Downstream.Environment">
+		<div *ngIf="metrics.Downstream && metrics.Downstream.Environment">
 			<div>
 				<span>Environment</span>
 			</div>
@@ -248,7 +253,7 @@
 				</div>
 			</div>
 		</div>
-		<div *ngIf="metrics && metrics.Downstream && metrics.Downstream.Cache">
+		<div *ngIf="metrics.Downstream && metrics.Downstream.Cache">
 			<div>
 				<span>Cache</span>
 			</div>
@@ -258,7 +263,7 @@
 				</div>
 			</div>
 		</div>
-		<div *ngIf="metrics && metrics.Downstream && metrics.Downstream.Services">
+		<div *ngIf="metrics.Downstream && metrics.Downstream.Services">
 			<div>
 				<span>Services</span>
 			</div>

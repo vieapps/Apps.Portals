@@ -57,7 +57,11 @@ export class HomePage implements OnInit, OnDestroy {
 	}
 
 	get metrics() {
-		return this.configSvc.metrics.Data;
+		return {
+			Router: this.configSvc.metrics.Router,
+			Upstream: this.configSvc.metrics.Upstream,
+			Downstream: this.configSvc.metrics.Downstream
+		};
 	}
 
 	get states() {

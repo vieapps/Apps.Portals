@@ -55,11 +55,13 @@ export class ConfigurationService extends BaseService {
 	private _definitions: { [key: string]: any } = {};
 	serviceLogs = new Array<ServiceLog>();
 	statistics = {
-		Sessions: { Total: 0, User: 0, Crawler: 0, Visitor: 0 },
+		Sessions: { Total: 0, User: 0, Visitor: 0, Crawler: 0 },
 		Visits: { Total: 0, Year: 0, Month: 0, Day: 0 }
 	};
 	metrics = {
-		Data: undefined,
+		Router: undefined as any,
+		Upstream: undefined as any,
+		Downstream: undefined as any,
 		States: {
 			Upstream: {},
 			Downstream: {}
@@ -332,9 +334,10 @@ export class ConfigurationService extends BaseService {
 		}
 
 		AppAPIs.registerAsObjectScopeProcessor("System", "Statistics", message => {
-			this.metrics.Data = message.Data;
-			this.metrics.Data.Upstream.Services = message.Data.Upstream.Services.sortBy({ name: "ServiceName", reverse: true });
-			this.metrics.Data.Upstream.Services.forEach(service => {
+			this.metrics.Router = message.Data.Router || message.Data.Upstream.Router;
+			this.metrics.Upstream = message.Data.Upstream;
+			this.metrics.Upstream.Services = this.metrics.Upstream.Services.sortBy({ name: "ServiceName", reverse: true });
+			this.metrics.Upstream.Services.forEach(service => {
 				if (this.metrics.States.Upstream[service.ServiceName] === undefined) {
 					this.metrics.States.Upstream[service.ServiceName] = {};
 				}
@@ -345,8 +348,9 @@ export class ConfigurationService extends BaseService {
 					}
 				});
 			});
-			this.metrics.Data.Downstream.Services = message.Data.Downstream.Services.sortBy({ name: "ServiceName" });
-			this.metrics.Data.Downstream.Services.forEach(service => {
+			this.metrics.Downstream = message.Data.Downstream;
+			this.metrics.Downstream.Services = this.metrics.Downstream.Services.sortBy({ name: "ServiceName" });
+			this.metrics.Downstream.Services.forEach(service => {
 				if (this.metrics.States.Downstream[service.ServiceName] === undefined) {
 					this.metrics.States.Downstream[service.ServiceName] = {};
 				}
@@ -357,9 +361,6 @@ export class ConfigurationService extends BaseService {
 					}
 				});
 			});
-			if (this.isDebug) {
-				console.log("Got system metrics", this.metrics.Data);
-			}
 		});
 	}
 
