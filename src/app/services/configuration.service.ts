@@ -334,8 +334,9 @@ export class ConfigurationService extends BaseService {
 		}
 
 		AppAPIs.registerAsObjectScopeProcessor("System", "Statistics", message => {
-			this.metrics.Router = message.Data.Router || message.Data.Upstream.Router;
+			this.metrics.Router = message.Data.Router;
 			this.metrics.Upstream = message.Data.Upstream;
+			this.metrics.Downstream = message.Data.Downstream;
 			this.metrics.Upstream.Services = this.metrics.Upstream.Services.sortBy({ name: "ServiceName", reverse: true });
 			this.metrics.Upstream.Services.forEach(service => {
 				if (this.metrics.States.Upstream[service.ServiceName] === undefined) {
@@ -348,7 +349,6 @@ export class ConfigurationService extends BaseService {
 					}
 				});
 			});
-			this.metrics.Downstream = message.Data.Downstream;
 			this.metrics.Downstream.Services = this.metrics.Downstream.Services.sortBy({ name: "ServiceName" });
 			this.metrics.Downstream.Services.forEach(service => {
 				if (this.metrics.States.Downstream[service.ServiceName] === undefined) {
