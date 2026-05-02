@@ -32,6 +32,10 @@ export class HomePage implements OnInit, OnDestroy {
 		return this.configSvc.locale;
 	}
 
+	get activeService() {
+		return this.configSvc.appConfig.services.active.service;
+	}
+
 	get isAuthenticated() {
 		return this.configSvc.isAuthenticated;
 	}
@@ -66,10 +70,6 @@ export class HomePage implements OnInit, OnDestroy {
 
 	get states() {
 		return this.configSvc.metrics.States;
-	}
-
-	get activeService() {
-		return this.configSvc.appConfig.services.active.service;
 	}
 
 	ngOnInit() {
