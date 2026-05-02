@@ -77,7 +77,7 @@ export interface AppShortcut {
 	OtherAction?: {
 		Icon?: string;
 		OnClick?: (shortcut?: AppShortcut, index?: number, event?: Event) => void;
-	}
+	};
 }
 
 /** Presents the struct of a requesting information */

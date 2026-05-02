@@ -78,7 +78,7 @@ declare global {
 
 Array.prototype.add = function<T>(this: T[], value: T): T[] {
 	return this.update(value);
-}
+};
 
 Array.prototype.insert = function<T>(this: T[], value: T, index?: number): T[] {
 	if (index !== undefined && index > -1 && index < this.length) {
