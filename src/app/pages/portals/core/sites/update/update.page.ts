@@ -161,6 +161,11 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 			control.Options.Type = "toggle";
 		}
 
+		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "AlwaysRebuildOnCDN"));
+		if (control !== undefined) {
+			control.Options.Type = "toggle";
+		}
+
 		control = formConfig.find(ctrl => AppUtility.isEquals(ctrl.Name, "IsDefault"));
 		if (control !== undefined) {
 			control.Options.Type = "toggle";
@@ -349,8 +354,15 @@ export class PortalsSitesUpdatePage implements OnInit, OnDestroy {
 	}
 
 	onFormInitialized() {
+		const sites = Site.instances.toArray(s => s.SystemID === this.site.SystemID);
+		if (sites.length < 2 || (this.organization.CDNZoneID === undefined && this.organization.CDNApiToken === undefined)) {
+			const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "AlwaysRebuildOnCDN"));
+			if (control !== undefined) {
+				control.Options.Disabled = true;
+			}
+		}
 		const site = AppUtility.clone(this.site, false);
-		if (Site.instances.toArray(s => s.SystemID === this.site.SystemID).length < 2) {
+		if (sites.length < 2) {
 			site.IsDefault = true;
 			const control = this.formControls.find(ctrl => AppUtility.isEquals(ctrl.Name, "IsDefault"));
 			if (control !== undefined) {

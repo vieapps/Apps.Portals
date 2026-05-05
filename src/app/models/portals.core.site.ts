@@ -29,6 +29,7 @@ export class Site extends CoreBaseModel {
 	OtherDomains = undefined as string;
 	AlwaysUseHTTPs = false;
 	AlwaysReturnHTTPs = true;
+	AlwaysRebuildOnCDN = false;
 	IsDefault = false;
 	Language = undefined as string;
 	Theme = undefined as string;

@@ -694,6 +694,11 @@
 					"placeholder": "",
 					"description": ""
 				},
+				"AlwaysRebuildOnCDN": {
+					"label": "Luôn xử lý CDN edge cache (khi đơn vị có sử dụng CDN)",
+					"placeholder": "",
+					"description": ""
+				},
 				"IsDefault": {
 					"label": "Chỉ định là site mặc định",
 					"placeholder": "",
