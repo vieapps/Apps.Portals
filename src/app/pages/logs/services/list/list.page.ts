@@ -156,7 +156,9 @@ export class LogsListPage implements OnInit, OnDestroy {
 				FilterBy: {
 					CorrelationID: AppUtility.toLowerCase(this.filterBy["CorrelationID"]),
 					ServiceName: AppUtility.toLowerCase(this.filterBy["ServiceName"]),
-					ObjectName: AppUtility.toLowerCase(this.filterBy["ObjectName"])
+					ObjectName: AppUtility.toLowerCase(this.filterBy["ObjectName"]),
+					StartTime: this.filterBy["StartTime"],
+					EndTime: this.filterBy["EndTime"]
 				},
 				Pagination: this.pagination
 			},
@@ -191,6 +193,8 @@ export class LogsListPage implements OnInit, OnDestroy {
 				this.filterBy["CorrelationID"] = data.CorrelationID;
 				this.filterBy["ServiceName"] = data.ServiceName;
 				this.filterBy["ObjectName"] = data.ObjectName;
+				this.filterBy["StartTime"] = data.StartTime;
+				this.filterBy["EndTime"] = data.EndTime;
 				this.refreshAsync().then(() => {
 					if (this.infiniteScrollCtrl !== undefined) {
 						this.infiniteScrollCtrl.disabled = false;
@@ -217,6 +221,18 @@ export class LogsListPage implements OnInit, OnDestroy {
 					type: "text",
 					value: this.filterBy["ObjectName"],
 					placeholder: "Object Name"
+				},
+				{
+					name: "StartTime",
+					type: "text",
+					value: this.filterBy["StartTime"],
+					placeholder: "Start Time (ISO)"
+				},
+				{
+					name: "EndTime",
+					type: "text",
+					value: this.filterBy["EndTime"],
+					placeholder: "End Time (ISO)"
 				}
 			]
 		);

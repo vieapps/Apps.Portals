@@ -52,17 +52,24 @@
 			</div>
 			<div>
 				<div>
-					RPC Gate - Usage: <b>{{ metrics.Router.Gate.Usage | number }}%</b> | Current: <b>{{ metrics.Router.Gate.Current | number }}</b> | Available: {{ metrics.Router.Gate.Available | number }} | Max: {{ metrics.Router.Gate.Max | number }}
+					Slot - Usage: <b>{{ metrics.Router.ConcurrencySlot.Usage * 100 | number }}%</b> | Current: <b>{{ metrics.Router.ConcurrencySlot.Current | number }}</b> | Available: {{ metrics.Router.ConcurrencySlot.Available | number }} | Max: {{ metrics.Router.ConcurrencySlot.Max | number }}
 				</div>
 			</div>
 			<div>
 				<div>
-					RPC Call - Backpressure: <b>{{ metrics.Router.Call.Backpressure | number }}</b> | Completion Ratio: <b>{{ metrics.Router.Call.CompletionRatio | number }}%</b> | Reject Rate: {{ metrics.Router.Call.RejectRate | number }}/s | Rejected: {{ metrics.Router.Call.TotalRejected | number }} | InFlight: {{ metrics.Router.Call.TotalInFlight | number }} | Completed: {{ metrics.Router.Call.TotalCompleted | number }} | Entered: {{ metrics.Router.Call.TotalEntered | number }}
+					Call - Backpressure: <b>{{ metrics.Router.RpcCall.Backpressure | number }}</b> / <b>{{ metrics.Router.RpcCall.BackpressureRate | number }}/s</b> | Completion Ratio: <b>{{ metrics.Router.RpcCall.CompletionRatio | number }}%</b> / {{ metrics.Router.RpcCall.CompletionRatioTotal | number }}% | Reject: {{ metrics.Router.RpcCall.RejectedRate | number }}/s | Enter: {{ metrics.Router.RpcCall.EnteredRate | number }}/s | Complete: {{ metrics.Router.RpcCall.CompletedRate | number }}/s
 				</div>
 			</div>
 			<div>
 				<div>
-					RPC Call Latency - Average: <b>{{ metrics.Router.Call.AverageLatency | number }}ms</b> | Max: {{ metrics.Router.Call.MaxLatency | number }}ms
+					<span></span>
+					- InFlight: <b>{{ metrics.Router.RpcCall.InFlight | number }}</b> | Rejected: {{ metrics.Router.RpcCall.Rejected | number }} / {{ metrics.Router.RpcCall.RejectedTotal | number }} | Entered: {{ metrics.Router.RpcCall.Entered | number }} / {{ metrics.Router.RpcCall.EnteredTotal | number }} | Completed: {{ metrics.Router.RpcCall.Completed | number }} / {{ metrics.Router.RpcCall.CompletedTotal | number }}
+				</div>
+			</div>
+			<div>
+				<div>
+					<span></span>
+					- Latency (average/max): <b>{{ metrics.Router.RpcCall.AverageLatency | number }}ms</b> / {{ metrics.Router.RpcCall.MaxLatency | number }}ms | All-time latency (average/max): {{ metrics.Router.RpcCall.AverageLatencyTotal | number }}ms / {{ metrics.Router.RpcCall.MaxLatencyTotal | number }}ms
 				</div>
 			</div>
 		</div>
@@ -80,7 +87,7 @@
 			</div>
 			<div>
 				<div>
-					ThreadPool - Usage: <b>{{ metrics.Upstream.Environment.ThreadPool.Usage | number }}%</b> | Workers: <b>{{ metrics.Upstream.Environment.ThreadPool.Workers | number }}</b> / {{ metrics.Upstream.Environment.ThreadPool.MaxWorkers | number }} | Async IO: <b>{{ metrics.Upstream.Environment.ThreadPool.AsyncIO | number }}</b> / {{ metrics.Upstream.Environment.ThreadPool.MaxAsyncIO | number }} | Node max: {{ metrics.Upstream.Environment.NodeMax.ID }} - Usage: {{ metrics.Upstream.Environment.NodeMax.Usage | number }}% - Workers: {{ metrics.Upstream.Environment.NodeMax.Workers | number }}
+					ThreadPool - Usage: <b>{{ metrics.Upstream.Environment.ThreadPool.Usage * 100 | number }}%</b> | Workers: <b>{{ metrics.Upstream.Environment.ThreadPool.Workers | number }}</b> / {{ metrics.Upstream.Environment.ThreadPool.MaxWorkers | number }} | Async IO: <b>{{ metrics.Upstream.Environment.ThreadPool.AsyncIO | number }}</b> / {{ metrics.Upstream.Environment.ThreadPool.MaxAsyncIO | number }} | Node max: {{ metrics.Upstream.Environment.NodeMax.ID }} - Usage: {{ metrics.Upstream.Environment.NodeMax.Usage * 100 | number }}% - Workers: {{ metrics.Upstream.Environment.NodeMax.Workers | number }}
 				</div>
 			</div>
 		</div>
@@ -114,7 +121,7 @@
 				</section>
 				<section>
 					<div>
-						Requests - Rate: <b>{{ service.RequestsRate | number }}/s</b>  | InFlight: <b>{{ service.RequestsInFlight | number }}</b> | Total: {{ service.RequestsTotal | number }}
+						Requests - InFlight: <b>{{ service.RequestsInFlight | number }}</b> | Rate: <b>{{ service.RequestsRate | number }}/s</b>  | Total: {{ service.RequestsTotal | number }}
 					</div>
 				</section>
 				<section>
@@ -144,21 +151,30 @@
 				<section>
 					<div>
 						<div>
-							Gate - Usage: <b>{{ service.RpcGateUsage | number }}%</b> | Current: <b>{{ service.RpcGateCurrent | number }}</b> | Available: {{ service.RpcGateAvailable | number }} | Max: {{ service.RpcGateMax | number }}
+							Slot - Usage: <b>{{ service.RpcGateUsage * 100 | number }}%</b> | Current: <b>{{ service.RpcGateCurrent | number }}</b> | Available: {{ service.RpcGateAvailable | number }} | Max: {{ service.RpcGateMax | number }}
 						</div>
 					</div>
 				</section>
 				<section>
 					<div>
 						<div>
-							Call - In: {{ service.RpcEnteredRate | number }}/s | Out: {{ service.RpcCompletedRate | number }}/s | Rejected: {{ service.RpcRejected | number }} | InFlight: {{ service.RpcInFlight | number }} | Completed: {{ service.RpcCompleted | number }} | Entered: {{ service.RpcEntered | number }}
+							Call - Backpressure: <b>{{ service.RpcBackpressure | number }}</b> / <b>{{ service.RpcBackpressureRate | number }}/s</b> | Completion Ratio: <b>{{ service.RpcCompletionRatio | number }}%</b> / {{ service.RpcCompletionRatioTotal | number }}% | Reject: {{ service.RpcRejectedRate | number }}/s | Enter: {{ service.RpcEnteredRate | number }}/s | Complete: {{ service.RpcCompletedRate | number }}/s
 						</div>
 					</div>
 				</section>
 				<section>
 					<div>
 						<div>
-							Latency - Average: <b>{{ service.RpcAverageLatency | number }}ms</b> | Max: {{ service.RpcMaxLatency | number }}ms
+							<span></span>
+							- InFlight: <b>{{ service.RpcInFlight | number }}</b> | Rejected: {{ service.RpcRejected | number }} / {{ service.RpcRejectedTotal | number }} | Entered: {{ service.RpcEntered | number }} / {{ service.RpcEnteredTotal | number }} | Completed: {{ service.RpcCompleted | number }} / {{ service.RpcCompletedTotal | number }}
+						</div>
+					</div>
+				</section>
+				<section>
+					<div>
+						<div>
+							<span></span>
+							- Latency (average/max): <b>{{ service.RpcAverageLatency | number }}ms</b> / {{ service.RpcMaxLatency | number }}ms | All-time latency (average/max): {{ service.RpcAverageLatencyTotal | number }}ms / {{ service.RpcMaxLatencyTotal | number }}ms
 						</div>
 					</div>
 				</section>
@@ -182,7 +198,7 @@
 							</section>
 							<section>
 								<div>
-									Requests - Rate: <b>{{ node.RequestsRate | number }}/s</b>  | InFlight: {{ node.RequestsInFlight | number }} | Total: {{ node.RequestsTotal | number }}
+									Requests - InFlight: <b>{{ node.RequestsInFlight | number }}</b> | Rate: {{ node.RequestsRate | number }}/s  | Total: {{ node.RequestsTotal | number }}
 								</div>
 							</section>
 							<section>
@@ -212,21 +228,30 @@
 							<section>
 								<div>
 									<div>
-										Gate - Usage: <b>{{ node.RpcGateUsage | number }}%</b> | Current: <b>{{ node.RpcGateCurrent | number }}</b> | Available: {{ node.RpcGateAvailable | number }} | Max: {{ node.RpcGateMax | number }}
+										Slot - Usage: <b>{{ node.RpcGateUsage * 100 | number }}%</b> | Current: <b>{{ node.RpcGateCurrent | number }}</b> | Available: {{ node.RpcGateAvailable | number }} | Max: {{ node.RpcGateMax | number }}
 									</div>
 								</div>
 							</section>
 							<section>
 								<div>
 									<div>
-										Call - In: {{ node.RpcEnteredRate | number }}/s | Out: {{ node.RpcCompletedRate | number }}/s | Rejected: {{ node.RpcRejected | number }} | InFlight: {{ node.RpcInFlight | number }} | Completed: {{ node.RpcCompleted | number }} | Entered: {{ node.RpcEntered | number }}
+										Call - Backpressure: <b>{{ node.RpcBackpressure | number }}</b> / <b>{{ node.RpcBackpressureRate | number }}/s</b> | Completion Ratio: <b>{{ node.RpcCompletionRatio | number }}%</b> / {{ node.RpcCompletionRatioTotal | number }}% | Reject: {{ node.RpcRejectedRate | number }}/s | Enter: {{ node.RpcEnteredRate | number }}/s | Complete: {{ node.RpcCompletedRate | number }}/s
 									</div>
 								</div>
 							</section>
 							<section>
 								<div>
 									<div>
-										Latency - Average: {{ node.RpcAverageLatency | number }}ms | Max: {{ node.RpcMaxLatency | number }}ms
+										<span></span>
+										- InFlight: <b>{{ node.RpcInFlight | number }}</b> | Rejected: {{ node.RpcRejected | number }} / {{ node.RpcRejectedTotal | number }} | Entered: {{ node.RpcEntered | number }} / {{ node.RpcEnteredTotal | number }} | Completed: {{ node.RpcCompleted | number }} / {{ node.RpcCompletedTotal | number }}
+									</div>
+								</div>
+							</section>
+							<section>
+								<div>
+									<div>
+										<span></span>
+										- Latency (average/max): {{ node.RpcAverageLatency | number }}ms / {{ node.RpcMaxLatency | number }}ms | All-time latency (average/max): {{ node.RpcAverageLatencyTotal | number }}ms / {{ node.RpcMaxLatencyTotal | number }}ms
 									</div>
 								</div>
 							</section>
@@ -249,7 +274,7 @@
 			</div>
 			<div>
 				<div>
-					ThreadPool - Usage: <b>{{ metrics.Downstream.Environment.ThreadPool.Usage | number }}%</b> | Workers: <b>{{ metrics.Downstream.Environment.ThreadPool.Workers | number }}</b> / {{ metrics.Downstream.Environment.ThreadPool.MaxWorkers | number }} | Async IO: <b>{{ metrics.Downstream.Environment.ThreadPool.AsyncIO | number }}</b> / {{ metrics.Downstream.Environment.ThreadPool.MaxAsyncIO | number }} | Node max: {{ metrics.Downstream.Environment.NodeMax.ID }} - Usage: {{ metrics.Downstream.Environment.NodeMax.Usage | number }}% | Workers: {{ metrics.Downstream.Environment.NodeMax.Workers | number }}
+					ThreadPool - Usage: <b>{{ metrics.Downstream.Environment.ThreadPool.Usage * 100 | number }}%</b> | Workers: <b>{{ metrics.Downstream.Environment.ThreadPool.Workers | number }}</b> / {{ metrics.Downstream.Environment.ThreadPool.MaxWorkers | number }} | Async IO: <b>{{ metrics.Downstream.Environment.ThreadPool.AsyncIO | number }}</b> / {{ metrics.Downstream.Environment.ThreadPool.MaxAsyncIO | number }} | Node max: {{ metrics.Downstream.Environment.NodeMax.ID }} - Usage: {{ metrics.Downstream.Environment.NodeMax.Usage * 100 | number }}% | Workers: {{ metrics.Downstream.Environment.NodeMax.Workers | number }}
 				</div>
 			</div>
 		</div>

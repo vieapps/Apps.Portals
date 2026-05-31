@@ -45,6 +45,11 @@ ion-header > ion-toolbar > div > span {
 .metrics > div > div > section > section > section > section > div > div {
 	margin-left: 15px;
 }
+.metrics > div > div > div > span,
+.metrics > div > div > section > div > div > span,
+.metrics > div > div > section > section > section > section > div > div > span {
+	margin-right: 32px;
+}
 .metrics > div > div > section > section > section > ion-icon {
 	cursor: pointer;
 }
