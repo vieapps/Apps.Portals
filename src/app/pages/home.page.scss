@@ -17,12 +17,6 @@ ion-header > ion-toolbar > div > span {
 .metrics > section > span {
 	font-size: larger;
 }
-.metrics > section > span.upstream {
-	color: darkblue;
-}
-.metrics > section > span.downstream {
-	color: darkred;	
-}
 .metrics > section > span,
 .metrics > div > div > span {
 	font-weight: bold;
@@ -45,11 +39,15 @@ ion-header > ion-toolbar > div > span {
 .metrics > div > div > section > section > section > section > div > div {
 	margin-left: 15px;
 }
-.metrics > div > div > div > span,
-.metrics > div > div > section > div > div > span,
-.metrics > div > div > section > section > section > section > div > div > span {
-	margin-right: 32px;
-}
 .metrics > div > div > section > section > section > ion-icon {
 	cursor: pointer;
+}
+.metrics > div.router > div > div > span,
+.metrics > div.upstream > div > section > div > div > span,
+.metrics > div.upstream > div > section > section > section > section > div > div > span {
+	margin-right: 32px;
+}
+.metrics > div.downstream > div > section > div > span,
+.metrics > div.downstream > div > section > section > section > section > div > span {
+	margin-right: 38px;
 }

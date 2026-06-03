@@ -44,7 +44,7 @@
 		<section *ngIf="metrics.Router">
 			<span>ROUTER</span>
 		</section>
-		<div *ngIf="metrics.Router">
+		<div *ngIf="metrics.Router" class="router">
 			<div>
 				<div>
 					CPU &amp; RAM (max/average/min) - CPU: <b>{{ metrics.Router.CPU.Max | number }}%</b> / {{ metrics.Router.CPU.Average | number }}% / {{ metrics.Router.CPU.Min | number }}% | RAM: <b>{{ metrics.Router.Memory.Max | number }}MB</b> / {{ metrics.Router.Memory.Average | number }}MB / {{ metrics.Router.Memory.Min | number }}MB
@@ -52,29 +52,29 @@
 			</div>
 			<div>
 				<div>
-					Slot - Usage: <b>{{ metrics.Router.ConcurrencySlot.Usage * 100 | number }}%</b> | Current: <b>{{ metrics.Router.ConcurrencySlot.Current | number }}</b> | Available: {{ metrics.Router.ConcurrencySlot.Available | number }} | Max: {{ metrics.Router.ConcurrencySlot.Max | number }}
+					Slot - Usage: <b>{{ metrics.Router.RpcSlot.Usage * 100 | number }}%</b> | Current: <b>{{ metrics.Router.RpcSlot.Current | number }}</b> | Available: {{ metrics.Router.RpcSlot.Available | number }} | Max: {{ metrics.Router.RpcSlot.Max | number }}
 				</div>
 			</div>
 			<div>
 				<div>
-					Call - Backpressure: <b>{{ metrics.Router.RpcCall.Backpressure | number }}</b> / <b>{{ metrics.Router.RpcCall.BackpressureRate | number }}/s</b> | Completion Ratio: <b>{{ metrics.Router.RpcCall.CompletionRatio | number }}%</b> / {{ metrics.Router.RpcCall.CompletionRatioTotal | number }}% | Reject: {{ metrics.Router.RpcCall.RejectedRate | number }}/s | Enter: {{ metrics.Router.RpcCall.EnteredRate | number }}/s | Complete: {{ metrics.Router.RpcCall.CompletedRate | number }}/s
-				</div>
-			</div>
-			<div>
-				<div>
-					<span></span>
-					- InFlight: <b>{{ metrics.Router.RpcCall.InFlight | number }}</b> | Rejected: {{ metrics.Router.RpcCall.Rejected | number }} / {{ metrics.Router.RpcCall.RejectedTotal | number }} | Entered: {{ metrics.Router.RpcCall.Entered | number }} / {{ metrics.Router.RpcCall.EnteredTotal | number }} | Completed: {{ metrics.Router.RpcCall.Completed | number }} / {{ metrics.Router.RpcCall.CompletedTotal | number }}
+					Call - Backpressure: <b>{{ metrics.Router.RpcCall.Backpressure.Value | number }}</b> / <b>{{ metrics.Router.RpcCall.Backpressure.Rate | number }}/s</b> | Completion Ratio: <b>{{ metrics.Router.RpcCall.Completion.Ratio | number }}%</b> / {{ metrics.Router.RpcCall.Completion.TotalRatio | number }}% | Reject: {{ metrics.Router.RpcCall.Rejected.Rate | number }}/s | Enter: {{ metrics.Router.RpcCall.Entered.Rate | number }}/s | Complete: {{ metrics.Router.RpcCall.Completed.Rate | number }}/s
 				</div>
 			</div>
 			<div>
 				<div>
 					<span></span>
-					- Latency (average/max): <b>{{ metrics.Router.RpcCall.AverageLatency | number }}ms</b> / {{ metrics.Router.RpcCall.MaxLatency | number }}ms | All-time latency (average/max): {{ metrics.Router.RpcCall.AverageLatencyTotal | number }}ms / {{ metrics.Router.RpcCall.MaxLatencyTotal | number }}ms
+					- InFlight: <b>{{ metrics.Router.RpcCall.InFlight | number }}</b> | Rejected: {{ metrics.Router.RpcCall.Rejected.Count | number }} / {{ metrics.Router.RpcCall.Rejected.Total | number }} | Entered: {{ metrics.Router.RpcCall.Entered.Count | number }} / {{ metrics.Router.RpcCall.Entered.Total | number }} | Completed: {{ metrics.Router.RpcCall.Completed.Count | number }} / {{ metrics.Router.RpcCall.Completed.Total | number }}
+				</div>
+			</div>
+			<div>
+				<div>
+					<span></span>
+					- Latency (average/max): <b>{{ metrics.Router.RpcCall.Latency.Average | number }}ms</b> / {{ metrics.Router.RpcCall.Latency.Max | number }}ms | All-time latency (average/max): {{ metrics.Router.RpcCall.Latency.AverageTotal | number }}ms / {{ metrics.Router.RpcCall.Latency.MaxTotal | number }}ms
 				</div>
 			</div>
 		</div>
 		<section *ngIf="metrics.Upstream">
-			<span class="upstream">UP-STREAM</span>
+			<span>UP-STREAM</span>
 		</section>
 		<div *ngIf="metrics.Upstream && metrics.Upstream.Environment">
 			<div>
@@ -87,7 +87,7 @@
 			</div>
 			<div>
 				<div>
-					ThreadPool - Usage: <b>{{ metrics.Upstream.Environment.ThreadPool.Usage * 100 | number }}%</b> | Workers: <b>{{ metrics.Upstream.Environment.ThreadPool.Workers | number }}</b> / {{ metrics.Upstream.Environment.ThreadPool.MaxWorkers | number }} | Async IO: <b>{{ metrics.Upstream.Environment.ThreadPool.AsyncIO | number }}</b> / {{ metrics.Upstream.Environment.ThreadPool.MaxAsyncIO | number }} | Node max: {{ metrics.Upstream.Environment.NodeMax.ID }} - Usage: {{ metrics.Upstream.Environment.NodeMax.Usage * 100 | number }}% - Workers: {{ metrics.Upstream.Environment.NodeMax.Workers | number }}
+					ThreadPool - Usage: <b>{{ metrics.Upstream.Environment.ThreadPool.Usage * 100 | number }}%</b> | Workers: <b>{{ metrics.Upstream.Environment.ThreadPool.Workers | number }}</b> | Async IO: <b>{{ metrics.Upstream.Environment.ThreadPool.AsyncIO | number }}</b>
 				</div>
 			</div>
 		</div>
@@ -97,11 +97,11 @@
 			</div>
 			<div>
 				<div>
-					Status: {{ metrics.Upstream.Cache.Status }} | Ping (max): <b>{{ metrics.Upstream.Cache.Ping.Max | number }}ms</b> | Ping (average): {{ metrics.Upstream.Cache.Ping.Average | number }}ms | Queue (max): <b>{{ metrics.Upstream.Cache.Queue.Max | number }}</b> | Queue (average): {{ metrics.Upstream.Cache.Queue.Average | number }}
+					Status: {{ metrics.Upstream.Cache.Status }} | Ping (max/average): <b>{{ metrics.Upstream.Cache.Ping.Max | number }}ms</b> / {{ metrics.Upstream.Cache.Ping.Average | number }}ms | Queue (max/average): <b>{{ metrics.Upstream.Cache.Queue.Max | number }}</b> / {{ metrics.Upstream.Cache.Queue.Average | number }}
 				</div>
 			</div>
 		</div>
-		<div *ngIf="metrics.Upstream && metrics.Upstream.Services">
+		<div *ngIf="metrics.Upstream && metrics.Upstream.Services" class="upstream">
 			<div>
 				<span>Services</span>
 			</div>
@@ -111,36 +111,36 @@
 				</section>
 				<section>
 					<div>
-						CPU &amp; RAM (max/average/min) - CPU: <b>{{ service.CpuMax | number }}%</b> / {{ service.CpuAverage | number }}% / {{ service.CpuMin | number }}% | RAM: <b>{{ service.MemoryMax | number }}MB</b> / {{ service.MemoryAverage | number }}MB / {{ service.MemoryMin | number }}MB
+						CPU &amp; RAM (max/average/min) - CPU: <b>{{ service.Cpu.Max | number }}%</b> / {{ service.Cpu.Average | number }}% / {{ service.Cpu.Min | number }}% | RAM: <b>{{ service.Memory.Max | number }}MB</b> / {{ service.Memory.Average | number }}MB / {{ service.Memory.Min | number }}MB
 					</div>
 				</section>
 				<section>
 					<div>
-						ThreadPool - Workers: <b>{{ service.ThreadPoolWorkers | number }}</b> / {{ service.ThreadPoolMaxWorkers | number }} | Async IO: <b>{{ service.ThreadPoolAsyncIO | number }}</b> / {{ service.ThreadPoolMaxAsyncIO | number }}
+						ThreadPool - Workers: <b>{{ service.ThreadPool.Workers | number }}</b> | Async IO: <b>{{ service.ThreadPool.AsyncIO | number }}</b>
 					</div>
 				</section>
 				<section>
 					<div>
-						Requests - InFlight: <b>{{ service.RequestsInFlight | number }}</b> | Rate: <b>{{ service.RequestsRate | number }}/s</b>  | Total: {{ service.RequestsTotal | number }}
+						Cache - Status: {{ service.Cache.Status }} | Queue: {{ service.Cache.Queue.Total | number }} | Ping: {{ service.Cache.Ping | number }}ms
 					</div>
 				</section>
-				<section>
-					<div>
-						Cache - Status: {{ service.CacheStatus }} | Queue: {{ service.CacheTotalQueue | number }} | Ping: {{ service.CachePingMilliseconds | number }}ms
-					</div>
-				</section>
-				<section *ngIf="service.CacheL1HitRatio">
+				<section *ngIf="service.Cache.L1">
 					<div>
 						<div>
-							L1 - Hit Ratio: {{ service.CacheL1HitRatio | number }}% | Miss Ratio: {{ service.CacheL1MissRatio | number }}% | Bypass Ratio: {{ service.CacheL1BypassRatio | number }}% | Miss: {{ service.CacheL1Miss | number }} | Bypass: {{ service.CacheL1Bypass | number }} | 200: {{ service.CacheL1Hit200 | number }} | 304: {{ service.CacheL1Hit304 | number }}
+							L1 - Hit Ratio: {{ service.Cache.L1.HitRatio | number }}% | Miss Ratio: {{ service.Cache.L1.MissRatio | number }}% | Bypass Ratio: {{ service.Cache.L1.BypassRatio | number }}% | Miss: {{ service.Cache.L1.Miss | number }} | Bypass: {{ service.Cache.L1.Bypass | number }} | 200: {{ service.Cache.L1.Hit200 | number }} | 304: {{ service.Cache.L1.Hit304 | number }}
 						</div>
 					</div>
 				</section>
-				<section *ngIf="service.CacheL2HitRatio">
+				<section *ngIf="service.Cache.L2">
 					<div>
 						<div>
-							L2 - Hit Ratio: {{ service.CacheL2HitRatio | number }}% | Miss Ratio: {{ service.CacheL2MissRatio | number }}% | Bypass Ratio: {{ service.CacheL2BypassRatio | number }}% | Miss: {{ service.CacheL2Miss | number }} | Bypass: {{ service.CacheL2Bypass | number }} | 200: {{ service.CacheL2Hit200 | number }} | 304: {{ service.CacheL2Hit304 | number }}
+							L2 - Hit Ratio: {{ service.Cache.L2.HitRatio | number }}% | Miss Ratio: {{ service.Cache.L2.MissRatio | number }}% | Bypass Ratio: {{ service.Cache.L2.BypassRatio | number }}% | Miss: {{ service.Cache.L2.Miss | number }} | Bypass: {{ service.Cache.L2.Bypass | number }} | 200: {{ service.Cache.L2.Hit200 | number }} | 304: {{ service.Cache.L2.Hit304 | number }}
 						</div>
+					</div>
+				</section>
+				<section>
+					<div>
+						Request - InFlight: <b>{{ service.Request.InFlight | number }}</b> | Rate: <b>{{ service.Request.Rate | number }}/s</b>  | Total: {{ service.Request.Total | number }}
 					</div>
 				</section>
 				<section>
@@ -151,22 +151,14 @@
 				<section>
 					<div>
 						<div>
-							Slot - Usage: <b>{{ service.RpcGateUsage * 100 | number }}%</b> | Current: <b>{{ service.RpcGateCurrent | number }}</b> | Available: {{ service.RpcGateAvailable | number }} | Max: {{ service.RpcGateMax | number }}
+							Slot - Usage: <b>{{ service.RpcSlot.Usage * 100 | number }}%</b> | Current: <b>{{ service.RpcSlot.Current | number }}</b> | Available: {{ service.RpcSlot.Available | number }} | Max: {{ service.RpcSlot.Max | number }}
 						</div>
 					</div>
 				</section>
 				<section>
 					<div>
 						<div>
-							Call - Backpressure: <b>{{ service.RpcBackpressure | number }}</b> / <b>{{ service.RpcBackpressureRate | number }}/s</b> | Completion Ratio: <b>{{ service.RpcCompletionRatio | number }}%</b> / {{ service.RpcCompletionRatioTotal | number }}% | Reject: {{ service.RpcRejectedRate | number }}/s | Enter: {{ service.RpcEnteredRate | number }}/s | Complete: {{ service.RpcCompletedRate | number }}/s
-						</div>
-					</div>
-				</section>
-				<section>
-					<div>
-						<div>
-							<span></span>
-							- InFlight: <b>{{ service.RpcInFlight | number }}</b> | Rejected: {{ service.RpcRejected | number }} / {{ service.RpcRejectedTotal | number }} | Entered: {{ service.RpcEntered | number }} / {{ service.RpcEnteredTotal | number }} | Completed: {{ service.RpcCompleted | number }} / {{ service.RpcCompletedTotal | number }}
+							Call - Backpressure: <b>{{ service.RpcCall.Backpressure.Value | number }}</b> / <b>{{ service.RpcCall.Backpressure.Rate | number }}/s</b> | Completion Ratio: <b>{{ service.RpcCall.Completion.Ratio | number }}%</b> / {{ service.RpcCall.Completion.TotalRatio | number }}% | Reject: {{ service.RpcCall.Rejected.Rate | number }}/s | Enter: {{ service.RpcCall.Entered.Rate | number }}/s | Complete: {{ service.RpcCall.Completed.Rate | number }}/s
 						</div>
 					</div>
 				</section>
@@ -174,7 +166,15 @@
 					<div>
 						<div>
 							<span></span>
-							- Latency (average/max): <b>{{ service.RpcAverageLatency | number }}ms</b> / {{ service.RpcMaxLatency | number }}ms | All-time latency (average/max): {{ service.RpcAverageLatencyTotal | number }}ms / {{ service.RpcMaxLatencyTotal | number }}ms
+							- InFlight: <b>{{ service.RpcCall.InFlight | number }}</b> | Rejected: {{ service.RpcCall.Rejected.Count | number }} / {{ service.RpcCall.Rejected.Total | number }} | Entered: {{ service.RpcCall.Entered.Count | number }} / {{ service.RpcCall.Entered.Total | number }} | Completed: {{ service.RpcCall.Completed.Count | number }} / {{ service.RpcCall.Completed.Total | number }}
+						</div>
+					</div>
+				</section>
+				<section>
+					<div>
+						<div>
+							<span></span>
+							- Latency (average/max): <b>{{ service.RpcCall.Latency.Average | number }}ms</b> / {{ service.RpcCall.Latency.Max | number }}ms | All-time latency (average/max): {{ service.RpcCall.Latency.AverageTotal | number }}ms / {{ service.RpcCall.Latency.MaxTotal | number }}ms
 						</div>
 					</div>
 				</section>
@@ -188,36 +188,36 @@
 						<section *ngIf="states.Upstream[service.ServiceName][node.NodeID]">
 							<section>
 								<div>
-									CPU &amp; RAM (max/average/min) - CPU: <b>{{ node.CpuMax | number }}%</b> / {{ node.CpuAverage | number }}% / {{ node.CpuMin | number }}% | RAM: <b>{{ node.MemoryMax | number }}MB</b> / {{ node.MemoryAverage | number }}MB / {{ node.MemoryMin | number }}MB
+									CPU &amp; RAM (max/average/min) - CPU: <b>{{ node.Cpu.Max | number }}%</b> / {{ node.Cpu.Average | number }}% / {{ node.Cpu.Min | number }}% | RAM: <b>{{ node.Memory.Max | number }}MB</b> / {{ node.Memory.Average | number }}MB / {{ node.Memory.Min | number }}MB
 								</div>
 							</section>
 							<section>
 								<div>
-									ThreadPool - Workers: <b>{{ node.ThreadPoolWorkers | number }}</b> / {{ node.ThreadPoolMaxWorkers | number }} | Async IO: <b>{{ node.ThreadPoolAsyncIO | number }}</b> / {{ node.ThreadPoolMaxAsyncIO | number }}
+									ThreadPool - Workers: <b>{{ node.ThreadPool.Workers | number }}</b> | Async IO: <b>{{ node.ThreadPool.AsyncIO | number }}</b>
 								</div>
 							</section>
 							<section>
 								<div>
-									Requests - InFlight: <b>{{ node.RequestsInFlight | number }}</b> | Rate: {{ node.RequestsRate | number }}/s  | Total: {{ node.RequestsTotal | number }}
+									Cache - Status: {{ node.Cache.Status }} | Queue: {{ node.Cache.Queue.Total | number }} | Ping: {{ node.Cache.Ping | number }}ms
 								</div>
 							</section>
-							<section>
-								<div>
-									Cache - Status: {{ node.CacheStatus }} | Queue: {{ node.CacheTotalQueue | number }} | Ping: {{ node.CachePingMilliseconds | number }}ms
-								</div>
-							</section>
-							<section *ngIf="node.CacheL1HitRatio">
+							<section *ngIf="node.Cache.L1">
 								<div>
 									<div>
-										L1 - Hit Ratio: {{ node.CacheL1HitRatio | number }}% | Miss Ratio: {{ node.CacheL1MissRatio | number }}% | Bypass Ratio: {{ node.CacheL1BypassRatio | number }}% | Miss: {{ node.CacheL1Miss | number }} | Bypass: {{ node.CacheL1Bypass | number }} | 200: {{ node.CacheL1Hit200 | number }} | 304: {{ node.CacheL1Hit304 | number }}
+										L1 - Hit Ratio: {{ node.Cache.L1.HitRatio | number }}% | Miss Ratio: {{ node.Cache.L1.MissRatio | number }}% | Bypass Ratio: {{ node.Cache.L1.BypassRatio | number }}% | Miss: {{ node.Cache.L1.Miss | number }} | Bypass: {{ node.Cache.L1.Bypass | number }} | 200: {{ node.Cache.L1.Hit200 | number }} | 304: {{ node.Cache.L1.Hit304 | number }}
 									</div>
 								</div>
 							</section>
-							<section *ngIf="node.CacheL2HitRatio">
+							<section *ngIf="node.Cache.L2">
 								<div>
 									<div>
-										L2 - Hit Ratio: {{ node.CacheL2HitRatio | number }}% | Miss Ratio: {{ node.CacheL2MissRatio | number }}% | Bypass Ratio: {{ node.CacheL2BypassRatio | number }}% | Miss: {{ node.CacheL2Miss | number }} | Bypass: {{ node.CacheL2Bypass | number }} | 200: {{ node.CacheL2Hit200 | number }} | 304: {{ node.CacheL2Hit304 | number }}
+										L2 - Hit Ratio: {{ node.Cache.L2.HitRatio | number }}% | Miss Ratio: {{ node.Cache.L2.MissRatio | number }}% | Bypass Ratio: {{ node.Cache.L2.BypassRatio | number }}% | Miss: {{ node.Cache.L2.Miss | number }} | Bypass: {{ node.Cache.L2.Bypass | number }} | 200: {{ node.Cache.L2.Hit200 | number }} | 304: {{ node.Cache.L2.Hit304 | number }}
 									</div>
+								</div>
+							</section>
+							<section>
+								<div>
+									Request - InFlight: <b>{{ node.Request.InFlight | number }}</b> | Rate: {{ node.Request.Rate | number }}/s  | Total: {{ node.Request.Total | number }}
 								</div>
 							</section>
 							<section>
@@ -228,22 +228,14 @@
 							<section>
 								<div>
 									<div>
-										Slot - Usage: <b>{{ node.RpcGateUsage * 100 | number }}%</b> | Current: <b>{{ node.RpcGateCurrent | number }}</b> | Available: {{ node.RpcGateAvailable | number }} | Max: {{ node.RpcGateMax | number }}
+										Slot - Usage: <b>{{ node.RpcSlot.Usage * 100 | number }}%</b> | Current: <b>{{ node.RpcSlot.Current | number }}</b> | Available: {{ node.RpcSlot.Available | number }} | Max: {{ node.RpcSlot.Max | number }}
 									</div>
 								</div>
 							</section>
 							<section>
 								<div>
 									<div>
-										Call - Backpressure: <b>{{ node.RpcBackpressure | number }}</b> / <b>{{ node.RpcBackpressureRate | number }}/s</b> | Completion Ratio: <b>{{ node.RpcCompletionRatio | number }}%</b> / {{ node.RpcCompletionRatioTotal | number }}% | Reject: {{ node.RpcRejectedRate | number }}/s | Enter: {{ node.RpcEnteredRate | number }}/s | Complete: {{ node.RpcCompletedRate | number }}/s
-									</div>
-								</div>
-							</section>
-							<section>
-								<div>
-									<div>
-										<span></span>
-										- InFlight: <b>{{ node.RpcInFlight | number }}</b> | Rejected: {{ node.RpcRejected | number }} / {{ node.RpcRejectedTotal | number }} | Entered: {{ node.RpcEntered | number }} / {{ node.RpcEnteredTotal | number }} | Completed: {{ node.RpcCompleted | number }} / {{ node.RpcCompletedTotal | number }}
+										Call - Backpressure: <b>{{ node.RpcCall.Backpressure.Value | number }}</b> / <b>{{ node.RpcCall.Backpressure.Rate | number }}/s</b> | Completion Ratio: <b>{{ node.RpcCall.Completion.Ratio | number }}%</b> / {{ node.RpcCall.Completion.TotalRatio | number }}% | Reject: {{ node.RpcCall.Rejected.Rate | number }}/s | Enter: {{ node.RpcCall.Entered.Rate | number }}/s | Complete: {{ node.RpcCall.Completed.Rate | number }}/s
 									</div>
 								</div>
 							</section>
@@ -251,7 +243,15 @@
 								<div>
 									<div>
 										<span></span>
-										- Latency (average/max): {{ node.RpcAverageLatency | number }}ms / {{ node.RpcMaxLatency | number }}ms | All-time latency (average/max): {{ node.RpcAverageLatencyTotal | number }}ms / {{ node.RpcMaxLatencyTotal | number }}ms
+										- InFlight: <b>{{ node.RpcCall.InFlight | number }}</b> | Rejected: {{ node.RpcCall.Rejected.Count | number }} / {{ node.RpcCall.Rejected.Total | number }} | Entered: {{ node.RpcCall.Entered.Count | number }} / {{ node.RpcCall.Entered.Total | number }} | Completed: {{ node.RpcCall.Completed.Count | number }} / {{ node.RpcCall.Completed.Total | number }}
+									</div>
+								</div>
+							</section>
+							<section>
+								<div>
+									<div>
+										<span></span>
+										- Latency (average/max): {{ node.RpcCall.Latency.Average | number }}ms / {{ node.RpcCall.Latency.Max | number }}ms | All-time latency (average/max): {{ node.RpcCall.Latency.AverageTotal | number }}ms / {{ node.RpcCall.Latency.MaxTotal | number }}ms
 									</div>
 								</div>
 							</section>
@@ -261,7 +261,7 @@
 			</div>
 		</div>
 		<section *ngIf="metrics.Downstream">
-			<span class="downstream">DOWN-STREAM</span>
+			<span>DOWN-STREAM</span>
 		</section>
 		<div *ngIf="metrics.Downstream && metrics.Downstream.Environment">
 			<div>
@@ -274,7 +274,7 @@
 			</div>
 			<div>
 				<div>
-					ThreadPool - Usage: <b>{{ metrics.Downstream.Environment.ThreadPool.Usage * 100 | number }}%</b> | Workers: <b>{{ metrics.Downstream.Environment.ThreadPool.Workers | number }}</b> / {{ metrics.Downstream.Environment.ThreadPool.MaxWorkers | number }} | Async IO: <b>{{ metrics.Downstream.Environment.ThreadPool.AsyncIO | number }}</b> / {{ metrics.Downstream.Environment.ThreadPool.MaxAsyncIO | number }} | Node max: {{ metrics.Downstream.Environment.NodeMax.ID }} - Usage: {{ metrics.Downstream.Environment.NodeMax.Usage * 100 | number }}% | Workers: {{ metrics.Downstream.Environment.NodeMax.Workers | number }}
+					ThreadPool - Usage: <b>{{ metrics.Downstream.Environment.ThreadPool.Usage * 100 | number }}%</b> | Workers: <b>{{ metrics.Downstream.Environment.ThreadPool.Workers | number }}</b> | Async IO: <b>{{ metrics.Downstream.Environment.ThreadPool.AsyncIO | number }}</b>
 				</div>
 			</div>
 		</div>
@@ -284,11 +284,11 @@
 			</div>
 			<div>
 				<div>
-					Status: {{ metrics.Downstream.Cache.Status }} | Ping (max): <b>{{ metrics.Downstream.Cache.Ping.Max | number }}ms</b> | Ping (average): {{ metrics.Downstream.Cache.Ping.Average | number }}ms | Queue (max): <b>{{ metrics.Downstream.Cache.Queue.Max | number }}</b> | Queue (average): {{ metrics.Downstream.Cache.Queue.Average | number }}
+					Status: {{ metrics.Downstream.Cache.Status }} | Ping (max/average): <b>{{ metrics.Downstream.Cache.Ping.Max | number }}ms</b> / {{ metrics.Downstream.Cache.Ping.Average | number }}ms | Queue (max/average): <b>{{ metrics.Downstream.Cache.Queue.Max | number }}</b> / {{ metrics.Downstream.Cache.Queue.Average | number }}
 				</div>
 			</div>
 		</div>
-		<div *ngIf="metrics.Downstream && metrics.Downstream.Services">
+		<div *ngIf="metrics.Downstream && metrics.Downstream.Services" class="downstream">
 			<div>
 				<span>Services</span>
 			</div>
@@ -298,17 +298,31 @@
 				</section>
 				<section>
 					<div>
-						CPU &amp; RAM (max/average/min) - CPU: <b>{{ service.CpuMax | number }}%</b> / {{ service.CpuAverage | number }}% / {{ service.CpuMin | number }}% | RAM: <b>{{ service.MemoryMax | number }}MB</b> / {{ service.MemoryAverage | number }}MB / {{ service.MemoryMin | number }}MB
+						CPU &amp; RAM (max/average/min) - CPU: <b>{{ service.Cpu.Max | number }}%</b> / {{ service.Cpu.Average | number }}% / {{ service.Cpu.Min | number }}% | RAM: <b>{{ service.Memory.Max | number }}MB</b> / {{ service.Memory.Average | number }}MB / {{ service.Memory.Min | number }}MB
 					</div>
 				</section>
 				<section>
 					<div>
-						ThreadPool - Workers: <b>{{ service.ThreadPoolWorkers | number }}</b> / {{ service.ThreadPoolMaxWorkers | number }} | Async IO: <b>{{ service.ThreadPoolAsyncIO | number }}</b> / {{ service.ThreadPoolMaxAsyncIO | number }}
+						ThreadPool - Workers: <b>{{ service.ThreadPool.Workers | number }}</b> | Async IO: <b>{{ service.ThreadPool.AsyncIO | number }}</b>
+						::
+						Cache - Status: {{ service.Cache.Status }} | Queue: {{ service.Cache.Queue.Total | number }} | Ping: {{ service.Cache.Ping | number }}ms
 					</div>
 				</section>
 				<section>
 					<div>
-						Cache - Status: {{ service.CacheStatus }} | Queue: {{ service.CacheTotalQueue | number }} | Ping: {{ service.CachePingMilliseconds | number }}ms
+						RPC - Backpressure: <b>{{ service.RpcCall.Backpressure.Value | number }}</b> / <b>{{ service.RpcCall.Backpressure.Rate | number }}/s</b> | Completion Ratio: <b>{{ service.RpcCall.Completion.Ratio | number }}%</b> / {{ service.RpcCall.Completion.TotalRatio | number }}% | Enter: {{ service.RpcCall.Entered.Rate | number }}/s | Complete: {{ service.RpcCall.Completed.Rate | number }}/s
+					</div>
+				</section>
+				<section>
+					<div>
+						<span></span>
+						- InFlight: <b>{{ service.RpcCall.InFlight | number }}</b> | Entered: {{ service.RpcCall.Entered.Count | number }} / {{ service.RpcCall.Entered.Total | number }} | Completed: {{ service.RpcCall.Completed.Count | number }} / {{ service.RpcCall.Completed.Total | number }}
+					</div>
+				</section>
+				<section>
+					<div>
+						<span></span>
+						- Latency (average/max): <b>{{ service.RpcCall.Latency.Average | number }}ms</b> / {{ service.RpcCall.Latency.Max | number }}ms | All-time latency (average/max): {{ service.RpcCall.Latency.AverageTotal | number }}ms / {{ service.RpcCall.Latency.MaxTotal | number }}ms
 					</div>
 				</section>
 				<section *ngIf="service.Nodes && service.Nodes.length > 1">
@@ -321,17 +335,31 @@
 						<section *ngIf="states.Downstream[service.ServiceName][node.NodeID]">
 							<section>
 								<div>
-									CPU &amp; RAM (max/average/min) - CPU: <b>{{ node.CpuMax | number }}%</b> / {{ node.CpuAverage | number }}% / {{ node.CpuMin | number }}% | RAM: <b>{{ node.MemoryMax | number }}MB</b> / {{ node.MemoryAverage | number }}MB / {{ node.MemoryMin | number }}MB
+									CPU &amp; RAM (max/average/min) - CPU: <b>{{ node.Cpu.Max | number }}%</b> / {{ node.Cpu.Average | number }}% / {{ node.Cpu.Min | number }}% | RAM: <b>{{ node.Memory.Max | number }}MB</b> / {{ node.Memory.Average | number }}MB / {{ node.Memory.Min | number }}MB
 								</div>
 							</section>
 							<section>
 								<div>
-									ThreadPool - Workers: <b>{{ node.ThreadPoolWorkers | number }}</b> / {{ node.ThreadPoolMaxWorkers | number }} | Async IO: <b>{{ node.ThreadPoolAsyncIO | number }}</b> / {{ node.ThreadPoolMaxAsyncIO | number }}
+									ThreadPool - Workers: <b>{{ node.ThreadPool.Workers | number }}</b> | Async IO: <b>{{ node.ThreadPool.AsyncIO | number }}</b>
+									::
+									Cache - Status: {{ node.Cache.Status }} | Queue: {{ node.Cache.Queue.Total | number }} | Ping: {{ node.Cache.Ping | number }}ms
 								</div>
 							</section>
 							<section>
 								<div>
-									Cache - Status: {{ node.CacheStatus }} | Queue: {{ node.CacheTotalQueue | number }} | Ping: {{ node.CachePingMilliseconds | number }}ms
+									RPC - Backpressure: <b>{{ node.RpcCall.Backpressure.Value | number }}</b> / <b>{{ node.RpcCall.Backpressure.Rate | number }}/s</b> | Completion Ratio: <b>{{ node.RpcCall.Completion.Ratio | number }}%</b> / {{ node.RpcCall.Completion.TotalRatio | number }}% | Enter: {{ node.RpcCall.Entered.Rate | number }}/s | Complete: {{ node.RpcCall.Completed.Rate | number }}/s
+								</div>
+							</section>
+							<section>
+								<div>
+									<span></span>
+									- InFlight: <b>{{ node.RpcCall.InFlight | number }}</b> | Entered: {{ node.RpcCall.Entered.Count | number }} / {{ node.RpcCall.Entered.Total | number }} | Completed: {{ node.RpcCall.Completed.Count | number }} / {{ node.RpcCall.Completed.Total | number }}
+								</div>
+							</section>
+							<section>
+								<div>
+									<span></span>
+									- Latency (average/max): {{ node.RpcCall.Latency.Average | number }}ms / {{ node.RpcCall.Latency.Max | number }}ms | All-time latency (average/max): {{ node.RpcCall.Latency.AverageTotal | number }}ms / {{ node.RpcCall.Latency.MaxTotal | number }}ms
 								</div>
 							</section>
 						</section>
