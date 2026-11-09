@@ -51,12 +51,7 @@
 	}
 	@else if (isMetricsPage && isSystemAdministrator) {
 		<div class="metrics ion-padding">
-			@if (!metrics.Router) {
-				<div>
-					Waiting for signal...
-				</div>
-			}
-			@else {
+			@if (metrics.Router) {
 				<section>
 					<span>ROUTER</span>
 				</section>
@@ -88,6 +83,11 @@
 							- Latency (average/max): <b>{{ metrics.Router.RpcCall.Latency.Average | number }}ms</b> / {{ metrics.Router.RpcCall.Latency.Max | number }}ms | All-time latency (average/max): {{ metrics.Router.RpcCall.Latency.AverageTotal | number }}ms / {{ metrics.Router.RpcCall.Latency.MaxTotal | number }}ms
 						</div>
 					</div>
+				</div>
+			}
+			@else {
+				<div>
+					Waiting for signal...
 				</div>
 			}
 			@if (metrics.Upstream) {
@@ -211,12 +211,10 @@
 										@for (node of service.Nodes; track node.NodeID) {
 											<section>
 												<section>
-													@if (!states.Upstream[service.ServiceName][node.NodeID]) {
-														<ion-icon (click)="changeState(service.ServiceName, node.NodeID)" fill="clear" name="caret-forward-outline" slot="icon-only"></ion-icon>
-													}
-													@if (states.Upstream[service.ServiceName][node.NodeID]) {
-														<ion-icon (click)="changeState(service.ServiceName, node.NodeID)" fill="clear" name="caret-down-outline" slot="icon-only"></ion-icon>
-													}
+													<ion-icon (click)="changeState(service.ServiceName, node.NodeID)"
+														[name]="states.Upstream[service.ServiceName][node.NodeID] ? 'caret-down-outline' : 'caret-forward-outline'"
+														slot="icon-only">
+													</ion-icon>
 													<span>Node: {{ node.NodeID }}</span>
 												</section>
 												@if (states.Upstream[service.ServiceName][node.NodeID]) {
@@ -382,12 +380,10 @@
 										@for (node of service.Nodes; track node.NodeID) {
 											<section>
 												<section>
-													@if (!states.Downstream[service.ServiceName][node.NodeID]) {
-														<ion-icon (click)="changeState(service.ServiceName, node.NodeID, false)" fill="clear" name="caret-forward-outline" slot="icon-only"></ion-icon>
-													}
-													@if (states.Downstream[service.ServiceName][node.NodeID]) {
-														<ion-icon (click)="changeState(service.ServiceName, node.NodeID, false)" fill="clear" name="caret-down-outline" slot="icon-only"></ion-icon>
-													}
+													<ion-icon (click)="changeState(service.ServiceName, node.NodeID, false)"
+														[name]="states.Downstream[service.ServiceName][node.NodeID] ? 'caret-down-outline' : 'caret-forward-outline'"
+														slot="icon-only">
+													</ion-icon>
 													<span>Node: {{ node.NodeID }}</span>
 												</section>
 												@if (states.Downstream[service.ServiceName][node.NodeID]) {
