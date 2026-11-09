@@ -28,7 +28,7 @@
 @if (headers && headers.length) {
 	<ion-footer>
 		<ion-toolbar [color]="color">
-			@for (header of headers; track track($index, header); let idx = $index) {
+			@for (header of headers; track header.name; let idx = $index) {
 				<span [slot]="idx === 0 ? 'start' : idx === 2 ? 'end' : ''">
 					<ion-checkbox slot="start" (ionChange)="onChanged($event, idx)"></ion-checkbox>
 					<span>{{ header.label }}</span>
@@ -42,7 +42,7 @@
 
 	@if (mode === 'select') {
 		<ion-list class="select">
-			@for (attachment of attachments; track attachment.ID || info.name) {
+			@for (attachment of attachments; track attachment.ID) {
 				<ion-item [color]="color">
 					@if (allowSelect) {
 						<ion-checkbox slot="end" [checked]="selected.contains(attachment.ID)" (ionChange)="onSelect($event, attachment)"></ion-checkbox>
