@@ -2235,7 +2235,6 @@ export class PortalsCoreService extends BaseService {
 		);
 	}
 
-
 	searchOrganizations(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("Organization", this.configSvc.relatedQuery),
@@ -2397,7 +2396,6 @@ export class PortalsCoreService extends BaseService {
 			}
 		}
 	}
-
 
 	searchRoles(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
@@ -2587,7 +2585,6 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-
 	searchModules(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("Module", this.configSvc.relatedQuery),
@@ -2712,7 +2709,6 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-
 	searchContentTypes(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("Content.Type", this.configSvc.relatedQuery),
@@ -2831,7 +2827,6 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-
 	searchExpressions(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("Expression", this.configSvc.relatedQuery),
@@ -2943,7 +2938,6 @@ export class PortalsCoreService extends BaseService {
 			AppEvents.broadcast(this.name, { Object: "Expression", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID });
 		}
 	}
-
 
 	searchSites(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
@@ -3074,7 +3068,6 @@ export class PortalsCoreService extends BaseService {
 			AppEvents.broadcast(this.name, { Object: "Site", Type: `${message.Type.Event}d`, ID: message.Data.ID });
 		}
 	}
-
 
 	searchDesktops(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
@@ -3282,7 +3275,6 @@ export class PortalsCoreService extends BaseService {
 		}
 	}
 
-
 	searchPortlets(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("Portlet", this.configSvc.relatedQuery),
@@ -3401,7 +3393,6 @@ export class PortalsCoreService extends BaseService {
 			AppEvents.broadcast(this.name, { Object: "Portlet", Type: `${message.Type.Event}d`, ID: message.Data.ID, DesktopID: message.Data.DesktopID, SystemID: message.Data.SystemID });
 		}
 	}
-
 
 	searchSchedulingTasks(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(

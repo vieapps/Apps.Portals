@@ -77,7 +77,6 @@ export class UsersService extends BaseService {
 	deinitialize() {
 	}
 
-
 	searchProfiles(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("Profile", this.configSvc.relatedQuery),

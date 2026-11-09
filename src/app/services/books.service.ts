@@ -5,7 +5,6 @@ import { AppAPIs } from "@app/components/app.apis";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppEvents } from "@app/components/app.events";
 import { AppUtility } from "@app/components/app.utility";
-import { AppPagination } from "@app/components/app.pagination";
 import { AppSidebar, AppSidebarMenuItem, AppMessage, AppDataRequest } from "@app/components/app.objects";
 import { CounterInfo } from "@app/models/counters";
 import { StatisticBase, StatisticInfo } from "@app/models/statistics";
@@ -205,8 +204,6 @@ export class BooksService extends BaseService {
 			});
 		}
 	}
-
-
 
 	searchBooks(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(

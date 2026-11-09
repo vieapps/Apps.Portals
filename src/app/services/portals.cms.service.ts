@@ -1008,7 +1008,6 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-
 	searchCategories(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("CMS.Category", this.configSvc.relatedQuery),
@@ -1267,7 +1266,6 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-
 	searchContents(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("CMS.Content", this.configSvc.relatedQuery),
@@ -1440,7 +1438,6 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-
 	searchItems(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("CMS.Item", this.configSvc.relatedQuery),
@@ -1590,7 +1587,6 @@ export class PortalsCmsService extends BaseService {
 			AppEvents.broadcast(this.name, { Object: "CMS.Item", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
 		}
 	}
-
 
 	searchLinks(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
@@ -1812,7 +1808,6 @@ export class PortalsCmsService extends BaseService {
 		}
 	}
 
-
 	searchForms(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
 			this.getSearchingPath("CMS.Form", this.configSvc.relatedQuery),
@@ -1954,7 +1949,6 @@ export class PortalsCmsService extends BaseService {
 			AppEvents.broadcast(this.name, { Object: "CMS.Form", Type: `${message.Type.Event}d`, ID: message.Data.ID, SystemID: message.Data.SystemID, RepositoryID: message.Data.RepositoryID, RepositoryEntityID: message.Data.RepositoryEntityID });
 		}
 	}
-
 
 	searchCrawlers(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
 		return this.search(
