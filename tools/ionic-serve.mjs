@@ -4,10 +4,10 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const project = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const isolatedNode = "/private/tmp/vieapps-portals-cms-toolchain/node-v24.22.2-darwin-x64/bin/node";
-const executable = Number(process.versions.node.split(".")[0]) >= 24 ? process.execPath : isolatedNode;
-if (!existsSync(executable)) {
-	console.error("Activate Node 24 from .nvmrc, then run npm run serve again.");
+const isolatedNode = resolve(project, ".node/bin/node");
+const executable = existsSync(isolatedNode) ? isolatedNode : Number(process.versions.node.split(".")[0]) >= 24 ? process.execPath : undefined;
+if (!executable) {
+	console.error("Node 24 is unavailable. Install it in .node or activate the version in .nvmrc, then run npm run serve again.");
 	process.exit(1);
 }
 const environment = {
@@ -15,11 +15,12 @@ const environment = {
 	PATH: dirname(executable) + ":" + process.env.PATH,
 	NG_CLI_ANALYTICS: "false",
 	CI: "true",
-	IONIC_CONFIG_DIRECTORY: "/private/tmp/vieapps-portals-cms-toolchain/ionic-config"
+	IONIC_CONFIG_DIRECTORY: resolve(project, ".node/ionic-config")
 };
 delete environment.IONIC_TOKEN;
 delete environment.IONIC_EMAIL;
 delete environment.IONIC_PASSWORD;
+console.log(`[serve] Node: ${executable}`);
 const child = spawn(executable, [
 	resolve(project, "node_modules/@ionic/cli/bin/ionic"),
 	"serve", "--host", "127.0.0.1", "--no-open", "--no-interactive", ...process.argv.slice(2)

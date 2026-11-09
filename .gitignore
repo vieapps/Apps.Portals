@@ -10,7 +10,6 @@
 *.sublime-workspace
 .DS_Store
 Thumbs.db
-UserInterfaceState.xcuserstate
 $RECYCLE.BIN/
 
 *.log
@@ -18,11 +17,7 @@ log.txt
 npm-debug.log*
 
 /.angular
-/.idea
-/.ionic
-/.sass-cache
-/.sourcemaps
-/.versions
+/.node
 /.vscode
 /dist
 /node_modules

@@ -10,7 +10,7 @@ type InAppBrowserAdapter = { create(url: string, target: string, options: any): 
 import { AppConfig } from "@app/app.config";
 import { AppUtility } from "@app/components/app.utility";
 
-/** Angular-facing adapter for the Electron preload bridge. */
+/** Angular-facing adapter for the Electron preload bridge */
 export interface AppElectronService {
 	readonly isElectronApp: boolean;
 	readonly ipcRenderer?: {
@@ -22,31 +22,27 @@ export interface AppElectronService {
 	};
 }
 
-/** Browser/native builds receive null; Electron receives the preload-backed adapter. */
+/** Browser/native builds receive null; Electron receives the preload-backed adapter */
 export const APP_ELECTRON_SERVICE = new InjectionToken<AppElectronService>("AppElectronService");
 
-/** Matches Apps/Portals.Electron/src/preload-app.js without exposing Node APIs. */
+/** Matches Electron desktop shell without exposing Node APIs */
 export function createElectronService(): AppElectronService | null {
-	const desktop = typeof window === "undefined"
+	type DesktopBridge = Pick<AppElectronService, "ipcRenderer" | "shell">;
+	const names = ["vieapps", "vieappsngx", "vieappsDesktop", "ngxDesktop", "ngx"];
+	const isBridge = (bridge: any): bridge is DesktopBridge => typeof bridge?.ipcRenderer?.on === "function" && typeof bridge?.ipcRenderer?.send === "function" && typeof bridge?.shell?.openExternal === "function";
+	const app: DesktopBridge | undefined = typeof window === "undefined"
 		? undefined
-		: (window as Window & { vieappsDesktop?: Pick<AppElectronService, "ipcRenderer" | "shell"> }).vieappsDesktop;
-
-	if (desktop === undefined) {
-		return null;
-	}
-
-	if (typeof desktop?.ipcRenderer?.on !== "function" || typeof desktop?.ipcRenderer?.send !== "function" || typeof desktop?.shell?.openExternal !== "function") {
-		throw new Error("[Electron]: The vieappsDesktop preload bridge is incomplete");
-	}
-
-	return {
-		isElectronApp: true,
-		ipcRenderer: {
-			on: (channel, listener) => desktop.ipcRenderer.on(channel, listener),
-			send: (channel, args) => desktop.ipcRenderer.send(channel, args)
-		},
-		shell: { openExternal: url => desktop.shell.openExternal(url) }
-	};
+		: names.map(name => (window as any)[name]).find(bridge => isBridge(bridge));
+	return app === undefined
+		? null
+		: {
+			isElectronApp: true,
+			ipcRenderer: {
+				on: (channel, listener) => app.ipcRenderer.on(channel, listener),
+				send: (channel, args) => app.ipcRenderer.send(channel, args)
+			},
+			shell: { openExternal: url => app.shell.openExternal(url) }
+		};
 }
 
 /** Servicing component for working with app on a specific platform */
