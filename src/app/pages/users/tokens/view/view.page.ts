@@ -154,6 +154,25 @@ export class TokensViewPage implements OnInit, OnDestroy {
 				}
 			},
 			{
+				Name: "JWTToken",
+				Type: "Text",
+				Extras: { "Text": (this.token.Token || {}).JWT },
+				Options: {
+					Type: "text",
+					Label: await this.configSvc.getResourceAsync("tokens.view.controls.Token.JWT"),
+					Icon: {
+						Name: "copy-outline",
+						Fill: "clear",
+						Color: "medium",
+						Slot: "end",
+						OnClick: async () => {
+							await PlatformUtility.copyToClipboardAsync(this.token.Token.JWT);
+							await this.appFormsSvc.showToastAsync("Copied...");
+						}
+					}
+				}
+			},
+			{
 				Name: "Created",
 				Type: "Text",
 				Extras: { "Text": await this.configSvc.getResourceAsync("tokens.view.controls.Created.description", { user: creator === undefined ? "Unknown" : creator.Name, created: this.datePipe.transform(this.token.Created, "h:mm a @ d/M/y") }) },
@@ -176,6 +195,10 @@ export class TokensViewPage implements OnInit, OnDestroy {
 				control = this.controls.find(ctrl => ctrl.Name === "BasicToken");
 				if (control !== undefined) {
 					control.Extras["Text"] = (this.token.Token || {}).Basic;
+				}
+				control = this.controls.find(ctrl => ctrl.Name === "JWTToken");
+				if (control !== undefined) {
+					control.Extras["Text"] = (this.token.Token || {}).JWT;
 				}
 			});
 		}

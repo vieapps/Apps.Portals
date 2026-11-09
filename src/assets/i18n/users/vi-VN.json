@@ -283,7 +283,8 @@
 				},
 				"Token": {
 					"Bearer": "Khoá truy cập theo kiểu Bearer",
-					"Basic": "Khoá truy cập theo kiểu Basic"
+					"Basic": "Khoá truy cập theo kiểu Basic",
+					"JWT": "Khoá truy cập theo kiểu JWT"
 				}
 			}
 		},

@@ -283,7 +283,8 @@
 				},
 				"Token": {
 					"Bearer": "Bearer access token",
-					"Basic": "Basic access token"
+					"Basic": "Basic access token",
+					"JWT": "JWT access token"
 				}
 			}
 		},

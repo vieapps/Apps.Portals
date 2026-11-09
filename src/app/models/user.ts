@@ -210,6 +210,7 @@ export class UserToken extends BaseModel {
 	Token = undefined as {
 		Bearer: string;
 		Basic: string;
+		JWT: string;
 	};
 
 	ansiTitle = "";
