@@ -33,16 +33,14 @@ export function createElectronService(): AppElectronService | null {
 	const app: DesktopBridge | undefined = typeof window === "undefined"
 		? undefined
 		: names.map(name => (window as any)[name]).find(bridge => isBridge(bridge));
-	return app === undefined
-		? null
-		: {
-			isElectronApp: true,
-			ipcRenderer: {
-				on: (channel, listener) => app.ipcRenderer.on(channel, listener),
-				send: (channel, args) => app.ipcRenderer.send(channel, args)
-			},
-			shell: { openExternal: url => app.shell.openExternal(url) }
-		};
+	return app === undefined ? null : {
+		isElectronApp: true,
+		ipcRenderer: {
+			on: (channel, listener) => app.ipcRenderer.on(channel, listener),
+			send: (channel, args) => app.ipcRenderer.send(channel, args)
+		},
+		shell: { openExternal: url => app.shell.openExternal(url) }
+	};
 }
 
 /** Servicing component for working with app on a specific platform */

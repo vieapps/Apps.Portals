@@ -47,7 +47,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	ngOnInit() {
 		// This migration cut mounts only verified families; deferred branches never silently drop data.
-		const supportedCustom = this.isCustomControl("data-selector") || this.isCustomControl("data-items") || this.isCustomControl("files-selector") || this.isCustomControl("object-privileges") || this.isCustomControl("service-privileges") || this.isCustomControl("image-cropper");
+		const supportedCustom = this.isCustomControl("data-selector") || this.isCustomControl("data-items") || this.isCustomControl("files-selector") || this.isCustomControl("object-privileges") || this.isCustomControl("service-privileges");
 		if (this.visible && (this.isCustomControl() && !supportedCustom)) {
 			throw new Error(`[Forms]: Renderer not migrated yet: ${this.control.Type}/${this.control.Options.Type}`);
 		}

@@ -1,542 +1,535 @@
-@if (visible && isFormControl && !isTextEditorControl && !isCaptchaControl && !selectAsRadioBoxes && !selectAsCheckBoxes && !isSelector && !isCustomControl()) {
-	<ion-item
-		[color]="theme"
-		[formGroup]="formGroup"
-		[lines]="lookupMultiple ? 'none' : undefined"
-		[class.invalid]="invalid"
-		[class.file-picker]="isFilePickerControl"
-		[class.completer-container]="isCompleter"
-		[class.select-dropdown]="selectAsDropdown"
-		[class.select-multiple]="selectAsMultiple">
-
-		@if (icon || isPasswordControl) {
-			<ion-buttons style="background-color:var(--ion-color-base)" [slot]="iconSlot">
-				<ion-button tabindex="-1" [attr.aria-label]="label || name || icon" [disabled]="!!disabled" [fill]="iconFill" [color]="iconColor" (click)="clickOnIcon($event)">
-					@if (icon && !isPasswordControl) {
-						<ion-icon [name]="icon" slot="icon-only"></ion-icon>
-					}
-					@if (isPasswordControl) {
-						<ion-icon name="eye" slot="icon-only" [hidden]="showPassword"></ion-icon>
-						<ion-icon name="eye-off" slot="icon-only" [hidden]="!showPassword"></ion-icon>
-					}
-				</ion-button>
-				@if (isModal && lookupAllowDelete) {
-					<ion-button tabindex="-1" [disabled]="disabled || !lookupDisplayValue" [fill]="iconFill" [color]="iconColor" (click)="deleteValue()">
-						<ion-icon name="close" slot="icon-only"></ion-icon>
+@if (visible) {
+	@if (isFormControl && !isTextEditorControl && !isCaptchaControl && !selectAsRadioBoxes && !selectAsCheckBoxes && !isSelector && !isCustomControl()) {
+		<ion-item
+			[color]="theme"
+			[formGroup]="formGroup"
+			[lines]="lookupMultiple ? 'none' : undefined"
+			[class.invalid]="invalid"
+			[class.file-picker]="isFilePickerControl"
+			[class.completer-container]="isCompleter"
+			[class.select-dropdown]="selectAsDropdown"
+			[class.select-multiple]="selectAsMultiple">
+	
+			@if (icon || isPasswordControl) {
+				<ion-buttons style="background-color:var(--ion-color-base)" [slot]="iconSlot">
+					<ion-button tabindex="-1" [attr.aria-label]="label || name || icon" [disabled]="!!disabled" [fill]="iconFill" [color]="iconColor" (click)="clickOnIcon($event)">
+						@if (isPasswordControl) {
+							<ion-icon name="eye" slot="icon-only" [hidden]="showPassword"></ion-icon>
+							<ion-icon name="eye-off" slot="icon-only" [hidden]="!showPassword"></ion-icon>
+						}
+						@else if (icon) {
+							<ion-icon [name]="icon" slot="icon-only"></ion-icon>
+						}
 					</ion-button>
-				}
-			</ion-buttons>
-		}
-
-		@if (label) {
-			<ion-label
-				[color]="color.label"
-				[position]="position"
-				[class]="css.label">{{ label }}</ion-label>
-		}
-
-		@if (isTextBoxControl) {
-			<ion-input [attr.aria-label]="label || name" #elementRef
-				[formControlName]="formControlName"
-				[name]="name"
-				[type]="type"
-				[placeholder]="placeholder"
-				[class]="css.control"
-				[required]="required"
-				[readonly]="readonly || !!disabled"
-				[min]="minValue"
-				[max]="maxValue"
-				[minlength]="minLength"
-				[maxlength]="maxLength"
-				[clearOnEdit]="clearOnEdit"
-				[attr.style]="style.control"
-				(keyup)="onKeyUp($event)"
-				(ionFocus)="onFocus($event)"
-				(ionBlur)="onBlur($event)"></ion-input>
-		}
-
-		@if (isTextAreaControl) {
-			<ion-textarea [attr.aria-label]="label || name" #elementRef
-				[formControlName]="formControlName"
-				[name]="name"
-				[placeholder]="placeholder"
-				[class]="css.control"
-				[required]="required"
-				[readonly]="readonly || !!disabled"
-				[minlength]="minLength"
-				[maxlength]="maxLength"
-				[rows]="rows" 
-				[attr.style]="style.control"
-				(ionFocus)="onFocus($event)"
-				(ionBlur)="onBlur($event)"></ion-textarea>
-		}
-
-		@if (isSelectControl && !selectAsDropdown) {
-			<ion-select [attr.aria-label]="label || name" #elementRef
-				[name]="name"
-				[multiple]="selectMultiple"
-				[interface]="selectInterface"
-				[interfaceOptions]="selectInterfaceOptions"
-				[cancelText]="selectCancelText"
-				[okText]="selectOkText"
-				[value]="value"
-				[disabled]="!!disabled"
-				[placeholder]="placeholder"
-				(ionFocus)="onFocus($event)"
-				(ionBlur)="onBlur($event)"
-				(ionChange)="onChanged($event)">
-				@for (option of selectOptions; track trackOption($index, option)) {
-					<ion-select-option [value]="option.Value">{{ option.Label }}</ion-select-option>
-				}
-			</ion-select>
-		}
-
-		@if (isToggleControl) {
-			<ion-toggle slot="end" [attr.aria-label]="label || name" #elementRef
-				[name]="name"
-				[disabled]="!!disabled"
-				[color]="color.control"
-				[checked]="yesnoChecked"
-				[title]="description"
-				(ionFocus)="onFocus($event)"
-				(ionBlur)="onBlur($event)"
-				(ionChange)="onChanged($event)"></ion-toggle>
-		}
-
-		@if (isCheckboxControl) {
-			<ion-checkbox slot="end" [attr.aria-label]="label || name" #elementRef
-				[name]="name"
-				[disabled]="!!disabled || readonly"
-				[color]="color.control"
-				[checked]="yesnoChecked"
-				[title]="description"
-				(ionFocus)="onFocus($event)"
-				(ionBlur)="onBlur($event)"
-				(ionChange)="onChanged($event)"></ion-checkbox>
-		}
-
-		@if (isRangeControl) {
-			<ion-range #elementRef
-				[name]="name"
-				[color]="color.control"
-				[disabled]="!!disabled"
-				[pin]="rangeOptions.AllowPin"
-				[snaps]="rangeOptions.AllowSnaps"
-				[dualKnobs]="rangeOptions.AllowDualKnobs"
-				[ticks]="rangeOptions.AllowTicks"
-				[step]="rangeOptions.Step"
-				[min]="minValue"
-				[max]="maxValue"
-				[value]="value"
-				[title]="description"
-				(ionFocus)="onFocus($event)"
-				(ionBlur)="onBlur($event)"
-				(ionChange)="onChanged($event)">
-				@if (rangeOptions.Icons.Start) {
-					<ion-icon [name]="rangeOptions.Icons.Start" size="small" slot="start"></ion-icon>
-				}
-				@if (rangeOptions.Icons.End) {
-					<ion-icon [name]="rangeOptions.Icons.End" size="small" slot="end"></ion-icon>
-				}
-			</ion-range>
-		}
-
-		@if (isDatePickerControl) {
-			<ion-datetime #elementRef [value]="datetimeValue"
-				[presentation]="control.Options.DatePickerOptions.AllowTimes ? 'date-time' : 'date'"
-				[min]="minValue" [max]="maxValue" [disabled]="!!disabled || readonly"
-				(ionChange)="onChanged($event)"></ion-datetime>
-		}
-
-		@if (isCompleter) {
-			<app-completer #elementRef
-				[inputName]="name" [disableInput]="!!disabled" [readonly]="readonly"
-				[placeholder]="completerPlaceHolder" [minSearchLength]="completerMinLength"
-				[maxChars]="completerMaxLength" [pause]="completerPauseMiliseconds"
-				[clearSelected]="completerClearSelected"
-				[textSearching]="completerSearchingText" [textNoResults]="completerNoResultsText"
-				[datasource]="completerDataSource" [initialValue]="completerInitialValue"
-				(keyup)="onKeyUp($event, !completerClearSelected)"
-				(focused)="onFocus($event)" (blurred)="onBlur($event)"
-				(selected)="onChanged($event)"></app-completer>
-		}
-
-		@if (selectAsDropdown || selectAsMultiple) {
-			<select #elementRef
-				[formControlName]="formControlName"
-				[name]="name"
-				[attr.disabled]="disabled ? '' : null"
-				[multiple]="selectMultiple"
-				[size]="rows" 
-				[class]="css.control"
-				[attr.style]="style.control"
-				(focus)="onFocus($event)"
-				(blur)="onBlur($event)"
-				(change)="onChanged(this.value)">
-				@for (option of selectOptions; track trackOption($index, option)) {
-					<option [value]="option.Value" [selected]="selectOptionIsChecked(option.Value)">{{ option.Label }}</option>
-				}
-			</select>
-		}
-
-		@if (isModal && !lookupMultiple) {
-			<ion-input readonly [attr.aria-label]="label || name" #elementRef
-				[value]="lookupDisplayValue"
-				[placeholder]="placeholder"
-				[class]="css.control"
-				[required]="required"		
-				[disabled]="!!disabled"
-				[attr.style]="style.control"></ion-input>
-		}
-
-		@if (isFilePickerControl) {
-			<div>
-				<div class="file-picker-input">
-					<input type="file" #elementRef
-						[accept]="control.Options.FilePickerOptions.Accept"
-						[multiple]="control.Options.FilePickerOptions.Multiple"
-						[placeholder]="placeholder"
-						[disabled]="!!disabled"
-						(change)="onChanged($event)" />
-				</div>
-				@if (isAllowImagePreview && value) {
-					<div class="image-picker-preview ion-padding-vertical">
-						@if (value.current) {
-							<div>
-								<img [src]="value.current" />
-							</div>
-						}
-						@if (value.new) {
-							<div>
-								<img [src]="value.new" />
-							</div>
-						}
-					</div>
-				}
-			</div>
-		}
-		
-		@if (isTextDisplayAsBoxControl) {
-			<ion-input [attr.aria-label]="label || name" #elementRef
-				[value]="text"
-				[readonly]="readonly"
-				[disabled]="!!disabled"
-				[class]="css.control"
-				[attr.style]="style.control"></ion-input>
-		}
-
-		@if (isTextDisplayAsTexAreaControl) {
-			<ion-textarea [attr.aria-label]="label || name" #elementRef
-				[value]="text"
-				[readonly]="readonly"
-				[disabled]="!!disabled"
-				[rows]="rows" 
-				[class]="css.control"
-				[attr.style]="style.control"
-				(ionFocus)="onFocus($event)"
-				(ionBlur)="onBlur($event)"></ion-textarea>
-		}
-		
-		@if (isTextDisplayAsLabelControl) {
-			<span [innerHTML]="text" class="text" #elementRef></span>
-		}
-		
-		@if (isTextDisplayAsParagraphControl) {
-			<div [innerHTML]="text" class="text" #elementRef></div>
-		}
-
-		@if (description && !isYesNoControl && !isRangeControl) {
-			<label
-				[class]="css.description"
-				[style]="style.description"
-				[ngClass]="{'text-area':isTextAreaControl}"
-				[innerHTML]="description"></label>
-		}
-		
-	</ion-item>
-}
-
-@if (visible && (isCompleter || isModal) && lookupMultiple) {
-	<ion-item [color]="theme">
-		<ion-label class="ion-text-wrap">
-			@for (lookup of lookupDisplayValues; track lookup) {
-				<ion-chip>
-					<ion-label>
-						@if (lookup.Image) {
-							<ion-thumbnail class="ion-float-start">
-								<img [src]="lookup.Image" />
-							</ion-thumbnail>
-						}
-						<span>
-							{{ lookup.Label }}
-						</span>
-					</ion-label>
-					@if (!disabled) {
-						<ion-icon name="close-circle" (click)="deleteValue(lookup.Value)"></ion-icon>
+					@if (isModal && lookupAllowDelete) {
+						<ion-button tabindex="-1" [disabled]="disabled || !lookupDisplayValue" [fill]="iconFill" [color]="iconColor" (click)="deleteValue()">
+							<ion-icon name="close" slot="icon-only"></ion-icon>
+						</ion-button>
 					}
-				</ion-chip>
+				</ion-buttons>
 			}
-		</ion-label>
-	</ion-item>
-}
-
-@if (visible && selectAsCheckBoxes) {
-	<ion-list #elementRef
-		[formGroup]="formGroup"
-		[class.invalid]="invalid">
-
-		@if (label) {
-			<ion-list-header [color]="theme">
-				<ion-label [class]="css.label">{{ label }}</ion-label>
-			</ion-list-header>
-		}
-
-		@for (option of selectOptions; track trackOption($index, option)) {
-			<ion-item [color]="theme">
-				<ion-label>{{ option.Label }}</ion-label>
-				<ion-checkbox slot="end" [checked]="selectOptionIsChecked(option.Value)" [value]="option.Value" (ionChange)="onChanged($event)"></ion-checkbox>
-			</ion-item>
-		}
-
-		@if (description) {
-			<ion-item [color]="theme">
-				<label
-					[class]="css.description"
-					[style]="style.description"
-					[innerHTML]="description"></label>
-			</ion-item>
-		}
-
-	</ion-list>
-}
-
-@if (visible && selectAsRadioBoxes) {
-	<ion-radio-group #elementRef
-		[name]="name"
-		[formGroup]="formGroup"
-		[class.invalid]="invalid"
-		[value]="value"
-		(ionFocus)="onFocus($event)"
-		(ionBlur)="onBlur($event)"
-		(ionChange)="onChanged($event)">
-
-		@if (label) {
-			<ion-list-header [color]="theme">
-				<ion-label [class]="css.label">{{ label }}</ion-label>
-			</ion-list-header>
-		}
-
-		@for (option of selectOptions; track trackOption($index, option)) {
-			<ion-item [color]="theme">
-				<ion-label>{{ option.Label }}</ion-label>
-				<ion-radio [value]="option.Value" [disabled]="!!disabled"></ion-radio>
-			</ion-item>
-		}
-
-	</ion-radio-group>
-}
 	
-@if (visible && isCaptchaControl) {
-	<ion-item
-		[color]="theme"
-		[formGroup]="formGroup"
-		[class.invalid]="invalid">
-		@if (label) {
-			<ion-label
-				[color]="color.label"
-				[position]="position"
-				[class]="css.label">{{ label }}</ion-label>
-		}
-		<ion-input type="text" [attr.aria-label]="label || name" #elementRef
-			[formControlName]="formControlName"
-			[name]="name"
-			[placeholder]="placeholder"
-			[class]="css.control"
-			[required]="required"
-			[readonly]="readonly"
-			[attr.disabled]="disabled ? '' : null"
-			[min]="minValue"
-			[max]="maxValue"
-			[minlength]="minLength"
-			[maxlength]="maxLength"
-			[attr.style]="style.control"
-			(keyup)="onKeyUp($event)"
-			(ionFocus)="onFocus($event)"
-			(ionBlur)="onBlur($event)"></ion-input>
-		@if (description) {
-			<label
-				[class]="css.description"
-				[style]="style.description"
-				[innerHTML]="description"></label>
-		}
-	</ion-item>
-}
-
-@if (visible && isCaptchaControl) {
-	<ion-item
-		[color]="theme">
-		<ion-button fill="clear" (click)="refreshCaptchaImage()">
-			<ion-icon icon="refresh" slot="icon-only"></ion-icon>
-		</ion-button>
-		@if (captchaURI) {
-			<img slot="start" [src]="captchaURI"/>
-		}
-	</ion-item>
-}
-
-@if (visible && description && !label && (isFormGroup || isFormArray)) {
-	<ion-item [color]="theme">
-		<label
-			[class]="css.description"
-			[style]="style.description"
-			[innerHTML]="description"></label>
-	</ion-item>
-}
-
-@if (visible && (isFormGroup || isFormArray) && !isFormButtons) {
-	<ion-list>
-		
-		@if (label) {
-			<ion-list-header [color]="theme">
-				<ion-label [class]="css.label">
-					<span>
-						{{ label }}
-					</span>
-					@if (isFormArray) {
-						<ion-buttons style="background-color:var(--ion-color-base);padding-right:16px" class="ion-float-end">
-							<ion-button fill="clear" color="medium" [disabled]="!!disabled" (click)="addControlOfFormArray()">
-								<ion-icon name="add" slot="icon-only"></ion-icon>
-							</ion-button>
-						</ion-buttons>
-					}
-				</ion-label>
-			</ion-list-header>
-		}
-
-		@if (visible && description && label) {
-			<ion-item [color]="theme">
-				<label
-					[class]="css.description"
-					[style]="style.description"
-					[innerHTML]="description"></label>
-			</ion-item>
-		}
-			
-		@if (isFormGroup) {
-			<div>
-				@for (ctrl of control.SubControls.Controls; track trackControl($index, ctrl)) {
-					<app-form-control
-						[formGroup]="formControlAsFormGroup"
-						[control]="ctrl"
-						[theme]="theme"></app-form-control>
-				}
-			</div>
-		}
-		
-		@if (isFormArray) {
-			<div>
-				@for (ctrl of control.SubControls.Controls; track trackControl($index, ctrl); let idx = $index) {
-					<app-form-control
-						[formGroup]="formControlAsFormGroup"
-						[formArrayIndex]="idx"
-						[control]="ctrl"
-						[theme]="theme"></app-form-control>
-				}
-			</div>
-		}
-
-	</ion-list>
-}
-
-@if (visible && isFormButtons) {
-	<ion-buttons style="background-color:var(--ion-color-base)" [class]="css.control || 'ion-padding'">
-		@for (button of control.SubControls.Controls; track trackControl($index, button)) {
-			<ion-button
-				[fill]="button.Options.ButtonOptions.Fill"
-				[color]="button.Options.ButtonOptions.Color"
-				[disabled]="button.Options.Disabled"
-				[class]="button.Options.Css"
-				(click)="clickOnButton($event, button)">
-				@if (button.Options.ButtonOptions.Icon.Name) {
-					<ion-icon [icon]="button.Options.ButtonOptions.Icon.Name" [slot]="button.Options.ButtonOptions.Icon.Slot"></ion-icon>
-				}
-				{{ button.Options.Label }}
-			</ion-button>
-		}
-	</ion-buttons>
-}
-
-@if (visible && label && isCustomControl('data-items')) {
-	<ion-item [color]="theme" lines="none">
-		<ion-label
-			[color]="color.label"
-			[position]="position"
-			[class]="css.label">{{ label }}</ion-label>
-	</ion-item>
-}
-
-@if (visible && (isSelector || isCustomControl('data-selector') || isCustomControl('data-items'))) {
-	<control-data-item #elementRef
-		[formGroup]="formGroup"
-		[control]="control"
-		[items]="lookupDisplayValues"
-		[settings]="lookupSettings"
-		[multiple]="lookupMultiple"></control-data-item>
-}
-
-@if (visible && description && (isSelector || isCustomControl('data-selector') || isCustomControl('data-items'))) {
-	<ion-item [color]="theme">
-		<label
-			[class]="css.description"
-			[style]="style.description"
-			[innerHTML]="description"></label>
-	</ion-item>
-}
-
-@if (visible && isCustomControl('files-selector')) {
-	<control-files-selector [control]="control" #elementRef></control-files-selector>
-}
-	
-@if (visible && isTextEditorControl) {
-	<div class="text-editor">
-		@if (label) {
-			<ion-item [color]="theme" lines="none">
+			@if (label) {
 				<ion-label
 					[color]="color.label"
 					[position]="position"
 					[class]="css.label">{{ label }}</ion-label>
-			</ion-item>
-		}
-		<ckeditor #elementRef
-			[editor]="ckEditor"
-			[config]="ckEditorConfig"
-			[data]="value"
-			(ready)="ckEditorOnReady($event)"
-			(change)="onChanged($event)"></ckeditor>
-	</div>
-}
-
-@if (visible && isCustomControl('image-cropper')) {
-	<control-image-cropper #elementRef
-		[formGroup]="formGroup"
-		[control]="control"
-		[settings]="value"
-		(change)="onChanged($event)"></control-image-cropper>
-}
-
-@if (visible && isCustomControl('object-privileges')) {
-	<control-object-privileges #elementRef
-		[formGroup]="formGroup"
-		[control]="control"
-		[privileges]="value"
-		(change)="onChanged($event)"></control-object-privileges>
-}
-
-@if (visible && isCustomControl('service-privileges')) {
-	<control-service-privileges #elementRef
-		[formGroup]="formGroup"
-		[control]="control"
-		[privileges]="value"
-		(change)="onChanged($event)"></control-service-privileges>
-}
+			}
 	
+			@if (isTextBoxControl) {
+				<ion-input [attr.aria-label]="label || name" #elementRef
+					[formControlName]="formControlName"
+					[name]="name"
+					[type]="type"
+					[placeholder]="placeholder"
+					[class]="css.control"
+					[required]="required"
+					[readonly]="readonly || !!disabled"
+					[min]="minValue"
+					[max]="maxValue"
+					[minlength]="minLength"
+					[maxlength]="maxLength"
+					[clearOnEdit]="clearOnEdit"
+					[attr.style]="style.control"
+					(keyup)="onKeyUp($event)"
+					(ionFocus)="onFocus($event)"
+					(ionBlur)="onBlur($event)"></ion-input>
+			}
+	
+			@if (isTextAreaControl) {
+				<ion-textarea [attr.aria-label]="label || name" #elementRef
+					[formControlName]="formControlName"
+					[name]="name"
+					[placeholder]="placeholder"
+					[class]="css.control"
+					[required]="required"
+					[readonly]="readonly || !!disabled"
+					[minlength]="minLength"
+					[maxlength]="maxLength"
+					[rows]="rows" 
+					[attr.style]="style.control"
+					(ionFocus)="onFocus($event)"
+					(ionBlur)="onBlur($event)"></ion-textarea>
+			}
+	
+			@if (isSelectControl && !selectAsDropdown) {
+				<ion-select [attr.aria-label]="label || name" #elementRef
+					[name]="name"
+					[multiple]="selectMultiple"
+					[interface]="selectInterface"
+					[interfaceOptions]="selectInterfaceOptions"
+					[cancelText]="selectCancelText"
+					[okText]="selectOkText"
+					[value]="value"
+					[disabled]="!!disabled"
+					[placeholder]="placeholder"
+					(ionFocus)="onFocus($event)"
+					(ionBlur)="onBlur($event)"
+					(ionChange)="onChanged($event)">
+					@for (option of selectOptions; track trackOption($index, option)) {
+						<ion-select-option [value]="option.Value">{{ option.Label }}</ion-select-option>
+					}
+				</ion-select>
+			}
+	
+			@if (isToggleControl) {
+				<ion-toggle slot="end" [attr.aria-label]="label || name" #elementRef
+					[name]="name"
+					[disabled]="!!disabled"
+					[color]="color.control"
+					[checked]="yesnoChecked"
+					[title]="description"
+					(ionFocus)="onFocus($event)"
+					(ionBlur)="onBlur($event)"
+					(ionChange)="onChanged($event)"></ion-toggle>
+			}
+	
+			@if (isCheckboxControl) {
+				<ion-checkbox slot="end" [attr.aria-label]="label || name" #elementRef
+					[name]="name"
+					[disabled]="!!disabled || readonly"
+					[color]="color.control"
+					[checked]="yesnoChecked"
+					[title]="description"
+					(ionFocus)="onFocus($event)"
+					(ionBlur)="onBlur($event)"
+					(ionChange)="onChanged($event)"></ion-checkbox>
+			}
+	
+			@if (isRangeControl) {
+				<ion-range #elementRef
+					[name]="name"
+					[color]="color.control"
+					[disabled]="!!disabled"
+					[pin]="rangeOptions.AllowPin"
+					[snaps]="rangeOptions.AllowSnaps"
+					[dualKnobs]="rangeOptions.AllowDualKnobs"
+					[ticks]="rangeOptions.AllowTicks"
+					[step]="rangeOptions.Step"
+					[min]="minValue"
+					[max]="maxValue"
+					[value]="value"
+					[title]="description"
+					(ionFocus)="onFocus($event)"
+					(ionBlur)="onBlur($event)"
+					(ionChange)="onChanged($event)">
+					@if (rangeOptions.Icons.Start) {
+						<ion-icon [name]="rangeOptions.Icons.Start" size="small" slot="start"></ion-icon>
+					}
+					@if (rangeOptions.Icons.End) {
+						<ion-icon [name]="rangeOptions.Icons.End" size="small" slot="end"></ion-icon>
+					}
+				</ion-range>
+			}
+	
+			@if (isDatePickerControl) {
+				<ion-datetime #elementRef [value]="datetimeValue"
+					[presentation]="control.Options.DatePickerOptions.AllowTimes ? 'date-time' : 'date'"
+					[min]="minValue" [max]="maxValue" [disabled]="!!disabled || readonly"
+					(ionChange)="onChanged($event)"></ion-datetime>
+			}
+	
+			@if (isCompleter) {
+				<app-completer #elementRef
+					[inputName]="name" [disableInput]="!!disabled" [readonly]="readonly"
+					[placeholder]="completerPlaceHolder" [minSearchLength]="completerMinLength"
+					[maxChars]="completerMaxLength" [pause]="completerPauseMiliseconds"
+					[clearSelected]="completerClearSelected"
+					[textSearching]="completerSearchingText" [textNoResults]="completerNoResultsText"
+					[datasource]="completerDataSource" [initialValue]="completerInitialValue"
+					(keyup)="onKeyUp($event, !completerClearSelected)"
+					(focused)="onFocus($event)" (blurred)="onBlur($event)"
+					(selected)="onChanged($event)"></app-completer>
+			}
+	
+			@if (selectAsDropdown || selectAsMultiple) {
+				<select #elementRef
+					[formControlName]="formControlName"
+					[name]="name"
+					[attr.disabled]="disabled ? '' : null"
+					[multiple]="selectMultiple"
+					[size]="rows" 
+					[class]="css.control"
+					[attr.style]="style.control"
+					(focus)="onFocus($event)"
+					(blur)="onBlur($event)"
+					(change)="onChanged(this.value)">
+					@for (option of selectOptions; track trackOption($index, option)) {
+						<option [value]="option.Value" [selected]="selectOptionIsChecked(option.Value)">{{ option.Label }}</option>
+					}
+				</select>
+			}
+	
+			@if (isModal && !lookupMultiple) {
+				<ion-input readonly [attr.aria-label]="label || name" #elementRef
+					[value]="lookupDisplayValue"
+					[placeholder]="placeholder"
+					[class]="css.control"
+					[required]="required"		
+					[disabled]="!!disabled"
+					[attr.style]="style.control"></ion-input>
+			}
+	
+			@if (isFilePickerControl) {
+				<div>
+					<div class="file-picker-input">
+						<input type="file" #elementRef
+							[accept]="control.Options.FilePickerOptions.Accept"
+							[multiple]="control.Options.FilePickerOptions.Multiple"
+							[placeholder]="placeholder"
+							[disabled]="!!disabled"
+							(change)="onChanged($event)" />
+					</div>
+					@if (isAllowImagePreview && value) {
+						<div class="image-picker-preview ion-padding-vertical">
+							@if (value.current) {
+								<div>
+									<img [src]="value.current" />
+								</div>
+							}
+							@if (value.new) {
+								<div>
+									<img [src]="value.new" />
+								</div>
+							}
+						</div>
+					}
+				</div>
+			}
+			
+			@if (isTextDisplayAsBoxControl) {
+				<ion-input [attr.aria-label]="label || name" #elementRef
+					[value]="text"
+					[readonly]="readonly"
+					[disabled]="!!disabled"
+					[class]="css.control"
+					[attr.style]="style.control"></ion-input>
+			}
+	
+			@if (isTextDisplayAsTexAreaControl) {
+				<ion-textarea [attr.aria-label]="label || name" #elementRef
+					[value]="text"
+					[readonly]="readonly"
+					[disabled]="!!disabled"
+					[rows]="rows" 
+					[class]="css.control"
+					[attr.style]="style.control"
+					(ionFocus)="onFocus($event)"
+					(ionBlur)="onBlur($event)"></ion-textarea>
+			}
+			
+			@if (isTextDisplayAsLabelControl) {
+				<span [innerHTML]="text" class="text" #elementRef></span>
+			}
+			
+			@if (isTextDisplayAsParagraphControl) {
+				<div [innerHTML]="text" class="text" #elementRef></div>
+			}
+	
+			@if (description && !isYesNoControl && !isRangeControl) {
+				<label
+					[class]="css.description"
+					[style]="style.description"
+					[ngClass]="{'text-area':isTextAreaControl}"
+					[innerHTML]="description"></label>
+			}
+			
+		</ion-item>
+	}
+	
+	@if ((isCompleter || isModal) && lookupMultiple) {
+		<ion-item [color]="theme">
+			<ion-label class="ion-text-wrap">
+				@for (lookup of lookupDisplayValues; track lookup) {
+					<ion-chip>
+						<ion-label>
+							@if (lookup.Image) {
+								<ion-thumbnail class="ion-float-start">
+									<img [src]="lookup.Image" />
+								</ion-thumbnail>
+							}
+							<span>
+								{{ lookup.Label }}
+							</span>
+						</ion-label>
+						@if (!disabled) {
+							<ion-icon name="close-circle" (click)="deleteValue(lookup.Value)"></ion-icon>
+						}
+					</ion-chip>
+				}
+			</ion-label>
+		</ion-item>
+	}
+	
+	@if (selectAsCheckBoxes) {
+		<ion-list #elementRef
+			[formGroup]="formGroup"
+			[class.invalid]="invalid">
+	
+			@if (label) {
+				<ion-list-header [color]="theme">
+					<ion-label [class]="css.label">{{ label }}</ion-label>
+				</ion-list-header>
+			}
+	
+			@for (option of selectOptions; track trackOption($index, option)) {
+				<ion-item [color]="theme">
+					<ion-label>{{ option.Label }}</ion-label>
+					<ion-checkbox slot="end" [checked]="selectOptionIsChecked(option.Value)" [value]="option.Value" (ionChange)="onChanged($event)"></ion-checkbox>
+				</ion-item>
+			}
+	
+			@if (description) {
+				<ion-item [color]="theme">
+					<label
+						[class]="css.description"
+						[style]="style.description"
+						[innerHTML]="description"></label>
+				</ion-item>
+			}
+	
+		</ion-list>
+	}
+	
+	@if (selectAsRadioBoxes) {
+		<ion-radio-group #elementRef
+			[name]="name"
+			[formGroup]="formGroup"
+			[class.invalid]="invalid"
+			[value]="value"
+			(ionFocus)="onFocus($event)"
+			(ionBlur)="onBlur($event)"
+			(ionChange)="onChanged($event)">
+	
+			@if (label) {
+				<ion-list-header [color]="theme">
+					<ion-label [class]="css.label">{{ label }}</ion-label>
+				</ion-list-header>
+			}
+	
+			@for (option of selectOptions; track trackOption($index, option)) {
+				<ion-item [color]="theme">
+					<ion-label>{{ option.Label }}</ion-label>
+					<ion-radio [value]="option.Value" [disabled]="!!disabled"></ion-radio>
+				</ion-item>
+			}
+	
+		</ion-radio-group>
+	}
+		
+	@if (isCaptchaControl) {
+		<ion-item
+			[color]="theme"
+			[formGroup]="formGroup"
+			[class.invalid]="invalid">
+			@if (label) {
+				<ion-label
+					[color]="color.label"
+					[position]="position"
+					[class]="css.label">{{ label }}</ion-label>
+			}
+			<ion-input type="text" [attr.aria-label]="label || name" #elementRef
+				[formControlName]="formControlName"
+				[name]="name"
+				[placeholder]="placeholder"
+				[class]="css.control"
+				[required]="required"
+				[readonly]="readonly"
+				[attr.disabled]="disabled ? '' : null"
+				[min]="minValue"
+				[max]="maxValue"
+				[minlength]="minLength"
+				[maxlength]="maxLength"
+				[attr.style]="style.control"
+				(keyup)="onKeyUp($event)"
+				(ionFocus)="onFocus($event)"
+				(ionBlur)="onBlur($event)"></ion-input>
+			@if (description) {
+				<label
+					[class]="css.description"
+					[style]="style.description"
+					[innerHTML]="description"></label>
+			}
+		</ion-item>
+	}
+	
+	@if (isCaptchaControl) {
+		<ion-item
+			[color]="theme">
+			<ion-button fill="clear" (click)="refreshCaptchaImage()">
+				<ion-icon icon="refresh" slot="icon-only"></ion-icon>
+			</ion-button>
+			@if (captchaURI) {
+				<img slot="start" [src]="captchaURI"/>
+			}
+		</ion-item>
+	}
+	
+	@if (description && !label && (isFormGroup || isFormArray)) {
+		<ion-item [color]="theme">
+			<label
+				[class]="css.description"
+				[style]="style.description"
+				[innerHTML]="description"></label>
+		</ion-item>
+	}
+	
+	@if ((isFormGroup || isFormArray) && !isFormButtons) {
+		<ion-list>
+			
+			@if (label) {
+				<ion-list-header [color]="theme">
+					<ion-label [class]="css.label">
+						<span>
+							{{ label }}
+						</span>
+						@if (isFormArray) {
+							<ion-buttons style="background-color:var(--ion-color-base);padding-right:16px" class="ion-float-end">
+								<ion-button fill="clear" color="medium" [disabled]="!!disabled" (click)="addControlOfFormArray()">
+									<ion-icon name="add" slot="icon-only"></ion-icon>
+								</ion-button>
+							</ion-buttons>
+						}
+					</ion-label>
+				</ion-list-header>
+			}
+	
+			@if (visible && description && label) {
+				<ion-item [color]="theme">
+					<label
+						[class]="css.description"
+						[style]="style.description"
+						[innerHTML]="description"></label>
+				</ion-item>
+			}
+				
+			@if (isFormGroup) {
+				<div>
+					@for (ctrl of control.SubControls.Controls; track trackControl($index, ctrl)) {
+						<app-form-control
+							[formGroup]="formControlAsFormGroup"
+							[control]="ctrl"
+							[theme]="theme"></app-form-control>
+					}
+				</div>
+			}
+			
+			@if (isFormArray) {
+				<div>
+					@for (ctrl of control.SubControls.Controls; track trackControl($index, ctrl); let idx = $index) {
+						<app-form-control
+							[formGroup]="formControlAsFormGroup"
+							[formArrayIndex]="idx"
+							[control]="ctrl"
+							[theme]="theme"></app-form-control>
+					}
+				</div>
+			}
+	
+		</ion-list>
+	}
+	
+	@if (isFormButtons) {
+		<ion-buttons style="background-color:var(--ion-color-base)" [class]="css.control || 'ion-padding'">
+			@for (button of control.SubControls.Controls; track trackControl($index, button)) {
+				<ion-button
+					[fill]="button.Options.ButtonOptions.Fill"
+					[color]="button.Options.ButtonOptions.Color"
+					[disabled]="button.Options.Disabled"
+					[class]="button.Options.Css"
+					(click)="clickOnButton($event, button)">
+					@if (button.Options.ButtonOptions.Icon.Name) {
+						<ion-icon [icon]="button.Options.ButtonOptions.Icon.Name" [slot]="button.Options.ButtonOptions.Icon.Slot"></ion-icon>
+					}
+					{{ button.Options.Label }}
+				</ion-button>
+			}
+		</ion-buttons>
+	}
+	
+	@if (label && isCustomControl('data-items')) {
+		<ion-item [color]="theme" lines="none">
+			<ion-label
+				[color]="color.label"
+				[position]="position"
+				[class]="css.label">{{ label }}</ion-label>
+		</ion-item>
+	}
+	
+	@if ((isSelector || isCustomControl('data-selector') || isCustomControl('data-items'))) {
+		<control-data-item #elementRef
+			[formGroup]="formGroup"
+			[control]="control"
+			[items]="lookupDisplayValues"
+			[settings]="lookupSettings"
+			[multiple]="lookupMultiple"></control-data-item>
+	}
+	
+	@if (description && (isSelector || isCustomControl('data-selector') || isCustomControl('data-items'))) {
+		<ion-item [color]="theme">
+			<label
+				[class]="css.description"
+				[style]="style.description"
+				[innerHTML]="description"></label>
+		</ion-item>
+	}
+	
+	@if (isCustomControl('files-selector')) {
+		<control-files-selector [control]="control" #elementRef></control-files-selector>
+	}
+		
+	@if (isTextEditorControl) {
+		<div class="text-editor">
+			@if (label) {
+				<ion-item [color]="theme" lines="none">
+					<ion-label
+						[color]="color.label"
+						[position]="position"
+						[class]="css.label">{{ label }}</ion-label>
+				</ion-item>
+			}
+			<ckeditor #elementRef
+				[editor]="ckEditor"
+				[config]="ckEditorConfig"
+				[data]="value"
+				(ready)="ckEditorOnReady($event)"
+				(change)="onChanged($event)"></ckeditor>
+		</div>
+	}
+	
+	@if (isCustomControl('object-privileges')) {
+		<control-object-privileges #elementRef
+			[formGroup]="formGroup"
+			[control]="control"
+			[privileges]="value"
+			(change)="onChanged($event)"></control-object-privileges>
+	}
+	
+	@if (isCustomControl('service-privileges')) {
+		<control-service-privileges #elementRef
+			[formGroup]="formGroup"
+			[control]="control"
+			[privileges]="value"
+			(change)="onChanged($event)"></control-service-privileges>
+	}
+}
