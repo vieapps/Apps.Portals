@@ -1,11 +1,15 @@
 <div [style.background-image]="coverBackground" [title]="book.Title" (click)="open()">
 	<section>
-		<span *ngIf="!hideAuthor">
-			{{ book.Author }}
-		</span>
-		<span *ngIf="!hideCategory">
-			{{ book.Category }}
-		</span>
+		@if (!hideAuthor) {
+			<span>
+				{{ book.Author }}
+			</span>
+		}
+		@if (!hideCategory) {
+			<span>
+				{{ book.Category }}
+			</span>
+		}
 		<h2>
 			{{ book.Title }}
 		</h2>

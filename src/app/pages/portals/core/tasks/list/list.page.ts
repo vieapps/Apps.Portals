@@ -115,10 +115,6 @@ export class PortalsTasksListPage implements OnInit, OnDestroy {
 		this.prepare(() => this.appFormsSvc.hideLoadingAsync());
 	}
 
-	track(index: number, task: SchedulingTask) {
-		return `${task.ID}@${index}`;
-	}
-
 	private prepare(onNext?: () => void) {
 		const tasks = SchedulingTask.instances.toArray(object => object.SystemID === this.systemID);
 		this.tasks = tasks.filter(object => object.Status !== "Completed").sortBy({ name: "Time", reverse: false }, "Title").merge(tasks.filter(object => object.Status === "Completed").sortBy({ name: "Time", reverse: false }, "Title"));

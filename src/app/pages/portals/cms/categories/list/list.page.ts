@@ -296,10 +296,6 @@ export class CmsCategoriesListPage implements OnInit, OnDestroy {
 		this.categories = this.parentCategory.Children;
 	}
 
-	track(index: number, item: any) {
-		return `${item.ID}@${index}`;
-	}
-
 	getInfo(category: Category) {
 		return category.childrenIDs === undefined || category.childrenIDs.length < 1
 			? `${this.alias}: ${category.Alias}`

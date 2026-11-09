@@ -15,11 +15,13 @@ import { CompleterData, CompleterItem } from "./app.completer";
 		[clearable]="true" [compareWith]="compareItems" [appendTo]="overlayTarget"
 		(change)="choose($event)" (close)="cancelSearch()" (focus)="focused.emit($event)" (blur)="blurred.emit($event)">
 		<ng-template ng-option-tmp let-item="item">
-			<img *ngIf="item.image" [src]="item.image" class="completer-image" alt="" />
+			@if (item.image) {
+				<img [src]="item.image" class="completer-image" alt="" />
+			}
 			<span>{{ item.title }}<small *ngIf="item.description">{{ item.description }}</small></span>
 		</ng-template>
 	</ng-select>`,
-	styles: [":host{display:block;width:100%;min-width:0} small{display:block;opacity:.7}.completer-image{width:32px;height:32px;object-fit:cover;margin-inline-end:8px;vertical-align:middle}"]
+	styles: [":host { display: block; width: 100%; min-width:0 } small { display: block; opacity:.7 } .completer-image { width: 32px; height:32px; object-fit: cover; margin-inline-end: 8px; vertical-align: middle; }"]
 })
 export class AppCompleterControl implements OnChanges, OnDestroy {
 	constructor(private changeDetector: ChangeDetectorRef, private host: ElementRef<HTMLElement>) {}

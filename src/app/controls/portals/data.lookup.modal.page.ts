@@ -165,10 +165,6 @@ export class DataLookupModalPage implements OnInit, OnDestroy {
 		}
 	}
 
-	track(index: number, item: DataItem) {
-		return `${item.ID}@${index}`;
-	}
-
 	openSearch() {
 		this.prepareFilterBy(false);
 		this.results = [];

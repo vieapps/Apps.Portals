@@ -221,10 +221,6 @@ export class CmsFormsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		}
 	}
 
-	track(index: number, item: Form) {
-		return `${item.ID}@${index}`;
-	}
-
 	onSearch(event: any) {
 		if (this.searching) {
 			if (this.subscription !== undefined) {

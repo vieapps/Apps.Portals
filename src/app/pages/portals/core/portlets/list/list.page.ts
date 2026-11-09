@@ -211,10 +211,6 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		this.portlets.merge(portlets.except(this.portlets)).filter(portlet => portlet.Versions === undefined).forEach(portlet => this.portalsCoreSvc.findVersions("Portlet", portlet.ID));
 	}
 
-	track(index: number, portlet: Portlet) {
-		return `${portlet.ID}@${index}`;
-	}
-
 	onSearch(event: any) {
 		if (AppUtility.isNotEmpty(event.detail.value)) {
 			this.filterBy.Query = event.detail.value;
@@ -421,10 +417,6 @@ export class PortalsPortletsListPage implements OnInit, OnDestroy {
 		this.orderedPortlets = [];
 		this.preparePortlets();
 		this.prepareTitleAsync().then(() => this.appFormsSvc.hideLoadingAsync(onNext));
-	}
-
-	trackReorderingItem(index: number, item: NestedObject) {
-		return `${item.ID}@${index}`;
 	}
 
 	private trackAsync(title: string, action?: string) {

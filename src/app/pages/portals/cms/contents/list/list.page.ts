@@ -256,10 +256,6 @@ export class CmsContentsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		}
 	}
 
-	track(index: number, content: Content) {
-		return `${content.ID}@${index}`;
-	}
-
 	onSearch(event: any) {
 		if (this.subscription !== undefined) {
 			this.subscription.unsubscribe();

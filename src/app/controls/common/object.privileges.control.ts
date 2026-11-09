@@ -209,10 +209,6 @@ export class ObjectPrivilegesControl implements OnInit, OnDestroy, AfterViewInit
 		});
 	}
 
-	track(index: number, item: string) {
-		return `${item}@${index}`;
-	}
-
 	onInheritFromParentChanged(event: any) {
 		const isInheritFromParent = AppUtility.isTrue(event.detail.checked);
 		this.inheritFromParent.inherit = isInheritFromParent;

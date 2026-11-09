@@ -99,10 +99,6 @@ export class TokensListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	track(index: number, token: UserToken) {
-		return `${token.ID}@${index}`;
-	}
-
 	openSearchAsync() {
 		return this.configSvc.navigateForwardAsync(`${this.configSvc.appConfig.URLs.users.root}/tokens/search`);
 	}

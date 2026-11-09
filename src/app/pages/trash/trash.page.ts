@@ -88,10 +88,6 @@ export class TrashPage implements OnInit {
 		}
 	}
 
-	track(index: number, content: TrashContent) {
-		return `${content.ID}@${index}`;
-	}
-
 	onInfiniteScroll() {
 		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
 			this.findAsync(() => this.infiniteScrollCtrl.complete());

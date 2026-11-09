@@ -113,11 +113,7 @@ export class LogsListPage implements OnInit, OnDestroy {
 		this.selectAllCtrl.checked = false;
 		await this.initializeAsync(true);
 	}
-
-	track(index: number, log: ServiceLog) {
-		return `${log.ID}@${index}`;
-	}
-
+	
 	info(log: ServiceLog) {
 		return log !== undefined ? log.Logs.substring(0, 100) + (log.Logs.length > 100 ? "..." : "") : "";
 	}

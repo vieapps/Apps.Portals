@@ -11,58 +11,76 @@
 
 <ion-content [color]="color" class="ion-padding">
 
-	<div *ngIf="mode === 'login'">
-		<app-form
-			[color]="color"
-			[form]="login.form"
-			[config]="login.config"
-			[controls]="login.controls"
-			(init)="onLoginFormInitialized()"></app-form>
-		<ion-buttons class="ion-padding">
-			<ion-button fill="solid" color="primary" (click)="logIn()">
-				<ion-icon *ngIf="login.buttons.login.icon" [icon]="login.buttons.login.icon" slot="start"></ion-icon>
-				{{ login.buttons.login.label }}
-			</ion-button>
-			<ion-button fill="clear" color="primary" (click)="openResetPasswordAsync()">
-				<ion-icon *ngIf="reset.button.icon" [icon]="reset.button.icon" slot="start"></ion-icon>
-				{{ reset.button.label }}
-			</ion-button>
-			<ion-button *ngIf="registrable && screenWidth > 767" fill="clear" color="primary" (click)="register()" class="ion-float-end">
-				<ion-icon *ngIf="login.buttons.register.icon" [icon]="login.buttons.register.icon" slot="start"></ion-icon>
-				{{ login.buttons.register.label }}
-			</ion-button>
-		</ion-buttons>
-	</div>
+	@if (mode === 'login') {
+		<div>
+			<app-form
+				[color]="color"
+				[form]="login.form"
+				[config]="login.config"
+				[controls]="login.controls"
+				(init)="onLoginFormInitialized()"></app-form>
+			<ion-buttons class="ion-padding">
+				<ion-button fill="solid" color="primary" (click)="logIn()">
+					@if (login.buttons.login.icon) {
+						<ion-icon [icon]="login.buttons.login.icon" slot="start"></ion-icon>
+					}
+					{{ login.buttons.login.label }}
+				</ion-button>
+				<ion-button fill="clear" color="primary" (click)="openResetPasswordAsync()">
+					@if (reset.button.icon) {
+						<ion-icon [icon]="reset.button.icon" slot="start"></ion-icon>
+					}
+					{{ reset.button.label }}
+				</ion-button>
+				@if (registrable && screenWidth > 767) {
+					<ion-button fill="clear" color="primary" (click)="register()" class="ion-float-end">
+						@if (login.buttons.register.icon) {
+							<ion-icon [icon]="login.buttons.register.icon" slot="start"></ion-icon>
+						}
+						{{ login.buttons.register.label }}
+					</ion-button>
+				}
+			</ion-buttons>
+		</div>
+	}
 
-	<div *ngIf="mode === 'otp'">
-		<app-form
-			[color]="color"
-			[form]="otp.form"
-			[config]="otp.config"
-			[controls]="otp.controls"
-			[value]="otp.value"></app-form>
-		<ion-buttons class="ion-padding">
-			<ion-button fill="solid" color="primary" (click)="logInOTP()">
-				<ion-icon *ngIf="otp.button.icon" [icon]="otp.button.icon" slot="start"></ion-icon>
-				{{ otp.button.label }}
-			</ion-button>
-		</ion-buttons>
-	</div>
+	@if (mode === 'otp') {
+		<div>
+			<app-form
+				[color]="color"
+				[form]="otp.form"
+				[config]="otp.config"
+				[controls]="otp.controls"
+				[value]="otp.value"></app-form>
+			<ion-buttons class="ion-padding">
+				<ion-button fill="solid" color="primary" (click)="logInOTP()">
+					@if (otp.button.icon) {
+						<ion-icon [icon]="otp.button.icon" slot="start"></ion-icon>
+					}
+					{{ otp.button.label }}
+				</ion-button>
+			</ion-buttons>
+		</div>
+	}
 
-	<div *ngIf="mode === 'reset'">
-		<app-form
-			[color]="color"
-			[form]="reset.form"
-			[config]="reset.config"
-			[controls]="reset.controls"
-			(init)="onResetPasswordFormInitialized()"
-			(refreshCaptcha)="onRefreshCaptcha()"></app-form>
-		<ion-buttons class="ion-padding">
-			<ion-button fill="solid" color="primary" (click)="resetPassword()">
-				<ion-icon *ngIf="reset.button.icon" [icon]="reset.button.icon" slot="start"></ion-icon>
-				{{ reset.button.label }}
-			</ion-button>
-		</ion-buttons>
-	</div>
+	@if (mode === 'reset') {
+		<div>
+			<app-form
+				[color]="color"
+				[form]="reset.form"
+				[config]="reset.config"
+				[controls]="reset.controls"
+				(init)="onResetPasswordFormInitialized()"
+				(refreshCaptcha)="onRefreshCaptcha()"></app-form>
+			<ion-buttons class="ion-padding">
+				<ion-button fill="solid" color="primary" (click)="resetPassword()">
+					@if (reset.button.icon) {
+						<ion-icon [icon]="reset.button.icon" slot="start"></ion-icon>
+					}
+					{{ reset.button.label }}
+				</ion-button>
+			</ion-buttons>
+		</div>
+	}
 
 </ion-content>

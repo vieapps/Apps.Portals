@@ -204,10 +204,6 @@ export class PortalsExpressionsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	track(index: number, expression: Expression) {
-		return `${expression.ID}@${index}`;
-	}
-
 	getInfo(expression: Expression) {
 		const contentType = expression.contentType;
 		return (contentType !== undefined ? `Type: ${contentType.Title}` : `Definition: ${expression.contentTypeDefinition.Title}`) + (AppUtility.isNotEmpty(expression.Description) ? ` - ${expression.Description}` : "");

@@ -218,10 +218,6 @@ export class PortalsContentTypesListPage implements OnInit, OnDestroy {
 		}, identity);
 	}
 
-	track(index: number, contentType: ContentType) {
-		return `${contentType.ID}@${index}`;
-	}
-
 	getInfo(contentType: ContentType) {
 		const module = Module.get(contentType.RepositoryID);
 		return `${(module !== undefined ? `Module: ${module.Title} - ` : "")}Definition: ${contentType.contentTypeDefinition.Title}${(AppUtility.isNotEmpty(contentType.Description) ? " - " + contentType.Description : "")}`;

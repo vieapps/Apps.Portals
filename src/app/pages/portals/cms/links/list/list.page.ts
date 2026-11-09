@@ -299,10 +299,6 @@ export class CmsLinksListPage implements OnInit, OnDestroy {
 		this.links = this.parentLink.Children;
 	}
 
-	track(index: number, item: any) {
-		return `${item.ID}@${index}`;
-	}
-
 	getInfo(link: Link) {
 		return link.childrenIDs === undefined || link.childrenIDs.length < 1
 			? link.URL

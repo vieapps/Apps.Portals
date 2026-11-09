@@ -118,7 +118,7 @@ export class HomePage implements OnInit, OnDestroy {
 	private async prepareAsync(action?: string) {
 		await this.setTitleAsync().then(() => TrackingUtility.trackAsync({ title: this.title, category: "Home", action: action || "Open" }));
 	}
-
+	
 	private async setTitleAsync() {
 		const title = await this.configSvc.getResourceAsync(this.titleResource);
 		if (this.titleResource !== title) {

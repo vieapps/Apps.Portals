@@ -173,10 +173,6 @@ export class PortalsModulesListPage implements OnInit, OnDestroy {
 		}, this.definition !== undefined ? `Modules:${this.definitionID}:Refresh` : "Modules:Refresh");
 	}
 
-	track(index: number, modul: Module) {
-		return `${modul.ID}@${index}`;
-	}
-
 	getInfo(modul: Module) {
 		const moduleDefinition = this.definitions.find(definition => definition.ID === modul.ModuleDefinitionID);
 		return `Definition: ${moduleDefinition.Title}${(AppUtility.isNotEmpty(modul.Description) ? " - " + modul.Description : "")}`;

@@ -125,8 +125,4 @@ export class AppFormsComponent implements OnInit, OnDestroy, AfterViewInit {
 		return this.controls.filter(control => AppUtility.isEquals(control.Segment, segment.Name));
 	}
 
-	track(index: number, item: any) {
-		return `${item.Name}@${index}`;
-	}
-
 }

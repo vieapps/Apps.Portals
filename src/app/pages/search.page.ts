@@ -231,10 +231,6 @@ export class SearchPage implements OnInit, OnDestroy, ViewDidEnter {
 		}
 	}
 
-	track(index: number, object: SearchResult) {
-		return `${object.ID}@${index}`;
-	}
-
 	view(object: SearchResult) {
 		if (object.OpenURI !== undefined) {
 			this.configSvc.navigateForwardAsync(object.OpenURI);

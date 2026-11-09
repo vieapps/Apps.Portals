@@ -215,10 +215,6 @@ export class PortalsSitesListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	track(index: number, site: Site) {
-		return `${site.ID}@${index}`;
-	}
-
 	getInfo(site: Site) {
 		return `${site.SubDomain}.${site.PrimaryDomain}` + (AppUtility.isNotEmpty(site.OtherDomains) ? `;${site.OtherDomains}` : "");
 	}

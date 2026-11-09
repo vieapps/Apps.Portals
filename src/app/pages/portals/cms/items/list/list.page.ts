@@ -237,10 +237,6 @@ export class CmsItemsListPage implements OnInit, OnDestroy, ViewDidEnter {
 		}
 	}
 
-	track(index: number, item: Item) {
-		return `${item.ID}@${index}`;
-	}
-
 	onSearch(event: any) {
 		if (this.searching) {
 			if (this.subscription !== undefined) {

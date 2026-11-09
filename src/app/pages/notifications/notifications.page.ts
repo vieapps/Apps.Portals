@@ -129,10 +129,6 @@ export class NotificationsPage implements OnInit, OnDestroy {
 		}
 	}
 
-	track(index: number, notification: Notification) {
-		return `${notification.ID}@${index}`;
-	}
-
 	info(notification: Notification) {
 		const organization = Organization.get(notification.SystemID);
 		if (organization === undefined && AppUtility.isNotEmpty(notification.SystemID) && !this.fetching.contains(notification.SystemID)) {

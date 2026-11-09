@@ -195,10 +195,6 @@ export class FeaturedContentsControl implements OnInit, OnDestroy {
 		});
 	}
 
-	track(index: number, content: FeaturedContent) {
-		return `${content.ID}@${index}`;
-	}
-
 	async viewAsync(event: any, object: FeaturedContent) {
 		event.stopPropagation();
 		if (this.portalsCoreSvc.activeOrganization === undefined || this.portalsCoreSvc.activeOrganization.ID !== object.OriginalObject.SystemID) {

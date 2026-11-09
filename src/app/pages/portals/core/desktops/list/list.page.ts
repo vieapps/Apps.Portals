@@ -211,10 +211,6 @@ export class PortalsDesktopsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	track(index: number, desktop: Desktop) {
-		return `${desktop.ID}@${index}`;
-	}
-
 	getInfo(desktop: Desktop) {
 		return desktop.childrenIDs === undefined || desktop.childrenIDs.length < 1
 			? `${this.labels.alias}: ${desktop.Alias}`

@@ -450,10 +450,6 @@ export class BooksListPage implements OnInit, OnDestroy, AfterViewInit {
 		));
 	}
 
-	track(index: number, book: Book) {
-		return `${book.ID}@${index}`;
-	}
-
 	private async trackAsync() {
 		const title = this.searching ? await this.configSvc.getResourceAsync("books.list.title.search") : this.category || this.author;
 		await TrackingUtility.trackAsync({ title: title, category: "Book", action: this.searching ? "Search" : "Browse" });

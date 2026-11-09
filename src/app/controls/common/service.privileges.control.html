@@ -8,7 +8,9 @@
 			[cancelText]="labels.buttons.cancel"
 			[value]="serviceRole"
 			(ionChange)="onServiceRoleChanged($event)">
-			<ion-select-option *ngFor="let role of roles; trackBy: track" [value]="role">{{ labels.roles[role] }}</ion-select-option>
+			@for (role of roles; track role) {
+				<ion-select-option [value]="role">{{ labels.roles[role] }}</ion-select-option>
+			}
 		</ion-select>
 	</ion-item>
 	<ion-list>
@@ -17,18 +19,22 @@
 				{{ labels.other }}
 			</ion-label>
 		</ion-list-header>
-		<ion-item *ngFor="let objectRole of objectRoles; trackBy: track" [color]="color">
-			<ion-label [position]="labelPosition">
-				{{ labels.objects[objectRole.name] }}
-			</ion-label>
-			<ion-select interface="alert"
-				[disabled]="serviceRole !== 'Viewer'"
-				[okText]="labels.buttons.ok"
-				[cancelText]="labels.buttons.cancel"
-				[value]="objectRole.role"
-				(ionChange)="onObjectRoleChanged($event, objectRole.name)">
-				<ion-select-option *ngFor="let role of roles; trackBy: track" [value]="role">{{ labels.roles[role] }}</ion-select-option>
-			</ion-select>
-		</ion-item>
+		@for (objectRole of objectRoles; track objectRole.name) {
+			<ion-item [color]="color">
+				<ion-label [position]="labelPosition">
+					{{ labels.objects[objectRole.name] }}
+				</ion-label>
+				<ion-select interface="alert"
+					[disabled]="serviceRole !== 'Viewer'"
+					[okText]="labels.buttons.ok"
+					[cancelText]="labels.buttons.cancel"
+					[value]="objectRole.role"
+					(ionChange)="onObjectRoleChanged($event, objectRole.name)">
+					@for (role of roles; track role) {
+						<ion-select-option [value]="role">{{ labels.roles[role] }}</ion-select-option>
+					}
+				</ion-select>
+			</ion-item>
+		}
 	</ion-list>
 </ion-list>

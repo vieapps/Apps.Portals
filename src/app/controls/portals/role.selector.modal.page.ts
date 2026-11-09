@@ -140,10 +140,6 @@ export class RolesSelectorModalPage implements OnInit, OnDestroy {
 		});
 	}
 
-	track(index: number, role: Role) {
-		return `${role.ID}@${index}`;
-	}
-
 	getInfo(role: Role) {
 		return AppUtility.isArray(role.childrenIDs, true) && role.childrenIDs.length > 0
 			? AppUtility.format(this.children, { number: role.childrenIDs.length, children: `${role.Children[0].Title}, ...` })

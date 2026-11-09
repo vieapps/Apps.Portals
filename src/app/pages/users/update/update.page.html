@@ -1,17 +1,25 @@
 <ion-header>
 	<ion-toolbar [color]="color">
-		<ion-buttons *ngIf="buttons.cancel" slot="start">
-			<ion-button color="secondary" (click)="buttons.cancel.handler()">
-				<ion-icon *ngIf="buttons.cancel.icon" [name]="buttons.cancel.icon" slot="start"></ion-icon>
-				{{ buttons.cancel.text }}
-			</ion-button>
-		</ion-buttons>
-		<ion-buttons *ngIf="buttons.ok" slot="end">
-			<ion-button color="primary" (click)="buttons.ok.handler()">
-				<ion-icon *ngIf="buttons.ok.icon" [name]="buttons.ok.icon" slot="start"></ion-icon>
-				{{ buttons.ok.text }}
-			</ion-button>
-		</ion-buttons>
+		@if (buttons.cancel) {
+			<ion-buttons slot="start">
+				<ion-button color="secondary" (click)="buttons.cancel.handler()">
+					@if (buttons.cancel.icon) {
+						<ion-icon [name]="buttons.cancel.icon" slot="start"></ion-icon>
+					}
+					{{ buttons.cancel.text }}
+				</ion-button>
+			</ion-buttons>
+		}
+		@if (buttons.ok) {
+			<ion-buttons slot="end">
+				<ion-button color="primary" (click)="buttons.ok.handler()">
+					@if (buttons.ok.icon) {
+						<ion-icon [name]="buttons.ok.icon" slot="start"></ion-icon>
+					}
+					{{ buttons.ok.text }}
+				</ion-button>
+			</ion-buttons>
+		}
 		<ion-title>
 			{{ title }}
 		</ion-title>
@@ -20,32 +28,42 @@
 
 <ion-content [color]="color" class="ion-padding">
 
-	<app-form *ngIf="mode === 'profile' && update.config"
-		[color]="color"
-		[form]="update.form"
-		[config]="update.config"
-		[controls]="update.controls"
-		(init)="onFormInitialized($event)"></app-form>
+	@if (mode === 'profile' && update.config) {
+		<app-form
+			[color]="color"
+			[form]="update.form"
+			[config]="update.config"
+			[controls]="update.controls"
+			(init)="onFormInitialized($event)"></app-form>
+	}
 
-	<app-form *ngIf="mode === 'password' && password.config"
-		[color]="color"
-		[form]="password.form"
-		[config]="password.config"
-		[controls]="password.controls"
-		(init)="onFormInitialized($event)"></app-form>
+	@if (mode === 'password' && password.config) {
+		<app-form
+			[color]="color"
+			[form]="password.form"
+			[config]="password.config"
+			[controls]="password.controls"
+			(init)="onFormInitialized($event)"></app-form>
+	}
 
-	<app-form *ngIf="mode === 'email' && email.config"
-		[color]="color"
-		[form]="email.form"
-		[config]="email.config"
-		[controls]="email.controls"
-		(init)="onFormInitialized($event)"></app-form>
+	@if (mode === 'email' && email.config) {
+		<app-form
+			[color]="color"
+			[form]="email.form"
+			[config]="email.config"
+			[controls]="email.controls"
+			(init)="onFormInitialized($event)"></app-form>
+	}
 
-	<div *ngIf="mode === 'privileges' && services">
-		<control-service-privileges *ngFor="let service of services; trackBy: trackServicePrivileges"
-			[service]="service"
-			[privileges]="getServicePrivileges(service)"
-			(change)="onServicePrivilegesChanged($event)"></control-service-privileges>
-	</div>
+	@if (mode === 'privileges' && services) {
+		<div>
+			@for (service of services; track trackServicePrivileges($index, service)) {
+				<control-service-privileges
+					[service]="service"
+					[privileges]="getServicePrivileges(service)"
+					(change)="onServicePrivilegesChanged($event)"></control-service-privileges>
+			}
+		</div>
+	}
 
 </ion-content>

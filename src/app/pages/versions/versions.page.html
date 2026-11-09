@@ -11,28 +11,30 @@
 
 <ion-content [color]="color">
 	<ion-list class="ion-padding-end">
-		<ion-item *ngFor="let version of versions; trackBy: track" [color]="color" detail="false">
-			<ion-buttons slot="end">
-				<ion-button fill="clear" color="primary" (click)="rollbackAsync(version)">
-					<ion-icon name="arrow-undo-outline"></ion-icon>
-				</ion-button>
-			</ion-buttons>
-			<ion-label>
-				<label class="ion-float-end ion-padding-start">
-					{{ version.Created | date:'h:mm:ss a' }}
-					<br/>
+		@for (version of versions; track version.ID) {
+			<ion-item [color]="color" detail="false">
+				<ion-buttons slot="end">
+					<ion-button fill="clear" color="primary" (click)="rollbackAsync(version)">
+						<ion-icon name="arrow-undo-outline"></ion-icon>
+					</ion-button>
+				</ion-buttons>
+				<ion-label>
+					<label class="ion-float-end ion-padding-start">
+						{{ version.Created | date:'h:mm:ss a' }}
+						<br/>
+						<span>
+							{{ version.Created | date:'d/M/y' }}
+						</span>
+					</label>
 					<span>
-						{{ version.Created | date:'d/M/y' }}
+						#{{ version.VersionNumber }} - by {{ version.Creator }}
+						<br/>
+						<span>
+							{{ version.Title }}
+						</span>
 					</span>
-				</label>
-				<span>
-					#{{ version.VersionNumber }} - by {{ version.Creator }}
-					<br/>
-					<span>
-						{{ version.Title }}
-					</span>
-				</span>
-			</ion-label>
-		</ion-item>
+				</ion-label>
+			</ion-item>
+		}
 	</ion-list>
 </ion-content>

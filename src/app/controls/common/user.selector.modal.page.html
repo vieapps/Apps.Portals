@@ -31,38 +31,46 @@
 </ion-header>
 
 <ion-content [color]="color">
-	<ion-list *ngIf="!searching" class="ion-padding-end">
-		<ion-item *ngFor="let profile of profiles; trackBy: track" [color]="color" detail="false">
-			<ion-checkbox slot="end" [checked]="selected.contains(profile.ID)" (ionChange)="select($event, profile.ID)"></ion-checkbox>
-			<ion-label>
-				<ion-thumbnail class="ion-float-start ion-padding-end">
-					<img [src]="profile.avatarURI" />
-				</ion-thumbnail>
-				<span>
-					{{ profile.Name }}
-					<span class="ion-float-end">
-						{{ profile.getEmail(hideEmails) }}
-					</span>
-				</span>
-			</ion-label>
-		</ion-item>
-	</ion-list>
-	<ion-list *ngIf="searching" class="ion-padding-end">
-		<ion-item *ngFor="let profile of results; trackBy: track" [color]="color" detail="false">
-			<ion-checkbox slot="end" [checked]="selected.contains(profile.ID)" (ionChange)="select($event, profile.ID)"></ion-checkbox>
-			<ion-label>
-				<ion-thumbnail class="ion-float-start ion-padding-end">
-					<img [src]="profile.avatarURI" />
-				</ion-thumbnail>
-				<span>
-					{{ profile.Name }}
-					<span class="ion-float-end">
-						{{ profile.getEmail(hideEmails) }}
-					</span>
-				</span>
-			</ion-label>
-		</ion-item>
-	</ion-list>
+	@if (searching) {
+		<ion-list class="ion-padding-end">
+			@for (profile of results; track profile.ID) {
+				<ion-item [color]="color" detail="false">
+					<ion-checkbox slot="end" [checked]="selected.contains(profile.ID)" (ionChange)="select($event, profile.ID)"></ion-checkbox>
+					<ion-label>
+						<ion-thumbnail class="ion-float-start ion-padding-end">
+							<img [src]="profile.avatarURI" />
+						</ion-thumbnail>
+						<span>
+							{{ profile.Name }}
+							<span class="ion-float-end">
+								{{ profile.getEmail(hideEmails) }}
+							</span>
+						</span>
+					</ion-label>
+				</ion-item>
+			}
+		</ion-list>
+	}
+	@else {
+		<ion-list class="ion-padding-end">
+			@for (profile of profiles; track profile.ID) {
+				<ion-item [color]="color" detail="false">
+					<ion-checkbox slot="end" [checked]="selected.contains(profile.ID)" (ionChange)="select($event, profile.ID)"></ion-checkbox>
+					<ion-label>
+						<ion-thumbnail class="ion-float-start ion-padding-end">
+							<img [src]="profile.avatarURI" />
+						</ion-thumbnail>
+						<span>
+							{{ profile.Name }}
+							<span class="ion-float-end">
+								{{ profile.getEmail(hideEmails) }}
+							</span>
+						</span>
+					</ion-label>
+				</ion-item>
+			}
+		</ion-list>
+	}
 	<ion-infinite-scroll threshold="288px" position="bottom" (ionInfinite)="onInfiniteScrollAsync()">
 		<ion-infinite-scroll-content></ion-infinite-scroll-content>
 	</ion-infinite-scroll>

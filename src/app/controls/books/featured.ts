@@ -111,8 +111,4 @@ export class BookFeaturedControl implements OnInit, OnDestroy {
 		this.books = AppUtility.getTopScores(Book.instances.toArray().sortBy({ name: "LastUpdated", reverse: true }).take(60), 12, book => Book.get(book.ID));
 	}
 
-	trackBook(index: number, book: Book) {
-		return `${book.ID}@${index}`;
-	}
-
 }

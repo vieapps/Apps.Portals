@@ -139,10 +139,6 @@ export class FilesProcessorModalPage implements OnInit, OnDestroy {
 		}
 	}
 
-	track(index: number, info: any) {
-		return `${info.ID || info.name}@${index}`;
-	}
-
 	onSelect(event: any, attachment: AttachmentInfo) {
 		if (event.detail.checked) {
 			if (!this.multiple) {

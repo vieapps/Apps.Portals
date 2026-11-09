@@ -5,19 +5,25 @@
 		</ion-thumbnail>
 		<div>
 			<div>
-				<span *ngIf="!hideAuthor">
-					{{ book.Author }}
-				</span>
-				<span *ngIf="!hideCategory">
-					{{ book.Category }}
-				</span>
-				<label class="ion-float-end">
-					<span *ngIf="book.TotalChapters > 1">
-						<span class="chapters">
-							{{ book.TotalChapters | number:'':locale }}
-						</span>
-						<ion-icon name="copy" slot="end"></ion-icon>
+				@if (!hideAuthor) {
+					<span>
+						{{ book.Author }}
 					</span>
+				}
+				@if (!hideCategory) {
+					<span>
+						{{ book.Category }}
+					</span>
+				}
+				<label class="ion-float-end">
+					@if (book.TotalChapters > 1) {
+						<span>
+							<span class="chapters">
+								{{ book.TotalChapters | number:'':locale }}
+							</span>
+							<ion-icon name="copy" slot="end"></ion-icon>
+						</span>
+					}
 				</label>
 			</div>
 			<h2>

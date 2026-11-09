@@ -67,10 +67,6 @@ export class VersionsPage implements OnInit {
 		}
 	}
 
-	track(index: number, version: VersionContent) {
-		return `${version.ID}@${index}`;
-	}
-
 	async rollbackAsync(version: VersionContent) {
 		await this.appFormsSvc.showConfirmAsync(
 			await this.configSvc.getResourceAsync("versions.confirm", { version: version.VersionNumber }),

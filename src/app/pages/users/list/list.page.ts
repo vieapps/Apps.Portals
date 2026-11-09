@@ -7,7 +7,7 @@ import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import { AppPagination } from "@app/components/app.pagination";
 import { AppFormsService } from "@app/components/forms.service";
-import { AppDataPagination, AppDataFilter, AppDataRequest } from "@app/components/app.objects";
+import { AppDataPagination, AppDataRequest } from "@app/components/app.objects";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { UsersService } from "@app/services/users.service";
@@ -95,10 +95,6 @@ export class UsersListPage implements OnInit, OnDestroy {
 			await this.appFormsSvc.showLoadingAsync();
 			await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 		}
-	}
-
-	track(index: number, profile: UserProfile) {
-		return `${profile.ID}@${index}`;
 	}
 
 	openSearchAsync() {

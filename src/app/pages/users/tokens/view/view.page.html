@@ -10,13 +10,15 @@
 </ion-header>
 
 <ion-content [color]="color" class="ion-padding">
-	<app-form *ngIf="config"
-		[color]="color"
-		[form]="form"
-		[config]="config"
-		[controls]="controls"
-		[asViewControls]="true"
-		(init)="onFormInitialized()"></app-form>
+	@if (config) {
+		<app-form
+			[color]="color"
+			[form]="form"
+			[config]="config"
+			[controls]="controls"
+			[asViewControls]="true"
+			(init)="onFormInitialized()"></app-form>
+	}
 	<ion-buttons class="ion-padding ion-float-end">
 		<ion-button color="danger" (click)="deleteAsync()">
 			<ion-icon icon="trash" slot="start"></ion-icon>

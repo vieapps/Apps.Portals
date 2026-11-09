@@ -173,10 +173,6 @@ export class PortalsOrganizationsListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	track(index: number, organization: Organization) {
-		return `${organization.ID}@${index}`;
-	}
-
 	getInfo(organization: Organization) {
 		return AppUtility.format(this.owner, { owner: organization.owner })
 			+ (this.configSvc.screenWidth < 1024 ? "" : (AppUtility.isNotEmpty(organization.Description) ? ` - ${(organization.Description.length > 30 ? organization.Description.substr(0, 30) + " ..." : organization.Description)}` : ""));

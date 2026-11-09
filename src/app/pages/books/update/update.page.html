@@ -17,11 +17,13 @@
 </ion-header>
 
 <ion-content [color]="color" class="ion-padding">
-	<app-form *ngIf="update.config"
-		[color]="configSvc.color"
-		[form]="update.form"
-		[config]="update.config"
-		[segments]="update.segments"
-		[controls]="update.controls"
-		(init)="onFormInitialized()"></app-form>
+	@if (update.config) {
+		<app-form
+			[color]="configSvc.color"
+			[form]="update.form"
+			[config]="update.config"
+			[segments]="update.segments"
+			[controls]="update.controls"
+			(init)="onFormInitialized()"></app-form>
+	}
 </ion-content>

@@ -2,7 +2,6 @@ import { AfterViewInit, Component, ElementRef, Input, NgModule, OnChanges, ViewC
 import QRCode from "qrcode";
 
 @Component({ selector: "qr-code", standalone: false, template: '<canvas #canvas aria-label="QR code"></canvas>' })
-
 export class QRCodeControl implements AfterViewInit, OnChanges {
 	@Input() value = "";
 	@Input() size = 290;
@@ -24,5 +23,4 @@ export class QRCodeControl implements AfterViewInit, OnChanges {
 }
 
 @NgModule({ declarations: [QRCodeControl], exports: [QRCodeControl] })
-
 export class QRCodeModule {}

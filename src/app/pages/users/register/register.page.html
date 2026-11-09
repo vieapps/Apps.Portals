@@ -10,16 +10,20 @@
 </ion-header>
 
 <ion-content [color]="color" class="ion-padding">
-	<app-form *ngIf="register.config"
-		[color]="color"
-		[form]="register.form"
-		[config]="register.config"
-		[controls]="register.controls"
-		(init)="onFormInitialized()"
-		(refreshCaptcha)="onRefreshCaptcha()"></app-form>
+	@if (register.config) {
+		<app-form
+			[color]="color"
+			[form]="register.form"
+			[config]="register.config"
+			[controls]="register.controls"
+			(init)="onFormInitialized()"
+			(refreshCaptcha)="onRefreshCaptcha()"></app-form>
+	}
 	<ion-buttons class="ion-padding">
 		<ion-button fill="solid" color="primary" (click)="registerAsync()">
-			<ion-icon *ngIf="register.button.icon" [icon]="register.button.icon" slot="start"></ion-icon>
+			@if (register.button.icon) {
+				<ion-icon [icon]="register.button.icon" slot="start"></ion-icon>
+			}
 			{{ register.button.label }}
 		</ion-button>
 	</ion-buttons>

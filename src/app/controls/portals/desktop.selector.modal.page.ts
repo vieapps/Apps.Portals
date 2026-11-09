@@ -105,10 +105,6 @@ export class DesktopsSelectorModalPage implements OnInit, OnDestroy {
 		await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 	}
 
-	track(index: number, desktop: Desktop) {
-		return `${desktop.ID}@${index}`;
-	}
-
 	getInfo(desktop: Desktop) {
 		return AppUtility.isArray(desktop.childrenIDs, true) && desktop.childrenIDs.length > 0
 			? AppUtility.format(this.children, { number: desktop.childrenIDs.length, children: `${desktop.Children[0].Title}, ...` })

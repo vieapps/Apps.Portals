@@ -121,10 +121,6 @@ export class ServicePrivilegesControl implements OnInit, OnDestroy {
 		});
 	}
 
-	track(index: number, item: string) {
-		return `${item}@${index}`;
-	}
-
 	onServiceRoleChanged(event: any) {
 		this.privileges.find(privilege => AppUtility.isEquals(privilege.ServiceName, this.service) && AppUtility.isEquals(privilege.ObjectName, "")).Role = event.detail.value;
 		if (event.detail.value !== "Viewer") {

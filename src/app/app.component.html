@@ -7,9 +7,11 @@
 			<ion-header>
 				<ion-menu-toggle auto-hide="false">
 					<ion-toolbar [color]="color">
-						<ion-thumbnail *ngIf="!!sidebar.Header.Avatar" slot="start" (click)="sidebar.Header.AvatarOnClick(sidebar, $event)">
-							<img [src]="sidebar.Header.Avatar" />
-						</ion-thumbnail>
+						@if (!!sidebar.Header.Avatar) {
+							<ion-thumbnail slot="start" (click)="sidebar.Header.AvatarOnClick(sidebar, $event)">
+								<img [src]="sidebar.Header.Avatar" />
+							</ion-thumbnail>
+						}
 						<ion-title (click)="sidebar.Header.TitleOnClick(sidebar, $event)">
 							{{ sidebar.Header.Title }}
 						</ion-title>
@@ -20,10 +22,14 @@
 			<ion-footer>
 				<ion-toolbar [color]="color">
 					<ion-buttons slot="start">
-						<ion-button *ngFor="let item of sidebarFooter; trackBy: trackSidebarItem" fill="clear" [title]="item.Title" [color]="sidebar.State.Active === item.Name ? 'primary' : 'medium'" (click)="item.OnClick(item.Name, sidebar, $event)">
-							<ion-icon [name]="item.Icon" slot="icon-only"></ion-icon>
-							<ion-badge *ngIf="!!item.Badge" [class.big]="item.Badge > 9" color="danger">{{ item.Badge > 9 ? '9+' : item.Badge }}</ion-badge>
-						</ion-button>
+						@for (item of sidebarFooter; track trackSidebarItem($index, item)) {
+							<ion-button fill="clear" [title]="item.Title" [color]="sidebar.State.Active === item.Name ? 'primary' : 'medium'" (click)="item.OnClick(item.Name, sidebar, $event)">
+								<ion-icon [name]="item.Icon" slot="icon-only"></ion-icon>
+								@if (!!item.Badge) {
+									<ion-badge [class.big]="item.Badge > 9" color="danger">{{ item.Badge > 9 ? '9+' : item.Badge }}</ion-badge>
+								}
+							</ion-button>
+						}
 					</ion-buttons>
 					<ion-buttons slot="end">
 						<ion-button fill="clear" [color]="isSidebarShown ? 'medium' : 'light'" (click)="sidebar.toggle()">
@@ -35,52 +41,86 @@
 
 			<ion-content [color]="color">
 
-				<ion-list *ngIf="sidebar.State.Active !== 'preferences'" class="ion-margin-vertical" lines="full">
+				@if (sidebar.State.Active !== 'preferences') {
+					<ion-list class="ion-margin-vertical" lines="full">
 
-					<ion-menu-toggle [hidden]="!isSidebarTopMenuShown" auto-hide="false">
-						<ion-item *ngFor="let item of sidebar.TopMenu; trackBy: trackSidebarItem" [color]="color" (click)="item.OnClick(item, sidebar, $event)" class="ion-activatable" detail="false">
-							<ion-icon *ngIf="!!item.Icon && !!item.Icon.Name" [name]="item.Icon.Name" [color]="item.Icon.Color" [slot]="item.Icon.Slot"></ion-icon>
-							<ion-label>
-								{{ item.Title }}
-								<ion-badge *ngIf="!!item.Badge" [class.big]="item.Badge > 9" color="danger">{{ item.Badge > 9 ? '9+' : item.Badge }}</ion-badge>
-							</ion-label>
-						</ion-item>
-					</ion-menu-toggle>
-
-					<ion-menu-toggle *ngFor="let menu of sidebar.MainMenu; let menuIndex=index; trackBy: trackSidebarItem" [hidden]="sidebar.State.Active !== menu.Name" [class]="'menu-' + menu.Name" auto-hide="false">
-						<ion-list-header *ngIf="!!menu.Parent && !!menu.Parent.Title" [color]="color" (click)="menu.Parent.OnClick(menu.Parent, sidebar, $event)" class="ion-padding-top">
-							<ion-label [class.thumbnail]="!!menu.Parent.Thumbnail">
-								<ion-icon *ngIf="menu.Parent.Expanded" name="chevron-back" slot="start"></ion-icon>
-								<ion-thumbnail *ngIf="!!menu.Parent.Thumbnail && !menu.Parent.Expanded" class="ion-float-start">
-									<img [src]="menu.Parent.Thumbnail" />
-								</ion-thumbnail>
-								{{ menu.Parent.Title }}
-								<ion-badge *ngIf="!!menu.Parent.Badge" [class.big]="menu.Parent.Badge > 9" color="danger">{{ menu.Parent.Badge > 9 ? '9+' : menu.Parent.Badge }}</ion-badge>
-							</ion-label>
-						</ion-list-header>
-						<div *ngFor="let item of menu.Items; let itemIndex=index; trackBy: trackSidebarItem">
-							<ion-item [color]="color" (click)="item.OnClick({ menuIndex: menuIndex, itemIndex: itemIndex }, sidebar, $event)" class="ion-activatable" detail="false">
-								<ion-icon *ngIf="!!item.Icon && !!item.Icon.Name" [name]="item.Icon.Name" [color]="item.Icon.Color" [slot]="item.Icon.Slot" (click)="item.OnClick({ menuIndex: menuIndex, itemIndex: itemIndex, expand: true }, sidebar, $event)"></ion-icon>
-								<ion-label>
-									{{ item.Title }}
-									<ion-badge *ngIf="!!item.Badge" [class.big]="item.Badge > 9" color="danger">{{ item.Badge > 9 ? '9+' : item.Badge }}</ion-badge>
-								</ion-label>
-							</ion-item>
-							<ion-list *ngIf="!!item.Children && item.Children.length > 0" [hidden]="!item.Expanded" class="children">
-								<ion-item *ngFor="let child of item.Children; let childIndex=index; trackBy: trackSidebarItem" [color]="color" (click)="child.OnClick({ menuIndex: menuIndex, itemIndex: itemIndex, childIndex: childIndex }, sidebar, $event)" class="ion-activatable" detail="false">
-									<ion-icon *ngIf="!!child.Icon && !!child.Icon.Name" [name]="child.Icon.Name" [color]="child.Icon.Color" [slot]="child.Icon.Slot" (click)="child.OnClick({ menuIndex: menuIndex, itemIndex: itemIndex, childIndex: childIndex, expand: true }, sidebar, $event)"></ion-icon>
+						<ion-menu-toggle [hidden]="!isSidebarTopMenuShown" auto-hide="false">
+							@for (item of sidebar.TopMenu; track trackSidebarItem($index, item)) {
+								<ion-item [color]="color" (click)="item.OnClick(item, sidebar, $event)" class="ion-activatable" detail="false">
+									@if (!!item.Icon && !!item.Icon.Name) {
+										<ion-icon [name]="item.Icon.Name" [color]="item.Icon.Color" [slot]="item.Icon.Slot"></ion-icon>
+									}
 									<ion-label>
-										{{ child.Title }}
-										<ion-badge *ngIf="!!child.Badge" [class.big]="child.Badge > 9" color="danger">{{ child.Badge > 9 ? '9+' : child.Badge }}</ion-badge>
+										{{ item.Title }}
+										@if (!!item.Badge) {
+											<ion-badge [class.big]="item.Badge > 9" color="danger">{{ item.Badge > 9 ? '9+' : item.Badge }}</ion-badge>
+										}
 									</ion-label>
 								</ion-item>
-							</ion-list>
-						</div>
-					</ion-menu-toggle>
+							}
+						</ion-menu-toggle>
 
-				</ion-list>
+						@for (menu of sidebar.MainMenu; track trackSidebarItem($index, menu); let menuIndex = $index) {
+							<ion-menu-toggle [hidden]="sidebar.State.Active !== menu.Name" [class]="'menu-' + menu.Name" auto-hide="false">
+								@if (!!menu.Parent && !!menu.Parent.Title) {
+									<ion-list-header [color]="color" (click)="menu.Parent.OnClick(menu.Parent, sidebar, $event)" class="ion-padding-top">
+										<ion-label [class.thumbnail]="!!menu.Parent.Thumbnail">
+											@if (menu.Parent.Expanded) {
+												<ion-icon name="chevron-back" slot="start"></ion-icon>
+											}
+											@if (!!menu.Parent.Thumbnail && !menu.Parent.Expanded) {
+												<ion-thumbnail class="ion-float-start">
+													<img [src]="menu.Parent.Thumbnail" />
+												</ion-thumbnail>
+											}
+											{{ menu.Parent.Title }}
+											@if (!!menu.Parent.Badge) {
+												<ion-badge [class.big]="menu.Parent.Badge > 9" color="danger">{{ menu.Parent.Badge > 9 ? '9+' : menu.Parent.Badge }}</ion-badge>
+											}
+										</ion-label>
+									</ion-list-header>
+								}
+								@for (item of menu.Items; track trackSidebarItem($index, item); let itemIndex = $index) {
+									<div>
+										<ion-item [color]="color" (click)="item.OnClick({ menuIndex: menuIndex, itemIndex: itemIndex }, sidebar, $event)" class="ion-activatable" detail="false">
+											@if (!!item.Icon && !!item.Icon.Name) {
+												<ion-icon [name]="item.Icon.Name" [color]="item.Icon.Color" [slot]="item.Icon.Slot" (click)="item.OnClick({ menuIndex: menuIndex, itemIndex: itemIndex, expand: true }, sidebar, $event)"></ion-icon>
+											}
+											<ion-label>
+												{{ item.Title }}
+												@if (!!item.Badge) {
+													<ion-badge [class.big]="item.Badge > 9" color="danger">{{ item.Badge > 9 ? '9+' : item.Badge }}</ion-badge>
+												}
+											</ion-label>
+										</ion-item>
+										@if (!!item.Children && item.Children.length > 0) {
+											<ion-list [hidden]="!item.Expanded" class="children">
+												@for (child of item.Children; track trackSidebarItem($index, child); let childIndex = $index) {
+													<ion-item [color]="color" (click)="child.OnClick({ menuIndex: menuIndex, itemIndex: itemIndex, childIndex: childIndex }, sidebar, $event)" class="ion-activatable" detail="false">
+														@if (!!child.Icon && !!child.Icon.Name) {
+															<ion-icon [name]="child.Icon.Name" [color]="child.Icon.Color" [slot]="child.Icon.Slot" (click)="child.OnClick({ menuIndex: menuIndex, itemIndex: itemIndex, childIndex: childIndex, expand: true }, sidebar, $event)"></ion-icon>
+														}
+														<ion-label>
+															{{ child.Title }}
+															@if (!!child.Badge) {
+																<ion-badge [class.big]="child.Badge > 9" color="danger">{{ child.Badge > 9 ? '9+' : child.Badge }}</ion-badge>
+															}
+														</ion-label>
+													</ion-item>
+												}
+											</ion-list>
+										}
+									</div>
+								}
+							</ion-menu-toggle>
+						}
 
-				<control-app-preferences *ngIf="sidebar.State.Active === 'preferences'"></control-app-preferences>
+					</ion-list>
+				}
+
+				@if (sidebar.State.Active === 'preferences') {
+					<control-app-preferences></control-app-preferences>
+				}
 
 			</ion-content>
 

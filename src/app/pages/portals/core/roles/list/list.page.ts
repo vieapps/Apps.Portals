@@ -197,10 +197,6 @@ export class PortalsRolesListPage implements OnInit, OnDestroy {
 		}
 	}
 
-	track(index: number, role: Role) {
-		return `${role.ID}@${index}`;
-	}
-
 	getInfo(role: Role) {
 		return role.childrenIDs === undefined || role.childrenIDs.length < 1
 			? role.Description

@@ -121,10 +121,6 @@ export class FilesSelectorControl implements OnInit {
 					: true;
 	}
 
-	track(index: number, attachment: AttachmentInfo) {
-		return `${attachment.ID}@${index}`;
-	}
-
 	copy(uri: string) {
 		PlatformUtility.copyToClipboardAsync(uri, async () => await this.appFormsSvc.showToastAsync("Copied..."));
 	}

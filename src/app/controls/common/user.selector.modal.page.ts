@@ -94,10 +94,6 @@ export class UsersSelectorModalPage implements OnInit, OnDestroy {
 		await this.startSearchAsync(async () => await this.appFormsSvc.hideLoadingAsync());
 	}
 
-	track(index: number, profile: UserProfile) {
-		return `${profile.ID}@${index}`;
-	}
-
 	openSearch() {
 		this.results = [];
 		this.searching = true;

@@ -28,91 +28,119 @@
 	</ion-toolbar>
 </ion-header>
 
-<ion-footer *ngIf="(pagination || actions) && !filtering">
-	<ion-toolbar [color]="color">
-		<span *ngIf="pagination" slot="start">
-			<ion-icon name="color-filter" color="primary" slot="start"></ion-icon>			
-			<span>
-				{{ totalDisplays | number:'':locale }} / {{ totalRecords | number:'':locale }}	
-			</span>
-		</span>
-		<ion-buttons *ngIf="actions" slot="end">
-			<ion-button *ngIf="canManage && !searching" color="secondary" (click)="showAdvancedAsync($event)">
-				<ion-icon name="footsteps-outline"></ion-icon>
-			</ion-button>
-			<ion-button color="primary" (click)="showActions()">
-				<ion-icon name="ellipsis-horizontal" slot="icon-only"></ion-icon>
-			</ion-button>
-		</ion-buttons>
-	</ion-toolbar>
-</ion-footer>
-
-<ion-content [color]="color" role="feed">
-	<ion-fab *ngIf="canUpdate" vertical="bottom" horizontal="end" slot="fixed">
-		<ion-fab-button (click)="create()">
-			<ion-icon name="add"></ion-icon>
-		</ion-fab-button>
-  </ion-fab>
-	<ion-list>
-		<ion-item-sliding *ngFor="let content of contents; trackBy: track">
-			<ion-item [color]="color" (click)="view($event, content)" class="ion-activatable" detail="false" role="article">
+@if ((pagination || actions) && !filtering) {
+	<ion-footer>
+		<ion-toolbar [color]="color">
+			@if (pagination) {
+				<span slot="start">
+					<ion-icon name="color-filter" color="primary" slot="start"></ion-icon>
+					<span>
+						{{ totalDisplays | number:'':locale }} / {{ totalRecords | number:'':locale }}
+					</span>
+				</span>
+			}
+			@if (actions) {
 				<ion-buttons slot="end">
-					<ion-button *ngIf="canUpdate" fill="clear" color="primary" [title]="buttons.edit" (click)="edit($event, content)">
-						<ion-icon name="create" slot="icon-only"></ion-icon>
-					</ion-button>
-					<ion-button *ngIf="!canUpdate" fill="clear" color="primary" [title]="buttons.edit" (click)="view($event, content)">
-						<ion-icon name="eye" slot="icon-only"></ion-icon>
-					</ion-button>
-					<ion-button *ngIf="allowAdvanced">
-						<ion-checkbox color="secondary" [value]="content.ID" [checked]="selected.contains(content.ID)" (click)="$event.stopPropagation()" (ionChange)="onChanged($event)"></ion-checkbox>
+					@if (canManage && !searching) {
+						<ion-button color="secondary" (click)="showAdvancedAsync($event)">
+							<ion-icon name="footsteps-outline"></ion-icon>
+						</ion-button>
+					}
+					<ion-button color="primary" (click)="showActions()">
+						<ion-icon name="ellipsis-horizontal" slot="icon-only"></ion-icon>
 					</ion-button>
 				</ion-buttons>
-				<ion-label>
-					<ion-thumbnail class="ion-float-start ion-padding-end">
-						<img [src]="content.thumbnailURI" />
-					</ion-thumbnail>
-					<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
-						{{ content.Created | date:'h:mm a @ d/M/y' }} <br/> {{ content.LastModified | time:locale:undefined:false }}
-					</span>
-					<span [class]="'title ' + content.Status">
-						{{ content.Title }}
-						<ion-icon name="radio" slot="icon-only"></ion-icon>
-					</span>
-					<div>
-						<span>
-							<ion-icon name="time" slot="icon-only" color="medium"></ion-icon>
-							{{ content.StartDate | date:'d/M/y' }}
+			}
+		</ion-toolbar>
+	</ion-footer>
+}
+
+<ion-content [color]="color" role="feed">
+	@if (canUpdate) {
+		<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+			<ion-fab-button (click)="create()">
+				<ion-icon name="add"></ion-icon>
+			</ion-fab-button>
+		</ion-fab>
+	}
+	<ion-list>
+		@for (content of contents; track content.ID) {
+			<ion-item-sliding>
+				<ion-item [color]="color" (click)="view($event, content)" class="ion-activatable" detail="false" role="article">
+					<ion-buttons slot="end">
+						@if (canUpdate) {
+							<ion-button fill="clear" color="primary" [title]="buttons.edit" (click)="edit($event, content)">
+								<ion-icon name="create" slot="icon-only"></ion-icon>
+							</ion-button>
+						}
+						@else {
+							<ion-button fill="clear" color="primary" [title]="buttons.edit" (click)="view($event, content)">
+								<ion-icon name="eye" slot="icon-only"></ion-icon>
+							</ion-button>
+						}
+						@if (allowAdvanced) {
+							<ion-button>
+								<ion-checkbox color="secondary" [value]="content.ID" [checked]="selected.contains(content.ID)" (click)="$event.stopPropagation()" (ionChange)="onChanged($event)"></ion-checkbox>
+							</ion-button>
+						}
+					</ion-buttons>
+					<ion-label>
+						<ion-thumbnail class="ion-float-start ion-padding-end">
+							<img [src]="content.thumbnailURI" />
+						</ion-thumbnail>
+						<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
+							{{ content.Created | date:'h:mm a @ d/M/y' }} <br/> {{ content.LastModified | time:locale:undefined:false }}
 						</span>
-						<span *ngIf="content.EndDate">
-							<ion-icon name="time" slot="icon-only" color="danger"></ion-icon>
-							{{ content.EndDate | date:'d/M/y' }}
+						<span [class]="'title ' + content.Status">
+							{{ content.Title }}
+							<ion-icon name="radio" slot="icon-only"></ion-icon>
 						</span>
-						<span *ngIf="content.Status === 'Published'">
-							<ion-icon name="alarm" slot="icon-only" color="medium"></ion-icon>
-							{{ content.PublishedTime | date:'h:mm a @ d/M/y' }}
-						</span>
-						<span *ngIf="content.category">
-							<ion-icon name="color-filter" slot="icon-only" color="medium"></ion-icon>
-							{{ content.category.FullTitle }}
-						</span>
-					</div>
-				</ion-label>
-			</ion-item>
-			<ion-item-options>
-				<ion-item-option *ngIf="canUpdate" color="dark" [title]="labels.versions" (click)="viewVersions($event, content)">
-					<ion-icon name="layers-outline" slot="icon-only"></ion-icon>
-				</ion-item-option>
-				<ion-item-option *ngIf="canUpdate" color="warning" [title]="labels.refresh" (click)="refresh($event, content)">
-					<ion-icon name="refresh" slot="icon-only"></ion-icon>
-				</ion-item-option>
-				<ion-item-option color="secondary" [title]="buttons.view" (click)="view($event, content)">
-					<ion-icon name="eye" slot="icon-only"></ion-icon>
-				</ion-item-option>
-				<ion-item-option *ngIf="canUpdate" color="primary" [title]="buttons.edit" (click)="edit($event, content)">
-					<ion-icon name="create" slot="icon-only"></ion-icon>
-				</ion-item-option>
-			</ion-item-options>
-		</ion-item-sliding>
+						<div>
+							<span>
+								<ion-icon name="time" slot="icon-only" color="medium"></ion-icon>
+								{{ content.StartDate | date:'d/M/y' }}
+							</span>
+							@if (content.EndDate) {
+								<span>
+									<ion-icon name="time" slot="icon-only" color="danger"></ion-icon>
+									{{ content.EndDate | date:'d/M/y' }}
+								</span>
+							}
+							@if (content.Status === 'Published') {
+								<span>
+									<ion-icon name="alarm" slot="icon-only" color="medium"></ion-icon>
+									{{ content.PublishedTime | date:'h:mm a @ d/M/y' }}
+								</span>
+							}
+							@if (content.category) {
+								<span>
+									<ion-icon name="color-filter" slot="icon-only" color="medium"></ion-icon>
+									{{ content.category.FullTitle }}
+								</span>
+							}
+						</div>
+					</ion-label>
+				</ion-item>
+				<ion-item-options>
+					@if (canUpdate) {
+						<ion-item-option color="dark" [title]="labels.versions" (click)="viewVersions($event, content)">
+							<ion-icon name="layers-outline" slot="icon-only"></ion-icon>
+						</ion-item-option>
+						<ion-item-option color="warning" [title]="labels.refresh" (click)="refresh($event, content)">
+							<ion-icon name="refresh" slot="icon-only"></ion-icon>
+						</ion-item-option>
+					}
+					<ion-item-option color="secondary" [title]="buttons.view" (click)="view($event, content)">
+						<ion-icon name="eye" slot="icon-only"></ion-icon>
+					</ion-item-option>
+					@if (canUpdate) {
+						<ion-item-option color="primary" [title]="buttons.edit" (click)="edit($event, content)">
+							<ion-icon name="create" slot="icon-only"></ion-icon>
+						</ion-item-option>
+					}
+				</ion-item-options>
+			</ion-item-sliding>
+		}
 	</ion-list>
 	<ion-infinite-scroll position="bottom" threshold="500px" (ionInfinite)="onInfiniteScroll()">
 		<ion-infinite-scroll-content></ion-infinite-scroll-content>
