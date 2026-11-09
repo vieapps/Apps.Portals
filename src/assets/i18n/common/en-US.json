@@ -1,0 +1,214 @@
+{
+	"common": {
+		"sidebar": {
+			"home": "Home",
+			"login": "Login",
+			"register": "Register",
+			"profile": "Profile",
+			"search": "Search",
+			"metrics": "System metrics"
+		},
+		"alert": {
+			"header": {
+				"general": "Attention",
+				"error": "Error"
+			}
+		},
+		"buttons": {
+			"yes": "Yes",
+			"no": "No",
+			"ok": "OK",
+			"done": "Done",
+			"add": "Add",
+			"moderate": "Moderate",
+			"approve": "Approve",
+			"create": "Create new",
+			"update": "Update",
+			"delete": "Delete",
+			"edit": "Update",
+			"view": "View",
+			"save": "Save",
+			"cancel": "Cancel",
+			"close": "Close",
+			"select": "Select",
+			"search": "Search",
+			"upload": "Upload",
+			"download": "Download",
+			"refresh": "Refresh",
+			"filter": "Quick filter",
+			"move": "Move",
+			"continue": "Continue",
+			"later": "Later",
+			"login": "Log in",
+			"logout": "Log out",
+			"submit": "Submit"
+		},
+		"messages": {
+			"initializing": "Initializing session...",
+			"loading": "Loading data...",
+			"searching": "Searching for data...",
+			"activating": "Activating...",
+			"processing": "Processing...",
+			"refreshen": "Data has been reloaded and refreshed...",
+			"errors": {
+				"general": "An error has occurred!",
+				"wrongAccountOrPassword": "Wrong account or password!",
+				"wrongCaptcha": "Verification code is invalid"
+			},
+			"delete": {
+				"normal": "Are you sure you want to delete?",
+				"selected": "Are you sure you want to delete the selected information?"
+			},
+			"completer": {
+				"searching": "searching...",
+				"noresults": "No matching results found"
+			}
+		},
+		"audits": {
+			"identity": "Identity",
+			"label": "Management information",
+			"info": "Created by {{creator}} at {{created}} - Last updated by {{modifier}} at {{modified}}"
+		},
+		"preferences": {
+			"label": "System",
+			"notifications": "Notifications",
+			"profile": "Account information",
+			"logs": "View system logs",
+			"flushCache": "Clear all cache",
+			"options": {
+				"language": "Language",
+				"thumbnails": "Use thumbnails when editing",
+				"theme": "Use dark theme",
+				"preflight": "Use preloading",
+				"xhr": "Use XHR",
+				"xhrToken": "Use XHR Query Token",
+				"debug": "Enable detailed logs"
+			},
+			"apps": {
+				"desktop": "Desktop apps",
+				"mobile": "Mobile apps"
+			},
+			"about": "About the app"
+		}
+	},
+	"privileges": {
+		"roles": {
+			"systems": {
+				"All": "All users",
+				"Authorized": "Signed-in users",
+				"SystemAdministrator": "System Administrator"
+			},
+			"privileges": {
+				"Administrator": "Administrator",
+				"Moderator": "Moderator",
+				"Editor": "Editor",
+				"Contributor": "Contributor",
+				"Viewer": "Viewer (Read Only)",
+				"Downloader": "Download files only"
+			}
+		},
+		"services": {
+			"role": "General role in '{{service}}'",
+			"other": "Other roles",
+			"object": "Role for '{{object}}'"
+		},
+		"objects": {
+			"inheritFromParent": "Inherit access permissions from parent",
+			"Administrative": {
+				"label": "Manage",
+				"description": "",
+				"roles": "Administrative roles",
+				"users": "Administrative users"
+			},
+			"Moderate": {
+				"label": "Moderate",
+				"description": "",
+				"roles": "Moderator roles",
+				"users": "Moderator users"
+			},
+			"Editable": {
+				"label": "Edit",
+				"description": "",
+				"roles": "Editor roles",
+				"users": "Editor users"
+			},
+			"Contributive": {
+				"label": "Contribute",
+				"description": "",
+				"roles": "Contributor roles",
+				"users": "Contributor users"
+			},
+			"Viewable": {
+				"label": "View (Read-Only)",
+				"description": "",
+				"roles": "Reader/viewer roles",
+				"users": "Reader/viewer users"
+			},
+			"Downloadable": {
+				"label": "Download files",
+				"description": "",
+				"roles": "Roles that can only download files",
+				"users": "Users that can only download files"
+			}
+		}
+	},
+	"status": {
+		"approval": {
+			"label": "Status",
+			"Draft": "Draft",
+			"Pending": "Pending approval",
+			"Rejected": "Rejected",
+			"Approved": "Approved",
+			"Published": "Published",
+			"Archieved": "Archived"
+		}
+	},
+	"events": {
+		"label": "Events",
+		"Create": "Create",
+		"Update": "Update",
+		"Delete": "Delete",
+		"Approve": "Approve",
+		"Reject": "Reject"
+	},
+	"files": {
+		"thumbnails": {
+			"label": "Thumbnail image",
+			"current": "Current image",
+			"new": "New image"
+		},
+		"attachments": {
+			"segment": "Attachments",
+			"label": "Attached files",
+			"confirm": "Are you sure you want to delete the file '{{name}}'?",
+			"upload": "Upload",
+			"download": "Download",
+			"controls": {
+				"title": "Title",
+				"description": "Description",
+				"shared": "Share for use throughout the system",
+				"tracked": "Log all access (including views)",
+				"filename": "Filename",
+				"uri": "File viewing/download link"
+			}
+		}
+	},
+	"versions": {
+		"view": "View changed versions",
+		"list": "{{total}} changed version(s) [{{title}}]",
+		"confirm": "Are you sure you want to restore from version #{{version}}?",
+		"processing": "Restoring version...",
+		"done": "Restored from version #{{version}}..."
+	},
+	"trash": {
+		"list": "Trash",
+		"all": "All organizations",
+		"confirm": "Are you sure you want to restore [{{title}}] from trash?",
+		"processing": "Restoring data...",
+		"done": "Restored [{{title}}] from trash..."
+	},
+	"notifications": {
+		"title": "Activity notifications",
+		"label": "{{user}} performed {{action}} on '{{title}}' - Status: {{status}}"
+	}
+}

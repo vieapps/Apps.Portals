@@ -1,0 +1,26 @@
+<ion-header>
+	<ion-toolbar [color]="color">
+		<ion-buttons slot="start">
+			<ion-back-button text="" icon="close"></ion-back-button>
+		</ion-buttons>
+		<ion-title>
+			{{ title }}
+		</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content [color]="color" class="ion-padding">
+	<app-form *ngIf="register.config"
+		[color]="color"
+		[form]="register.form"
+		[config]="register.config"
+		[controls]="register.controls"
+		(init)="onFormInitialized()"
+		(refreshCaptcha)="onRefreshCaptcha()"></app-form>
+	<ion-buttons class="ion-padding">
+		<ion-button fill="solid" color="primary" (click)="registerAsync()">
+			<ion-icon *ngIf="register.button.icon" [icon]="register.button.icon" slot="start"></ion-icon>
+			{{ register.button.label }}
+		</ion-button>
+	</ion-buttons>
+</ion-content>

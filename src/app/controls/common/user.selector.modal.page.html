@@ -1,0 +1,69 @@
+<ion-header>
+	<ion-toolbar [color]="color">
+		<ion-buttons slot="start">
+			<ion-button color="secondary" (click)="closeAsync()">
+				{{ labels.cancel }}
+			</ion-button>
+		</ion-buttons>
+		<ion-buttons slot="end">
+			<ion-button color="primary" (click)="closeAsync(selected.toArray())">
+				{{ labels.select }}
+			</ion-button>
+		</ion-buttons>
+		<ion-title [hidden]="searching" class="ion-text-center">
+			<ion-button fill="clear" color="medium" (click)="openSearch()">
+				<ion-icon name="search"></ion-icon>
+				{{ labels.search }}
+			</ion-button>
+		</ion-title>
+		<ion-searchbar
+			showCancelButton="always"
+			cancelButtonIcon="arrow-back"
+			enterkeyhint="search"
+			inputmode="search"
+			[debounce]="debounce"
+			[cancelButtonText]="labels.cancel"
+			[hidden]="!searching"
+			(ionChange)="onStartSearch($event)"
+			(ionClear)="onClearSearch()"
+			(ionCancel)="onCancelSearch()"></ion-searchbar>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content [color]="color">
+	<ion-list *ngIf="!searching" class="ion-padding-end">
+		<ion-item *ngFor="let profile of profiles; trackBy: track" [color]="color" detail="false">
+			<ion-checkbox slot="end" [checked]="selected.contains(profile.ID)" (ionChange)="select($event, profile.ID)"></ion-checkbox>
+			<ion-label>
+				<ion-thumbnail class="ion-float-start ion-padding-end">
+					<img [src]="profile.avatarURI" />
+				</ion-thumbnail>
+				<span>
+					{{ profile.Name }}
+					<span class="ion-float-end">
+						{{ profile.getEmail(hideEmails) }}
+					</span>
+				</span>
+			</ion-label>
+		</ion-item>
+	</ion-list>
+	<ion-list *ngIf="searching" class="ion-padding-end">
+		<ion-item *ngFor="let profile of results; trackBy: track" [color]="color" detail="false">
+			<ion-checkbox slot="end" [checked]="selected.contains(profile.ID)" (ionChange)="select($event, profile.ID)"></ion-checkbox>
+			<ion-label>
+				<ion-thumbnail class="ion-float-start ion-padding-end">
+					<img [src]="profile.avatarURI" />
+				</ion-thumbnail>
+				<span>
+					{{ profile.Name }}
+					<span class="ion-float-end">
+						{{ profile.getEmail(hideEmails) }}
+					</span>
+				</span>
+			</ion-label>
+		</ion-item>
+	</ion-list>
+	<ion-infinite-scroll threshold="288px" position="bottom" (ionInfinite)="onInfiniteScrollAsync()">
+		<ion-infinite-scroll-content></ion-infinite-scroll-content>
+	</ion-infinite-scroll>
+</ion-content>

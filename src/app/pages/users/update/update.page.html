@@ -1,0 +1,51 @@
+<ion-header>
+	<ion-toolbar [color]="color">
+		<ion-buttons *ngIf="buttons.cancel" slot="start">
+			<ion-button color="secondary" (click)="buttons.cancel.handler()">
+				<ion-icon *ngIf="buttons.cancel.icon" [name]="buttons.cancel.icon" slot="start"></ion-icon>
+				{{ buttons.cancel.text }}
+			</ion-button>
+		</ion-buttons>
+		<ion-buttons *ngIf="buttons.ok" slot="end">
+			<ion-button color="primary" (click)="buttons.ok.handler()">
+				<ion-icon *ngIf="buttons.ok.icon" [name]="buttons.ok.icon" slot="start"></ion-icon>
+				{{ buttons.ok.text }}
+			</ion-button>
+		</ion-buttons>
+		<ion-title>
+			{{ title }}
+		</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content [color]="color" class="ion-padding">
+
+	<app-form *ngIf="mode === 'profile' && update.config"
+		[color]="color"
+		[form]="update.form"
+		[config]="update.config"
+		[controls]="update.controls"
+		(init)="onFormInitialized($event)"></app-form>
+
+	<app-form *ngIf="mode === 'password' && password.config"
+		[color]="color"
+		[form]="password.form"
+		[config]="password.config"
+		[controls]="password.controls"
+		(init)="onFormInitialized($event)"></app-form>
+
+	<app-form *ngIf="mode === 'email' && email.config"
+		[color]="color"
+		[form]="email.form"
+		[config]="email.config"
+		[controls]="email.controls"
+		(init)="onFormInitialized($event)"></app-form>
+
+	<div *ngIf="mode === 'privileges' && services">
+		<control-service-privileges *ngFor="let service of services; trackBy: trackServicePrivileges"
+			[service]="service"
+			[privileges]="getServicePrivileges(service)"
+			(change)="onServicePrivilegesChanged($event)"></control-service-privileges>
+	</div>
+
+</ion-content>

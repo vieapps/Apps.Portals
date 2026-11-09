@@ -1,0 +1,34 @@
+{
+	"compileOnSave": false,
+	"compilerOptions": {
+		"strict": false,
+		"outDir": "./dist/out-tsc",
+		"sourceMap": true,
+		"declaration": false,
+		"experimentalDecorators": true,
+		"allowJs": true,
+		"importHelpers": true,
+		"esModuleInterop": true,
+		"target": "ES2022",
+		"module": "preserve",
+		"moduleResolution": "bundler",
+		"useDefineForClassFields": false,
+		"lib": [
+			"ES2022",
+			"DOM"
+		],
+		"paths": {
+			"@app/*": [
+				"./src/app/*"
+			]
+		}
+	},
+	"angularCompilerOptions": {
+		"strictTemplates": false
+	},
+	"exclude": [
+		"node_modules",
+		"www",
+		"dist"
+	]
+}

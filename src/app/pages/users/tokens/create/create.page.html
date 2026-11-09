@@ -1,0 +1,24 @@
+<ion-header>
+	<ion-toolbar [color]="color">
+		<ion-buttons slot="start">
+			<ion-back-button text="" icon="close"></ion-back-button>
+		</ion-buttons>
+		<ion-title>
+			{{ title }}
+		</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content [color]="color" class="ion-padding">
+	<app-form *ngIf="config"
+		[color]="color"
+		[form]="form"
+		[config]="config"
+		[controls]="controls"
+		(init)="onFormInitialized()"></app-form>
+	<ion-buttons class="ion-padding">
+		<ion-button fill="solid" color="primary" (click)="createAsync()">
+			{{ button }}
+		</ion-button>
+	</ion-buttons>
+</ion-content>

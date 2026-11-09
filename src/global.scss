@@ -1,0 +1,489 @@
+@import "@ionic/angular/css/core.css";
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+@import "@ionic/angular/css/display.css";
+@import "@angular/cdk/overlay-prebuilt.css";
+@import "@ng-select/ng-select/themes/default.theme.css";
+
+/* hidden for Ionic 9 */
+[hidden] {
+  display: none !important;
+}
+
+/* olny allow select text in the content panels */
+ion-header, ion-footer, ion-content {
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+ion-app > ion-split-pane > ion-router-outlet ion-content {
+	-webkit-user-select: auto !important;
+	-moz-user-select: auto !important;
+	-ms-user-select: auto !important;
+	user-select: auto !important;
+}
+
+/* avoid white-padding that not matched with theme color */
+ion-list {
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
+}
+
+/* side menu */
+@media (min-width: 1024px) {
+	.split-pane-md.split-pane-visible > .split-pane-side,
+	.split-pane-ios.split-pane-visible > .split-pane-side {
+		max-width: 350px;
+	}
+}
+ion-menu.menu-side-start > ion-header > ion-menu-toggle > ion-toolbar > ion-thumbnail,
+ion-menu.menu-side-start > ion-header > ion-menu-toggle > ion-toolbar > ion-title {
+	cursor: pointer;
+}
+ion-menu.menu-side-start > ion-header > ion-menu-toggle > ion-toolbar > ion-thumbnail img {
+	border-radius: 50%;
+	width: 80%;
+	height: 80%;
+	margin: 10%;
+}
+.ios ion-menu.menu-side-start > ion-header > ion-menu-toggle > ion-toolbar > ion-thumbnail {
+	height: 46px;
+	width: 46px;
+}
+ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label {
+	line-height: 44px;
+	font-weight: bold;
+	cursor: pointer;
+}
+ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label > ion-icon {
+	width: 24px;
+	margin-inline-end: 30px;
+}
+ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label.thumbnail {
+	line-height: inherit;
+	margin-top: 7px;
+}
+ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label.thumbnail > ion-thumbnail {
+	margin-top: -7px;
+}
+ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label > ion-thumbnail {
+	margin-right: 16px;
+}
+ion-menu > ion-content ion-list ion-item {
+	cursor: pointer;
+}
+ion-menu > ion-content ion-list.children > ion-item {
+	--padding-start: 74px;
+}
+.ios ion-menu > ion-content ion-list.children > ion-item {
+	--padding-start: 67px;
+}
+.md ion-menu > ion-content > ion-list > ion-menu-toggle > ion-list-header > ion-label {
+	text-transform: uppercase;
+}
+ion-menu > ion-content > ion-list > ion-menu-toggle img {
+	max-height: 44px;
+}
+ion-menu > ion-content > control-app-preferences img.logo {
+	width: 70px !important;
+}
+
+/* header toolbars/searchbars on iOS */
+.ios ion-header > ion-toolbar:first-child {
+	padding-top: 0;
+}
+.ios ion-header > ion-toolbar > ion-searchbar {
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
+/* toolbars */
+ion-footer ion-toolbar {
+	padding-left: 8px;
+}
+.ios ion-toolbar,
+.ios ion-toolbar > ion-title {
+	min-height: 52px;
+}
+.ios ion-toolbar > ion-buttons {
+	margin-top: 7px;
+}
+
+/* badges */
+ion-toolbar ion-badge,
+ion-menu > ion-content > ion-list ion-badge {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  font-size: 0.6em;
+  --padding-start: 5px;
+  --padding-end: 5px;
+}
+ion-toolbar ion-badge.big,
+ion-menu > ion-content > ion-list ion-badge.big {
+  --padding-end: 3px;
+}
+
+/* Dynamic forms ----------------------------------------- */
+
+/* segments */
+app-form ion-segment.segments.md {
+	padding-bottom: 15px;
+}
+
+/* label of invalid controls */
+app-form .invalid:not(.item-has-focus) > ion-label.sc-ion-label-md-h,
+app-form .invalid:not(.item-has-focus) > ion-label.sc-ion-label-md-s,
+app-form .invalid:not(.item-has-focus) > ion-label.sc-ion-label-ios-h,
+app-form .invalid:not(.item-has-focus) > ion-label.sc-ion-label-ios-s {
+	color: var(--ion-color-danger);
+}
+
+/* description label of an input control */
+app-form label.description {
+	font-size: 12px;
+	color: var(--ion-color-medium);
+	clear: both;
+	padding: 10px 0;
+}
+app-form label.description.text-area {
+	border-top: solid 1px var(--ion-item-border-color, var(--ion-border-color, var(--ion-color-step-150, rgba(0, 0, 0, 0.13))));
+	width: 100%;
+}
+
+/* text */
+app-form span.text,
+app-form div.text {
+	padding: 12px 0;
+}
+
+/* images & medias */
+app-form span.text figure.image,
+app-form div.text figure.image,
+app-form span.text figure.media,
+app-form div.text figure.media {
+	display: table;
+	clear: both;
+	text-align: center;
+	margin: 1em auto;
+}
+app-form span.text figure.image.image-style-align-left,
+app-form div.text figure.image.image-style-align-left {
+	clear: none;
+	float: left;
+	margin-right: 16px;
+	margin-top: 0;
+}
+app-form span.text figure.image.image-style-align-right,
+app-form div.text figure.image.image-style-align-right,
+app-form span.text figure.image.image-style-side,
+app-form div.text figure.image.image-style-side {
+	clear: none;
+	float: right;
+	margin-left: 16px;
+	margin-top: 0;
+}
+app-form span.text figure.image img,
+app-form div.text figure.image img {
+	display: block;
+	margin: 0 auto;
+	max-width: 100%;
+}
+app-form span.text figure.image > figcaption,
+app-form div.text figure.image > figcaption {
+	display: table-caption;
+	caption-side: bottom;
+	word-break: break-word;
+	color: #333;
+	background-color: #f7f7f7;
+	padding: .6em;
+	font-size: .75em;
+	outline-offset: -1px;
+}
+app-form span.text figure.media > iframe,
+app-form div.text figure.media > iframe,
+app-form span.text figure.media > video,
+app-form div.text figure.media > video,
+app-form span.text figure.media > audio,
+app-form div.text figure.media > audio {
+	max-width: 100%;
+}
+app-form app-form-control figure.media.ck-widget > div.ck-media__wrapper {
+	max-width: 75%;
+}
+
+/* tables */
+app-form div.text figure.table {
+	display: table;
+	width: 100%;
+}
+app-form div.text figure.table[style='float:left;'],
+app-form div.text figure.table[style='float:right;'],
+app-form div.text figure.table[style='text-align:center;'] {
+	width: auto;
+}
+app-form div.text figure.table > table {
+	margin: 0 auto;
+}
+
+/* special box */
+app-form div.text div.special.box,
+app-form div.text section.special.box {
+  border: solid 2px #eee;
+  border-radius: 7px;
+  padding: 15px;
+	max-width: 100%;
+}
+app-form div.text div.special.box.left,
+app-form div.text section.special.box.left,
+app-form div.text div.special.block.left,
+app-form div.text section.special.block.left {
+	float: left;
+	clear: none;
+}
+app-form div.text div.special.box.right,
+app-form div.text section.special.box.right,
+app-form div.text div.special.block.right,
+app-form div.text section.special.block.right {
+	float: right;
+	clear: none;
+}
+app-form div.text div.special.box > h2,
+app-form div.text section.special.box > h2,
+app-form div.text div.special.box > h3,
+app-form div.text section.special.box > h3,
+app-form div.text div.special.box > h4,
+app-form div.text section.special.box > h4 {
+  margin-top: 10px;
+  padding-bottom: 15px;
+  border-bottom: solid 3px #bbb;
+}
+
+/* buttons */
+app-form ion-buttons.sc-ion-buttons-md-h,
+app-form ion-buttons.sc-ion-buttons-ios-h {
+	display: block;
+	overflow: hidden;
+}
+/* selects */
+app-form ion-item.select-dropdown > select {
+	margin: 8px 0;
+}
+app-form ion-item.select-multiple select {
+	border: 0;
+	width: 100%;
+	margin: 8px 0;
+}
+app-form ion-item.select-multiple select > option {
+	padding: 5px;
+}
+
+/* header of a sub list */
+app-form > form > ion-list > app-form-control > ion-list > ion-list-header,
+app-form > form > div > ion-list > app-form-control > ion-list > ion-list-header,
+app-form > form > ion-list > app-form-control > ion-list app-form-control > ion-list > ion-list-header,
+app-form > form > div > ion-list > app-form-control > ion-list app-form-control > ion-list > ion-list-header,
+app-form > form > ion-list > app-form-control > ion-list app-form-control > ion-radio-group > ion-list-header,
+app-form > form > div > ion-list > app-form-control > ion-list app-form-control > ion-radio-group > ion-list-header {
+	font-weight: bold;
+	padding-top: 15px;
+}
+app-form > form > ion-list > app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > div > ion-list > app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > ion-list > app-form-control > ion-list app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > div > ion-list > app-form-control > ion-list app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > ion-list > app-form-control > ion-list app-form-control > ion-radio-group > ion-list-header > ion-label > span,
+app-form > form > div > ion-list > app-form-control > ion-list app-form-control > ion-radio-group > ion-list-header > ion-label > span {
+	line-height: 32px;
+}
+app-form > form > ion-list.md > app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > div > ion-list.md > app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > ion-list.md > app-form-control > ion-list app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > div > ion-list.md > app-form-control > ion-list app-form-control > ion-list > ion-list-header > ion-label > span,
+app-form > form > ion-list.md > app-form-control > ion-list app-form-control > ion-radio-group > ion-list-header > ion-label > span,
+app-form > form > div > ion-list.md > app-form-control > ion-list app-form-control > ion-radio-group > ion-list-header > ion-label > span {
+	line-height: 48px;
+}
+app-form > form > ion-list > app-form-control:first-of-type > ion-list > ion-list-header,
+app-form > form > div > ion-list > app-form-control:first-of-type > ion-list > ion-list-header,
+app-form > form > ion-list > app-form-control > ion-list app-form-control:first-of-type > ion-list > ion-list-header,
+app-form > form > div > ion-list > app-form-control > ion-list app-form-control:first-of-type > ion-list > ion-list-header,
+app-form > form > ion-list > app-form-control > ion-list app-form-control:first-of-type > ion-radio-group > ion-list-header,
+app-form > form > div > ion-list > app-form-control > ion-list app-form-control:first-of-type > ion-radio-group > ion-list-header {
+	padding-top: 0;
+}
+
+/* completer & related controls */
+app-form .completer-container > ng2-completer,
+app-form .completer-holder,
+app-form .completer-dropdown-holder,
+app-form .completer-dropdown,
+app-form .select-dropdown > select,
+app-form .file-picker > div,
+app-form .file-picker > div > div.file-picker-input,
+div.upload .file-picker,
+div.upload .file-picker > div.file-picker-input {
+	width: 100% !important;
+}
+app-form ion-item.completer-container > ion-label,
+app-form ion-item.select-dropdown > ion-label,
+app-form ion-item.file-picker > ion-label,
+div.upload ion-item.file-picker > ion-label {
+	padding-bottom: 8px;
+}
+app-form .completer-holder > input.completer-input,
+app-form .file-picker > div > div.file-picker-input > input,
+div.upload .file-picker > div.file-picker-input > input {
+	padding-top: 8px;
+	padding-bottom: 8px;
+	font-family: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+	letter-spacing: inherit;
+	text-decoration: inherit;
+	text-overflow: inherit;
+	text-transform: inherit;
+	text-align: inherit;
+	white-space: inherit;
+	color: inherit;
+	display: inline-block;
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	width: 100%;
+	border: 0;
+	outline: 0;
+	background: 0 0;
+	box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	appearance: none;	
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	-webkit-tap-highlight-color: rgba(0,0,0,0);
+	-webkit-tap-highlight-color: transparent;
+	-webkit-touch-callout: none;
+}
+app-form .completer-dropdown {
+	position: static !important;
+}
+app-form .completer-title {
+	clear: both;
+	display: block;
+	width: 100%;
+}
+app-form .completer-image {
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+}
+app-form .completer-image-holder {
+	width: auto !important;
+	margin-right: 15px;
+}
+app-form .completer-image-default {
+	background-image: none !important;
+}
+app-form .completer-item-text-image {
+	float: left !important;
+}
+
+/* image picker preview */
+app-form .file-picker .image-picker-preview {
+	clear: both;
+	overflow: hidden;
+}
+app-form .file-picker .image-picker-preview > div {
+	width: 300px;
+	float: left;
+	padding-right: 20px;
+}
+
+/* images of chips */
+app-form ion-item > ion-chip > ion-label > ion-thumbnail {
+	height: 20px;
+	width: 30px;
+	padding-right: 10px;
+}
+app-form ion-item > ion-chip > ion-label > ion-thumbnail > img {
+	border-radius: 50%;
+}
+app-form ion-item > ion-chip > ion-label > span {
+	display: inline-block;
+	padding-top: 3px;
+}
+
+/* disabled check-box on views */
+app-form-view > ion-item > ion-label,
+app-form-view > ion-item > ion-checkbox {
+	opacity: 1 !important;
+}
+app-form-view > ion-item > ion-checkbox.yesno {
+	margin-right: 16px;
+}
+
+/* text editor */
+.text-editor div.ck-toolbar {
+	margin-top: 15px;
+}
+.text-editor .ck-editor__editable_inline {
+	min-height: 400px;
+	max-height: 670px;
+	border-left: solid 1px var(--ck-color-toolbar-border) !important;
+	border-right: solid 1px var(--ck-color-toolbar-border) !important;
+	border-bottom: solid 1px var(--ck-color-toolbar-border) !important;
+}
+form.ck-link-form_layout-vertical > button.ck-button {
+	border-right: none !important;
+}
+
+/* approval status */
+ion-list > ion-item > ion-label > span.title.Draft > ion-icon,
+ion-list > ion-item-sliding > ion-item > ion-label > span.title.Draft > ion-icon,
+ion-footer > ion-toolbar span.Draft > ion-icon {
+	color: darkgray;
+}
+ion-list > ion-item > ion-label > span.title.Pending > ion-icon,
+ion-list > ion-item-sliding > ion-item > ion-label > span.title.Pending > ion-icon,
+ion-list > ion-item > ion-label > span.title.Rejected > ion-icon,
+ion-list > ion-item-sliding > ion-item > ion-label > span.title.Rejected > ion-icon,
+ion-footer > ion-toolbar span.Pending > ion-icon,
+ion-footer > ion-toolbar span.Rejected > ion-icon {
+	color: red;
+}
+ion-list > ion-item > ion-label > span.title.Approved > ion-icon,
+ion-list > ion-item-sliding > ion-item > ion-label > span.title.Approved > ion-icon,
+ion-footer > ion-toolbar span.Approved > ion-icon {
+	color: blue;
+}
+ion-list > ion-item > ion-label > span.title.Published > ion-icon,
+ion-list > ion-item-sliding > ion-item > ion-label > span.title.Published > ion-icon,
+ion-footer > ion-toolbar span.Published > ion-icon {
+	color: green;
+}
+
+
+/* Completer uses a CDK overlay; scope panel styles to ng-select, including in Ionic modals. */
+app-form ion-item.completer-container > app-completer {
+	width: 100%;
+	min-width: 0;
+	padding-block: 8px;
+}
+app-completer .ng-select-container {
+	background: var(--ion-item-background, var(--ion-background-color, #fff));
+	color: var(--ion-text-color, #000);
+}
+.ng-dropdown-panel {
+	background: var(--ion-background-color, #fff);
+	color: var(--ion-text-color, #000);
+}
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+	background: var(--ion-background-color, #fff);
+	color: var(--ion-text-color, #000);
+}

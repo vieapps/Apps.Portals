@@ -1,0 +1,177 @@
+{
+	"books": {
+		"name": "Online Books",
+		"home": {
+			"latest": "Recently updated",
+			"statistics": {
+				"label": "Statistics:",
+				"authors": "Total number of authors",
+				"books": "Total number of articles & books",
+				"categories": "Categories"
+			}
+		},
+		"objects": {
+			"book": "E-books",
+			"category": "Categories",
+			"statistic": "Statistics"
+		},
+		"bookmarks": {
+			"header": "Currently reading",
+			"footer": "Synced at:",
+			"chapter": "Chapter: ",
+			"position": "Position: ",
+			"buttons": {
+				"read": "Read",
+				"delete": "Delete"
+			}
+		},
+		"crawl": {
+			"header": "Crawl data",
+			"label": "Crawl data from a specific source",
+			"placeholder": "Data source URL",
+			"mode": {
+				"full": "All",
+				"missing": "Missing chapters"
+			},
+			"button": "Crawl",
+			"message": "Crawl request has been sent..."
+		},
+		"list": {
+			"title": {
+				"search": "Search",
+				"category": "Category: {{category}}",
+				"author": "Author: {{author}}"
+			},
+			"searchbar": {
+				"search": "Place keywords in \"..\" for an exact search (diacritics are optional), for example: \"Little Nicholas\"",
+				"filter": "Quick search; diacritics are optional"
+			},
+			"actions": {
+				"search": "Open search screen",
+				"filter": "Quick filter/search",
+				"sort": "Change sorting",
+				"show": "Show all {{totalRecords}} results",
+				"crawl": "Crawl data"
+			},
+			"sort": {
+				"labels": {
+					"Title": "Title (A - Z)",
+					"LastUpdated": "Last updated",
+					"Chapters": "More chapters/sections first"
+				},
+				"header": "Sort by",
+				"button": "Set",
+				"message": "Sorting has been changed..."
+			}
+		},
+		"read": {
+			"actions": {
+				"author": "By this author",
+				"info": "Information",
+				"toc": "Table of contents",
+				"options": "Reading options",
+				"crawl": "Recrawl"
+			},
+			"navigate": {
+				"previous": "Previous",
+				"next": "Next"
+			},
+			"delete": {
+				"confirm": "Are you sure you want to delete?",
+				"message": "{{title}} has been deleted..."
+			}
+		},
+		"info": {
+			"controls": {
+				"Title": "Title",
+				"Category": "Category",
+				"Original": "Original",
+				"Author": "Author",
+				"Translator": "Translator",
+				"Publisher": "Publisher",
+				"Producer": "Producer",
+				"Source": "Source",
+				"Cover": "Cover image",
+				"LastUpdated": "Last updated",
+				"Language": "Language",
+				"Tags": "Tags",
+				"TOCs": "Table of Contents"
+			},
+			"chapters": "Number of chapters/sections",
+			"download": "Download",
+			"qrcode": {
+				"header": "QR Code",
+				"description": "Use {{scanner}} to scan the QR Code for quick access"
+			},
+			"statistics": {
+				"views": "Reads",
+				"downloads": "Downloads",
+				"total": "Total",
+				"month": "This month",
+				"week": "This week"
+			},
+			"updated": "Updated at",
+			"link": "Link",
+			"notAuthenticated": "Please log in to download e-books!"
+		},
+		"options": {
+			"title": "Reading Options",
+			"labels": {
+				"color": "Background color",
+				"font": "Font",
+				"size": "Font size",
+				"paragraph": "Line spacing",
+				"align": "Alignment",
+				"sample": "<p>I kept accelerating, day and night merging into one; the sky turned a deep blue, glowing like an early sunset;</p><p>The sun was a shimmering streak of blazing fire; the moon became a wavering band of dim light, and I could see no stars.</p>"
+			},
+			"color": {
+				"white": "White",
+				"black": "Black",
+				"sepia": "Sepia"
+			},
+			"font": {
+				"default": "Default",
+				"like-default": "Similar to default",
+				"plump": "Rounded",
+				"fat": "Fat",
+				"fancy": "Unusual"
+			},
+			"size": {
+				"smallest": "Smallest",
+				"smaller": "Smaller",
+				"small": "Small",
+				"normal": "Normal",
+				"big": "Big",
+				"bigger": "Bigger",
+				"huge": "Huge"
+			},
+			"paragraph": {
+				"one": "Normal",
+				"two": "Loose",
+				"three": "Very loose"
+			},
+			"align": {
+				"align-left": "Left",
+				"align-justify": "Justify",
+				"align-right": "Right"
+			}
+		},
+		"update": {
+			"title": {
+				"update": "Update book information",
+				"request": "Request a book information update"
+			},
+			"button": "Send request",
+			"segments": {
+				"meta": "Book information",
+				"others": "Table of contents & cover image"
+			},
+			"messages": {
+				"confirm": "Are you sure you want to discard changes?",
+				"success": "The book has been updated...",
+				"sent": "The book update request has been sent to the administrator...",
+				"sync": "Currently reading books have been synced..."
+			}
+		}
+	}
+}

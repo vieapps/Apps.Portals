@@ -1,0 +1,218 @@
+import { ChangeDetectionStrategy, Component, OnInit, ViewChild, NgZone, ChangeDetectorRef } from "@angular/core";
+import { registerLocaleData } from "@angular/common";
+import { IonInfiniteScroll } from "@ionic/angular";
+import { AppUtility } from "@app/components/app.utility";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { AppFormsService } from "@app/components/forms.service";
+import { AppPagination } from "@app/components/app.pagination";
+import { AppDataPagination, AppDataRequest } from "@app/components/app.objects";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { UsersService } from "@app/services/users.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { TrashContent } from "@app/models/base";
+import { UserProfile } from "@app/models/user";
+import { Organization, Module, ContentType } from "@app/models/portals.core.all";
+
+@Component({
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.Eager,
+	selector: "page-trash-list",
+	templateUrl: "./trash.page.html",
+	styleUrls: ["./trash.page.scss"]
+})
+
+export class TrashPage implements OnInit {
+
+	constructor(
+		private zone: NgZone,
+		private changeDetector: ChangeDetectorRef,
+		private configSvc: ConfigurationService,
+		private appFormsSvc: AppFormsService,
+		private usersSvc: UsersService,
+		private authSvc: AuthenticationService,
+		private portalsCoreSvc: PortalsCoreService
+	) {
+		this.configSvc.locales.forEach(locale => registerLocaleData(this.configSvc.getLocaleData(locale)));
+	}
+
+	@ViewChild(IonInfiniteScroll, { static: true }) private infiniteScrollCtrl: IonInfiniteScroll;
+
+	all = {
+		value: false,
+		label: "All organizations"
+	};
+	title = "Trash";
+	contents = new Array<TrashContent>();
+	request: AppDataRequest;
+	pageNumber = 0;
+	pagination: AppDataPagination;
+
+	get color() {
+		return this.configSvc.color;
+	}
+
+	get locale() {
+		return this.configSvc.locale;
+	}
+
+	get isSystemAdministrator() {
+		return this.authSvc.isSystemAdministrator();
+	}
+
+	get totalDisplays() {
+		return this.pagination !== undefined ? AppPagination.computeTotal(this.pageNumber, this.pagination) : 0;
+	}
+
+	get totalRecords() {
+		return this.pagination !== undefined ? this.pagination.TotalRecords : 0;
+	}
+
+	ngOnInit() {
+		this.initializeAsync();
+	}
+
+	private async initializeAsync() {
+		const gotRights = this.isSystemAdministrator || this.portalsCoreSvc.canManageOrganization(this.portalsCoreSvc.activeOrganization);
+		if (gotRights) {
+			await this.appFormsSvc.showLoadingAsync();
+			this.title = await this.configSvc.getResourceAsync("trash.list");
+			this.all.label = await this.configSvc.getResourceAsync("trash.all");
+			this.findAsync(() => this.appFormsSvc.hideLoadingAsync(() => TrackingUtility.trackAsync({ title: this.title, category: "Trash", action: "List" })));
+		}
+		else {
+			await Promise.all([
+				this.appFormsSvc.showToastAsync("Hmmm..."),
+				this.configSvc.navigateBackAsync()
+			]);
+		}
+	}
+
+	track(index: number, content: TrashContent) {
+		return `${content.ID}@${index}`;
+	}
+
+	onInfiniteScroll() {
+		if (this.pagination !== undefined && this.pagination.PageNumber < this.pagination.TotalPages) {
+			this.findAsync(() => this.infiniteScrollCtrl.complete());
+		}
+		else {
+			this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = true);
+		}
+	}
+
+	onAllOrganizationsChanged(event: any) {
+		this.contents = [];
+		this.pageNumber = 0;
+		this.pagination = undefined;
+		this.all.value = event.detail.checked;
+		this.infiniteScrollCtrl.complete().then(() => this.infiniteScrollCtrl.disabled = false);
+		this.appFormsSvc.showLoadingAsync().then(() => this.findAsync(() => this.appFormsSvc.hideLoadingAsync(() => this.infiniteScrollCtrl.disabled = false)));
+	}
+
+	private findAsync(onNext?: () => void) {
+		this.request = AppPagination.buildRequest(undefined, undefined, this.pagination);
+		return this.portalsCoreSvc.findTrashContentsAsync(
+			this.request,
+			this.all.value ? undefined : (this.portalsCoreSvc.activeOrganization || {}).ID,
+			data => {
+				this.pagination = data !== undefined ? AppPagination.getDefault(data) : AppPagination.get(this.request);
+				if (this.pagination !== undefined) {
+					this.pageNumber++;
+					this.pagination.PageNumber = this.pageNumber;
+				}
+				this.contents.merge(data.Objects, true, (object, array) => array.findIndex(item => item.ID === object.ID)).forEach(async content => {
+					content.Created = new Date(content.Created);
+					if (content["Creator"] === undefined) {
+						await this.usersSvc.fetchProfileAsync(content.CreatedID, true);
+						const profile = UserProfile.get(content.CreatedID);
+						content["Creator"] = profile !== undefined ? profile.Name : "Unknown";
+					}
+					if (content["Meta"] === undefined) {
+						let contentType = ContentType.get(content.RepositoryEntityID);
+						let module = Module.get(content.RepositoryID);
+						let organization = Organization.get(content.SystemID);
+						if (contentType === undefined && AppUtility.isNotEmpty(content.RepositoryEntityID)) {
+							await Promise.all([this.portalsCoreSvc.getModuleAsync(content.RepositoryID), this.portalsCoreSvc.getOrganizationAsync(content.SystemID)])
+							.then(() => this.portalsCoreSvc.getContentTypeAsync(content.RepositoryEntityID, () => {
+								contentType = ContentType.get(content.RepositoryEntityID);
+								module = Module.get(content.RepositoryID);
+								organization = Organization.get(content.SystemID);
+								this.updateMeta(content, contentType, module, organization);
+							}));
+						}
+						else if (module === undefined && AppUtility.isNotEmpty(content.RepositoryID)) {
+							await this.portalsCoreSvc.getOrganizationAsync(content.SystemID)
+							.then(() => this.portalsCoreSvc.getModuleAsync(content.RepositoryID, () => {
+								module = Module.get(content.RepositoryID);
+								organization = Organization.get(content.SystemID);	
+								this.updateMeta(content, contentType, module, organization);
+							}));
+						}
+						else if (organization === undefined && AppUtility.isNotEmpty(content.SystemID)) {
+							await this.portalsCoreSvc.getOrganizationAsync(content.SystemID, () => {
+								organization = Organization.get(content.SystemID);
+								this.updateMeta(content, contentType, module, organization);
+							});
+						}
+						if (contentType !== undefined || module !== undefined || organization !== undefined) {
+							this.updateMeta(content, contentType, module, organization);
+						}
+					}
+				});
+				if (this.configSvc.isElectronApp) {
+					this.zone.run(() => this.changeDetector.detectChanges());
+				}
+				if (onNext !== undefined) {
+					onNext();
+				}
+			},
+			error => this.appFormsSvc.showErrorAsync(error)
+		);
+	}
+
+	private updateMeta(content: TrashContent, contentType?: ContentType, module?: Module, organization?: Organization) {
+		let meta = "";
+		if (contentType !== undefined) {
+			meta = "# " + contentType.Title + (module === undefined ? "" : ` (${module.Title})`) + (organization !== undefined && this.all.value ? " @ " + organization.Title : "");
+		}
+		else if (module !== undefined) {
+			meta = module.Title + (organization !== undefined && this.all.value ? " @ " + organization.Title : "");
+		}
+		else if (organization !== undefined && this.all.value) {
+			meta = " @ " + organization.Title;
+		}
+		content["Meta"] = meta + (meta !== "" ? " - " : "");
+	}
+
+	async restoreAsync(content: TrashContent) {
+		await this.appFormsSvc.showConfirmAsync(
+			await this.configSvc.getResourceAsync("trash.confirm", { title: content.Title }),
+			async () => {
+				await this.appFormsSvc.showLoadingAsync(await this.configSvc.getResourceAsync("trash.processing"));
+				await this.portalsCoreSvc.restoreAsync(content.ID, () => this.restoreSuccessAsync(content), error => {
+					if ((error.Message || "").indexOf("Value cannot be null") > -1 ) {
+						this.restoreSuccessAsync(content);
+					}
+					else {
+						this.appFormsSvc.showErrorAsync(error);
+					}
+				});
+			},
+			"{{default}}",
+			"{{default}}"
+		);
+	}
+
+	private async restoreSuccessAsync(content: TrashContent) {
+		const message = await this.configSvc.getResourceAsync("trash.done", { title: content.Title });
+		await Promise.all([
+			TrackingUtility.trackAsync({ title: this.title, category: "Trash", action: "Restore" }),
+			this.appFormsSvc.showAlertAsync(undefined, message, undefined, () => this.contents.removeAt(this.contents.findIndex(cnt => cnt.ID == content.ID)))
+		]);
+		if (this.configSvc.isElectronApp) {
+			this.zone.run(() => this.changeDetector.detectChanges());
+		}
+	}
+
+}

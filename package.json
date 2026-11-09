@@ -1,0 +1,59 @@
+{
+	"name": "net.vieapps.portals",
+	"version": "10.2611.1",
+	"private": true,
+	"description": "Manage information and related services of VIEApps NGX CMS Portals",
+	"engines": {
+		"node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+	},
+	"scripts": {
+		"ng": "ng",
+		"start": "ng serve",
+		"serve": "node tools/ionic-serve.mjs",
+		"build": "node tools/angular-build.mjs",
+		"build:development": "ng build --configuration development",
+		"typecheck": "ngc --project tsconfig.app.json --noEmit",
+		"verify:core": "node verification/run-core-contracts.mjs",
+		"verify:session": "node verification/run-core-contracts.mjs session",
+		"verify:transport": "node verification/run-core-contracts.mjs transport",
+		"verify:forms": "node verification/run-core-contracts.mjs forms",
+		"verify:completer": "node verification/run-core-contracts.mjs completer",
+		"verify:ui:build": "ng build --configuration verification",
+		"verify:ui:serve": "ng serve --configuration verification --host 127.0.0.1 --port 4311"
+	},
+	"dependencies": {
+		"@angular/cdk": "22.2.5",
+		"@angular/common": "22.2.5",
+		"@angular/compiler": "22.2.5",
+		"@angular/core": "22.2.5",
+		"@angular/forms": "22.2.5",
+		"@angular/platform-browser": "22.2.5",
+		"@angular/router": "22.2.5",
+		"@capacitor/app": "8.1.2",
+		"@capacitor/clipboard": "8.0.1",
+		"@capacitor/core": "8.6.0",
+		"@capacitor/device": "8.0.3",
+		"@capacitor/inappbrowser": "4.1.0",
+		"@capacitor/keyboard": "8.0.6",
+		"@ionic/angular": "9.0.10",
+		"@ionic/storage-angular": "4.0.0",
+		"@ng-select/ng-select": "24.2.1",
+		"@ngx-translate/core": "18.1.0",
+		"@ngx-translate/http-loader": "18.1.0",
+		"crypto-js": "4.2.0",
+		"linqts": "3.4.0",
+		"qrcode": "1.5.4",
+		"rxjs": "7.8.2",
+		"tslib": "2.9.1",
+		"zone.js": "0.16.0"
+	},
+	"devDependencies": {
+		"@angular/build": "22.2.5",
+		"@angular/cli": "22.2.5",
+		"@angular/compiler-cli": "22.2.5",
+		"@capacitor/cli": "8.6.0",
+		"@ionic/cli": "7.2.1",
+		"@types/crypto-js": "4.2.2",
+		"typescript": "6.0.3"
+	}
+}

@@ -1,0 +1,29 @@
+<div *ngIf="books">
+	<h1 class="ion-padding-horizontal">
+		{{ labels.latest }}
+	</h1>
+	<ion-grid>
+		<ion-row>
+			<ion-col *ngFor="let book of books; trackBy: trackBook" size-xs="6" size-sm="4" size-xl="3">
+				<control-books-grid-item
+					[book]="book"
+					[hideAuthor]="false"
+					[hideCategory]="true"></control-books-grid-item>
+			</ion-col>
+		</ion-row>
+	</ion-grid>
+</div>
+<section [innerHtml]="introduction" class="ion-padding-horizontal"></section>
+<section *ngIf="status">
+	<h1 class="ion-padding-horizontal">
+		{{ labels.statistics }}
+	</h1>
+	<ul>
+		<li>
+			{{ labels.authors }}: <b>{{ status.Authors | number:'':locale }}</b>
+		</li>
+		<li>
+			{{ labels.books }}: <b>{{ status.Books | number:'':locale }}</b>
+		</li>
+	</ul>
+</section>

@@ -1,0 +1,744 @@
+import { ChangeDetectionStrategy, Component, OnInit, ViewChild } from "@angular/core";
+import { Router, RoutesRecognized, NavigationEnd } from "@angular/router";
+import { Platform, IonMenu } from "@ionic/angular";
+import { AppAPIs } from "@app/components/app.apis";
+import { AppEvents } from "@app/components/app.events";
+import { AppCrypto } from "@app/components/app.crypto";
+import { AppUtility } from "@app/components/app.utility";
+import { AppStorage } from "@app/components/app.storage";
+import { AppFormsService } from "@app/components/forms.service";
+import { AppSidebar, AppSidebarMenuItem, AppSidebarFooterItem } from "@app/components/app.objects";
+import { AppPagination } from "@app/components/app.pagination";
+import { PlatformUtility } from "@app/components/app.utility.platform";
+import { TrackingUtility } from "@app/components/app.utility.trackings";
+import { ConfigurationService } from "@app/services/configuration.service";
+import { AuthenticationService } from "@app/services/authentication.service";
+import { UsersService } from "@app/services/users.service";
+import { PortalsCoreService } from "@app/services/portals.core.service";
+import { PortalsCmsService } from "@app/services/portals.cms.service";
+import { BooksService } from "@app/services/books.service";
+import { NotificationsService } from "@app/services/notifications.service";
+import { Account } from "@app/models/account";
+import { UserProfile, UserToken } from "@app/models/user";
+import { Notification } from "@app/models/notification";
+import { Book } from "@app/models/book";
+import { Organization, Role, Module, ContentType, Expression, Site, Desktop, Portlet, SchedulingTask } from "@app/models/portals.core.all";
+import { Category, Content, Item, Link, Form, Crawler } from "@app/models/portals.cms.all";
+
+@Component({
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.Eager,
+	selector: "app-root",
+	templateUrl: "./app.component.html"
+})
+
+export class AppComponent implements OnInit {
+
+	constructor(
+		private platform: Platform,
+		private appFormsSvc: AppFormsService,
+		private configSvc: ConfigurationService,
+		private authSvc: AuthenticationService,
+		private usersSvc: UsersService,
+		private notificationsSvc: NotificationsService,
+		private portalsCoreSvc: PortalsCoreService,
+		private portalsCmsSvc: PortalsCmsService,
+		private booksSvc: BooksService,
+		router: Router
+	) {
+		console.log("<App>: Initializing...");
+		router.events.subscribe(event => {
+			if (event instanceof RoutesRecognized) {
+				if (AppAPIs.isPingPeriodTooLarge) {
+					AppAPIs.reopen("<Router>: Ping period is too large...");
+				}
+				this.configSvc.appConfig.URLs.routerParams = (event as RoutesRecognized).state.root.params;
+				this.configSvc.pushURL((event as RoutesRecognized).url, (event as RoutesRecognized).state.root.queryParams);
+				const current = this.configSvc.getCurrentURL();
+				AppEvents.broadcast("App", { Type: "Router", Mode: "Navigating", URL: current.url, Params: current.params });
+			}
+			else if (event instanceof NavigationEnd) {
+				const current = this.configSvc.getCurrentURL();
+				AppEvents.broadcast("App", { Type: "Router", Mode: "Navigated", URL: current.url, Params: current.params });
+				if (current.url === this.configSvc.appConfig.URLs.home) {
+					AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Router" });
+				}
+				if (this.configSvc.isDebug) {
+					console.log(`<Router>: URLs stack [${this.configSvc.appConfig.URLs.stack.length}]`, this.configSvc.appConfig.URLs.stack);
+				}
+			}
+		});
+	}
+
+	@ViewChild("mainMenu", { static: true }) private menuCtrl: IonMenu;
+	private _time = new Date();
+
+	sidebar: AppSidebar = {
+		Header: {
+			Avatar: undefined,
+			AvatarOnClick: undefined,
+			Title: undefined,
+			TitleOnClick: undefined
+		},
+		Footer: new Array<AppSidebarFooterItem>(),
+		TopMenu: new Array<AppSidebarMenuItem>(),
+		MainMenu: new Array<{
+			Name: string;
+			Parent?: AppSidebarMenuItem;
+			Items: Array<AppSidebarMenuItem>
+		}>(),
+		State: {
+			Profile: false,
+			Search: true,
+			Visible: true,
+			Active: ""
+		},
+		toggle: undefined,
+		active: undefined,
+		updateTopMenu: undefined,
+		normalizeTopMenu: undefined,
+		updateMainMenu: undefined,
+		updateHeader: undefined,
+		updateFooter: undefined,
+		normalizeFooter: undefined,
+		updateBadge: undefined
+	};
+
+	get sidebarFooter() {
+		return this.sidebar.Footer.filter(btn => !!btn.Name && !!btn.Icon);
+	}
+
+	get color() {
+		return this.configSvc.color;
+	}
+
+	get isSidebarShown() {
+		return this.sidebar.State.Visible && this.configSvc.screenWidth >= 1200;
+	}
+
+	get isSidebarTopMenuShown() {
+		return !(this.sidebar.State.Active === "notifications" || this.sidebar.State.Active === "chat" || this.sidebar.State.Active === "preferences");
+	}
+
+	ngOnInit() {
+		return this.platform.ready().then(async () => {
+			const appConfig = this.configSvc.appConfig;
+			const uri = appConfig.isWebApp ? AppUtility.parseURI() : undefined;
+
+			const resetApps = () => {
+				["URIs", "Options", "GeoMeta-Country", "GeoMeta-Countries", "GeoMeta-Provinces", "Session"].forEach(name => AppStorage.removeAsync(name));
+				appConfig.options = appConfig.defaultOptions;
+			};
+			const disableServices = (services: string, updateFooter: boolean = false) => AppUtility.toArray(services).filter(name => AppUtility.isNotEmpty(name)).forEach(name => {
+				[this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc].filter(service => AppUtility.isEquals(service.name, name)).forEach(service => service.deinitialize());
+				appConfig.services.all.removeAt(appConfig.services.all.findIndex(svc => AppUtility.isEquals(svc.name, name)));
+				if (updateFooter) {
+					this.sidebar.Footer.removeAt(this.sidebar.Footer.findIndex(item => AppUtility.isEquals(item.Name, name)));
+					console.log("<App>: Available services", appConfig.services.all.map(svc => svc.name));
+				}
+			});
+
+			if (appConfig.isWebApp) {
+				if (uri.QueryParams["xhr"] !== undefined) {
+					appConfig.app.query.preferXHR = true;
+				}
+				if (uri.QueryParams["xhr-token"] !== undefined) {
+					appConfig.app.query.includeToken = true;
+				}
+				if (uri.QueryParams["tunnel-as-sse"] !== undefined) {
+					appConfig.app.websocketAsTunnel = false;
+				}
+				if (uri.QueryParams["debug"] !== undefined) {
+					appConfig.app.debug = true;
+				}
+				if (uri.QueryParams["account-registrable"] === "true") {
+					appConfig.accounts.registrable = true;
+				}
+				if (uri.QueryParams["reset"] !== undefined) {
+					resetApps();
+				}
+				appConfig.services.all.map((svc, index) => ({ availableHosts: svc.availableHosts || [], unavailableHosts: svc.unavailableHosts || [], index: index })).forEach(info => {
+					if ((info.availableHosts.length > 0 && info.availableHosts.indexOf(uri.Host) < 0) || (info.unavailableHosts.length > 0 && info.unavailableHosts.indexOf(uri.Host) > -1)) {
+						appConfig.services.all.removeAt(info.index);
+					}
+				});
+			}
+
+			await this.configSvc.loadURIsAsync(appConfig.isWebApp && uri.QueryParams["reset"] === undefined ? uri.QueryParams["URIs"] : undefined);
+			await this.configSvc.loadOptionsAsync();
+			await this.configSvc.prepareLanguagesAsync();
+
+			const session = await AppStorage.getAsync("Session") || {};
+			if (AppUtility.isNotEmpty(session.device) ) {
+				appConfig.session.device = session.device;
+			}
+
+			await this.configSvc.preparePlatformAsync();
+			this.configSvc.prepare();
+			this.prepareSidebar();
+			this.prepareEventProcessors();
+
+			let activeService = appConfig.services.all.first(svc => svc.name === appConfig.services.active.service);
+			if (activeService === undefined) {
+				activeService = appConfig.services.all.first();
+				appConfig.services.active.service = activeService.name;
+				appConfig.app.name = activeService.appName || appConfig.app.name;
+				appConfig.app.description = activeService.appDescription || appConfig.app.description;
+			}
+			this.sidebar.State.Active = activeService.sidebar || activeService.name.toLowerCase();
+
+			[this.usersSvc, this.notificationsSvc, this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc]
+				.filter(service => "Users" === service.name || "Notifications" === service.name || appConfig.services.all.findIndex(svc => AppUtility.isEquals(svc.name, service.name)) > -1)
+				.forEach(service => service.initialize());
+			if (!appConfig.isNativeApp) {
+				disableServices(uri.QueryParams["disable-services"]);
+			}
+
+			this.sidebar.Header.Title = appConfig.app.name;
+			await this.updateSidebarAsync({}, true);
+
+			const isActivate = appConfig.isWebApp && AppUtility.isEquals("activate", uri.QueryParams["prego"]);
+			const message = await this.configSvc.getResourceAsync(`common.messages.${isActivate ? "activating" : "initializing"}`);
+			await this.appFormsSvc.showLoadingAsync(message);
+			isActivate ? this.activate() : this.initialize();
+
+			if (!appConfig.isNativeApp) {
+				if (this.configSvc.isWebApp) {
+					PlatformUtility.preparePWAEnvironment(() => this.configSvc.watchFacebookConnect());
+				}
+				window["__vieapps"] = {
+					apis: AppAPIs,
+					config: appConfig,
+					crypto: AppCrypto,
+					events: AppEvents,
+					utils: AppUtility,
+					reset: (apis: string, ws: string, files: string, portals: string, apps: string, disabledServices?: string, dontStoreURIs: boolean = true) => this.appFormsSvc.showLoadingAsync().then(() => {
+						resetApps();
+						disableServices(disabledServices, true);
+						this.configSvc.loadURIsAsync(AppCrypto.base64Encode(AppUtility.stringify({	apis: apis, ws: ws, files: files, portals: portals, apps: apps	})))
+							.then(() => this.configSvc.loadOptionsAsync())
+							.then(() => dontStoreURIs ? AppStorage.removeAsync("URIs") : AppUtility.promise)
+							.then(() => appConfig.session.id = appConfig.session.token = appConfig.session.account = undefined)
+							.then(() => AppAPIs.close())
+							.then(() => this.initialize(() => this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.users.login)));
+					}),
+					resetApps: function(domain: string, disabledServices?: string, dontStoreURIs: boolean = true) {
+						this.reset(`https://apis.${domain}/`, `https://apis.${domain}/`, `https://files.${domain}/`, `https://portals.${domain}/`, `https://cms.${domain}/`, disabledServices, dontStoreURIs);
+					},
+					getRedirectURL: (systemID: string, objectID: string, objectNameOrRepositoryEntityID: string) => {
+						const request = {
+							SystemID: systemID,
+							ObjectID: objectID
+						};
+						request[objectNameOrRepositoryEntityID !== undefined && objectNameOrRepositoryEntityID.length === 32 ? "RepositoryEntityID" : "ObjectName"] = objectNameOrRepositoryEntityID;
+						console.log("home?redirect=" + AppCrypto.base64urlEncode("/portals/initializer?x-request=" + AppCrypto.base64urlEncode(AppUtility.stringify(request))));
+					},
+					open: (uri: string) => {
+						try {
+							console.log(`<App>: Open an URI => ${uri}`);
+							this.configSvc.navigateForwardAsync(uri);
+						}
+						catch (error) {
+							console.error("Cannot open", error);
+						}
+					}
+				};
+				AppEvents.on("App", info => {
+					if ("Initialized" === info.args.Type) {
+						AppUtility.invoke(() => {
+							window["__vieapps"]["services"] = {
+								config: this.configSvc,
+								forms: this.appFormsSvc,
+								users: this.usersSvc,
+								authentication: this.authSvc,
+								notifications: this.notificationsSvc,
+								books: this.booksSvc,
+								portals: {
+									core: this.portalsCoreSvc,
+									cms: this.portalsCmsSvc
+								}
+							};
+							window["__vieapps"]["data"] = {
+								accounts: Account.instances,
+								users: UserProfile.instances,
+								tokens: UserToken.instances,
+								books: Book.instances,
+								paginations: AppPagination.instances,
+								notifications: Notification.instances,
+								organizations: Organization.instances,
+								roles: Role.instances,
+								modules: Module.instances,
+								contentTypes: ContentType.instances,
+								expressions: Expression.instances,
+								sites: Site.instances,
+								desktops: Desktop.instances,
+								portlets: Portlet.instances,
+								schedulingTasks: SchedulingTask.instances,
+								categories: Category.instances,
+								contents: Content.instances,
+								items: Item.instances,
+								links: Link.instances,
+								forms: Form.instances,
+								crawlers: Crawler.instances
+							};
+							AppEvents.off("App", "AssignAppDebugInfo");
+							if (this.configSvc.isDebug) {
+								console.log("<App>: Debug info", window["__vieapps"]);
+							}
+						}, 1234);
+					}
+				}, "AssignAppDebugInfo");
+			}
+		}).catch(error => {
+			console.error("<App>: Initialization failed", error);
+			return this.appFormsSvc.hideLoadingAsync();
+		});
+	}
+
+	private prepareSidebar() {
+		this.sidebar.Header.AvatarOnClick = () => AppEvents.broadcast("Navigate", { Type: "Profile" });
+		this.sidebar.Header.TitleOnClick = () => {};
+
+		this.sidebar.toggle = (visible?: boolean) => {
+			this.sidebar.State.Visible = visible !== undefined ? !!visible : !this.sidebar.State.Visible;
+			if (this.sidebar.State.Visible) {
+				this.menuCtrl.open();
+			}
+			else {
+				this.menuCtrl.close();
+			}
+		};
+
+		this.sidebar.active = (name?: string, open?: boolean) => {
+			if (!!name && name !== this.sidebar.State.Active) {
+				const onClick = (this.sidebar.Footer.find(item => item.Name === name) || {}).OnClick;
+				if (typeof onClick === "function") {
+					onClick(name, this.sidebar);
+				}
+				this.sidebar.State.Active = name;
+			}
+			if (!!open) {
+				this.sidebar.toggle(true);
+			}
+		};
+
+		this.sidebar.updateTopMenu = (items: Array<AppSidebarMenuItem>) => {
+			this.sidebar.TopMenu = items || [];
+		};
+
+		this.sidebar.normalizeTopMenu = () => {
+			if (!this.sidebar.State.Search) {
+				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => !!item.Link && item.Link.indexOf("/search") > 0));
+			}
+			if (this.configSvc.isAuthenticated) {
+				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => !!item.Link && item.Link.startsWith(this.configSvc.appConfig.URLs.users.login)));
+				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => !!item.Link && item.Link.startsWith(this.configSvc.appConfig.URLs.users.register)));
+				if (!this.sidebar.State.Profile) {
+					this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => !!item.Link && item.Link.startsWith(this.configSvc.appConfig.URLs.users.profile)));
+				}
+			}
+			else {
+				this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => !!item.Link && item.Link.startsWith(this.configSvc.appConfig.URLs.users.profile)));
+				if (!this.authSvc.canRegisterNewAccounts) {
+					this.sidebar.TopMenu.removeAt(this.sidebar.TopMenu.findIndex(item => !!item.Link && item.Link.startsWith(this.configSvc.appConfig.URLs.users.register)));
+				}
+			}
+		};
+
+		this.sidebar.updateMainMenu = (name: string, parent: AppSidebarMenuItem, items: Array<AppSidebarMenuItem>, index?: number) => {
+			index = index !== undefined ? index : 0;
+			if (index < 0) {
+				index = this.sidebar.MainMenu.length;
+			}
+			while (this.sidebar.MainMenu.length < index + 1) {
+				this.sidebar.MainMenu.push({ Name: undefined, Parent: undefined, Items: [] });
+			}
+			this.sidebar.MainMenu.update({ Name: name || this.sidebar.State.Active, Parent: parent, Items: items || [] }, index);
+		};
+
+		this.sidebar.updateHeader = (args: { title?: string; onClick?: (sidebar?: AppSidebar, event?: Event) => void; updateAvatar?: boolean; }) => {
+			args = args || {};
+			if (AppUtility.isNotEmpty(args.title)) {
+				this.sidebar.Header.Title = args.title;
+			}
+			if (typeof args.onClick === "function") {
+				this.sidebar.Header.TitleOnClick = args.onClick;
+			}
+			if (!!args.updateAvatar) {
+				const profile = this.configSvc.getAccount().profile;
+				this.sidebar.Header.Avatar = profile !== undefined ? profile.avatarURI : undefined;
+			}
+		};
+
+		this.sidebar.updateFooter = (args: { items?: Array<AppSidebarFooterItem>; predicate?: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean; onUpdated?: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void; beRemoved?: Array<string>; }) => {
+			if (AppUtility.isArray(args.items, true)) {
+				const predicate: (sidebar: AppSidebar, item: AppSidebarFooterItem) => boolean = typeof args.predicate === "function"
+					? (sidebar, item) => args.predicate(sidebar, item)
+					: (sidebar, item) => sidebar.Footer.findIndex(icon => icon.Name === item.Name) < 0;
+				const onUpdated: (sidebar: AppSidebar, item: AppSidebarFooterItem) => void = typeof args.onUpdated === "function" ? args.onUpdated : () => {};
+				args.items.filter(item => predicate(this.sidebar, item)).forEach(item => {
+					const position = item.Position !== undefined ? item.Position : this.sidebar.Footer.length;
+					while (this.sidebar.Footer.length <= position) {
+						this.sidebar.Footer.push({ Name: undefined, Icon: undefined });
+					}
+					this.sidebar.Footer.update(item, position);
+					onUpdated(this.sidebar, item);
+				});
+				this.sidebar.normalizeFooter();
+			}
+			if (AppUtility.isArray(args.beRemoved, true)) {
+				args.beRemoved.forEach(name => this.sidebar.Footer.removeAt(this.sidebar.Footer.findIndex(item => item.Name === name)));
+			}
+		};
+
+		this.sidebar.normalizeFooter = () => {
+			if (!this.configSvc.isAuthenticated) {
+				this.sidebar.Footer.removeAt(this.sidebar.Footer.findIndex(item => item.Name === "preferences"));
+			}
+			else if (this.sidebar.Footer.findIndex(item => item.Name === "preferences") < 0) {
+				AppUtility.invoke(async () => this.sidebar.updateFooter({ items: [{
+					Name: "preferences",
+					Icon: "settings",
+					Badge: Notification.unread.size,
+					Title: await this.configSvc.getResourceAsync("common.preferences.label"),
+					OnClick: (name: string, sidebar: AppSidebar) => {
+						sidebar.State.Active = name;
+						sidebar.active(name, true);
+					}
+				}]}), 1234);
+			}
+		};
+
+		this.sidebar.updateBadge = (name: string, badge: number) => {
+			const item = !!name ? this.sidebar.Footer.find(btn => btn.Name === name) : undefined;
+			if (item !== undefined) {
+				item.Badge = badge;
+			}
+		};
+	}
+
+	private async updateSidebarAsync(args: { header?: any; footer?: Array<AppSidebarFooterItem>; name?: string; parent?: AppSidebarMenuItem, items?: Array<AppSidebarMenuItem>; index?: number; }, updateTopMenu: boolean = false, onNext?: () => void) {
+		args = args || {};
+
+		if (AppUtility.isObject(args.header, true)) {
+			this.sidebar.Header = {
+				Avatar: args.header.Avatar || this.sidebar.Header.Avatar,
+				AvatarOnClick: args.header.AvatarOnClick || this.sidebar.Header.AvatarOnClick || (() => {}),
+				Title: args.header.Title || this.sidebar.Header.Title,
+				TitleOnClick: args.header.TitleOnClick || this.sidebar.Header.TitleOnClick || (() => {})
+			};
+		}
+
+		if (AppUtility.isArray(args.footer, true)) {
+			this.sidebar.Footer = args.footer;
+			this.sidebar.normalizeFooter();
+		}
+
+		if (updateTopMenu) {
+			this.sidebar.updateTopMenu([
+				{
+					Title: await this.configSvc.getResourceAsync("common.sidebar.home"),
+					Link: this.configSvc.appConfig.URLs.home,
+					Icon: { Name: "home", Color: "primary", Slot: "start" },
+					OnClick: data => {
+						const previousURL = this.configSvc.currentURL;
+						this.configSvc.navigateRootAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "HomePage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.State.Active, PreviousURL: previousURL }));
+					}
+				},
+				{
+					Title: await this.configSvc.getResourceAsync("common.sidebar.login"),
+					Link: this.configSvc.appConfig.URLs.users.login,
+					Icon: { Name: "log-in", Color: "success", Slot: "start" },
+					OnClick: data => this.configSvc.navigateForwardAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "LogInPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.State.Active }))
+				},
+				{
+					Title: await this.configSvc.getResourceAsync("common.sidebar.register"),
+					Link: this.configSvc.appConfig.URLs.users.register,
+					Icon: { Name: "person-add", Color: "warning", Slot: "start" },
+					OnClick: data => this.configSvc.navigateForwardAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "RegisterPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.State.Active }))
+				},
+				{
+					Title: await this.configSvc.getResourceAsync("common.sidebar.profile"),
+					Link: `${this.configSvc.appConfig.URLs.users.profile}/my`,
+					Icon: { Name: "person", Color: "warning", Slot: "start" },
+					OnClick: data => this.configSvc.navigateForwardAsync(data.Link).then(() => AppEvents.broadcast("App", { Type: "ProfilePage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.State.Active }))
+				},
+				{
+					Title: await this.configSvc.getResourceAsync("common.sidebar.search"),
+					Icon: { Name: "search", Color: "tertiary", Slot: "start" },
+					OnClick: _ => this.configSvc.navigateForwardAsync(this.configSvc.appConfig.URLs.search).then(() => AppEvents.broadcast("App", { Type: "SearchPage", Mode: "Open", Source: "Sidebar", Active: this.sidebar.State.Active }))
+				}
+			]);
+		}
+
+		if (args.name !== undefined || args.parent !== undefined || args.items !== undefined) {
+			const parent = AppUtility.isObject(args.parent, true)
+				? this.getSidebarMainMenuItem(args.parent, !!args.parent.Expanded, args.parent.OnClick || (_ => {}))
+				: undefined;
+			if (parent !== undefined) {
+				parent.Title = await this.appFormsSvc.normalizeResourceAsync(parent.Title);
+			}
+			const items = AppUtility.isArray(args.items, true)
+				? args.items.map(item => this.getSidebarMainMenuItem(item)).filter(item => AppUtility.isNotEmpty(item.Title))
+				: undefined;
+			await Promise.all((items || []).map(async item => item.Title = await this.appFormsSvc.normalizeResourceAsync(item.Title)));
+			this.sidebar.updateMainMenu(args.name, parent, items, args.index);
+		}
+
+		if (onNext !== undefined) {
+			onNext();
+		}
+	}
+
+	private async updateSidebarMainMenuItemAsync(args: any) {
+		let menuIndex = args.menuIndex !== undefined ? +args.menuIndex : -1;
+		if (menuIndex < 0) {
+			menuIndex = 0;
+		}
+		else if (menuIndex >= this.sidebar.MainMenu.length) {
+			menuIndex = this.sidebar.MainMenu.length;
+			this.sidebar.MainMenu.push({ Name: undefined, Parent: undefined, Items: [] });
+		}
+		const menuItem = this.getSidebarMainMenuItem(args.itemInfo);
+		menuItem.Title = await this.appFormsSvc.normalizeResourceAsync(menuItem.Title);
+		this.sidebar.MainMenu[menuIndex].Items.update(menuItem, args.itemIndex !== undefined ? +args.itemIndex : -1);
+	}
+
+	private getSidebarMainMenuItem(args: any, expanded?: boolean, onClick?: (data?: any, sidebar?: AppSidebar, event?: Event) => void): AppSidebarMenuItem {
+		const gotChildren = expanded === undefined && AppUtility.isArray(args.Children, true) && AppUtility.isGotData(args.Children);
+		return {
+			ID: args.ID,
+			Title: args.Title,
+			Link: args.Link,
+			Params: args.Params,
+			Direction: args.Direction,
+			Children: gotChildren ? (args.Children as Array<any>).map(item => this.getSidebarMainMenuItem(item)) : [],
+			Expanded: expanded !== undefined ? expanded : gotChildren && !!args.Expanded,
+			Detail: !gotChildren && !!args.Detail,
+			Badge: args.Badge !== undefined && +args.Badge > 0 ? +args.Badge : 0,
+			Thumbnail: args.Thumbnail,
+			Icon: args.Icon,
+			OnClick: typeof args.OnClick === "function"
+				? args.OnClick
+				: typeof onClick === "function"
+					? onClick
+					: (data, sidebar) => {
+						const menuItem = data.childIndex !== undefined ? sidebar.MainMenu[data.menuIndex].Items[data.itemIndex].Children[data.childIndex] : sidebar.MainMenu[data.menuIndex].Items[data.itemIndex];
+						this.configSvc.navigateAsync(menuItem.Direction, menuItem.Link, menuItem.Params);
+					}
+		} as AppSidebarMenuItem;
+	}
+
+	trackSidebarItem(index: number, item: any) {
+		return `${item.ID || item.Name || item.Title}@${index}`;
+	}
+
+	private preflightAsync(fetchMessage: string, preloadMessage: string) {
+		const isDebug = this.configSvc.isDebug;
+		const settings = this.configSvc.appConfig.options.preload || this.configSvc.appConfig.defaultOptions.preload;
+		return AppUtility.invoke(() => {
+			this.notificationsSvc.fetchNotificationsAsync().then(isDebug ? () => console.log(fetchMessage) : () => {})
+			.then(() => AppUtility.invoke(() => {
+				this.portalsCoreSvc.getActiveOrganizationsAsync(false).then(isDebug ? () => console.log(preloadMessage) : () => {})
+				.then(() => AppUtility.invoke(() => {
+					const organizations = this.portalsCoreSvc.activeOrganizations.map(id => Organization.get(id)).filter(organization => organization !== undefined && (Organization.active === undefined || organization.ID !== Organization.active.ID));
+					if (isDebug) {
+						console.log("<App>: Preload tasks, sites & desktops", organizations.map(organization => organization.Title));
+					}
+					Promise.all(organizations.map((organization, index) => Promise.all([
+						!!SchedulingTask.instances.first(schedulingTask => schedulingTask.SystemID === organization.ID) ? AppUtility.promise : AppUtility.invoke(() => {
+							if (isDebug) {
+								console.log("<App>: Fetch scheduling tasks", organization);
+							}
+							this.portalsCoreSvc.fetchSchedulingTasks(organization.ID);
+						}, 4567 + (123 * index)),
+						!!Site.instances.first(site => site.SystemID === organization.ID) ? AppUtility.promise : AppUtility.invoke(() => {
+							if (isDebug) {
+								console.log("<App>: Fetch sites", organization);
+							}
+							this.portalsCoreSvc.fetchSitesAsync(organization);
+						}, 6789 + (123 * index)),
+						!!Desktop.instances.first(desktop => desktop.SystemID === organization.ID) ? AppUtility.promise : AppUtility.invoke(() => {
+							if (isDebug) {
+								console.log("<App>: Fetch desktops", organization);
+							}
+							this.portalsCoreSvc.fetchDesktops(organization.ID);
+						}, 12345 + (123 * index))
+					])))
+					.then(() => AppUtility.invoke(() => (settings.categories ? this.portalsCmsSvc.prepareCategoriesOfActiveOrganizationsAsync() : AppUtility.promise).then(() => AppUtility.invoke(() => settings.featured ? this.portalsCmsSvc.prepareFeaturedContentsOfActiveOrganizationsAsync() : AppUtility.promise, settings.featured ? 234567 : 0)), settings.categories ? 123456 : 0));
+				}, 12345));
+			}, 6789));
+		}, 3456);
+	}
+
+	private prepareEventProcessors() {
+		AppEvents.on("ToggleSidebar", info => this.sidebar.toggle(info.args.Visible));
+		AppEvents.on("ActiveSidebar", info => this.sidebar.active(info.args.Name, info.args.Visible));
+		AppEvents.on("OpenSidebar", info => this.sidebar.active(info.args.Name, true));
+		AppEvents.on("CloseSidebar", _ => this.sidebar.toggle(false));
+
+		AppEvents.on("UpdateSidebar", info => this.updateSidebarAsync(info.args));
+		AppEvents.on("UpdateSidebarItem", info => this.updateSidebarMainMenuItemAsync(info.args));
+
+		AppEvents.on("UpdateSidebarHeader", info => this.sidebar.updateHeader(info.args));
+		AppEvents.on("UpdateSidebarFooter", info => this.sidebar.updateFooter(info.args));
+
+		AppEvents.on("Navigate", info => this.configSvc.navigateAsync(
+			info.args.Direction,
+			"LogIn" === info.args.Type
+				? this.configSvc.appConfig.URLs.users.login
+				: "Profile" === info.args.Type
+					? `${this.configSvc.appConfig.URLs.users.profile}/my`
+					: "Profiles" === info.args.Type || "Accounts" === info.args.Type
+						? this.configSvc.appConfig.URLs.users.list
+						: info.args.url || this.configSvc.appConfig.URLs.home
+		));
+
+		AppEvents.on("App", info => {
+			if ("Language" === info.args.Type && "Changed" === info.args.Mode) {
+				this.updateSidebarAsync({}, true, () => this.sidebar.normalizeTopMenu());
+			}
+		});
+
+		AppEvents.on("Session", info => {
+			if ("LogIn" === info.args.Type || "LogOut" === info.args.Type) {
+				if ("LogIn" === info.args.Type) {
+					this.preflightAsync("<App>: Fetch notifications (log in)", "<App>: Fetch active organizations (log in)");
+				}
+				else {
+					if (this.configSvc.isDebug) {
+						console.log("<App>: Update sidebar header (when session got updated)", info.args);
+					}
+					this.sidebar.updateHeader({ title: this.configSvc.appConfig.app.name, onClick: () => {}, updateAvatar: true });
+				}
+				if (this.configSvc.isDebug) {
+					console.log("<App>: Update sidebar (when session got updated)", info.args);
+				}
+				this.updateSidebarAsync({}, true, () => this.sidebar.normalizeTopMenu());
+			}
+		});
+
+		AppEvents.on("Profile", info => {
+			if ("Updated" === info.args.Type && ("APIs" === info.args.Mode || "Apps" === info.args.Mode || "Avatar" === info.args.Mode)) {
+				if (this.configSvc.isDebug) {
+					console.log("<App>: Update sidebar header (when profile got updated)", info.args);
+				}
+				this.sidebar.updateHeader({ updateAvatar: true });
+			}
+		});
+
+		AppEvents.on("UpdateUnreadNotifications", _ => this.sidebar.updateBadge("preferences", Notification.unread.size));
+	}
+
+	private activate() {
+		TrackingUtility.trackAsync({ title: "Users - Activate",  campaignUrl: "users/activate", category: "Users:Activation", action: "Activate" }, false);
+		const mode = this.configSvc.queryParams["mode"];
+		const code = this.configSvc.queryParams["code"];
+		if (AppUtility.isNotEmpty(mode) && AppUtility.isNotEmpty(code)) {
+			this.usersSvc.activateAsync(
+				mode,
+				code,
+				() => this.initialize(async () => this.showActivationResult({
+					Header: await this.configSvc.getResourceAsync(`users.activate.header.${("account" === mode ? "account" : "password")}`),
+					Message: await this.configSvc.getResourceAsync(`users.activate.subHeader.success`),
+					SubMessage: await this.configSvc.getResourceAsync(`users.activate.messages.success.${("account" === mode ? "account" : "password")}`)
+				}), true),
+				error => this.initialize(async () => this.showActivationResult({
+					Header: await this.configSvc.getResourceAsync(`users.activate.header.${("account" === mode ? "account" : "password")}`),
+					Message: await this.configSvc.getResourceAsync(`users.activate.subHeader.error`),
+					SubMessage: await this.configSvc.getResourceAsync("users.activate.messages.error.general", { error: (error ? ` (${error.Message})` : "") })
+				}))
+			);
+		}
+		else {
+			this.initialize(async () => this.showActivationResult({
+				Header: await this.configSvc.getResourceAsync(`users.activate.header.${("account" === mode ? "account" : "password")}`),
+				Message: await this.configSvc.getResourceAsync(`users.activate.subHeader.error`),
+				SubMessage: await this.configSvc.getResourceAsync("users.activate.messages.error.invalid", { mode: mode, code: code })
+			}));
+		}
+	}
+
+	private showActivationResult(data: any) {
+		this.appFormsSvc.showAlertAsync(data.Header, data.Message, data.SubMessage, () => this.configSvc.navigateRootAsync());
+	}
+
+	private initialize(onNext?: () => void, dontInitializeSession?: boolean) {
+		this.configSvc.initializeAsync(
+			() => {
+				if (this.configSvc.isReady && this.configSvc.isAuthenticated) {
+					console.log(`<App>: The session is initialized & registered (user) [${AppUtility.getElapsedTime(this._time)}]`, this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+					this.finalize(onNext);
+				}
+				else {
+					console.log("<App>: Register the initialized session (anonymous)", this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+					this.configSvc.registerSessionAsync(
+						() => {
+							console.log(`<App>: The session is registered (anonymous) [${AppUtility.getElapsedTime(this._time)}]`, this.configSvc.isDebug ? this.configSvc.appConfig.session : "");
+							this.finalize(onNext);
+						},
+						error => {
+							if (AppUtility.isGotSecurityException(error)) {
+								console.warn("<App>: Cannot register, the session is need to be re-initialized (anonymous)");
+								this.configSvc.resetSessionAsync(() => AppUtility.invoke(() => this.initialize(onNext, dontInitializeSession), 234));
+							}
+							else {
+								this.appFormsSvc.hideLoadingAsync(() => console.error(`<App>: Cannot initialize the app => ${AppUtility.getErrorMessage(error)}`, error));
+							}
+						}
+					);
+				}
+			},
+			error => {
+				if (AppUtility.isGotSecurityException(error)) {
+					console.warn("<App>: Cannot initialize, the session is need to be re-initialized (anonymous)");
+					this.configSvc.resetSessionAsync(() => AppUtility.invoke(() => this.initialize(onNext, dontInitializeSession), 234));
+				}
+				else {
+					this.appFormsSvc.hideLoadingAsync(() => console.error(`<App>: Cannot initialize the app => ${AppUtility.getErrorMessage(error)}`, error));
+				}
+			},
+			dontInitializeSession
+		);
+	}
+
+	private finalize(onNext?: () => void) {
+		this.sidebar.normalizeTopMenu();
+		this.appFormsSvc.hideLoadingAsync()
+		.then(() => Promise.all([this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc]
+			.filter(service => this.configSvc.appConfig.services.all.findIndex(svc => svc.name === service.name) > -1)
+			.map(service => service.initializeAsync())
+		).then(() => AppAPIs.open(() => AppAPIs.isReopen ? AppUtility.promise : Promise.all([
+			this.configSvc.isAuthenticated ? this.usersSvc.fetchStatisticsAsync() : AppUtility.promise,
+			this.configSvc.isAuthenticated ? this.preflightAsync("<App>: Fetch notifications (app init)", "<App>: Fetch active organizations (app init)") : AppUtility.promise,
+			AppUtility.invoke(() => {
+				const data = {
+					URIs: this.configSvc.appConfig.URIs,
+					app: this.configSvc.appConfig.app,
+					session: this.configSvc.appConfig.session,
+					services: this.configSvc.appConfig.services,
+					accounts: this.configSvc.appConfig.accounts,
+					options: this.configSvc.appConfig.options,
+					languages: this.configSvc.appConfig.languages
+				};
+				AppEvents.broadcast("App", { Type: "Initialized", Data: data });
+				AppEvents.sendToElectron("App", { Type: "Initialized", Data: data });
+			}),
+			AppUtility.invoke(onNext !== undefined ? () => onNext() : () => {
+				let redirect = this.configSvc.queryParams["redirect"] as string || this.configSvc.appConfig.URLs.redirectToWhenReady;
+				if (AppUtility.isNotEmpty(redirect)) {
+					this.configSvc.appConfig.URLs.redirectToWhenReady = undefined;
+					this.configSvc.appConfig.URLs.stack.update({ url: this.configSvc.appConfig.URLs.home, params: {} }, this.configSvc.appConfig.URLs.stack.length - 1);
+					try {
+						redirect = AppCrypto.base64urlDecode(redirect);
+						console.log(`<App>: Redirect to the requested URI => ${redirect}`);
+						this.configSvc.navigateForwardAsync(redirect);
+					}
+					catch (error) {
+						console.error(`<App>: The requested URI for redirecting is not well-form => ${redirect}`, error);
+					}
+				}
+			})
+		]).then(() => console.log(`<App>: Initialized [${AppUtility.getElapsedTime(this._time)}]`, this.configSvc.appConfig.app)))));
+	}
+}

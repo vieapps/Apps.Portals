@@ -1,0 +1,28 @@
+h1 {
+	margin: 0;
+}
+span {
+	margin-right: 16px;
+}
+label {
+	font-weight: bold;
+}
+ul > li {
+	margin: 8px 0;
+}
+ul.files > li {
+	margin: 16px 0;
+}
+img {
+	border-radius: 5px;
+	width: 270px;
+	max-width: 100%;
+}
+.qrcode > span {
+	font-size: 80%;
+	font-weight: normal;
+	color: var(--ion-color-medium);
+}
+ion-icon, a, ul.files > li {
+	cursor: pointer;
+}

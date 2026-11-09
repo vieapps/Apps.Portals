@@ -1,0 +1,47 @@
+<ion-list>
+	<ion-list-header *ngIf="label" [color]="color">
+		<ion-label>
+			{{ label }}
+		</ion-label>
+	</ion-list-header>
+	<ion-item *ngFor="let attachment of attachments; trackBy: track" [color]="color">
+		<ion-checkbox [attr.aria-label]="attachment.Title" *ngIf="allowSelect" slot="end" [checked]="selected.contains(attachment.ID)" (ionChange)="onSelect($event, attachment)"></ion-checkbox>
+		<ion-label>
+			<ion-buttons *ngIf="allowEdit || allowDelete" class="ion-float-end">
+				<ion-button *ngIf="allowEdit" fill="clear" color="medium" (click)="onEdit($event, attachment)">
+					<ion-icon name="create" slot="icon-only"></ion-icon>
+				</ion-button>
+				<ion-button *ngIf="allowDelete" fill="clear" color="medium" (click)="onDelete($event, attachment)">
+					<ion-icon name="trash" slot="icon-only"></ion-icon>
+				</ion-button>
+			</ion-buttons>
+			<span>
+				<ion-icon [name]="attachment.icon" class="ion-float-start"></ion-icon>
+				{{ attachment.Title }}
+			</span>
+			<div *ngIf="showIcons">
+				<span class="ion-float-start margin-top-10">
+					{{ attachment.friendlyFilename }} - {{ attachment.Size | number:'':locale }} bytes
+				</span>
+				<a (click)="open(attachment.URIs.Alternative)" [class]="cssIcons">
+					<ion-icon name="open" color="medium" slot="icon-only" title="Open"></ion-icon>
+				</a>
+				<a (click)="copy(attachment.URIs.Download)" [class]="cssIcons">
+					<ion-icon name="download" color="medium" slot="icon-only" title="Copy download URI"></ion-icon>
+				</a>
+				<a (click)="copy(attachment.URIs.Direct)" [class]="cssIcons">
+					<ion-icon name="link" color="medium" slot="icon-only" title="Copy direct URI"></ion-icon>
+				</a>
+				<a *ngIf="attachment.isImage && !!attachment.URIs.Thumbnail" (click)="copy(attachment.URIs.Thumbnail)" [class]="cssIcons">
+					<ion-icon name="image" color="medium" slot="icon-only" title="Copy thumbnail URI"></ion-icon>
+				</a>
+				<a [class]="cssIcons">
+					<ion-icon *ngIf="attachment.IsShared" name="share-social" color="medium" slot="icon-only"></ion-icon>
+				</a>
+				<a [class]="cssIcons">
+					<ion-icon *ngIf="attachment.IsTracked" name="analytics" color="medium" slot="icon-only"></ion-icon>
+				</a>
+			</div>
+		</ion-label>
+	</ion-item>
+</ion-list>

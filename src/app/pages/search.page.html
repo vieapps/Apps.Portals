@@ -1,0 +1,70 @@
+<ion-header>
+	<ion-toolbar [color]="color">
+		<ion-buttons slot="end">
+			<ion-select class="ion-padding-end" multiple="false" interface="alert" (ionChange)="onClear(true)">
+				<ion-select-option *ngFor="let type of types;" [value]="type.Value">{{ type.Label }}</ion-select-option>
+			</ion-select>	
+		</ion-buttons>
+		<ion-searchbar
+			showCancelButton="always"
+			cancelButtonIcon="arrow-back"
+			enterkeyhint="search"
+			inputmode="search"
+			[debounce]="debounce"
+			(ionChange)="onSearch($event)"
+			(ionClear)="onClear()"
+			(ionCancel)="onCancel()"></ion-searchbar>
+	</ion-toolbar>
+</ion-header>
+
+<ion-footer *ngIf="pagination">
+	<ion-toolbar [color]="color">
+		<span *ngIf="pagination" slot="start">
+			<ion-icon name="color-filter" color="primary" slot="start"></ion-icon>			
+			<span>
+				{{ totalDisplays | number:'':locale }} / {{ totalRecords | number:'':locale }}	
+			</span>
+		</span>
+		<span *ngIf="pagination" slot="end" class="ion-padding-end">
+			<span>
+				{{ pageNumber | number:'':locale }} / {{ totalPages | number:'':locale }}	
+			</span>
+		</span>
+	</ion-toolbar>
+</ion-footer>
+
+<ion-content [color]="color">
+	<ion-list class="ion-padding-end">
+		<ion-item *ngFor="let content of results; trackBy: track" [color]="color" (click)="view(content)" class="ion-activatable" detail="false">
+			<ion-label>
+				<ion-thumbnail class="ion-float-start ion-padding-end">
+					<img [src]="content.ThumbnailURI || noThumbnailURI" />
+				</ion-thumbnail>
+				<span class="time ion-float-end ion-text-right" [hidden]="screenWidth < 768">
+					{{ content.Created | date:'h:mm a @ d/M/y' }} <br/> {{ content.LastModified | time:locale:undefined:false }}
+				</span>
+				<span [class]="'title ' + content.Status">
+					{{ content.Title }}
+					<ion-icon name="radio" slot="icon-only"></ion-icon>
+				</span>
+				<div>
+					<span>
+						<ion-icon name="time" slot="icon-only" color="medium"></ion-icon>
+						{{ content.StartDate | date:'d/M/y' }}
+					</span>
+					<span *ngIf="content.Status === 'Published' && !!content.PublishedTime">
+						<ion-icon name="alarm" slot="icon-only" color="medium"></ion-icon>
+						{{ content.PublishedTime | date:'h:mm a @ d/M/y' }}
+					</span>
+					<span *ngIf="!!content.SubTitle">
+						<ion-icon name="color-filter" slot="icon-only" color="medium"></ion-icon>
+						{{ content.SubTitle }}
+					</span>
+				</div>
+			</ion-label>
+		</ion-item>
+	</ion-list>
+	<ion-infinite-scroll position="bottom" threshold="500px" (ionInfinite)="onScroll()">
+		<ion-infinite-scroll-content></ion-infinite-scroll-content>
+	</ion-infinite-scroll>
+</ion-content>

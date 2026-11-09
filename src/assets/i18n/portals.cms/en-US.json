@@ -1,0 +1,737 @@
+{
+	"portals": {
+		"cms": {
+			"common": {
+				"buttons": {
+					"list": "Content list",
+					"viewAsPublished": "View content (as published)",
+					"viewAsPublic": "View content (publicly published)",
+					"duplicate": "Duplicate content"
+				},
+				"links": {
+					"content": "Create a link from existing content",
+					"file": "Create a link from an uploaded file",
+					"media": "Insert media content from an uploaded file"
+				},
+				"permanentLink": {
+					"label": "Permanent link",
+					"description": "The system will automatically open the correct public link from this permanent/unchanging link"
+				},
+				"tempLink": {
+					"label": "Public link (temporary)",
+					"description": "Use the link above to view how the content will appear when published publicly in the temporary environment"
+				},
+				"publicLink": {
+					"label": "Public link",
+					"description": "The system will use the link above to display the content when it is published publicly"
+				},
+				"featured": {
+					"updated": "Recently updated",
+					"published": "Recently published"
+				},
+				"shortcuts": {
+					"active": {
+						"organization": "Active organization: {{organization}}",
+						"module": "Active module: {{module}}"
+					},
+					"labels": {
+						"shortcuts": "Content administration shortcuts",
+						"contents": "Content administration",
+						"others": "Other information administration"
+					},
+					"select": {
+						"organization": "Select an organization",
+						"module": "Select a working module"
+					},
+					"messages": {
+						"removeOrganization": "Are you sure you want to leave '{{name}}'?"
+					}
+				},
+				"advanced": {
+					"delete": {
+						"action": "Delete selected content",
+						"confirm": {
+							"first": "Are you sure you want to delete the selected content?",
+							"last": "The selected content will be moved to 'Trash' and permanently deleted after 30 days.",
+							"next": "Are you sure you want to delete these items?"
+						},
+						"message": "Selected content has been deleted!"
+					},
+					"resend": {
+						"action": "Resend notifications for selected content",
+						"confirm": "Are you sure you want to resend notifications for the selected content?",
+						"message": "Notifications for the selected content have been sent!",
+						"label": "Notification type to send:",
+						"types": {
+							"app": "App notification",
+							"email": "Email notification",
+							"webhook": "Webhook signal"
+						}
+					},
+					"controls": {
+						"LastModified": {
+							"label": "Last updated time",
+							"description": "Override the 'Last updated time' value for this content"
+						},
+						"LastModifiedID": {
+							"label": "Last updated by",
+							"description": "Override the 'Last updated by' information for this content"
+						}
+					}
+				}
+			},
+			"categories": {
+				"title": {
+					"list": "Category list {{info}}",
+					"search": "Search categories",
+					"reorder": "Reorder categories",
+					"create": "Create a new category",
+					"update": "Update category"
+				},
+				"controls": {
+					"Info": "Category of",
+					"ParentID": {
+						"label": "Parent category",
+						"placeholder": "",
+						"description": ""
+					},
+					"OrderIndex": {
+						"label": "Display order",
+						"placeholder": "",
+						"description": ""
+					},
+					"Title": {
+						"label": "Title",
+						"placeholder": "",
+						"description": ""
+					},
+					"Alias": {
+						"label": "Alias",
+						"placeholder": "",
+						"description": "The alias will be used to generate administration and content preview links"
+					},
+					"Description": {
+						"label": "Description",
+						"placeholder": "",
+						"description": "The description is used for the <b>Description</b> tag for SEO"
+					},
+					"DesktopID": {
+						"label": "Display desktop",
+						"placeholder": "",
+						"description": "The default desktop used to display the category's content. If no desktop is specified, the desktop of the corresponding content business data type will be used"
+					},
+					"OpenBy": {
+						"label": "Category opening method",
+						"placeholder": "",
+						"description": "Specify how to open (generate links for) the content category",
+						"DesktopWithAlias": "Open the display desktop with the alias",
+						"DesktopOnly": "Open only the display desktop",
+						"SpecifiedURI": "Open using the static link specified below"
+					},
+					"SpecifiedURI": {
+						"label": "Static link",
+						"placeholder": "",
+						"description": "Specify the category's static/fixed link.<br/>Tips: Use '<b>~/</b>' to specify a link from the root, or '<b>javascript:</b>' to run a JavaScript function."
+					},
+					"PrimaryContentID": {
+						"label": "Primary content type",
+						"placeholder": "",
+						"description": "Specify the primary content data type when browsing the content list"
+					},
+					"Notes": {
+						"label": "Notes",
+						"placeholder": "",
+						"description": "Used for notes or recording special information"
+					},
+					"Status": {
+						"label": "Status",
+						"placeholder": "",
+						"description": "The category will only be used when its status is 'Published'"
+					}
+				},
+				"list": {
+					"searchbar": "Place keywords in \"..\" for an exact category search; prefix with + if the term is required",
+					"children": "{{number}} subcategories: {{children}}",
+					"labels": {
+						"edit": "Update category",
+						"children": "View subcategory list",
+						"view": "View content list",
+						"move": "Move all content to another category",
+						"moveFirstConfirm": "Are you sure you want to move to another category?",
+						"moveLastConfirm": "Do you really want to move to another category?",
+						"moveExplanation": "Move all content in the current category to another category",
+						"moveNoCategory": "No ID has been provided for the target data type/category",
+						"moveInvalidCategory": "Please re-enter the correct ID for the target data type/category",
+						"moveDone": "Moved to another category successfully"
+					},
+					"buttons": {
+						"edit": "Update",
+						"children": "View children",
+						"view": "View content"
+					}
+				},
+				"update": {
+					"segments": {
+						"basic": "Basic information",
+						"privileges": "Access permissions",
+						"notifications": "Notifications"
+					},
+					"messages": {
+						"confirm": {
+							"new": "Are you sure you want to cancel category creation?",
+							"cancel": "Are you sure you want to discard the category changes?",
+							"delete": "Are you sure you want to delete the category and its related information?",
+							"remove": "The category and all of its articles will be deleted (moved to trash and recoverable within 30 days)"
+						},
+						"success": {
+							"new": "Category created successfully",
+							"update": "Category changes saved successfully",
+							"delete": "The category and its related information have been queued to be moved to trash"
+						}
+					},
+					"buttons": {
+						"delete": "Delete category",
+						"remove": "Confirm deletion"
+					}
+				}
+			},
+			"contents": {
+				"title": {
+					"search": "Search content",
+					"filter": "Quick keyword search",
+					"list": "Content list {{info}}",
+					"create": "Create new content",
+					"update": "Update content",
+					"view": "View content details"
+				},
+				"controls": {
+					"Status": {
+						"label": "Status",
+						"placeholder": "",
+						"description": "Content will only appear publicly when its status is 'Published'"
+					},
+					"CategoryID": {
+						"label": "Content category",
+						"placeholder": "",
+						"description": "Specify the primary category in which the content will appear"
+					},
+					"OtherCategories": {
+						"label": "Additional content categories",
+						"placeholder": "",
+						"description": "Specify the categories in which the content will also appear"
+					},
+					"Alias": {
+						"label": "Alias",
+						"placeholder": "e.g.: my-content",
+						"description": "The alias will be used to generate administration and content viewing links"
+					},
+					"StartDate": {
+						"label": "Start date",
+						"placeholder": "",
+						"description": "Specify the date on which the content will start appearing"
+					},
+					"EndDate": {
+						"label": "End date",
+						"placeholder": "",
+						"description": "Specify the date on which the content will end (no longer appear publicly). Leave unset to specify that it never ends."
+					},
+					"PublishedTime": {
+						"label": "Publication time",
+						"placeholder": "",
+						"description": "Specify a particular publication time for the content. Leave unset to let the system assign the time when publication starts."
+					},
+					"Tags": {
+						"label": "Classification tags",
+						"placeholder": "",
+						"description": "Classify content using tags, with values separated by commas (,). Tags are also used as keywords for SEO"
+					},
+					"AllowComments": {
+						"label": "Allow comments",
+						"placeholder": "",
+						"description": ""
+					},
+					"InlineScripts": {
+						"label": "Inline scripts",
+						"placeholder": "$(() => {/* do something crazy */});",
+						"description": "Inline script code used in special situations that require a separate script for this content"
+					},
+					"Title": {
+						"label": "Title",
+						"placeholder": "",
+						"description": "The main title will be displayed in lists and used as the title for SEO"
+					},
+					"SubTitle": {
+						"label": "Subtitle",
+						"placeholder": "",
+						"description": "The subtitle provides additional information for the main title"
+					},
+					"Author": {
+						"label": "Author",
+						"placeholder": "",
+						"description": "The name of the content's author. Note: this is not the name of the account that created/updated the content"
+					},
+					"AuthorTitle": {
+						"label": "Author's title",
+						"placeholder": "",
+						"description": ""
+					},
+					"Source": {
+						"label": "Source",
+						"placeholder": "",
+						"description": "Specify the content source (for content obtained externally)"
+					},
+					"SourceURL": {
+						"label": "Source link",
+						"placeholder": "",
+						"description": "Specify the source link (for content obtained externally)"
+					},
+					"Summary": {
+						"label": "Summary",
+						"placeholder": "",
+						"description": "The summary will appear in lists and be used as the description for SEO"
+					},
+					"Details": {
+						"label": "Details",
+						"placeholder": "",
+						"description": ""
+					},
+					"Relateds": {
+						"label": "Related content",
+						"placeholder": "",
+						"description": "Specify related content (within this system)"
+					},
+					"ExternalRelateds": {
+						"label": "Related information from outside the system",
+						"placeholder": "",
+						"description": "",
+						"Title": {
+							"label": "Title",
+							"placeholder": "",
+							"description": "The title is combined with the original URL to form the list"
+						},
+						"Summary": {
+							"label": "Summary",
+							"placeholder": "",
+							"description": ""
+						},
+						"URL": {
+							"label": "Original URL",
+							"placeholder": "",
+							"description": "The URL of the original content on the external website.<br/>Tips: Leave the title or original URL blank to remove this content block."
+						}
+					}
+				},
+				"list": {
+					"search": "Place keywords in \"..\" for an exact search within the category; prefix with + if the term is required",
+					"filter": "Enter keywords (diacritics are optional) to filter by title; prefix with + if the term is required",
+					"current": "Business data type",
+					"change": "Change business data type"
+				},
+				"update": {
+					"segments": {
+						"management": "Administration",
+						"basic": "Content",
+						"related": "Related content"
+					},
+					"messages": {
+						"confirm": {
+							"new": "Are you sure you want to cancel content creation?",
+							"cancel": "Are you sure you want to discard the content changes?",
+							"delete": "Are you sure you want to delete the content?",
+							"deleteThumbnail": "Are you sure you want to delete the thumbnail image?"
+						},
+						"success": {
+							"new": "Content created successfully",
+							"update": "Content changes saved successfully",
+							"delete": "Content deleted (moved to trash) successfully"
+						}
+					},
+					"buttons": {
+						"delete": "Delete content",
+						"remove": "Confirm deletion",
+						"deleteThumbnail": "Delete thumbnail image"
+					}
+				},
+				"view": {
+					"segments": {
+						"management": "Administration information",
+						"basic": "Content"
+					},
+					"duplicate": {
+						"organization": "Organization that will contain the content",
+						"module": "Business module that contains the content",
+						"contentType": "Business data type of the content",
+						"category": "Select the primary category",
+						"otherCategories": "Select additional categories",
+						"confirm": "Are you sure you want to duplicate this content in '{{organization}}'?",
+						"success": "Content duplicated successfully. Click 'View' to open the copy.",
+						"error": "An error occurred while duplicating => {{error}}"
+					}
+				}
+			},
+			"links": {
+				"title": {
+					"list": "Link list {{info}}",
+					"search": "Search links",
+					"reorder": "Reorder links",
+					"create": "Create a new link",
+					"update": "Update link",
+					"view": "Link details"
+				},
+				"controls": {
+					"ParentID": {
+						"label": "Parent link",
+						"placeholder": "",
+						"description": ""
+					},
+					"Title": {
+						"label": "Title",
+						"placeholder": "",
+						"description": "The link's title will be used as its display label"
+					},
+					"Summary": {
+						"label": "Description",
+						"placeholder": "",
+						"description": "The description is used for the <b>Description</b> tag for SEO or for special situations"
+					},
+					"URL": {
+						"label": "Link URL",
+						"placeholder": "",
+						"description": "Specify the link URL.<br/>Tips: Use '<b>~/</b>' to specify a link from the root, or '<b>javascript:</b>' to run a JavaScript function."
+					},
+					"Target": {
+						"label": "Link target",
+						"placeholder": "",
+						"description": "Specify the target when opening the link.<br/>Tips: Set '<b>_blank</b>' to open the link in a new window/tab."
+					},
+					"ChildrenMode": {
+						"label": "How to retrieve child links",
+						"placeholder": "",
+						"description": "Specify how to retrieve child links",
+						"Normal": "Normal",
+						"Lookup": "From other business data"
+					},
+					"LookupRepositoryID": {
+						"label": "Business module",
+						"placeholder": "",
+						"description": "Specify the business module whose data will be used to generate child links"
+					},
+					"LookupRepositoryEntityID": {
+						"label": "Business data type",
+						"placeholder": "",
+						"description": "Specify the business data type whose data will be used to generate child links"
+					},
+					"LookupRepositoryObjectID": {
+						"label": "Business data",
+						"placeholder": "",
+						"description": "The system will use the children of the data specified above to generate child links for this link item"
+					},
+					"OrderIndex": {
+						"label": "Display order",
+						"placeholder": "",
+						"description": ""
+					},
+					"StartDate": {
+						"label": "Start date",
+						"placeholder": "",
+						"description": "Specify the date on which the link will start appearing"
+					},
+					"EndDate": {
+						"label": "End date",
+						"placeholder": "",
+						"description": "Specify the date on which the link will end (no longer appear publicly). Leave unset to specify that it never ends."
+					},
+					"Status": {
+						"label": "Status",
+						"placeholder": "",
+						"description": "The link will only appear publicly and be usable when its status is 'Published'"
+					}
+				},
+				"list": {
+					"search": "Place keywords in \"..\" for an exact link search; prefix with + if the term is required",
+					"children": "{{number}} child links: {{children}}",
+					"labels": {
+						"edit": "Update link",
+						"children": "View child link list",
+						"view": "View link details"
+					},
+					"buttons": {
+						"edit": "Update",
+						"children": "View children",
+						"view": "View details"
+					}
+				},
+				"update": {
+					"messages": {
+						"confirm": {
+							"new": "Are you sure you want to cancel link creation?",
+							"cancel": "Are you sure you want to discard the link changes?",
+							"delete": "Are you sure you want to delete the link (move it to trash, recoverable within 30 days)?",
+							"remove": "For child links:"
+						},
+						"success": {
+							"new": "Link created successfully",
+							"update": "Link changes saved successfully",
+							"delete": "The link and its related information have been queued to be moved to trash"
+						}
+					},
+					"buttons": {
+						"delete": "Delete link",
+						"remove": "Confirm deletion"
+					}
+				}
+			},
+			"forms": {
+				"title": {
+					"list": "Request information",
+					"search": "Search request information",
+					"create": "Create a new request",
+					"update": "Update request",
+					"view": "Request details"
+				},
+				"controls": {
+					"Name": {
+						"label": "Full name",
+						"placeholder": "",
+						"description": ""
+					},
+					"Phone": {
+						"label": "Phone",
+						"placeholder": "",
+						"description": ""
+					},
+					"Email": {
+						"label": "Email",
+						"placeholder": "",
+						"description": ""
+					},
+					"Address": {
+						"label": "Address",
+						"placeholder": "",
+						"description": ""
+					},
+					"Postal": {
+						"label": "Postal code",
+						"placeholder": "",
+						"description": ""
+					},
+					"Notes": {
+						"label": "Notes",
+						"placeholder": "",
+						"description": ""
+					},
+					"Title": {
+						"label": "Title",
+						"placeholder": "",
+						"description": ""
+					},
+					"Details": {
+						"label": "Details",
+						"placeholder": "",
+						"description": ""
+					},
+					"Tags": {
+						"label": "Tags",
+						"placeholder": "",
+						"description": "Tags, separated by semicolons (;)"
+					},
+					"ConfirmationIsOpened": {
+						"label": "Confirmation email has been opened",
+						"placeholder": "",
+						"description": ""
+					},
+					"ConfirmationOpenedTime": {
+						"label": "Confirmation email opening time",
+						"placeholder": "",
+						"description": ""
+					},
+					"Confirmed": {
+						"label": "Request confirmed",
+						"placeholder": "",
+						"description": ""
+					},
+					"DeviceID": {
+						"label": "Device ID",
+						"placeholder": "",
+						"description": "Device ID when the request was submitted - used in follow-up flows"
+					},
+					"IPAddress": {
+						"label": "IP address",
+						"placeholder": "",
+						"description": "IP address when the request was submitted - used in follow-up flows"
+					},
+					"Extras": {
+						"label": "Additional system information",
+						"placeholder": "",
+						"description": "Additional system-level information about user activity - used in follow-up flows"
+					},
+					"Profiles": {
+						"label": "Account",
+						"placeholder": "",
+						"description": ""
+					},
+					"Status": {
+						"label": "Processing status",
+						"placeholder": "",
+						"description": "",
+						"Draft": "Draft",
+						"Pending": "Pending processing",
+						"Rejected": "Rejected",
+						"Approved": "In progress",
+						"Published": "Processed",
+						"Archieved": "Completed"
+					}
+				},
+				"buttons": {
+					"change": "Change processing status",
+					"approved": "Mark as in progress",
+					"published": "Mark as processed",
+					"archieved": "Mark as completed"
+				},
+				"messages": {
+					"success": "Request submitted successfully!",
+					"error": "An error has occurred!",
+					"status": "Processing status changed to ({{status}}) successfully"
+				}
+			},
+			"crawlers": {
+				"title": {
+					"search": "Search data sources",
+					"filter": "Quick keyword search",
+					"list": "Data source list {{info}}",
+					"create": "Create a new data source",
+					"update": "Update data source",
+					"view": "View data source details"
+				},
+				"controls": {
+					"Status": {
+						"label": "Status",
+						"placeholder": "",
+						"description": "The data source will only start being used when its status is 'Published'"
+					},
+					"Title": {
+						"label": "Title",
+						"placeholder": "",
+						"description": ""
+					},
+					"Description": {
+						"label": "Notes",
+						"placeholder": "",
+						"description": ""
+					},
+					"Type": {
+						"label": "Data source type",
+						"placeholder": "",
+						"description": ""
+					},
+					"URL": {
+						"label": "Web address",
+						"placeholder": "e.g.: https://domain.com",
+						"description": "Root web address of the data source"
+					},
+					"RepositoryID": {
+						"label": "Business module",
+						"placeholder": "",
+						"description": "Specify the business module that will receive the data"
+					},
+					"RepositoryEntityID": {
+						"label": "Business data type",
+						"placeholder": "",
+						"description": "Specify the business data type that will receive the data"
+					},
+					"SetAuthor": {
+						"label": "Retrieve 'Author' information",
+						"placeholder": "",
+						"description": ""
+					},
+					"SetSource": {
+						"label": "Retrieve 'Source' information",
+						"placeholder": "",
+						"description": ""
+					},
+					"NormalizingAdapter": {
+						"label": "Data normalization component name",
+						"placeholder": "",
+						"description": "Specify the name of the data normalization component - e.g.: net.vieapps.Services.Portals.Crawlers.NormalizingAdapter,VIEApps.Services.Portals"
+					},
+					"DefaultStatus": {
+						"label": "Default status",
+						"placeholder": "",
+						"description": "Specify the default publication status of content retrieved from the data source"
+					},
+					"MaxPages": {
+						"label": "Maximum number of pages",
+						"placeholder": "",
+						"description": "Specify the maximum number of pages to retrieve from the data source; set to zero (0) to retrieve all data pages"
+					},
+					"Interval": {
+						"label": "Periodic data retrieval interval (minutes)",
+						"placeholder": "",
+						"description": "Specify the periodic data retrieval interval - in minutes"
+					},
+					"LastActivity": {
+						"label": "Last activity time",
+						"placeholder": "",
+						"description": ""
+					},
+					"SelectedCategories": {
+						"label": "Retrieve content from",
+						"placeholder": "",
+						"description": "Specify the categories from which to retrieve content at the source",
+						"fetch": "Fetch list"
+					},
+					"DefaultCategoryID": {
+						"label": "Default category",
+						"placeholder": "",
+						"description": "Specify the default category to use for content when no specific category can be determined"
+					},
+					"CategoryMappings": {
+						"label": "Category mappings",
+						"placeholder": "",
+						"description": "Specify content category mappings between the system and the data source"
+					},
+					"Options": {
+						"label": "Customizations",
+						"placeholder": "",
+						"description": "Configure custom settings for retrieving and adjusting source data"
+					}
+				},
+				"list": {
+					"search": "Place keywords in \"..\" for an exact search; prefix with + if the term is required",
+					"filter": "Enter keywords (diacritics are optional) to filter by title; prefix with + if the term is required"
+				},
+				"update": {
+					"segments": {
+						"basic": "Basic",
+						"categories": "Categories",
+						"options": "Custom settings"
+					},
+					"messages": {
+						"confirm": {
+							"new": "Are you sure you want to cancel content creation?",
+							"cancel": "Are you sure you want to discard the content changes?",
+							"delete": "Are you sure you want to delete the content?",
+							"deleteThumbnail": "Are you sure you want to delete the thumbnail image?"
+						},
+						"success": {
+							"new": "Content created successfully",
+							"update": "Content changes saved successfully",
+							"delete": "Content deleted (moved to trash) successfully"
+						}
+					},
+					"buttons": {
+						"delete": "Delete content",
+						"remove": "Confirm deletion",
+						"deleteThumbnail": "Delete thumbnail image"
+					}
+				},
+				"view": {
+					"segments": {
+						"management": "Administration information",
+						"basic": "Content"
+					}
+				}
+			}
+		}
+	}
+}

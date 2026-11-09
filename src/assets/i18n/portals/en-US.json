@@ -1,0 +1,1703 @@
+{
+	"portals": {
+		"name": "Content integration portal",
+		"preferences": {
+			"cms": "Content administration",
+			"portals": "Portal and system information administration"
+		},
+		"sidebar": {
+			"tasks": "Scheduled tasks",
+			"organizations": "Organizations",
+			"sites": "Sites - Access points",
+			"roles": "User roles",
+			"desktops": "Display desktops",
+			"modules": "Business modules",
+			"content-types": "Business data types",
+			"expressions": "Query and sorting expressions",
+			"crawlers": "Automatic data sources",
+			"titles": {
+				"system": "Administration",
+				"categories": "Content categories",
+				"contents": "Content"
+			}
+		},
+		"common": {
+			"unspecified": "Unspecified",
+			"advancedEdit": "Update (advanced)",
+			"emptyDefinition": "Unable to retrieve the appropriate information. Please try again.",
+			"excel": {
+				"action": {
+					"export": "Export data to Excel",
+					"import": "Import data from Excel"
+				},
+				"message": {
+					"all": "Export only data matching the current filter? (select 'No' to export all data)",
+					"confirm": "Are you sure you want to export data to Excel?",
+					"export": "Data exported successfully. Select 'Download' to download the Excel file",
+					"import": "Data imported from the Excel file successfully"
+				},
+				"button": "Upload & update"
+			},
+			"customizeFilterAndSort": {
+				"label": "Customize data filtering & sorting",
+				"filter": "Data filtering expression (JSON)",
+				"sort": "Data sorting expression (JSON)"
+			},
+			"controls": {
+				"notifications": {
+					"inheritFromParent": "Use notification event and delivery method settings from the parent",
+					"events": "Send notifications when",
+					"methods": "Notification delivery methods",
+					"emails": {
+						"inheritFromParent": "Use settings from the parent to send email notifications",
+						"label": "Email notification settings",
+						"description": "Configure how email notifications are sent when a data event occurs",
+						"toAddresses": {
+							"label": "Recipient addresses",
+							"placeholder": "Email addresses can be entered as Name <email address>, e.g.: VIEApps.net <info@vieapps.net>",
+							"description": "Notification recipient email addresses, separated by semicolons (;)"
+						},
+						"ccAddresses": {
+							"label": "Recipient addresses (CC)",
+							"description": "Notification recipient email addresses in the carbon copy (CC) field, separated by semicolons (;)"
+						},
+						"bccAddresses": {
+							"label": "Recipient addresses (BCC)",
+							"description": "Notification recipient email addresses in the blind carbon copy (BCC) field, separated by semicolons (;)"
+						},
+						"subject": {
+							"label": "Notification email subject"
+						},
+						"body": {
+							"label": "Notification email body",
+							"description": "The notification email body can contain HTML. The system automatically inserts '<b>&lt;br/&gt;</b>' tags at line breaks.<br/><u>Note</u>: Brace tokens can be used in the email subject and body to insert data, e.g.: <b>{{</b>@current(Title)<b>}}</b> retrieves the title of the current data.<br/>There are 3 main data objects: '<b>@request</b>' contains request information, '<b>@current</b>' contains information in the current operation context, and '<b>@params</b>' contains additional information (Organization, Site, ...).<br/>Please refer to the documentation for details about these data objects."
+						}
+					},
+					"emailsByApprovalStatus": {
+						"label": "Email notification settings for a specific status",
+						"description": "If specified, the email notification content for a specific status will be used for the default email notification"
+					},
+					"emailsWhenPublish": {
+						"label": "Email notification settings on publication",
+						"description": "If specified (with at least 01 email address, a subject and a body), this email notification will be sent in addition to the default email notification when the status is 'Published'"
+					},
+					"webhooks": {
+						"label": "Webhook notification settings",
+						"inheritFromParent": "Use settings from the parent to send webhook notifications",
+						"endpointURLs": {
+							"label": "Webhook recipient addresses",
+							"placeholder": "e.g.: https://apis.vieapps.net/webhooks/portals/vieapps-ngx",
+							"description": "Web addresses that receive webhook notifications, one address per line; each must start with http:// or https://"
+						},
+						"signKey": {
+							"description": "Specify the phrase used to generate the key for the webhook's HMAC signature.<br/>If unset, the system uses a default value in the following priority order:<br/>- ID of the interacting app<br/>- Organization ID<br/>- Default system key phrase"
+						},
+						"signatureName": {
+							"description": "Specify the name of the signature parameter in the webhook.<br/>If unset, the system uses the method name, e.g.: HmacSha256Signature"
+						},
+						"query": {
+							"label": "Additional query-string information",
+							"description": "Enter additional query-string information as JSON.<br/>Example:<br/>{<br/>&nbsp;&nbsp;\"webhook.query\":\"this is web hook query\"<br/>}"
+						},
+						"header": {
+							"label": "Additional header information",
+							"description": "Enter additional header information as JSON.<br/>Example:<br/>{<br/>&nbsp;&nbsp;\"webhook.header\":\"this is web hook header\"<br/>}"
+						},
+						"encryptionKey": {
+							"label": "Hex string containing the data encryption key",
+							"description": "Specify the AES data encryption key. The hex string must represent a <b>256 bits</b> key"
+						},
+						"encryptionIV": {
+							"label": "Hex string containing the encryption initialization vector",
+							"description": "Specify the AES encryption initialization vector. The hex string must represent a <b>128 bits</b> key"
+						},
+						"generateIdentity": {
+							"label": "Regenerate the data ID"
+						},
+						"prepareBodyScript": {
+							"label": "JavaScript code to recalculate the webhook BODY",
+							"placeholder": "ex: this.Title += ' (copied)'; return JSON.stringify(this);",
+							"description": "If provided, the system executes the JavaScript code above to recalculate the webhook BOBY. The <b>this</b> parameter is the object containing the BODY of the outgoing webhook. Two parameters are available: '<b>__request</b>' contains the webhook processing request (__request.Body is the object containing the original BODY), and '<b>__params</b>' contains organization (__params.Organization), business module (__params.Module) and business data type (__params.ContentType) information."
+						},
+						"prepareBodyScriptTimeout": {
+							"label": "Maximum execution time",
+							"description": "If provided, the system only allows the JavaScript code above to run for the configured maximum duration - in milliseconds."
+						}
+					}
+				},
+				"emails": {
+					"label": "Outgoing email settings",
+					"inheritFromParent": "Use outgoing email settings from the parent",
+					"sender": {
+						"label": "Sender email address",
+						"placeholder": "Email addresses can be entered as Name <email address>, e.g.: VIEApps.net <info@vieapps.net>"
+					},
+					"signature": {
+						"label": "Signature (appended to all emails)",
+						"description": "The content can contain HTML. The system automatically inserts '<b>&lt;br/&gt;</b>' tags at line breaks"
+					},
+					"smtp": {
+						"label": "Outgoing email server",
+						"host": {
+							"label": "Address",
+							"description": "The outgoing email server address can be a domain name (e.g.: smtp.gmail.com) or an IP address"
+						},
+						"port": {
+							"label": "Connection port",
+							"description": "The SMTP connection port is usually 25; when using SSL, the connection port may be 587"
+						},
+						"enableSsl": "Use a secure SSL connection",
+						"user": {
+							"label": "Connection account",
+							"description": "The account name used to log in and connect to the outgoing email server"
+						},
+						"userPassword": {
+							"label": "Connection password",
+							"description": "The password of the account used to log in and connect to the outgoing email server"
+						}
+					},
+					"test": {
+						"label": "Test sending email with the configured settings",
+						"button": "Send test email",
+						"to": "Recipient address (required)",
+						"subject": {
+							"placeholder": "Subject (optional)",
+							"default": "Email delivery test [{{info}}]"
+						},
+						"messages": {
+							"success": "The outgoing email settings are correct. Email sent successfully to {{email}}",
+							"error": "The outgoing email settings are incorrect",
+							"none": "No outgoing email settings have been configured"
+						}
+					}
+				},
+				"webhooks": {
+					"label": "Incoming webhook settings",
+					"url": {
+						"label": "URL for receiving webhooks",
+						"description": "External systems use the URL above to send information into the system via webhooks (JSON documents sent over HTTP using POST).<br/>The webhook sender must provide the following parameters (in headers or the query-string):<ul><li>For system data, provide the object name: <b>x-webhook-object</b></li><li>For business data, provide the business data type ID: <b>x-webhook-entity</b></li></ul>",
+						"descriptionOfContentType": "External systems use the URL above to send information into the system via webhooks (JSON documents sent over HTTP using POST) for data belonging to this business data type."
+					},
+					"signAlgorithm": {
+						"label": "HMAC signing method",
+						"description": "Specify the method for signing the webhook content to ensure its validity"
+					},
+					"signKey": {
+						"label": "Phrase used to generate the HMAC signature key",
+						"description": "Specify the phrase used to generate the HMAC signature key to ensure webhook validity.<br/>If unset, the system uses a default value in the following priority order:<br/>- ID of the interacting app<br/>- Organization ID<br/>- Default system key phrase"
+					},
+					"signKeyIsHex": {
+						"label": "The key phrase is a hex string (enable to use the key in the hex string directly; disable to generate a key from the phrase)"
+					},
+					"signatureName": {
+						"label": "Signature parameter name",
+						"description": "Specify the name of the signature parameter used to validate the webhook.<br/>If unset, the system uses the method name, e.g.: HmacSha256Signature"
+					},
+					"signaturePrefix": {
+						"label": "Signature prefix",
+						"description": "Specify the value to prepend to the signature when validating the webhook"
+					},
+					"signatureSuffix": {
+						"label": "Signature suffix",
+						"description": "Specify the value to append to the signature when validating the webhook"
+					},
+					"signatureAsHex": {
+						"label": "Signature in hex format (disable for base64 format)"
+					},
+					"signatureInQuery": {
+						"label": "Place the signature in the query-string (disable to place it in a header)"
+					},
+					"secretToken": {
+						"label": "Secret token",
+						"description": "Specify a secret token for authentication and data integrity using an alternative method (replacing signature verification, but less secure).<br/>Incoming webhooks must contain this secret token in the parameter named below (defaulting to <b>x-webhook-secret-token</b> if no name is specified). This parameter must be in a header or the query-string."
+					},
+					"secretTokenName": {
+						"label": "Secret token name",
+						"description": "Specify the name of the secret token for authentication and data integrity using an alternative method (replacing signature verification, but less secure).<br/>Incoming webhooks must contain this secret token in the parameter named above. If no name is specified, the secret token name defaults to <b>x-webhook-secret-token</b>. This named secret token must be in a header or the query-string."
+					},
+					"signWithTimestamp": {
+						"label": "Use a timestamp when signing"
+					},
+					"signWithTimestampName": {
+						"label": "Timestamp parameter name",
+						"description": "Specify the timestamp parameter name. If unset, the default parameter name (x-webhook-timestamp) will be used"
+					},
+					"signWithTimestampConnect": {
+						"label": "Separator between the timestamp parameter and body",
+						"description": "Specify the value used to join the timestamp parameter and body when signing. If unset, the default value is a period (.)"
+					},
+					"query": {
+						"label": "Required query-string parameters",
+						"description": "Specify the required query-string parameters for incoming information (as JSON).<br/>Example:<br/>{<br/>&nbsp;&nbsp;\"webhook.query\":\"this is web hook query\"<br/>}"
+					},
+					"header": {
+						"label": "Required header parameters",
+						"description": "Specify the required header parameters for incoming information (as JSON).<br/>Example:<br/>{<br/>&nbsp;&nbsp;\"webhook.header\":\"this is web hook header\"<br/>}"
+					},
+					"encryptionKey": {
+						"label": "Hex string containing the data decryption key",
+						"description": "Specify the AES data decryption key. The hex string must represent a <b>256 bits</b> key"
+					},
+					"encryptionIV": {
+						"label": "Hex string containing the decryption initialization vector",
+						"description": "Specify the AES decryption initialization vector. The hex string must represent a <b>128 bits</b> key"
+					},
+					"generateIdentity": {
+						"label": "Regenerate the data ID (if any)"
+					},
+					"prepareBodyScript": {
+						"label": "JavaScript code for computation",
+						"placeholder": "ex: this.Title += ' (copied)'; this.Alias = null; return JSON.stringify(this);",
+						"description": "If provided, the system executes the JavaScript code above to recalculate the BOBY from the webhook in a normal context, or calculate all data for the webhook to be forwarded when this is used as a forwarder.<br/><br/>In a normal context, the <b>this</b> parameter is the object containing the BODY of the outgoing webhook. Two parameters are available: '<b>__request</b>' contains the webhook sending request (__request.Body is the object containing the original BODY), and '<b>__params</b>' contains organization (__params.Organization), business module (__params.Module) and business data type (__params.ContentType) information.<br/><br/>In a forwarding context, the <b>this</b> parameter is a JSON object containing all necessary information for the webhook to be forwarded. Two parameters are available: '<b>__request</b>' contains the webhook sending request (including 3 parameters: __request.Header, __request.Query, __request.Body), and '<b>__params</b>' contains organization (__params.Organization), business module (__params.Module) and business data type (__params.ContentType) information.<br/><br/>This JSON object must contain the following parameters:<ul><li>Verb (string): HTTP Verb to use when forwarding (GET, POST, PUT, PATCH, DELETE)</li><li>EndpointURL (string): destination address for forwarding</li><li>EndpointURLs (string array): destination addresses for forwarding</li><li>Header (json): header parameters for forwarding</li><li>Query (json): query-string parameters for forwarding</li><li>Body (json): content of the forwarded webhook</li></ul>Note: The signature will automatically be added to the forwarded webhook according to the settings above."
+					},
+					"prepareBodyScriptTimeout": {
+						"label": "Maximum execution time",
+						"description": "If provided, the system only allows the JavaScript code above to run for the configured maximum duration - in milliseconds."
+					}
+				},
+				"UISettings": {
+					"label": "Display customizations",
+					"description": "",
+					"Padding": {
+						"label": "Padding",
+						"placeholder": "e.g.: 10px 3px",
+						"description": "Specify padding according to HTML standards (top, bottom, left, right); values can use px, %, rem, em"
+					},
+					"Margin": {
+						"label": "Margin",
+						"placeholder": "e.g.: 10px 3px 7px 20px",
+						"description": "Specify margin according to HTML standards (top, bottom, left, right); values can use px, %, rem, em"
+					},
+					"Width": {
+						"label": "Width (fixed)",
+						"placeholder": "",
+						"description": "Specify a fixed width according to HTML standards; the value can use px, %, rem, em"
+					},
+					"Height": {
+						"label": "Height (fixed)",
+						"placeholder": "",
+						"description": "Specify a fixed height according to HTML standards; the value can use px, %, rem, em"
+					},
+					"Color": {
+						"label": "Text color",
+						"placeholder": "e.g.: #000000",
+						"description": "Specify the text color according to HTML standards, using a hexadecimal RGB color code"
+					},
+					"BackgroundColor": {
+						"label": "Background color",
+						"placeholder": "e.g.: #ffccff",
+						"description": "Specify the background color according to HTML standards, using a hexadecimal RGB color code"
+					},
+					"BackgroundImageURI": {
+						"label": "Background image",
+						"placeholder": "",
+						"description": "Specify the background image from an uploaded file"
+					},
+					"BackgroundImageRepeat": {
+						"label": "Background image repeat mode",
+						"placeholder": "",
+						"description": "Specify how the background image repeats"
+					},
+					"BackgroundImagePosition": {
+						"label": "Background image position",
+						"placeholder": "",
+						"description": "Specify the background image display position"
+					},
+					"BackgroundImageSize": {
+						"label": "Background image size",
+						"placeholder": "",
+						"description": "Specify the background image display size"
+					},
+					"Css": {
+						"label": "CSS code",
+						"placeholder": "",
+						"description": "Specify the CSS code to use according to HTML standards, with values separated by spaces"
+					},
+					"Style": {
+						"label": "Other customizations",
+						"placeholder": "",
+						"description": "Specify other customizations using the <b>style</b> attribute according to HTML standards"
+					}
+				}
+			},
+			"lookup": {
+				"searchbar": "Place keywords in \"..\" for an exact search",
+				"children": "{{number}} child content items: {{children}}"
+			},
+			"cache": {
+				"title": "Clear cached data",
+				"confirm": "Are you sure you want to clear the cached data?",
+				"done": "Cached data cleared successfully"
+			},
+			"approval": {
+				"label": "Current status: {{status}}",
+				"message": "Approved with the new status ({{status}}) successfully",
+				"Draft": "Revert to draft",
+				"Pending": "Submit for approval",
+				"Pending2": "Revert to pending approval",
+				"Rejected": "Reject",
+				"Approved": "Approve & submit for publication",
+				"Published": "Publish",
+				"Archieved": "Move to archive"
+			},
+			"errors": {
+				"alias": {
+					"organization": "The organization alias is already in use by another organization. Please choose another alias",
+					"desktop": "The desktop alias is already in use by another display desktop"
+				},
+				"template": {
+					"desktop": {
+						"invalid": "The desktop template is invalid (invalid XHTML or missing required information)",
+						"required": "The desktop template is invalid because required zones are missing",
+						"noZone": "The desktop template has no display zones (a tag with the 'zone-id' attribute is required)",
+						"zoneNoID": "The desktop display zone is invalid because it has no ID",
+						"zoneExisted": "The desktop display zone is invalid because its ID is already used by another zone"
+					},
+					"portlet": {
+						"invalid": "The portlet template is invalid (invalid XHTML or missing required information)",
+						"listXslt": "The list template is not valid XSLT",
+						"viewXslt": "The detail template is not valid XSLT",
+						"paginationXslt": "The pagination template is not valid XSLT",
+						"breadcrumbXslt": "The breadcrumb template is not valid XSLT"
+					}
+				},
+				"metaTags": "The meta tags are not valid XHTML/XML",
+				"scripts": "The script tags are not valid XHTML/XML",
+				"listOptions": "The list display options are not valid JSON",
+				"viewOptions": "The detail display options are not valid JSON"
+			}
+		},
+		"organizations": {
+			"title": {
+				"search": "Search organizations",
+				"list": "Organization list",
+				"create": "Create a new organization",
+				"update": "Update organization",
+				"register": "Register a new organization"
+			},
+			"controls": {
+				"Title": {
+					"label": "Title",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Notes",
+					"placeholder": "",
+					"description": ""
+				},
+				"OwnerID": {
+					"label": "Owner account",
+					"placeholder": "",
+					"description": "This account will automatically have all highest-level administration permissions for information within the organization"
+				},
+				"Status": {
+					"label": "Status",
+					"placeholder": "",
+					"description": "The system will only operate when the status is 'Approved' or 'Published'"
+				},
+				"Alias": {
+					"label": "Alias",
+					"placeholder": "e.g.: my-org",
+					"description": "The alias will be used to generate administration and content preview links"
+				},
+				"ExpiredDate": {
+					"label": "Expiration date",
+					"placeholder": "",
+					"description": "Specify the expiration date - leave blank/clear all data to specify that it never expires"
+				},
+				"FilesQuotes": {
+					"label": "Storage quota (GB)",
+					"placeholder": "",
+					"description": "Leave the quota unset (value 0) to specify unlimited storage"
+				},
+				"Required2FA": {
+					"label": "Require two-factor authentication",
+					"placeholder": "",
+					"description": "If enabled, all accounts accessing the system for editing must complete two-factor authentication before performing operations"
+				},
+				"TrackDownloadFiles": {
+					"label": "Log all file download activity",
+					"placeholder": "",
+					"description": "If enabled, all file downloads will be logged"
+				},
+				"Theme": {
+					"label": "Theme",
+					"placeholder": "",
+					"description": ""
+				},
+				"HomeDesktopID": {
+					"label": "Home desktop",
+					"placeholder": "",
+					"description": ""
+				},
+				"SearchDesktopID": {
+					"label": "Search desktop",
+					"placeholder": "",
+					"description": ""
+				},
+				"Instructions": {
+					"description": "The message content can contain HTML. The system automatically inserts '<b>&lt;br/&gt;</b>' tags at line breaks.<br/><u>Note</u>: Brace tokens can be used in the email subject and body to insert data, e.g.: <b>{{</b>@current(Title)<b>}}</b> retrieves the title of the current data.<br/>There are 3 main data objects: '<b>@request</b>' contains request information, '<b>@current</b>' contains information in the current operation context, and '<b>@params</b>' contains additional information (Organization, Site, ...).<br/>Please refer to the documentation for details about these data objects.",
+					"language": "Language",
+					"Account": {
+						"label": "New account activation message",
+						"Subject": "Email subject for the new account activation message",
+						"Body": "Email body for the new account activation message"
+					},
+					"Invite": {
+						"label": "Invitation to join the system",
+						"Subject": "Email subject for the invitation to join the system",
+						"Body": "Email body for the invitation to join the system"
+					},
+					"Reset": {
+						"label": "Login password reset message",
+						"Subject": "Email subject for the new login password activation message",
+						"Body": "Email body for the new login password activation message"
+					},
+					"Password": {
+						"label": "Login password change message",
+						"Subject": "Email subject notifying that the new login password has been changed successfully",
+						"Body": "Email body notifying that the new login password has been changed successfully"
+					},
+					"Email": {
+						"label": "Login email change message",
+						"Subject": "Email subject notifying that the new login email has been changed successfully",
+						"Body": "Email body notifying that the new login email has been changed successfully"
+					}
+				},
+				"Socials": "Integrate social network libraries",
+				"Trackings": {
+					"label": "Counting/tracking systems",
+					"GoogleAnalytics": {
+						"label": "Google Analytics ID",
+						"description": "Enter GA IDs, separated by semicolons (;), to count page-view (web) or screen-view (app) events"
+					},
+					"FacebookPixel": {
+						"label": "Facebook Pixel ID",
+						"description": "Enter FB Pixel IDs, separated by semicolons (;), to count page-view (web) events"
+					}
+				},
+				"Others": {
+					"label": "Additional meta and script tags",
+					"MetaTags": {
+						"label": "Additional meta tags",
+						"description": "Additional meta tags will be added to the HEAD section of all display desktops. The meta tags must conform to XML standards"
+					},
+					"ScriptLibraries": {
+						"label": "Additional script libraries",
+						"description": "Additional script library code (JavaScript) will be added at the end (before the closing BODY tag) of all display desktops.<br/>This code must be enclosed in &lt;script&gt; and &lt;/script&gt;, can use jQuery ($), and may reference external script libraries.<br/>Tips: Additional HTML tags can also be inserted here."
+					},
+					"Scripts": {
+						"label": "Additional scripts",
+						"description": "Additional script code (JavaScript) will be added at the end (before the closing BODY tag) of all display desktops.<br/>This code must NOT be enclosed in &lt;script&gt; and &lt;/script&gt; (because it will be exposed as an external link)."
+					}
+				},
+				"HttpIndicators": {
+					"label": "Directives for bots/spiders/advertising systems",
+					"Name": {
+						"label": "Directive name",
+						"description": "Name of the file containing the directive (favicon.ico, .txt, .xml, .json) - e.g.: robots.txt"
+					},
+					"Content": {
+						"label": "Content",
+						"description": "Specific directive content - base64 for favicon.ico, text for other formats"
+					}
+				},
+				"AlwaysUseHtmlSuffix": "Always use the .html suffix for all links",
+				"RefreshURLs": {
+					"label": "URLs to refresh",
+					"Addresses": {
+						"label": "URL addresses to refresh periodically",
+						"description": "The URLs above will be refreshed periodically to respond as quickly as possible to web page requests, with one URL per line.<br/><u>Note</u>: Use '<b>~/</b>' to specify a link from the root."
+					},
+					"Interval": {
+						"label": "Periodic refresh interval (minutes)",
+						"description": "Specify the interval (minutes) for periodically refreshing the specified URLs."
+					}
+				},
+				"RedirectURLs": {
+					"label": "URLs to redirect",
+					"Addresses": {
+						"label": "URL addresses to redirect",
+						"description": "The URLs above will be redirected on a not found error (HTTP 404), with one URL per line, entered in the format 'source URL|destination URL.<br/><u>Note</u>: Use '<b>~/</b>' to specify a link from the root, or '<b>*</b>' to specify all source links."
+					},
+					"AllHttp404": "Redirect all not found links (HTTP 404) to the catch-all (*) destination or the home page"
+				},
+				"Specials": "Special settings",
+				"FakeFilesHttpURI": {
+					"label": "'Masked files service server' address",
+					"description": "Specify the files service server address to use in HTML to hide the actual files service server address (usually via a proxy/CDN such as Cloudflare)"
+				},
+				"FakePortalsHttpURI": {
+					"label": "'Masked portals service server' address",
+					"description": "Specify the portals service server address to use in HTML to hide the actual portals service server address (usually via a proxy/CDN such as Cloudflare)"
+				},
+				"CDNProvider": {
+					"label": "CDN provider",
+					"description": "Specify the CDN service provider in use"
+				},
+				"CDNZoneID": {
+					"label": "CDN Zone ID",
+					"description": "Specify the CDN zone ID for clearing cache - only applies when the system is behind a CDN (e.g.: Cloudflare)"
+				},
+				"CDNApiToken": {
+					"label": "CDN API Token",
+					"description": "Specify the CDN API token for clearing cache - only applies when the system is behind a CDN (e.g.: Cloudflare)"
+				},
+				"ExamineURLs": {
+					"label": "URLs to examine",
+					"description": "JSON content of the URLs to examine.<br/><br/>Set a prefix for a URL:<ul><li><b>s:</b> matches at the start</li><li><b>c:</b> matches anywhere</li><li><b>e:</b> matches at the end (default)</li></ul>"
+				},
+				"McpSettings": {
+					"label": "MCP server settings",
+					"description": "JSON content for configuring the MCP server to integrate with AI systems"
+				}
+			},
+			"list": {
+				"searchbar": "Place keywords in \"..\" for an exact organization search",
+				"owner": "Owner account: {{owner}}",
+				"invalid": "The organization information is incorrect. Select the organization to work with",
+				"active": "Set as the active organization"
+			},
+			"update": {
+				"segments": {
+					"basic": "Basic information",
+					"privileges": "Access permissions",
+					"notifications": "Notifications",
+					"instructions": "Messages",
+					"urls": "URLs",
+					"emails": "Emails & Web-Hook",
+					"socials": "Social networks & additional settings"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Are you sure you want to cancel organization creation?",
+						"cancel": "Are you sure you want to discard the organization changes?",
+						"delete": "Are you sure you want to delete the organization and all its related information?",
+						"remove": "The organization and all its related information will be deleted (moved to trash and recoverable within 30 days)."
+					},
+					"success": {
+						"new": "Organization created successfully",
+						"update": "Organization changes saved successfully",
+						"delete": "The organization and all its related information have been queued to be moved to trash"
+					}
+				},
+				"buttons": {
+					"delete": "Delete organization",
+					"remove": "Confirm deletion",
+					"phrase": "Secret phrase"
+				}
+			}
+		},
+		"roles": {
+			"title": {
+				"search": "Search user roles",
+				"list": "User role list {{info}}",
+				"create": "Create a new user role",
+				"update": "Update user role"
+			},
+			"controls": {
+				"Organization": "Role within the organization",
+				"ParentID": {
+					"label": "Parent role",
+					"placeholder": "",
+					"description": "The parent role will automatically have the permissions assigned to this role"
+				},
+				"Title": {
+					"label": "Title",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Notes",
+					"placeholder": "",
+					"description": ""
+				},
+				"UserIDs": {
+					"label": "User accounts in the role",
+					"placeholder": "",
+					"description": "User accounts in this role will have the permissions assigned to the role",
+					"confirm": "Are you sure you want to remove the selected user accounts from the role?"
+				}
+			},
+			"list": {
+				"searchbar": "Place keywords in \"..\" for an exact user role search",
+				"children": "{{number}} child roles: {{children}}"
+			},
+			"update": {
+				"messages": {
+					"confirm": {
+						"new": "Are you sure you want to cancel user role creation?",
+						"cancel": "Are you sure you want to discard the user role changes?",
+						"delete": "Are you sure you want to delete the user role and its related information?"
+					},
+					"success": {
+						"new": "User role created successfully",
+						"update": "User role changes saved successfully",
+						"delete": "User role deleted successfully"
+					},
+					"mode": "Action to apply to all child roles:"
+				},
+				"buttons": {
+					"delete": "Delete user role",
+					"delete-all": "Delete",
+					"set-null-all": "Move to root"
+				}
+			}
+		},
+		"sites": {
+			"title": {
+				"search": "Search sites",
+				"list": "Site list {{info}}",
+				"create": "Create a new site",
+				"update": "Update site"
+			},
+			"controls": {
+				"Organization": "Site of the organization",
+				"Title": {
+					"label": "Site name",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Notes",
+					"placeholder": "",
+					"description": ""
+				},
+				"Status": {
+					"label": "Status",
+					"placeholder": "",
+					"description": "The site will only operate when its status is 'Approved' or 'Published'"
+				},
+				"PrimaryDomain": {
+					"label": "Primary domain",
+					"placeholder": "e.g.: company.com",
+					"description": "Specify the primary domain used to identify the site"
+				},
+				"SubDomain": {
+					"label": "Subdomain",
+					"placeholder": "e.g.: www or *",
+					"description": "Specify the subdomain to combine with the primary domain to identify the site. Use <b>*</b> to specify all subdomains"
+				},
+				"OtherDomains": {
+					"label": "Other domains",
+					"placeholder": "",
+					"description": "Specify other domains used to identify the site, following domain naming rules.<br/>Separate values with semicolons (;)."
+				},
+				"AlwaysUseHTTPs": {
+					"label": "Always use secure HTTPS connections (note: a suitable SSL certificate is required)",
+					"placeholder": "",
+					"description": ""
+				},
+				"AlwaysReturnHTTPs": {
+					"label": "Always return links using secure HTTPS connections (use when SSL is handled by proxies/load balancers)",
+					"placeholder": "",
+					"description": ""
+				},
+				"AlwaysRebuildOnCDN": {
+					"label": "Always process the CDN edge cache (when the organization uses a CDN)",
+					"placeholder": "",
+					"description": ""
+				},
+				"IsDefault": {
+					"label": "Set as the default site",
+					"placeholder": "",
+					"description": ""
+				},
+				"Language": {
+					"label": "Display language",
+					"placeholder": "",
+					"description": "Labels, numbers, dates, ... will use the selected language's formats for desktops without a specific display language (set to <b>'Unspecified'</b>)"
+				},
+				"Theme": {
+					"label": "Theme",
+					"placeholder": "",
+					"description": "If unset, the theme inherited from the organization will be used"
+				},
+				"HomeDesktopID": {
+					"label": "Home desktop",
+					"placeholder": "",
+					"description": "If unset, the home desktop specified for the organization will be used"
+				},
+				"SearchDesktopID": {
+					"label": "Search desktop",
+					"placeholder": "",
+					"description": "If unset, the search desktop specified for the organization will be used"
+				},
+				"UISettings": "Display customizations (applied to all desktops within the site)",
+				"IconURI": {
+					"label": "Icon image",
+					"placeholder": "",
+					"description": "Specify an icon image for all desktops within the site, preferably an .ICO or .PNG image sized 64x64"
+				},
+				"CoverURI": {
+					"label": "Cover image",
+					"placeholder": "",
+					"description": "Specify a cover image for all desktops within the site, used as the default for social networks when the content has no specific cover image, preferably a .JPG or .PNG image sized 1200x630 or 600x315"
+				},
+				"MetaTags": {
+					"label": "Additional meta tags",
+					"placeholder": "",
+					"description": "Additional meta tags will be added to the HEAD section of all desktops within the site. The meta tags must conform to XML standards"
+				},
+				"Stylesheets": {
+					"label": "Shared stylesheets (CSS) for the entire site",
+					"placeholder": "",
+					"description": "Stylesheet code (CSS) shared by all desktops within the site. Note: These stylesheets will not be used when the desktops are accessed with another site's settings."
+				},
+				"ScriptLibraries": {
+					"label": "Additional script libraries",
+					"placeholder": "",
+					"description": "Additional script library code (JavaScript) will be added at the end (before the closing BODY tag) of all display desktops within the site.<br/>This code must be enclosed in &lt;script&gt; and &lt;/script&gt;, can use jQuery ($), and may reference external script libraries.<br/>Tips: Additional HTML tags can also be inserted here."
+				},
+				"Scripts": {
+					"label": "Additional scripts",
+					"placeholder": "",
+					"description": "Additional script code (JavaScript) will be added at the end (before the closing BODY tag) of all display desktops within the site.<br/>This code must NOT be enclosed in &lt;script&gt; and &lt;/script&gt; (because it will be exposed as an external link)."
+				},
+				"RedirectToNoneWWW": {
+					"label": "Always redirect links containing 'WWW' to the root (to shorten URLs)",
+					"placeholder": "",
+					"description": ""
+				},
+				"UseInlineStylesheets": {
+					"label": "Use inline stylesheets instead of external links",
+					"placeholder": "",
+					"description": ""
+				},
+				"UseInlineScripts": {
+					"label": "Use inline scripts instead of external links",
+					"placeholder": "",
+					"description": ""
+				},
+				"CanonicalHost": {
+					"label": "Domain for Canonical links",
+					"placeholder": "",
+					"description": "Specify a single domain to use for canonical links"
+				},
+				"SEOInfo": {
+					"label": "SEO settings",
+					"placeholder": "",
+					"description": "",
+					"Title": {
+						"label": "Title",
+						"placeholder": "",
+						"description": "The site's title, combined with the main portlet's title and the desktop's title"
+					},
+					"Description": {
+						"label": "Description",
+						"placeholder": "",
+						"description": "The site's description, combined with the main portlet's description and the desktop's description"
+					},
+					"Keywords": {
+						"label": "Keywords",
+						"placeholder": "",
+						"description": "The site's keywords, combined with the main portlet's keywords and the desktop's keywords"
+					}
+				}
+			},
+			"list": {
+				"search": "Place keywords in \"..\" for an exact site search; prefix with + if the term is required",
+				"open": "Open the site using its default domain"
+			},
+			"update": {
+				"segments": {
+					"basic": "Basic information",
+					"display": "Display settings",
+					"seo": "SEO settings"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Are you sure you want to cancel site creation?",
+						"cancel": "Are you sure you want to discard the site changes?",
+						"delete": "Are you sure you want to delete the site and its related information?"
+					},
+					"success": {
+						"new": "Site created successfully",
+						"update": "Site changes saved successfully",
+						"delete": "Site deleted successfully"
+					}
+				},
+				"buttons": {
+					"delete": "Delete site"
+				}
+			}
+		},
+		"desktops": {
+			"title": {
+				"search": "Search display desktops",
+				"list": "Display desktop list {{info}}",
+				"create": "Create a new display desktop",
+				"update": "Update display desktop"
+			},
+			"controls": {
+				"Organization": "Desktop within the organization",
+				"CopyFromID": {
+					"label": "Copy from desktop",
+					"placeholder": "",
+					"description": "Specify the desktop to copy (template, display customizations and portlets)"
+				},
+				"ParentID": {
+					"label": "Parent desktop",
+					"placeholder": "",
+					"description": "When a parent desktop is specified, display and SEO settings will be inherited from it if they are not set on this desktop"
+				},
+				"Title": {
+					"label": "Full name",
+					"placeholder": "",
+					"description": "This name is used during administration"
+				},
+				"Alias": {
+					"label": "Alias",
+					"placeholder": "e.g.: my-dsk",
+					"description": "The alias will be used to generate administration and content preview links"
+				},
+				"Aliases": {
+					"label": "Other aliases",
+					"placeholder": "",
+					"description": "Allow multiple links to be created for the desktop to preserve existing links, with values separated by semicolons (;)"
+				},
+				"Language": {
+					"label": "Display language",
+					"placeholder": "",
+					"description": "Labels, numbers, dates, ... will use the selected language's formats. Select <b>'Unspecified'</b> to inherit from the parent desktop."
+				},
+				"Theme": {
+					"label": "Theme",
+					"placeholder": "",
+					"description": "If unset, the theme inherited from the parent desktop, site or organization will be used"
+				},
+				"Template": {
+					"label": "Template",
+					"placeholder": "",
+					"description": "XHTML code for the desktop template. The default template is used if left blank. There must be at least 1 zone with the ID <b>Content</b>.<br/>Zones for placing portlets must be suitable HTML tags (div, section, ...) identified by the <b>zone-id</b> attribute (e.g.: zone-id=\"Content\").<br/>Tips: Click the adjacent icon to retrieve the default XHTML template code and edit it."
+				},
+				"IconURI": {
+					"label": "Icon image",
+					"placeholder": "",
+					"description": "Specify an icon image for the desktop, preferably an .ICO or .PNG image sized 64x64"
+				},
+				"CoverURI": {
+					"label": "Cover image",
+					"placeholder": "",
+					"description": "Specify a cover image for the desktop, used as the default for social networks when the content has no specific cover image, preferably a .JPG or .PNG image sized 1200x630 or 600x315"
+				},
+				"MetaTags": {
+					"label": "Additional meta tags",
+					"placeholder": "",
+					"description": "Additional meta tags will be added to the HEAD section of the display desktop. The meta tags must conform to XML standards"
+				},
+				"Stylesheets": {
+					"label": "Additional stylesheets (CSS)",
+					"placeholder": "",
+					"description": "Additional stylesheet code (CSS) for the desktop"
+				},
+				"ScriptLibraries": {
+					"label": "Additional script libraries",
+					"placeholder": "",
+					"description": "Additional script library code (JavaScript) will be added at the end (before the closing BODY tag) of the site's display desktop.<br/>This code must be enclosed in &lt;script&gt; and &lt;/script&gt;, can use jQuery ($), and may reference external script libraries.<br/>Tips: Additional HTML tags can also be inserted here."
+				},
+				"Scripts": {
+					"label": "Additional scripts",
+					"placeholder": "",
+					"description": "Additional script code (JavaScript) will be added at the end (before the closing BODY tag) of the display desktop.<br/>This code must NOT be enclosed in &lt;script&gt; and &lt;/script&gt; (because it will be exposed as an external link)."
+				},
+				"MainPortletID": {
+					"label": "Main portlet",
+					"placeholder": "",
+					"description": "Specify the main portlet used to combine SEO parameters"
+				},
+				"SEOSettings": {
+					"label": "SEO customizations",
+					"placeholder": "",
+					"description": "",
+					"SEOInfo": {
+						"label": "",
+						"placeholder": "",
+						"description": "",
+						"Title": {
+							"label": "Title",
+							"placeholder": "",
+							"description": "The desktop's title, combined with the main portlet's title and the site's title"
+						},
+						"Description": {
+							"label": "Description",
+							"placeholder": "",
+							"description": "The desktop's description, combined with the main portlet's description and the site's description"
+						},
+						"Keywords": {
+							"label": "Keywords",
+							"placeholder": "",
+							"description": "The desktop's keywords, combined with the main portlet's keywords and the site's keywords"
+						}
+					},
+					"TitleMode": {
+						"label": "Title combination method",
+						"placeholder": "",
+						"description": "Specify how to combine values to create the desktop's title (<b>title</b> tag)"
+					},
+					"DescriptionMode": {
+						"label": "Description combination method",
+						"placeholder": "",
+						"description": "Specify how to combine values to create the desktop's description (<b>description</b> tag)"
+					},
+					"KeywordsMode": {
+						"label": "Keyword combination method",
+						"placeholder": "",
+						"description": "Specify how to combine values to create the desktop's keywords (<b>keywords</b> tag)"
+					}
+				}
+			},
+			"list": {
+				"searchbar": "Place keywords in \"..\" for an exact display desktop search",
+				"children": "{{number}} child desktops: {{children}}",
+				"view": "Child desktop list"
+			},
+			"update": {
+				"segments": {
+					"basic": "Basic information",
+					"display": "Display settings",
+					"seo": "SEO settings"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Are you sure you want to cancel display desktop creation?",
+						"cancel": "Are you sure you want to discard the display desktop changes?",
+						"delete": "Are you sure you want to delete the display desktop and its related information?"
+					},
+					"success": {
+						"new": "Display desktop created successfully",
+						"update": "Display desktop changes saved successfully",
+						"delete": "Display desktop deleted successfully"
+					},
+					"mode": "Action to apply to all child desktops:"
+				},
+				"buttons": {
+					"delete": "Delete display desktop",
+					"delete-all": "Delete",
+					"set-null-all": "Move to root"
+				},
+				"seo": {
+					"PortletAndDesktopAndSite": "Portlet + Desktop + Site",
+					"SiteAndDesktopAndPortlet": "Site + Desktop + Portlet",
+					"PortletAndDesktop": "Portlet + Desktop",
+					"DesktopAndPortlet": "Desktop + Portlet",
+					"PortletAndSite": "Portlet + Site",
+					"SiteAndPortlet": "Site + Portlet",
+					"DesktopAndSite": "Desktop + Site",
+					"SiteAndDesktop": "Site + Desktop",
+					"Portlet": "Portlet only",
+					"Desktop": "Desktop only"
+				}
+			}
+		},
+		"portlets": {
+			"title": {
+				"search": "Search display portlets",
+				"list": "Display portlet list {{info}}",
+				"create": "Create a new display portlet",
+				"update": "Update display portlet",
+				"reorder": "Reposition portlets"
+			},
+			"actions": {
+				"List": "Display list",
+				"View": "View content details"
+			},
+			"controls": {
+				"Title": {
+					"label": "Display portlet name",
+					"placeholder": "",
+					"description": ""
+				},
+				"Action": {
+					"label": "Action",
+					"placeholder": "",
+					"description": "Used by default when the display desktop does not have enough parameters"
+				},
+				"AlternativeAction": {
+					"label": "Alternative action",
+					"placeholder": "",
+					"description": "Used when the display desktop has all parameters for the content to display, including <b>ParentIdentity</b> and <b>ContentIdentity</b>"
+				},
+				"DesktopID": {
+					"label": "Display in desktop",
+					"placeholder": "",
+					"description": ""
+				},
+				"OtherDesktops": {
+					"label": "Also display in desktops",
+					"placeholder": "",
+					"description": "Specify the desktops in which the portlet will also appear"
+				},
+				"Zone": {
+					"label": "Display in zone",
+					"placeholder": "",
+					"description": ""
+				},
+				"RepositoryEntityID": {
+					"label": "Business data types",
+					"placeholder": "",
+					"description": "The portlet will display data from the specified business data type"
+				},
+				"OriginalPortlet": {
+					"label": "Original portlet",
+					"placeholder": "",
+					"description": "Settings from this original portlet will be used"
+				},
+				"OriginalPortletID": {
+					"label": "Original portlet ID",
+					"placeholder": "",
+					"description": ""
+				},
+				"CommonSettings": {
+					"label": "Portlet display settings",
+					"description": "General settings for displaying the portlet",
+					"Template": {
+						"label": "Template",
+						"placeholder": "",
+						"description": "XHTML code for the portlet template. The default template is used if left blank.<br/>A portlet template usually has 3 display zones, with the following IDs (specified by the <b>zone-id</b> attribute):<ul><li>'<b>ContextMenu</b>' for the portlet's context menu,</li><li>'<b>Title</b>' for the portlet's title,</li><li>'<b>Content</b>' for displaying the portlet's content (this zone is required)</ul>Tips:<ul><li>You can clear the <b>Business data type</b> and insert static content (XHTML code) into the <b>Content</b> zone</li><li>Click the adjacent icon to retrieve the default XHTML template code and edit it</li></ul>"
+					},
+					"HideTitle": {
+						"label": "Hide the portlet title when displayed"
+					},
+					"TitleURL": {
+						"label": "Title link",
+						"placeholder": "",
+						"description": "Specify the link to open when the user clicks the portlet's title"
+					},
+					"IconURI": {
+						"label": "Title icon image",
+						"placeholder": "",
+						"description": "Specify an icon image to place in the portlet's title. If an icon is present, the context menu appears when the user hovers over it"
+					},
+					"TitleUISettings": "Title zone display customizations",
+					"ContentUISettings": "Content zone display customizations"
+				},
+				"ExpressionID": {
+					"label": "Data query and sorting expression",
+					"placeholder": "",
+					"description": "Specify the expression for querying and sorting the data displayed in the list"
+				},
+				"ListSettings": {
+					"Template": {
+						"label": "Template",
+						"placeholder": "",
+						"description": "XSLT code for displaying the portlet's content list. The default template is used if left blank.<br/>Tips: Click the adjacent icon to retrieve the default XSLT template code and edit it."
+					},
+					"PageSize": {
+						"label": "Number of content items per page",
+						"placeholder": "",
+						"description": "Specify the number of data items to display per page, passed by the display desktop through the <b>PageSize</b> parameter.<br/><b>Tips</b>: Set the value to <b>0</b> to retrieve all data."
+					},
+					"AutoPageNumber": {
+						"label": "Automatically determine the page number (via the PageNumber parameter; leave unset to always retrieve the first page)"
+					},
+					"Options": {
+						"label": "Display options",
+						"placeholder": "",
+						"description": "JSON code specifying the information to display in the list. This content will be placed in the &lt;Options&gt; tag of the XML containing the list data"
+					},
+					"ShowBreadcrumbs": {
+						"label": "Show breadcrumbs"
+					},
+					"ShowPagination": {
+						"label": "Show pagination bar"
+					}
+				},
+				"ViewSettings": {
+					"Template": {
+						"label": "Template",
+						"placeholder": "",
+						"description": "XSLT code for displaying the portlet's content details. The default template is used if left blank.<br/>Tips: Click the adjacent icon to retrieve the default XSLT template code and edit it."
+					},
+					"Options": {
+						"label": "Display options",
+						"placeholder": "",
+						"description": "JSON code specifying the information to display. This content will be placed in the &lt;Options&gt; tag of the XML containing the detail display data"
+					},
+					"ShowBreadcrumbs": {
+						"label": "Show breadcrumbs"
+					},
+					"ShowPagination": {
+						"label": "Show pagination bar"
+					}
+				},
+				"PaginationSettings": {
+					"label": "Pagination display settings",
+					"description": "Settings for displaying the portlet's pagination bar",
+					"Template": {
+						"label": "Template",
+						"placeholder": "",
+						"description": "XSLT code for the pagination template. The default template is used if left blank.<br/>Tips: Click the adjacent icon to retrieve the default XHTML template code and edit it."
+					},
+					"PreviousPageLabel": {
+						"label": "'Previous page' label",
+						"placeholder": "",
+						"description": "The content above will be used for the '<b>Previous page</b>' label on the pagination bar"
+					},
+					"NextPageLabel": {
+						"label": "'Next page' label",
+						"placeholder": "",
+						"description": "The content above will be used for the '<b>Next page</b>' label on the pagination bar"
+					},
+					"CurrentPageLabel": {
+						"label": "'Current page' label",
+						"placeholder": "",
+						"description": "The content above will be used for the '<b>Current page</b>' label on the pagination bar"
+					},
+					"ShowPageLinks": {
+						"label": "Show page links (deselect to show a selection box)"
+					},
+					"NumberOfPageLinks": {
+						"label": "Number of page links to display",
+						"placeholder": "",
+						"description": "Specify the number of page links to display on the pagination bar. Tips: Set the value to <b>0</b> (zero) to display all page links; use this only when there is little content."
+					}
+				},
+				"BreadcrumbSettings": {
+					"label": "Breadcrumb display settings",
+					"description": "Settings for displaying the portlet's breadcrumbs",
+					"Template": {
+						"label": "Template",
+						"placeholder": "",
+						"description": "XSLT code for the breadcrumb template. The default template is used if left blank.<br/>Tips: Click the adjacent icon to retrieve the default XHTML template code and edit it."
+					},
+					"SeparatedLabel": {
+						"label": "Separator label",
+						"placeholder": "",
+						"description": "The content above will be used to separate items in the breadcrumbs"
+					},
+					"HomeLabel": {
+						"label": "'Home' label",
+						"placeholder": "",
+						"description": "The content above will be used for the '<b>Home</b>' label in the breadcrumbs"
+					},
+					"HomeURL": {
+						"label": "Home link",
+						"placeholder": "",
+						"description": "Specify the home link. Use <b>~/</b> to specify a root link; leave blank to use the default link"
+					},
+					"HomeAdditionalLabel": {
+						"label": "Additional 'Home' label (after)",
+						"placeholder": "",
+						"description": "The content above will be used as an additional label after the home label in the breadcrumbs"
+					},
+					"HomeAdditionalURL": {
+						"label": "Additional label link",
+						"placeholder": "",
+						"description": "Specify the link for the additional label. Use <b>~/</b> to specify a root link"
+					},
+					"ShowModuleLink": {
+						"label": "Show the link to the business module"
+					},
+					"ModuleLabel": {
+						"label": "'Business module' label",
+						"placeholder": "",
+						"description": "The content above will be used for the '<b>Business module</b>' label in the breadcrumbs; leave blank to use the default value (title)"
+					},
+					"ModuleURL": {
+						"label": "Business module link",
+						"placeholder": "",
+						"description": "Specify the link to the business module. Use <b>~/</b> to specify a root link; leave blank to use the default link"
+					},
+					"ModuleAdditionalLabel": {
+						"label": "Additional 'Business module' label (after)",
+						"placeholder": "",
+						"description": "The content above will be used as an additional label after the business module label in the breadcrumbs"
+					},
+					"ModuleAdditionalURL": {
+						"label": "Additional label link",
+						"placeholder": "",
+						"description": "Specify the link for the additional label. Use <b>~/</b> to specify a root link"
+					},
+					"ShowContentTypeLink": {
+						"label": "Show the link to the business data type"
+					},
+					"ContentTypeLabel": {
+						"label": "'Business data type' label",
+						"placeholder": "",
+						"description": "The content above will be used for the '<b>Business data type</b>' label in the breadcrumbs; leave blank to use the default value (title)"
+					},
+					"ContentTypeURL": {
+						"label": "Business data type link",
+						"placeholder": "",
+						"description": "Specify the link to the business data type. Use <b>~/</b> to specify a root link; leave blank to use the default link"
+					},
+					"ContentTypeAdditionalLabel": {
+						"label": "Additional 'Business data type' label (after)",
+						"placeholder": "",
+						"description": "The content above will be used as an additional label after the business data type label in the breadcrumbs"
+					},
+					"ContentTypeAdditionalURL": {
+						"label": "Additional label link",
+						"placeholder": "",
+						"description": "Specify the link for the additional label. Use <b>~/</b> to specify a root link"
+					},
+					"NumberOfNodes": {
+						"label": "Number of links to display",
+						"placeholder": "",
+						"description": "Specify the number of links to display (counting from the end, excluding home, business module and business data type links); set to zero (0) to display all links"
+					}
+				}
+			},
+			"list": {
+				"searchbar": "Place keywords in \"..\" for an exact display portlet search",
+				"invalid": "No display portlet has been specified"
+			},
+			"update": {
+				"segments": {
+					"common": "General settings",
+					"list": "Display list",
+					"view": "View details",
+					"other": "Pagination & breadcrumbs"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Are you sure you want to cancel display portlet creation?",
+						"cancel": "Are you sure you want to discard the display portlet changes?",
+						"delete": "Are you sure you want to delete the display portlet?",
+						"remove": "This display portlet will be deleted (moved to trash and recoverable within 30 days)"
+					},
+					"success": {
+						"new": "Display portlet created successfully",
+						"update": "Display portlet changes saved successfully",
+						"delete": "The display portlet and its related information have been queued to be moved to trash"
+					},
+					"json": "Invalid JSON syntax in the display options"
+				},
+				"buttons": {
+					"delete": "Delete display portlet",
+					"remove": "Confirm deletion"
+				},
+				"reorder": "Portlets in zone {{zone}}"
+			}
+		},
+		"modules": {
+			"title": {
+				"search": "Search business modules",
+				"list": "Business module list {{info}}",
+				"create": "Create a new business module",
+				"update": "Update business module"
+			},
+			"controls": {
+				"Organization": "Business module of the organization",
+				"ModuleDefinitionID": {
+					"label": "Module template",
+					"placeholder": "",
+					"description": "This business module's functions will be provided by the module template specified above"
+				},
+				"Title": {
+					"label": "Business module name",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Description",
+					"placeholder": "",
+					"description": ""
+				},
+				"DesktopID": {
+					"label": "Display desktops",
+					"placeholder": "",
+					"description": "Default desktop used to display the module's business content"
+				},
+				"Trackings": {
+					"label": "Counting/tracking systems",
+					"GoogleAnalytics": {
+						"label": "Google Analytics ID",
+						"description": "Enter GA IDs, separated by semicolons (;), to count page-view (web) or screen-view (app) events for the business module's content"
+					},
+					"FacebookPixel": {
+						"label": "Facebook Pixel ID",
+						"description": "Enter FB Pixel IDs, separated by semicolons (;), to count page-view (web) events for the business module's content"
+					}
+				}
+			},
+			"list": {
+				"searchbar": "Place keywords in \"..\" for an exact business module search",
+				"invalid": "No business module has been specified",
+				"active": "Set as the active business module"
+			},
+			"update": {
+				"segments": {
+					"basic": "Basic information",
+					"privileges": "Access permissions",
+					"notifications": "Notifications & tracking IDs"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Are you sure you want to cancel business module creation?",
+						"cancel": "Are you sure you want to discard the business module changes?",
+						"delete": "Are you sure you want to delete the business module and its related information?",
+						"remove": "The business module, its data types and all its business data will be deleted (moved to trash and recoverable within 30 days)"
+					},
+					"success": {
+						"new": "Business module created successfully",
+						"update": "Business module changes saved successfully",
+						"delete": "The business module and its related information have been queued to be moved to trash"
+					}
+				},
+				"buttons": {
+					"delete": "Delete business module",
+					"remove": "Confirm deletion"
+				}
+			}
+		},
+		"contenttypes": {
+			"title": {
+				"search": "Search business data types",
+				"list": "Business data type list {{info}}",
+				"create": "Create a new business data type",
+				"update": "Update business data type"
+			},
+			"controls": {
+				"Organization": "Business data type of the organization",
+				"RepositoryID": {
+					"label": "Business modules",
+					"placeholder": "",
+					"description": "This business data type will belong to the specified business module"
+				},
+				"ContentTypeDefinitionID": {
+					"label": "Data type template",
+					"placeholder": "",
+					"description": "This business data type's functions will be provided by the specified data type template"
+				},
+				"Title": {
+					"label": "Business data type name",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Description",
+					"placeholder": "",
+					"description": ""
+				},
+				"DesktopID": {
+					"label": "Display desktops",
+					"placeholder": "",
+					"description": "Default desktop used to display the data type's business content"
+				},
+				"CreateNewVersionWhenUpdated": {
+					"label": "Create a content version when business data is updated",
+					"placeholder": "",
+					"description": ""
+				},
+				"AllowComments": {
+					"label": "Allow comments on content",
+					"placeholder": "",
+					"description": ""
+				},
+				"UseSocialNetworkComments": {
+					"label": "Use a social network commenting system",
+					"placeholder": "",
+					"description": ""
+				},
+				"DefaultCommentStatus": {
+					"label": "Default approval status for new comments",
+					"placeholder": "",
+					"description": "Note: If the default status is 'Published', new comments appear immediately after users submit them, without moderation"
+				},
+				"Trackings": {
+					"label": "Counting/tracking systems",
+					"GoogleAnalytics": {
+						"label": "Google Analytics ID",
+						"description": "Enter GA IDs, separated by semicolons (;), to count page-view (web) or screen-view (app) events for the business data type's content"
+					},
+					"FacebookPixel": {
+						"label": "Facebook Pixel ID",
+						"description": "Enter FB Pixel IDs, separated by semicolons (;), to count page-view (web) events for the business data type's content"
+					}
+				},
+				"WebHookNotifications": {
+					"label": "Outgoing webhook settings",
+					"description": "Configure direct webhooks for all events occurring on all objects of the business data type.<br/>These webhooks are sent automatically and independently of the notification settings."
+				},
+				"WebHookAdapters": {
+					"label": "Incoming webhook adapter settings",
+					"description": "Configure adapters to receive webhooks sent from multiple external sources for this business data type.",
+					"Name": {
+						"label": "Incoming webhook adapter name",
+						"description": "The name must be unique. The adapter named <b>default</b> will be used when an adapter specified by name cannot be found.<br/>Tips: Clear the name (leave it unset) to delete this adapter."
+					}
+				},
+				"ExtendedPropertyDefinitions": {
+					"label": "Extended properties",
+					"description": "JSON code defining the extended properties"
+				},
+				"ExtendedControlDefinitions": {
+					"label": "Extended property data entry form",
+					"description": "JSON code defining the controls in the data entry form for extended properties"
+				},
+				"StandardControlDefinitions": {
+					"label": "Standard property data entry form",
+					"description": "JSON code overriding special controls in the data entry form for certain standard properties"
+				},
+				"SubTitleFormula": {
+					"label": "Subtitle calculation expression",
+					"description": "The calculation expression can use one of 2 approaches:<ul><li>Use an expression: start with '@', using @script/@javascript/@js or @[...] for a JavaScript calculation expression with the 'this' object and 2 available parameters, '__request' and '__params', for example: @[return \"abc xyz \" + this.Title;]</li><li>Use a {{ }} template with predefined calculation functions such as @current/@object, @request, @params, @toString, ..., for example: This is the subtitle of {{@object(Title)}}"
+				}
+			},
+			"list": {
+				"searchbar": "Place keywords in \"..\" for an exact business data type search",
+				"invalid": "No business data type has been specified",
+				"no": "No business data types are available",
+				"move": "Move the data type and all its content to another module",
+				"moveFirstConfirm": "Are you sure you want to move to another module?",
+				"moveLastConfirm": "Do you really want to move to another module?",
+				"moveExplanation": "Move the data type and all its current content to another module",
+				"moveNoModule": "No ID has been provided for the target module",
+				"moveInvalidModule": "Please re-enter the correct ID for the target module",
+				"moveDone": "Moved to another module successfully"
+			},
+			"update": {
+				"segments": {
+					"basic": "Basic",
+					"privileges": "Access permissions",
+					"notifications": "Notifications & tracking IDs",
+					"webhookNotifications": "Outgoing webhooks",
+					"webhookAdapters": "Incoming webhooks",
+					"extend": "Customizations"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Are you sure you want to cancel business data type creation?",
+						"cancel": "Are you sure you want to discard the business data type changes?",
+						"delete": "Are you sure you want to delete the business data type and its related information?",
+						"remove": "The information and all business data of this data type will be deleted (moved to trash and recoverable within 30 days)"
+					},
+					"success": {
+						"new": "Business data type created successfully",
+						"update": "Business data type changes saved successfully",
+						"delete": "The business data type and its related information have been queued to be moved to trash"
+					},
+					"json": {
+						"extendedProperty": "Invalid JSON syntax in the extended property definitions",
+						"extendedControl": "Invalid JSON syntax in the data entry form definitions for extended properties",
+						"extendedNotMatched": "The extended property definition JSON does not match the data entry form definition JSON for extended properties",
+						"standardControl": "Invalid JSON syntax in the data entry form definitions for standard properties",
+						"standardNotMatched": "The data entry form definition JSON for standard properties does not match the default data entry form"
+					}
+				},
+				"buttons": {
+					"delete": "Delete business data type",
+					"remove": "Confirm deletion"
+				}
+			}
+		},
+		"expressions": {
+			"title": {
+				"search": "Search query expressions",
+				"list": "Query expression list {{info}}",
+				"create": "Create a new query expression",
+				"update": "Update query expression"
+			},
+			"controls": {
+				"Organization": "Query expression of the organization",
+				"Title": {
+					"label": "Query expression name",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Description",
+					"placeholder": "",
+					"description": ""
+				},
+				"RepositoryID": {
+					"label": "Business modules",
+					"placeholder": "",
+					"description": "This query expression will be used to query data from the specified business module"
+				},
+				"ContentTypeDefinitionID": {
+					"label": "Data type template",
+					"placeholder": "",
+					"description": "Specify the query expression to use for a particular data type template"
+				},
+				"RepositoryEntityID": {
+					"label": "Business data types",
+					"placeholder": "",
+					"description": "Specify the query expression to use for a particular business data type. If unset, the query expression can be used for all business data types that share the specified data type template."
+				},
+				"Filter": {
+					"label": "Query expression (JSON)",
+					"placeholder": "",
+					"description": ""
+				},
+				"Sorts": {
+					"label": "Sorting expressions (JSON)",
+					"placeholder": "",
+					"description": ""
+				},
+				"UseCursor": {
+					"label": "Use a cursor for pagination ('x-cursor' parameter)",
+					"placeholder": "",
+					"description": ""
+				},
+				"SearchTransformScript": {
+					"label": "JavaScript code to transform an object's JSON when using the search method (search)",
+					"placeholder": "ex: return JSON.stringify(this);",
+					"description": "If provided, the system uses this JavaScript code to generate the JSON for each object in the list"
+				},
+				"GetTransformScript": {
+					"label": "JavaScript code to transform the object's JSON body when using the data retrieval method (get)",
+					"placeholder": "ex: return JSON.stringify(this);",
+					"description": "If provided, the system uses this JavaScript code to generate the object's JSON boby"
+				}
+			},
+			"list": {
+				"searchbar": "Place keywords in \"..\" for an exact query expression search",
+				"invalid": "No query expression has been specified"
+			},
+			"update": {
+				"segments": {
+					"basic": "Basic",
+					"filter": "Query details",
+					"sorts": "Sorting details",
+					"integrations": "Integration & connections"
+				},
+				"messages": {
+					"confirm": {
+						"new": "Are you sure you want to cancel query expression creation?",
+						"cancel": "Are you sure you want to discard the query expression changes?",
+						"delete": "Are you sure you want to delete the query expression?",
+						"remove": "This query expression will be deleted (moved to trash and recoverable within 30 days)"
+					},
+					"success": {
+						"new": "Query expression created successfully",
+						"update": "Query expression changes saved successfully",
+						"delete": "The query expression and its related information have been queued to be moved to trash"
+					},
+					"json": "Invalid JSON syntax in the expression"
+				},
+				"buttons": {
+					"delete": "Delete query expression",
+					"remove": "Confirm deletion",
+					"edit": "Advanced update"
+				}
+			}
+		},
+		"tasks": {
+			"status": {
+				"Awaiting": "Queued",
+				"Acquired": "Preparing to execute",
+				"Running": "Running",
+				"Completed": "Executed"
+			},
+			"schedulingType": {
+				"Update": "Update data",
+				"SendNotification": "Send notifications",
+				"Refresh": "Refresh web page",
+				"RunCrawler": "Run crawler"
+			},
+			"recurringType": {
+				"Years": "Years",
+				"Months": "Months",
+				"Days": "Days",
+				"Hours": "Hours",
+				"Minutes": "Minutes",
+				"Seconds": "Seconds"
+			},
+			"title": {
+				"search": "Search tasks",
+				"list": "Task list {{info}}",
+				"create": "Create a new task",
+				"update": "Update task",
+				"run": "Run task"
+			},
+			"controls": {
+				"Organization": "Of the organization",
+				"Title": {
+					"label": "Task name",
+					"placeholder": "",
+					"description": ""
+				},
+				"Description": {
+					"label": "Description",
+					"placeholder": "",
+					"description": ""
+				},
+				"EntityInfo": {
+					"label": "Business data types",
+					"placeholder": "",
+					"description": ""
+				},
+				"ObjectID": {
+					"label": "ID of the object in the task",
+					"placeholder": "",
+					"description": "Specify the ID of the object in the task"
+				},
+				"Time": {
+					"label": "Execution time",
+					"placeholder": "",
+					"description": ""
+				},
+				"UserID": {
+					"label": "ID of the user executing the task",
+					"placeholder": "",
+					"description": "Specify the ID of the user executing the task"
+				},
+				"SchedulingType": {
+					"label": "Task type",
+					"placeholder": "",
+					"description": ""
+				},
+				"RecurringType": {
+					"label": "Repeat task execution by",
+					"placeholder": "",
+					"description": ""
+				},
+				"RecurringUnit": {
+					"label": "Interval before running the task again",
+					"placeholder": "",
+					"description": ""
+				},
+				"Status": {
+					"label": "Status",
+					"placeholder": "",
+					"description": ""
+				},
+				"Data": {
+					"label": "Data used to execute the task",
+					"placeholder": "",
+					"description": "JSON data used to execute the task"
+				}
+			},
+			"update": {
+				"messages": {
+					"json": "Invalid JSON data",
+					"confirm": {
+						"new": "Are you sure you want to cancel task creation?",
+						"cancel": "Are you sure you want to discard the task changes?",
+						"delete": "Are you sure you want to delete the task?"
+					},
+					"success": {
+						"new": "Task created successfully",
+						"update": "Task changes saved successfully",
+						"delete": "Task moved to trash"
+					}
+				},
+				"buttons": {
+					"delete": "Delete task",
+					"remove": "Confirm deletion"
+				}
+			},
+			"scheduled": {
+				"publish": {
+					"title": {
+						"modal": "Schedule publication",
+						"object": "Publish content \"{{title}}\""
+					},
+					"message": "Publication scheduled successfully",
+					"time": "Content execution & publication time",
+					"status": "Status",
+					"start": "Start date",
+					"end": "End date"
+				},
+				"update": {
+					"action": "Configure scheduled update",
+					"title": "Update \"{{title}}\""
+				}
+			}
+		}
+	}
+}

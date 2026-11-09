@@ -1,0 +1,11 @@
+ion-item {
+	cursor: pointer;
+}
+ion-item > ion-label > label {
+	display: inline-block;
+	vertical-align: middle;
+	top: -1px;
+	font-size: 90%;
+	text-align: right;
+	color: var(--ion-color-medium);
+}
