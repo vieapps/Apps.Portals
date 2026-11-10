@@ -5,7 +5,9 @@ import { CompleterData, CompleterItem } from "./app.completer";
 
 /** UI bridge; business callbacks continue to receive the previous CompleterItem shape. */
 @Component({
-	selector: "app-completer", standalone: false, changeDetection: ChangeDetectionStrategy.Eager,
+	selector: "app-completer",
+	standalone: false,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	template: `<ng-select #select [items]="items" bindLabel="title"
 		[ngModel]="selection" [ngModelOptions]="{standalone: true}"
 		[typeahead]="terms" [minTermLength]="minSearchLength" [loading]="loading"
@@ -49,12 +51,19 @@ export class AppCompleterControl implements OnChanges, OnDestroy {
 	private searches: Subscription;
 	private activeQuery = false;
 
-	get inputAttributes() { return { maxlength: String(this.maxChars), "aria-label": this.placeholder || this.inputName }; }
-	// Keep an overlay inside an Ionic modal's focus enclosure; root pages can use body.
+	get inputAttributes() {
+		return {
+			maxlength: String(this.maxChars),
+			"aria-label": this.placeholder || this.inputName
+		};
+	}
+
+	// keep an overlay inside an Ionic modal's focus enclosure; root pages can use body.
 	get overlayTarget() {
 		const modal = this.host.nativeElement.closest("ion-modal");
 		return modal?.id ? `ion-modal#${CSS.escape(modal.id)}` : "body";
 	}
+	
 	readonly compareItems = (a: CompleterItem, b: CompleterItem) => a === b || (a?.originalObject === b?.originalObject);
 
 	ngOnChanges(changes: SimpleChanges) {
@@ -100,10 +109,20 @@ export class AppCompleterControl implements OnChanges, OnDestroy {
 		}
 	}
 
-	cancelSearch() { this.activeQuery = false; this.datasource?.cancel(); }
-	focus() { this.select?.focus(); }
+	cancelSearch() {
+		this.activeQuery = false;
+		this.datasource?.cancel();
+	}
+
+	focus() {
+		this.select?.focus();
+	}
+	
 	ngOnDestroy() {
-		this.searches?.unsubscribe(); this.inputSubscription.unsubscribe(); this.subscriptions.unsubscribe();
-		this.datasource?.cancel(); this.terms.complete();
+		this.searches?.unsubscribe();
+		this.inputSubscription.unsubscribe();
+		this.subscriptions.unsubscribe();
+		this.datasource?.cancel();
+		this.terms.complete();
 	}
 }

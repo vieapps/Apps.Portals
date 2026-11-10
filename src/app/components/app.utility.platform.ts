@@ -28,7 +28,7 @@ export const APP_ELECTRON_SERVICE = new InjectionToken<AppElectronService>("AppE
 /** Matches Electron desktop shell without exposing Node APIs */
 export function createElectronService(): AppElectronService | null {
 	type DesktopBridge = Pick<AppElectronService, "ipcRenderer" | "shell">;
-	const names = ["vieapps", "vieappsngx", "vieappsDesktop", "ngxDesktop", "ngx"];
+	const names = ["vieapps", "vieappsngx", "ngx", "ngxDesktop", "vieappsDesktop", "vieappsngxDesktop"];
 	const isBridge = (bridge: any): bridge is DesktopBridge => typeof bridge?.ipcRenderer?.on === "function" && typeof bridge?.ipcRenderer?.send === "function" && typeof bridge?.shell?.openExternal === "function";
 	const app: DesktopBridge | undefined = typeof window === "undefined"
 		? undefined

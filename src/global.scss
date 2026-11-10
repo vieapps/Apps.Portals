@@ -468,7 +468,6 @@ ion-footer > ion-toolbar span.Published > ion-icon {
 	color: green;
 }
 
-
 /* Completer uses a CDK overlay; scope panel styles to ng-select, including in Ionic modals. */
 app-form ion-item.completer-container > app-completer {
 	width: 100%;
@@ -478,6 +477,10 @@ app-form ion-item.completer-container > app-completer {
 app-completer .ng-select-container {
 	background: var(--ion-item-background, var(--ion-background-color, #fff));
 	color: var(--ion-text-color, #000);
+	border: 0 !important;
+}
+app-completer .ng-select-container .ng-value-container {
+	padding-left: 0 !important;
 }
 .ng-dropdown-panel {
 	background: var(--ion-background-color, #fff);

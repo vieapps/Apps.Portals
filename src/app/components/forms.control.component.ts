@@ -46,11 +46,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	@ViewChild("elementRef", { static: false }) private elementRef: any;
 
 	ngOnInit() {
-		// This migration cut mounts only verified families; deferred branches never silently drop data.
-		const supportedCustom = this.isCustomControl("data-selector") || this.isCustomControl("data-items") || this.isCustomControl("files-selector") || this.isCustomControl("object-privileges") || this.isCustomControl("service-privileges");
-		if (this.visible && (this.isCustomControl() && !supportedCustom)) {
-			throw new Error(`[Forms]: Renderer not migrated yet: ${this.control.Type}/${this.control.Options.Type}`);
-		}
 		this.control.controlRef = this;
 		this.control.formControlRef = this.formControl;
 		if (this.isLookupControl && this.isCompleter) {
@@ -463,10 +458,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return this._selectOptions.indexOf(selectOption) > -1;
 	}
 
-	trackOption(index: number, option: { Value: string, Label: string }) {
-		return `${option.Value}@${index}`;
-	}
-
 	get rangeOptions() {
 		return this.control.Options.RangeOptions;
 	}
@@ -690,10 +681,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	focusNext() {
 		this.appFormsSvc.focusNext(this.control, () => this.lastFocus.emit(this));
-	}
-
-	trackControl(index: number, control: AppFormsControl) {
-		return `${control.Name}@${index}`;
 	}
 
 	refreshCaptchaImage() {
@@ -941,7 +928,6 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		else if (!this.isFilePickerControl) {
 			// set value
 			this.setValue(event !== undefined && event.detail !== undefined ? event.detail.value : event);
-
 			// focus to next control
 			if (!this.isRangeControl) {
 				this.focusNext();

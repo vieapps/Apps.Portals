@@ -14,15 +14,30 @@ export class CKEditorControl implements AfterViewInit, OnChanges, OnDestroy {
 	async ngAfterViewInit() {
 		try {
 			const constructor = await this.editor();
-			if (this.destroyed) return;
+			if (this.destroyed) {
+				return;
+			}
 			const instance = await constructor.create(this.host.nativeElement, this.config);
-			if (this.destroyed) { await instance.destroy(); return; }
+			if (this.destroyed) {
+				await instance.destroy();
+				return;
+			}
 			this.editorInstance = instance;
 			instance.setData(this.data || "");
 			instance.model.document.on("change:data", () => this.change.emit({ editor: instance }));
 			this.ready.emit(instance);
-		} catch (error) { console.error("Custom CKEditor initialization failed", error); }
+		}
+		catch (error) {
+			console.error("Custom CKEditor initialization failed", error);
+		}
 	}
-	ngOnChanges() { if (this.editorInstance && this.editorInstance.getData() !== (this.data || "")) this.editorInstance.setData(this.data || ""); }
-	ngOnDestroy() { this.destroyed = true; this.editorInstance?.destroy(); }
+	ngOnChanges() {
+		if (this.editorInstance && this.editorInstance.getData() !== (this.data || "")) {
+			this.editorInstance.setData(this.data || "");
+		 }
+	}
+
+	ngOnDestroy() {
+		this.destroyed = true; this.editorInstance?.destroy();
+	}
 }

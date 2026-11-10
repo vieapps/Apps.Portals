@@ -1,102 +1,104 @@
-@if (visible && !isCustomControl && !isButtonsControl) {
-	<ion-item
-		[color]="theme"
-		[class.file-picker]="isFilePickerControl">
+@if (visible) {
 
-		@if (icon) {
-			<ion-buttons style="background-color:var(--ion-color-base)" [slot]="iconSlot">
-				<ion-button tabindex="-1" [fill]="iconFill" [color]="iconColor" (click)="clickOnIcon($event)">
-					<ion-icon [name]="icon" slot="icon-only"></ion-icon>
+	@if (isButtonsControl) {
+		<ion-buttons #elementRef style="background-color:var(--ion-color-base)" class="ion-padding">
+			@for (button of control.SubControls.Controls; track button.Name) {
+				<ion-button
+					[fill]="button.Options.ButtonOptions.Fill"
+					[color]="button.Options.ButtonOptions.Color"
+					[disabled]="button.Options.Disabled"
+					[class]="button.Options.Css"
+					(click)="button.Options.ButtonOptions.OnClick($event, button)">
+					@if (button.Options.ButtonOptions.Icon.Name) {
+						<ion-icon [icon]="button.Options.ButtonOptions.Icon.Name" [slot]="button.Options.ButtonOptions.Icon.Slot"></ion-icon>
+					}
+					{{ button.Options.Label }}
 				</ion-button>
-			</ion-buttons>
-		}
+			}
+		</ion-buttons>
+	}
 
-		@if (label) {
-			<ion-label [position]="position">
-				{{ label }}
-			</ion-label>
-		}
-
-		@if (isNumber) {
-			<span class="text number" #elementRef>
-				{{ value | number:'':locale }}
-			</span>
-		}
-
-		@if (isDateTime) {
-			<span class="text date-time" #elementRef>
-				{{ value | date:datetimeFormat }}
-			</span>
-		}
-
-		@if (isBoolean) {
-			<ion-checkbox [checked]="value" [disabled]="true" class="yesno" slot="end" #elementRef></ion-checkbox>
-		}
-
-		@if (isMediumText) {
-			<span [innerHTML]="value" class="text medium" #elementRef></span>
-		}
-		
-		@if (isLargeText) {
-			<div [innerHTML]="value" class="text large" #elementRef></div>
-		}
-
-		@if (!isNumber && !isDateTime && !isBoolean && !isMediumText && !isLargeText && !isFilePickerControl) {
-			<span class="text" #elementRef>
-				{{ value }}
-			</span>
-		}
-		
-		@if (isFilePickerControl) {
-			<div>
-				@if (control.Options.FilePickerOptions.AllowSelect) {
-					<div class="file-picker-input">
-						<input type="file" #elementRef
-							[accept]="control.Options.FilePickerOptions.Accept"
-							[multiple]="control.Options.FilePickerOptions.Multiple"
-							[placeholder]="control.Options.PlaceHolder"
-							(change)="onFilePickerChanged($event)" />
-					</div>
-				}
-				@if (control.Options.FilePickerOptions.AllowPreview && control.value) {
-					<div class="image-picker-preview ion-padding-vertical">
-						@if (value.current) {
-							<div class="current">
-								<img [src]="value.current" />
-							</div>
-						}
-						@if (value.new) {
-							<div class="new">
-								<img [src]="value.new" />
-							</div>
-						}
-					</div>
-				}
-			</div>
-		}
-		
-	</ion-item>
-}
-
-@if (visible && isButtonsControl) {
-	<ion-buttons style="background-color:var(--ion-color-base)" class="ion-padding" #elementRef>
-		@for (button of control.SubControls.Controls; track button) {
-			<ion-button
-				[fill]="button.Options.ButtonOptions.Fill"
-				[color]="button.Options.ButtonOptions.Color"
-				[disabled]="button.Options.Disabled"
-				[class]="button.Options.Css"
-				(click)="button.Options.ButtonOptions.OnClick($event, button)">
-				@if (button.Options.ButtonOptions.Icon.Name) {
-					<ion-icon [icon]="button.Options.ButtonOptions.Icon.Name" [slot]="button.Options.ButtonOptions.Icon.Slot"></ion-icon>
-				}
-				{{ button.Options.Label }}
-			</ion-button>
-		}
-	</ion-buttons>
-}
+	@else if (!isCustomControl) {
+		<ion-item
+			[color]="theme"
+			[class.file-picker]="isFilePickerControl">
 	
+			@if (icon) {
+				<ion-buttons style="background-color:var(--ion-color-base)" [slot]="iconSlot">
+					<ion-button tabindex="-1" [fill]="iconFill" [color]="iconColor" (click)="clickOnIcon($event)">
+						<ion-icon [name]="icon" slot="icon-only"></ion-icon>
+					</ion-button>
+				</ion-buttons>
+			}
+	
+			@if (label) {
+				<ion-label [position]="position">
+					{{ label }}
+				</ion-label>
+			}
+	
+			@if (isNumber) {
+				<span #elementRef class="text number">
+					{{ value | number:'':locale }}
+				</span>
+			}
+	
+			@if (isDateTime) {
+				<span #elementRef class="text date-time">
+					{{ value | date:datetimeFormat }}
+				</span>
+			}
+	
+			@if (isBoolean) {
+				<ion-checkbox #elementRef [checked]="value" [disabled]="true" class="yesno" slot="end"></ion-checkbox>
+			}
+	
+			@if (isMediumText) {
+				<span #elementRef [innerHTML]="value" class="text medium"></span>
+			}
+			
+			@if (isLargeText) {
+				<div #elementRef [innerHTML]="value" class="text large"></div>
+			}
+	
+			@if (!isNumber && !isDateTime && !isBoolean && !isMediumText && !isLargeText && !isFilePickerControl) {
+				<span #elementRef class="text">
+					{{ value }}
+				</span>
+			}
+			
+			@if (isFilePickerControl) {
+				<div>
+					@if (control.Options.FilePickerOptions.AllowSelect) {
+						<div class="file-picker-input">
+							<input #elementRef type="file"
+								[accept]="control.Options.FilePickerOptions.Accept"
+								[multiple]="control.Options.FilePickerOptions.Multiple"
+								[placeholder]="control.Options.PlaceHolder"
+								(change)="onFilePickerChanged($event)" />
+						</div>
+					}
+					@if (control.Options.FilePickerOptions.AllowPreview && control.value) {
+						<div class="image-picker-preview ion-padding-vertical">
+							@if (value.current) {
+								<div class="current">
+									<img [src]="value.current" />
+								</div>
+							}
+							@if (value.new) {
+								<div class="new">
+									<img [src]="value.new" />
+								</div>
+							}
+						</div>
+					}
+				</div>
+			}
+			
+		</ion-item>
+	}
 
-@if (visible && isCustomControlOf('files-selector')) {
-	<control-files-selector [control]="control" #elementRef></control-files-selector>
+	@if (isCustomControlOf('files-selector')) {
+		<control-files-selector #elementRef [control]="control"></control-files-selector>
+	}
 }
