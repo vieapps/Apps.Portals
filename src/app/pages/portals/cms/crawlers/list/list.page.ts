@@ -203,10 +203,6 @@ export class CmsCrawlersListPage implements OnInit, OnDestroy, ViewDidEnter {
 		}
 	}
 
-	track(index: number, crawler: Crawler) {
-		return `${crawler.ID}@${index}`;
-	}
-
 	onSearch(event: any) {
 		if (this.searching) {
 			if (this.subscription !== undefined) {

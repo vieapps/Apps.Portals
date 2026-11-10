@@ -55,7 +55,7 @@
 	  </ion-fab>
 	}
 	<ion-list class="ion-padding-end">
-		@for (crawler of crawlers; track track($index, crawler)) {
+		@for (crawler of crawlers; track crawler.ID) {
 			<ion-item-sliding>
 				<ion-item [color]="color" (click)="view($event, crawler)" class="ion-activatable" detail="false">
 					<ion-buttons slot="end">

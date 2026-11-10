@@ -1,0 +1,6 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": { "outDir": "../../dist/out-tsc/completer", "types": [] },
+	"files": ["main.ts"],
+	"include": ["./**/*.ts", "../../src/**/*.ts"]
+}

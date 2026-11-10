@@ -1,0 +1,14 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"outDir": "../../dist/out-tsc/ui-verification",
+		"types": []
+	},
+	"files": [
+		"main.ts"
+	],
+	"include": [
+		"./**/*.ts",
+		"../../src/**/*.ts"
+	]
+}
