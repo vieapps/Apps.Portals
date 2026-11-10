@@ -16,6 +16,12 @@ export class AuthenticationService extends BaseService {
 		super("Authentication");
 	}
 
+	initialize() {}
+	deinitialize() {}
+	initializeAsync(onNext?: () => void) {
+		return AppUtility.promise;
+	}
+
 	/**
 	 * Determines the account is system administrator or not
 	 * @param account The account to check (default is current logged in account)

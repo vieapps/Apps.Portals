@@ -27,6 +27,12 @@ export class FilesService extends BaseService {
 		return AppAPIs.http;
 	}
 
+	initialize() {}
+	deinitialize() {}
+	initializeAsync(onNext?: () => void) {
+		return AppUtility.promise;
+	}
+
 	readAsDataURL(file: File, onRead: (data: string) => void, limitSize?: number, onLimitExceeded?: (fileSize?: number, limitSize?: number) => void) {
 		if (limitSize !== undefined && file.size > limitSize) {
 			console.log(`[Files]: Limit size exceeded - Max allowed size: ${limitSize} bytes - Actual size: ${file.size} bytes`);

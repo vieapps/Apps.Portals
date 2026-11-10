@@ -6,10 +6,10 @@ import { AppAPIs } from "@app/components/app.apis";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { AppPagination } from "@app/components/app.pagination";
-import { AppRequestInfo, AppMessage, AppDataRequest } from "@app/components/app.objects";
+import { AppRequestInfo, AppDataRequest } from "@app/components/app.objects";
 
 /** Base class of all services of the app */
-export class Base {
+export abstract class Base {
 
 	private _name = "";
 
@@ -23,6 +23,15 @@ export class Base {
 	get name() {
 		return this._name;
 	}
+
+	/** Initializes the service */
+	abstract initialize(): void;
+
+	/** Initializes the service asynchronously */
+	abstract initializeAsync(onNext?: () => void): Promise<void>;
+
+	/** Deinitializes the service */
+	abstract deinitialize(): void;
 
 	/** Gets the headers that include the authenticated information */
 	getHeaders(additional?: any, onCompleted?: (headers: { [key: string]: string }) => void) {

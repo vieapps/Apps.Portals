@@ -14,6 +14,7 @@ import { TrackingUtility } from "@app/components/app.utility.trackings";
 import { ConfigurationService } from "@app/services/configuration.service";
 import { AuthenticationService } from "@app/services/authentication.service";
 import { UsersService } from "@app/services/users.service";
+import { FilesService } from "@app/services/files.service";
 import { PortalsCoreService } from "@app/services/portals.core.service";
 import { PortalsCmsService } from "@app/services/portals.cms.service";
 import { BooksService } from "@app/services/books.service";
@@ -40,6 +41,7 @@ export class AppComponent implements OnInit {
 		private configSvc: ConfigurationService,
 		private authSvc: AuthenticationService,
 		private usersSvc: UsersService,
+		private filesSvc: FilesService,
 		private notificationsSvc: NotificationsService,
 		private portalsCoreSvc: PortalsCoreService,
 		private portalsCmsSvc: PortalsCmsService,
@@ -121,7 +123,7 @@ export class AppComponent implements OnInit {
 	}
 
 	ngOnInit() {
-		return this.platform.ready().then(async () => {
+		this.platform.ready().then(async () => {
 			const appConfig = this.configSvc.appConfig;
 			const uri = appConfig.isWebApp ? AppUtility.parseURI() : undefined;
 
@@ -173,8 +175,7 @@ export class AppComponent implements OnInit {
 				appConfig.session.device = session.device;
 			}
 
-			await this.configSvc.preparePlatformAsync();
-			this.configSvc.prepare();
+			await this.configSvc.prepareAsync();
 			this.prepareSidebar();
 			this.prepareEventProcessors();
 
@@ -187,9 +188,8 @@ export class AppComponent implements OnInit {
 			}
 			this.sidebar.State.Active = activeService.sidebar || activeService.name.toLowerCase();
 
-			[this.usersSvc, this.notificationsSvc, this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc]
-				.filter(service => "Users" === service.name || "Notifications" === service.name || appConfig.services.all.findIndex(svc => AppUtility.isEquals(svc.name, service.name)) > -1)
-				.forEach(service => service.initialize());
+			[this.configSvc, this.authSvc, this.usersSvc, this.filesSvc, this.notificationsSvc].forEach(service => service.initialize());
+			[this.portalsCoreSvc, this.portalsCmsSvc, this.booksSvc].filter(service => appConfig.services.all.findIndex(svc => AppUtility.isEquals(svc.name, service.name)) > -1).forEach(service => service.initialize());
 			if (!appConfig.isNativeApp) {
 				disableServices(uri.QueryParams["disable-services"]);
 			}
@@ -291,7 +291,7 @@ export class AppComponent implements OnInit {
 			}
 		}).catch(error => {
 			console.error("<App>: Initialization failed", error);
-			return this.appFormsSvc.hideLoadingAsync();
+			this.appFormsSvc.hideLoadingAsync();
 		});
 	}
 

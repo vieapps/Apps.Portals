@@ -42,7 +42,6 @@ export class ConfigurationService extends BaseService {
 		AppStorage.initializeAsync(this.storage, () => console.log(`[Configuration]: Storage is ready. Driver: ${this.storage.driver}`));
 	}
 
-	private _nativeDevice: { platform: string; uuid: string; manufacturer: string; model: string; version: string };
 	private _definitions: { [key: string]: any } = {};
 	serviceLogs = new Array<ServiceLog>();
 	statistics = {
@@ -225,29 +224,21 @@ export class ConfigurationService extends BaseService {
 		return AppConfig.options.fileLimits || AppConfig.defaultOptions.fileLimits;
 	}
 
-	/** Capacitor exposes device details asynchronously; prepare() stays synchronous. */
-	async preparePlatformAsync() {
-		if (Capacitor.isNativePlatform()) {
-			const [info, id] = await Promise.all([Device.getInfo(), Device.getId()]);
-			this._nativeDevice = {
-				platform: info.platform === "ios" ? "iOS" : "Android",
-				uuid: id.identifier,
-				manufacturer: info.manufacturer,
-				model: info.model,
-				version: info.osVersion
-			};
-		}
-	}
-
 	/** Prepare the configuration of the app */
-	prepare() {
-		const isNativeApp = Capacitor.isNativePlatform();
-		if (isNativeApp && this._nativeDevice === undefined) {
-			throw new Error("Call preparePlatformAsync() before prepare() on a native platform.");
+	async prepareAsync() {
+		const deviceInfo = { platform: undefined as string, uuid: undefined as string, manufacturer: undefined as string, model: undefined as string, version: undefined as string };
+		const isNativePlatform = Capacitor.isNativePlatform();
+		if (isNativePlatform ) {
+			const [info, id] = await Promise.all([Device.getInfo(), Device.getId()]);
+			deviceInfo.platform = info.platform === "ios" ? "iOS" : "Android";
+			deviceInfo.uuid = id.identifier;
+			deviceInfo.manufacturer = info.manufacturer;
+			deviceInfo.model = info.model;
+			deviceInfo.version = info.osVersion;
 		}
 		const userAgent = navigator ? navigator.userAgent : "";
-		const platform = isNativeApp
-			? this._nativeDevice.platform
+		const platform = isNativePlatform
+			? deviceInfo.platform
 			: /iPhone|iPad|iPod|Windows Phone|Android|BlackBerry|BB10|IEMobile|webOS|Opera Mini/i.test(userAgent)
 				? /iPhone|iPad|iPod/i.test(userAgent)
 					? "iOS"
@@ -260,7 +251,7 @@ export class ConfigurationService extends BaseService {
 								: "Mobile"
 				: "Desktop";
 
-		AppConfig.app.mode = isNativeApp ? "NTA" : "PWA";
+		AppConfig.app.mode = isNativePlatform ? "NTA" : "PWA";
 		AppConfig.app.os = platform !== "Desktop"
 			? platform
 			: /Windows/i.test(userAgent)
@@ -286,10 +277,10 @@ export class ConfigurationService extends BaseService {
 			AppConfig.URLs.host = host;
 		}
 
-		if (isNativeApp) {
+		if (isNativePlatform) {
 			AppConfig.URLs.base = "";
-			AppConfig.app.platform = this._nativeDevice.platform;
-			AppConfig.session.device = `${this._nativeDevice.uuid}@${AppConfig.app.id}-${this._nativeDevice.platform.toLocaleLowerCase()}`;
+			AppConfig.app.platform = deviceInfo.platform;
+			AppConfig.session.device = `${deviceInfo.uuid}@${AppConfig.app.id}-${deviceInfo.platform.toLocaleLowerCase()}`;
 		}
 
 		else {
@@ -320,19 +311,19 @@ export class ConfigurationService extends BaseService {
 			}
 		}
 		else {
-			AppConfig.app.shell = isNativeApp ? "Capacitor" : "Browser";
-			if (isNativeApp) {
-				App.getInfo().then(info => info.build)
-					.then(version => AppConfig.app.version = isNativeApp && !this.isRunningOnIOS ? (version + "").replace(/0/g, ".") : version + "")
+			AppConfig.app.shell = isNativePlatform ? "Capacitor" : "Browser";
+			if (isNativePlatform) {
+				await App.getInfo().then(info => info.build)
+					.then(version => AppConfig.app.version = isNativePlatform && !this.isRunningOnIOS ? (version + "").replace(/0/g, ".") : version + "")
 					.catch(error => console.error(`[Configuration]: Error occurred while preparing the app version\n${AppUtility.getErrorMessage(error)}`, error));
 				PlatformUtility.prepareNative();
 			}
 		}
 
-		if (isNativeApp) {
-			TrackingUtility.initializeAsync();
+		if (isNativePlatform) {
+			await TrackingUtility.initializeAsync();
 			if (this.isDebug) {
-				console.log(`[Configuration]: Device Information\n- UUID: ${this._nativeDevice.uuid}\n- Manufacturer: ${this._nativeDevice.manufacturer}\n- Model: ${this._nativeDevice.model}\n- Platform: ${this._nativeDevice.platform} ${this._nativeDevice.platform !== "browser" ? this._nativeDevice.version : "[" + this._nativeDevice.model + " v" + this._nativeDevice.version + "]"}`);
+				console.log(`[Configuration]: Device Information\n- UUID: ${deviceInfo.uuid}\n- Manufacturer: ${deviceInfo.manufacturer}\n- Model: ${deviceInfo.model}\n- Platform: ${deviceInfo.platform} ${deviceInfo.platform !== "browser" ? deviceInfo.version : "[" + deviceInfo.model + " v" + deviceInfo.version + "]"}`);
 			}
 		}
 
@@ -366,6 +357,9 @@ export class ConfigurationService extends BaseService {
 			});
 		});
 	}
+
+	initialize() {}
+	deinitialize() {}
 
 	/** Initializes the configuration settings of the app */
 	initializeAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, dontInitializeSession: boolean = false) {

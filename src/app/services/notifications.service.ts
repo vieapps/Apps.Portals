@@ -2,6 +2,7 @@ import { Injectable } from "@angular/core";
 import { AppAPIs } from "@app/components/app.apis";
 import { AppEvents } from "@app/components/app.events";
 import { AppDataRequest } from "@app/components/app.objects";
+import { AppUtility } from "@app/components/app.utility";
 import { Base as BaseService } from "@app/services/base.service";
 import { Notification } from "@app/models/notification";
 
@@ -27,7 +28,9 @@ export class NotificationsService extends BaseService {
 		});
 	}
 
-	deinitialize() {
+	deinitialize() {}
+	initializeAsync(onNext?: () => void) {
+		return AppUtility.promise;
 	}
 
 	fetchNotificationsAsync() {

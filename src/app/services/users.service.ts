@@ -73,7 +73,9 @@ export class UsersService extends BaseService {
 		});
 	}
 
-	deinitialize() {
+	deinitialize() {}
+	initializeAsync(onNext?: () => void) {
+		return AppUtility.promise;
 	}
 
 	searchProfiles(request: AppDataRequest, onSuccess?: (data?: any) => void, onError?: (error?: any) => void) {
