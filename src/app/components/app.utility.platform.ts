@@ -14,10 +14,12 @@ import { AppUtility } from "@app/components/app.utility";
 export interface AppElectronService {
 	readonly isElectronApp: boolean;
 	readonly ipcRenderer?: {
-		on(channel: string, listener: (event: any, info: any) => void): unknown;
 		send(channel: string, args: any): unknown;
+		on(channel: string, listener: (event: any, info: any) => void): unknown;
+		off(channel: string, listener: (event: any, info: any) => void): unknown;
 	};
 	readonly shell: {
+		closeWindow(): unknown;
 		openExternal(url: string): unknown;
 	};
 }
@@ -28,18 +30,22 @@ export const APP_ELECTRON_SERVICE = new InjectionToken<AppElectronService>("AppE
 /** Matches Electron desktop shell without exposing Node APIs */
 export function createElectronService(): AppElectronService | null {
 	type DesktopBridge = Pick<AppElectronService, "ipcRenderer" | "shell">;
-	const names = ["vieapps", "vieappsngx", "ngx", "ngxDesktop", "vieappsDesktop", "vieappsngxDesktop"];
-	const isBridge = (bridge: any): bridge is DesktopBridge => typeof bridge?.ipcRenderer?.on === "function" && typeof bridge?.ipcRenderer?.send === "function" && typeof bridge?.shell?.openExternal === "function";
+	const names = ["vieapps", "vieappsDesktop", "vieappsngx", "vieappsngxDesktop", "ngx", "ngxDesktop", "bridge", "shell", "app"];
+	const isBridge = (bridge: any): bridge is DesktopBridge => typeof bridge?.ipcRenderer?.send === "function" && typeof bridge?.ipcRenderer?.on === "function" && typeof bridge?.shell?.openExternal === "function";
 	const app: DesktopBridge | undefined = typeof window === "undefined"
 		? undefined
 		: names.map(name => (window as any)[name]).find(bridge => isBridge(bridge));
 	return app === undefined ? null : {
 		isElectronApp: true,
 		ipcRenderer: {
+			send: (channel, args) => app.ipcRenderer.send(channel, args),
 			on: (channel, listener) => app.ipcRenderer.on(channel, listener),
-			send: (channel, args) => app.ipcRenderer.send(channel, args)
+			off: (channel, listener) => app.ipcRenderer.off(channel, listener)
 		},
-		shell: { openExternal: url => app.shell.openExternal(url) }
+		shell: {
+			closeWindow: () => app.shell.closeWindow(),
+			openExternal: url => app.shell.openExternal(url)			
+		}
 	};
 }
 
