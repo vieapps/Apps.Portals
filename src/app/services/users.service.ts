@@ -5,7 +5,6 @@ import { AppEvents } from "@app/components/app.events";
 import { AppCrypto } from "@app/components/app.crypto";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
-import { AppPagination } from "@app/components/app.pagination";
 import { AppFormsControlConfig } from "@app/components/forms.objects";
 import { Account } from "@app/models/account";
 import { UserProfile, UserToken } from "@app/models/user";
@@ -516,7 +515,9 @@ export class UsersService extends BaseService {
 						const profile = account.profile;
 						profile.IsOnline = true;
 						profile.LastAccess = new Date();
-						delete (profile.Options.extras || {})["fileLimits"];
+						if (profile.Options && profile.Options.extras) {
+							delete profile.Options.extras["fileLimits"];
+						}
 						if (this.configSvc.appConfig.options.i18n !== profile.Language) {
 							this.configSvc.changeLanguageAsync(profile.Language);
 						}
@@ -556,8 +557,72 @@ export class UsersService extends BaseService {
 				Path: this.getPath("profile", "export", "x-request=" + AppCrypto.jsonEncode(request)),
 				Header: this.getHeaders()
 			},
-			data => console.log(`[Users]: Start to export objects to Excel - Process ID: ${data !== undefined ? data.ProcessID as string : undefined}`),
-			error => this.appFormsSvc.showErrorAsync(error)
+			data => {
+				const processID = data !== undefined ? data.ProcessID as string : undefined;
+				if (AppUtility.isNotEmpty(processID)) {
+					if (this.configSvc.isDebug) {
+						console.log(`[Users]: Start to export objects to Excel - Process ID: ${processID}`);
+					}
+					AppAPIs.registerAsObjectScopeProcessor(
+						this.name,
+						"Excel",
+						message => {
+							switch (message.Data.Status || "") {
+								case "Done":
+									if (this.configSvc.isDebug) {
+										console.log(`[Users]: The export objects to Excel process was completed - Process ID: ${processID}`);
+									}
+									AppAPIs.unregisterProcessor(processID, this.name, "Excel");
+									if (onProgress !== undefined) {
+										onProgress(message.Data.Percentage);
+									}
+									if (onCompleted !== undefined) {
+										this.appFormsSvc.hideLoadingAsync().then(() => onCompleted(message));
+									}
+									AppUtility.invoke(async () => this.appFormsSvc.showConfirmAsync(
+										await this.configSvc.getResourceAsync("portals.common.excel.message.export"),
+										() => PlatformUtility.openURL(this.filesSvc.getTemporaryFileURI(message)),
+										await this.configSvc.getResourceAsync("common.buttons.download"),
+										await this.configSvc.getResourceAsync("common.buttons.cancel")
+									));
+									break;
+								case "Error":
+									if (this.configSvc.isDebug) {
+										console.error(`[Users]: Error occurred while exporting objects to Excel - Process ID: ${processID}`, message);
+									}
+									AppAPIs.unregisterProcessor(processID, this.name, "Excel");
+									if (onError !== undefined) {
+										this.appFormsSvc.hideLoadingAsync().then(() => onError(message.Data));
+									}
+									else {
+										this.appFormsSvc.showErrorAsync(message.Data);
+									}
+									break;
+								default:
+									if (this.configSvc.isDebug) {
+										console.log(`[Users]: Exporting - Process ID: ${processID} - ${message.Data.Percentage}`);
+									}
+									if (onProgress !== undefined) {
+										onProgress(message.Data.Percentage);
+									}
+									break;
+							}
+						},
+						processID
+					);
+				}
+				else {
+					this.appFormsSvc.hideLoadingAsync();
+				}
+			},
+			error => {
+				if (onError !== undefined) {
+					this.appFormsSvc.hideLoadingAsync().then(() => onError(error));
+				}
+				else {
+					this.appFormsSvc.showErrorAsync(error);
+				}
+			}
 		);
 	}
 

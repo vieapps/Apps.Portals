@@ -43,21 +43,6 @@ export class ConfigurationService extends BaseService {
 	}
 
 	private _nativeDevice: { platform: string; uuid: string; manufacturer: string; model: string; version: string };
-
-	/** Capacitor exposes device details asynchronously; prepare() stays synchronous. */
-	async preparePlatformAsync() {
-		if (Capacitor.isNativePlatform()) {
-			const [info, id] = await Promise.all([Device.getInfo(), Device.getId()]);
-			this._nativeDevice = {
-				platform: info.platform === "ios" ? "iOS" : "Android",
-				uuid: id.identifier,
-				manufacturer: info.manufacturer,
-				model: info.model,
-				version: info.osVersion
-			};
-		}
-	}
-
 	private _definitions: { [key: string]: any } = {};
 	serviceLogs = new Array<ServiceLog>();
 	statistics = {
@@ -238,6 +223,20 @@ export class ConfigurationService extends BaseService {
 	/** Gets the file-size limits */
 	get fileLimits() {
 		return AppConfig.options.fileLimits || AppConfig.defaultOptions.fileLimits;
+	}
+
+	/** Capacitor exposes device details asynchronously; prepare() stays synchronous. */
+	async preparePlatformAsync() {
+		if (Capacitor.isNativePlatform()) {
+			const [info, id] = await Promise.all([Device.getInfo(), Device.getId()]);
+			this._nativeDevice = {
+				platform: info.platform === "ios" ? "iOS" : "Android",
+				uuid: id.identifier,
+				manufacturer: info.manufacturer,
+				model: info.model,
+				version: info.osVersion
+			};
+		}
 	}
 
 	/** Prepare the configuration of the app */
