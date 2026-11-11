@@ -38,7 +38,7 @@ export class UsersService extends BaseService {
 			}
 		});
 		AppEvents.on("App", info => {
-			if ("Options" === info.args.Type && "Changed" === info.args.Mode && this.configSvc.isAuthenticated) {
+			if (("Options" === info.args.Type || "Language" === info.args.Type) && "Changed" === info.args.Mode && this.configSvc.isAuthenticated) {
 				const profile = this.configSvc.getAccount().profile;
 				if (profile !== undefined) {
 					profile.Language = this.configSvc.appConfig.options.i18n;

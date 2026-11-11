@@ -75,7 +75,7 @@ export class AppCustomCompleter extends Subject<CompleterItem[]> implements Comp
 			error: error => {
 				this.loading.next(false);
 				this.next([]);
-				console.error(`[Custom Completer]: Error occurred while fetching remote data => ${AppUtility.getErrorMessage(error)}`, error);
+				console.error(`[Completer]: Error occurred while fetching remote data => ${AppUtility.getErrorMessage(error)}`, error);
 			},
 			complete: () => this.loading.next(false)
 		});

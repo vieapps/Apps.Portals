@@ -739,6 +739,6 @@ export class AppComponent implements OnInit {
 					}
 				}
 			})
-		]).then(() => console.log(`<App>: Initialized [${AppUtility.getElapsedTime(this._time)}]`, this.configSvc.appConfig.app, this.configSvc.appConfig.isElectronApp ? window["app"] || window["bridge"] : this.configSvc.appConfig.app.shell)))));
+		]).then(() => console.log(`<App>: Initialized [${AppUtility.getElapsedTime(this._time)}]`, this.configSvc.appConfig.app, this.configSvc.appConfig.options, this.configSvc.appConfig.isElectronApp ? window["app"] || window["bridge"] : this.configSvc.appConfig.app.shell)))));
 	}
 }

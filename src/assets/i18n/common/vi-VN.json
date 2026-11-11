@@ -62,7 +62,8 @@
 			"completer": {
 				"searching": "tìm kiếm...",
 				"noresults": "không có kết quả phù hợp"
-			}
+			},
+			"language": "Khởi động lại app để menu hiển thị theo ngôn ngữ mới..."
 		},
 		"audits": {
 			"identity": "Mã định danh",

@@ -1,10 +1,10 @@
 import { AbstractControl } from "@angular/forms";
 import { ValidatorFn, AsyncValidatorFn } from "@angular/forms";
-import type { CompleterData } from "@app/components/app.completer";
 import { AppUtility } from "@app/components/app.utility";
 import { PlatformUtility } from "@app/components/app.utility.platform";
 import type { AppFormsControlComponent } from "@app/components/forms.control.component";
 import type { AppFormsViewComponent } from "@app/components/forms.view.component";
+import type { CompleterData } from "@app/components/app.completer";
 
 /** Presents the settings of a segment (means a tab that contains group of controls) in the dynamic forms */
 export class AppFormsSegment {

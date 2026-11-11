@@ -125,7 +125,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.prepareLabelsAsync();
 		this.options = {
-			language: this.configSvc.appConfig.language,
+			language: this.configSvc.appConfig.options.i18n,
 			darkTheme: "dark" === this.color,
 			thumbnails: this.configSvc.appConfig.options.thumbnails.useWhenInsertWithLink,
 			preflight: this.configSvc.appConfig.app.preflight.enable,
@@ -175,9 +175,13 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 	}
 
 	onLanguageChanged(event: any) {
-		if (this.options.language !== event.detail.value) {
-			this.configSvc.appConfig.options.i18n = this.options.language = event.detail.value;
-			this.configSvc.changeLanguageAsync(this.options.language).then(() => this.configSvc.storeOptionsAsync());
+		const language = event.detail.value || this.options.language;
+		if (this.options.language !== language) {
+			this.options.language = language;
+			this.configSvc.changeLanguageAsync(language).then(async () => await Promise.all([
+				this.configSvc.storeOptionsAsync(),
+				this.appFormsSvc.showToastAsync(await this.configSvc.getResourceAsync("common.messages.language"))
+			]));
 		}
 	}
 

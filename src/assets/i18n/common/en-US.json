@@ -62,7 +62,8 @@
 			"completer": {
 				"searching": "searching...",
 				"noresults": "No matching results found"
-			}
+			},
+			"language": "Restart the app for the menu to display in the new language..."
 		},
 		"audits": {
 			"identity": "Identity",
