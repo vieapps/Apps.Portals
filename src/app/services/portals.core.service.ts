@@ -1794,7 +1794,7 @@ export class PortalsCoreService extends BaseService {
 	prepareApprovalStatusControl(controlConfig: AppFormsControlConfig) {
 		if (controlConfig !== undefined) {
 			this.appFormsSvc.prepareSelectControl(controlConfig, controlConfig.Options.SelectOptions.Values, _ => controlConfig.Options.SelectOptions.Values = AppUtility.isGotData(controlConfig.Options.SelectOptions.Values)
-				? (controlConfig.Options.SelectOptions.Values as AppFormsLookupValue[]).map(kvp => ({ Value: kvp.Value, Label: `{{status.approval.${kvp.Value}}}` }) as AppFormsLookupValue)
+				? (controlConfig.Options.SelectOptions.Values as AppFormsLookupValue[]).filter(kvp => kvp.Value !== "Archieved").map(kvp => ({ Value: kvp.Value, Label: `{{status.approval.${kvp.Value}}}` }) as AppFormsLookupValue)
 				: BaseModel.approvalStatus.map(value => ({ Value: value, Label: `{{status.approval.${value}}}` }) as AppFormsLookupValue)
 			);
 		}

@@ -77,16 +77,16 @@
 								<a [href]="attachment.URIs.Download" target="_blank" class="ion-padding-start">
 									<ion-icon name="download" color="medium" slot="icon-only" title="Download URL"></ion-icon>
 								</a>
-								<a class="ion-padding-start">
-									@if (attachment.IsShared) {
+								@if (attachment.IsShared) {
+									<a class="ion-padding-start">
 										<ion-icon name="share-social" color="medium" slot="icon-only"></ion-icon>
-									}
-								</a>
-								<a class="ion-padding-start">
-									@if (attachment.IsTracked) {
+									</a>
+								}
+								@if (attachment.IsTracked) {
+									<a class="ion-padding-start">
 										<ion-icon name="analytics" color="medium" slot="icon-only"></ion-icon>
-									}
-								</a>
+									</a>
+								}
 							</div>
 						}
 					</ion-label>

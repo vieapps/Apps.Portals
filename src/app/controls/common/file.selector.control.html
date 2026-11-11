@@ -49,16 +49,16 @@
 								<ion-icon name="image" color="medium" slot="icon-only" title="Copy thumbnail URI"></ion-icon>
 							</a>
 						}
-						<a [class]="cssIcons">
-							@if (attachment.IsShared) {
+						@if (attachment.IsShared) {
+							<a [class]="cssIcons">
 								<ion-icon name="share-social" color="medium" slot="icon-only"></ion-icon>
-							}
-						</a>
-						<a [class]="cssIcons">
-							@if (attachment.IsTracked) {
+							</a>
+						}
+						@if (attachment.IsTracked) {
+							<a [class]="cssIcons">
 								<ion-icon name="analytics" color="medium" slot="icon-only"></ion-icon>
-							}
-						</a>
+							</a>
+						}
 					</div>
 				}
 			</ion-label>

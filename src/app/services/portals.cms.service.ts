@@ -568,7 +568,7 @@ export class PortalsCmsService extends BaseService {
 					(objects: CmsBaseModel[]) => {
 						const obj = objects !== undefined && objects.length > 0 ? objects[0] : undefined;
 						const parent = obj !== undefined ? Category.get(obj["CategoryID"]) : undefined;
-						onSelected(obj !== undefined ? this.portalsCoreSvc.getPortalURL(obj, parent) + (object.organization.AlwaysUseHtmlSuffix ? ".html" : "") : undefined);
+						onSelected(obj !== undefined ? this.portalsCoreSvc.getPortalURL(obj, parent) : undefined);
 					}
 				)
 			};

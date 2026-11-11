@@ -11,7 +11,6 @@ import { UserProfile, UserToken } from "@app/models/user";
 import { Privilege } from "@app/models/privileges";
 import { Base as BaseService } from "@app/services/base.service";
 import { ConfigurationService } from "@app/services/configuration.service";
-import { AuthenticationService } from "@app/services/authentication.service";
 import { FilesService } from "@app/services/files.service";
 import { AppFormsService } from "@app/components/forms.service";
 import { AppMessage, AppDataRequest, AppDataPagination } from "@app/components/app.objects";
@@ -21,7 +20,6 @@ export class UsersService extends BaseService {
 
 	constructor(
 		private configSvc: ConfigurationService,
-		private authSvc: AuthenticationService,
 		private filesSvc: FilesService,
 		private appFormsSvc: AppFormsService,
 		private datePipe: DatePipe

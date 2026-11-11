@@ -43,6 +43,10 @@ export class UsersAvatarPage implements OnInit {
 		return this.configSvc.color;
 	}
 
+	get updateDisabled() {
+		return this.processing || (AppUtility.isEquals(this.mode, "Avatar") && !this.imageCropper.gotData);
+	}
+
 	ngOnInit() {
 		this.imageCropperSettings.currentImage = AppUtility.isNotEmpty(this.avatarURI) ? this.avatarURI : undefined;
 		this.initializeResourcesAsync();
@@ -64,18 +68,21 @@ export class UsersAvatarPage implements OnInit {
 	}
 
 	async updateAsync() {
+		if (this.updateDisabled) {
+			return;
+		}
 		this.processing = true;
 		await (AppUtility.isEquals(this.mode, "Avatar") && this.imageCropper.data !== undefined
-			? this.filesSvc.uploadAvatarAsync
-			(
-				this.imageCropper.data,
-				async data => await this.closeAsync(this.mode, data.URI),
-				error => {
-					console.error(`Error occurred while uploading avatar image => ${AppUtility.getErrorMessage(error)}`);
-					this.processing = false;
-				}
-			)
-			: this.closeAsync(this.mode));
+			? this.filesSvc.uploadAvatarAsync(
+					this.imageCropper.data,
+					async data => await this.closeAsync(this.mode, data.URI),
+					error => {
+						console.error(`Error occurred while uploading avatar image => ${AppUtility.getErrorMessage(error)}`);
+						this.processing = false;
+					}
+				)
+			: this.closeAsync(this.mode)
+		);
 	}
 
 	async closeAsync(mode?: string, imageURI?: string) {
@@ -84,5 +91,4 @@ export class UsersAvatarPage implements OnInit {
 			imageURI: imageURI
 		});
 	}
-
 }

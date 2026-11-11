@@ -42,6 +42,7 @@
 		"@ngx-translate/http-loader": "18.1.0",
 		"crypto-js": "4.2.0",
 		"linqts": "3.4.0",
+		"ngx-image-cropper": "9.1.7",
 		"qrcode": "1.5.4",
 		"rxjs": "7.8.2",
 		"tslib": "2.9.1",
