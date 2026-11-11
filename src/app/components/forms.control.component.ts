@@ -944,10 +944,13 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 		return () => import("./ckeditor/ckeditor.js").then(module => module.default);
 	}
 
+	get ckEditorLanguage() {
+		return this.configSvc.appConfig.options.i18n.startsWith("vi") ? "vi" : "en";
+	}
+
 	get ckEditorConfig() {
 		if (this._ckEditorConfig === undefined) {
 			this._ckEditorConfig = {
-				language: this.configSvc.appConfig.language.substring(0, 2),
 				fontSize: this.control.Extras["ckEditorFontSize"] || {
 					options: [10, 11, 12, "default", 14, 16, 18, 20, 24, 28, 34, 38, 40, 46, 50],
 					supportAllValues: true
@@ -1034,12 +1037,18 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 
 	ckEditorSetData(data: string) {
 		if (this.isTextEditorControl) {
-			this.elementRef.editorInstance.setData(data);
+			const editor = this.elementRef?.editorInstance;
+			if (editor) {
+				editor.setData(data);
+			}
+			else {
+				this.setValue(data);
+			}
 		}
 	}
 
 	ckEditorGetData() {
-		return this.isTextEditorControl ? this.elementRef.editorInstance.getData() as string : undefined;
+		return this.isTextEditorControl ? this.elementRef?.editorInstance?.getData() ?? this.value : undefined;
 	}
 
 }

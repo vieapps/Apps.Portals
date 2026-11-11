@@ -480,6 +480,7 @@
 			<ckeditor #elementRef
 				[editor]="ckEditor"
 				[config]="ckEditorConfig"
+				[language]="ckEditorLanguage"
 				[data]="value"
 				(ready)="ckEditorOnReady($event)"
 				(change)="onChanged($event)"></ckeditor>

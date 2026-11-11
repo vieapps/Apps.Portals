@@ -105,8 +105,36 @@ class EditorFixtureRoot implements OnInit {
 				const buttons = document.querySelectorAll("ion-modal ckeditor-selector-fixture ion-button"); (buttons[1] as HTMLElement).click();
 				await until(() => !document.querySelector("ion-modal"), "Modal did not dismiss"); assert(panel.form.value["Body"] === before);
 			});
-			await this.test("Destroy form removes detached toolbar and editor", async () => { const toolbar = editor.ui.view.toolbar.element; this.mounted = false; await until(() => editor.state === "destroyed", "Editor not destroyed"); assert(!toolbar.isConnected); assert(!document.querySelector(".ck-link-form")); });
-			await this.test("Recreate form in English without duplicate engine", async () => { AppConfig.options.i18n = "en-US"; this.mounted = true; await until(() => this.panel?.editor && this.panel.editor !== editor, "English editor missing"); assert(this.panel.editor.locale.uiLanguage === "en"); assert(this.panel.editor.t("Internal content") === "Internal content"); assert(!this.panel.editor.isReadOnly); });
+			await this.test("Live language switching follows UI preferences and preserves the draft", async () => {
+				const account = AppConfig.session.account;
+				AppConfig.session.account = { profile: { Language: "vi-VN" } } as typeof account;
+				const draft = editor.getData();
+				const changes = panel.changes;
+				const pending = editor.plugins.get("PendingActions");
+				const upload = pending.add("Fixture upload");
+				try {
+					await this.config.changeLanguageAsync("en-US", false);
+					await wait(100);
+					assert(panel.editor === editor, "Editor was replaced during a pending action");
+					pending.remove(upload);
+					await until(() => panel.editor?.locale.uiLanguage === "en", "English editor missing");
+					assert(this.panel === panel && editor.state === "destroyed");
+					assert(panel.editor.t("Internal content") === "Internal content" && !panel.editor.isReadOnly);
+					assert(panel.editor.getData() === draft && panel.form.value["Body"] === draft);
+					assert(panel.changes === changes && panel.form.value["Other"] === "preserved");
+					assert(document.querySelectorAll("ckeditor .ck-toolbar").length === 1);
+					await this.config.changeLanguageAsync("vi-VN", false);
+					await until(() => panel.editor?.locale.uiLanguage === "vi", "Vietnamese editor missing");
+					assert(panel.editor.t("Internal content") === "Nội dung nội bộ");
+					assert(panel.editor.getData() === draft && panel.changes === changes);
+				}
+				finally {
+					AppConfig.session.account = account;
+					if (editor.state !== "destroyed" && pending.hasAny) pending.remove(upload);
+				}
+			});
+			await this.test("Destroy form removes detached toolbar and editor", async () => { const current = panel.editor; const toolbar = current.ui.view.toolbar.element; this.mounted = false; await until(() => current.state === "destroyed", "Editor not destroyed"); assert(!toolbar.isConnected); assert(!document.querySelector(".ck-link-form")); });
+			await this.test("Recreate form in English without duplicate engine", async () => { await this.config.changeLanguageAsync("en-US", false); this.mounted = true; await until(() => this.panel?.editor && this.panel !== panel, "English editor missing"); assert(this.panel.editor.locale.uiLanguage === "en"); assert(this.panel.editor.t("Internal content") === "Internal content"); assert(!this.panel.editor.isReadOnly); });
 			await this.test("Async adapter init uses latest input; initial ready emits once", async () => {
 				const control = new CKEditorControl(); const host = document.createElement("div"); document.body.append(host); control.host = new ElementRef(host); control.data = "<p>Before</p>";
 				let release: (value: any) => void; const pending = new Promise(resolve => release = resolve); const facade = (await import("../../src/app/components/ckeditor/ckeditor.js")).default;
