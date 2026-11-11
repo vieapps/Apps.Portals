@@ -1,0 +1,46 @@
+[
+  {
+    "name": "Real form renderer initializes latest editor in Vietnamese",
+    "pass": true
+  },
+  {
+    "name": "Form Extras preserve selectors and upload header contract",
+    "pass": true
+  },
+  {
+    "name": "Programmatic form patch reaches editor without loop",
+    "pass": true
+  },
+  {
+    "name": "Editor change reaches form and metadata callback",
+    "pass": true
+  },
+  {
+    "name": "Popup content button opens Ionic modal and delivers callback",
+    "pass": true
+  },
+  {
+    "name": "File selector cancellation keeps form HTML",
+    "pass": true
+  },
+  {
+    "name": "Destroy form removes detached toolbar and editor",
+    "pass": true
+  },
+  {
+    "name": "Recreate form in English without duplicate engine",
+    "pass": true
+  },
+  {
+    "name": "Async adapter init uses latest input; initial ready emits once",
+    "pass": true
+  },
+  {
+    "name": "Destroy before editor import prevents creation",
+    "pass": true
+  },
+  {
+    "name": "Destroy during create cleans late editor instance",
+    "pass": true
+  }
+]

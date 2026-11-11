@@ -1,6 +1,6 @@
 {
 	"name": "net.vieapps.portals",
-	"version": "10.2611.1",
+	"version": "11.2611.1",
 	"private": true,
 	"description": "Manage information and related services of VIEApps NGX CMS Portals",
 	"engines": {

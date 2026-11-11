@@ -97,7 +97,7 @@
 			}
 	
 			@if (isToggleControl) {
-				<ion-toggle #elementRef slot="end"
+				<ion-toggle #elementRef slot="end" labelPlacement="start" justify="space-between"
 					[attr.aria-label]="label || name"
 					[name]="name"
 					[disabled]="!!disabled"
@@ -110,7 +110,7 @@
 			}
 	
 			@if (isCheckboxControl) {
-				<ion-checkbox #elementRef slot="end"
+				<ion-checkbox #elementRef slot="end" labelPlacement="start" justify="space-between"
 					[attr.aria-label]="label || name"
 					[name]="name"
 					[disabled]="!!disabled || readonly"
@@ -188,7 +188,8 @@
 			}
 	
 			@if (isModal && !lookupMultiple) {
-				<ion-input readonly [attr.aria-label]="label || name" #elementRef
+				<ion-input #elementRef readonly
+					[attr.aria-label]="label || name"
 					[value]="lookupDisplayValue"
 					[placeholder]="placeholder"
 					[class]="css.control"
@@ -200,7 +201,7 @@
 			@if (isFilePickerControl) {
 				<div>
 					<div class="file-picker-input">
-						<input type="file" #elementRef
+						<input #elementRef type="file"
 							[accept]="control.Options.FilePickerOptions.Accept"
 							[multiple]="control.Options.FilePickerOptions.Multiple"
 							[placeholder]="placeholder"
@@ -335,10 +336,9 @@
 			}
 			@for (option of selectOptions; track option.Value) {
 				<ion-item [color]="theme">
-					<ion-label>{{ option.Label }}</ion-label>
-					<ion-radio
+					<ion-radio labelPlacement="start" justify="space-between"
 						[value]="option.Value"
-						[disabled]="!!disabled"></ion-radio>
+						[disabled]="!!disabled">{{ option.Label }}</ion-radio>
 				</ion-item>
 			}
 		</ion-radio-group>

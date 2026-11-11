@@ -1,0 +1,16 @@
+{
+  "engine": "49.1.0",
+  "bundler": "8.1.7",
+  "licenseMode": "GPL",
+  "languages": [
+    "en",
+    "vi"
+  ],
+  "files": {
+    "COPYING.GPL": "de124e5a899ae4074ebf5c0f790494178ab66d310606b86203d67a6f3ef45168",
+    "LICENSE.md": "f2e8b78facd384d6acb226c3704f27424140f66cdf0e027ab32d837889233108",
+    "ckeditor.css": "b41795b8aaf4c1c643a6f4522c350d0dfa069590f658354d0e15126a690348b1",
+    "ckeditor.js": "de6f63e28d561c3bf6667c9cb7f5dac8c8db7d0a1b8b8b0b036b2554ea6a2ab7",
+    "ckeditor.js.map": "783ce8c88f13dc301766b3bd60c0d84eb94078ad186c4334f7f9d89a59b45ef4"
+  }
+}

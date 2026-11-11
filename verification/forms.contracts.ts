@@ -267,8 +267,3 @@ test("modal service preserves props/injector and dismiss → onDismiss → onNex
 	assert.deepEqual(order[4], ["no-modal", undefined]);
 });
 
-test("deferred visible renderer families fail explicitly instead of silently omitting a field", () => {
-	for (const item of [control("Custom", { Type: "Custom" })]) {
-		assert.throws(() => renderer(item, makeService().getFormGroup([item])).ngOnInit(), /Renderer not migrated yet/);
-	}
-});

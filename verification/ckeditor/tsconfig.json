@@ -1,0 +1,6 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": { "outDir": "../../dist/out-tsc/ckeditor", "types": [] },
+	"files": ["main.ts"],
+	"include": ["./**/*.ts", "../../src/**/*.ts"]
+}

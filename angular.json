@@ -23,14 +23,24 @@
 						],
 						"tsConfig": "tsconfig.app.json",
 						"assets": [
-							{ "glob": "**/*", "input": "src/assets", "output": "assets" }
+							{ "glob": "**/*", "input": "src/assets", "output": "assets" },
+							{ "glob": "{LICENSE.md,COPYING.GPL}", "input": "src/app/components/ckeditor", "output": "assets/ckeditor" }
 						],
 						"styles": [
 							"src/theme/variables.scss",
+							"src/app/components/ckeditor/ckeditor.css",
 							"src/global.scss"
 						]
 					},
 					"configurations": {
+						"ckeditor": {
+							"browser": "verification/ckeditor/main.ts",
+							"tsConfig": "verification/ckeditor/tsconfig.json",
+							"outputPath": { "base": "dist/ckeditor-verification", "browser": "" },
+							"optimization": false,
+							"sourceMap": true,
+							"extractLicenses": false
+						},
 						"completer": {
 							"browser": "verification/completer/main.ts",
 							"tsConfig": "verification/completer/tsconfig.json",
@@ -64,6 +74,7 @@
 				"serve": {
 					"builder": "@angular/build:dev-server",
 					"configurations": {
+						"ckeditor": { "buildTarget": "app:build:ckeditor" },
 						"verification": {
 							"buildTarget": "app:build:verification"
 						},

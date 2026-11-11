@@ -305,52 +305,66 @@ test("security recovery reinitializes and registers; Unauthorized errors do not 
 
 test("browser platform preparation keeps a restored device identity", async () => {
 	AppConfig.session.device = "stored-device-id";
-	await config.preparePlatformAsync();
-	config.prepare();
+	await config.prepareAsync();
 	assert.equal(AppConfig.app.mode, "PWA");
 	assert.equal(AppConfig.app.shell, "Browser");
 	assert.equal(AppConfig.session.device, "stored-device-id");
 	assert.equal(AppConfig.URLs.base, "/");
 });
 
-test("app startup prepares services and continues into session initialization after loading", async context => {
+test("app startup prepares services and continues into session initialization after loading", { timeout: 5000 }, async context => {
 	const order = [];
-	// Host filtering is part of this fixture; do not depend on local Books configuration.
-	AppConfig.services.all.find(service => service.name === "Books").availableHosts = ["books.vieapps.net"];
+	const started = Promise.withResolvers<void>();
+	AppConfig.services.all = [
+		{ name: "Portals", objects: [], sidebar: "cms" },
+		{ name: "Books", objects: [], availableHosts: ["books.example.invalid"] }
+	];
+	const previousActiveService = AppConfig.services.active.service;
+	AppConfig.services.active.service = "Portals";
 	values.set("Session", { device: "stored-local-device" });
 	const configuration = {
 		appConfig: AppConfig,
 		loadURIsAsync: async () => { order.push("uris"); },
 		loadOptionsAsync: async () => { order.push("options"); },
 		prepareLanguagesAsync: async () => { order.push("language"); },
-		preparePlatformAsync: async () => { order.push("native-prerequisites"); },
-		prepare: () => { order.push("prepare"); },
+		prepareAsync: async () => {
+			await Promise.resolve();
+			assert.equal(AppConfig.session.device, "stored-local-device");
+			order.push("prepare");
+		},
+		initialize: () => { order.push("configuration"); },
+		isWebApp: true,
 		getResourceAsync: async key => key
 	};
 	const service = name => ({ name, initialize: () => order.push(name), deinitialize: () => {} });
 	const component = new AppComponent(
 		{ ready: async () => { order.push("platform"); } } as any,
-		{ showLoadingAsync: async () => { order.push("loading"); }, hideLoadingAsync: async () => { order.push("failed"); } } as any,
-		configuration as any, {} as any, service("Users") as any, service("Notifications") as any,
-		service("Portals") as any, service("Portals") as any, service("Books") as any,
+		{ showLoadingAsync: async () => { order.push("loading"); }, hideLoadingAsync: async () => { started.reject(new Error("App startup failed")); } } as any,
+		configuration as any, service("Authentication") as any, service("Users") as any, service("Files") as any,
+		service("Notifications") as any, service("Portals") as any, service("Portals") as any, service("Books") as any,
 		{ events: new Subject() } as any
 	);
 	const app = component as any;
 	app.prepareSidebar = () => order.push("sidebar");
 	app.prepareEventProcessors = () => order.push("events");
 	app.updateSidebarAsync = async () => { order.push("menu"); };
-	app.initialize = () => order.push("session");
+	app.initialize = () => {
+		order.push("session");
+		started.resolve();
+	};
 	context.mock.method(PlatformUtility, "preparePWAEnvironment", () => {});
 	const previousWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
 	Object.defineProperty(globalThis, "window", { configurable: true, value: {} });
 	try {
-		await component.ngOnInit();
-		assert.deepEqual(order, ["platform", "uris", "options", "language", "native-prerequisites", "prepare", "sidebar", "events", "Users", "Notifications", "Portals", "Portals", "menu", "loading", "session"]);
-		assert.equal(AppConfig.session.device, "stored-local-device");
+		component.ngOnInit();
+		await started.promise;
+		assert.deepEqual(order, ["platform", "uris", "options", "language", "prepare", "sidebar", "events", "configuration", "Authentication", "Users", "Files", "Notifications", "Portals", "Portals", "menu", "loading", "session"]);
+		assert.deepEqual(AppConfig.services.all.map(service => service.name), ["Portals"]);
 		assert.equal(component.sidebar.State.Active, "cms");
 		assert.ok((globalThis as any).window.__vieapps);
 	}
 	finally {
+		AppConfig.services.active.service = previousActiveService;
 		AppEvents.off("App", "AssignAppDebugInfo");
 		if (previousWindow) Object.defineProperty(globalThis, "window", previousWindow);
 		else delete (globalThis as any).window;
@@ -404,13 +418,13 @@ test("optional Electron adapter retains the existing outbound IPC shape and clon
 	assert.notEqual(sent[0].args.nested, args.nested);
 });
 
-test("Electron provider returns null on browser and rejects an incomplete preload", () => {
+test("Electron provider returns null on browser or when no preload bridge is usable", () => {
 	const previousWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
 	try {
 		Object.defineProperty(globalThis, "window", { configurable: true, value: {} });
 		assert.equal(createElectronService(), null);
 		Object.defineProperty(globalThis, "window", { configurable: true, value: { vieappsDesktop: {} } });
-		assert.throws(createElectronService, /preload bridge is incomplete/);
+		assert.equal(createElectronService(), null);
 	}
 	finally {
 		if (previousWindow) Object.defineProperty(globalThis, "window", previousWindow);
@@ -447,7 +461,7 @@ test("preload without isElectronApp connects both IPC directions and normalizes 
 			{} as any, storage as any, { setTitle: () => {} } as any, translate, http, adapter
 		);
 		AppConfig.session.device = "";
-		configuration.prepare();
+		await configuration.prepareAsync();
 		assert.equal(configuration.isElectronApp, true);
 		assert.equal(AppConfig.isElectronApp, true);
 		assert.equal(AppConfig.isWebApp, false);

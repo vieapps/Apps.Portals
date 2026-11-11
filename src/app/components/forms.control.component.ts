@@ -941,7 +941,7 @@ export class AppFormsControlComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	get ckEditor(): any {
-		return () => import("./ckeditor.js").then(async module => { await import("./ckeditor.vi.js"); return (module as any).default || module; });
+		return () => import("./ckeditor/ckeditor.js").then(module => module.default);
 	}
 
 	get ckEditorConfig() {

@@ -1,0 +1,13 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "popup": {
+    "left": 8,
+    "right": 359,
+    "viewportWidth": 390
+  },
+  "focusAfterThreeTabs": "Uploaded file",
+  "logs": []
+}

@@ -1,11 +1,12 @@
 <ion-list>
 	@if (inheritFromParent.allow) {
 		<ion-item [color]="color">
-			<ion-label>{{ labels.inheritFromParent }}</ion-label>
-			<ion-toggle
+			<ion-toggle labelPlacement="start" justify="space-between"
 				[color]="color"
 				[checked]="inheritFromParent.inherit"
-				(ionChange)="onInheritFromParentChanged($event)"></ion-toggle>
+				(ionChange)="onInheritFromParentChanged($event)">
+				{{ labels.inheritFromParent }}
+			</ion-toggle>
 		</ion-item>
 	}
 	@if (initialized) {
