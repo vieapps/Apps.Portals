@@ -1,15 +1,9 @@
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const project = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const isolatedNode = resolve(project, ".node/bin/node");
-const executable = existsSync(isolatedNode) ? isolatedNode : Number(process.versions.node.split(".")[0]) >= 24 ? process.execPath : undefined;
-if (!executable) {
-	console.error("Node 24 is unavailable. Install it in .node or activate the version in .nvmrc, then run npm run serve again.");
-	process.exit(1);
-}
+const executable = process.execPath;
 const environment = {
 	...process.env,
 	PATH: dirname(executable) + ":" + process.env.PATH,
