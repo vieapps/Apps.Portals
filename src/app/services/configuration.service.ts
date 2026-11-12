@@ -917,7 +917,7 @@ export class ConfigurationService extends BaseService {
 
 	/** Gets service logs */
 	getServiceLogsAsync(request: any, onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = true) {
-		return this.searchAsync(this.getSearchingPath(undefined, undefined, "logs"), request, onSuccess, onError, true, undefined, useXHR);
+		return this.searchAsync(this.getSearchingPath("service", undefined, "logs"), request, onSuccess, onError, true, undefined, useXHR);
 	}
 
 	flushCachingStoragesAsync(onSuccess?: (data?: any) => void, onError?: (error?: any) => void, useXHR: boolean = false) {
