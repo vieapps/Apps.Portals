@@ -11,6 +11,25 @@
 			<ion-item [color]="color" (click)="openProfile()">
 				<ion-label>{{ labels.profile }}</ion-label>
 			</ion-item>
+		}
+		<ion-item [color]="color">
+			<ion-label>{{ labels.options.language }}</ion-label>
+			<ion-select slot="end" multiple="false" interface="alert"
+				[cancelText]="labels.cancel"
+				[okText]="labels.ok"
+				[value]="options.language"
+				(ionChange)="onLanguageChanged($event)">
+				@for (language of languages; track language.Value) {
+					<ion-select-option [value]="language.Value">{{ language.Label }}</ion-select-option>
+				}
+			</ion-select>
+		</ion-item>
+		<ion-item [color]="color">
+			<ion-toggle justify="space-between" labelPlacement="start" [checked]="options.darkTheme" (ionChange)="onThemeChanged($event)">
+				{{ labels.options.theme }}
+			</ion-toggle>
+		</ion-item>
+		@if (isAuthenticated) {
 			<ion-item [color]="color">
 				<ion-toggle justify="space-between" labelPlacement="start" [checked]="options.thumbnails" (ionChange)="onUseThumbnailsChanged($event)">
 					{{ labels.options.thumbnails }}
@@ -31,56 +50,35 @@
 					{{ labels.options.xhrToken }}
 				</ion-toggle>
 			</ion-item>
-		}
-		<ion-item [color]="color">
-			<ion-toggle justify="space-between" labelPlacement="start" [checked]="options.darkTheme" (ionChange)="onThemeChanged($event)">
-				{{ labels.options.theme }}
-			</ion-toggle>
-		</ion-item>
-		<ion-item [color]="color">
-			<ion-label>{{ labels.options.language }}</ion-label>
-			<ion-select slot="end" multiple="false" interface="alert"
-				[cancelText]="labels.cancel"
-				[okText]="labels.ok"
-				[value]="options.language"
-				(ionChange)="onLanguageChanged($event)">
-				@for (language of languages; track language.Value) {
-					<ion-select-option [value]="language.Value">{{ language.Label }}</ion-select-option>
-				}
-			</ion-select>
-		</ion-item>
-		@if (isAuthenticated) {
 			<ion-item [color]="color">
 				<ion-toggle justify="space-between" labelPlacement="start" [checked]="options.debug" (ionChange)="onDebugChanged($event)">
 					{{ labels.options.debug }}
 				</ion-toggle>
 			</ion-item>
 		}
-		@if (isSystemAdministrator) {
-			<ion-item [color]="color" (click)="openLogs()">
-				<ion-label>{{ labels.logs }}</ion-label>
-			</ion-item>
-		}
 		@if (isAdministrator) {
 			<ion-item [color]="color" (click)="openTrash()">
 				<ion-label>{{ labels.trash }}</ion-label>
 			</ion-item>
-		}
-		@if (showStatistics) {
-			<ion-item [color]="color" (click)="openAPIs('sessions', 'x-user&x-no-day-details')">
-				<ion-label>{{ labels.sessions }}</ion-label>
-			</ion-item>
-			<ion-item [color]="color" (click)="openAPIs('visits', 'x-sum&x-no-hour-details')">
-				<ion-label>{{ labels.visits }}</ion-label>
-			</ion-item>
-		}
-		@if (isSystemAdministrator) {
-			<ion-item [color]="color" (click)="openSystemStatistics()">
-				<ion-label>{{ labels.system }}</ion-label>
-			</ion-item>
-			<ion-item [color]="color" (click)="flushCacheAsync()">
-				<ion-label>{{ labels.flushCache }}</ion-label>
-			</ion-item>
+			@if (isSystemAdministrator) {
+				<ion-item [color]="color" (click)="openLogs()">
+					<ion-label>{{ labels.logs }}</ion-label>
+				</ion-item>
+				@if (showStatistics) {
+					<ion-item [color]="color" (click)="openAPIs('sessions', 'x-user&x-no-day-details')">
+						<ion-label>{{ labels.sessions }}</ion-label>
+					</ion-item>
+					<ion-item [color]="color" (click)="openAPIs('visits', 'x-sum&x-no-hour-details')">
+						<ion-label>{{ labels.visits }}</ion-label>
+					</ion-item>
+				}
+				<ion-item [color]="color" (click)="openSystemStatistics()">
+					<ion-label>{{ labels.system }}</ion-label>
+				</ion-item>
+				<ion-item [color]="color" (click)="flushCacheAsync()">
+					<ion-label>{{ labels.flushCache }}</ion-label>
+				</ion-item>
+			}
 		}
 	</ion-list>
 </div>

@@ -43,7 +43,7 @@ export class AppPreferencesControl implements OnInit, OnDestroy {
 	}
 
 	get showStatistics() {
-		return this.isSystemAdministrator || this.configSvc.appConfig.options.showStatistics;
+		return this.configSvc.appConfig.options.showStatistics;
 	}
 
 	get logo() {
