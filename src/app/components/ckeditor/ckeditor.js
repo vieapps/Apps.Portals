@@ -41325,6 +41325,7 @@ tB.builtinPlugins = [
 			"imageStyle:side",
 			"|",
 			"imageTextAlternative",
+			"toggleImageCaption",
 			"|",
 			"linkImage",
 			"|",
